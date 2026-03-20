@@ -48,7 +48,8 @@
     color: inherit;
     background: #0d0d18;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
-    display: block;
+    display: flex;
+    flex-direction: column;
   }
   .card:hover {
     transform: translateY(-6px);
@@ -73,6 +74,9 @@
   }
   .card-body {
     padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
   .card-title {
     font-size: 1em;
@@ -91,6 +95,8 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    flex: 1;
+    align-content: flex-start;
   }
   .tag {
     font-size: 0.6em;
