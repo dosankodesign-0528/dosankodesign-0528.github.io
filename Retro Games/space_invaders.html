@@ -100,6 +100,108 @@
 </div>
 
 <script>
+// ========== AUDIO ENGINE ==========
+const SFX = (() => {
+  let _ctx = null, _muted = false, _bgmGain = null, _bgmTimer = null;
+  const getCtx = () => {
+    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return _ctx;
+  };
+  ['keydown','click'].forEach(ev => document.addEventListener(ev, () => getCtx(), {once:true}));
+  const tone = (freq, type, dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.01));
+    o.start(t); o.stop(t + dur + 0.05);
+  };
+  const slide = (f1, f2, type, dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(f1, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  };
+  const noize = (dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const n = Math.ceil(a.sampleRate * dur);
+    const buf = a.createBuffer(1, n, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(), g = a.createGain();
+    src.buffer = buf; src.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.start(t); src.stop(t + dur + 0.05);
+  };
+  return {
+    shoot()      { slide(880,440,'square',0.08,0.18); },
+    alienDie()   { noize(0.12,0.35); slide(300,60,'square',0.1,0.15); },
+    shieldHit()  { tone(200,'square',0.04,0.1); },
+    playerDie()  { noize(0.4,0.5); [440,370,311,261,196].forEach((f,i) => slide(f,f*0.7,'sawtooth',0.14,0.2,i*0.1)); },
+    ufoBuzz()    { slide(600,900,'sawtooth',0.06,0.12); },
+    ufoDie()     { [300,200,150,100].forEach((f,i) => tone(f,'square',0.1,0.3,i*0.08)); noize(0.3,0.4); },
+    clear()      { [523,659,784,1047,1319].forEach((f,i) => tone(f,'square',0.18,0.3,i*0.1)); tone(1319,'square',0.6,0.4,0.55); },
+    gameOver()   { [392,330,261].forEach((f,i) => slide(f,f*0.65,'sawtooth',0.22,0.28,i*0.22)); tone(130,'sawtooth',0.7,0.4,0.8); },
+    march(beat)  { const freqs=[160,120,100,80]; tone(freqs[beat&3],'square',0.09,0.28); },
+    bgmPlay(notes, bpm) {
+      this.bgmStop();
+      const a = getCtx(), beatSec = 60 / bpm;
+      _bgmGain = a.createGain(); _bgmGain.gain.value = _muted ? 0 : 0.05;
+      _bgmGain.connect(a.destination);
+      const totalBeats = notes.reduce((s,[,b]) => s + b, 0);
+      let base = a.currentTime + 0.1;
+      const sched = () => {
+        if (!_bgmGain) return;
+        let t = base;
+        notes.forEach(([f, b]) => {
+          if (f > 1) {
+            const o = a.createOscillator(), g = a.createGain();
+            o.connect(g); g.connect(_bgmGain);
+            o.type = 'square'; o.frequency.value = f;
+            const dur = b * beatSec * 0.82;
+            g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            o.start(t); o.stop(t + b * beatSec + 0.01);
+          }
+          t += b * beatSec;
+        });
+        base += totalBeats * beatSec;
+        _bgmTimer = setTimeout(sched, (base - a.currentTime - 1.5) * 1000);
+      };
+      sched();
+    },
+    bgmStop() {
+      if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
+      if (_bgmGain) { try { _bgmGain.gain.setValueAtTime(0, _ctx.currentTime); } catch(e){} _bgmGain = null; }
+    },
+    toggleMute() { _muted = !_muted; if (_bgmGain) _bgmGain.gain.value = _muted ? 0 : 0.05; return _muted; },
+    get muted() { return _muted; }
+  };
+})();
+// Space Invaders title BGM (short fanfare loop)
+const SI_TITLE_BGM = [
+  [330,0.5],[415,0.5],[494,0.5],[415,0.5],
+  [330,0.5],[494,0.5],[330,1],
+  [494,0.5],[587,0.5],[659,0.5],[587,0.5],
+  [494,0.5],[659,0.5],[494,1],
+  [659,0.5],[587,0.5],[523,0.5],[494,0.5],
+  [440,0.5],[392,0.5],[349,0.5],[330,0.5],
+  [330,0.5],[349,0.5],[392,0.5],[440,0.5],
+  [494,2],
+]; // 16 beats @ 130 BPM
+let _marchBeat = 0;
+let _ufoSoundTimer = 0;
+
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
 const W = 560, H = 480;
@@ -130,6 +232,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
   }
   keys[e.key] = true;
+  if (e.key === 'm' || e.key === 'M') SFX.toggleMute();
   if ((e.key === 'r' || e.key === 'R') && phase !== 'title') startGame(1, true);
   if (phase === 'title' && e.key === ' ') startGame(1, true);
   if (phase === 'over'  && e.key === ' ') startGame(1, true);
@@ -206,6 +309,9 @@ function startGame(lv, resetScore) {
     a: Math.random() * 0.6 + 0.3,
   }));
 
+  _marchBeat = 0;
+  _ufoSoundTimer = 0;
+  SFX.bgmStop();
   phase = 'play';
 }
 
@@ -226,6 +332,7 @@ function update(dt) {
   if (fire() && shootTimer <= 0 && bullets.length < 3) {
     bullets.push({ x: player.x, y: player.y - player.h/2, w: 3, h: 14, dy: -10 });
     shootTimer = 280;
+    SFX.shoot();
   }
 
   // Player bullets
@@ -236,7 +343,7 @@ function update(dt) {
     // vs shield
     for (const sh of shields) {
       if (sh.hp <= 0) continue;
-      if (hit(b.x-1, b.y, b.w, b.h, sh.x, sh.y, 8, 8)) { sh.hp--; return false; }
+      if (hit(b.x-1, b.y, b.w, b.h, sh.x, sh.y, 8, 8)) { sh.hp--; SFX.shieldHit(); return false; }
     }
 
     // vs alien
@@ -245,6 +352,7 @@ function update(dt) {
       if (hit(b.x-1, b.y, b.w, b.h, a.x, a.y, a.w, a.h)) {
         a.alive = false;
         addScore(pts(a.type));
+        SFX.alienDie();
         return false;
       }
     }
@@ -253,6 +361,7 @@ function update(dt) {
     if (ufo && hit(b.x-1, b.y, b.w, b.h, ufo.x-22, ufo.y-12, 44, 20)) {
       addScore([50,100,150,300][0|rand(0,4)]);
       ufo = null;
+      SFX.ufoDie();
       return false;
     }
 
@@ -262,7 +371,7 @@ function update(dt) {
   // Alien movement
   const alive = aliens.filter(a => a.alive);
   if (alive.length === 0) {
-    phase = 'clear'; return;
+    phase = 'clear'; SFX.clear(); return;
   }
 
   alienMoveTimer += dt;
@@ -282,6 +391,7 @@ function update(dt) {
       else      a.x += alienDir * 8;
       a.frame ^= 1;
     });
+    SFX.march(_marchBeat++);
   }
 
   // Alien shoot
@@ -305,7 +415,8 @@ function update(dt) {
     if (!pInv && hit(b.x-1, b.y, b.w, b.h, player.x - player.w/2, player.y, player.w, player.h)) {
       lives--;
       liEl.textContent = lives;
-      if (lives <= 0) { phase = 'over'; return false; }
+      SFX.playerDie();
+      if (lives <= 0) { phase = 'over'; SFX.gameOver(); return false; }
       playerInvincible = 2000; // 2s invincible
       return false;
     }
@@ -314,7 +425,7 @@ function update(dt) {
 
   // Aliens reached bottom
   for (const a of alive) {
-    if (a.y + a.h >= player.y - 4) { lives = 0; liEl.textContent = 0; phase = 'over'; return; }
+    if (a.y + a.h >= player.y - 4) { lives = 0; liEl.textContent = 0; phase = 'over'; SFX.gameOver(); return; }
   }
 
   // UFO
@@ -325,6 +436,9 @@ function update(dt) {
   }
   if (ufo) {
     ufo.x += ufo.dx;
+    // UFO periodic buzz sound
+    _ufoSoundTimer -= dt;
+    if (_ufoSoundTimer <= 0) { SFX.ufoBuzz(); _ufoSoundTimer = 600; }
     if (ufo.x > W + 30) ufo = null;
   }
 }
@@ -409,6 +523,14 @@ function draw(now) {
     ctx.fillRect(b.x - 1, b.y + 8, b.w, 4);
   });
 
+  // Mute indicator
+  ctx.save();
+  ctx.textAlign = 'right';
+  ctx.font = '10px monospace';
+  ctx.fillStyle = '#334';
+  ctx.fillText(SFX.muted ? '[M]MUTE' : '[M]SND', W - 4, 14);
+  ctx.restore();
+
   // Overlay screens
   if (phase === 'title') {
     drawOverlay('SPACE INVADERS', 'Space キーでスタート', '#38bdf8');
@@ -465,7 +587,7 @@ function loop(now) {
 
   // Phase transitions via Space key
   if (phase === 'clear' && keys[' ']) { keys[' '] = false; startGame(level + 1, false); }
-  if ((phase === 'over' || phase === 'title') && keys[' ']) { keys[' '] = false; startGame(1, true); }
+  if ((phase === 'over' || phase === 'title') && keys[' ']) { keys[' '] = false; SFX.bgmStop(); startGame(1, true); }
 
   update(dt);
   draw(now);
@@ -474,6 +596,13 @@ function loop(now) {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 phase = 'title';
+// Start title BGM on first interaction
+document.addEventListener('keydown', () => {
+  if (phase === 'title') SFX.bgmPlay(SI_TITLE_BGM, 130);
+}, { once: true });
+document.addEventListener('click', () => {
+  if (phase === 'title') SFX.bgmPlay(SI_TITLE_BGM, 130);
+}, { once: true });
 score = 0; lives = 3; level = 1;
 // 未初期化ガード（タイトル画面でforEachエラーにならないよう空配列）
 aliens = []; shields = []; bullets = []; eBullets = [];

@@ -149,6 +149,105 @@
 </div>
 
 <script>
+// ========== AUDIO ENGINE ==========
+const SFX = (() => {
+  let _ctx = null, _muted = false, _bgmGain = null, _bgmTimer = null;
+  const getCtx = () => {
+    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return _ctx;
+  };
+  ['keydown','click'].forEach(ev => document.addEventListener(ev, () => getCtx(), {once:true}));
+  const tone = (freq, type, dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + Math.max(dur, 0.01));
+    o.start(t); o.stop(t + dur + 0.05);
+  };
+  const slide = (f1, f2, type, dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(f1, t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(f2, 1), t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur + 0.05);
+  };
+  const noize = (dur, vol=0.2, delay=0) => {
+    if (_muted) return;
+    const a = getCtx(), t = a.currentTime + delay;
+    const n = Math.ceil(a.sampleRate * dur);
+    const buf = a.createBuffer(1, n, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(), g = a.createGain();
+    src.buffer = buf; src.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    src.start(t); src.stop(t + dur + 0.05);
+  };
+  return {
+    slash()       { slide(1200,300,'sawtooth',0.08,0.22); noize(0.06,0.15); },
+    heavySlash()  { slide(800,150,'sawtooth',0.14,0.3); noize(0.1,0.2); },
+    specialSlash(){ slide(1600,200,'sawtooth',0.18,0.4); noize(0.15,0.3); tone(220,'sine',0.3,0.2,0.05); },
+    hit()         { noize(0.08,0.45); tone(180,'square',0.06,0.2); },
+    block()       { tone(600,'square',0.05,0.3); tone(400,'square',0.08,0.2,0.03); noize(0.05,0.15); },
+    roundStart()  { tone(110,'sine',0.6,0.5); tone(147,'sine',0.4,0.3,0.1); tone(220,'sine',0.35,0.25,0.2); },
+    roundEnd()    { slide(300,150,'sine',0.8,0.4); tone(110,'sine',0.8,0.35,0.2); },
+    victory()     { [392,494,587,659,784].forEach((f,i) => tone(f,'square',0.18,0.3,i*0.12)); tone(784,'square',0.6,0.4,0.65); },
+    bgmPlay(notes, bpm) {
+      this.bgmStop();
+      const a = getCtx(), beatSec = 60 / bpm;
+      _bgmGain = a.createGain(); _bgmGain.gain.value = _muted ? 0 : 0.06;
+      _bgmGain.connect(a.destination);
+      const totalBeats = notes.reduce((s,[,b]) => s + b, 0);
+      let base = a.currentTime + 0.1;
+      const sched = () => {
+        if (!_bgmGain) return;
+        let t = base;
+        notes.forEach(([f, b]) => {
+          if (f > 1) {
+            const o = a.createOscillator(), g = a.createGain();
+            o.connect(g); g.connect(_bgmGain);
+            o.type = 'triangle'; o.frequency.value = f;
+            const dur = b * beatSec * 0.85;
+            g.gain.setValueAtTime(0.8, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+            o.start(t); o.stop(t + b * beatSec + 0.01);
+          }
+          t += b * beatSec;
+        });
+        base += totalBeats * beatSec;
+        _bgmTimer = setTimeout(sched, (base - a.currentTime - 1.5) * 1000);
+      };
+      sched();
+    },
+    bgmStop() {
+      if (_bgmTimer) { clearTimeout(_bgmTimer); _bgmTimer = null; }
+      if (_bgmGain) { try { _bgmGain.gain.setValueAtTime(0, _ctx.currentTime); } catch(e){} _bgmGain = null; }
+    },
+    toggleMute() { _muted = !_muted; if (_bgmGain) _bgmGain.gain.value = _muted ? 0 : 0.06; return _muted; },
+    get muted() { return _muted; }
+  };
+})();
+// Japanese pentatonic BGM (Em pentatonic: E G A B D)
+const SAMURAI_BGM = [
+  [165,1],[196,0.5],[220,0.5],
+  [247,1.5],[0,0.5],
+  [220,0.5],[247,0.5],[294,0.5],[247,0.5],
+  [220,1],[0,1],
+  [196,0.5],[220,0.5],[247,0.5],[294,0.5],
+  [330,1],[0,0.5],[294,0.5],
+  [247,0.5],[220,0.5],[196,1],
+  [165,2],
+]; // 16 beats @ 76 BPM ≈ 12.6s loop
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const W = 800, H = 400;
@@ -224,6 +323,11 @@ class Fighter {
       this.power = 0;
       this.specialCooldown = 120;
       spawnSpecialEffect(this);
+      SFX.specialSlash();
+    } else if (type === 'kick') {
+      SFX.heavySlash();
+    } else {
+      SFX.slash();
     }
     return true;
   }
@@ -250,6 +354,9 @@ class Fighter {
     if (this.blocking) {
       dmg = Math.floor(dmg * 0.15);
       spawnHit(this.cx, this.cy + 20, '防御！', '#adf');
+      SFX.block();
+    } else {
+      SFX.hit();
     }
     this.hp = Math.max(0, this.hp - dmg);
     this.state = this.blocking ? 'block' : 'hurt';
@@ -607,6 +714,7 @@ window.addEventListener('keydown', e => {
     if (gameState === 'fight') paused = !paused;
     e.preventDefault(); return;
   }
+  if (e.code === 'KeyM') { SFX.toggleMute(); e.preventDefault(); return; }
   if (!pressedKeys[e.code]) justPressed[e.code] = true;
   pressedKeys[e.code] = true;
   e.preventDefault();
@@ -894,6 +1002,8 @@ function startRound() {
   p1AttackHit = false; p2AttackHit = false;
   timer = 99; hitEffects = []; particles = [];
   gameState = 'fight';
+  SFX.roundStart();
+  SFX.bgmPlay(SAMURAI_BGM, 76);
   timerInterval = setInterval(() => {
     if (gameState !== 'fight' || paused) return;
     timer = Math.max(0, timer-1);
@@ -904,6 +1014,8 @@ function startRound() {
 function endRound(reason) {
   clearInterval(timerInterval);
   gameState = 'roundEnd';
+  SFX.bgmStop();
+  SFX.roundEnd();
   let winner = null;
   if (reason === 'timeout') {
     if (p1.hp > p2.hp) winner = 0;
@@ -912,7 +1024,7 @@ function endRound(reason) {
     winner = p1.hp <= 0 ? 1 : 0;
   }
   if (winner !== null) roundWins[winner]++;
-  if (roundWins[0] >= 2 || roundWins[1] >= 2) setTimeout(() => { gameState = 'gameOver'; }, 1800);
+  if (roundWins[0] >= 2 || roundWins[1] >= 2) setTimeout(() => { gameState = 'gameOver'; SFX.victory(); }, 1800);
   else { roundNum++; setTimeout(() => startRound(), 2200); }
 }
 
@@ -1069,6 +1181,14 @@ function gameLoop(ts) {
   }
 
   drawOverlay();
+
+  // Mute indicator
+  ctx.save();
+  ctx.textAlign = 'right';
+  ctx.font = '11px Courier New';
+  ctx.fillStyle = '#443';
+  ctx.fillText(SFX.muted ? '[M]MUTE' : '[M]SND', W - 4, 14);
+  ctx.restore();
 
   if (justPressed['Enter']) {
     if (gameState === 'title') startRound();
