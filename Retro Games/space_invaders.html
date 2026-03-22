@@ -91,7 +91,7 @@
     HI<span id="hi">0</span>
   </div>
   <canvas id="c" width="560" height="480" tabindex="0"></canvas>
-  <div id="info">← → 移動 &nbsp; Space 発射 &nbsp; R リスタート</div>
+  <div id="info">← → 移動 &nbsp; Space 発射 &nbsp; R リスタート &nbsp;|&nbsp; ポーズ: P</div>
   <div id="touch-controls">
     <button id="bl">◀</button>
     <button id="bfire">●</button>
@@ -214,6 +214,7 @@ const hiEl = document.getElementById('hi');
 
 // ── Game state ────────────────────────────────────────────────────────────────
 let phase; // 'title' | 'play' | 'dying' | 'clear' | 'over'
+let paused = false;
 let score, hi = 0, lives, level;
 let player, playerInvincible;
 let bullets, eBullets;
@@ -233,6 +234,7 @@ document.addEventListener('keydown', e => {
   }
   keys[e.key] = true;
   if (e.key === 'm' || e.key === 'M') SFX.toggleMute();
+  if ((e.key === 'p' || e.key === 'P') && phase === 'play') paused = !paused;
   if ((e.key === 'r' || e.key === 'R') && phase !== 'title') startGame(1, true);
   if (phase === 'title' && e.key === ' ') startGame(1, true);
   if (phase === 'over'  && e.key === ' ') startGame(1, true);
@@ -321,7 +323,7 @@ function pts(type) { return [30, 20, 10][type]; }
 
 // ── Update ────────────────────────────────────────────────────────────────────
 function update(dt) {
-  if (phase !== 'play') return;
+  if (phase !== 'play' || paused) return;
 
   const spd = 4;
   if (left())  player.x = Math.max(player.w/2, player.x - spd);
@@ -538,6 +540,8 @@ function draw(now) {
     drawOverlay(`LEVEL ${level} CLEAR!`, `Space キーで次へ　SCORE: ${score}`, '#4ade80');
   } else if (phase === 'over') {
     drawOverlay('GAME OVER', `Space キーでリトライ　SCORE: ${score}`, '#f87171');
+  } else if (paused) {
+    drawOverlay('一時停止', 'P キーで再開', '#38bdf8');
   }
 }
 

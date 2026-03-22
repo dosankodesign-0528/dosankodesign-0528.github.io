@@ -144,7 +144,7 @@
 <canvas id="canvas" width="800" height="400"></canvas>
 <div id="controls">
   <span>MUSASHI 操作</span> &nbsp;|&nbsp;
-  移動: ← / → &nbsp;|&nbsp; ガード: ↑ &nbsp;|&nbsp; 斬り: A &nbsp;|&nbsp; 重斬り: Z &nbsp;|&nbsp; 必殺（居合）: X（ゲージ満タン時） &nbsp;|&nbsp; ポーズ: SPACE
+  移動: ← / → &nbsp;|&nbsp; ガード: ↑ &nbsp;|&nbsp; 斬り: A &nbsp;|&nbsp; 重斬り: Z &nbsp;|&nbsp; 必殺（居合）: X（ゲージ満タン時） &nbsp;|&nbsp; ポーズ: P
 </div>
 </div>
 
@@ -710,7 +710,7 @@ const pressedKeys = {};
 const justPressed = {};
 
 window.addEventListener('keydown', e => {
-  if (e.code === 'Space') {
+  if (e.code === 'KeyP') {
     if (gameState === 'fight') paused = !paused;
     e.preventDefault(); return;
   }
@@ -1154,7 +1154,7 @@ function gameLoop(ts) {
     ctx.fillText('一時停止', W/2, H/2-10);
     ctx.shadowBlur = 0;
     ctx.font = '15px Courier New'; ctx.fillStyle = '#aaa';
-    ctx.fillText('SPACE キーで再開', W/2, H/2+30);
+    ctx.fillText('P キーで再開', W/2, H/2+30);
     ctx.restore();
     Object.keys(justPressed).forEach(k=>delete justPressed[k]);
     updateHUD(); requestAnimationFrame(gameLoop); return;
