@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, Settings, Plus, Copy, Trash2, Map, List, GripHorizontal } from 'lucide-react';
-import { Trip, Day, Spot, SPOT_CONFIG } from '../../../lib/types';
+import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Map, List } from 'lucide-react';
+import { Trip, Day, Spot } from '../../../lib/types';
 import {
   getTrip, updateTrip, addSpot, updateSpot, deleteSpot,
   deleteTrip as removeTripFromStorage, updateDayHeadline,
@@ -16,10 +16,18 @@ import { cn } from '../../../lib/utils';
 const MapView = dynamic(() => import('../../../components/MapView'), { ssr: false });
 const SpotEditModal = dynamic(() => import('../../../components/SpotEditModal'), { ssr: false });
 
+const DAY_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
+
 function formatShortDate(dateStr: string, dayOffset: number): string {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + dayOffset);
   return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function formatDateWithDay(dateStr: string, dayOffset: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + dayOffset);
+  return `${d.getMonth() + 1}/${d.getDate()}(${DAY_OF_WEEK[d.getDay()]})`;
 }
 
 export default function TripPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,12 +42,13 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
   const [showAddSpot, setShowAddSpot] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
-  // マップの高さ（ドラッグで変更可能）
-  const [mapHeight, setMapHeight] = useState(35); // vh単位
+  const [mapHeight, setMapHeight] = useState(35);
   const isDragging = useRef(false);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(35);
+  const headerRef = useRef<HTMLElement>(null);
 
   const handleDragStart = useCallback((clientY: number) => {
     isDragging.current = true;
@@ -94,6 +103,23 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
     ? trip.days[selectedDayIdx - 1] ?? null
     : null;
 
+  // spotId → 日付ラベルのマップを構築
+  const spotDateMap: Record<string, string> = {};
+  if (trip) {
+    trip.days.forEach((day, idx) => {
+      const label = `Day${day.dayNum} ${formatDateWithDay(trip.startDate, idx)}`;
+      day.spots.forEach((s) => { spotDateMap[s.id] = label; });
+    });
+  }
+
+  // SpotEditModal用の日程選択肢
+  const dayOptions = trip
+    ? trip.days.map((day, idx) => ({
+        id: day.id,
+        label: `Day${day.dayNum} ${formatDateWithDay(trip.startDate, idx)}`,
+      }))
+    : [];
+
   const refreshTrip = useCallback(() => {
     const t = getTrip(id);
     if (t) setTrip(t);
@@ -101,9 +127,8 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
 
   const handleAddSpot = (data: SpotFormData) => {
     if (!trip) return;
-    const targetDayId = selectedDayIdx > 0
-      ? trip.days[selectedDayIdx - 1]?.id
-      : trip.days[0]?.id;
+    const targetDayId = data.dayId
+      || (selectedDayIdx > 0 ? trip.days[selectedDayIdx - 1]?.id : trip.days[0]?.id);
     if (!targetDayId) return;
     addSpot(trip.id, targetDayId, data);
     refreshTrip();
@@ -124,7 +149,6 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
     if (selectedSpotId === spotId) setSelectedSpotId(null);
   };
 
-  // カードタップ → 編集モーダルを開く（readOnlyでなければ）
   const handleSpotTap = (spotId: string) => {
     setSelectedSpotId(spotId);
     setEditSpotId(spotId);
@@ -170,7 +194,8 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
 
   const handleCopyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl);
-    alert('共有URLをコピーしました！');
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 2500);
   };
 
   const editingSpot = editSpotId
@@ -180,32 +205,34 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
   if (!trip) {
     return (
       <div className="min-h-full bg-[var(--color-bg)] flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">読み込み中...</p>
+        <p className="text-sm text-gray-400">読み込み中...</p>
       </div>
     );
   }
 
   return (
     <div className="h-full flex flex-col bg-[var(--color-bg)] overflow-hidden">
-      {/* ── ナビゲーションバー ── */}
-      <header className="ios-nav sticky top-0 z-50 px-3 h-[48px] flex items-center justify-between flex-shrink-0">
+      {/* ── ヘッダー ── */}
+      <header
+        ref={headerRef}
+        className="ios-nav sticky top-0 z-50 px-4 py-3.5 flex items-center flex-shrink-0"
+      >
         <button
           onClick={() => router.push('/')}
-          className="flex items-center gap-0.5 text-[var(--color-primary)] text-[15px] min-w-[50px]"
+          className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center"
         >
-          <ChevronLeft className="w-5 h-5" />
-          <span>戻る</span>
+          <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <h1 className="text-[16px] font-semibold truncate mx-2">{trip.title}</h1>
+        <h1 className="text-[17px] font-bold truncate mx-3 flex-1 text-center">{trip.title}</h1>
         <button
-          onClick={() => setShowSettings(true)}
-          className="text-[var(--color-primary)] min-w-[40px] flex justify-end"
+          onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+          className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center"
         >
-          <Settings className="w-[22px] h-[22px]" />
+          {viewMode === 'map' ? <List className="w-[18px] h-[18px] text-gray-700" /> : <Map className="w-[18px] h-[18px] text-gray-700" />}
         </button>
       </header>
 
-      {/* ── 地図エリア（ドラッグで高さ変更可能） ── */}
+      {/* ── 地図エリア ── */}
       {viewMode === 'map' && (
         <div className="flex-shrink-0 relative" style={{ height: `${mapHeight}vh`, minHeight: 100 }}>
           <MapView
@@ -216,9 +243,9 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
         </div>
       )}
 
-      {/* ── 日程タブ＋工程リスト（マップ下にドッキング） ── */}
+      {/* ── 日程タブ＋工程リスト ── */}
       <div className="flex-1 flex flex-col min-h-0 bg-white rounded-t-2xl -mt-3 relative z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-        {/* ドラッグハンドル（上下にスワイプして地図サイズを変える） */}
+        {/* ドラッグハンドル */}
         {viewMode === 'map' && (
           <div
             className="flex justify-center items-center py-1.5 cursor-row-resize touch-none select-none"
@@ -228,76 +255,58 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
             <div className="w-9 h-1 bg-gray-300 rounded-full" />
           </div>
         )}
-        {/* 表示モード切替 + 日程タブ */}
-        <div className="flex-shrink-0 px-3 pt-2 pb-1 border-b border-gray-100">
-          {/* 表示切替 */}
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex bg-gray-100 rounded-lg p-0.5 text-[12px]">
-              <button
-                onClick={() => setViewMode('map')}
-                className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-md transition-all',
-                  viewMode === 'map' ? 'bg-white font-semibold shadow-sm text-gray-900' : 'text-gray-500'
-                )}
-              >
-                <Map className="w-3.5 h-3.5" />
-                地図
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-md transition-all',
-                  viewMode === 'list' ? 'bg-white font-semibold shadow-sm text-gray-900' : 'text-gray-500'
-                )}
-              >
-                <List className="w-3.5 h-3.5" />
-                リスト
-              </button>
+        {/* 日程タブ + 設定 */}
+        <div className="flex-shrink-0 px-3 pt-2 pb-1.5 border-b border-gray-100">
+          {currentDay && currentDay.headline && (
+            <div className="text-[12px] text-gray-400 truncate mb-1">
+              {currentDay.headline}
             </div>
-            {currentDay && (
-              <span className="text-[12px] text-gray-400 truncate ml-2">
-                {currentDay.headline}
-              </span>
-            )}
-          </div>
-
-          {/* 日程タブ（コンパクトなピル型、横スクロール制御） */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-3 px-3">
+          )}
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={() => setSelectedDayIdx(0)}
               className={cn(
-                'flex-shrink-0 px-3 py-1 rounded-full text-[12px] font-medium transition-all whitespace-nowrap',
+                'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
                 selectedDayIdx === 0
-                  ? 'bg-[var(--color-primary)] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-500 active:bg-gray-200'
               )}
             >
-              全日程
+              All
             </button>
             {trip.days.map((day, idx) => (
               <button
                 key={day.id}
                 onClick={() => setSelectedDayIdx(idx + 1)}
                 className={cn(
-                  'flex-shrink-0 px-3 py-1 rounded-full text-[12px] font-medium transition-all whitespace-nowrap',
+                  'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
                   selectedDayIdx === idx + 1
-                    ? 'bg-[var(--color-primary)] text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-500 active:bg-gray-200'
                 )}
               >
-                Day{day.dayNum}
+                Day {day.dayNum}
                 <span className={cn(
                   'ml-1',
-                  selectedDayIdx === idx + 1 ? 'text-white/70' : 'text-gray-400'
+                  selectedDayIdx === idx + 1 ? 'text-white/60' : 'text-gray-400'
                 )}>
                   {formatShortDate(trip.startDate, idx)}
                 </span>
               </button>
             ))}
+            </div>
+            {/* 設定ボタン */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-1 active:bg-gray-200 transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
         </div>
 
-        {/* 工程リスト（スクロールエリア） */}
+        {/* 工程リスト */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24">
           <Timeline
             spots={displaySpots}
@@ -305,15 +314,17 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
             onSpotSelect={handleSpotTap}
             onSpotEdit={setEditSpotId}
             onSpotDelete={handleDeleteSpot}
+            onAdd={() => setShowAddSpot(true)}
             readOnly={false}
+            spotDateMap={spotDateMap}
           />
         </div>
       </div>
 
-      {/* ── FAB（スポット追加ボタン） ── */}
+      {/* ── FAB ── */}
       <button
         onClick={() => setShowAddSpot(true)}
-        className="fixed bottom-6 right-5 z-40 w-13 h-13 bg-[var(--color-primary)] text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
+        className="fixed bottom-6 right-5 z-40 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform"
         aria-label="スポットを追加"
       >
         <Plus className="w-6 h-6" strokeWidth={2.5} />
@@ -321,10 +332,17 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
 
       {/* ── モーダル類 ── */}
       {showAddSpot && (
-        <SpotEditModal isOpen={showAddSpot} onClose={() => setShowAddSpot(false)} onSave={handleAddSpot} />
+        <SpotEditModal isOpen={showAddSpot} onClose={() => setShowAddSpot(false)} onSave={handleAddSpot} dayOptions={dayOptions} />
       )}
       {editSpotId && editingSpot && (
-        <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} />
+        <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
+      )}
+
+      {/* ── スナックバー ── */}
+      {showSnackbar && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 bg-gray-900 text-white text-[14px] font-medium rounded-2xl shadow-xl animate-[fadeInUp_0.3s_ease]">
+          共有リンクを発行しました
+        </div>
       )}
 
       {/* ── 設定モーダル ── */}
@@ -338,38 +356,45 @@ export default function TripPage({ params }: { params: Promise<{ id: string }> }
               <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
             <div className="flex items-center justify-between px-4 pb-3">
-              <button onClick={() => setShowSettings(false)} className="text-[var(--color-primary)] text-[15px]">
-                キャンセル
+              <button
+                onClick={() => setShowSettings(false)}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
-              <span className="text-[15px] font-semibold">設定</span>
-              <button onClick={handleSaveSettings} className="text-[var(--color-primary)] text-[15px] font-bold">
-                保存
+              <span className="text-[16px] font-bold">設定</span>
+              <button
+                onClick={handleSaveSettings}
+                className="w-9 h-9 rounded-full bg-gray-900 flex items-center justify-center"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </button>
             </div>
             <div className="px-4 space-y-4">
               <div>
-                <label className="text-[12px] text-gray-500 mb-1 block">タイトル</label>
+                <label className="text-[12px] text-gray-400 mb-1 block font-medium">タイトル</label>
                 <input type="text" className="ios-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[12px] text-gray-500 mb-1 block">出発日</label>
+                  <label className="text-[12px] text-gray-400 mb-1 block font-medium">出発日</label>
                   <input type="date" className="ios-input" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[12px] text-gray-500 mb-1 block">帰着日</label>
+                  <label className="text-[12px] text-gray-400 mb-1 block font-medium">帰着日</label>
                   <input type="date" className="ios-input" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
                 </div>
               </div>
               <div>
-                <label className="text-[12px] text-gray-500 mb-1 block">共有URL（閲覧専用）</label>
-                <div className="flex gap-2">
-                  <input type="text" className="ios-input flex-1 text-[13px]" value={shareUrl} readOnly />
-                  <button onClick={handleCopyShareUrl} className="flex items-center gap-1 px-3 h-[44px] bg-[var(--color-primary)] text-white rounded-lg text-[13px] font-medium flex-shrink-0">
-                    <Copy className="w-4 h-4" />
-                    コピー
-                  </button>
-                </div>
+                <label className="text-[12px] text-gray-400 mb-1 block font-medium">共有リンク</label>
+                <button onClick={handleCopyShareUrl} className="flex items-center justify-center gap-2 w-full h-[44px] bg-blue-50 text-blue-600 rounded-xl text-[14px] font-medium active:bg-blue-100 transition-colors">
+                  <Share2 className="w-4 h-4" />
+                  共有リンクを発行
+                </button>
               </div>
               <button onClick={handleDeleteTrip} className="flex items-center justify-center gap-2 w-full h-[44px] bg-red-50 text-red-600 rounded-xl text-[15px] font-medium mt-4">
                 <Trash2 className="w-4 h-4" />

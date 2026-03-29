@@ -3,11 +3,11 @@
 // どんな情報を持つか、の設計図みたいなもの
 // ========================================
 
-/** スポットの種類（目的地、移動、ホテル、グルメ、空港） */
-export type SpotType = 'destination' | 'transit' | 'hotel' | 'food' | 'airport';
+/** スポットのカテゴリ（目的地、移動・経由、ホテル、食事） */
+export type SpotType = 'destination' | 'transit' | 'hotel' | 'food';
 
 /** 移動手段 */
-export type TransportType = 'train' | 'car' | 'walk' | 'bus' | 'plane' | 'ferry' | 'taxi' | 'other';
+export type TransportType = 'subway' | 'shinkansen' | 'taxi' | 'bus' | 'walk';
 
 /** 1つのスポット（行き先・立ち寄り場所）の情報 */
 export interface Spot {
@@ -46,23 +46,31 @@ export interface Trip {
   updatedAt: string;
 }
 
-/** スポット種類ごとの色とアイコン */
-export const SPOT_CONFIG: Record<SpotType, { color: string; label: string; icon: string }> = {
+/** カテゴリごとの色とアイコン */
+const SPOT_CONFIG_FALLBACK = { color: '#70757A', label: 'その他', icon: '📌' };
+export const SPOT_CONFIG: Record<string, { color: string; label: string; icon: string }> = {
   destination: { color: '#EA4335', label: '目的地', icon: '📍' },
   transit:     { color: '#70757A', label: '移動・経由', icon: '🚃' },
-  hotel:       { color: '#7C3AED', label: '宿泊', icon: '🏨' },
-  food:        { color: '#F59E0B', label: 'グルメ', icon: '🍽️' },
-  airport:     { color: '#1A73E8', label: '空港', icon: '✈️' },
+  hotel:       { color: '#7C3AED', label: 'ホテル', icon: '🏨' },
+  food:        { color: '#F59E0B', label: '食事', icon: '🍽️' },
 };
 
+/** カテゴリ設定を安全に取得（旧タイプのフォールバック付き） */
+export function getSpotConfig(type: string) {
+  return SPOT_CONFIG[type] ?? SPOT_CONFIG_FALLBACK;
+}
+
 /** 移動手段のラベル */
-export const TRANSPORT_LABELS: Record<TransportType, string> = {
+export const TRANSPORT_LABELS: Record<string, string> = {
+  subway: '地下鉄',
+  shinkansen: '新幹線',
+  taxi: 'タクシー',
+  bus: 'バス',
+  walk: '徒歩',
+  // 旧データ互換
   train: '電車',
   car: '車',
-  walk: '徒歩',
-  bus: 'バス',
   plane: '飛行機',
   ferry: 'フェリー',
-  taxi: 'タクシー',
   other: 'その他',
 };

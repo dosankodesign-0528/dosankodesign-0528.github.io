@@ -105,7 +105,7 @@ export function addSpot(tripId: string, dayId: string, spot: Omit<Spot, 'id' | '
   return trip;
 }
 
-/** スポットを更新 */
+/** スポットを更新（dayIdが変わった場合は日をまたいで移動） */
 export function updateSpot(tripId: string, spotId: string, updates: Partial<Spot>): Trip | undefined {
   const trip = getTrip(tripId);
   if (!trip) return undefined;
@@ -113,7 +113,21 @@ export function updateSpot(tripId: string, spotId: string, updates: Partial<Spot
   for (const day of trip.days) {
     const idx = day.spots.findIndex(s => s.id === spotId);
     if (idx !== -1) {
-      day.spots[idx] = { ...day.spots[idx], ...updates };
+      const updatedSpot = { ...day.spots[idx], ...updates };
+
+      // dayIdが変更された場合: 元の日から削除して新しい日に追加
+      if (updates.dayId && updates.dayId !== day.id) {
+        const targetDay = trip.days.find(d => d.id === updates.dayId);
+        if (targetDay) {
+          day.spots.splice(idx, 1);
+          day.spots.forEach((s, i) => { s.sortOrder = i; });
+          updatedSpot.sortOrder = targetDay.spots.length;
+          targetDay.spots.push(updatedSpot);
+        }
+      } else {
+        day.spots[idx] = updatedSpot;
+      }
+
       updateTrip(trip);
       return trip;
     }

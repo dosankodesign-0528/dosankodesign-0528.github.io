@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Spot, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_LABELS } from '../lib/types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Spot, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_LABELS, getSpotConfig } from '../lib/types';
 
 export interface SpotFormData {
   name: string;
@@ -13,6 +13,12 @@ export interface SpotFormData {
   lat?: number;
   lng?: number;
   memo?: string;
+  dayId?: string;
+}
+
+interface DayOption {
+  id: string;
+  label: string;
 }
 
 interface SpotEditModalProps {
@@ -20,6 +26,7 @@ interface SpotEditModalProps {
   onClose: () => void;
   onSave: (spot: SpotFormData) => void;
   initialData?: Partial<Spot>;
+  dayOptions?: DayOption[];
 }
 
 interface NominatimResult {
@@ -29,188 +36,135 @@ interface NominatimResult {
 }
 
 // ==============================
-// DrumPicker Sub-component
+// Drum roll picker column
 // ==============================
-function DrumPicker({
+const ITEM_H = 32;
+const VISIBLE = 3;
+const DRUM_H = ITEM_H * VISIBLE;
+
+function DrumColumn({
   items,
-  selectedIndex,
+  value,
   onChange,
 }: {
   items: string[];
-  selectedIndex: number;
-  onChange: (index: number) => void;
+  value: string;
+  onChange: (val: string) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isScrollingRef = useRef(false);
-  const ITEM_HEIGHT = 40;
-  const VISIBLE_COUNT = 5;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isScrolling = useRef(false);
+  const idx = Math.max(0, items.indexOf(value));
 
-  // Scroll to selected index on mount and when selectedIndex changes externally
+  // 初期位置へスクロール
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el || isScrollingRef.current) return;
-    el.scrollTo({ top: selectedIndex * ITEM_HEIGHT, behavior: 'smooth' });
-  }, [selectedIndex]);
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTop = idx * ITEM_H;
+    }
+  }, [idx]);
 
-  const handleScroll = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    isScrollingRef.current = true;
-
-    // Use a timeout to detect when scrolling has stopped (snap settled)
-    clearTimeout((el as any)._scrollTimer);
-    (el as any)._scrollTimer = setTimeout(() => {
-      const index = Math.round(el.scrollTop / ITEM_HEIGHT);
-      const clamped = Math.max(0, Math.min(items.length - 1, index));
-      isScrollingRef.current = false;
-      if (clamped !== selectedIndex) {
-        onChange(clamped);
-      }
-    }, 80);
-  }, [items.length, selectedIndex, onChange]);
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    if (isScrolling.current) return;
+    isScrolling.current = true;
+    requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (!el) { isScrolling.current = false; return; }
+      const newIdx = Math.round(el.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(items.length - 1, newIdx));
+      if (items[clamped] !== value) onChange(items[clamped]);
+      isScrolling.current = false;
+    });
+  };
 
   return (
-    <div
-      className="drum-picker"
-      style={{
-        position: 'relative',
-        height: ITEM_HEIGHT * VISIBLE_COUNT,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Highlight bar */}
+    <div style={{ position: 'relative', height: DRUM_H, width: 52, overflow: 'hidden' }}>
+      {/* 中央ハイライト */}
+      <div style={{
+        position: 'absolute', top: ITEM_H, left: 0, right: 0,
+        height: ITEM_H, background: '#f2f2f7', borderRadius: 8,
+        pointerEvents: 'none', zIndex: 0,
+      }} />
+      {/* スクロール領域 */}
       <div
-        className="drum-highlight"
-        style={{
-          position: 'absolute',
-          top: ITEM_HEIGHT * 2,
-          left: 0,
-          right: 0,
-          height: ITEM_HEIGHT,
-          background: 'rgba(120,120,128,0.12)',
-          borderRadius: 8,
-          pointerEvents: 'none',
-          zIndex: 1,
-        }}
-      />
-      {/* Top gradient */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: ITEM_HEIGHT * 2,
-          background: 'linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)',
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}
-      />
-      {/* Bottom gradient */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: ITEM_HEIGHT * 2,
-          background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%)',
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}
-      />
-      {/* Scrollable list */}
-      <div
-        ref={containerRef}
+        ref={scrollRef}
         onScroll={handleScroll}
         style={{
-          height: '100%',
-          overflowY: 'auto',
+          height: '100%', overflowY: 'auto', position: 'relative', zIndex: 1,
           scrollSnapType: 'y mandatory',
           WebkitOverflowScrolling: 'touch',
-          msOverflowStyle: 'none',
-          scrollbarWidth: 'none',
+          msOverflowStyle: 'none', scrollbarWidth: 'none',
         }}
       >
-        {/* Top padding (2 empty slots) */}
-        <div style={{ height: ITEM_HEIGHT * 2 }} />
-        {items.map((item, i) => (
-          <div
-            key={i}
-            style={{
-              height: ITEM_HEIGHT,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              scrollSnapAlign: 'start',
-              fontSize: i === selectedIndex ? 20 : 16,
-              fontWeight: i === selectedIndex ? 600 : 400,
-              color: i === selectedIndex ? '#000' : '#8e8e93',
-              transition: 'font-size 0.15s, color 0.15s',
-              cursor: 'pointer',
-              userSelect: 'none',
-            }}
-            onClick={() => {
-              onChange(i);
-              containerRef.current?.scrollTo({
-                top: i * ITEM_HEIGHT,
-                behavior: 'smooth',
-              });
-            }}
-          >
-            {item}
-          </div>
-        ))}
-        {/* Bottom padding (2 empty slots) */}
-        <div style={{ height: ITEM_HEIGHT * 2 }} />
+        {/* 上下パディング */}
+        <div style={{ height: ITEM_H }} />
+        {items.map((item, i) => {
+          const selected = i === idx;
+          return (
+            <div
+              key={item}
+              style={{
+                height: ITEM_H,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: selected ? 20 : 16,
+                fontWeight: selected ? 700 : 400,
+                color: selected ? '#1a1a1a' : '#c7c7cc',
+                fontFamily: "'Roboto', sans-serif",
+                scrollSnapAlign: 'start',
+                transition: 'font-size 0.1s, color 0.1s',
+                userSelect: 'none',
+              }}
+            >
+              {item}
+            </div>
+          );
+        })}
+        <div style={{ height: ITEM_H }} />
       </div>
+      {/* スクロールバー非表示 */}
+      <style>{`
+        div[style*="scroll-snap-type"]::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 }
 
 // ==============================
-// TimePicker component using DrumPicker
+// TimePicker component (drum roll style)
 // ==============================
 function TimePicker({
   value,
   onChange,
 }: {
-  value: string; // "HH:MM"
+  value: string;
   onChange: (val: string) => void;
 }) {
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 
   const [h, m] = value.split(':');
-  const hourIndex = hours.indexOf(h) >= 0 ? hours.indexOf(h) : 0;
-  const minuteIndex = minutes.indexOf(m) >= 0 ? minutes.indexOf(m) : 0;
+  const currentH = hours.includes(h) ? h : '09';
+  const currentM = minutes.includes(m) ? m : '00';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <div style={{ flex: 1 }}>
-        <DrumPicker
-          items={hours}
-          selectedIndex={hourIndex}
-          onChange={(i) => onChange(`${hours[i]}:${minutes[minuteIndex]}`)}
-        />
-      </div>
-      <div
-        style={{
-          fontSize: 24,
-          fontWeight: 600,
-          color: '#000',
-          paddingBottom: 2,
-        }}
-      >
-        :
-      </div>
-      <div style={{ flex: 1 }}>
-        <DrumPicker
-          items={minutes}
-          selectedIndex={minuteIndex}
-          onChange={(i) => onChange(`${hours[hourIndex]}:${minutes[i]}`)}
-        />
-      </div>
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+      padding: '2px 0',
+    }}>
+      <DrumColumn
+        items={hours}
+        value={currentH}
+        onChange={(v) => onChange(`${v}:${currentM}`)}
+      />
+      <div style={{
+        fontSize: 22, fontWeight: 700, color: '#1a1a1a',
+        lineHeight: 1,
+      }}>:</div>
+      <DrumColumn
+        items={minutes}
+        value={currentM}
+        onChange={(v) => onChange(`${currentH}:${v}`)}
+      />
     </div>
   );
 }
@@ -223,6 +177,7 @@ export default function SpotEditModal({
   onClose,
   onSave,
   initialData,
+  dayOptions,
 }: SpotEditModalProps) {
   const [name, setName] = useState(initialData?.name ?? '');
   const [type, setType] = useState<SpotType>(initialData?.type ?? 'destination');
@@ -234,17 +189,15 @@ export default function SpotEditModal({
   const [lat, setLat] = useState<number | undefined>(initialData?.lat);
   const [lng, setLng] = useState<number | undefined>(initialData?.lng);
   const [memo, setMemo] = useState(initialData?.memo ?? '');
+  const [dayId, setDayId] = useState(initialData?.dayId ?? '');
 
-  // Search state
   const [searchResults, setSearchResults] = useState<NominatimResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Animation state
   const [visible, setVisible] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
 
-  // Reset form when initialData changes or modal opens
   useEffect(() => {
     if (isOpen) {
       setName(initialData?.name ?? '');
@@ -257,9 +210,9 @@ export default function SpotEditModal({
       setLat(initialData?.lat);
       setLng(initialData?.lng);
       setMemo(initialData?.memo ?? '');
+      setDayId(initialData?.dayId ?? '');
       setSearchResults([]);
       setShowResults(false);
-
       setVisible(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setAnimateIn(true));
@@ -271,7 +224,6 @@ export default function SpotEditModal({
     }
   }, [isOpen, initialData]);
 
-  // Nominatim search with debounce
   const handleNameChange = (val: string) => {
     setName(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -296,7 +248,6 @@ export default function SpotEditModal({
   };
 
   const selectSearchResult = (result: NominatimResult) => {
-    // Use the short part of display_name (first segment)
     const shortName = result.display_name.split(',')[0].trim();
     setName(shortName);
     setLat(parseFloat(result.lat));
@@ -317,6 +268,7 @@ export default function SpotEditModal({
       ...(lat !== undefined ? { lat } : {}),
       ...(lng !== undefined ? { lng } : {}),
       ...(memo.trim() ? { memo: memo.trim() } : {}),
+      ...(dayId ? { dayId } : {}),
     };
     onSave(data);
   };
@@ -333,7 +285,7 @@ export default function SpotEditModal({
   return (
     <>
       <style>{`
-        .modal-overlay {
+        .spot-modal-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.4);
@@ -343,9 +295,14 @@ export default function SpotEditModal({
           justify-content: center;
           transition: opacity 0.3s ease;
         }
-        .modal-sheet {
+        @media (min-width: 768px) {
+          .spot-modal-overlay {
+            align-items: center;
+          }
+        }
+        .spot-modal-sheet {
           background: #f2f2f7;
-          border-radius: 12px 12px 0 0;
+          border-radius: 16px 16px 0 0;
           width: 100%;
           max-width: 500px;
           max-height: 92vh;
@@ -355,90 +312,105 @@ export default function SpotEditModal({
           padding-bottom: env(safe-area-inset-bottom, 20px);
           -webkit-overflow-scrolling: touch;
         }
-        .modal-sheet.open {
+        @media (min-width: 768px) {
+          .spot-modal-sheet {
+            border-radius: 20px;
+            max-height: 80vh;
+            transform: translateY(0) scale(0.95);
+            opacity: 0;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+          }
+          .spot-modal-sheet.open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+        .spot-modal-sheet.open {
           transform: translateY(0);
         }
-        .ios-input {
+        .spot-modal-sheet .ios-input {
           width: 100%;
           padding: 12px 16px;
           border: none;
           border-radius: 10px;
           background: #fff;
-          font-size: 17px;
+          font-size: 16px;
           color: #000;
           outline: none;
           -webkit-appearance: none;
+          font-family: 'Roboto', sans-serif;
         }
-        .ios-input::placeholder {
+        .spot-modal-sheet .ios-input::placeholder {
           color: #c7c7cc;
         }
-        .ios-input:focus {
+        .spot-modal-sheet .ios-input:focus {
           box-shadow: 0 0 0 2px rgba(0,122,255,0.3);
-        }
-        .ios-button {
-          padding: 8px 16px;
-          border: none;
-          background: none;
-          font-size: 17px;
-          cursor: pointer;
-          color: #007aff;
-        }
-        .drum-picker div::-webkit-scrollbar {
-          display: none;
         }
       `}</style>
 
       <div
-        className="modal-overlay"
+        className="spot-modal-overlay"
         style={{ opacity: animateIn ? 1 : 0 }}
         onClick={handleBackdropClick}
       >
-        <div className={`modal-sheet ${animateIn ? 'open' : ''}`}>
+        <div className={`spot-modal-sheet ${animateIn ? 'open' : ''}`}>
           {/* Drag handle */}
           <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0 4px' }}>
-            <div
-              style={{
-                width: 36,
-                height: 5,
-                borderRadius: 2.5,
-                background: '#c7c7cc',
-              }}
-            />
+            <div style={{ width: 36, height: 5, borderRadius: 2.5, background: '#c7c7cc' }} />
           </div>
 
-          {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '4px 8px 12px',
-              borderBottom: '0.5px solid #c6c6c8',
-            }}
-          >
-            <button className="ios-button" onClick={onClose} style={{ fontWeight: 400 }}>
-              キャンセル
+          {/* Header: ✕ タイトル ✓ */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '4px 12px 12px',
+            borderBottom: '0.5px solid #e5e5ea',
+          }}>
+            <button
+              onClick={onClose}
+              style={{
+                width: 34, height: 34, borderRadius: '50%',
+                background: '#e5e5ea', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
-            <span style={{ fontSize: 17, fontWeight: 600 }}>
+            <span style={{ fontSize: 16, fontWeight: 700 }}>
               {initialData?.id ? 'スポット編集' : 'スポット追加'}
             </span>
             <button
-              className="ios-button"
               onClick={handleSave}
-              style={{ fontWeight: 600, opacity: name.trim() ? 1 : 0.4 }}
               disabled={!name.trim()}
+              style={{
+                width: 34, height: 34, borderRadius: '50%',
+                background: name.trim() ? '#1a1a1a' : '#e5e5ea',
+                border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: name.trim() ? 'pointer' : 'default',
+                transition: 'background 0.2s',
+              }}
             >
-              保存
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={name.trim() ? '#fff' : '#8e8e93'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
             </button>
           </div>
 
-          {/* Form body */}
+          {/* Form */}
           <div style={{ padding: '16px' }}>
-            {/* Name field */}
-            <div style={{ marginBottom: 16, position: 'relative' }}>
-              <label style={{ fontSize: 13, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4 }}>
-                スポット名
-              </label>
+            {/* Name + Main toggle (same row) */}
+            <div style={{ marginBottom: 12, position: 'relative' }}>
+              <div style={{ marginBottom: 6 }}>
+                <label style={{ fontSize: 12, color: '#8e8e93', paddingLeft: 4, fontWeight: 500 }}>
+                  スポット名
+                </label>
+              </div>
               <input
                 className="ios-input"
                 type="text"
@@ -448,38 +420,26 @@ export default function SpotEditModal({
                 onFocus={() => searchResults.length > 0 && setShowResults(true)}
                 onBlur={() => setTimeout(() => setShowResults(false), 200)}
               />
-              {/* Search results dropdown */}
               {showResults && searchResults.length > 0 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    background: '#fff',
-                    borderRadius: 10,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                    zIndex: 10,
-                    marginTop: 4,
-                    overflow: 'hidden',
-                  }}
-                >
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0,
+                  background: '#fff', borderRadius: 10,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                  zIndex: 10, marginTop: 4, overflow: 'hidden',
+                }}>
                   {searchResults.map((result, i) => (
                     <div
                       key={i}
                       onMouseDown={() => selectSearchResult(result)}
                       style={{
-                        padding: '12px 16px',
-                        fontSize: 15,
-                        color: '#000',
-                        cursor: 'pointer',
+                        padding: '10px 16px', fontSize: 14, color: '#000', cursor: 'pointer',
                         borderBottom: i < searchResults.length - 1 ? '0.5px solid #e5e5ea' : 'none',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#f2f2f7')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
                     >
                       <div style={{ fontWeight: 500 }}>{result.display_name.split(',')[0]}</div>
-                      <div style={{ fontSize: 12, color: '#8e8e93', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 11, color: '#8e8e93', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {result.display_name}
                       </div>
                     </div>
@@ -488,47 +448,33 @@ export default function SpotEditModal({
               )}
             </div>
 
-            {/* Spot type selector */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4 }}>
-                タイプ
+            {/* Type selector */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
+                カテゴリ
               </label>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  overflowX: 'auto',
-                  paddingBottom: 4,
-                  WebkitOverflowScrolling: 'touch',
-                  msOverflowStyle: 'none',
-                  scrollbarWidth: 'none',
-                }}
-              >
+              <div style={{
+                display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4,
+                WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none',
+              }}>
                 {spotTypes.map((st) => {
                   const config = SPOT_CONFIG[st];
                   const selected = type === st;
                   return (
                     <button
                       key={st}
-                      onClick={() => setType(st)}
+                      onClick={() => { setType(st); setIsMain(st === 'destination'); }}
                       style={{
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '8px 14px',
-                        borderRadius: 20,
-                        border: 'none',
+                        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
+                        padding: '6px 12px', borderRadius: 20, border: 'none',
                         background: selected ? config.color : '#fff',
                         color: selected ? '#fff' : '#000',
-                        fontSize: 15,
-                        fontWeight: selected ? 600 : 400,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+                        fontSize: 13, fontWeight: selected ? 600 : 400,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
                       }}
                     >
-                      <span>{config.icon}</span>
+                      <span style={{ fontSize: 14 }}>{config.icon}</span>
                       <span>{config.label}</span>
                     </button>
                   );
@@ -536,110 +482,112 @@ export default function SpotEditModal({
               </div>
             </div>
 
-            {/* Is Main toggle */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: '#fff',
-                borderRadius: 10,
-                padding: '12px 16px',
-                marginBottom: 16,
-              }}
-            >
-              <span style={{ fontSize: 17 }}>メイン目的地</span>
-              <button
-                onClick={() => setIsMain(!isMain)}
-                style={{
-                  width: 51,
-                  height: 31,
-                  borderRadius: 15.5,
-                  border: 'none',
-                  background: isMain ? '#34c759' : '#e9e9eb',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                  padding: 0,
-                }}
-              >
-                <div
-                  style={{
-                    width: 27,
-                    height: 27,
-                    borderRadius: '50%',
-                    background: '#fff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    position: 'absolute',
-                    top: 2,
-                    left: isMain ? 22 : 2,
-                    transition: 'left 0.2s',
-                  }}
-                />
-              </button>
-            </div>
+            {/* Day selector */}
+            {dayOptions && dayOptions.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
+                  日程
+                </label>
+                <div style={{
+                  display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4,
+                  WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none',
+                }}>
+                  {dayOptions.map((opt) => {
+                    const selected = dayId === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setDayId(opt.id)}
+                        style={{
+                          flexShrink: 0, display: 'flex', alignItems: 'center',
+                          padding: '6px 12px', borderRadius: 20, border: 'none',
+                          background: selected ? '#1a1a1a' : '#fff',
+                          color: selected ? '#fff' : '#000',
+                          fontSize: 13, fontWeight: selected ? 600 : 400,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            {/* Time picker */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4 }}>
-                開始時刻
-              </label>
-              <div style={{ background: '#fff', borderRadius: 10, padding: '8px 16px' }}>
-                <TimePicker value={time} onChange={setTime} />
+            {/* Time pickers */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
+                    開始時刻
+                  </label>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: '4px 8px' }}>
+                    <TimePicker value={time} onChange={setTime} />
+                  </div>
+                </div>
+                {showEndTime ? (
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                      <label style={{ fontSize: 12, color: '#8e8e93', paddingLeft: 4, fontWeight: 500 }}>
+                        終了時刻
+                      </label>
+                      <button
+                        onClick={() => { setShowEndTime(false); setEndTime(''); }}
+                        style={{
+                          width: 18, height: 18, borderRadius: '50%',
+                          background: '#e5e5ea', border: 'none',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', marginLeft: 'auto',
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" strokeWidth="3" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div style={{ background: '#fff', borderRadius: 14, padding: '4px 8px' }}>
+                      <TimePicker value={endTime || time} onChange={setEndTime} />
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
+                      終了時刻
+                    </label>
+                    <button
+                      onClick={() => {
+                        setShowEndTime(true);
+                        if (!endTime) setEndTime(time);
+                      }}
+                      style={{
+                        width: '100%', height: DRUM_H + 8,
+                        borderRadius: 14, border: '2px dashed #d1d1d6',
+                        background: '#f9f9f9',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: 4,
+                        cursor: 'pointer', color: '#8e8e93',
+                        transition: 'border-color 0.2s, background 0.2s',
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                      <span style={{ fontSize: 12, fontWeight: 500 }}>タップして追加</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* End time - collapsible */}
-            <div style={{ marginBottom: 16 }}>
-              <button
-                onClick={() => {
-                  setShowEndTime(!showEndTime);
-                  if (!endTime) setEndTime(time);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 15,
-                  color: '#007aff',
-                  cursor: 'pointer',
-                  padding: '4px 4px',
-                  marginBottom: showEndTime ? 6 : 0,
-                }}
-              >
-                <span style={{
-                  display: 'inline-block',
-                  transform: showEndTime ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}>
-                  ▶
-                </span>
-                終了時刻を{showEndTime ? '非表示' : '追加'}
-              </button>
-              {showEndTime && (
-                <div style={{ background: '#fff', borderRadius: 10, padding: '8px 16px' }}>
-                  <TimePicker value={endTime || time} onChange={setEndTime} />
-                </div>
-              )}
-            </div>
-
-            {/* Transport selector (only for transit) */}
+            {/* Transport (transit only) */}
             {type === 'transit' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 13, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4 }}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
                   移動手段
                 </label>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 8,
-                    overflowX: 'auto',
-                    paddingBottom: 4,
-                    flexWrap: 'wrap',
-                  }}
-                >
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {transportTypes.map((tt) => {
                     const selected = transport === tt;
                     return (
@@ -647,16 +595,12 @@ export default function SpotEditModal({
                         key={tt}
                         onClick={() => setTransport(tt)}
                         style={{
-                          padding: '8px 14px',
-                          borderRadius: 20,
-                          border: 'none',
-                          background: selected ? '#007aff' : '#fff',
+                          padding: '6px 12px', borderRadius: 20, border: 'none',
+                          background: selected ? '#1a1a1a' : '#fff',
                           color: selected ? '#fff' : '#000',
-                          fontSize: 15,
-                          fontWeight: selected ? 600 : 400,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.08)',
+                          fontSize: 13, fontWeight: selected ? 600 : 400,
+                          cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
                         }}
                       >
                         {TRANSPORT_LABELS[tt]}
@@ -667,9 +611,9 @@ export default function SpotEditModal({
               </div>
             )}
 
-            {/* Memo field */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4 }}>
+            {/* Memo */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
                 メモ
               </label>
               <textarea
@@ -677,12 +621,8 @@ export default function SpotEditModal({
                 placeholder="メモを入力..."
                 value={memo}
                 onChange={(e) => setMemo(e.target.value)}
-                rows={3}
-                style={{
-                  resize: 'none',
-                  fontFamily: 'inherit',
-                  lineHeight: 1.5,
-                }}
+                rows={2}
+                style={{ resize: 'none', fontFamily: 'inherit', lineHeight: 1.5, height: 'auto' }}
               />
             </div>
           </div>

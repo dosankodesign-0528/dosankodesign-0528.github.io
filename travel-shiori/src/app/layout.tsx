@@ -30,6 +30,9 @@ export default function RootLayout({
     <html lang="ja" className="h-full">
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="h-full bg-[var(--color-bg)]">
         <ServiceWorkerRegistrar />

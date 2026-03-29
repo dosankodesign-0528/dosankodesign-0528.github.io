@@ -16,17 +16,17 @@ import {
   Polyline,
   useMap,
 } from 'react-leaflet';
-import { Spot, SPOT_CONFIG } from '../lib/types';
+import { Spot, getSpotConfig } from '../lib/types';
 
 // ─── 定数 ───
 const DEFAULT_CENTER: L.LatLngExpression = [35.6762, 139.6503];
 const DEFAULT_ZOOM = 6;
 
-// Google Maps風のマップタイル（CartoDB Voyager = Google Mapsに近い見た目）
+// 日本語ラベルのマップタイル（OpenStreetMap Japan）
 const TILE_URL =
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  'https://tile.openstreetmap.jp/styles/osm-bright-ja/512/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 // ─── 型定義 ───
 interface MapViewProps {
@@ -40,7 +40,7 @@ interface MapViewProps {
 // Google Mapsのピンは「丸い頭＋尖った下部」のドロップ型
 // ========================================
 function createGoogleStylePin(spot: Spot, isSelected: boolean): L.DivIcon {
-  const config = SPOT_CONFIG[spot.type];
+  const config = getSpotConfig(spot.type);
   const scale = isSelected ? 1.3 : 1;
   const shadow = isSelected
     ? '0 4px 12px rgba(0,0,0,0.4)'
@@ -85,7 +85,7 @@ function createGoogleStylePin(spot: Spot, isSelected: boolean): L.DivIcon {
 
 // Google Maps風のスポット番号付きピン（順番がわかるように）
 function createNumberedPin(spot: Spot, index: number, isSelected: boolean): L.DivIcon {
-  const config = SPOT_CONFIG[spot.type];
+  const config = getSpotConfig(spot.type);
   const scale = isSelected ? 1.3 : 1;
   const shadow = isSelected
     ? '0 4px 12px rgba(0,0,0,0.4)'
@@ -214,7 +214,6 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
         url={TILE_URL}
         attribution={TILE_ATTRIBUTION}
         maxZoom={19}
-        subdomains="abcd"
       />
 
       {/* 小さめの著作権表示（右下に） */}
@@ -258,7 +257,7 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
       {/* 各スポットのピン */}
       {geoSpots.map((spot, idx) => {
         const isSelected = spot.id === selectedSpotId;
-        const config = SPOT_CONFIG[spot.type];
+        const config = getSpotConfig(spot.type);
 
         return (
           <Marker

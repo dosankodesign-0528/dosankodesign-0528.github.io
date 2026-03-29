@@ -30,10 +30,11 @@
 
 html, body {
   overscroll-behavior: none;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-family: 'Roboto', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  font-size: 16px;
 }
 
 body {
@@ -101,39 +102,11 @@ body {
 
 /* ドラムロールピッカー */
 .drum-picker {
-  height: 200px;
   overflow: hidden;
   position: relative;
 }
-.drum-picker::before,
-.drum-picker::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 76px;
-  pointer-events: none;
-  z-index: 2;
-}
-.drum-picker::before {
-  top: 0;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0));
-}
-.drum-picker::after {
-  bottom: 0;
-  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0));
-}
 .drum-highlight {
-  position: absolute;
-  top: 50%;
-  left: 8px;
-  right: 8px;
-  height: 40px;
-  transform: translateY(-50%);
-  background: var(--color-bg);
-  border-radius: 8px;
   pointer-events: none;
-  z-index: 1;
 }
 
 /* 地図ピン */
@@ -179,6 +152,10 @@ body {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 
 /* Google Maps風ポップア���プ */
 .google-maps-popup .leaflet-popup-content-wrapper {
@@ -194,6 +171,16 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 
+/* PC用 削除ボタン（ホバー対応デバイスでのみ表示） */
+.pc-delete-btn {
+  display: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pc-delete-btn {
+    display: flex !important;
+  }
+}
+
 /* Leafletのデフォルトズームコントロールを非表示 */
 .leaflet-control-zoom { display: none !important; }
 
@@ -201,3 +188,4 @@ body {
 .leaflet-container {
   background: #E8EAED !important;
 }
+
