@@ -1,6 +1,8 @@
 'use client';
 
+import { ChevronRight } from 'lucide-react';
 import { Spot, SPOT_CONFIG, TRANSPORT_LABELS } from '../lib/types';
+import { cn } from '../lib/utils';
 
 interface TimelineProps {
   spots: Spot[];
@@ -19,190 +21,93 @@ export default function Timeline({
   onSpotDelete,
   readOnly,
 }: TimelineProps) {
-  return (
-    <div className="relative pb-8">
-      {/* Vertical timeline line */}
-      <div
-        className="absolute left-[23px] top-4 bottom-4 w-[2px] bg-gray-200"
-        aria-hidden="true"
-      />
+  if (spots.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+        <div className="text-4xl mb-3">📍</div>
+        <p className="text-[15px]">スポットがまだありません</p>
+        <p className="text-[13px] mt-1">右下の＋ボタンで追加しましょう</p>
+      </div>
+    );
+  }
 
-      <div className="flex flex-col gap-2">
-        {spots.map((spot, index) => {
+  return (
+    <div className="relative px-3 pt-3">
+      {/* タイムライン縦線 */}
+      <div className="absolute left-[22px] top-6 bottom-6 w-[1.5px] bg-gray-200" aria-hidden="true" />
+
+      <div className="flex flex-col gap-1.5">
+        {spots.map((spot) => {
           const config = SPOT_CONFIG[spot.type];
           const isSelected = selectedSpotId === spot.id;
           const isMain = spot.isMain;
 
           return (
-            <div
-              key={spot.id}
-              className="relative flex items-start gap-3"
-            >
-              {/* Timeline dot */}
-              <div
-                className="relative z-10 flex-shrink-0 flex items-center justify-center mt-4"
-                style={{ width: 46, minHeight: 44 }}
-              >
+            <div key={spot.id} className="relative flex items-start gap-2.5">
+              {/* タイムラインドット */}
+              <div className="relative z-10 flex-shrink-0 flex items-center justify-center mt-3.5" style={{ width: 40 }}>
                 <div
-                  className={`rounded-full border-2 border-white shadow-sm ${
-                    isMain ? 'w-3.5 h-3.5' : 'w-2.5 h-2.5'
-                  }`}
+                  className={cn(
+                    'rounded-full border-2 border-white shadow-sm',
+                    isMain ? 'w-3 h-3' : 'w-2 h-2'
+                  )}
                   style={{ backgroundColor: config.color }}
                 />
               </div>
 
-              {/* Card */}
+              {/* カード本体（全体がタップ可能） */}
               <button
                 type="button"
                 onClick={() => onSpotSelect(spot.id)}
-                className={`
-                  flex-1 min-h-[44px] text-left rounded-2xl transition-all duration-200 ease-in-out
-                  ${isMain
-                    ? 'bg-white shadow-sm border border-gray-100 p-4'
-                    : 'bg-gray-50/80 p-3 ml-2'
-                  }
-                  ${isSelected
-                    ? 'ring-2 ring-blue-400/40 bg-blue-50/30 shadow-md'
-                    : 'hover:shadow-sm active:scale-[0.98]'
-                  }
-                `}
-                style={{
-                  borderLeftWidth: isMain ? 4 : 0,
-                  borderLeftColor: isMain ? config.color : undefined,
-                }}
+                className={cn(
+                  'flex-1 min-w-0 text-left rounded-xl transition-all duration-150 active:scale-[0.98]',
+                  isMain
+                    ? 'bg-white shadow-sm ring-1 ring-gray-100 p-3'
+                    : 'bg-gray-50/80 p-2.5',
+                  isSelected && 'ring-2 ring-blue-400/40 bg-blue-50/20 shadow-md',
+                )}
+                style={isMain ? { borderLeft: `3px solid ${config.color}` } : undefined}
               >
-                <div className="flex items-start justify-between gap-2">
-                  {/* Left content */}
+                <div className="flex items-center justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    {/* Time row */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className={`font-bold tracking-tight text-gray-900 ${
-                          isMain ? 'text-[20px]' : 'text-[16px]'
-                        }`}
-                      >
+                    {/* 時刻 */}
+                    <div className="flex items-baseline gap-1.5">
+                      <span className={cn(
+                        'font-bold tabular-nums text-gray-900',
+                        isMain ? 'text-[17px]' : 'text-[14px]'
+                      )}>
                         {spot.time}
                       </span>
                       {spot.endTime && (
-                        <span className="text-[14px] text-gray-400">
-                          ~ {spot.endTime}
+                        <span className="text-[12px] text-gray-400">〜 {spot.endTime}</span>
+                      )}
+                      {spot.transport && (
+                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-medium">
+                          {TRANSPORT_LABELS[spot.transport]}
                         </span>
                       )}
                     </div>
 
-                    {/* Name row */}
-                    <div className="flex items-center gap-1.5">
-                      <span className={`${isMain ? 'text-[18px]' : 'text-[15px]'}`}>
-                        {config.icon}
-                      </span>
-                      <span
-                        className={`truncate ${
-                          isMain
-                            ? 'text-[17px] font-semibold text-gray-900'
-                            : 'text-[15px] font-medium text-gray-700'
-                        }`}
-                      >
+                    {/* スポット名 */}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={isMain ? 'text-[15px]' : 'text-[13px]'}>{config.icon}</span>
+                      <span className={cn(
+                        'truncate',
+                        isMain ? 'text-[15px] font-semibold text-gray-900' : 'text-[14px] text-gray-700'
+                      )}>
                         {spot.name}
                       </span>
                     </div>
 
-                    {/* Transport badge */}
-                    {spot.transport && (
-                      <div className="mt-1.5">
-                        <span
-                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full
-                                     text-[13px] font-medium bg-gray-100 text-gray-600"
-                        >
-                          {TRANSPORT_LABELS[spot.transport]}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Memo */}
+                    {/* メモ */}
                     {spot.memo && (
-                      <p
-                        className={`mt-1.5 text-gray-500 leading-snug ${
-                          isMain ? 'text-[15px]' : 'text-[14px]'
-                        }`}
-                      >
-                        {spot.memo}
-                      </p>
+                      <p className="text-[12px] text-gray-400 mt-0.5 truncate">{spot.memo}</p>
                     )}
                   </div>
 
-                  {/* Action buttons (edit / delete) */}
+                  {/* 右矢印（タップで編集画面へ入れることを示す） */}
                   {!readOnly && (
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSpotEdit(spot.id);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation();
-                            onSpotEdit(spot.id);
-                          }
-                        }}
-                        className="flex items-center justify-center w-[44px] h-[44px]
-                                   rounded-xl text-gray-400 hover:text-blue-500
-                                   hover:bg-blue-50 active:bg-blue-100
-                                   transition-colors duration-150 cursor-pointer"
-                        aria-label={`${spot.name}を編集`}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                          <path d="m15 5 4 4" />
-                        </svg>
-                      </div>
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSpotDelete(spot.id);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation();
-                            onSpotDelete(spot.id);
-                          }
-                        }}
-                        className="flex items-center justify-center w-[44px] h-[44px]
-                                   rounded-xl text-gray-400 hover:text-red-500
-                                   hover:bg-red-50 active:bg-red-100
-                                   transition-colors duration-150 cursor-pointer"
-                        aria-label={`${spot.name}を削除`}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </div>
-                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
                   )}
                 </div>
               </button>
@@ -210,13 +115,6 @@ export default function Timeline({
           );
         })}
       </div>
-
-      {/* Empty state */}
-      {spots.length === 0 && (
-        <div className="text-center py-12 text-gray-400 text-[16px]">
-          スポットがまだありません
-        </div>
-      )}
     </div>
   );
 }
