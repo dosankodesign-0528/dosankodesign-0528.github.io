@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+/* ========================================
+   iOS風のグローバルスタイル
+   ======================================== */
+
+:root {
+  --color-primary: #1A73E8;
+  --color-destination: #EA4335;
+  --color-hotel: #7C3AED;
+  --color-food: #F59E0B;
+  --color-airport: #1A73E8;
+  --color-transit: #70757A;
+  --color-bg: #F2F2F7;
+  --color-card: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-subtext: #5F6368;
+  --color-border: #E5E5EA;
+  --color-danger: #FF3B30;
+}
+
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  overscroll-behavior: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* iOS風ナビバー（すりガラス効果） */
+.ios-nav {
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 0.5px solid var(--color-border);
+}
+
+.ios-card {
+  background: var(--color-card);
+  border-radius: 12px;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.04);
+}
+
+.ios-list-item {
+  background: var(--color-card);
+  border-bottom: 0.5px solid var(--color-border);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  transition: background 0.15s;
+}
+.ios-list-item:active {
+  background: #E5E5EA;
+}
+
+.ios-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 17px;
+  padding: 0 24px;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+.ios-button:active {
+  opacity: 0.7;
+}
+
+.ios-input {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-bg);
+  padding: 0 12px;
+  font-size: 17px;
+  outline: none;
+  color: var(--color-text);
+}
+.ios-input:focus {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* ドラムロールピッカー */
+.drum-picker {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+.drum-picker::before,
+.drum-picker::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 76px;
+  pointer-events: none;
+  z-index: 2;
+}
+.drum-picker::before {
+  top: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0));
+}
+.drum-picker::after {
+  bottom: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0));
+}
+.drum-highlight {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 40px;
+  transform: translateY(-50%);
+  background: var(--color-bg);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 地図ピン */
+.custom-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.custom-pin-inner {
+  transform: rotate(45deg);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.tab-bar {
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(255, 255, 255, 0.85);
+  border-top: 0.5px solid var(--color-border);
+}
+
+/* モーダルオーバーレイ */
+.modal-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+.modal-sheet {
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Google Maps風ポップア���プ */
+.google-maps-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 0;
+  overflow: hidden;
+}
+.google-maps-popup .leaflet-popup-content {
+  margin: 0;
+}
+.google-maps-popup .leaflet-popup-tip {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* Leafletのデフォルトズームコントロールを非表示 */
+.leaflet-control-zoom { display: none !important; }
+
+/* 地図タイル読み込み中の背景色（Google Maps風のグレー） */
+.leaflet-container {
+  background: #E8EAED !important;
+}
