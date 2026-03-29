@@ -5,12 +5,24 @@
 
 import { Trip, Day, Spot } from './types';
 import { nanoid } from 'nanoid';
+import { SEED_TRIP } from './seed-data';
 
 const STORAGE_KEY = 'travel-shiori-trips';
+const SEED_KEY = 'travel-shiori-seeded';
 
-/** 保存されている全旅行プランを取得 */
+/** 保存されている全旅行プランを取得（初回はサンプルデータを自動投入） */
 export function getTrips(): Trip[] {
   if (typeof window === 'undefined') return [];
+
+  // 初回起動時にサンプルデータを自動で入れる
+  if (!localStorage.getItem(SEED_KEY)) {
+    localStorage.setItem(SEED_KEY, 'true');
+    const existing = localStorage.getItem(STORAGE_KEY);
+    if (!existing || JSON.parse(existing).length === 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([SEED_TRIP]));
+    }
+  }
+
   const data = localStorage.getItem(STORAGE_KEY);
   return data ? JSON.parse(data) : [];
 }
