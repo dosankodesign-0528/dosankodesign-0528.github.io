@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import ServiceWorkerRegistrar from "../components/ServiceWorkerRegistrar";
 
 export const metadata: Metadata = {
   title: "旅のしおり",
@@ -30,7 +31,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="h-full bg-[var(--color-bg)]">{children}</body>
+      <body className="h-full bg-[var(--color-bg)]">
+        <ServiceWorkerRegistrar />
+        {children}
+      </body>
     </html>
   );
 }

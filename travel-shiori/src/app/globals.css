@@ -179,3 +179,25 @@ body {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+
+/* Google Maps風ポップア���プ */
+.google-maps-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 0;
+  overflow: hidden;
+}
+.google-maps-popup .leaflet-popup-content {
+  margin: 0;
+}
+.google-maps-popup .leaflet-popup-tip {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* Leafletのデフォルトズームコントロールを非表示 */
+.leaflet-control-zoom { display: none !important; }
+
+/* 地図タイル読み込み中の背景色（Google Maps風のグレー） */
+.leaflet-container {
+  background: #E8EAED !important;
+}
