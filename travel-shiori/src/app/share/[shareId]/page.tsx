@@ -253,18 +253,22 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
       {/* ── 日程タブ＋工程リスト ── */}
       <div className="flex-1 flex flex-col min-h-0 bg-white rounded-t-2xl -mt-3 relative z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-        {/* ドラッグハンドル */}
+        {/* ドラッグハンドル + 日程タブ（まとめてドラッグ可能） */}
+        <div
+          className={cn(
+            'flex-shrink-0',
+            viewMode === 'map' && 'cursor-row-resize touch-none select-none'
+          )}
+          onMouseDown={viewMode === 'map' ? (e) => handleDragStart(e.clientY) : undefined}
+          onTouchStart={viewMode === 'map' ? (e) => handleDragStart(e.touches[0].clientY) : undefined}
+        >
         {viewMode === 'map' && (
-          <div
-            className="flex justify-center items-center py-1.5 cursor-row-resize touch-none select-none"
-            onMouseDown={(e) => handleDragStart(e.clientY)}
-            onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
-          >
+          <div className="flex justify-center items-center py-1.5">
             <div className="w-9 h-1 bg-gray-300 rounded-full" />
           </div>
         )}
         {/* 日程タブ + 設定 */}
-        <div className="flex-shrink-0 px-3 pt-2 pb-1.5 border-b border-gray-100">
+        <div className="px-3 pt-2 pb-1.5 border-b border-gray-100">
           {currentDay && currentDay.headline && (
             <div className="text-[12px] text-gray-400 truncate mb-1">
               {currentDay.headline}
@@ -312,6 +316,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
               <MoreHorizontal className="w-4 h-4 text-gray-500" />
             </button>
           </div>
+        </div>
         </div>
 
         {/* 工程リスト */}
