@@ -218,31 +218,38 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     );
   }
 
+  // ボトムシートの高さ（vhで管理、100 - mapHeight がシートの高さ）
+  const sheetTopVh = viewMode === 'map' ? mapHeight : 0;
+
   return (
-    <div className="h-full flex flex-col bg-[var(--color-bg)] overflow-hidden">
-      {/* ── ヘッダー ── */}
+    <div className="h-full relative bg-[var(--color-bg)] overflow-hidden">
+      {/* ── ヘッダー（マップの上にオーバーレイ） ── */}
       <header
         ref={headerRef}
-        className="ios-nav sticky top-0 z-50 px-4 py-3.5 flex items-center flex-shrink-0"
+        className="absolute top-0 left-0 right-0 z-30 px-4 py-3.5 flex items-center"
       >
         <button
           onClick={() => router.push('/')}
-          className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <h1 className="text-[17px] font-bold truncate mx-3 flex-1 text-center">{trip.title}</h1>
+        <div className="mx-3 flex-1 text-center">
+          <span className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[15px] font-bold text-gray-900 truncate max-w-[200px]">
+            {trip.title}
+          </span>
+        </div>
         <button
           onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
-          className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center"
+          className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center"
         >
           {viewMode === 'map' ? <List className="w-[18px] h-[18px] text-gray-700" /> : <Map className="w-[18px] h-[18px] text-gray-700" />}
         </button>
       </header>
 
-      {/* ── 地図エリア ── */}
+      {/* ── 全画面マップ ── */}
       {viewMode === 'map' && (
-        <div className="flex-shrink-0 relative" style={{ height: `${mapHeight}vh`, minHeight: 100 }}>
+        <div className="absolute inset-0 z-0">
           <MapView
             spots={displaySpots}
             selectedSpotId={selectedSpotId}
@@ -251,9 +258,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
         </div>
       )}
 
-      {/* ── 日程タブ＋工程リスト ── */}
-      <div className="flex-1 flex flex-col min-h-0 bg-white rounded-t-2xl -mt-3 relative z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-        {/* ドラッグハンドル + 日程タブ（まとめてドラッグ可能） */}
+      {/* ── ボトムシート ── */}
+      <div
+        className="absolute left-0 right-0 bottom-0 z-20 flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
+        style={{
+          top: viewMode === 'map' ? `${sheetTopVh}vh` : '56px',
+          transition: isDragging.current ? 'none' : 'top 0.2s ease-out',
+        }}
+      >
+        {/* ドラッグハンドル + 日程タブ */}
         <div
           className={cn(
             'flex-shrink-0',
@@ -262,61 +275,61 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           onMouseDown={viewMode === 'map' ? (e) => handleDragStart(e.clientY) : undefined}
           onTouchStart={viewMode === 'map' ? (e) => handleDragStart(e.touches[0].clientY) : undefined}
         >
-        {viewMode === 'map' && (
-          <div className="flex justify-center items-center py-1.5">
-            <div className="w-9 h-1 bg-gray-300 rounded-full" />
-          </div>
-        )}
-        {/* 日程タブ + 設定 */}
-        <div className="px-3 pt-2 pb-1.5 border-b border-gray-100">
-          {currentDay && currentDay.headline && (
-            <div className="text-[12px] text-gray-400 truncate mb-1">
-              {currentDay.headline}
+          {viewMode === 'map' && (
+            <div className="flex justify-center items-center py-2">
+              <div className="w-9 h-1 bg-gray-300 rounded-full" />
             </div>
           )}
-          <div className="flex items-center gap-1.5">
-            <div className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-            <button
-              onClick={() => setSelectedDayIdx(0)}
-              className={cn(
-                'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
-                selectedDayIdx === 0
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-gray-100 text-gray-500 active:bg-gray-200'
-              )}
-            >
-              All
-            </button>
-            {trip.days.map((day, idx) => (
+          {/* 日程タブ + 設定 */}
+          <div className="px-3 pt-1 pb-1.5 border-b border-gray-100">
+            {currentDay && currentDay.headline && (
+              <div className="text-[12px] text-gray-400 truncate mb-1">
+                {currentDay.headline}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                <button
+                  onClick={() => setSelectedDayIdx(0)}
+                  className={cn(
+                    'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
+                    selectedDayIdx === 0
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-500 active:bg-gray-200'
+                  )}
+                >
+                  All
+                </button>
+                {trip.days.map((day, idx) => (
+                  <button
+                    key={day.id}
+                    onClick={() => setSelectedDayIdx(idx + 1)}
+                    className={cn(
+                      'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
+                      selectedDayIdx === idx + 1
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-500 active:bg-gray-200'
+                    )}
+                  >
+                    Day {day.dayNum}
+                    <span className={cn(
+                      'ml-1',
+                      selectedDayIdx === idx + 1 ? 'text-white/60' : 'text-gray-400'
+                    )}>
+                      {formatShortDate(trip.startDate, idx)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {/* 設定ボタン */}
               <button
-                key={day.id}
-                onClick={() => setSelectedDayIdx(idx + 1)}
-                className={cn(
-                  'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
-                  selectedDayIdx === idx + 1
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-500 active:bg-gray-200'
-                )}
+                onClick={() => setShowSettings(true)}
+                className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-1 active:bg-gray-200 transition-colors"
               >
-                Day {day.dayNum}
-                <span className={cn(
-                  'ml-1',
-                  selectedDayIdx === idx + 1 ? 'text-white/60' : 'text-gray-400'
-                )}>
-                  {formatShortDate(trip.startDate, idx)}
-                </span>
+                <MoreHorizontal className="w-4 h-4 text-gray-500" />
               </button>
-            ))}
             </div>
-            {/* 設定ボタン */}
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-1 active:bg-gray-200 transition-colors"
-            >
-              <MoreHorizontal className="w-4 h-4 text-gray-500" />
-            </button>
           </div>
-        </div>
         </div>
 
         {/* 工程リスト */}
