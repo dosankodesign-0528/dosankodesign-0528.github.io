@@ -36,7 +36,9 @@ export default function RootLayout({
       </head>
       <body className="h-full bg-[var(--color-bg)]">
         <ServiceWorkerRegistrar />
-        {children}
+        <div className="h-full max-w-[1024px] mx-auto">
+          {children}
+        </div>
       </body>
     </html>
   );

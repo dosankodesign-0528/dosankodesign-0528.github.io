@@ -38,28 +38,39 @@ function Logo() {
 export default function HomePage() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
 
-  useEffect(() => { setTrips(getTrips()); }, []);
+  useEffect(() => {
+    getTrips().then((t) => { setTrips(t); setLoading(false); });
+  }, []);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newTitle.trim() || !newStart || !newEnd) return;
-    const trip = createTrip(newTitle.trim(), newStart, newEnd);
-    setTrips(getTrips());
+    const trip = await createTrip(newTitle.trim(), newStart, newEnd);
+    setTrips(await getTrips());
     setShowCreate(false);
     setNewTitle(''); setNewStart(''); setNewEnd('');
-    router.push(`/trip/${trip.id}`);
+    router.push(`/share/${trip.shareId}`);
   };
 
-  const handleDelete = (id: string) => {
-    deleteTrip(id);
-    setTrips(getTrips());
+  const handleDelete = async (shareId: string) => {
+    await deleteTrip(shareId);
+    setTrips(await getTrips());
     setDeleteConfirm(null);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-full bg-[var(--color-bg)] flex items-center justify-center">
+        <p className="text-sm text-gray-400">読み込み中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-[var(--color-bg)]">
@@ -103,10 +114,10 @@ export default function HomePage() {
               const spotCount = trip.days.reduce((sum, d) => sum + d.spots.length, 0);
 
               return (
-                <SwipeableRow key={trip.id} onDelete={() => setDeleteConfirm(trip.id)}>
+                <SwipeableRow key={trip.id} onDelete={() => setDeleteConfirm(trip.shareId)}>
                   <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04]">
                     <button
-                      onClick={() => router.push(`/trip/${trip.id}`)}
+                      onClick={() => router.push(`/share/${trip.shareId}`)}
                       className="w-full text-left p-4 flex items-center gap-3 active:bg-gray-50/80 transition-colors rounded-2xl"
                     >
                       <div className="flex-1 min-w-0">
