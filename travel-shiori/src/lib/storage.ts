@@ -1,49 +1,43 @@
 // ========================================
 // データの保存・読み込み・削除を担当するファイル
-// ブラウザの localStorage を使ってスマホ内にデータを保存する
+// Supabase を使ってクラウドにデータを保存する
 // ========================================
 
 import { Trip, Day, Spot } from './types';
 import { nanoid } from 'nanoid';
-import { SEED_TRIP } from './seed-data';
+import { supabase } from './supabase';
 
-const STORAGE_KEY = 'travel-shiori-trips';
-const SEED_KEY = 'travel-shiori-seeded';
+/** 保存されている全旅行プランを取得 */
+export async function getTrips(): Promise<Trip[]> {
+  const { data, error } = await supabase
+    .from('trips')
+    .select('data')
+    .order('updated_at', { ascending: false });
 
-/** 保存されている全旅行プランを取得（初回はサンプルデータを自動投入） */
-export function getTrips(): Trip[] {
-  if (typeof window === 'undefined') return [];
-
-  // 初回起動時にサンプルデータを自動で入れる
-  if (!localStorage.getItem(SEED_KEY)) {
-    localStorage.setItem(SEED_KEY, 'true');
-    const existing = localStorage.getItem(STORAGE_KEY);
-    if (!existing || JSON.parse(existing).length === 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([SEED_TRIP]));
-    }
+  if (error) {
+    console.error('getTrips error:', error);
+    return [];
   }
-
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+  return (data ?? []).map((row) => row.data as Trip);
 }
 
-/** 全旅行プランを保存（上書き） */
-function saveTrips(trips: Trip[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
-}
+/** 共有IDを指定して旅行プランを取得 */
+export async function getTripByShareId(shareId: string): Promise<Trip | null> {
+  const { data, error } = await supabase
+    .from('trips')
+    .select('data')
+    .eq('share_id', shareId)
+    .single();
 
-/** IDを指定して1つの旅行プランを取得 */
-export function getTrip(id: string): Trip | undefined {
-  return getTrips().find(t => t.id === id);
-}
-
-/** 共有IDを指定して旅行プランを取得（閲覧用） */
-export function getTripByShareId(shareId: string): Trip | undefined {
-  return getTrips().find(t => t.shareId === shareId);
+  if (error) {
+    console.error('getTripByShareId error:', error);
+    return null;
+  }
+  return (data?.data as Trip) ?? null;
 }
 
 /** 新しい旅行プランを作成 */
-export function createTrip(title: string, startDate: string, endDate: string): Trip {
+export async function createTrip(title: string, startDate: string, endDate: string): Promise<Trip> {
   const now = new Date().toISOString();
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -65,34 +59,50 @@ export function createTrip(title: string, startDate: string, endDate: string): T
     createdAt: now,
     updatedAt: now,
   };
-  // tripIdをセット
   trip.days.forEach(d => { d.tripId = trip.id; });
 
-  const trips = getTrips();
-  trips.push(trip);
-  saveTrips(trips);
+  const { error } = await supabase
+    .from('trips')
+    .insert({ share_id: trip.shareId, data: trip });
+
+  if (error) {
+    console.error('createTrip error:', error);
+    throw new Error('旅行プランの作成に失敗しました');
+  }
   return trip;
 }
 
-/** 旅行プランを更新 */
-export function updateTrip(updated: Trip): void {
+/** 旅行プランを更新（shareIdで特定） */
+export async function updateTrip(updated: Trip): Promise<void> {
   updated.updatedAt = new Date().toISOString();
-  const trips = getTrips().map(t => t.id === updated.id ? updated : t);
-  saveTrips(trips);
+  const { error } = await supabase
+    .from('trips')
+    .update({ data: updated, updated_at: new Date().toISOString() })
+    .eq('share_id', updated.shareId);
+
+  if (error) {
+    console.error('updateTrip error:', error);
+  }
 }
 
-/** 旅行プランを削除 */
-export function deleteTrip(id: string): void {
-  const trips = getTrips().filter(t => t.id !== id);
-  saveTrips(trips);
+/** 旅行プランを削除（shareIdで特定） */
+export async function deleteTrip(shareId: string): Promise<void> {
+  const { error } = await supabase
+    .from('trips')
+    .delete()
+    .eq('share_id', shareId);
+
+  if (error) {
+    console.error('deleteTrip error:', error);
+  }
 }
 
 /** スポットを追加 */
-export function addSpot(tripId: string, dayId: string, spot: Omit<Spot, 'id' | 'dayId' | 'sortOrder'>): Trip | undefined {
-  const trip = getTrip(tripId);
-  if (!trip) return undefined;
+export async function addSpot(shareId: string, dayId: string, spot: Omit<Spot, 'id' | 'dayId' | 'sortOrder'>): Promise<Trip | null> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return null;
   const day = trip.days.find(d => d.id === dayId);
-  if (!day) return undefined;
+  if (!day) return null;
 
   const newSpot: Spot = {
     ...spot,
@@ -101,21 +111,20 @@ export function addSpot(tripId: string, dayId: string, spot: Omit<Spot, 'id' | '
     sortOrder: day.spots.length,
   };
   day.spots.push(newSpot);
-  updateTrip(trip);
+  await updateTrip(trip);
   return trip;
 }
 
 /** スポットを更新（dayIdが変わった場合は日をまたいで移動） */
-export function updateSpot(tripId: string, spotId: string, updates: Partial<Spot>): Trip | undefined {
-  const trip = getTrip(tripId);
-  if (!trip) return undefined;
+export async function updateSpot(shareId: string, spotId: string, updates: Partial<Spot>): Promise<Trip | null> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return null;
 
   for (const day of trip.days) {
     const idx = day.spots.findIndex(s => s.id === spotId);
     if (idx !== -1) {
       const updatedSpot = { ...day.spots[idx], ...updates };
 
-      // dayIdが変更された場合: 元の日から削除して新しい日に追加
       if (updates.dayId && updates.dayId !== day.id) {
         const targetDay = trip.days.find(d => d.id === updates.dayId);
         if (targetDay) {
@@ -128,38 +137,37 @@ export function updateSpot(tripId: string, spotId: string, updates: Partial<Spot
         day.spots[idx] = updatedSpot;
       }
 
-      updateTrip(trip);
+      await updateTrip(trip);
       return trip;
     }
   }
-  return undefined;
+  return null;
 }
 
 /** スポットを削除 */
-export function deleteSpot(tripId: string, spotId: string): Trip | undefined {
-  const trip = getTrip(tripId);
-  if (!trip) return undefined;
+export async function deleteSpot(shareId: string, spotId: string): Promise<Trip | null> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return null;
 
   for (const day of trip.days) {
     const idx = day.spots.findIndex(s => s.id === spotId);
     if (idx !== -1) {
       day.spots.splice(idx, 1);
-      // sortOrderを振り直す
       day.spots.forEach((s, i) => { s.sortOrder = i; });
-      updateTrip(trip);
+      await updateTrip(trip);
       return trip;
     }
   }
-  return undefined;
+  return null;
 }
 
 /** 日程の見出しを更新 */
-export function updateDayHeadline(tripId: string, dayId: string, headline: string): Trip | undefined {
-  const trip = getTrip(tripId);
-  if (!trip) return undefined;
+export async function updateDayHeadline(shareId: string, dayId: string, headline: string): Promise<Trip | null> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return null;
   const day = trip.days.find(d => d.id === dayId);
-  if (!day) return undefined;
+  if (!day) return null;
   day.headline = headline;
-  updateTrip(trip);
+  await updateTrip(trip);
   return trip;
 }
