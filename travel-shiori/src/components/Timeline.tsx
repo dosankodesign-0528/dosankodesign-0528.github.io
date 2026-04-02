@@ -195,8 +195,7 @@ function SpotCard({
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
               className={cn(
-                'w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2',
-                aColor!.ring,
+                'w-10 h-10 rounded-full object-cover flex-shrink-0',
               )}
             />
           ) : (
@@ -258,10 +257,7 @@ function SpotCard({
             <img
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
-              className={cn(
-                'w-14 h-14 rounded-full object-cover ring-2',
-                aColor!.ring,
-              )}
+              className="w-14 h-14 rounded-full object-cover"
             />
             <span className={cn('text-[11px] font-bold', aColor!.text)}>
               {ASSIGNEE_CONFIG[assignee]?.label}

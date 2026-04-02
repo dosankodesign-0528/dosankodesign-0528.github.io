@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Map, List } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2 } from 'lucide-react';
 import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
   getTripByShareId, updateTrip, addSpot, updateSpot, deleteSpot,
@@ -40,7 +40,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   const [notFound, setNotFound] = useState(false);
   const [selectedDayIdx, setSelectedDayIdx] = useState(1);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [editSpotId, setEditSpotId] = useState<string | null>(null);
   const [showAddSpot, setShowAddSpot] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -290,7 +289,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   }
 
   // ボトムシートの高さ（vhで管理、100 - mapHeight がシートの高さ）
-  const sheetTopVh = viewMode === 'map' ? mapHeight : 0;
+  const sheetTopVh = mapHeight;
 
   return (
     <div className="h-full relative bg-[var(--color-bg)] overflow-hidden">
@@ -311,30 +310,27 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           </span>
         </div>
         <button
-          onClick={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+          onClick={() => setShowSettings(true)}
           className="w-9 h-9 rounded-full bg-white/80 backdrop-blur-sm shadow-sm flex items-center justify-center"
         >
-          {viewMode === 'map' ? <List className="w-[18px] h-[18px] text-gray-700" /> : <Map className="w-[18px] h-[18px] text-gray-700" />}
+          <MoreHorizontal className="w-[18px] h-[18px] text-gray-700" />
         </button>
       </header>
 
       {/* ── 全画面マップ ── */}
-      {viewMode === 'map' && (
-        <div className="absolute inset-0 z-0">
-          <MapView
-            ref={mapRef}
-            spots={displaySpots}
-            selectedSpotId={selectedSpotId}
-            onSpotSelect={(spotId) => setSelectedSpotId(spotId)}
-            visibleHeightVh={mapHeight}
-            spotDayMap={spotDayMap}
-          />
-        </div>
-      )}
+      <div className="absolute inset-0 z-0">
+        <MapView
+          ref={mapRef}
+          spots={displaySpots}
+          selectedSpotId={selectedSpotId}
+          onSpotSelect={(spotId) => setSelectedSpotId(spotId)}
+          visibleHeightVh={mapHeight}
+          spotDayMap={spotDayMap}
+        />
+      </div>
 
       {/* ── 現在地ボタン（マップの右下、ボトムシートの上）── */}
-      {viewMode === 'map' && (
-        <button
+      <button
           onClick={() => {
             setLocating(true);
             mapRef.current?.locateMe();
@@ -351,30 +347,24 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             </svg>
           </div>
         </button>
-      )}
 
       {/* ── ボトムシート ── */}
       <div
         className="absolute left-0 right-0 bottom-0 z-20 flex flex-col bg-white rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
         style={{
-          top: viewMode === 'map' ? `${sheetTopVh}vh` : '56px',
+          top: `${sheetTopVh}vh`,
           transition: isDragging.current ? 'none' : 'top 0.2s ease-out',
         }}
       >
         {/* ドラッグハンドル + 日程タブ */}
         <div
-          className={cn(
-            'flex-shrink-0',
-            viewMode === 'map' && 'cursor-row-resize touch-none select-none'
-          )}
-          onMouseDown={viewMode === 'map' ? (e) => handleDragStart(e.clientY) : undefined}
-          onTouchStart={viewMode === 'map' ? (e) => handleDragStart(e.touches[0].clientY) : undefined}
+          className="flex-shrink-0 cursor-row-resize touch-none select-none"
+          onMouseDown={(e) => handleDragStart(e.clientY)}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientY)}
         >
-          {viewMode === 'map' && (
-            <div className="flex justify-center items-center py-2">
-              <div className="w-9 h-1 bg-gray-300 rounded-full" />
-            </div>
-          )}
+          <div className="flex justify-center items-center py-2">
+            <div className="w-9 h-1 bg-gray-300 rounded-full" />
+          </div>
           {/* 日程タブ + 設定 */}
           <div className="px-3 pt-1 pb-1.5 border-b border-gray-100">
             <div className="flex items-center gap-1.5">
@@ -401,61 +391,31 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   </button>
                 ))}
               </div>
-              {/* 設定ボタン */}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-1 active:bg-gray-200 transition-colors"
-              >
-                <MoreHorizontal className="w-4 h-4 text-gray-500" />
-              </button>
             </div>
-            {/* 人物フィルター（アバター付きセグメント） */}
-            <div className="flex items-center gap-0 mt-2 mb-0.5 bg-gray-100 rounded-xl p-0.5">
-              {/* みんな */}
-              <button
-                onClick={() => setAssigneeFilter('all')}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
-                  assigneeFilter === 'all'
-                    ? 'bg-white shadow-sm text-gray-900'
-                    : 'text-gray-400'
-                )}
-              >
-                <span className="text-[14px]">👨‍👩‍👦</span>
-                みんな
-              </button>
-              {/* 両親 */}
-              <button
-                onClick={() => setAssigneeFilter('parents')}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
-                  assigneeFilter === 'parents'
-                    ? 'bg-white shadow-sm text-orange-600'
-                    : 'text-gray-400'
-                )}
-              >
-                <img src="/avatar-parents-sm.jpg" alt="両親" className={cn(
-                  'w-5 h-5 rounded-full object-cover ring-1',
-                  assigneeFilter === 'parents' ? 'ring-orange-300' : 'ring-gray-200'
-                )} />
-                両親
-              </button>
-              {/* 息子 */}
-              <button
-                onClick={() => setAssigneeFilter('son')}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
-                  assigneeFilter === 'son'
-                    ? 'bg-white shadow-sm text-green-600'
-                    : 'text-gray-400'
-                )}
-              >
-                <img src="/avatar-son-sm.jpg" alt="息子" className={cn(
-                  'w-5 h-5 rounded-full object-cover ring-1',
-                  assigneeFilter === 'son' ? 'ring-green-300' : 'ring-gray-200'
-                )} />
-                息子
-              </button>
+            {/* 人物フィルター（コンパクトピル） */}
+            <div className="flex items-center gap-1 mt-1.5 mb-0.5">
+              {([
+                { key: 'all' as const, label: '全員', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700', activeBg: 'bg-gray-200' },
+                { key: 'parents' as const, label: '両親', icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600', activeBg: 'bg-orange-50' },
+                { key: 'son' as const, label: '息子', icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600', activeBg: 'bg-green-50' },
+              ] as const).map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setAssigneeFilter(item.key)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-all',
+                    assigneeFilter === item.key
+                      ? cn(item.activeBg, item.activeText)
+                      : 'text-gray-400 hover:text-gray-500'
+                  )}
+                >
+                  {item.avatar
+                    ? <img src={item.avatar} alt={item.label} className="w-4 h-4 rounded-full object-cover" />
+                    : <span className="text-[12px]">{item.icon}</span>
+                  }
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
