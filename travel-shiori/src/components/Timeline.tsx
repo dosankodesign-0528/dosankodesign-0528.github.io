@@ -1,9 +1,10 @@
 'use client';
 
-import { ChevronRight, Trash2, Plus } from 'lucide-react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, TRANSPORT_CONFIG, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
-import type { ReviewSuggestion } from '../lib/trip-review';
+import type { DraftSpot } from '../lib/trip-review';
+import { getMissingInfo } from '../lib/trip-review';
 
 /** Day セクション情報 */
 export interface DaySection {
@@ -14,16 +15,6 @@ export interface DaySection {
   spots: Spot[];        // フィルタ済みのスポット
 }
 
-/** 提案タイプごとのアイコン */
-const SUGGESTION_ICON: Record<string, string> = {
-  missing_transport: '🚃',
-  missing_time: '⏰',
-  missing_hotel: '🏨',
-  missing_meal: '🍽️',
-  missing_headline: '📝',
-  long_gap: '⏳',
-};
-
 interface TimelineProps {
   /** Day セクション単位のデータ（All表示用） */
   daySections: DaySection[];
@@ -32,10 +23,10 @@ interface TimelineProps {
   onSpotDelete: (id: string) => void;
   onAdd?: () => void;
   readOnly: boolean;
-  /** 抜けチェックの提案（インライン表示） */
-  suggestions?: ReviewSuggestion[];
-  /** 提案カードをタップ時 */
-  onSuggestionTap?: (suggestion: ReviewSuggestion) => void;
+  /** ドラフトスポット（抜けチェック用、破線カードとして挿入） */
+  draftSpots?: DraftSpot[];
+  /** ドラフトカードをタップ時 */
+  onDraftTap?: (draft: DraftSpot) => void;
 }
 
 export default function Timeline({
@@ -45,12 +36,12 @@ export default function Timeline({
   onSpotDelete,
   onAdd,
   readOnly,
-  suggestions = [],
-  onSuggestionTap,
+  draftSpots = [],
+  onDraftTap,
 }: TimelineProps) {
   const totalSpots = daySections.reduce((sum, s) => sum + s.spots.length, 0);
 
-  if (totalSpots === 0) {
+  if (totalSpots === 0 && draftSpots.length === 0) {
     return (
       <button
         type="button"
@@ -66,32 +57,28 @@ export default function Timeline({
     );
   }
 
-  // Day ごとの色テーマ（共通定数から取得）
   const dayColors = DAY_COLORS;
 
-  // suggestions を dayId + afterSpotId でインデックス化
-  const suggestionsByDay: Record<string, Record<string, ReviewSuggestion[]>> = {};
-  for (const s of suggestions) {
-    if (!suggestionsByDay[s.dayId]) suggestionsByDay[s.dayId] = {};
-    const key = s.afterSpotId ?? '__end__';
-    if (!suggestionsByDay[s.dayId][key]) suggestionsByDay[s.dayId][key] = [];
-    suggestionsByDay[s.dayId][key].push(s);
+  // ドラフトを dayId + afterSpotId でインデックス化
+  const draftsByDay: Record<string, Record<string, DraftSpot[]>> = {};
+  for (const d of draftSpots) {
+    if (!draftsByDay[d.dayId]) draftsByDay[d.dayId] = {};
+    const key = d.afterSpotId ?? '__end__';
+    if (!draftsByDay[d.dayId][key]) draftsByDay[d.dayId][key] = [];
+    draftsByDay[d.dayId][key].push(d);
   }
 
   return (
     <div className="px-3 pt-1">
       {daySections.map((section, sectionIdx) => {
         const { day, spots } = section;
-        if (spots.length === 0) return null;
+        if (spots.length === 0 && !draftsByDay[day.id]) return null;
         const color = dayColors[section.dayIdx % dayColors.length];
-        const daySuggestions = suggestionsByDay[day.id] || {};
+        const dayDrafts = draftsByDay[day.id] || {};
 
         return (
           <div key={day.id} data-day-idx={section.dayIdx}>
-            {/* Day 間の余白（最初のセクション以外） */}
-            {sectionIdx > 0 && (
-              <div className="h-10" />
-            )}
+            {sectionIdx > 0 && <div className="h-10" />}
 
             {/* Day セクションヘッダー */}
             <div className="sticky top-0 z-10 -mx-3 px-4 pt-3 pb-2" style={{
@@ -114,7 +101,7 @@ export default function Timeline({
               )}
             </div>
 
-            {/* スポット一覧（提案カードをインラインで挿入） */}
+            {/* スポット一覧 + ドラフトカード */}
             <div className="flex flex-col gap-1.5 pt-2">
               {spots.map((spot) => (
                 <div key={spot.id}>
@@ -126,23 +113,25 @@ export default function Timeline({
                     onSelect={() => onSpotSelect(spot.id)}
                     onDelete={() => onSpotDelete(spot.id)}
                   />
-                  {/* このスポットの後に挿入される提案カード */}
-                  {daySuggestions[spot.id]?.map((suggestion) => (
-                    <div key={suggestion.id} className="mt-1.5">
-                      <SuggestionCard
-                        suggestion={suggestion}
-                        onTap={() => onSuggestionTap?.(suggestion)}
+                  {/* このスポットの後に挿入されるドラフト */}
+                  {dayDrafts[spot.id]?.map((draft) => (
+                    <div key={draft.id} className="mt-1.5">
+                      <DraftCard
+                        spot={draft}
+                        dayNum={day.dayNum}
+                        onTap={() => onDraftTap?.(draft)}
                       />
                     </div>
                   ))}
                 </div>
               ))}
-              {/* 末尾に挿入される提案カード */}
-              {daySuggestions['__end__']?.map((suggestion) => (
-                <div key={suggestion.id}>
-                  <SuggestionCard
-                    suggestion={suggestion}
-                    onTap={() => onSuggestionTap?.(suggestion)}
+              {/* 末尾に挿入されるドラフト */}
+              {dayDrafts['__end__']?.map((draft) => (
+                <div key={draft.id}>
+                  <DraftCard
+                    spot={draft}
+                    dayNum={day.dayNum}
+                    onTap={() => onDraftTap?.(draft)}
                   />
                 </div>
               ))}
@@ -154,46 +143,97 @@ export default function Timeline({
   );
 }
 
-/** 抜けチェック提案の破線カード */
-function SuggestionCard({
-  suggestion,
+/** ドラフトカード（通常カードと同じ見た目 + 破線ボーダー + 不足情報バッジ） */
+function DraftCard({
+  spot,
+  dayNum,
   onTap,
 }: {
-  suggestion: ReviewSuggestion;
+  spot: DraftSpot;
+  dayNum: number;
   onTap: () => void;
 }) {
-  const icon = SUGGESTION_ICON[suggestion.type] || '💡';
-  const isWarning = suggestion.severity === 'warning';
+  const config = getSpotConfig(spot.type);
+  const isTransit = spot.type === 'transit';
+  const dayColor = getDayColor(dayNum);
+  const missing = getMissingInfo(spot);
 
+  if (isTransit) {
+    const tc = spot.transport ? TRANSPORT_CONFIG[spot.transport] : null;
+    return (
+      <button
+        type="button"
+        onClick={onTap}
+        className="w-full text-left rounded-xl py-3 px-3.5 transition-all duration-150 active:scale-[0.98] border-2 border-dashed border-blue-300 bg-blue-50/30"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center flex-shrink-0 w-10">
+            <div className="w-0.5 h-2 bg-blue-200 rounded-full" />
+            <span className="text-[28px] leading-none my-0.5">{tc?.icon ?? '🔄'}</span>
+            <div className="w-0.5 h-2 bg-blue-200 rounded-full" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[15px] font-semibold text-gray-700 truncate block">
+              {spot.name}
+            </span>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              {spot.time ? (
+                <span className="text-[14px] tabular-nums text-gray-400 font-medium">{spot.time}</span>
+              ) : (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">時刻が未設定</span>
+              )}
+              {tc ? (
+                <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-200/70 text-gray-600 font-medium">{tc.label}</span>
+              ) : (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">移動手段が未設定</span>
+              )}
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-blue-400 flex-shrink-0" />
+        </div>
+      </button>
+    );
+  }
+
+  // 目的地/ホテル/食事
   return (
     <button
       type="button"
       onClick={onTap}
-      className={cn(
-        'w-full text-left rounded-xl py-2.5 px-3.5 transition-all duration-150 active:scale-[0.98]',
-        'border-2 border-dashed',
-        isWarning
-          ? 'border-orange-300 bg-orange-50/40'
-          : 'border-blue-300 bg-blue-50/40',
-      )}
+      className="w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98] p-3.5 border-2 border-dashed border-blue-300 bg-blue-50/30"
     >
-      <div className="flex items-center gap-2.5">
-        <span className="text-[20px] flex-shrink-0">{icon}</span>
-        <p className={cn(
-          'text-[14px] font-medium flex-1',
-          isWarning ? 'text-orange-600' : 'text-blue-600',
-        )}>
-          {suggestion.message}
-        </p>
-        <div className={cn(
-          'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
-          isWarning ? 'bg-orange-100' : 'bg-blue-100',
-        )}>
-          <Plus className={cn(
-            'w-3.5 h-3.5',
-            isWarning ? 'text-orange-500' : 'text-blue-500',
-          )} strokeWidth={2.5} />
+      <div className="flex items-center gap-3">
+        <MiniPinIcon dayNum={dayNum} size={36} draft />
+
+        <div className="flex-1 min-w-0">
+          <span className={cn(
+            'text-[19px] font-bold truncate block leading-tight',
+            (spot.name === '宿泊先' || spot.name === '食事') ? 'text-gray-400' : 'text-gray-900'
+          )}>
+            {spot.name}
+          </span>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {spot.time ? (
+              <span className="text-[14px] tabular-nums text-gray-400 font-medium">{spot.time}</span>
+            ) : (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">時刻が未設定</span>
+            )}
+            <span
+              className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
+              style={{
+                backgroundColor: dayColor.hex + '15',
+                color: dayColor.hex,
+              }}
+            >
+              {config?.label ?? 'その他'}
+            </span>
+            {(spot.name === '宿泊先' || spot.name === '食事') && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">名前を入力</span>
+            )}
+          </div>
         </div>
+
+        <ChevronRight className="w-5 h-5 text-blue-400 flex-shrink-0" />
       </div>
     </button>
   );
@@ -205,16 +245,16 @@ const ASSIGNEE_COLORS: Record<string, { bg: string; text: string; avatar: string
   son:     { bg: 'bg-green-50',  text: 'text-green-700',  avatar: '/avatar-son-sm.jpg' },
 };
 
-/** ミニピンアイコン（マップピンと同じデザインの小型版） */
-function MiniPinIcon({ dayNum, size = 28 }: { dayNum: number; size?: number }) {
+/** ミニピンアイコン */
+function MiniPinIcon({ dayNum, size = 28, draft = false }: { dayNum: number; size?: number; draft?: boolean }) {
   const color = getDayColor(dayNum);
   const svgH = Math.round(size * 1.3);
   return (
-    <svg width={size} height={svgH} viewBox="0 0 32 42" fill="none" className="flex-shrink-0">
+    <svg width={size} height={svgH} viewBox="0 0 32 42" fill="none" className="flex-shrink-0" style={draft ? { opacity: 0.5 } : undefined}>
       <path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 26 16 26s16-14 16-26C32 7.164 24.836 0 16 0z"
-            fill={color.hex} />
+            fill={draft ? '#93C5FD' : color.hex} />
       <circle cx="16" cy="15" r="9" fill="white" opacity="0.95"/>
-      <text x="16" y="19" textAnchor="middle" fill={color.hex}
+      <text x="16" y="19" textAnchor="middle" fill={draft ? '#93C5FD' : color.hex}
             fontSize="14" fontWeight="700">{dayNum}</text>
     </svg>
   );
@@ -255,7 +295,6 @@ function SpotCard({
         )}
       >
         <div className="flex items-center gap-3">
-          {/* アバター（assigneeあり時） */}
           {assignee && (
             <img
               src={aColor!.avatar}
@@ -263,7 +302,6 @@ function SpotCard({
               className="w-9 h-9 rounded-full object-cover flex-shrink-0"
             />
           )}
-          {/* 移動手段emoji */}
           <div className="flex flex-col items-center flex-shrink-0 w-10">
             <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
             <span className="text-[28px] leading-none my-0.5">{tc?.icon ?? '🔄'}</span>
@@ -310,7 +348,6 @@ function SpotCard({
       style={{ borderLeft: `3px solid ${dayColor.hex}` }}
     >
       <div className="flex items-center gap-3">
-        {/* 左: アバター（assigneeあり時） */}
         {assignee && (
           <img
             src={aColor!.avatar}
@@ -319,10 +356,8 @@ function SpotCard({
           />
         )}
 
-        {/* ピンアイコン */}
         <MiniPinIcon dayNum={dayNum} size={36} />
 
-        {/* メイン: 目的地名（主役）+ 時刻（脇役） */}
         <div className="flex-1 min-w-0">
           <span className="text-[19px] font-bold text-gray-900 truncate block leading-tight">
             {spot.name}
@@ -346,7 +381,6 @@ function SpotCard({
           </div>
         </div>
 
-        {/* 右: 操作 */}
         {!readOnly && (
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
@@ -360,7 +394,6 @@ function SpotCard({
         )}
       </div>
 
-      {/* メモ（罫線で区切り） */}
       {spot.memo && (
         <div className="mt-2.5 pl-[50px] pt-2 border-t border-gray-200">
           <p className="text-[13px] text-gray-500 leading-relaxed">{spot.memo}</p>

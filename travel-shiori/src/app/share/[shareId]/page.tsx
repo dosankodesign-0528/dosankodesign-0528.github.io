@@ -13,7 +13,7 @@ import { SpotFormData } from '../../../components/SpotEditModal';
 import Timeline from '../../../components/Timeline';
 import type { DaySection } from '../../../components/Timeline';
 import { cn } from '../../../lib/utils';
-import { analyzeTrip, ReviewSuggestion } from '../../../lib/trip-review';
+import { analyzeTrip, DraftSpot } from '../../../lib/trip-review';
 
 import type { MapViewHandle } from '../../../components/MapView';
 const MapView = dynamic(() => import('../../../components/MapView'), { ssr: false });
@@ -51,7 +51,8 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   const titleInputRef = useRef<HTMLInputElement>(null);
   const [showReview, setShowReview] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewSuggestions, setReviewSuggestions] = useState<ReviewSuggestion[]>([]);
+  const [draftSpots, setDraftSpots] = useState<DraftSpot[]>([]);
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
 
   const mapRef = useRef<MapViewHandle>(null);
   const [locating, setLocating] = useState(false);
@@ -277,10 +278,10 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     if (!trip) return;
     setShowReview(true);
     setReviewLoading(true);
-    setReviewSuggestions([]);
+    setDraftSpots([]);
     setTimeout(() => {
       const results = analyzeTrip(trip);
-      setReviewSuggestions(results);
+      setDraftSpots(results);
       setReviewLoading(false);
     }, 1200);
   };
@@ -289,44 +290,49 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     if (!trip) return;
     const updated = { ...trip, days: trip.days.map(d => ({ ...d, spots: [...d.spots] })) };
 
-    for (const suggestion of reviewSuggestions) {
-      if (suggestion.suggestedSpot) {
-        const day = updated.days.find(d => d.id === suggestion.dayId);
-        if (day) {
-          day.spots.push({
-            id: crypto.randomUUID(),
-            dayId: day.id,
-            name: suggestion.suggestedSpot.name,
-            type: suggestion.suggestedSpot.type,
-            isMain: false,
-            time: suggestion.suggestedSpot.time || '',
-            endTime: suggestion.suggestedSpot.endTime,
-            transport: suggestion.suggestedSpot.transport,
-            sortOrder: suggestion.suggestedSpot.sortOrder,
-            memo: '',
-          });
-          day.spots.sort((a, b) => a.sortOrder - b.sortOrder);
-        }
+    for (const draft of draftSpots) {
+      const day = updated.days.find(d => d.id === draft.dayId);
+      if (day) {
+        day.spots.push({
+          id: crypto.randomUUID(),
+          dayId: day.id,
+          name: draft.name,
+          type: draft.type,
+          isMain: false,
+          time: draft.time || '',
+          endTime: draft.endTime,
+          transport: draft.transport,
+          sortOrder: draft.sortOrder,
+          memo: draft.memo || '',
+        });
+        day.spots.sort((a, b) => a.sortOrder - b.sortOrder);
       }
     }
 
     await updateTrip(updated);
     setTrip(updated);
     setShowReview(false);
-    setReviewSuggestions([]);
+    setDraftSpots([]);
   };
 
-  /** 提案カードをタップ → 編集モーダルで追加 */
-  const handleSuggestionTap = async (suggestion: ReviewSuggestion) => {
-    if (!trip || !suggestion.suggestedSpot) return;
-    const day = trip.days.find(d => d.id === suggestion.dayId);
-    if (!day) return;
-    // 提案データを使って新規スポット追加モーダルを開く
-    setShowReview(false);
-    setShowAddSpot(true);
-    // pre-fill は SpotEditModal の initialData 経由で行う
-    // ここでは suggestedSpot の情報を editSpot 的に使う
+  /** ドラフトカードをタップ → 編集モーダルを開く */
+  const handleDraftTap = (draft: DraftSpot) => {
+    setEditingDraftId(draft.id);
   };
+
+  /** ドラフト編集を保存 */
+  const handleDraftSave = (data: SpotFormData) => {
+    setDraftSpots(prev => prev.map(d =>
+      d.id === editingDraftId
+        ? { ...d, name: data.name, type: data.type, time: data.time, endTime: data.endTime, transport: data.transport, memo: data.memo, dayId: data.dayId || d.dayId }
+        : d
+    ));
+    setEditingDraftId(null);
+  };
+
+  const editingDraft = editingDraftId
+    ? draftSpots.find(d => d.id === editingDraftId)
+    : undefined;
 
   const editingSpot = editSpotId
     ? trip?.days.flatMap(d => d.spots).find(s => s.id === editSpotId)
@@ -543,12 +549,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       {editSpotId && editingSpot && (
         <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
       )}
+      {editingDraftId && editingDraft && (
+        <SpotEditModal isOpen={true} onClose={() => setEditingDraftId(null)} onSave={handleDraftSave} initialData={editingDraft} dayOptions={dayOptions} />
+      )}
 
       {/* ── 抜けチェック プレビュー ── */}
       {showReview && (
         <div
           className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-end justify-center"
-          onClick={(e) => { if (e.target === e.currentTarget) { setShowReview(false); setReviewSuggestions([]); } }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowReview(false); setDraftSpots([]); } }}
         >
           <div className="w-full max-w-lg bg-white rounded-t-2xl modal-sheet pb-8 max-h-[85vh] flex flex-col">
             <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
@@ -556,7 +565,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             </div>
             <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0">
               <button
-                onClick={() => { setShowReview(false); setReviewSuggestions([]); }}
+                onClick={() => { setShowReview(false); setDraftSpots([]); }}
                 className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -565,11 +574,11 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
               </button>
               <div className="text-center">
                 <span className="text-[16px] font-bold">抜けチェック</span>
-                {!reviewLoading && reviewSuggestions.length > 0 && (
-                  <p className="text-[12px] text-gray-400 mt-0.5">{reviewSuggestions.length}件の提案</p>
+                {!reviewLoading && draftSpots.length > 0 && (
+                  <p className="text-[12px] text-gray-400 mt-0.5">{draftSpots.length}件の提案</p>
                 )}
               </div>
-              {!reviewLoading && reviewSuggestions.length > 0 ? (
+              {!reviewLoading && draftSpots.length > 0 ? (
                 <button
                   onClick={handleApplyReview}
                   className="px-3 py-1.5 bg-blue-500 text-white text-[13px] font-semibold rounded-lg active:bg-blue-600 transition-colors"
@@ -594,7 +603,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                     </div>
                   ))}
                 </div>
-              ) : reviewSuggestions.length === 0 ? (
+              ) : draftSpots.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <div className="text-5xl mb-4">✨</div>
                   <h3 className="text-[17px] font-bold text-gray-900 mb-1">完璧な旅程です！</h3>
@@ -607,8 +616,8 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   onSpotSelect={() => {}}
                   onSpotDelete={() => {}}
                   readOnly={true}
-                  suggestions={reviewSuggestions}
-                  onSuggestionTap={handleSuggestionTap}
+                  draftSpots={draftSpots}
+                  onDraftTap={handleDraftTap}
                 />
               )}
             </div>
