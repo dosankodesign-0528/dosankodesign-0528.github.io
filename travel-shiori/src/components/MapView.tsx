@@ -17,7 +17,7 @@ import {
   CircleMarker,
   useMap,
 } from 'react-leaflet';
-import { Spot, getSpotConfig } from '../lib/types';
+import { Spot, getSpotConfig, getDayColor } from '../lib/types';
 
 // ─── 定数 ───
 // デフォルト: 日本中心
@@ -94,16 +94,16 @@ function createGoogleStylePin(spot: Spot, isSelected: boolean): L.DivIcon {
   });
 }
 
-// Google Maps風のピン（何日目かを表示）
+// Google Maps風のピン（何日目かを表示、Day色で統一）
 function createNumberedPin(spot: Spot, dayNum: number | undefined, isSelected: boolean): L.DivIcon {
-  const config = getSpotConfig(spot.type);
+  const dayColor = dayNum ? getDayColor(dayNum) : null;
+  const pinColor = dayColor?.hex ?? getSpotConfig(spot.type).color;
   const scale = isSelected ? 1.3 : 1;
   const shadow = isSelected
     ? '0 4px 12px rgba(0,0,0,0.4)'
     : '0 2px 6px rgba(0,0,0,0.3)';
 
-  // メインスポットはアイコン、それ以外は「○日目」の数字
-  const label = spot.isMain ? config.icon : (dayNum ?? '');
+  const label = dayNum ?? '';
 
   const pinHtml = `
     <div style="
@@ -115,7 +115,7 @@ function createNumberedPin(spot: Spot, dayNum: number | undefined, isSelected: b
     ">
       <svg width="32" height="42" viewBox="0 0 32 42" fill="none">
         <path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 26 16 26s16-14 16-26C32 7.164 24.836 0 16 0z"
-              fill="${config.color}" />
+              fill="${pinColor}" />
         <circle cx="16" cy="15" r="9" fill="white" opacity="0.95"/>
       </svg>
       <div style="
@@ -127,7 +127,7 @@ function createNumberedPin(spot: Spot, dayNum: number | undefined, isSelected: b
         font-size: 13px;
         font-weight: 700;
         line-height: 20px;
-        color: ${config.color};
+        color: ${pinColor};
       ">${label}</div>
     </div>
   `;

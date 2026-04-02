@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType } from '../lib/types';
+import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
 
 /** スポットの「有効なassignee」を返す（未設定='all'扱い） */
@@ -55,13 +55,8 @@ export default function Timeline({
     );
   }
 
-  // Day ごとの色テーマ
-  const dayColors = [
-    { bg: 'bg-blue-600', light: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' },
-    { bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' },
-    { bg: 'bg-amber-600', light: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
-    { bg: 'bg-purple-600', light: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-600' },
-  ];
+  // Day ごとの色テーマ（共通定数から取得）
+  const dayColors = DAY_COLORS;
 
   return (
     <div className="px-3 pt-1">
@@ -122,6 +117,7 @@ export default function Timeline({
                     )}
                     <SpotCard
                       spot={spot}
+                      dayNum={day.dayNum}
                       isSelected={selectedSpotId === spot.id}
                       readOnly={readOnly}
                       onSelect={() => onSpotSelect(spot.id)}
@@ -144,15 +140,32 @@ const ASSIGNEE_COLORS: Record<string, { bg: string; ring: string; iconBg: string
   son:     { bg: 'bg-green-50',  ring: 'ring-green-200',  iconBg: 'bg-green-100',  text: 'text-green-700',  avatar: '/avatar-son-sm.jpg' },
 };
 
+/** ミニピンアイコン（マップピンと同じデザインの小型版） */
+function MiniPinIcon({ dayNum, size = 28 }: { dayNum: number; size?: number }) {
+  const color = getDayColor(dayNum);
+  const svgH = Math.round(size * 1.3);
+  return (
+    <svg width={size} height={svgH} viewBox="0 0 32 42" fill="none" className="flex-shrink-0">
+      <path d="M16 0C7.164 0 0 7.164 0 16c0 12 16 26 16 26s16-14 16-26C32 7.164 24.836 0 16 0z"
+            fill={color.hex} />
+      <circle cx="16" cy="15" r="9" fill="white" opacity="0.95"/>
+      <text x="16" y="19" textAnchor="middle" fill={color.hex}
+            fontSize="14" fontWeight="700">{dayNum}</text>
+    </svg>
+  );
+}
+
 /** 1スポットのカード表示 */
 function SpotCard({
   spot,
+  dayNum,
   isSelected,
   readOnly,
   onSelect,
   onDelete,
 }: {
   spot: Spot;
+  dayNum: number;
   isSelected: boolean;
   readOnly: boolean;
   onSelect: () => void;
@@ -162,6 +175,7 @@ function SpotCard({
   const isTransit = spot.type === 'transit';
   const assignee = spot.assignee && spot.assignee !== 'all' ? spot.assignee : null;
   const aColor = assignee ? ASSIGNEE_COLORS[assignee] : null;
+  const dayColor = getDayColor(dayNum);
 
   if (isTransit) {
     return (
@@ -181,7 +195,7 @@ function SpotCard({
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
               className={cn(
-                'w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2',
+                'w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2',
                 aColor!.ring,
               )}
             />
@@ -223,7 +237,6 @@ function SpotCard({
     );
   }
 
-  const cfgColor = config?.color ?? '#70757A';
   return (
     <button
       type="button"
@@ -236,7 +249,7 @@ function SpotCard({
           : 'bg-white ring-1 ring-black/[0.04]',
         isSelected && 'ring-2 ring-blue-500/30 shadow-md',
       )}
-      style={{ borderLeft: `3px solid ${cfgColor}` }}
+      style={{ borderLeft: `3px solid ${dayColor.hex}` }}
     >
       <div className="flex gap-3">
         {/* 左: 人物アバター写真（大きく表示） */}
@@ -246,11 +259,11 @@ function SpotCard({
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
               className={cn(
-                'w-11 h-11 rounded-full object-cover ring-2',
+                'w-14 h-14 rounded-full object-cover ring-2',
                 aColor!.ring,
               )}
             />
-            <span className={cn('text-[10px] font-bold', aColor!.text)}>
+            <span className={cn('text-[11px] font-bold', aColor!.text)}>
               {ASSIGNEE_CONFIG[assignee]?.label}
             </span>
           </div>
@@ -270,8 +283,8 @@ function SpotCard({
             <span
               className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
               style={{
-                backgroundColor: cfgColor + '15',
-                color: cfgColor,
+                backgroundColor: dayColor.hex + '15',
+                color: dayColor.hex,
               }}
             >
               {config?.label ?? 'その他'}
@@ -289,7 +302,7 @@ function SpotCard({
             )}
           </div>
           <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-[16px]">{config?.icon ?? '📌'}</span>
+            <MiniPinIcon dayNum={dayNum} size={22} />
             <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
               {spot.name}
             </span>

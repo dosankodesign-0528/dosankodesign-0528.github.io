@@ -72,6 +72,19 @@ export function getSpotConfig(type: string) {
   return SPOT_CONFIG[type] ?? SPOT_CONFIG_FALLBACK;
 }
 
+/** Day ごとのカラーテーマ（ピン・見出し共通） */
+export const DAY_COLORS = [
+  { hex: '#2563EB', bg: 'bg-blue-600', light: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' },
+  { hex: '#059669', bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' },
+  { hex: '#D97706', bg: 'bg-amber-600', light: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
+  { hex: '#9333EA', bg: 'bg-purple-600', light: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-600' },
+];
+
+/** dayNum（1始まり）からDay色を取得 */
+export function getDayColor(dayNum: number) {
+  return DAY_COLORS[(dayNum - 1) % DAY_COLORS.length];
+}
+
 /** 移動手段のラベル */
 export const TRANSPORT_LABELS: Record<string, string> = {
   subway: '地下鉄',
