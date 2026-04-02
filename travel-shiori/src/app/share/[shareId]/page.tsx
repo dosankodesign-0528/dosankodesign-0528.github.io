@@ -409,23 +409,53 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                 <MoreHorizontal className="w-4 h-4 text-gray-500" />
               </button>
             </div>
-            {/* 人物フィルター */}
-            <div className="flex gap-1.5 mt-1.5 pb-0.5">
-              {(Object.keys(ASSIGNEE_CONFIG) as AssigneeType[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setAssigneeFilter(key)}
-                  className={cn(
-                    'flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium transition-all',
-                    assigneeFilter === key
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200 active:bg-gray-100'
-                  )}
-                >
-                  <span className="text-[13px]">{ASSIGNEE_CONFIG[key].icon}</span>
-                  {ASSIGNEE_CONFIG[key].label}
-                </button>
-              ))}
+            {/* 人物フィルター（アバター付きセグメント） */}
+            <div className="flex items-center gap-0 mt-2 mb-0.5 bg-gray-100 rounded-xl p-0.5">
+              {/* みんな */}
+              <button
+                onClick={() => setAssigneeFilter('all')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
+                  assigneeFilter === 'all'
+                    ? 'bg-white shadow-sm text-gray-900'
+                    : 'text-gray-400'
+                )}
+              >
+                <span className="text-[14px]">👨‍👩‍👦</span>
+                みんな
+              </button>
+              {/* 両親 */}
+              <button
+                onClick={() => setAssigneeFilter('parents')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
+                  assigneeFilter === 'parents'
+                    ? 'bg-white shadow-sm text-orange-600'
+                    : 'text-gray-400'
+                )}
+              >
+                <img src="/avatar-parents-sm.jpg" alt="両親" className={cn(
+                  'w-5 h-5 rounded-full object-cover ring-1',
+                  assigneeFilter === 'parents' ? 'ring-orange-300' : 'ring-gray-200'
+                )} />
+                両親
+              </button>
+              {/* 息子 */}
+              <button
+                onClick={() => setAssigneeFilter('son')}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all',
+                  assigneeFilter === 'son'
+                    ? 'bg-white shadow-sm text-green-600'
+                    : 'text-gray-400'
+                )}
+              >
+                <img src="/avatar-son-sm.jpg" alt="息子" className={cn(
+                  'w-5 h-5 rounded-full object-cover ring-1',
+                  assigneeFilter === 'son' ? 'ring-green-300' : 'ring-gray-200'
+                )} />
+                息子
+              </button>
             </div>
           </div>
         </div>
