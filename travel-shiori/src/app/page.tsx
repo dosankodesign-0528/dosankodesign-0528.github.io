@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy } from 'lucide-react';
+import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown } from 'lucide-react';
 import { Trip } from '../lib/types';
-import { getTrips, createTrip, deleteTrip, duplicateTrip } from '../lib/storage';
+import { getTrips, createTrip, deleteTrip, duplicateTrip, getTrashedTrips, restoreTrip, permanentlyDeleteTrip } from '../lib/storage';
 import { cn } from '../lib/utils';
 
 function getDayOfWeek(dateStr: string): string {
@@ -90,18 +90,27 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [permanentDeleteConfirm, setPermanentDeleteConfirm] = useState<string | null>(null);
+  const [trashedTrips, setTrashedTrips] = useState<Trip[]>([]);
+  const [showTrash, setShowTrash] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
 
+  const refreshAll = async () => {
+    const [t, trashed] = await Promise.all([getTrips(), getTrashedTrips()]);
+    setTrips(t);
+    setTrashedTrips(trashed);
+  };
+
   useEffect(() => {
-    getTrips().then((t) => { setTrips(t); setLoading(false); });
+    refreshAll().then(() => setLoading(false));
   }, []);
 
   const handleCreate = async () => {
     if (!newTitle.trim() || !newStart || !newEnd) return;
     const trip = await createTrip(newTitle.trim(), newStart, newEnd);
-    setTrips(await getTrips());
+    await refreshAll();
     setShowCreate(false);
     setNewTitle(''); setNewStart(''); setNewEnd('');
     router.push(`/share/${trip.shareId}`);
@@ -109,15 +118,24 @@ export default function HomePage() {
 
   const handleDelete = async (shareId: string) => {
     await deleteTrip(shareId);
-    setTrips(await getTrips());
+    await refreshAll();
     setDeleteConfirm(null);
   };
 
   const handleDuplicate = async (shareId: string) => {
     const newTrip = await duplicateTrip(shareId);
-    if (newTrip) {
-      setTrips(await getTrips());
-    }
+    if (newTrip) await refreshAll();
+  };
+
+  const handleRestore = async (shareId: string) => {
+    await restoreTrip(shareId);
+    await refreshAll();
+  };
+
+  const handlePermanentDelete = async (shareId: string) => {
+    await permanentlyDeleteTrip(shareId);
+    await refreshAll();
+    setPermanentDeleteConfirm(null);
   };
 
   if (loading) {
@@ -198,6 +216,68 @@ export default function HomePage() {
             })}
           </div>
         )}
+
+        {/* ゴミ箱セクション */}
+        {trashedTrips.length > 0 && (
+          <div className="mt-10">
+            <button
+              onClick={() => setShowTrash(!showTrash)}
+              className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors mb-3"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-[14px] font-medium">ゴミ箱（{trashedTrips.length}件）</span>
+              <ChevronDown className={cn(
+                'w-4 h-4 transition-transform',
+                showTrash && 'rotate-180'
+              )} />
+            </button>
+            {showTrash && (
+              <div className="space-y-2">
+                {trashedTrips.map((trip) => {
+                  const dayCount = trip.days.length;
+                  const spotCount = trip.days.reduce((sum, d) => sum + d.spots.length, 0);
+                  const deletedDate = trip.deletedAt ? new Date(trip.deletedAt) : null;
+                  const deletedLabel = deletedDate
+                    ? `${deletedDate.getMonth() + 1}/${deletedDate.getDate()} に削除`
+                    : '';
+
+                  return (
+                    <div key={trip.id} className="bg-gray-50 rounded-2xl ring-1 ring-black/[0.04] p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0 opacity-60">
+                          <h3 className="text-[15px] font-bold text-gray-700 truncate">{trip.title}</h3>
+                          <div className="flex items-center gap-1.5 mt-1 text-[12px] text-gray-400">
+                            <Calendar className="w-3 h-3" />
+                            <span>{formatDate(trip.startDate)} 〜 {formatDate(trip.endDate)}</span>
+                          </div>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            {dayCount}日間 · {spotCount}スポット · {deletedLabel}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => handleRestore(trip.shareId)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg ring-1 ring-black/[0.08] text-[12px] font-medium text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            復元
+                          </button>
+                          <button
+                            onClick={() => setPermanentDeleteConfirm(trip.shareId)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg ring-1 ring-black/[0.08] text-[12px] font-medium text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            完全削除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* 新規作成モーダル */}
@@ -255,7 +335,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 削除確認 */}
+      {/* ゴミ箱に移動確認 */}
       {deleteConfirm && (
         <div
           className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-center justify-center px-8"
@@ -263,15 +343,38 @@ export default function HomePage() {
         >
           <div className="bg-white rounded-2xl w-full max-w-[270px] overflow-hidden text-center">
             <div className="pt-5 pb-4 px-4">
-              <h3 className="text-[15px] font-semibold mb-1">旅行プランを削除</h3>
-              <p className="text-[13px] text-gray-500">この操作は取り消せません</p>
+              <h3 className="text-[15px] font-semibold mb-1">ゴミ箱に移動</h3>
+              <p className="text-[13px] text-gray-500">ゴミ箱からいつでも復元できます</p>
             </div>
             <div className="border-t border-gray-100 flex">
               <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-3 text-[15px] text-[var(--color-primary)] border-r border-gray-100">
                 キャンセル
               </button>
               <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-3 text-[15px] text-red-500 font-semibold">
-                削除
+                ゴミ箱へ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 完全削除確認 */}
+      {permanentDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-center justify-center px-8"
+          onClick={(e) => { if (e.target === e.currentTarget) setPermanentDeleteConfirm(null); }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-[270px] overflow-hidden text-center">
+            <div className="pt-5 pb-4 px-4">
+              <h3 className="text-[15px] font-semibold mb-1">完全に削除</h3>
+              <p className="text-[13px] text-gray-500">この操作は取り消せません</p>
+            </div>
+            <div className="border-t border-gray-100 flex">
+              <button onClick={() => setPermanentDeleteConfirm(null)} className="flex-1 py-3 text-[15px] text-[var(--color-primary)] border-r border-gray-100">
+                キャンセル
+              </button>
+              <button onClick={() => handlePermanentDelete(permanentDeleteConfirm)} className="flex-1 py-3 text-[15px] text-red-500 font-semibold">
+                完全削除
               </button>
             </div>
           </div>

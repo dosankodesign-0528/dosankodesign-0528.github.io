@@ -7,7 +7,7 @@ import { Trip, Day, Spot } from './types';
 import { nanoid } from 'nanoid';
 import { supabase } from './supabase';
 
-/** 保存されている全旅行プランを取得 */
+/** 保存されている全旅行プランを取得（ゴミ箱除外） */
 export async function getTrips(): Promise<Trip[]> {
   const { data, error } = await supabase
     .from('trips')
@@ -18,7 +18,25 @@ export async function getTrips(): Promise<Trip[]> {
     console.error('getTrips error:', error);
     return [];
   }
-  return (data ?? []).map((row) => row.data as Trip);
+  return (data ?? [])
+    .map((row) => row.data as Trip)
+    .filter((trip) => !trip.deletedAt);
+}
+
+/** ゴミ箱にある旅行プランを取得 */
+export async function getTrashedTrips(): Promise<Trip[]> {
+  const { data, error } = await supabase
+    .from('trips')
+    .select('data')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('getTrashedTrips error:', error);
+    return [];
+  }
+  return (data ?? [])
+    .map((row) => row.data as Trip)
+    .filter((trip) => !!trip.deletedAt);
 }
 
 /** 共有IDを指定して旅行プランを取得 */
@@ -126,15 +144,31 @@ export async function duplicateTrip(shareId: string): Promise<Trip | null> {
   return newTrip;
 }
 
-/** 旅行プランを削除（shareIdで特定） */
+/** 旅行プランをゴミ箱に移動（ソフトデリート） */
 export async function deleteTrip(shareId: string): Promise<void> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return;
+  trip.deletedAt = new Date().toISOString();
+  await updateTrip(trip);
+}
+
+/** ゴミ箱から復元 */
+export async function restoreTrip(shareId: string): Promise<void> {
+  const trip = await getTripByShareId(shareId);
+  if (!trip) return;
+  delete trip.deletedAt;
+  await updateTrip(trip);
+}
+
+/** 完全に削除（ゴミ箱から） */
+export async function permanentlyDeleteTrip(shareId: string): Promise<void> {
   const { error } = await supabase
     .from('trips')
     .delete()
     .eq('share_id', shareId);
 
   if (error) {
-    console.error('deleteTrip error:', error);
+    console.error('permanentlyDeleteTrip error:', error);
   }
 }
 

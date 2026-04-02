@@ -55,6 +55,7 @@ export interface Trip {
   days: Day[];
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;       // ゴミ箱に入れた日時（未設定=通常、設定済み=ゴミ箱）
 }
 
 /** カテゴリごとの色とアイコン */
