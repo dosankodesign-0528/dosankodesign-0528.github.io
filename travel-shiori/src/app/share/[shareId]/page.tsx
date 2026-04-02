@@ -597,17 +597,76 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                 {/* リストコンテンツ */}
                 <div className="flex-1 overflow-y-auto bg-white rounded-t-xl">
                   {reviewLoading ? (
-                    <div className="px-3 pt-1 space-y-4 animate-pulse">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i}>
-                          <div className="h-6 w-24 bg-gray-200 rounded-md mb-3 ml-1" />
-                          <div className="space-y-2">
-                            <div className="h-16 bg-gray-100 rounded-2xl" />
-                            <div className="h-12 bg-gray-100 rounded-xl border-2 border-dashed border-gray-200" />
-                            <div className="h-16 bg-gray-100 rounded-2xl" />
-                          </div>
+                    <div className="px-4 pt-4">
+                      {/* AI分析ヘッダー */}
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center ai-pulse-glow">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
                         </div>
-                      ))}
+                        <div>
+                          <p className="text-[15px] font-bold text-gray-900">旅程を分析中...</p>
+                          <p className="text-[12px] text-gray-400 mt-0.5">抜け漏れをチェックしています</p>
+                        </div>
+                      </div>
+
+                      {/* スキャンアニメーション付きカード群 */}
+                      <div className="space-y-3 relative">
+                        <div className="ai-scan-line" />
+                        {[0, 1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className="ai-card-stagger"
+                            style={{ animationDelay: `${i * 0.15}s` }}
+                          >
+                            {i % 3 === 1 ? (
+                              /* 破線ドラフトカード風 */
+                              <div className="rounded-xl py-3 px-3.5 border-2 border-dashed border-blue-200 overflow-hidden">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full ai-shimmer" />
+                                  <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-3/5 rounded-md ai-shimmer" />
+                                    <div className="flex gap-2">
+                                      <div className="h-3 w-14 rounded-full ai-shimmer" />
+                                      <div className="h-3 w-16 rounded-full ai-shimmer" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              /* 通常カード風 */
+                              <div className="rounded-2xl p-3.5 bg-white ring-1 ring-black/[0.04] overflow-hidden">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-12 rounded-lg ai-shimmer" />
+                                  <div className="flex-1 space-y-2">
+                                    <div className="h-5 rounded-md ai-shimmer" style={{ width: `${55 + i * 8}%` }} />
+                                    <div className="flex gap-2">
+                                      <div className="h-3.5 w-12 rounded-md ai-shimmer" />
+                                      <div className="h-3.5 w-10 rounded-full ai-shimmer" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 進捗ドット */}
+                      <div className="flex items-center justify-center gap-1.5 mt-6">
+                        {[0, 1, 2].map((i) => (
+                          <div
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-blue-400"
+                            style={{
+                              animation: 'pulseGlow 1.5s ease-in-out infinite',
+                              animationDelay: `${i * 0.3}s`,
+                              opacity: 0.4 + i * 0.2,
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   ) : draftSpots.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
