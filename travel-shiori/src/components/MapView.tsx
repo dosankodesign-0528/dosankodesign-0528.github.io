@@ -200,9 +200,9 @@ function MapController({
             const offsetY = (mapContainerH - visibleH) / 2;
 
             map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
-            // setView後にオフセット分だけパン
+            // setView後にオフセット分だけパン（正の値で地図を下にずらし、ドットを見える領域の中央へ）
             setTimeout(() => {
-              map.panBy([0, -offsetY], { animate: true, duration: 0.3 });
+              map.panBy([0, offsetY], { animate: true, duration: 0.3 });
             }, 100);
           },
           () => {
