@@ -1,8 +1,13 @@
 'use client';
 
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { Spot, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG } from '../lib/types';
+import { Spot, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType } from '../lib/types';
 import { cn } from '../lib/utils';
+
+/** スポットの「有効なassignee」を返す（未設定='all'扱い） */
+function getEffectiveAssignee(spot: Spot): AssigneeType {
+  return spot.assignee && spot.assignee !== 'all' ? spot.assignee : 'all';
+}
 
 interface TimelineProps {
   spots: Spot[];
@@ -41,14 +46,31 @@ export default function Timeline({
     );
   }
 
+  // 人物グループが切り替わるインデックスを計算
+  const assigneeChangeIndices = new Set<number>();
+  for (let i = 0; i < spots.length; i++) {
+    const curr = getEffectiveAssignee(spots[i]);
+    const prev = i > 0 ? getEffectiveAssignee(spots[i - 1]) : 'all';
+    // all → 個人、または異なる個人への切り替え時にヘッダーを出す
+    if (curr !== 'all' && curr !== prev) {
+      assigneeChangeIndices.add(i);
+    }
+    // 個人 → all に戻る時も区切りを出す
+    if (curr === 'all' && prev !== 'all') {
+      assigneeChangeIndices.add(i);
+    }
+  }
+
   return (
     <div className="px-3 pt-3">
       <div className="flex flex-col gap-1.5">
-        {spots.map((spot) => {
+        {spots.map((spot, spotIdx) => {
           const config = getSpotConfig(spot.type);
           const isSelected = selectedSpotId === spot.id;
           const isTransit = spot.type === 'transit';
           const dateLabel = spotDateMap?.[spot.id];
+          const effectiveAssignee = getEffectiveAssignee(spot);
+          const showGroupHeader = assigneeChangeIndices.has(spotIdx);
 
           // 移動・経由はインデント＋コンパクト表示
           if (isTransit) {
@@ -101,7 +123,14 @@ export default function Timeline({
                 </div>
               </button>
             );
-            return <div key={spot.id}>{transitCard}</div>;
+            return (
+              <div key={spot.id}>
+                {showGroupHeader && (
+                  <AssigneeGroupHeader assignee={effectiveAssignee} />
+                )}
+                {transitCard}
+              </div>
+            );
           }
 
           // 目的地・ホテル・食事などのメインカード
@@ -170,9 +199,51 @@ export default function Timeline({
               )}
             </button>
           );
-          return <div key={spot.id}>{mainCard}</div>;
+          return (
+            <div key={spot.id}>
+              {showGroupHeader && (
+                <AssigneeGroupHeader assignee={effectiveAssignee} />
+              )}
+              {mainCard}
+            </div>
+          );
         })}
       </div>
+    </div>
+  );
+}
+
+/** 人物グループの区切りヘッダー */
+function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
+  if (assignee === 'all') {
+    return (
+      <div className="flex items-center gap-2 py-2 mt-2">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-[12px] text-gray-400 font-medium px-2">
+          👨‍👩‍👦 みんな合流
+        </span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+    );
+  }
+
+  const config = ASSIGNEE_CONFIG[assignee];
+  const colors: Record<string, { bg: string; text: string; border: string }> = {
+    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+    son: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
+  };
+  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
+
+  return (
+    <div className="flex items-center gap-2 py-2 mt-2">
+      <div className="flex-1 h-px bg-gray-200" />
+      <span className={cn(
+        'text-[12px] font-semibold px-3 py-1 rounded-full border',
+        c.bg, c.text, c.border,
+      )}>
+        {config?.icon} {config?.label}
+      </span>
+      <div className="flex-1 h-px bg-gray-200" />
     </div>
   );
 }
