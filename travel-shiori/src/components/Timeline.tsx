@@ -175,9 +175,9 @@ function SpotCard({
             />
           )}
           {/* 移動手段emoji */}
-          <div className="flex flex-col items-center flex-shrink-0 w-9">
+          <div className="flex flex-col items-center flex-shrink-0 w-10">
             <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-            <span className="text-[22px] leading-none my-0.5">{tc?.icon ?? '🔄'}</span>
+            <span className="text-[28px] leading-none my-0.5">{tc?.icon ?? '🔄'}</span>
             <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
           </div>
           <div className="flex-1 min-w-0">
