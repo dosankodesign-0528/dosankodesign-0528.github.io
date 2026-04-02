@@ -89,28 +89,27 @@ export default function Timeline({
             )}
 
             {/* Day セクションヘッダー */}
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm -mx-3 px-3 pt-2 pb-3">
-              <div className={cn(
-                'rounded-xl p-3',
-                color.light, 'border', color.border,
-              )}>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    'text-[15px] font-extrabold text-white rounded-lg px-2.5 py-1',
-                    color.bg,
-                  )}>
-                    {day.dayNum}日目
-                  </span>
-                  <span className="text-[17px] font-bold text-gray-800">
-                    {section.dateLabel}
-                  </span>
-                </div>
-                {section.headline && (
-                  <p className={cn('text-[14px] font-medium mt-1.5 ml-0.5', color.text)}>
-                    {section.headline}
-                  </p>
-                )}
+            <div className="sticky top-0 z-10 -mx-3 px-4 pt-3 pb-2" style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.98) 70%, rgba(255,255,255,0.85))',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <div className="flex items-baseline gap-2">
+                <span className={cn(
+                  'text-[22px] font-black tracking-tight',
+                  color.text,
+                )}>
+                  {day.dayNum}日目
+                </span>
+                <span className="text-[15px] font-semibold text-gray-500">
+                  {section.dateLabel}
+                </span>
               </div>
+              {section.headline && (
+                <p className="text-[13px] text-gray-400 mt-0.5 leading-snug">
+                  {section.headline}
+                </p>
+              )}
+              <div className={cn('mt-2 h-[2px] rounded-full', color.bg, 'opacity-60')} />
             </div>
 
             {/* スポット一覧 */}
