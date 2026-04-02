@@ -18,6 +18,7 @@ import { analyzeTrip, DraftSpot } from '../../../lib/trip-review';
 import type { MapViewHandle } from '../../../components/MapView';
 const MapView = dynamic(() => import('../../../components/MapView'), { ssr: false });
 const SpotEditModal = dynamic(() => import('../../../components/SpotEditModal'), { ssr: false });
+const DraftEditForm = dynamic(() => import('../../../components/DraftEditForm'), { ssr: false });
 
 const DAY_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -315,18 +316,14 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     setDraftSpots([]);
   };
 
-  /** ドラフトカードをタップ → 編集モーダルを開く */
+  /** ドラフトカードをタップ → ボトムシート内で編集画面に遷移 */
   const handleDraftTap = (draft: DraftSpot) => {
     setEditingDraftId(draft.id);
   };
 
-  /** ドラフト編集を保存 */
-  const handleDraftSave = (data: SpotFormData) => {
-    setDraftSpots(prev => prev.map(d =>
-      d.id === editingDraftId
-        ? { ...d, name: data.name, type: data.type, time: data.time, endTime: data.endTime, transport: data.transport, memo: data.memo, dayId: data.dayId || d.dayId }
-        : d
-    ));
+  /** ドラフト編集を保存（ボトムシート内） */
+  const handleDraftSave = (updated: DraftSpot) => {
+    setDraftSpots(prev => prev.map(d => d.id === updated.id ? updated : d));
     setEditingDraftId(null);
   };
 
@@ -549,9 +546,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       {editSpotId && editingSpot && (
         <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
       )}
-      {editingDraftId && editingDraft && (
-        <SpotEditModal isOpen={true} onClose={() => setEditingDraftId(null)} onSave={handleDraftSave} initialData={editingDraft} dayOptions={dayOptions} />
-      )}
 
       {/* ── 抜けチェック プレビュー ── */}
       {showReview && (
@@ -559,68 +553,82 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-end justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) { setShowReview(false); setDraftSpots([]); } }}
         >
-          <div className="w-full max-w-lg bg-white rounded-t-2xl modal-sheet pb-8 max-h-[85vh] flex flex-col">
+          <div className="w-full max-w-lg bg-[#f2f2f7] rounded-t-2xl modal-sheet pb-8 max-h-[85vh] flex flex-col">
             <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
               <div className="w-10 h-1 bg-gray-300 rounded-full" />
             </div>
-            <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0">
-              <button
-                onClick={() => { setShowReview(false); setDraftSpots([]); }}
-                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-              <div className="text-center">
-                <span className="text-[16px] font-bold">抜けチェック</span>
-                {!reviewLoading && draftSpots.length > 0 && (
-                  <p className="text-[12px] text-gray-400 mt-0.5">{draftSpots.length}件の提案</p>
-                )}
-              </div>
-              {!reviewLoading && draftSpots.length > 0 ? (
-                <button
-                  onClick={handleApplyReview}
-                  className="px-3 py-1.5 bg-blue-500 text-white text-[13px] font-semibold rounded-lg active:bg-blue-600 transition-colors"
-                >
-                  確定
-                </button>
-              ) : (
-                <div className="w-14" />
-              )}
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {reviewLoading ? (
-                <div className="px-3 pt-1 space-y-4 animate-pulse">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i}>
-                      <div className="h-6 w-24 bg-gray-200 rounded-md mb-3 ml-1" />
-                      <div className="space-y-2">
-                        <div className="h-16 bg-gray-100 rounded-2xl" />
-                        <div className="h-12 bg-gray-100 rounded-xl border-2 border-dashed border-gray-200" />
-                        <div className="h-16 bg-gray-100 rounded-2xl" />
-                      </div>
+
+            {/* 編集画面 or リスト画面 */}
+            {editingDraftId && editingDraft ? (
+              <DraftEditForm
+                draft={editingDraft}
+                onSave={handleDraftSave}
+                onBack={() => setEditingDraftId(null)}
+              />
+            ) : (
+              <>
+                {/* リスト画面ヘッダー */}
+                <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0">
+                  <button
+                    onClick={() => { setShowReview(false); setDraftSpots([]); setEditingDraftId(null); }}
+                    className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                  <div className="text-center">
+                    <span className="text-[16px] font-bold">抜けチェック</span>
+                    {!reviewLoading && draftSpots.length > 0 && (
+                      <p className="text-[12px] text-gray-400 mt-0.5">{draftSpots.length}件の提案</p>
+                    )}
+                  </div>
+                  {!reviewLoading && draftSpots.length > 0 ? (
+                    <button
+                      onClick={handleApplyReview}
+                      className="px-3 py-1.5 bg-blue-500 text-white text-[13px] font-semibold rounded-lg active:bg-blue-600 transition-colors"
+                    >
+                      確定
+                    </button>
+                  ) : (
+                    <div className="w-14" />
+                  )}
+                </div>
+                {/* リストコンテンツ */}
+                <div className="flex-1 overflow-y-auto bg-white rounded-t-xl">
+                  {reviewLoading ? (
+                    <div className="px-3 pt-1 space-y-4 animate-pulse">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i}>
+                          <div className="h-6 w-24 bg-gray-200 rounded-md mb-3 ml-1" />
+                          <div className="space-y-2">
+                            <div className="h-16 bg-gray-100 rounded-2xl" />
+                            <div className="h-12 bg-gray-100 rounded-xl border-2 border-dashed border-gray-200" />
+                            <div className="h-16 bg-gray-100 rounded-2xl" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : draftSpots.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="text-5xl mb-4">✨</div>
+                      <h3 className="text-[17px] font-bold text-gray-900 mb-1">完璧な旅程です！</h3>
+                      <p className="text-[14px] text-gray-400">抜け漏れは見つかりませんでした</p>
+                    </div>
+                  ) : (
+                    <Timeline
+                      daySections={daySections}
+                      selectedSpotId={null}
+                      onSpotSelect={() => {}}
+                      onSpotDelete={() => {}}
+                      readOnly={true}
+                      draftSpots={draftSpots}
+                      onDraftTap={handleDraftTap}
+                    />
+                  )}
                 </div>
-              ) : draftSpots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="text-5xl mb-4">✨</div>
-                  <h3 className="text-[17px] font-bold text-gray-900 mb-1">完璧な旅程です！</h3>
-                  <p className="text-[14px] text-gray-400">抜け漏れは見つかりませんでした</p>
-                </div>
-              ) : (
-                <Timeline
-                  daySections={daySections}
-                  selectedSpotId={null}
-                  onSpotSelect={() => {}}
-                  onSpotDelete={() => {}}
-                  readOnly={true}
-                  draftSpots={draftSpots}
-                  onDraftTap={handleDraftTap}
-                />
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       )}
