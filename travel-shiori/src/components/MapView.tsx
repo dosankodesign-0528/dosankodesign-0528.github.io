@@ -5,7 +5,7 @@
 // ピンのデザインや操作感をGoogle Mapsに近づけている
 // ========================================
 
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
@@ -23,6 +23,11 @@ import { Spot, getSpotConfig } from '../lib/types';
 // デフォルト: 日本中心
 const DEFAULT_CENTER: L.LatLngExpression = [36.5, 137.5];
 const DEFAULT_ZOOM = 6;
+
+// MapViewの外部操作用ハンドル
+export interface MapViewHandle {
+  locateMe: () => void;
+}
 
 // 日本語ラベルのマップタイル（OpenStreetMap Japan）
 const TILE_URL =
@@ -161,67 +166,40 @@ function FitBounds({ spots }: { spots: Spot[] }) {
 }
 
 // ========================================
-// 現在地ボタン（Google Maps風 右下）
+// マップ操作コントローラー（refで外部から操作可能）
 // ========================================
-function LocateButton({ onLocate }: { onLocate: (lat: number, lng: number) => void }) {
+function MapController({
+  controlRef,
+  onLocate,
+}: {
+  controlRef: React.MutableRefObject<{ locateMe: () => void } | null>;
+  onLocate: (lat: number, lng: number) => void;
+}) {
   const map = useMap();
-  const [locating, setLocating] = useState(false);
 
-  const handleLocate = useCallback(() => {
-    if (!navigator.geolocation) {
-      alert('このブラウザでは位置情報を取得できません');
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
-        onLocate(latitude, longitude);
-        setLocating(false);
+  useEffect(() => {
+    controlRef.current = {
+      locateMe: () => {
+        if (!navigator.geolocation) {
+          alert('このブラウザでは位置情報を取得できません');
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
+            onLocate(latitude, longitude);
+          },
+          () => {
+            alert('位置情報を取得できませんでした。\n設定で位置情報の許可を確認してください。');
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
       },
-      () => {
-        alert('位置情報を取得できませんでした。\n設定で位置情報の許可を確認してください。');
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, [map, onLocate]);
+    };
+  }, [map, onLocate, controlRef]);
 
-  return (
-    <div className="leaflet-bottom leaflet-right" style={{ marginBottom: 16, marginRight: 10, zIndex: 1000 }}>
-      <div className="leaflet-control">
-        <button
-          onClick={handleLocate}
-          disabled={locating}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: 'white',
-            border: 'none',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            cursor: locating ? 'wait' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: locating ? 0.6 : 1,
-            transition: 'opacity 0.2s',
-          }}
-          aria-label="現在地を表示"
-        >
-          {/* Google Maps風の現在地アイコン（十字＋丸） */}
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="4" fill={locating ? '#4285F4' : 'none'} stroke={locating ? '#4285F4' : '#666'} />
-            <line x1="12" y1="2" x2="12" y2="6" />
-            <line x1="12" y1="18" x2="12" y2="22" />
-            <line x1="2" y1="12" x2="6" y2="12" />
-            <line x1="18" y1="12" x2="22" y2="12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 // ========================================
@@ -248,15 +226,18 @@ function PanToSelected({ spots, selectedSpotId }: { spots: Spot[]; selectedSpotI
 // ========================================
 // メインの地図コンポーネント
 // ========================================
-export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapViewProps) {
+const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInner(
+  { spots, selectedSpotId, onSpotSelect },
+  ref
+) {
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const controlRef = useRef<{ locateMe: () => void } | null>(null);
 
   const geoSpots = useMemo(
     () => spots.filter((s): s is Spot & { lat: number; lng: number } => s.lat != null && s.lng != null),
     [spots]
   );
 
-  // 初期表示の中心: ピンがあればその中心、なければ日本
   const initialCenter = useMemo<L.LatLngExpression>(() => {
     if (geoSpots.length === 0) return DEFAULT_CENTER;
     if (geoSpots.length === 1) return [geoSpots[0].lat, geoSpots[0].lng];
@@ -267,7 +248,6 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
 
   const initialZoom = useMemo(() => geoSpots.length > 0 ? 10 : DEFAULT_ZOOM, [geoSpots]);
 
-  // スポット間を結ぶルート線の座標
   const polylinePositions = useMemo<L.LatLngTuple[]>(
     () => geoSpots.map(s => [s.lat, s.lng]),
     [geoSpots]
@@ -277,7 +257,11 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
     setCurrentLocation({ lat, lng });
   }, []);
 
-  // SSR回避
+  // 外部からlocateMeを呼べるようにする
+  useImperativeHandle(ref, () => ({
+    locateMe: () => controlRef.current?.locateMe(),
+  }), []);
+
   if (typeof window === 'undefined') {
     return <div style={{ width: '100%', height: '100%', background: '#E8EAED' }} />;
   }
@@ -301,17 +285,13 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
         maxZoom={19}
       />
 
-      {/* 表示範囲の自動調整 */}
       <FitBounds spots={geoSpots} />
       <PanToSelected spots={geoSpots} selectedSpotId={selectedSpotId} />
-
-      {/* 現在地ボタン（右下） */}
-      <LocateButton onLocate={handleLocate} />
+      <MapController controlRef={controlRef} onLocate={handleLocate} />
 
       {/* 現在地の青い丸マーカー（Google Maps風） */}
       {currentLocation && (
         <>
-          {/* 外側の薄い円（精度範囲） */}
           <CircleMarker
             center={[currentLocation.lat, currentLocation.lng]}
             radius={20}
@@ -322,7 +302,6 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
               fillOpacity: 0.1,
             }}
           />
-          {/* 内側の青い丸 */}
           <CircleMarker
             center={[currentLocation.lat, currentLocation.lng]}
             radius={7}
@@ -336,7 +315,6 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
         </>
       )}
 
-      {/* ルート線 */}
       {polylinePositions.length >= 2 && (
         <>
           <Polyline
@@ -435,4 +413,6 @@ export default function MapView({ spots, selectedSpotId, onSpotSelect }: MapView
       })}
     </MapContainer>
   );
-}
+});
+
+export default MapViewInner;
