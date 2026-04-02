@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Sparkles } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Search } from 'lucide-react';
 import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
   getTripByShareId, updateTrip, addSpot, updateSpot, deleteSpot,
@@ -18,7 +18,6 @@ import { analyzeTrip, ReviewSuggestion } from '../../../lib/trip-review';
 import type { MapViewHandle } from '../../../components/MapView';
 const MapView = dynamic(() => import('../../../components/MapView'), { ssr: false });
 const SpotEditModal = dynamic(() => import('../../../components/SpotEditModal'), { ssr: false });
-const AIReviewModal = dynamic(() => import('../../../components/AIReviewModal'), { ssr: false });
 
 const DAY_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -279,7 +278,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     setShowReview(true);
     setReviewLoading(true);
     setReviewSuggestions([]);
-    // スケルトン演出後に分析
     setTimeout(() => {
       const results = analyzeTrip(trip);
       setReviewSuggestions(results);
@@ -287,11 +285,11 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     }, 1200);
   };
 
-  const handleApplyReview = async (selected: ReviewSuggestion[]) => {
+  const handleApplyReview = async () => {
     if (!trip) return;
     const updated = { ...trip, days: trip.days.map(d => ({ ...d, spots: [...d.spots] })) };
 
-    for (const suggestion of selected) {
+    for (const suggestion of reviewSuggestions) {
       if (suggestion.suggestedSpot) {
         const day = updated.days.find(d => d.id === suggestion.dayId);
         if (day) {
@@ -315,6 +313,19 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     await updateTrip(updated);
     setTrip(updated);
     setShowReview(false);
+    setReviewSuggestions([]);
+  };
+
+  /** 提案カードをタップ → 編集モーダルで追加 */
+  const handleSuggestionTap = async (suggestion: ReviewSuggestion) => {
+    if (!trip || !suggestion.suggestedSpot) return;
+    const day = trip.days.find(d => d.id === suggestion.dayId);
+    if (!day) return;
+    // 提案データを使って新規スポット追加モーダルを開く
+    setShowReview(false);
+    setShowAddSpot(true);
+    // pre-fill は SpotEditModal の initialData 経由で行う
+    // ここでは suggestedSpot の情報を editSpot 的に使う
   };
 
   const editingSpot = editSpotId
@@ -463,8 +474,21 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   </button>
                 ))}
               </div>
-              {/* 右: 人物フィルター */}
-              <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5 ml-auto">
+              {/* 抜けチェック */}
+              <button
+                onClick={handleStartReview}
+                className={cn(
+                  'flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all whitespace-nowrap ml-auto',
+                  showReview
+                    ? 'bg-orange-100 text-orange-600'
+                    : 'bg-amber-50 text-amber-600 active:bg-amber-100'
+                )}
+              >
+                <Search className="w-3 h-3" />
+                抜けチェック
+              </button>
+              {/* 人物フィルター */}
+              <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5">
                 {([
                   { key: 'all' as const, label: '全員', activeText: 'text-gray-700' },
                   { key: 'parents' as const, label: '両親', activeText: 'text-orange-600' },
@@ -503,15 +527,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
       {/* ── FAB ── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
-        {/* AIレビューボタン */}
-        <button
-          onClick={handleStartReview}
-          className="absolute bottom-0 right-[84px] w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full shadow-lg shadow-orange-400/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
-          aria-label="AIレビュー"
-        >
-          <Sparkles className="w-5 h-5" strokeWidth={2.5} />
-        </button>
-        {/* スポット追加ボタン */}
         <button
           onClick={() => setShowAddSpot(true)}
           className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
@@ -529,14 +544,77 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
         <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
       )}
 
-      {/* ── AIレビューモーダル ── */}
-      <AIReviewModal
-        isOpen={showReview}
-        onClose={() => setShowReview(false)}
-        suggestions={reviewSuggestions}
-        loading={reviewLoading}
-        onApply={handleApplyReview}
-      />
+      {/* ── 抜けチェック プレビュー ── */}
+      {showReview && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-end justify-center"
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowReview(false); setReviewSuggestions([]); } }}
+        >
+          <div className="w-full max-w-lg bg-white rounded-t-2xl modal-sheet pb-8 max-h-[85vh] flex flex-col">
+            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            </div>
+            <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0">
+              <button
+                onClick={() => { setShowReview(false); setReviewSuggestions([]); }}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3c3c43" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+              <div className="text-center">
+                <span className="text-[16px] font-bold">抜けチェック</span>
+                {!reviewLoading && reviewSuggestions.length > 0 && (
+                  <p className="text-[12px] text-gray-400 mt-0.5">{reviewSuggestions.length}件の提案</p>
+                )}
+              </div>
+              {!reviewLoading && reviewSuggestions.length > 0 ? (
+                <button
+                  onClick={handleApplyReview}
+                  className="px-3 py-1.5 bg-blue-500 text-white text-[13px] font-semibold rounded-lg active:bg-blue-600 transition-colors"
+                >
+                  確定
+                </button>
+              ) : (
+                <div className="w-14" />
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {reviewLoading ? (
+                <div className="px-3 pt-1 space-y-4 animate-pulse">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i}>
+                      <div className="h-6 w-24 bg-gray-200 rounded-md mb-3 ml-1" />
+                      <div className="space-y-2">
+                        <div className="h-16 bg-gray-100 rounded-2xl" />
+                        <div className="h-12 bg-gray-100 rounded-xl border-2 border-dashed border-gray-200" />
+                        <div className="h-16 bg-gray-100 rounded-2xl" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : reviewSuggestions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="text-5xl mb-4">✨</div>
+                  <h3 className="text-[17px] font-bold text-gray-900 mb-1">完璧な旅程です！</h3>
+                  <p className="text-[14px] text-gray-400">抜け漏れは見つかりませんでした</p>
+                </div>
+              ) : (
+                <Timeline
+                  daySections={daySections}
+                  selectedSpotId={null}
+                  onSpotSelect={() => {}}
+                  onSpotDelete={() => {}}
+                  readOnly={true}
+                  suggestions={reviewSuggestions}
+                  onSuggestionTap={handleSuggestionTap}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── スナックバー ── */}
       {showSnackbar && (

@@ -1,8 +1,9 @@
 'use client';
 
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2, Plus } from 'lucide-react';
 import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, TRANSPORT_CONFIG, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
+import type { ReviewSuggestion } from '../lib/trip-review';
 
 /** Day セクション情報 */
 export interface DaySection {
@@ -13,6 +14,16 @@ export interface DaySection {
   spots: Spot[];        // フィルタ済みのスポット
 }
 
+/** 提案タイプごとのアイコン */
+const SUGGESTION_ICON: Record<string, string> = {
+  missing_transport: '🚃',
+  missing_time: '⏰',
+  missing_hotel: '🏨',
+  missing_meal: '🍽️',
+  missing_headline: '📝',
+  long_gap: '⏳',
+};
+
 interface TimelineProps {
   /** Day セクション単位のデータ（All表示用） */
   daySections: DaySection[];
@@ -21,6 +32,10 @@ interface TimelineProps {
   onSpotDelete: (id: string) => void;
   onAdd?: () => void;
   readOnly: boolean;
+  /** 抜けチェックの提案（インライン表示） */
+  suggestions?: ReviewSuggestion[];
+  /** 提案カードをタップ時 */
+  onSuggestionTap?: (suggestion: ReviewSuggestion) => void;
 }
 
 export default function Timeline({
@@ -30,6 +45,8 @@ export default function Timeline({
   onSpotDelete,
   onAdd,
   readOnly,
+  suggestions = [],
+  onSuggestionTap,
 }: TimelineProps) {
   const totalSpots = daySections.reduce((sum, s) => sum + s.spots.length, 0);
 
@@ -52,12 +69,22 @@ export default function Timeline({
   // Day ごとの色テーマ（共通定数から取得）
   const dayColors = DAY_COLORS;
 
+  // suggestions を dayId + afterSpotId でインデックス化
+  const suggestionsByDay: Record<string, Record<string, ReviewSuggestion[]>> = {};
+  for (const s of suggestions) {
+    if (!suggestionsByDay[s.dayId]) suggestionsByDay[s.dayId] = {};
+    const key = s.afterSpotId ?? '__end__';
+    if (!suggestionsByDay[s.dayId][key]) suggestionsByDay[s.dayId][key] = [];
+    suggestionsByDay[s.dayId][key].push(s);
+  }
+
   return (
     <div className="px-3 pt-1">
       {daySections.map((section, sectionIdx) => {
         const { day, spots } = section;
         if (spots.length === 0) return null;
         const color = dayColors[section.dayIdx % dayColors.length];
+        const daySuggestions = suggestionsByDay[day.id] || {};
 
         return (
           <div key={day.id} data-day-idx={section.dayIdx}>
@@ -87,7 +114,7 @@ export default function Timeline({
               )}
             </div>
 
-            {/* スポット一覧 */}
+            {/* スポット一覧（提案カードをインラインで挿入） */}
             <div className="flex flex-col gap-1.5 pt-2">
               {spots.map((spot) => (
                 <div key={spot.id}>
@@ -99,6 +126,24 @@ export default function Timeline({
                     onSelect={() => onSpotSelect(spot.id)}
                     onDelete={() => onSpotDelete(spot.id)}
                   />
+                  {/* このスポットの後に挿入される提案カード */}
+                  {daySuggestions[spot.id]?.map((suggestion) => (
+                    <div key={suggestion.id} className="mt-1.5">
+                      <SuggestionCard
+                        suggestion={suggestion}
+                        onTap={() => onSuggestionTap?.(suggestion)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+              {/* 末尾に挿入される提案カード */}
+              {daySuggestions['__end__']?.map((suggestion) => (
+                <div key={suggestion.id}>
+                  <SuggestionCard
+                    suggestion={suggestion}
+                    onTap={() => onSuggestionTap?.(suggestion)}
+                  />
                 </div>
               ))}
             </div>
@@ -106,6 +151,51 @@ export default function Timeline({
         );
       })}
     </div>
+  );
+}
+
+/** 抜けチェック提案の破線カード */
+function SuggestionCard({
+  suggestion,
+  onTap,
+}: {
+  suggestion: ReviewSuggestion;
+  onTap: () => void;
+}) {
+  const icon = SUGGESTION_ICON[suggestion.type] || '💡';
+  const isWarning = suggestion.severity === 'warning';
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      className={cn(
+        'w-full text-left rounded-xl py-2.5 px-3.5 transition-all duration-150 active:scale-[0.98]',
+        'border-2 border-dashed',
+        isWarning
+          ? 'border-orange-300 bg-orange-50/40'
+          : 'border-blue-300 bg-blue-50/40',
+      )}
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="text-[20px] flex-shrink-0">{icon}</span>
+        <p className={cn(
+          'text-[14px] font-medium flex-1',
+          isWarning ? 'text-orange-600' : 'text-blue-600',
+        )}>
+          {suggestion.message}
+        </p>
+        <div className={cn(
+          'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0',
+          isWarning ? 'bg-orange-100' : 'bg-blue-100',
+        )}>
+          <Plus className={cn(
+            'w-3.5 h-3.5',
+            isWarning ? 'text-orange-500' : 'text-blue-500',
+          )} strokeWidth={2.5} />
+        </div>
+      </div>
+    </button>
   );
 }
 
