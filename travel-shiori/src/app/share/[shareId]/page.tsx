@@ -389,25 +389,21 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
               {/* 右: 人物フィルター */}
               <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5 ml-auto">
                 {([
-                  { key: 'all' as const, label: '全', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700' },
-                  { key: 'parents' as const, label: null, icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600' },
-                  { key: 'son' as const, label: null, icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600' },
+                  { key: 'all' as const, label: '全員', activeText: 'text-gray-700' },
+                  { key: 'parents' as const, label: '両親', activeText: 'text-orange-600' },
+                  { key: 'son' as const, label: '息子', activeText: 'text-green-600' },
                 ] as const).map((item) => (
                   <button
                     key={item.key}
                     onClick={() => setAssigneeFilter(item.key)}
                     className={cn(
-                      'flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all',
+                      'px-2.5 py-1 rounded-md text-[12px] font-semibold transition-all whitespace-nowrap',
                       assigneeFilter === item.key
                         ? cn('bg-white shadow-sm', item.activeText)
                         : 'text-gray-400'
                     )}
                   >
-                    {item.avatar
-                      ? <img src={item.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
-                      : <span className="text-[13px] leading-none">{item.icon}</span>
-                    }
-                    {item.label && <span>{item.label}</span>}
+                    {item.label}
                   </button>
                 ))}
               </div>
