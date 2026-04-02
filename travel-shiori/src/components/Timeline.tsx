@@ -94,11 +94,9 @@ export default function Timeline({
               backdropFilter: 'blur(8px)',
             }}>
               <div className="flex items-baseline gap-2">
-                <span className={cn(
-                  'text-[22px] font-black tracking-tight',
-                  color.text,
-                )}>
-                  {day.dayNum}日目
+                <span className={cn('font-black', color.text)}>
+                  <span className="text-[28px] tracking-tighter" style={{ fontWeight: 900 }}>{day.dayNum}</span>
+                  <span className="text-[18px] tracking-tight ml-[1px]">日目</span>
                 </span>
                 <span className="text-[15px] font-semibold text-gray-500">
                   {section.dateLabel}
@@ -109,7 +107,6 @@ export default function Timeline({
                   {section.headline}
                 </p>
               )}
-              <div className={cn('mt-2 h-[2px] rounded-full', color.bg, 'opacity-60')} />
             </div>
 
             {/* スポット一覧 */}
