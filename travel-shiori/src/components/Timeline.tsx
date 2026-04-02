@@ -138,6 +138,12 @@ export default function Timeline({
   );
 }
 
+/** 人物の色テーマ */
+const ASSIGNEE_COLORS: Record<string, { bg: string; ring: string; iconBg: string; text: string }> = {
+  parents: { bg: 'bg-orange-50', ring: 'ring-orange-200', iconBg: 'bg-orange-100', text: 'text-orange-700' },
+  son:     { bg: 'bg-green-50',  ring: 'ring-green-200',  iconBg: 'bg-green-100',  text: 'text-green-700' },
+};
+
 /** 1スポットのカード表示 */
 function SpotCard({
   spot,
@@ -154,6 +160,8 @@ function SpotCard({
 }) {
   const config = getSpotConfig(spot.type);
   const isTransit = spot.type === 'transit';
+  const assignee = spot.assignee && spot.assignee !== 'all' ? spot.assignee : null;
+  const aColor = assignee ? ASSIGNEE_COLORS[assignee] : null;
 
   if (isTransit) {
     return (
@@ -161,17 +169,27 @@ function SpotCard({
         type="button"
         onClick={onSelect}
         className={cn(
-          'w-full text-left rounded-xl py-2.5 px-3 ml-3 transition-all duration-150 active:scale-[0.98]',
-          'bg-transparent',
+          'w-full text-left rounded-xl py-2.5 px-3 transition-all duration-150 active:scale-[0.98]',
+          assignee ? cn(aColor!.bg, 'ring-1', aColor!.ring) : 'bg-transparent ml-3',
           isSelected && 'bg-blue-50/50',
         )}
       >
         <div className="flex items-center gap-2">
-          <div className="flex flex-col items-center gap-0.5 text-gray-300">
-            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-            <span className="text-[13px]">{config?.icon ?? '📌'}</span>
-            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-          </div>
+          {/* 人物アイコン（assigneeあり） or 移動線アイコン */}
+          {assignee ? (
+            <div className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+              aColor!.iconBg,
+            )}>
+              <span className="text-[16px]">{ASSIGNEE_CONFIG[assignee]?.icon}</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-0.5 text-gray-300">
+              <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+              <span className="text-[13px]">{config?.icon ?? '📌'}</span>
+              <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[14px] tabular-nums text-gray-500 font-medium">
@@ -185,9 +203,9 @@ function SpotCard({
                   {TRANSPORT_LABELS[spot.transport]}
                 </span>
               )}
-              {spot.assignee && spot.assignee !== 'all' && (
-                <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
-                  {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
+              {assignee && (
+                <span className={cn('text-[11px] font-semibold', aColor!.text)}>
+                  {ASSIGNEE_CONFIG[assignee]?.label}
                 </span>
               )}
             </div>
@@ -210,55 +228,73 @@ function SpotCard({
       onClick={onSelect}
       className={cn(
         'w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98]',
-        'bg-white shadow-sm ring-1 ring-black/[0.04] p-3.5',
+        'shadow-sm p-3.5',
+        assignee
+          ? cn(aColor!.bg, 'ring-1', aColor!.ring)
+          : 'bg-white ring-1 ring-black/[0.04]',
         isSelected && 'ring-2 ring-blue-500/30 shadow-md',
       )}
       style={{ borderLeft: `3px solid ${cfgColor}` }}
     >
-      <div className="flex items-center gap-2">
-        <span className="text-[22px] font-bold tabular-nums tracking-tight text-gray-900">
-          {spot.time}
-        </span>
-        {spot.endTime && (
-          <span className="text-[14px] text-gray-400 font-medium">
-            – {spot.endTime}
-          </span>
-        )}
-        {spot.assignee && spot.assignee !== 'all' && (
-          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
-            {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
-          </span>
-        )}
-        <span
-          className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
-          style={{
-            backgroundColor: cfgColor + '15',
-            color: cfgColor,
-          }}
-        >
-          {config?.label ?? 'その他'}
-        </span>
-        {!readOnly && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="pc-delete-btn w-7 h-7 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500" />
-            </button>
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+      <div className="flex gap-3">
+        {/* 左: 人物アイコン（大きく表示） */}
+        {assignee && (
+          <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
+            <div className={cn(
+              'w-10 h-10 rounded-full flex items-center justify-center',
+              aColor!.iconBg,
+            )}>
+              <span className="text-[20px]">{ASSIGNEE_CONFIG[assignee]?.icon}</span>
+            </div>
+            <span className={cn('text-[10px] font-bold', aColor!.text)}>
+              {ASSIGNEE_CONFIG[assignee]?.label}
+            </span>
           </div>
         )}
+
+        {/* 右: スポット情報 */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[22px] font-bold tabular-nums tracking-tight text-gray-900">
+              {spot.time}
+            </span>
+            {spot.endTime && (
+              <span className="text-[14px] text-gray-400 font-medium">
+                – {spot.endTime}
+              </span>
+            )}
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
+              style={{
+                backgroundColor: cfgColor + '15',
+                color: cfgColor,
+              }}
+            >
+              {config?.label ?? 'その他'}
+            </span>
+            {!readOnly && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                  className="pc-delete-btn w-7 h-7 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500" />
+                </button>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[16px]">{config?.icon ?? '📌'}</span>
+            <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
+              {spot.name}
+            </span>
+          </div>
+          {spot.memo && (
+            <p className="text-[13px] text-gray-400 truncate mt-1 ml-7">{spot.memo}</p>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2 mt-1.5">
-        <span className="text-[16px]">{config?.icon ?? '📌'}</span>
-        <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
-          {spot.name}
-        </span>
-      </div>
-      {spot.memo && (
-        <p className="text-[13px] text-gray-400 truncate mt-1 ml-7">{spot.memo}</p>
-      )}
     </button>
   );
 }
@@ -267,32 +303,35 @@ function SpotCard({
 function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
   if (assignee === 'all') {
     return (
-      <div className="flex items-center gap-2 py-2 mt-2">
+      <div className="flex items-center gap-3 py-3 mt-3">
         <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-[12px] text-gray-400 font-medium px-2">
-          👨‍👩‍👦 みんな合流
-        </span>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
+          <span className="text-[18px]">👨‍👩‍👦</span>
+          <span className="text-[13px] text-gray-500 font-semibold">みんな合流</span>
+        </div>
         <div className="flex-1 h-px bg-gray-200" />
       </div>
     );
   }
 
   const config = ASSIGNEE_CONFIG[assignee];
-  const colors: Record<string, { bg: string; text: string; border: string }> = {
-    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
-    son: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' },
+  const colors: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
+    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200', iconBg: 'bg-orange-100' },
+    son:     { bg: 'bg-green-50',  text: 'text-green-600',  border: 'border-green-200',  iconBg: 'bg-green-100' },
   };
-  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
+  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', iconBg: 'bg-gray-100' };
 
   return (
-    <div className="flex items-center gap-2 py-2 mt-2">
+    <div className="flex items-center gap-3 py-3 mt-3">
       <div className="flex-1 h-px bg-gray-200" />
-      <span className={cn(
-        'text-[12px] font-semibold px-3 py-1 rounded-full border',
-        c.bg, c.text, c.border,
-      )}>
-        {config?.icon} {config?.label}
-      </span>
+      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full border', c.bg, c.border)}>
+        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center', c.iconBg)}>
+          <span className="text-[14px]">{config?.icon}</span>
+        </div>
+        <span className={cn('text-[13px] font-bold', c.text)}>
+          {config?.label}だけ
+        </span>
+      </div>
       <div className="flex-1 h-px bg-gray-200" />
     </div>
   );
