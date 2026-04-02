@@ -204,12 +204,15 @@ function SpotCard({
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[15px] tabular-nums text-gray-500 font-medium">
+            <span className="text-[15px] font-semibold text-gray-700 truncate block">
+              {spot.name}
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[14px] tabular-nums text-gray-400 font-medium">
                 {spot.time}
               </span>
               {spot.endTime && (
-                <span className="text-[14px] text-gray-400">– {spot.endTime}</span>
+                <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
               )}
               {spot.transport && TRANSPORT_LABELS[spot.transport] && (
                 <span className="text-[13px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
@@ -222,9 +225,6 @@ function SpotCard({
                 </span>
               )}
             </div>
-            <span className="text-[15px] text-gray-600 truncate block">
-              {spot.name}
-            </span>
           </div>
           {!readOnly && (
             <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
