@@ -310,10 +310,10 @@ function SpotCard({
         )}
       </div>
 
-      {/* メモ（あれば別枠で表示） */}
+      {/* メモ（罫線で区切り） */}
       {spot.memo && (
-        <div className="mt-2 ml-11 px-2.5 py-1.5 bg-gray-50 rounded-lg">
-          <p className="text-[11px] text-gray-400 leading-relaxed">{spot.memo}</p>
+        <div className="mt-2 ml-11 pt-2 border-t border-gray-100">
+          <p className="text-[11px] text-gray-500 leading-relaxed">{spot.memo}</p>
         </div>
       )}
     </button>
