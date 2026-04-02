@@ -117,6 +117,14 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   // マップ用: 全スポット（フィルタ済み）
   const displaySpots: Spot[] = daySections.flatMap((s) => s.spots);
 
+  // spotId → 何日目 のマッピング（マップピン表示用）
+  const spotDayMap: Record<string, number> = {};
+  if (trip) {
+    trip.days.forEach((day) => {
+      day.spots.forEach((s) => { spotDayMap[s.id] = day.dayNum; });
+    });
+  }
+
   const dayOptions = trip
     ? trip.days.map((day, idx) => ({
         id: day.id,
@@ -319,6 +327,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             selectedSpotId={selectedSpotId}
             onSpotSelect={(spotId) => setSelectedSpotId(spotId)}
             visibleHeightVh={mapHeight}
+            spotDayMap={spotDayMap}
           />
         </div>
       )}

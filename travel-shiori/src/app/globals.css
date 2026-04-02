@@ -189,3 +189,10 @@ body {
   background: #E8EAED !important;
 }
 
+/* PC向けフォントサイズアップ（768px以上） */
+@media (min-width: 768px) {
+  html, body {
+    font-size: 18px;
+  }
+}
+

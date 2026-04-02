@@ -42,6 +42,8 @@ interface MapViewProps {
   onSpotSelect: (spotId: string) => void;
   /** マップの可視領域の高さ（vh単位）。ボトムシートの上だけ見えるので補正用 */
   visibleHeightVh?: number;
+  /** spotId → 何日目 のマッピング（ピン表示用） */
+  spotDayMap?: Record<string, number>;
 }
 
 // ========================================
@@ -92,13 +94,16 @@ function createGoogleStylePin(spot: Spot, isSelected: boolean): L.DivIcon {
   });
 }
 
-// Google Maps風のスポット番号付きピン（順番がわかるように）
-function createNumberedPin(spot: Spot, index: number, isSelected: boolean): L.DivIcon {
+// Google Maps風のピン（何日目かを表示）
+function createNumberedPin(spot: Spot, dayNum: number | undefined, isSelected: boolean): L.DivIcon {
   const config = getSpotConfig(spot.type);
   const scale = isSelected ? 1.3 : 1;
   const shadow = isSelected
     ? '0 4px 12px rgba(0,0,0,0.4)'
     : '0 2px 6px rgba(0,0,0,0.3)';
+
+  // メインスポットはアイコン、それ以外は「○日目」の数字
+  const label = spot.isMain ? config.icon : (dayNum ?? '');
 
   const pinHtml = `
     <div style="
@@ -123,7 +128,7 @@ function createNumberedPin(spot: Spot, index: number, isSelected: boolean): L.Di
         font-weight: 700;
         line-height: 20px;
         color: ${config.color};
-      ">${spot.isMain ? config.icon : index + 1}</div>
+      ">${label}</div>
     </div>
   `;
 
@@ -276,7 +281,7 @@ function PanToSelected({ spots, selectedSpotId }: { spots: Spot[]; selectedSpotI
 // メインの地図コンポーネント
 // ========================================
 const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInner(
-  { spots, selectedSpotId, onSpotSelect, visibleHeightVh = 35 },
+  { spots, selectedSpotId, onSpotSelect, visibleHeightVh = 35, spotDayMap = {} },
   ref
 ) {
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -399,7 +404,7 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
           <Marker
             key={spot.id}
             position={[spot.lat, spot.lng]}
-            icon={createNumberedPin(spot, idx, isSelected)}
+            icon={createNumberedPin(spot, spotDayMap[spot.id], isSelected)}
             zIndexOffset={isSelected ? 1000 : spot.isMain ? 500 : 0}
             eventHandlers={{
               click: () => onSpotSelect(spot.id),
