@@ -483,8 +483,8 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                 className={cn(
                   'flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all whitespace-nowrap ml-auto',
                   showReview
-                    ? 'bg-orange-100 text-orange-600'
-                    : 'bg-amber-50 text-amber-600 active:bg-amber-100'
+                    ? 'text-orange-600'
+                    : 'text-gray-500 active:text-gray-700'
                 )}
               >
                 <Search className="w-3 h-3" />
