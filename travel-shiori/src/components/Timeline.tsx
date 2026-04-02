@@ -269,34 +269,23 @@ function SpotCard({
           </div>
         )}
 
-        {/* 中央: ピンアイコン + 目的地名 */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <MiniPinIcon dayNum={dayNum} size={26} />
-          <div className="min-w-0 flex-1">
-            <span className="text-[18px] font-bold text-gray-900 truncate block">
-              {spot.name}
-            </span>
-            {spot.memo && (
-              <p className="text-[12px] text-gray-400 truncate mt-0.5">{spot.memo}</p>
-            )}
-          </div>
-        </div>
+        {/* ピンアイコン */}
+        <MiniPinIcon dayNum={dayNum} size={28} />
 
-        {/* 右: 時刻 + カテゴリ + 操作 */}
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <div className="flex items-baseline gap-1">
-            <span className="text-[20px] font-bold tabular-nums tracking-tight text-gray-900">
+        {/* メイン: 目的地名（主役）+ 時刻（脇役） */}
+        <div className="flex-1 min-w-0">
+          <span className="text-[18px] font-bold text-gray-900 truncate block leading-tight">
+            {spot.name}
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[14px] tabular-nums text-gray-400 font-medium">
               {spot.time}
             </span>
             {spot.endTime && (
-              <span className="text-[13px] text-gray-400 font-medium">
-                –{spot.endTime}
-              </span>
+              <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
             )}
-          </div>
-          <div className="flex items-center gap-1.5">
             <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
               style={{
                 backgroundColor: dayColor.hex + '15',
                 color: dayColor.hex,
@@ -304,20 +293,29 @@ function SpotCard({
             >
               {config?.label ?? 'その他'}
             </span>
-            {!readOnly && (
-              <>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="pc-delete-btn w-6 h-6 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
-                </button>
-                <ChevronRight className="w-4 h-4 text-gray-300" />
-              </>
-            )}
           </div>
         </div>
+
+        {/* 右: 操作 */}
+        {!readOnly && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="pc-delete-btn w-6 h-6 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+            </button>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+          </div>
+        )}
       </div>
+
+      {/* メモ（あれば別枠で表示） */}
+      {spot.memo && (
+        <div className="mt-2 ml-11 px-2.5 py-1.5 bg-gray-50 rounded-lg">
+          <p className="text-[11px] text-gray-400 leading-relaxed">{spot.memo}</p>
+        </div>
+      )}
     </button>
   );
 }
