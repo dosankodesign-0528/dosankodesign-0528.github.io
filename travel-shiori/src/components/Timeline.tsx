@@ -166,6 +166,14 @@ function SpotCard({
         )}
       >
         <div className="flex items-center gap-3">
+          {/* アバター（assigneeあり時） */}
+          {assignee && (
+            <img
+              src={aColor!.avatar}
+              alt={ASSIGNEE_CONFIG[assignee]?.label}
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+            />
+          )}
           {/* 移動手段emoji */}
           <div className="flex flex-col items-center flex-shrink-0 w-9">
             <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
