@@ -143,7 +143,19 @@ export default function Timeline({
   );
 }
 
-/** ドラフトカード（通常カードと同じ見た目 + 破線ボーダー + 不足情報バッジ） */
+/** 入力が必要なフィールドのプレースホルダー表示 */
+function FieldPlaceholder({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[12px] px-2.5 py-1 rounded-lg bg-orange-50 border border-dashed border-orange-300 text-orange-500 font-medium">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+      </svg>
+      {label}
+    </span>
+  );
+}
+
+/** ドラフトカード（通常カードと同じ見た目 + 破線ボーダー + 入力すべき箇所を明示） */
 function DraftCard({
   spot,
   dayNum,
@@ -156,7 +168,6 @@ function DraftCard({
   const config = getSpotConfig(spot.type);
   const isTransit = spot.type === 'transit';
   const dayColor = getDayColor(dayNum);
-  const missing = getMissingInfo(spot);
 
   if (isTransit) {
     const tc = spot.transport ? TRANSPORT_CONFIG[spot.transport] : null;
@@ -176,16 +187,16 @@ function DraftCard({
             <span className="text-[15px] font-semibold text-gray-700 truncate block">
               {spot.name}
             </span>
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {spot.time ? (
                 <span className="text-[14px] tabular-nums text-gray-400 font-medium">{spot.time}</span>
               ) : (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">時刻が未設定</span>
+                <FieldPlaceholder label="時刻を入力" />
               )}
               {tc ? (
                 <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-200/70 text-gray-600 font-medium">{tc.label}</span>
               ) : (
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">移動手段が未設定</span>
+                <FieldPlaceholder label="移動手段を選択" />
               )}
             </div>
           </div>
@@ -196,6 +207,8 @@ function DraftCard({
   }
 
   // 目的地/ホテル/食事
+  const isNamePlaceholder = spot.name === '宿泊先' || spot.name === '食事';
+
   return (
     <button
       type="button"
@@ -206,17 +219,21 @@ function DraftCard({
         <MiniPinIcon dayNum={dayNum} size={36} draft />
 
         <div className="flex-1 min-w-0">
-          <span className={cn(
-            'text-[19px] font-bold truncate block leading-tight',
-            (spot.name === '宿泊先' || spot.name === '食事') ? 'text-gray-400' : 'text-gray-900'
-          )}>
-            {spot.name}
-          </span>
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+          {isNamePlaceholder ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[19px] font-bold text-gray-300 leading-tight">{spot.name}</span>
+              <FieldPlaceholder label="名前を入力" />
+            </div>
+          ) : (
+            <span className="text-[19px] font-bold text-gray-900 truncate block leading-tight">
+              {spot.name}
+            </span>
+          )}
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {spot.time ? (
               <span className="text-[14px] tabular-nums text-gray-400 font-medium">{spot.time}</span>
             ) : (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">時刻が未設定</span>
+              <FieldPlaceholder label="時刻を入力" />
             )}
             <span
               className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
@@ -227,9 +244,6 @@ function DraftCard({
             >
               {config?.label ?? 'その他'}
             </span>
-            {(spot.name === '宿泊先' || spot.name === '食事') && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-medium">名前を入力</span>
-            )}
           </div>
         </div>
 
@@ -326,7 +340,15 @@ function SpotCard({
             </div>
           </div>
           {!readOnly && (
-            <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                className="pc-delete-btn w-8 h-8 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+              </button>
+              <ChevronRight className="w-5 h-5 text-gray-300" />
+            </div>
           )}
         </div>
       </button>
