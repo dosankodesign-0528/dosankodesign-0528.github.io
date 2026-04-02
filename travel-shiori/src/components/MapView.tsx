@@ -40,6 +40,8 @@ interface MapViewProps {
   spots: Spot[];
   selectedSpotId: string | null;
   onSpotSelect: (spotId: string) => void;
+  /** マップの可視領域の高さ（vh単位）。ボトムシートの上だけ見えるので補正用 */
+  visibleHeightVh?: number;
 }
 
 // ========================================
@@ -171,9 +173,11 @@ function FitBounds({ spots }: { spots: Spot[] }) {
 function MapController({
   controlRef,
   onLocate,
+  visibleHeightVh,
 }: {
   controlRef: React.MutableRefObject<{ locateMe: () => void } | null>;
   onLocate: (lat: number, lng: number) => void;
+  visibleHeightVh: number;
 }) {
   const map = useMap();
 
@@ -187,8 +191,19 @@ function MapController({
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const { latitude, longitude } = pos.coords;
-            map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
             onLocate(latitude, longitude);
+
+            // マップの見える部分の中央に来るようオフセット補正
+            // マップ全体の高さと、見えてる部分（visibleHeightVh）の差分をピクセルで算出
+            const mapContainerH = map.getSize().y;
+            const visibleH = (visibleHeightVh / 100) * window.innerHeight;
+            const offsetY = (mapContainerH - visibleH) / 2;
+
+            map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
+            // setView後にオフセット分だけパン
+            setTimeout(() => {
+              map.panBy([0, -offsetY], { animate: true, duration: 0.3 });
+            }, 100);
           },
           () => {
             alert('位置情報を取得できませんでした。\n設定で位置情報の許可を確認してください。');
@@ -197,7 +212,36 @@ function MapController({
         );
       },
     };
-  }, [map, onLocate, controlRef]);
+  }, [map, onLocate, controlRef, visibleHeightVh]);
+
+  return null;
+}
+
+// ========================================
+// PCトラックパッド: スクロール→パン（移動）に変換
+// Ctrl+スクロールでズーム（Google Maps風）
+// ========================================
+function TrackpadPanHandler() {
+  const map = useMap();
+
+  useEffect(() => {
+    const container = map.getContainer();
+
+    const handleWheel = (e: WheelEvent) => {
+      // Ctrl/Meta押しながらスクロール → ズーム（ブラウザのピンチズームも含む）
+      if (e.ctrlKey || e.metaKey) {
+        return; // Leafletのデフォルトズーム処理に任せる
+      }
+
+      // 通常スクロール → パン（移動）に変換
+      e.preventDefault();
+      e.stopPropagation();
+      map.panBy([e.deltaX, e.deltaY], { animate: false });
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [map]);
 
   return null;
 }
@@ -227,7 +271,7 @@ function PanToSelected({ spots, selectedSpotId }: { spots: Spot[]; selectedSpotI
 // メインの地図コンポーネント
 // ========================================
 const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInner(
-  { spots, selectedSpotId, onSpotSelect },
+  { spots, selectedSpotId, onSpotSelect, visibleHeightVh = 35 },
   ref
 ) {
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -271,7 +315,7 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
       center={initialCenter}
       zoom={initialZoom}
       style={{ width: '100%', height: '100%' }}
-      scrollWheelZoom
+      scrollWheelZoom={false}
       zoomControl={false}
       attributionControl={false}
       inertia
@@ -287,7 +331,8 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
 
       <FitBounds spots={geoSpots} />
       <PanToSelected spots={geoSpots} selectedSpotId={selectedSpotId} />
-      <MapController controlRef={controlRef} onLocate={handleLocate} />
+      <MapController controlRef={controlRef} onLocate={handleLocate} visibleHeightVh={visibleHeightVh} />
+      <TrackpadPanHandler />
 
       {/* 現在地の青い丸マーカー（Google Maps風） */}
       {currentLocation && (

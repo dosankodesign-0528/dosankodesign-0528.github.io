@@ -265,6 +265,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             spots={displaySpots}
             selectedSpotId={selectedSpotId}
             onSpotSelect={(spotId) => setSelectedSpotId(spotId)}
+            visibleHeightVh={mapHeight}
           />
         </div>
       )}
