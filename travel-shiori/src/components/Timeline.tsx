@@ -1,8 +1,21 @@
 'use client';
 
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2, Train, TrainFront, Car, Bus, Footprints, Plane, MoreHorizontal } from 'lucide-react';
 import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
+import type { LucideIcon } from 'lucide-react';
+
+/** 移動手段のアイコン */
+const TRANSPORT_ICONS: Record<string, LucideIcon> = {
+  subway: Train,
+  shinkansen: TrainFront,
+  taxi: Car,
+  car: Car,
+  bus: Bus,
+  walk: Footprints,
+  plane: Plane,
+  other: MoreHorizontal,
+};
 
 /** Day セクション情報 */
 export interface DaySection {
@@ -74,15 +87,15 @@ export default function Timeline({
             }}>
               <div className="flex items-baseline gap-2">
                 <span className={cn('font-black', color.text)}>
-                  <span className="text-[32px] tracking-tighter" style={{ fontWeight: 900 }}>{day.dayNum}</span>
-                  <span className="text-[20px] tracking-tight ml-[1px]">日目</span>
+                  <span className="text-[36px] tracking-tighter" style={{ fontWeight: 900 }}>{day.dayNum}</span>
+                  <span className="text-[22px] tracking-tight ml-[1px]">日目</span>
                 </span>
-                <span className="text-[16px] font-semibold text-gray-500">
+                <span className="text-[17px] font-semibold text-gray-500">
                   {section.dateLabel}
                 </span>
               </div>
               {section.headline && (
-                <p className="text-[14px] text-gray-400 mt-0.5 leading-snug">
+                <p className="text-[15px] text-gray-400 mt-0.5 leading-snug">
                   {section.headline}
                 </p>
               )}
@@ -165,20 +178,20 @@ function SpotCard({
         )}
       >
         <div className="flex items-center gap-2.5">
-          {/* 人物アイコン（assigneeあり） or 移動線アイコン */}
-          {assignee ? (
-            <img
-              src={aColor!.avatar}
-              alt={ASSIGNEE_CONFIG[assignee]?.label}
-              className="w-11 h-11 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-0.5 text-gray-300">
-              <div className="w-0.5 h-2.5 bg-gray-200 rounded-full" />
-              <span className="text-[15px]">{config?.icon ?? '📌'}</span>
-              <div className="w-0.5 h-2.5 bg-gray-200 rounded-full" />
-            </div>
-          )}
+          {/* 移動手段アイコン */}
+          {(() => {
+            const TransportIcon = spot.transport ? TRANSPORT_ICONS[spot.transport] : null;
+            return (
+              <div className="flex flex-col items-center gap-0.5 flex-shrink-0 w-8">
+                <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+                {TransportIcon
+                  ? <TransportIcon className="w-5 h-5 text-gray-400" />
+                  : <MoreHorizontal className="w-5 h-5 text-gray-300" />
+                }
+                <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+              </div>
+            );
+          })()}
           <div className="flex-1 min-w-0">
             <span className="text-[15px] font-semibold text-gray-700 truncate block">
               {spot.name}
@@ -193,11 +206,6 @@ function SpotCard({
               {spot.transport && TRANSPORT_LABELS[spot.transport] && (
                 <span className="text-[13px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
                   {TRANSPORT_LABELS[spot.transport]}
-                </span>
-              )}
-              {assignee && (
-                <span className={cn('text-[12px] font-semibold', aColor!.text)}>
-                  {ASSIGNEE_CONFIG[assignee]?.label}
                 </span>
               )}
             </div>
@@ -277,7 +285,7 @@ function SpotCard({
 
       {/* メモ（罫線で区切り） */}
       {spot.memo && (
-        <div className="mt-2.5 pl-[50px] pt-2 border-t border-gray-100">
+        <div className="mt-2.5 pl-[50px] pt-2 border-t border-gray-200">
           <p className="text-[13px] text-gray-500 leading-relaxed">{spot.memo}</p>
         </div>
       )}

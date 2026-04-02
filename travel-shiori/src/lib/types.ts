@@ -92,10 +92,7 @@ export const TRANSPORT_LABELS: Record<string, string> = {
   taxi: 'タクシー',
   bus: 'バス',
   walk: '徒歩',
-  // 旧データ互換
-  train: '電車',
   car: '車',
   plane: '飛行機',
-  ferry: 'フェリー',
   other: 'その他',
 };

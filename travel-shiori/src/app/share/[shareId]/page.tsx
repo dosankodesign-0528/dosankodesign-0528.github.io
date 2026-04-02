@@ -426,7 +426,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       </div>
 
       {/* ── FAB ── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[1024px] pointer-events-none">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
         <button
           onClick={() => setShowAddSpot(true)}
           className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
