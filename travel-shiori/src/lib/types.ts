@@ -91,7 +91,7 @@ export const TRANSPORT_CONFIG: Record<string, { label: string; icon: string }> =
   shinkansen: { label: '新幹線', icon: '🚅' },
   taxi: { label: 'タクシー', icon: '🚕' },
   bus: { label: 'バス', icon: '🚌' },
-  walk: { label: '徒歩', icon: '🚶' },
+  walk: { label: '徒歩', icon: '👣' },
   car: { label: '車', icon: '🚗' },
   plane: { label: '飛行機', icon: '✈️' },
   other: { label: 'その他', icon: '🔄' },
