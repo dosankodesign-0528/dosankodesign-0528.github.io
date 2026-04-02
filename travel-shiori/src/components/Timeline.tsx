@@ -138,10 +138,10 @@ export default function Timeline({
   );
 }
 
-/** 人物の色テーマ */
-const ASSIGNEE_COLORS: Record<string, { bg: string; ring: string; iconBg: string; text: string }> = {
-  parents: { bg: 'bg-orange-50', ring: 'ring-orange-200', iconBg: 'bg-orange-100', text: 'text-orange-700' },
-  son:     { bg: 'bg-green-50',  ring: 'ring-green-200',  iconBg: 'bg-green-100',  text: 'text-green-700' },
+/** 人物の色テーマ + アバター画像 */
+const ASSIGNEE_COLORS: Record<string, { bg: string; ring: string; iconBg: string; text: string; avatar: string }> = {
+  parents: { bg: 'bg-orange-50', ring: 'ring-orange-200', iconBg: 'bg-orange-100', text: 'text-orange-700', avatar: '/avatar-parents-sm.jpg' },
+  son:     { bg: 'bg-green-50',  ring: 'ring-green-200',  iconBg: 'bg-green-100',  text: 'text-green-700',  avatar: '/avatar-son-sm.jpg' },
 };
 
 /** 1スポットのカード表示 */
@@ -177,12 +177,14 @@ function SpotCard({
         <div className="flex items-center gap-2">
           {/* 人物アイコン（assigneeあり） or 移動線アイコン */}
           {assignee ? (
-            <div className={cn(
-              'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-              aColor!.iconBg,
-            )}>
-              <span className="text-[16px]">{ASSIGNEE_CONFIG[assignee]?.icon}</span>
-            </div>
+            <img
+              src={aColor!.avatar}
+              alt={ASSIGNEE_CONFIG[assignee]?.label}
+              className={cn(
+                'w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2',
+                aColor!.ring,
+              )}
+            />
           ) : (
             <div className="flex flex-col items-center gap-0.5 text-gray-300">
               <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
@@ -237,15 +239,17 @@ function SpotCard({
       style={{ borderLeft: `3px solid ${cfgColor}` }}
     >
       <div className="flex gap-3">
-        {/* 左: 人物アイコン（大きく表示） */}
+        {/* 左: 人物アバター写真（大きく表示） */}
         {assignee && (
           <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
-            <div className={cn(
-              'w-10 h-10 rounded-full flex items-center justify-center',
-              aColor!.iconBg,
-            )}>
-              <span className="text-[20px]">{ASSIGNEE_CONFIG[assignee]?.icon}</span>
-            </div>
+            <img
+              src={aColor!.avatar}
+              alt={ASSIGNEE_CONFIG[assignee]?.label}
+              className={cn(
+                'w-11 h-11 rounded-full object-cover ring-2',
+                aColor!.ring,
+              )}
+            />
             <span className={cn('text-[10px] font-bold', aColor!.text)}>
               {ASSIGNEE_CONFIG[assignee]?.label}
             </span>
@@ -315,19 +319,20 @@ function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
   }
 
   const config = ASSIGNEE_CONFIG[assignee];
-  const colors: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
-    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200', iconBg: 'bg-orange-100' },
-    son:     { bg: 'bg-green-50',  text: 'text-green-600',  border: 'border-green-200',  iconBg: 'bg-green-100' },
+  const colors: Record<string, { bg: string; text: string; border: string }> = {
+    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
+    son:     { bg: 'bg-green-50',  text: 'text-green-600',  border: 'border-green-200' },
   };
-  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', iconBg: 'bg-gray-100' };
+  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
+  const avatarSrc = ASSIGNEE_COLORS[assignee]?.avatar;
 
   return (
     <div className="flex items-center gap-3 py-3 mt-3">
       <div className="flex-1 h-px bg-gray-200" />
       <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full border', c.bg, c.border)}>
-        <div className={cn('w-6 h-6 rounded-full flex items-center justify-center', c.iconBg)}>
-          <span className="text-[14px]">{config?.icon}</span>
-        </div>
+        {avatarSrc && (
+          <img src={avatarSrc} alt="" className="w-6 h-6 rounded-full object-cover" />
+        )}
         <span className={cn('text-[13px] font-bold', c.text)}>
           {config?.label}だけ
         </span>
