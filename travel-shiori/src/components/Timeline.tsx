@@ -76,11 +76,9 @@ export default function Timeline({
 
         return (
           <div key={day.id} data-day-idx={section.dayIdx}>
-            {/* Day 間の区切りスペース（最初のセクション以外） */}
+            {/* Day 間の余白（最初のセクション以外） */}
             {sectionIdx > 0 && (
-              <div className="py-4 -mx-3 px-3">
-                <div className="h-[3px] bg-gray-100 rounded-full" />
-              </div>
+              <div className="h-10" />
             )}
 
             {/* Day セクションヘッダー */}
@@ -313,37 +311,28 @@ function SpotCard({
 function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
   if (assignee === 'all') {
     return (
-      <div className="flex items-center gap-3 py-3 mt-3">
-        <div className="flex-1 h-px bg-gray-200" />
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full">
-          <span className="text-[20px]">👨‍👩‍👦</span>
-          <span className="text-[14px] text-gray-500 font-semibold">みんな合流</span>
-        </div>
-        <div className="flex-1 h-px bg-gray-200" />
+      <div className="flex items-center gap-2 py-2 mt-2 px-1">
+        <div className="flex-1 h-px bg-gray-100" />
+        <span className="text-[12px] text-gray-400 font-medium">👨‍👩‍👦 合流</span>
+        <div className="flex-1 h-px bg-gray-100" />
       </div>
     );
   }
 
   const config = ASSIGNEE_CONFIG[assignee];
-  const colors: Record<string, { bg: string; text: string; border: string }> = {
-    parents: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' },
-    son:     { bg: 'bg-green-50',  text: 'text-green-600',  border: 'border-green-200' },
+  const colors: Record<string, { text: string }> = {
+    parents: { text: 'text-orange-500' },
+    son:     { text: 'text-green-500' },
   };
-  const c = colors[assignee] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
-  const avatarSrc = ASSIGNEE_COLORS[assignee]?.avatar;
+  const c = colors[assignee] || { text: 'text-gray-500' };
 
   return (
-    <div className="flex items-center gap-3 py-3 mt-3">
-      <div className="flex-1 h-px bg-gray-200" />
-      <div className={cn('flex items-center gap-2 px-4 py-2 rounded-full border', c.bg, c.border)}>
-        {avatarSrc && (
-          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover" />
-        )}
-        <span className={cn('text-[14px] font-bold', c.text)}>
-          {config?.label}だけ
-        </span>
-      </div>
-      <div className="flex-1 h-px bg-gray-200" />
+    <div className="flex items-center gap-2 py-2 mt-2 px-1">
+      <div className="flex-1 h-px bg-gray-100" />
+      <span className={cn('text-[12px] font-medium', c.text)}>
+        {config?.label}だけ
+      </span>
+      <div className="flex-1 h-px bg-gray-100" />
     </div>
   );
 }
