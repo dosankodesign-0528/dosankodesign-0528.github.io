@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { Spot, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType } from '../lib/types';
+import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType } from '../lib/types';
 import { cn } from '../lib/utils';
 
 /** スポットの「有効なassignee」を返す（未設定='all'扱い） */
@@ -9,28 +9,37 @@ function getEffectiveAssignee(spot: Spot): AssigneeType {
   return spot.assignee && spot.assignee !== 'all' ? spot.assignee : 'all';
 }
 
+/** Day セクション情報 */
+export interface DaySection {
+  day: Day;
+  dayIdx: number;
+  dateLabel: string;    // "5/28(木)"
+  headline: string;     // "女満別/旭川→東京 大誓堂・屋形船"
+  spots: Spot[];        // フィルタ済みのスポット
+}
+
 interface TimelineProps {
-  spots: Spot[];
+  /** Day セクション単位のデータ（All表示用） */
+  daySections: DaySection[];
   selectedSpotId: string | null;
   onSpotSelect: (id: string) => void;
   onSpotEdit: (id: string) => void;
   onSpotDelete: (id: string) => void;
   onAdd?: () => void;
   readOnly: boolean;
-  /** spotId → "Day1 4/10(金)" のようなラベル */
-  spotDateMap?: Record<string, string>;
 }
 
 export default function Timeline({
-  spots,
+  daySections,
   selectedSpotId,
   onSpotSelect,
   onSpotDelete,
   onAdd,
   readOnly,
-  spotDateMap,
 }: TimelineProps) {
-  if (spots.length === 0) {
+  const totalSpots = daySections.reduce((sum, s) => sum + s.spots.length, 0);
+
+  if (totalSpots === 0) {
     return (
       <button
         type="button"
@@ -46,170 +55,194 @@ export default function Timeline({
     );
   }
 
-  // 人物グループが切り替わるインデックスを計算
-  const assigneeChangeIndices = new Set<number>();
-  for (let i = 0; i < spots.length; i++) {
-    const curr = getEffectiveAssignee(spots[i]);
-    const prev = i > 0 ? getEffectiveAssignee(spots[i - 1]) : 'all';
-    // all → 個人、または異なる個人への切り替え時にヘッダーを出す
-    if (curr !== 'all' && curr !== prev) {
-      assigneeChangeIndices.add(i);
-    }
-    // 個人 → all に戻る時も区切りを出す
-    if (curr === 'all' && prev !== 'all') {
-      assigneeChangeIndices.add(i);
-    }
+  return (
+    <div className="px-3 pt-1">
+      {daySections.map((section) => {
+        const { day, spots } = section;
+        if (spots.length === 0) return null;
+
+        // 人物グループ切り替え計算
+        const assigneeChangeIndices = new Set<number>();
+        for (let i = 0; i < spots.length; i++) {
+          const curr = getEffectiveAssignee(spots[i]);
+          const prev = i > 0 ? getEffectiveAssignee(spots[i - 1]) : 'all';
+          if (curr !== 'all' && curr !== prev) assigneeChangeIndices.add(i);
+          if (curr === 'all' && prev !== 'all') assigneeChangeIndices.add(i);
+        }
+
+        return (
+          <div key={day.id} data-day-idx={section.dayIdx} className="mb-2">
+            {/* Day セクションヘッダー */}
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-3 px-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-bold text-white bg-gray-900 rounded-md px-2 py-0.5">
+                    Day {day.dayNum}
+                  </span>
+                  <span className="text-[14px] font-semibold text-gray-700">
+                    {section.dateLabel}
+                  </span>
+                </div>
+                {section.headline && (
+                  <span className="text-[13px] text-gray-400 truncate flex-1">
+                    {section.headline}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2 h-px bg-gradient-to-r from-gray-300 via-gray-200 to-transparent" />
+            </div>
+
+            {/* スポット一覧 */}
+            <div className="flex flex-col gap-1.5 pt-1">
+              {spots.map((spot, spotIdx) => {
+                const effectiveAssignee = getEffectiveAssignee(spot);
+                const showGroupHeader = assigneeChangeIndices.has(spotIdx);
+
+                return (
+                  <div key={spot.id}>
+                    {showGroupHeader && (
+                      <AssigneeGroupHeader assignee={effectiveAssignee} />
+                    )}
+                    <SpotCard
+                      spot={spot}
+                      isSelected={selectedSpotId === spot.id}
+                      readOnly={readOnly}
+                      onSelect={() => onSpotSelect(spot.id)}
+                      onDelete={() => onSpotDelete(spot.id)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 1スポットのカード表示 */
+function SpotCard({
+  spot,
+  isSelected,
+  readOnly,
+  onSelect,
+  onDelete,
+}: {
+  spot: Spot;
+  isSelected: boolean;
+  readOnly: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+}) {
+  const config = getSpotConfig(spot.type);
+  const isTransit = spot.type === 'transit';
+
+  if (isTransit) {
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        className={cn(
+          'w-full text-left rounded-xl py-2.5 px-3 ml-3 transition-all duration-150 active:scale-[0.98]',
+          'bg-transparent',
+          isSelected && 'bg-blue-50/50',
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-0.5 text-gray-300">
+            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+            <span className="text-[13px]">{config?.icon ?? '📌'}</span>
+            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] tabular-nums text-gray-500 font-medium">
+                {spot.time}
+              </span>
+              {spot.endTime && (
+                <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
+              )}
+              {spot.transport && TRANSPORT_LABELS[spot.transport] && (
+                <span className="text-[12px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                  {TRANSPORT_LABELS[spot.transport]}
+                </span>
+              )}
+              {spot.assignee && spot.assignee !== 'all' && (
+                <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
+                  {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
+                </span>
+              )}
+            </div>
+            <span className="text-[14px] text-gray-600 truncate block">
+              {spot.name}
+            </span>
+          </div>
+          {!readOnly && (
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+          )}
+        </div>
+      </button>
+    );
   }
 
+  const cfgColor = config?.color ?? '#70757A';
   return (
-    <div className="px-3 pt-3">
-      <div className="flex flex-col gap-1.5">
-        {spots.map((spot, spotIdx) => {
-          const config = getSpotConfig(spot.type);
-          const isSelected = selectedSpotId === spot.id;
-          const isTransit = spot.type === 'transit';
-          const dateLabel = spotDateMap?.[spot.id];
-          const effectiveAssignee = getEffectiveAssignee(spot);
-          const showGroupHeader = assigneeChangeIndices.has(spotIdx);
-
-          // 移動・経由はインデント＋コンパクト表示
-          if (isTransit) {
-            const transitCard = (
-              <button
-                type="button"
-                onClick={() => onSpotSelect(spot.id)}
-                className={cn(
-                  'w-full text-left rounded-xl py-2.5 px-3 ml-3 transition-all duration-150 active:scale-[0.98]',
-                  'bg-transparent',
-                  isSelected && 'bg-blue-50/50',
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  {/* 移動線アイコン */}
-                  <div className="flex flex-col items-center gap-0.5 text-gray-300">
-                    <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-                    <span className="text-[13px]">{config?.icon ?? '📌'}</span>
-                    <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      {dateLabel && (
-                        <span className="text-[11px] text-gray-400 font-medium">{dateLabel}</span>
-                      )}
-                      <span className="text-[14px] tabular-nums text-gray-500 font-medium">
-                        {spot.time}
-                      </span>
-                      {spot.endTime && (
-                        <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
-                      )}
-                      {spot.transport && TRANSPORT_LABELS[spot.transport] && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-                          {TRANSPORT_LABELS[spot.transport]}
-                        </span>
-                      )}
-                      {spot.assignee && spot.assignee !== 'all' && (
-                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
-                          {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[14px] text-gray-600 truncate block">
-                      {spot.name}
-                    </span>
-                  </div>
-                  {!readOnly && (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  )}
-                </div>
-              </button>
-            );
-            return (
-              <div key={spot.id}>
-                {showGroupHeader && (
-                  <AssigneeGroupHeader assignee={effectiveAssignee} />
-                )}
-                {transitCard}
-              </div>
-            );
-          }
-
-          // 目的地・ホテル・食事などのメインカード
-          const cfgColor = config?.color ?? '#70757A';
-          const mainCard = (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        'w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98]',
+        'bg-white shadow-sm ring-1 ring-black/[0.04] p-3.5',
+        isSelected && 'ring-2 ring-blue-500/30 shadow-md',
+      )}
+      style={{ borderLeft: `3px solid ${cfgColor}` }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-[22px] font-bold tabular-nums tracking-tight text-gray-900">
+          {spot.time}
+        </span>
+        {spot.endTime && (
+          <span className="text-[14px] text-gray-400 font-medium">
+            – {spot.endTime}
+          </span>
+        )}
+        {spot.assignee && spot.assignee !== 'all' && (
+          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
+            {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
+          </span>
+        )}
+        <span
+          className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
+          style={{
+            backgroundColor: cfgColor + '15',
+            color: cfgColor,
+          }}
+        >
+          {config?.label ?? 'その他'}
+        </span>
+        {!readOnly && (
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
-              type="button"
-              onClick={() => onSpotSelect(spot.id)}
-              className={cn(
-                'w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98]',
-                'bg-white shadow-sm ring-1 ring-black/[0.04] p-3.5',
-                isSelected && 'ring-2 ring-blue-500/30 shadow-md',
-              )}
-              style={{ borderLeft: `3px solid ${cfgColor}` }}
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="pc-delete-btn w-7 h-7 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
             >
-              {/* 日付ラベル */}
-              {dateLabel && (
-                <div className="text-[11px] text-gray-400 font-medium mb-1">{dateLabel}</div>
-              )}
-              {/* 上段: 時刻 */}
-              <div className="flex items-center gap-2">
-                <span className="text-[22px] font-bold tabular-nums tracking-tight text-gray-900">
-                  {spot.time}
-                </span>
-                {spot.endTime && (
-                  <span className="text-[14px] text-gray-400 font-medium">
-                    – {spot.endTime}
-                  </span>
-                )}
-                {spot.assignee && spot.assignee !== 'all' && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
-                    {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
-                  </span>
-                )}
-                <span
-                  className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
-                  style={{
-                    backgroundColor: cfgColor + '15',
-                    color: cfgColor,
-                  }}
-                >
-                  {config?.label ?? 'その他'}
-                </span>
-                {!readOnly && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onSpotDelete(spot.id); }}
-                      className="pc-delete-btn w-7 h-7 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500" />
-                    </button>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
-              {/* 下段: スポット名 */}
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[16px]">{config?.icon ?? '📌'}</span>
-                <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
-                  {spot.name}
-                </span>
-              </div>
-              {spot.memo && (
-                <p className="text-[13px] text-gray-400 truncate mt-1 ml-7">{spot.memo}</p>
-              )}
+              <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500" />
             </button>
-          );
-          return (
-            <div key={spot.id}>
-              {showGroupHeader && (
-                <AssigneeGroupHeader assignee={effectiveAssignee} />
-              )}
-              {mainCard}
-            </div>
-          );
-        })}
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
       </div>
-    </div>
+      <div className="flex items-center gap-2 mt-1.5">
+        <span className="text-[16px]">{config?.icon ?? '📌'}</span>
+        <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
+          {spot.name}
+        </span>
+      </div>
+      {spot.memo && (
+        <p className="text-[13px] text-gray-400 truncate mt-1 ml-7">{spot.memo}</p>
+      )}
+    </button>
   );
 }
 

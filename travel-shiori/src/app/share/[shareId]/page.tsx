@@ -11,6 +11,7 @@ import {
 } from '../../../lib/storage';
 import { SpotFormData } from '../../../components/SpotEditModal';
 import Timeline from '../../../components/Timeline';
+import type { DaySection } from '../../../components/Timeline';
 import { cn } from '../../../lib/utils';
 
 import type { MapViewHandle } from '../../../components/MapView';
@@ -37,7 +38,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(1);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [editSpotId, setEditSpotId] = useState<string | null>(null);
@@ -97,28 +98,24 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     });
   }, [shareId]);
 
-  const allSpots: Spot[] = trip
-    ? selectedDayIdx === 0
-      ? trip.days.flatMap((d) => d.spots)
-      : (trip.days[selectedDayIdx - 1]?.spots ?? [])
+  // DaySection データを構築（常に全Day表示、フィルタはスポットレベルで適用）
+  const daySections: DaySection[] = trip
+    ? trip.days.map((day, idx) => {
+        const filtered = assigneeFilter === 'all'
+          ? day.spots
+          : day.spots.filter((s) => !s.assignee || s.assignee === 'all' || s.assignee === assigneeFilter);
+        return {
+          day,
+          dayIdx: idx,
+          dateLabel: formatDateWithDay(trip.startDate, idx),
+          headline: day.headline,
+          spots: filtered,
+        };
+      })
     : [];
 
-  // 人物フィルター適用（「みんな」なら全表示、それ以外は該当 or 未設定/all のスポットのみ）
-  const displaySpots: Spot[] = assigneeFilter === 'all'
-    ? allSpots
-    : allSpots.filter((s) => !s.assignee || s.assignee === 'all' || s.assignee === assigneeFilter);
-
-  const currentDay: Day | null = trip && selectedDayIdx > 0
-    ? trip.days[selectedDayIdx - 1] ?? null
-    : null;
-
-  const spotDateMap: Record<string, string> = {};
-  if (trip) {
-    trip.days.forEach((day, idx) => {
-      const label = `Day${day.dayNum} ${formatDateWithDay(trip.startDate, idx)}`;
-      day.spots.forEach((s) => { spotDateMap[s.id] = label; });
-    });
-  }
+  // マップ用: 全スポット（フィルタ済み）
+  const displaySpots: Spot[] = daySections.flatMap((s) => s.spots);
 
   const dayOptions = trip
     ? trip.days.map((day, idx) => ({
@@ -127,10 +124,66 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       }))
     : [];
 
+  // スクロール領域のref（IntersectionObserver用）
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const tabContainerRef = useRef<HTMLDivElement>(null);
+  const isScrollingByClick = useRef(false);
+
   const refreshTrip = useCallback(async () => {
     const t = await getTripByShareId(shareId);
     if (t) setTrip(t);
   }, [shareId]);
+
+  // IntersectionObserver: スクロール位置に応じてタブ自動切り替え
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer || !trip) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isScrollingByClick.current) return;
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = Number((entry.target as HTMLElement).dataset.dayIdx);
+            if (!isNaN(idx)) setSelectedDayIdx(idx + 1);
+          }
+        }
+      },
+      {
+        root: scrollContainer,
+        // ヘッダーの少し下で検出
+        rootMargin: '-10% 0px -70% 0px',
+        threshold: 0,
+      }
+    );
+
+    const sections = scrollContainer.querySelectorAll('[data-day-idx]');
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [trip, daySections]);
+
+  // アクティブなタブが見えるように横スクロール
+  useEffect(() => {
+    const container = tabContainerRef.current;
+    if (!container) return;
+    const activeTab = container.querySelector('[data-active-tab="true"]') as HTMLElement | null;
+    if (activeTab) {
+      activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [selectedDayIdx]);
+
+  // タブクリック → 該当セクションにスムーズスクロール
+  const handleDayTabClick = useCallback((dayIdx: number) => {
+    setSelectedDayIdx(dayIdx + 1);
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    const target = scrollContainer.querySelector(`[data-day-idx="${dayIdx}"]`);
+    if (target) {
+      isScrollingByClick.current = true;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => { isScrollingByClick.current = false; }, 800);
+    }
+  }, []);
 
   const handleAddSpot = async (data: SpotFormData) => {
     if (!trip) return;
@@ -315,28 +368,13 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           )}
           {/* 日程タブ + 設定 */}
           <div className="px-3 pt-1 pb-1.5 border-b border-gray-100">
-            {currentDay && currentDay.headline && (
-              <div className="text-[12px] text-gray-400 truncate mb-1">
-                {currentDay.headline}
-              </div>
-            )}
             <div className="flex items-center gap-1.5">
-              <div className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                <button
-                  onClick={() => setSelectedDayIdx(0)}
-                  className={cn(
-                    'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
-                    selectedDayIdx === 0
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-500 active:bg-gray-200'
-                  )}
-                >
-                  All
-                </button>
+              <div ref={tabContainerRef} className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                 {trip.days.map((day, idx) => (
                   <button
                     key={day.id}
-                    onClick={() => setSelectedDayIdx(idx + 1)}
+                    data-active-tab={selectedDayIdx === idx + 1 ? 'true' : undefined}
+                    onClick={() => handleDayTabClick(idx)}
                     className={cn(
                       'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
                       selectedDayIdx === idx + 1
@@ -384,16 +422,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
         </div>
 
         {/* 工程リスト */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pb-24">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-24">
           <Timeline
-            spots={displaySpots}
+            daySections={daySections}
             selectedSpotId={selectedSpotId}
             onSpotSelect={handleSpotTap}
             onSpotEdit={setEditSpotId}
             onSpotDelete={handleDeleteSpot}
             onAdd={() => setShowAddSpot(true)}
             readOnly={false}
-            spotDateMap={spotDateMap}
           />
         </div>
       </div>
