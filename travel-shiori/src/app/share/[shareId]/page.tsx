@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2 } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Sparkles } from 'lucide-react';
 import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
   getTripByShareId, updateTrip, addSpot, updateSpot, deleteSpot,
@@ -13,10 +13,12 @@ import { SpotFormData } from '../../../components/SpotEditModal';
 import Timeline from '../../../components/Timeline';
 import type { DaySection } from '../../../components/Timeline';
 import { cn } from '../../../lib/utils';
+import { analyzeTrip, ReviewSuggestion } from '../../../lib/trip-review';
 
 import type { MapViewHandle } from '../../../components/MapView';
 const MapView = dynamic(() => import('../../../components/MapView'), { ssr: false });
 const SpotEditModal = dynamic(() => import('../../../components/SpotEditModal'), { ssr: false });
+const AIReviewModal = dynamic(() => import('../../../components/AIReviewModal'), { ssr: false });
 
 const DAY_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -45,6 +47,12 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   const [showSettings, setShowSettings] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeType>('all');
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [inlineTitle, setInlineTitle] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewSuggestions, setReviewSuggestions] = useState<ReviewSuggestion[]>([]);
 
   const mapRef = useRef<MapViewHandle>(null);
   const [locating, setLocating] = useState(false);
@@ -266,6 +274,49 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     setTimeout(() => setShowSnackbar(false), 2500);
   };
 
+  const handleStartReview = () => {
+    if (!trip) return;
+    setShowReview(true);
+    setReviewLoading(true);
+    setReviewSuggestions([]);
+    // スケルトン演出後に分析
+    setTimeout(() => {
+      const results = analyzeTrip(trip);
+      setReviewSuggestions(results);
+      setReviewLoading(false);
+    }, 1200);
+  };
+
+  const handleApplyReview = async (selected: ReviewSuggestion[]) => {
+    if (!trip) return;
+    const updated = { ...trip, days: trip.days.map(d => ({ ...d, spots: [...d.spots] })) };
+
+    for (const suggestion of selected) {
+      if (suggestion.suggestedSpot) {
+        const day = updated.days.find(d => d.id === suggestion.dayId);
+        if (day) {
+          day.spots.push({
+            id: crypto.randomUUID(),
+            dayId: day.id,
+            name: suggestion.suggestedSpot.name,
+            type: suggestion.suggestedSpot.type,
+            isMain: false,
+            time: suggestion.suggestedSpot.time || '',
+            endTime: suggestion.suggestedSpot.endTime,
+            transport: suggestion.suggestedSpot.transport,
+            sortOrder: suggestion.suggestedSpot.sortOrder,
+            memo: '',
+          });
+          day.spots.sort((a, b) => a.sortOrder - b.sortOrder);
+        }
+      }
+    }
+
+    await updateTrip(updated);
+    setTrip(updated);
+    setShowReview(false);
+  };
+
   const editingSpot = editSpotId
     ? trip?.days.flatMap(d => d.spots).find(s => s.id === editSpotId)
     : undefined;
@@ -305,9 +356,35 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
         <div className="mx-3 flex-1 text-center">
-          <span className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 truncate max-w-[220px]">
-            {trip.title}
-          </span>
+          {editingTitle ? (
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={inlineTitle}
+              onChange={(e) => setInlineTitle(e.target.value)}
+              onBlur={async () => {
+                const trimmed = inlineTitle.trim();
+                if (trimmed && trimmed !== trip.title) {
+                  const updated = { ...trip, title: trimmed };
+                  await updateTrip(updated);
+                  setTrip(updated);
+                }
+                setEditingTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                if (e.key === 'Escape') { setEditingTitle(false); }
+              }}
+              className="w-full max-w-[220px] px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 text-center outline-none ring-2 ring-blue-500/40"
+            />
+          ) : (
+            <span
+              onClick={() => { setInlineTitle(trip.title); setEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
+              className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 truncate max-w-[220px] cursor-pointer active:bg-white/60 transition-colors"
+            >
+              {trip.title}
+            </span>
+          )}
         </div>
         <button
           onClick={() => setShowSettings(true)}
@@ -426,6 +503,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
       {/* ── FAB ── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
+        {/* AIレビューボタン */}
+        <button
+          onClick={handleStartReview}
+          className="absolute bottom-0 right-[84px] w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-full shadow-lg shadow-orange-400/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
+          aria-label="AIレビュー"
+        >
+          <Sparkles className="w-5 h-5" strokeWidth={2.5} />
+        </button>
+        {/* スポット追加ボタン */}
         <button
           onClick={() => setShowAddSpot(true)}
           className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
@@ -442,6 +528,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       {editSpotId && editingSpot && (
         <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
       )}
+
+      {/* ── AIレビューモーダル ── */}
+      <AIReviewModal
+        isOpen={showReview}
+        onClose={() => setShowReview(false)}
+        suggestions={reviewSuggestions}
+        loading={reviewLoading}
+        onApply={handleApplyReview}
+      />
 
       {/* ── スナックバー ── */}
       {showSnackbar && (

@@ -229,7 +229,7 @@ function MapController({
 
 // ========================================
 // PCトラックパッド: スクロール→パン（移動）に変換
-// Ctrl+スクロールでズーム（Google Maps風）
+// ピンチ操作（Ctrl+scroll）→ ズーム
 // ========================================
 function TrackpadPanHandler() {
   const map = useMap();
@@ -238,9 +238,18 @@ function TrackpadPanHandler() {
     const container = map.getContainer();
 
     const handleWheel = (e: WheelEvent) => {
-      // Ctrl/Meta押しながらスクロール → ズーム（ブラウザのピンチズームも含む）
+      // ピンチズーム（トラックパッド2本指ピンチ = ctrlKey + wheel）
       if (e.ctrlKey || e.metaKey) {
-        return; // Leafletのデフォルトズーム処理に任せる
+        e.preventDefault();
+        e.stopPropagation();
+        const zoomDelta = -e.deltaY * 0.01;
+        const currentZoom = map.getZoom();
+        const newZoom = Math.min(19, Math.max(3, currentZoom + zoomDelta));
+        // マウスカーソル位置を基準にズーム
+        const mousePoint = map.mouseEventToContainerPoint(e);
+        const mouseLatLng = map.containerPointToLatLng(mousePoint);
+        map.setZoomAround(mouseLatLng, newZoom, { animate: false });
+        return;
       }
 
       // 通常スクロール → パン（移動）に変換

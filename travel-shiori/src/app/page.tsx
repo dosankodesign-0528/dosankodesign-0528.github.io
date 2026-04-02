@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown } from 'lucide-react';
 import { Trip } from '../lib/types';
-import { getTrips, createTrip, deleteTrip, duplicateTrip, getTrashedTrips, restoreTrip, permanentlyDeleteTrip } from '../lib/storage';
+import { getTrips, createTrip, deleteTrip, duplicateTrip, getTrashedTrips, restoreTrip, permanentlyDeleteTrip, updateTrip } from '../lib/storage';
 import { cn } from '../lib/utils';
 
 function getDayOfWeek(dateStr: string): string {
@@ -96,6 +96,9 @@ export default function HomePage() {
   const [newTitle, setNewTitle] = useState('');
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [editingTripTitle, setEditingTripTitle] = useState('');
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const refreshAll = async () => {
     const [t, trashed] = await Promise.all([getTrips(), getTrashedTrips()]);
@@ -190,17 +193,48 @@ export default function HomePage() {
               return (
                 <div key={trip.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04]">
                   <div className="flex items-center gap-2 p-4">
-                    <button
-                      onClick={() => router.push(`/share/${trip.shareId}`)}
-                      className="flex-1 min-w-0 text-left active:opacity-70 transition-opacity"
+                    <div
+                      onClick={() => { if (editingTripId !== trip.id) router.push(`/share/${trip.shareId}`); }}
+                      className="flex-1 min-w-0 text-left active:opacity-70 transition-opacity cursor-pointer"
                     >
-                      <h3 className="text-[17px] font-bold text-gray-900 truncate">{trip.title}</h3>
+                      {editingTripId === trip.id ? (
+                        <input
+                          ref={titleInputRef}
+                          type="text"
+                          value={editingTripTitle}
+                          onChange={(e) => setEditingTripTitle(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onBlur={async () => {
+                            const trimmed = editingTripTitle.trim();
+                            if (trimmed && trimmed !== trip.title) {
+                              await updateTrip({ ...trip, title: trimmed });
+                              await refreshAll();
+                            }
+                            setEditingTripId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                            if (e.key === 'Escape') setEditingTripId(null);
+                          }}
+                          className="text-[17px] font-bold text-gray-900 w-full bg-transparent outline-none ring-1 ring-blue-500/40 rounded-lg px-2 py-0.5 -ml-2"
+                        />
+                      ) : (
+                        <h3
+                          className="text-[17px] font-bold text-gray-900 truncate"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTripId(trip.id);
+                            setEditingTripTitle(trip.title);
+                            setTimeout(() => titleInputRef.current?.focus(), 50);
+                          }}
+                        >{trip.title}</h3>
+                      )}
                       <div className="flex items-center gap-1.5 mt-1.5 text-[13px] text-gray-500">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
                         <span>{formatDate(trip.startDate)} 〜 {formatDate(trip.endDate)}</span>
                       </div>
                       <p className="text-[12px] text-gray-400 mt-0.5">{dayCount}日間 · {spotCount}スポット</p>
-                    </button>
+                    </div>
                     <TripMenu
                       shareId={trip.shareId}
                       onDelete={(id) => setDeleteConfirm(id)}
