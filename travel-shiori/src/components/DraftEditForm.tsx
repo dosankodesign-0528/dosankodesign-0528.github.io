@@ -193,7 +193,7 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1 pl-1">
                 <label className="text-[12px] text-gray-400 font-medium">開始時刻</label>
-                {isTimeEmpty && <MissingBadge label="未設定" />}
+                {isTimeEmpty && <MissingBadge label="入力してください" />}
               </div>
               <input
                 type="time"
