@@ -251,10 +251,10 @@ function SpotCard({
       )}
       style={{ borderLeft: `3px solid ${dayColor.hex}` }}
     >
-      <div className="flex gap-3">
-        {/* 左: 人物アバター写真（大きく表示） */}
+      <div className="flex items-center gap-3">
+        {/* 左: アバター（assigneeあり時） */}
         {assignee && (
-          <div className="flex flex-col items-center gap-1 pt-0.5 flex-shrink-0">
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
             <img
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
@@ -269,19 +269,34 @@ function SpotCard({
           </div>
         )}
 
-        {/* 右: スポット情報 */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[22px] font-bold tabular-nums tracking-tight text-gray-900">
+        {/* 中央: ピンアイコン + 目的地名 */}
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <MiniPinIcon dayNum={dayNum} size={26} />
+          <div className="min-w-0 flex-1">
+            <span className="text-[18px] font-bold text-gray-900 truncate block">
+              {spot.name}
+            </span>
+            {spot.memo && (
+              <p className="text-[12px] text-gray-400 truncate mt-0.5">{spot.memo}</p>
+            )}
+          </div>
+        </div>
+
+        {/* 右: 時刻 + カテゴリ + 操作 */}
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[20px] font-bold tabular-nums tracking-tight text-gray-900">
               {spot.time}
             </span>
             {spot.endTime && (
-              <span className="text-[14px] text-gray-400 font-medium">
-                – {spot.endTime}
+              <span className="text-[13px] text-gray-400 font-medium">
+                –{spot.endTime}
               </span>
             )}
+          </div>
+          <div className="flex items-center gap-1.5">
             <span
-              className="text-[11px] px-2 py-0.5 rounded-full font-medium ml-auto"
+              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
               style={{
                 backgroundColor: dayColor.hex + '15',
                 color: dayColor.hex,
@@ -290,26 +305,17 @@ function SpotCard({
               {config?.label ?? 'その他'}
             </span>
             {!readOnly && (
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <>
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="pc-delete-btn w-7 h-7 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
+                  className="pc-delete-btn w-6 h-6 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500" />
+                  <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
                 </button>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-1.5">
-            <MiniPinIcon dayNum={dayNum} size={22} />
-            <span className="text-[17px] font-semibold text-gray-900 truncate flex-1">
-              {spot.name}
-            </span>
-          </div>
-          {spot.memo && (
-            <p className="text-[13px] text-gray-400 truncate mt-1 ml-7">{spot.memo}</p>
-          )}
         </div>
       </div>
     </button>
