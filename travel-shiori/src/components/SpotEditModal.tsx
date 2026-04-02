@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Spot, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_LABELS, getSpotConfig } from '../lib/types';
+import { Spot, SpotType, TransportType, AssigneeType, SPOT_CONFIG, TRANSPORT_LABELS, ASSIGNEE_CONFIG, getSpotConfig } from '../lib/types';
 
 export interface SpotFormData {
   name: string;
@@ -10,6 +10,7 @@ export interface SpotFormData {
   time: string;
   endTime?: string;
   transport?: TransportType;
+  assignee?: AssigneeType;
   lat?: number;
   lng?: number;
   memo?: string;
@@ -36,7 +37,7 @@ interface NominatimResult {
 }
 
 // ==============================
-// Drum roll picker column
+// Drum roll picker column (mobile)
 // ==============================
 const ITEM_H = 32;
 const VISIBLE = 3;
@@ -55,7 +56,6 @@ function DrumColumn({
   const isScrolling = useRef(false);
   const idx = Math.max(0, items.indexOf(value));
 
-  // 初期位置へスクロール
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
@@ -79,13 +79,11 @@ function DrumColumn({
 
   return (
     <div style={{ position: 'relative', height: DRUM_H, width: 52, overflow: 'hidden' }}>
-      {/* 中央ハイライト */}
       <div style={{
         position: 'absolute', top: ITEM_H, left: 0, right: 0,
         height: ITEM_H, background: '#f2f2f7', borderRadius: 8,
         pointerEvents: 'none', zIndex: 0,
       }} />
-      {/* スクロール領域 */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -96,7 +94,6 @@ function DrumColumn({
           msOverflowStyle: 'none', scrollbarWidth: 'none',
         }}
       >
-        {/* 上下パディング */}
         <div style={{ height: ITEM_H }} />
         {items.map((item, i) => {
           const selected = i === idx;
@@ -121,7 +118,6 @@ function DrumColumn({
         })}
         <div style={{ height: ITEM_H }} />
       </div>
-      {/* スクロールバー非表示 */}
       <style>{`
         div[style*="scroll-snap-type"]::-webkit-scrollbar { display: none; }
       `}</style>
@@ -130,7 +126,7 @@ function DrumColumn({
 }
 
 // ==============================
-// TimePicker component (drum roll style)
+// TimePicker: mobile=drum roll, PC=select dropdown
 // ==============================
 function TimePicker({
   value,
@@ -146,6 +142,48 @@ function TimePicker({
   const currentH = hours.includes(h) ? h : '09';
   const currentM = minutes.includes(m) ? m : '00';
 
+  const [isMobile, setIsMobile] = useState(true);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // PC: select dropdown
+  if (!isMobile) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '8px 0' }}>
+        <select
+          value={currentH}
+          onChange={(e) => onChange(`${e.target.value}:${currentM}`)}
+          style={{
+            fontSize: 20, fontWeight: 700, fontFamily: "'Roboto', sans-serif",
+            padding: '8px 12px', borderRadius: 10, border: '1px solid #e5e5ea',
+            background: '#fff', color: '#1a1a1a', cursor: 'pointer',
+            appearance: 'auto' as const,
+          }}
+        >
+          {hours.map(hh => <option key={hh} value={hh}>{hh}</option>)}
+        </select>
+        <span style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>:</span>
+        <select
+          value={currentM}
+          onChange={(e) => onChange(`${currentH}:${e.target.value}`)}
+          style={{
+            fontSize: 20, fontWeight: 700, fontFamily: "'Roboto', sans-serif",
+            padding: '8px 12px', borderRadius: 10, border: '1px solid #e5e5ea',
+            background: '#fff', color: '#1a1a1a', cursor: 'pointer',
+            appearance: 'auto' as const,
+          }}
+        >
+          {minutes.map(mm => <option key={mm} value={mm}>{mm}</option>)}
+        </select>
+      </div>
+    );
+  }
+
+  // Mobile: drum roll
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
@@ -156,10 +194,7 @@ function TimePicker({
         value={currentH}
         onChange={(v) => onChange(`${v}:${currentM}`)}
       />
-      <div style={{
-        fontSize: 22, fontWeight: 700, color: '#1a1a1a',
-        lineHeight: 1,
-      }}>:</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', lineHeight: 1 }}>:</div>
       <DrumColumn
         items={minutes}
         value={currentM}
@@ -186,6 +221,7 @@ export default function SpotEditModal({
   const [endTime, setEndTime] = useState(initialData?.endTime ?? '');
   const [showEndTime, setShowEndTime] = useState(!!initialData?.endTime);
   const [transport, setTransport] = useState<TransportType | undefined>(initialData?.transport);
+  const [assignee, setAssignee] = useState<AssigneeType | undefined>(initialData?.assignee);
   const [lat, setLat] = useState<number | undefined>(initialData?.lat);
   const [lng, setLng] = useState<number | undefined>(initialData?.lng);
   const [memo, setMemo] = useState(initialData?.memo ?? '');
@@ -207,6 +243,7 @@ export default function SpotEditModal({
       setEndTime(initialData?.endTime ?? '');
       setShowEndTime(!!initialData?.endTime);
       setTransport(initialData?.transport);
+      setAssignee(initialData?.assignee);
       setLat(initialData?.lat);
       setLng(initialData?.lng);
       setMemo(initialData?.memo ?? '');
@@ -265,6 +302,7 @@ export default function SpotEditModal({
       time,
       ...(showEndTime && endTime ? { endTime } : {}),
       ...(type === 'transit' && transport ? { transport } : {}),
+      ...(assignee && assignee !== 'all' ? { assignee } : {}),
       ...(lat !== undefined ? { lat } : {}),
       ...(lng !== undefined ? { lng } : {}),
       ...(memo.trim() ? { memo: memo.trim() } : {}),
@@ -281,6 +319,7 @@ export default function SpotEditModal({
 
   const spotTypes = Object.keys(SPOT_CONFIG) as SpotType[];
   const transportTypes = Object.keys(TRANSPORT_LABELS) as TransportType[];
+  const assigneeTypes = Object.keys(ASSIGNEE_CONFIG) as AssigneeType[];
 
   return (
     <>
@@ -360,7 +399,7 @@ export default function SpotEditModal({
             <div style={{ width: 36, height: 5, borderRadius: 2.5, background: '#c7c7cc' }} />
           </div>
 
-          {/* Header: ✕ タイトル ✓ */}
+          {/* Header */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -404,7 +443,7 @@ export default function SpotEditModal({
 
           {/* Form */}
           <div style={{ padding: '16px' }}>
-            {/* Name + Main toggle (same row) */}
+            {/* Name */}
             <div style={{ marginBottom: 12, position: 'relative' }}>
               <div style={{ marginBottom: 6 }}>
                 <label style={{ fontSize: 12, color: '#8e8e93', paddingLeft: 4, fontWeight: 500 }}>
@@ -515,6 +554,37 @@ export default function SpotEditModal({
                 </div>
               </div>
             )}
+
+            {/* Assignee selector */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 12, color: '#8e8e93', marginBottom: 6, display: 'block', paddingLeft: 4, fontWeight: 500 }}>
+                対象者
+              </label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {assigneeTypes.map((at) => {
+                  const config = ASSIGNEE_CONFIG[at];
+                  const selected = (assignee ?? 'all') === at;
+                  return (
+                    <button
+                      key={at}
+                      onClick={() => setAssignee(at)}
+                      style={{
+                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                        padding: '8px 10px', borderRadius: 12, border: 'none',
+                        background: selected ? '#1a1a1a' : '#fff',
+                        color: selected ? '#fff' : '#000',
+                        fontSize: 13, fontWeight: selected ? 600 : 400,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{config.icon}</span>
+                      <span>{config.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Time pickers */}
             <div style={{ marginBottom: 12 }}>

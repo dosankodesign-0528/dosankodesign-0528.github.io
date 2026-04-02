@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { Spot, getSpotConfig, TRANSPORT_LABELS } from '../lib/types';
+import { Spot, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG } from '../lib/types';
 import { cn } from '../lib/utils';
 
 interface TimelineProps {
@@ -85,6 +85,11 @@ export default function Timeline({
                           {TRANSPORT_LABELS[spot.transport]}
                         </span>
                       )}
+                      {spot.assignee && spot.assignee !== 'all' && (
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
+                          {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
+                        </span>
+                      )}
                     </div>
                     <span className="text-[14px] text-gray-600 truncate block">
                       {spot.name}
@@ -124,6 +129,11 @@ export default function Timeline({
                 {spot.endTime && (
                   <span className="text-[14px] text-gray-400 font-medium">
                     – {spot.endTime}
+                  </span>
+                )}
+                {spot.assignee && spot.assignee !== 'all' && (
+                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-500 font-medium">
+                    {ASSIGNEE_CONFIG[spot.assignee]?.icon} {ASSIGNEE_CONFIG[spot.assignee]?.label}
                   </span>
                 )}
                 <span

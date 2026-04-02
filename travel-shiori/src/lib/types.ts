@@ -9,6 +9,16 @@ export type SpotType = 'destination' | 'transit' | 'hotel' | 'food';
 /** 移動手段 */
 export type TransportType = 'subway' | 'shinkansen' | 'taxi' | 'bus' | 'walk';
 
+/** 人物フィルター */
+export type AssigneeType = 'all' | 'parents' | 'son';
+
+/** 人物フィルターの設定 */
+export const ASSIGNEE_CONFIG: Record<AssigneeType, { label: string; icon: string }> = {
+  all: { label: 'みんな', icon: '👨‍👩‍👦' },
+  parents: { label: '両親', icon: '👫' },
+  son: { label: '息子', icon: '🧑' },
+};
+
 /** 1つのスポット（行き先・立ち寄り場所）の情報 */
 export interface Spot {
   id: string;
@@ -19,6 +29,7 @@ export interface Spot {
   time: string;           // 到着予定時間 (HH:MM)
   endTime?: string;       // 出発予定時間 (HH:MM)
   transport?: TransportType;
+  assignee?: AssigneeType; // 誰のスケジュールか（未設定=みんな）
   lat?: number;           // 緯度
   lng?: number;           // 経度
   memo?: string;

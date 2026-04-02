@@ -85,6 +85,47 @@ export async function updateTrip(updated: Trip): Promise<void> {
   }
 }
 
+/** 旅行プランを複製 */
+export async function duplicateTrip(shareId: string): Promise<Trip | null> {
+  const original = await getTripByShareId(shareId);
+  if (!original) return null;
+
+  const now = new Date().toISOString();
+  const newTrip: Trip = {
+    ...original,
+    id: nanoid(),
+    title: `${original.title}（コピー）`,
+    shareId: nanoid(12),
+    createdAt: now,
+    updatedAt: now,
+    days: original.days.map(day => ({
+      ...day,
+      id: nanoid(),
+      tripId: '',
+      spots: day.spots.map(spot => ({
+        ...spot,
+        id: nanoid(),
+        dayId: '',
+      })),
+    })),
+  };
+  // IDを付け直す
+  newTrip.days.forEach(d => {
+    d.tripId = newTrip.id;
+    d.spots.forEach(s => { s.dayId = d.id; });
+  });
+
+  const { error } = await supabase
+    .from('trips')
+    .insert({ share_id: newTrip.shareId, data: newTrip });
+
+  if (error) {
+    console.error('duplicateTrip error:', error);
+    return null;
+  }
+  return newTrip;
+}
+
 /** 旅行プランを削除（shareIdで特定） */
 export async function deleteTrip(shareId: string): Promise<void> {
   const { error } = await supabase
@@ -95,6 +136,16 @@ export async function deleteTrip(shareId: string): Promise<void> {
   if (error) {
     console.error('deleteTrip error:', error);
   }
+}
+
+/** 日内のスポットを時刻順にソート */
+function sortSpotsByTime(spots: Spot[]): void {
+  spots.sort((a, b) => {
+    const timeA = a.time || '99:99';
+    const timeB = b.time || '99:99';
+    return timeA.localeCompare(timeB);
+  });
+  spots.forEach((s, i) => { s.sortOrder = i; });
 }
 
 /** スポットを追加 */
@@ -111,6 +162,7 @@ export async function addSpot(shareId: string, dayId: string, spot: Omit<Spot, '
     sortOrder: day.spots.length,
   };
   day.spots.push(newSpot);
+  sortSpotsByTime(day.spots);
   await updateTrip(trip);
   return trip;
 }
@@ -129,12 +181,14 @@ export async function updateSpot(shareId: string, spotId: string, updates: Parti
         const targetDay = trip.days.find(d => d.id === updates.dayId);
         if (targetDay) {
           day.spots.splice(idx, 1);
-          day.spots.forEach((s, i) => { s.sortOrder = i; });
+          sortSpotsByTime(day.spots);
           updatedSpot.sortOrder = targetDay.spots.length;
           targetDay.spots.push(updatedSpot);
+          sortSpotsByTime(targetDay.spots);
         }
       } else {
         day.spots[idx] = updatedSpot;
+        sortSpotsByTime(day.spots);
       }
 
       await updateTrip(trip);

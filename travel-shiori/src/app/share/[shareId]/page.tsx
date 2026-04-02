@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Map, List } from 'lucide-react';
-import { Trip, Day, Spot } from '../../../lib/types';
+import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
   getTripByShareId, updateTrip, addSpot, updateSpot, deleteSpot,
   deleteTrip as removeTripFromStorage, updateDayHeadline,
@@ -43,6 +43,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   const [showAddSpot, setShowAddSpot] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeType>('all');
 
   const [mapHeight, setMapHeight] = useState(35);
   const isDragging = useRef(false);
@@ -92,11 +93,16 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     });
   }, [shareId]);
 
-  const displaySpots: Spot[] = trip
+  const allSpots: Spot[] = trip
     ? selectedDayIdx === 0
       ? trip.days.flatMap((d) => d.spots)
       : (trip.days[selectedDayIdx - 1]?.spots ?? [])
     : [];
+
+  // 人物フィルター適用（「みんな」なら全表示、それ以外は該当 or 未設定/all のスポットのみ）
+  const displaySpots: Spot[] = assigneeFilter === 'all'
+    ? allSpots
+    : allSpots.filter((s) => !s.assignee || s.assignee === 'all' || s.assignee === assigneeFilter);
 
   const currentDay: Day | null = trip && selectedDayIdx > 0
     ? trip.days[selectedDayIdx - 1] ?? null
@@ -328,6 +334,24 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
               >
                 <MoreHorizontal className="w-4 h-4 text-gray-500" />
               </button>
+            </div>
+            {/* 人物フィルター */}
+            <div className="flex gap-1.5 mt-1.5 pb-0.5">
+              {(Object.keys(ASSIGNEE_CONFIG) as AssigneeType[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setAssigneeFilter(key)}
+                  className={cn(
+                    'flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium transition-all',
+                    assigneeFilter === key
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-50 text-gray-500 ring-1 ring-gray-200 active:bg-gray-100'
+                  )}
+                >
+                  <span className="text-[13px]">{ASSIGNEE_CONFIG[key].icon}</span>
+                  {ASSIGNEE_CONFIG[key].label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

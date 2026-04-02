@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy } from 'lucide-react';
 import { Trip } from '../lib/types';
-import { getTrips, createTrip, deleteTrip } from '../lib/storage';
+import { getTrips, createTrip, deleteTrip, duplicateTrip } from '../lib/storage';
 import { cn } from '../lib/utils';
-import SwipeableRow from '../components/SwipeableRow';
 
 function getDayOfWeek(dateStr: string): string {
   const days = ['日', '月', '火', '水', '木', '金', '土'];
@@ -31,6 +30,56 @@ function Logo() {
         <h1 className="text-[22px] font-bold text-gray-900 tracking-tight">旅のしおり</h1>
         <p className="text-[12px] text-gray-400 -mt-0.5">Travel Planner</p>
       </div>
+    </div>
+  );
+}
+
+function TripMenu({ shareId, onDelete, onDuplicate }: { shareId: string; onDelete: (id: string) => void; onDuplicate: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('touchstart', handleClick as unknown as EventListener);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('touchstart', handleClick as unknown as EventListener);
+    };
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative flex-shrink-0">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 active:bg-gray-200 transition-colors"
+      >
+        <MoreHorizontal className="w-5 h-5 text-gray-400" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-9 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/[0.08] overflow-hidden min-w-[140px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDuplicate(shareId); }}
+            className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <Copy className="w-4 h-4 text-gray-500" />
+            複製
+          </button>
+          <div className="h-px bg-gray-100" />
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(shareId); }}
+            className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-red-500 hover:bg-red-50 active:bg-red-100 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            削除
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -62,6 +111,13 @@ export default function HomePage() {
     await deleteTrip(shareId);
     setTrips(await getTrips());
     setDeleteConfirm(null);
+  };
+
+  const handleDuplicate = async (shareId: string) => {
+    const newTrip = await duplicateTrip(shareId);
+    if (newTrip) {
+      setTrips(await getTrips());
+    }
   };
 
   if (loading) {
@@ -114,24 +170,30 @@ export default function HomePage() {
               const spotCount = trip.days.reduce((sum, d) => sum + d.spots.length, 0);
 
               return (
-                <SwipeableRow key={trip.id} onDelete={() => setDeleteConfirm(trip.shareId)}>
-                  <div className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04]">
+                <div key={trip.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04]">
+                  <div className="flex items-center gap-2 p-4">
                     <button
                       onClick={() => router.push(`/share/${trip.shareId}`)}
-                      className="w-full text-left p-4 flex items-center gap-3 active:bg-gray-50/80 transition-colors rounded-2xl"
+                      className="flex-1 min-w-0 text-left active:opacity-70 transition-opacity"
                     >
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[17px] font-bold text-gray-900 truncate">{trip.title}</h3>
-                        <div className="flex items-center gap-1.5 mt-1.5 text-[13px] text-gray-500">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{formatDate(trip.startDate)} 〜 {formatDate(trip.endDate)}</span>
-                        </div>
-                        <p className="text-[12px] text-gray-400 mt-0.5">{dayCount}日間 · {spotCount}スポット</p>
+                      <h3 className="text-[17px] font-bold text-gray-900 truncate">{trip.title}</h3>
+                      <div className="flex items-center gap-1.5 mt-1.5 text-[13px] text-gray-500">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <span>{formatDate(trip.startDate)} 〜 {formatDate(trip.endDate)}</span>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                      <p className="text-[12px] text-gray-400 mt-0.5">{dayCount}日間 · {spotCount}スポット</p>
                     </button>
+                    <TripMenu
+                      shareId={trip.shareId}
+                      onDelete={(id) => setDeleteConfirm(id)}
+                      onDuplicate={handleDuplicate}
+                    />
+                    <ChevronRight
+                      className="w-5 h-5 text-gray-300 flex-shrink-0 cursor-pointer"
+                      onClick={() => router.push(`/share/${trip.shareId}`)}
+                    />
                   </div>
-                </SwipeableRow>
+                </div>
               );
             })}
           </div>
