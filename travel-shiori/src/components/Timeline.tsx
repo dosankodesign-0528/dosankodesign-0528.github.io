@@ -90,15 +90,15 @@ export default function Timeline({
             }}>
               <div className="flex items-baseline gap-2">
                 <span className={cn('font-black', color.text)}>
-                  <span className="text-[28px] tracking-tighter" style={{ fontWeight: 900 }}>{day.dayNum}</span>
-                  <span className="text-[18px] tracking-tight ml-[1px]">日目</span>
+                  <span className="text-[32px] tracking-tighter" style={{ fontWeight: 900 }}>{day.dayNum}</span>
+                  <span className="text-[20px] tracking-tight ml-[1px]">日目</span>
                 </span>
-                <span className="text-[15px] font-semibold text-gray-500">
+                <span className="text-[16px] font-semibold text-gray-500">
                   {section.dateLabel}
                 </span>
               </div>
               {section.headline && (
-                <p className="text-[13px] text-gray-400 mt-0.5 leading-snug">
+                <p className="text-[14px] text-gray-400 mt-0.5 leading-snug">
                   {section.headline}
                 </p>
               )}
@@ -188,48 +188,46 @@ function SpotCard({
           isSelected && 'bg-blue-50/50',
         )}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {/* 人物アイコン（assigneeあり） or 移動線アイコン */}
           {assignee ? (
             <img
               src={aColor!.avatar}
               alt={ASSIGNEE_CONFIG[assignee]?.label}
-              className={cn(
-                'w-10 h-10 rounded-full object-cover flex-shrink-0',
-              )}
+              className="w-11 h-11 rounded-full object-cover flex-shrink-0"
             />
           ) : (
             <div className="flex flex-col items-center gap-0.5 text-gray-300">
-              <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-              <span className="text-[13px]">{config?.icon ?? '📌'}</span>
-              <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+              <div className="w-0.5 h-2.5 bg-gray-200 rounded-full" />
+              <span className="text-[15px]">{config?.icon ?? '📌'}</span>
+              <div className="w-0.5 h-2.5 bg-gray-200 rounded-full" />
             </div>
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-[14px] tabular-nums text-gray-500 font-medium">
+              <span className="text-[15px] tabular-nums text-gray-500 font-medium">
                 {spot.time}
               </span>
               {spot.endTime && (
-                <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
+                <span className="text-[14px] text-gray-400">– {spot.endTime}</span>
               )}
               {spot.transport && TRANSPORT_LABELS[spot.transport] && (
-                <span className="text-[12px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                <span className="text-[13px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
                   {TRANSPORT_LABELS[spot.transport]}
                 </span>
               )}
               {assignee && (
-                <span className={cn('text-[11px] font-semibold', aColor!.text)}>
+                <span className={cn('text-[12px] font-semibold', aColor!.text)}>
                   {ASSIGNEE_CONFIG[assignee]?.label}
                 </span>
               )}
             </div>
-            <span className="text-[14px] text-gray-600 truncate block">
+            <span className="text-[15px] text-gray-600 truncate block">
               {spot.name}
             </span>
           </div>
           {!readOnly && (
-            <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
           )}
         </div>
       </button>
@@ -250,33 +248,33 @@ function SpotCard({
       )}
       style={{ borderLeft: `3px solid ${dayColor.hex}` }}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         {/* 左: アバター（assigneeあり時） */}
         {assignee && (
           <img
             src={aColor!.avatar}
             alt={ASSIGNEE_CONFIG[assignee]?.label}
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            className="w-11 h-11 rounded-full object-cover flex-shrink-0"
           />
         )}
 
         {/* ピンアイコン */}
-        <MiniPinIcon dayNum={dayNum} size={34} />
+        <MiniPinIcon dayNum={dayNum} size={36} />
 
         {/* メイン: 目的地名（主役）+ 時刻（脇役） */}
         <div className="flex-1 min-w-0">
-          <span className="text-[17px] font-bold text-gray-900 truncate block leading-tight">
+          <span className="text-[19px] font-bold text-gray-900 truncate block leading-tight">
             {spot.name}
           </span>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[13px] tabular-nums text-gray-400 font-medium">
+            <span className="text-[14px] tabular-nums text-gray-400 font-medium">
               {spot.time}
             </span>
             {spot.endTime && (
-              <span className="text-[12px] text-gray-400">– {spot.endTime}</span>
+              <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
             )}
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+              className="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
               style={{
                 backgroundColor: dayColor.hex + '15',
                 color: dayColor.hex,
@@ -289,22 +287,22 @@ function SpotCard({
 
         {/* 右: 操作 */}
         {!readOnly && (
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="pc-delete-btn w-6 h-6 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
+              className="pc-delete-btn w-8 h-8 rounded-full items-center justify-center hover:bg-red-50 transition-colors"
             >
-              <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-500" />
+              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
             </button>
-            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <ChevronRight className="w-5 h-5 text-gray-300" />
           </div>
         )}
       </div>
 
       {/* メモ（罫線で区切り） */}
       {spot.memo && (
-        <div className="mt-2 pl-[46px] pt-2 border-t border-gray-100">
-          <p className="text-[11px] text-gray-500 leading-relaxed">{spot.memo}</p>
+        <div className="mt-2.5 pl-[50px] pt-2 border-t border-gray-100">
+          <p className="text-[13px] text-gray-500 leading-relaxed">{spot.memo}</p>
         </div>
       )}
     </button>
@@ -317,9 +315,9 @@ function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
     return (
       <div className="flex items-center gap-3 py-3 mt-3">
         <div className="flex-1 h-px bg-gray-200" />
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
-          <span className="text-[18px]">👨‍👩‍👦</span>
-          <span className="text-[13px] text-gray-500 font-semibold">みんな合流</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full">
+          <span className="text-[20px]">👨‍👩‍👦</span>
+          <span className="text-[14px] text-gray-500 font-semibold">みんな合流</span>
         </div>
         <div className="flex-1 h-px bg-gray-200" />
       </div>
@@ -337,11 +335,11 @@ function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
   return (
     <div className="flex items-center gap-3 py-3 mt-3">
       <div className="flex-1 h-px bg-gray-200" />
-      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full border', c.bg, c.border)}>
+      <div className={cn('flex items-center gap-2 px-4 py-2 rounded-full border', c.bg, c.border)}>
         {avatarSrc && (
-          <img src={avatarSrc} alt="" className="w-6 h-6 rounded-full object-cover" />
+          <img src={avatarSrc} alt="" className="w-7 h-7 rounded-full object-cover" />
         )}
-        <span className={cn('text-[13px] font-bold', c.text)}>
+        <span className={cn('text-[14px] font-bold', c.text)}>
           {config?.label}だけ
         </span>
       </div>

@@ -305,7 +305,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
         <div className="mx-3 flex-1 text-center">
-          <span className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[15px] font-bold text-gray-900 truncate max-w-[200px]">
+          <span className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 truncate max-w-[220px]">
             {trip.title}
           </span>
         </div>
@@ -376,7 +376,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                     data-active-tab={selectedDayIdx === idx + 1 ? 'true' : undefined}
                     onClick={() => handleDayTabClick(idx)}
                     className={cn(
-                      'flex-shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
+                      'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[14px] font-medium transition-all whitespace-nowrap',
                       selectedDayIdx === idx + 1
                         ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-500 active:bg-gray-200'
@@ -397,7 +397,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                     key={item.key}
                     onClick={() => setAssigneeFilter(item.key)}
                     className={cn(
-                      'px-2.5 py-1 rounded-md text-[12px] font-semibold transition-all whitespace-nowrap',
+                      'px-2.5 py-1 rounded-md text-[13px] font-semibold transition-all whitespace-nowrap',
                       assigneeFilter === item.key
                         ? cn('bg-white shadow-sm', item.activeText)
                         : 'text-gray-400'
