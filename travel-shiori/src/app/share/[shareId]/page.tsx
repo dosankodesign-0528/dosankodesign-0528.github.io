@@ -365,57 +365,49 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           <div className="flex justify-center items-center py-2">
             <div className="w-9 h-1 bg-gray-300 rounded-full" />
           </div>
-          {/* 人物フィルター（上段右寄せ）+ 日程タブ */}
+          {/* 日程タブ + 人物フィルター（横並び） */}
           <div className="px-3 pt-1 pb-1.5 border-b border-gray-100">
-            {/* 上段: 人物フィルター（ミニセグメント） */}
-            <div className="flex justify-end mb-1">
-              <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 gap-0">
-                {([
-                  { key: 'all' as const, label: '全員', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700' },
-                  { key: 'parents' as const, label: '両親', icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600' },
-                  { key: 'son' as const, label: '息子', icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600' },
-                ] as const).map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setAssigneeFilter(item.key)}
-                    className={cn(
-                      'flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all',
-                      assigneeFilter === item.key
-                        ? cn('bg-white shadow-sm', item.activeText)
-                        : 'text-gray-400'
-                    )}
-                  >
-                    {item.avatar
-                      ? <img src={item.avatar} alt={item.label} className="w-4 h-4 rounded-full object-cover" />
-                      : <span className="text-[12px] leading-none">{item.icon}</span>
-                    }
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* 下段: 日程タブ */}
-            <div className="flex items-center gap-1.5">
-              <div ref={tabContainerRef} className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex items-center gap-2">
+              {/* 左: 日程タブ */}
+              <div ref={tabContainerRef} className="flex gap-1 overflow-x-auto no-scrollbar pb-1">
                 {trip.days.map((day, idx) => (
                   <button
                     key={day.id}
                     data-active-tab={selectedDayIdx === idx + 1 ? 'true' : undefined}
                     onClick={() => handleDayTabClick(idx)}
                     className={cn(
-                      'flex-shrink-0 px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
+                      'flex-shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all whitespace-nowrap',
                       selectedDayIdx === idx + 1
                         ? 'bg-gray-900 text-white'
                         : 'bg-gray-100 text-gray-500 active:bg-gray-200'
                     )}
                   >
                     {day.dayNum}日目
-                    <span className={cn(
-                      'ml-1',
-                      selectedDayIdx === idx + 1 ? 'text-white/60' : 'text-gray-400'
-                    )}>
-                      {formatShortDate(trip.startDate, idx)}
-                    </span>
+                  </button>
+                ))}
+              </div>
+              {/* 右: 人物フィルター */}
+              <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5 ml-auto">
+                {([
+                  { key: 'all' as const, label: '全', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700' },
+                  { key: 'parents' as const, label: null, icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600' },
+                  { key: 'son' as const, label: null, icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600' },
+                ] as const).map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setAssigneeFilter(item.key)}
+                    className={cn(
+                      'flex items-center justify-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all',
+                      assigneeFilter === item.key
+                        ? cn('bg-white shadow-sm', item.activeText)
+                        : 'text-gray-400'
+                    )}
+                  >
+                    {item.avatar
+                      ? <img src={item.avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
+                      : <span className="text-[13px] leading-none">{item.icon}</span>
+                    }
+                    {item.label && <span>{item.label}</span>}
                   </button>
                 ))}
               </div>
