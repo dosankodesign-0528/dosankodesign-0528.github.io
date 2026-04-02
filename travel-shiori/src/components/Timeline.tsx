@@ -1,13 +1,8 @@
 'use client';
 
 import { ChevronRight, Trash2 } from 'lucide-react';
-import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, AssigneeType, DAY_COLORS, getDayColor } from '../lib/types';
+import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
-
-/** スポットの「有効なassignee」を返す（未設定='all'扱い） */
-function getEffectiveAssignee(spot: Spot): AssigneeType {
-  return spot.assignee && spot.assignee !== 'all' ? spot.assignee : 'all';
-}
 
 /** Day セクション情報 */
 export interface DaySection {
@@ -65,15 +60,6 @@ export default function Timeline({
         if (spots.length === 0) return null;
         const color = dayColors[section.dayIdx % dayColors.length];
 
-        // 人物グループ切り替え計算
-        const assigneeChangeIndices = new Set<number>();
-        for (let i = 0; i < spots.length; i++) {
-          const curr = getEffectiveAssignee(spots[i]);
-          const prev = i > 0 ? getEffectiveAssignee(spots[i - 1]) : 'all';
-          if (curr !== 'all' && curr !== prev) assigneeChangeIndices.add(i);
-          if (curr === 'all' && prev !== 'all') assigneeChangeIndices.add(i);
-        }
-
         return (
           <div key={day.id} data-day-idx={section.dayIdx}>
             {/* Day 間の余白（最初のセクション以外） */}
@@ -104,26 +90,18 @@ export default function Timeline({
 
             {/* スポット一覧 */}
             <div className="flex flex-col gap-1.5 pt-2">
-              {spots.map((spot, spotIdx) => {
-                const effectiveAssignee = getEffectiveAssignee(spot);
-                const showGroupHeader = assigneeChangeIndices.has(spotIdx);
-
-                return (
-                  <div key={spot.id}>
-                    {showGroupHeader && (
-                      <AssigneeGroupHeader assignee={effectiveAssignee} />
-                    )}
-                    <SpotCard
-                      spot={spot}
-                      dayNum={day.dayNum}
-                      isSelected={selectedSpotId === spot.id}
-                      readOnly={readOnly}
-                      onSelect={() => onSpotSelect(spot.id)}
-                      onDelete={() => onSpotDelete(spot.id)}
-                    />
-                  </div>
-                );
-              })}
+              {spots.map((spot) => (
+                <div key={spot.id}>
+                  <SpotCard
+                    spot={spot}
+                    dayNum={day.dayNum}
+                    isSelected={selectedSpotId === spot.id}
+                    readOnly={readOnly}
+                    onSelect={() => onSpotSelect(spot.id)}
+                    onDelete={() => onSpotDelete(spot.id)}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -304,35 +282,5 @@ function SpotCard({
         </div>
       )}
     </button>
-  );
-}
-
-/** 人物グループの区切りヘッダー */
-function AssigneeGroupHeader({ assignee }: { assignee: AssigneeType }) {
-  if (assignee === 'all') {
-    return (
-      <div className="flex items-center gap-2 py-2 mt-2 px-1">
-        <div className="flex-1 h-px bg-gray-100" />
-        <span className="text-[12px] text-gray-400 font-medium">👨‍👩‍👦 合流</span>
-        <div className="flex-1 h-px bg-gray-100" />
-      </div>
-    );
-  }
-
-  const config = ASSIGNEE_CONFIG[assignee];
-  const colors: Record<string, { text: string }> = {
-    parents: { text: 'text-orange-500' },
-    son:     { text: 'text-green-500' },
-  };
-  const c = colors[assignee] || { text: 'text-gray-500' };
-
-  return (
-    <div className="flex items-center gap-2 py-2 mt-2 px-1">
-      <div className="flex-1 h-px bg-gray-100" />
-      <span className={cn('text-[12px] font-medium', c.text)}>
-        {config?.label}だけ
-      </span>
-      <div className="flex-1 h-px bg-gray-100" />
-    </div>
   );
 }
