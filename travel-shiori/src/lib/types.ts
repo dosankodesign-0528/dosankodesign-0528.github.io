@@ -85,14 +85,19 @@ export function getDayColor(dayNum: number) {
   return DAY_COLORS[(dayNum - 1) % DAY_COLORS.length];
 }
 
-/** 移動手段のラベル */
-export const TRANSPORT_LABELS: Record<string, string> = {
-  subway: '地下鉄',
-  shinkansen: '新幹線',
-  taxi: 'タクシー',
-  bus: 'バス',
-  walk: '徒歩',
-  car: '車',
-  plane: '飛行機',
-  other: 'その他',
+/** 移動手段のラベルとアイコン */
+export const TRANSPORT_CONFIG: Record<string, { label: string; icon: string }> = {
+  subway: { label: '地下鉄', icon: '🚇' },
+  shinkansen: { label: '新幹線', icon: '🚅' },
+  taxi: { label: 'タクシー', icon: '🚕' },
+  bus: { label: 'バス', icon: '🚌' },
+  walk: { label: '徒歩', icon: '🚶' },
+  car: { label: '車', icon: '🚗' },
+  plane: { label: '飛行機', icon: '✈️' },
+  other: { label: 'その他', icon: '🔄' },
 };
+
+/** 後方互換: ラベルだけ必要な場面用 */
+export const TRANSPORT_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(TRANSPORT_CONFIG).map(([k, v]) => [k, v.label])
+);

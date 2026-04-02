@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Spot, SpotType, TransportType, AssigneeType, SPOT_CONFIG, TRANSPORT_LABELS, ASSIGNEE_CONFIG, getSpotConfig } from '../lib/types';
+import { Spot, SpotType, TransportType, AssigneeType, SPOT_CONFIG, TRANSPORT_LABELS, TRANSPORT_CONFIG, ASSIGNEE_CONFIG, getSpotConfig } from '../lib/types';
 
 export interface SpotFormData {
   name: string;
@@ -504,8 +504,8 @@ export default function SpotEditModal({
                       key={st}
                       onClick={() => { setType(st); setIsMain(st === 'destination'); }}
                       style={{
-                        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '6px 12px', borderRadius: 20, border: 'none',
+                        flexShrink: 0, display: 'flex', alignItems: 'center',
+                        padding: '6px 14px', borderRadius: 20, border: 'none',
                         background: selected ? config.color : '#fff',
                         color: selected ? '#fff' : '#000',
                         fontSize: 13, fontWeight: selected ? 600 : 400,
@@ -513,8 +513,7 @@ export default function SpotEditModal({
                         boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
                       }}
                     >
-                      <span style={{ fontSize: 14 }}>{config.icon}</span>
-                      <span>{config.label}</span>
+                      {config.label}
                     </button>
                   );
                 })}
@@ -660,11 +659,13 @@ export default function SpotEditModal({
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {transportTypes.map((tt) => {
                     const selected = transport === tt;
+                    const tc = TRANSPORT_CONFIG[tt];
                     return (
                       <button
                         key={tt}
                         onClick={() => setTransport(tt)}
                         style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
                           padding: '6px 12px', borderRadius: 20, border: 'none',
                           background: selected ? '#1a1a1a' : '#fff',
                           color: selected ? '#fff' : '#000',
@@ -673,7 +674,8 @@ export default function SpotEditModal({
                           boxShadow: selected ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
                         }}
                       >
-                        {TRANSPORT_LABELS[tt]}
+                        <span style={{ fontSize: 15 }}>{tc?.icon}</span>
+                        <span>{tc?.label}</span>
                       </button>
                     );
                   })}

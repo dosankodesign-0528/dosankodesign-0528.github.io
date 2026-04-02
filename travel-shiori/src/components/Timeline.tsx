@@ -1,21 +1,8 @@
 'use client';
 
-import { ChevronRight, Trash2, Train, TrainFront, Car, Bus, Footprints, Plane, MoreHorizontal } from 'lucide-react';
-import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
+import { ChevronRight, Trash2 } from 'lucide-react';
+import { Spot, Day, getSpotConfig, TRANSPORT_LABELS, TRANSPORT_CONFIG, ASSIGNEE_CONFIG, DAY_COLORS, getDayColor } from '../lib/types';
 import { cn } from '../lib/utils';
-import type { LucideIcon } from 'lucide-react';
-
-/** 移動手段のアイコン */
-const TRANSPORT_ICONS: Record<string, LucideIcon> = {
-  subway: Train,
-  shinkansen: TrainFront,
-  taxi: Car,
-  car: Car,
-  bus: Bus,
-  walk: Footprints,
-  plane: Plane,
-  other: MoreHorizontal,
-};
 
 /** Day セクション情報 */
 export interface DaySection {
@@ -167,31 +154,24 @@ function SpotCard({
   const dayColor = getDayColor(dayNum);
 
   if (isTransit) {
+    const tc = spot.transport ? TRANSPORT_CONFIG[spot.transport] : null;
     return (
       <button
         type="button"
         onClick={onSelect}
         className={cn(
-          'w-full text-left rounded-xl py-2.5 px-3 transition-all duration-150 active:scale-[0.98]',
-          assignee ? cn(aColor!.bg, 'ring-1', aColor!.ring) : 'bg-transparent ml-3',
-          isSelected && 'bg-blue-50/50',
+          'w-full text-left rounded-xl py-3 px-3.5 transition-all duration-150 active:scale-[0.98]',
+          'bg-gray-50 ring-1 ring-gray-100',
+          isSelected && 'ring-2 ring-blue-500/30 bg-blue-50/30',
         )}
       >
-        <div className="flex items-center gap-2.5">
-          {/* 移動手段アイコン */}
-          {(() => {
-            const TransportIcon = spot.transport ? TRANSPORT_ICONS[spot.transport] : null;
-            return (
-              <div className="flex flex-col items-center gap-0.5 flex-shrink-0 w-8">
-                <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-                {TransportIcon
-                  ? <TransportIcon className="w-5 h-5 text-gray-400" />
-                  : <MoreHorizontal className="w-5 h-5 text-gray-300" />
-                }
-                <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
-              </div>
-            );
-          })()}
+        <div className="flex items-center gap-3">
+          {/* 移動手段emoji */}
+          <div className="flex flex-col items-center flex-shrink-0 w-9">
+            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+            <span className="text-[22px] leading-none my-0.5">{tc?.icon ?? '🔄'}</span>
+            <div className="w-0.5 h-2 bg-gray-200 rounded-full" />
+          </div>
           <div className="flex-1 min-w-0">
             <span className="text-[15px] font-semibold text-gray-700 truncate block">
               {spot.name}
@@ -203,9 +183,9 @@ function SpotCard({
               {spot.endTime && (
                 <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
               )}
-              {spot.transport && TRANSPORT_LABELS[spot.transport] && (
-                <span className="text-[13px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-                  {TRANSPORT_LABELS[spot.transport]}
+              {tc && (
+                <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-200/70 text-gray-600 font-medium">
+                  {tc.label}
                 </span>
               )}
             </div>
