@@ -417,7 +417,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             daySections={daySections}
             selectedSpotId={selectedSpotId}
             onSpotSelect={handleSpotTap}
-            onSpotEdit={setEditSpotId}
             onSpotDelete={handleDeleteSpot}
             onAdd={() => setShowAddSpot(true)}
             readOnly={false}

@@ -18,7 +18,6 @@ interface TimelineProps {
   daySections: DaySection[];
   selectedSpotId: string | null;
   onSpotSelect: (id: string) => void;
-  onSpotEdit: (id: string) => void;
   onSpotDelete: (id: string) => void;
   onAdd?: () => void;
   readOnly: boolean;
@@ -111,9 +110,9 @@ export default function Timeline({
 }
 
 /** 人物の色テーマ + アバター画像 */
-const ASSIGNEE_COLORS: Record<string, { bg: string; ring: string; iconBg: string; text: string; avatar: string }> = {
-  parents: { bg: 'bg-orange-50', ring: 'ring-orange-200', iconBg: 'bg-orange-100', text: 'text-orange-700', avatar: '/avatar-parents-sm.jpg' },
-  son:     { bg: 'bg-green-50',  ring: 'ring-green-200',  iconBg: 'bg-green-100',  text: 'text-green-700',  avatar: '/avatar-son-sm.jpg' },
+const ASSIGNEE_COLORS: Record<string, { bg: string; text: string; avatar: string }> = {
+  parents: { bg: 'bg-orange-50', text: 'text-orange-700', avatar: '/avatar-parents-sm.jpg' },
+  son:     { bg: 'bg-green-50',  text: 'text-green-700',  avatar: '/avatar-son-sm.jpg' },
 };
 
 /** ミニピンアイコン（マップピンと同じデザインの小型版） */
@@ -214,7 +213,7 @@ function SpotCard({
         'w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98]',
         'shadow-sm p-3.5',
         assignee
-          ? cn(aColor!.bg, 'ring-1', aColor!.ring)
+          ? aColor!.bg
           : 'bg-white ring-1 ring-black/[0.04]',
         isSelected && 'ring-2 ring-blue-500/30 shadow-md',
       )}
