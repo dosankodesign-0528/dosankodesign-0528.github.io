@@ -382,7 +382,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                         : 'bg-gray-100 text-gray-500 active:bg-gray-200'
                     )}
                   >
-                    Day {day.dayNum}
+                    {day.dayNum}日目
                     <span className={cn(
                       'ml-1',
                       selectedDayIdx === idx + 1 ? 'text-white/60' : 'text-gray-400'

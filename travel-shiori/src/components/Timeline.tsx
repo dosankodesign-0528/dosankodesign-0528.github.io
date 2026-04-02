@@ -99,7 +99,7 @@ export default function Timeline({
                     'text-[15px] font-extrabold text-white rounded-lg px-2.5 py-1',
                     color.bg,
                   )}>
-                    Day {day.dayNum}
+                    {day.dayNum}日目
                   </span>
                   <span className="text-[17px] font-bold text-gray-800">
                     {section.dateLabel}
