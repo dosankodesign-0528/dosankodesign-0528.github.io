@@ -55,11 +55,20 @@ export default function Timeline({
     );
   }
 
+  // Day ごとの色テーマ
+  const dayColors = [
+    { bg: 'bg-blue-600', light: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600' },
+    { bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-600' },
+    { bg: 'bg-amber-600', light: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600' },
+    { bg: 'bg-purple-600', light: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-600' },
+  ];
+
   return (
     <div className="px-3 pt-1">
-      {daySections.map((section) => {
+      {daySections.map((section, sectionIdx) => {
         const { day, spots } = section;
         if (spots.length === 0) return null;
+        const color = dayColors[section.dayIdx % dayColors.length];
 
         // 人物グループ切り替え計算
         const assigneeChangeIndices = new Set<number>();
@@ -71,29 +80,41 @@ export default function Timeline({
         }
 
         return (
-          <div key={day.id} data-day-idx={section.dayIdx} className="mb-2">
+          <div key={day.id} data-day-idx={section.dayIdx}>
+            {/* Day 間の区切りスペース（最初のセクション以外） */}
+            {sectionIdx > 0 && (
+              <div className="py-4 -mx-3 px-3">
+                <div className="h-[3px] bg-gray-100 rounded-full" />
+              </div>
+            )}
+
             {/* Day セクションヘッダー */}
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-3 px-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[13px] font-bold text-white bg-gray-900 rounded-md px-2 py-0.5">
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm -mx-3 px-3 pt-2 pb-3">
+              <div className={cn(
+                'rounded-xl p-3',
+                color.light, 'border', color.border,
+              )}>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    'text-[15px] font-extrabold text-white rounded-lg px-2.5 py-1',
+                    color.bg,
+                  )}>
                     Day {day.dayNum}
                   </span>
-                  <span className="text-[14px] font-semibold text-gray-700">
+                  <span className="text-[17px] font-bold text-gray-800">
                     {section.dateLabel}
                   </span>
                 </div>
                 {section.headline && (
-                  <span className="text-[13px] text-gray-400 truncate flex-1">
+                  <p className={cn('text-[14px] font-medium mt-1.5 ml-0.5', color.text)}>
                     {section.headline}
-                  </span>
+                  </p>
                 )}
               </div>
-              <div className="mt-2 h-px bg-gradient-to-r from-gray-300 via-gray-200 to-transparent" />
             </div>
 
             {/* スポット一覧 */}
-            <div className="flex flex-col gap-1.5 pt-1">
+            <div className="flex flex-col gap-1.5 pt-2">
               {spots.map((spot, spotIdx) => {
                 const effectiveAssignee = getEffectiveAssignee(spot);
                 const showGroupHeader = assigneeChangeIndices.has(spotIdx);

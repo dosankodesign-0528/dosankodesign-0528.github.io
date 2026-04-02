@@ -194,16 +194,21 @@ function MapController({
             onLocate(latitude, longitude);
 
             // マップの見える部分の中央に来るようオフセット補正
-            // マップ全体の高さと、見えてる部分（visibleHeightVh）の差分をピクセルで算出
+            // 1. まず現在位置を一旦中央にセット（アニメなし）してピクセル座標を取得
+            // 2. 見える領域の中央ピクセルを算出し、そこに対応する緯度経度を逆算
+            // 3. 補正済み中心で setView する（1回だけ）
+            map.setView([latitude, longitude], 15, { animate: false });
+
             const mapContainerH = map.getSize().y;
             const visibleH = (visibleHeightVh / 100) * window.innerHeight;
-            const offsetY = (mapContainerH - visibleH) / 2;
+            // 見える領域の中央Y = visibleH / 2
+            // マップコンテナ中央Y = mapContainerH / 2
+            // ユーザー位置を visibleH/2 に置くには、地図中心を下にずらす
+            const targetCenterY = mapContainerH / 2 + (mapContainerH / 2 - visibleH / 2);
+            const targetCenterX = map.getSize().x / 2;
+            const adjustedCenter = map.containerPointToLatLng([targetCenterX, targetCenterY]);
 
-            map.setView([latitude, longitude], 15, { animate: true, duration: 0.5 });
-            // setView後にオフセット分だけパン（正の値で地図を下にずらし、ドットを見える領域の中央へ）
-            setTimeout(() => {
-              map.panBy([0, offsetY], { animate: true, duration: 0.3 });
-            }, 100);
+            map.setView(adjustedCenter, 15, { animate: true, duration: 0.5 });
           },
           () => {
             alert('位置情報を取得できませんでした。\n設定で位置情報の許可を確認してください。');
