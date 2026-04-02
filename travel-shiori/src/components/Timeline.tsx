@@ -250,35 +250,30 @@ function SpotCard({
       )}
       style={{ borderLeft: `3px solid ${dayColor.hex}` }}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* 左: アバター（assigneeあり時） */}
         {assignee && (
-          <div className="flex flex-col items-center gap-1 flex-shrink-0">
-            <img
-              src={aColor!.avatar}
-              alt={ASSIGNEE_CONFIG[assignee]?.label}
-              className="w-14 h-14 rounded-full object-cover"
-            />
-            <span className={cn('text-[11px] font-bold', aColor!.text)}>
-              {ASSIGNEE_CONFIG[assignee]?.label}
-            </span>
-          </div>
+          <img
+            src={aColor!.avatar}
+            alt={ASSIGNEE_CONFIG[assignee]?.label}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+          />
         )}
 
         {/* ピンアイコン */}
-        <MiniPinIcon dayNum={dayNum} size={28} />
+        <MiniPinIcon dayNum={dayNum} size={34} />
 
         {/* メイン: 目的地名（主役）+ 時刻（脇役） */}
         <div className="flex-1 min-w-0">
-          <span className="text-[18px] font-bold text-gray-900 truncate block leading-tight">
+          <span className="text-[17px] font-bold text-gray-900 truncate block leading-tight">
             {spot.name}
           </span>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[14px] tabular-nums text-gray-400 font-medium">
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[13px] tabular-nums text-gray-400 font-medium">
               {spot.time}
             </span>
             {spot.endTime && (
-              <span className="text-[13px] text-gray-400">– {spot.endTime}</span>
+              <span className="text-[12px] text-gray-400">– {spot.endTime}</span>
             )}
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
@@ -308,7 +303,7 @@ function SpotCard({
 
       {/* メモ（罫線で区切り） */}
       {spot.memo && (
-        <div className="mt-2 ml-11 pt-2 border-t border-gray-100">
+        <div className="mt-2 pl-[46px] pt-2 border-t border-gray-100">
           <p className="text-[11px] text-gray-500 leading-relaxed">{spot.memo}</p>
         </div>
       )}

@@ -365,8 +365,36 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
           <div className="flex justify-center items-center py-2">
             <div className="w-9 h-1 bg-gray-300 rounded-full" />
           </div>
-          {/* 日程タブ + 設定 */}
+          {/* 人物フィルター（上段右寄せ）+ 日程タブ */}
           <div className="px-3 pt-1 pb-1.5 border-b border-gray-100">
+            {/* 上段: 人物フィルター（ミニセグメント） */}
+            <div className="flex justify-end mb-1">
+              <div className="inline-flex items-center bg-gray-100 rounded-lg p-0.5 gap-0">
+                {([
+                  { key: 'all' as const, label: '全員', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700' },
+                  { key: 'parents' as const, label: '両親', icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600' },
+                  { key: 'son' as const, label: '息子', icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600' },
+                ] as const).map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setAssigneeFilter(item.key)}
+                    className={cn(
+                      'flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all',
+                      assigneeFilter === item.key
+                        ? cn('bg-white shadow-sm', item.activeText)
+                        : 'text-gray-400'
+                    )}
+                  >
+                    {item.avatar
+                      ? <img src={item.avatar} alt={item.label} className="w-4 h-4 rounded-full object-cover" />
+                      : <span className="text-[12px] leading-none">{item.icon}</span>
+                    }
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* 下段: 日程タブ */}
             <div className="flex items-center gap-1.5">
               <div ref={tabContainerRef} className="flex-1 flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                 {trip.days.map((day, idx) => (
@@ -391,31 +419,6 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   </button>
                 ))}
               </div>
-            </div>
-            {/* 人物フィルター（コンパクトピル） */}
-            <div className="flex items-center gap-1 mt-1.5 mb-0.5">
-              {([
-                { key: 'all' as const, label: '全員', icon: '👨‍👩‍👦', avatar: null, activeText: 'text-gray-700', activeBg: 'bg-gray-200' },
-                { key: 'parents' as const, label: '両親', icon: null, avatar: '/avatar-parents-sm.jpg', activeText: 'text-orange-600', activeBg: 'bg-orange-50' },
-                { key: 'son' as const, label: '息子', icon: null, avatar: '/avatar-son-sm.jpg', activeText: 'text-green-600', activeBg: 'bg-green-50' },
-              ] as const).map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setAssigneeFilter(item.key)}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold transition-all',
-                    assigneeFilter === item.key
-                      ? cn(item.activeBg, item.activeText)
-                      : 'text-gray-400 hover:text-gray-500'
-                  )}
-                >
-                  {item.avatar
-                    ? <img src={item.avatar} alt={item.label} className="w-4 h-4 rounded-full object-cover" />
-                    : <span className="text-[12px]">{item.icon}</span>
-                  }
-                  {item.label}
-                </button>
-              ))}
             </div>
           </div>
         </div>
