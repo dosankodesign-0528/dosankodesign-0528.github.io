@@ -175,7 +175,7 @@ function DraftCard({
       <button
         type="button"
         onClick={onTap}
-        className="w-full text-left rounded-xl py-3 px-3.5 transition-all duration-150 active:scale-[0.98] border-2 border-dashed border-blue-300 bg-blue-50/30"
+        className="w-full text-left rounded-xl py-3 px-3.5 border-2 border-dashed border-blue-300 bg-blue-50/30"
       >
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center flex-shrink-0 w-10">
@@ -213,7 +213,7 @@ function DraftCard({
     <button
       type="button"
       onClick={onTap}
-      className="w-full text-left rounded-2xl transition-all duration-150 active:scale-[0.98] p-3.5 border-2 border-dashed border-blue-300 bg-blue-50/30"
+      className="w-full text-left rounded-2xl p-3.5 border-2 border-dashed border-blue-300 bg-blue-50/30"
     >
       <div className="flex items-center gap-3">
         <MiniPinIcon dayNum={dayNum} size={36} draft />

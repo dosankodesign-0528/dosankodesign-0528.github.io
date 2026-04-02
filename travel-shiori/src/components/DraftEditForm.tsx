@@ -4,6 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import { Spot, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_CONFIG } from '../lib/types';
 import type { DraftSpot } from '../lib/trip-review';
 
+/** 未入力フィールドのアラートバッジ */
+function MissingBadge({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-orange-50 border border-dashed border-orange-300 text-orange-500 font-medium">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+      </svg>
+      {label}
+    </span>
+  );
+}
+
 interface NominatimResult {
   display_name: string;
   lat: string;
@@ -89,6 +101,11 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
   const spotTypes = Object.keys(SPOT_CONFIG) as SpotType[];
   const transportTypes = Object.keys(TRANSPORT_CONFIG) as TransportType[];
 
+  // 未入力チェック
+  const isNameEmpty = !name.trim() || name === '宿泊先' || name === '食事';
+  const isTimeEmpty = !time;
+  const isTransportEmpty = type === 'transit' && !transport;
+
   return (
     <div className="flex flex-col h-full">
       {/* ヘッダー: 戻る + 完了 */}
@@ -116,7 +133,10 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
       <div className="flex-1 overflow-y-auto px-4 pb-8">
         {/* スポット名 */}
         <div className="mb-3 relative">
-          <label className="text-[12px] text-gray-400 mb-1 block pl-1 font-medium">スポット名</label>
+          <div className="flex items-center gap-2 mb-1 pl-1">
+            <label className="text-[12px] text-gray-400 font-medium">スポット名</label>
+            {isNameEmpty && <MissingBadge label="名前を入力してください" />}
+          </div>
           <input
             type="text"
             placeholder="場所を検索..."
@@ -124,7 +144,7 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
             onChange={(e) => handleNameChange(e.target.value)}
             onFocus={() => searchResults.length > 0 && setShowResults(true)}
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
-            className="w-full px-4 py-3 bg-white rounded-xl text-[16px] outline-none focus:ring-2 focus:ring-blue-500/30"
+            className={`w-full px-4 py-3 bg-white rounded-xl text-[16px] outline-none focus:ring-2 focus:ring-blue-500/30 ${isNameEmpty ? 'ring-1 ring-orange-300' : ''}`}
           />
           {showResults && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white rounded-xl shadow-lg z-10 mt-1 overflow-hidden">
@@ -171,12 +191,15 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
         <div className="mb-3">
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-[12px] text-gray-400 mb-1 block pl-1 font-medium">開始時刻</label>
+              <div className="flex items-center gap-2 mb-1 pl-1">
+                <label className="text-[12px] text-gray-400 font-medium">開始時刻</label>
+                {isTimeEmpty && <MissingBadge label="未設定" />}
+              </div>
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-3 bg-white rounded-xl text-[16px] outline-none focus:ring-2 focus:ring-blue-500/30"
+                className={`w-full px-4 py-3 bg-white rounded-xl text-[16px] outline-none focus:ring-2 focus:ring-blue-500/30 ${isTimeEmpty ? 'ring-1 ring-orange-300' : ''}`}
               />
             </div>
             <div className="flex-1">
@@ -194,7 +217,10 @@ export default function DraftEditForm({ draft, onSave, onBack }: DraftEditFormPr
         {/* 移動手段（transit のみ） */}
         {type === 'transit' && (
           <div className="mb-3">
-            <label className="text-[12px] text-gray-400 mb-1.5 block pl-1 font-medium">移動手段</label>
+            <div className="flex items-center gap-2 mb-1.5 pl-1">
+              <label className="text-[12px] text-gray-400 font-medium">移動手段</label>
+              {isTransportEmpty && <MissingBadge label="選択してください" />}
+            </div>
             <div className="flex gap-1.5 flex-wrap">
               {transportTypes.map((tt) => {
                 const selected = transport === tt;
