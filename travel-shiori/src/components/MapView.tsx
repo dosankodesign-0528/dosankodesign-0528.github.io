@@ -29,9 +29,9 @@ export interface MapViewHandle {
   locateMe: () => void;
 }
 
-// Google Maps風タイル（日本語ラベル対応）
+// Google Maps風タイル（日本語ラベル・高解像度Retina対応）
 const TILE_URL =
-  'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ja';
+  'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ja&scale=2';
 const TILE_ATTRIBUTION =
   '&copy; Google Maps';
 
@@ -345,7 +345,9 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
       <TileLayer
         url={TILE_URL}
         attribution={TILE_ATTRIBUTION}
-        maxZoom={19}
+        maxZoom={20}
+        tileSize={512}
+        zoomOffset={-1}
       />
 
       <FitBounds spots={geoSpots} />
