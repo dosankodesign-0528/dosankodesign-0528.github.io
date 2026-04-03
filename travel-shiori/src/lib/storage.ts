@@ -54,6 +54,42 @@ export async function getTripByShareId(shareId: string): Promise<Trip | null> {
   return (data?.data as Trip) ?? null;
 }
 
+/** 編集用 or 閲覧用IDで旅行プランを取得（どちらのIDか判定付き） */
+export async function getTripByAnyShareId(id: string): Promise<{ trip: Trip; readOnly: boolean } | null> {
+  // まず編集用IDで検索
+  const { data: editData } = await supabase
+    .from('trips')
+    .select('share_id, view_id, data')
+    .eq('share_id', id)
+    .single();
+
+  if (editData) {
+    const trip = editData.data as Trip;
+    // viewIdが未設定の既存データを補完
+    if (!trip.viewId && editData.view_id) {
+      trip.viewId = editData.view_id;
+    }
+    return { trip, readOnly: false };
+  }
+
+  // 閲覧用IDで検索
+  const { data: viewData } = await supabase
+    .from('trips')
+    .select('share_id, view_id, data')
+    .eq('view_id', id)
+    .single();
+
+  if (viewData) {
+    const trip = viewData.data as Trip;
+    if (!trip.viewId && viewData.view_id) {
+      trip.viewId = viewData.view_id;
+    }
+    return { trip, readOnly: true };
+  }
+
+  return null;
+}
+
 /** 新しい旅行プランを作成 */
 export async function createTrip(title: string, startDate: string, endDate: string): Promise<Trip> {
   const now = new Date().toISOString();
@@ -67,6 +103,7 @@ export async function createTrip(title: string, startDate: string, endDate: stri
     startDate,
     endDate,
     shareId: nanoid(12),
+    viewId: nanoid(12),
     days: Array.from({ length: dayCount }, (_, i) => ({
       id: nanoid(),
       tripId: '',
@@ -81,7 +118,7 @@ export async function createTrip(title: string, startDate: string, endDate: stri
 
   const { error } = await supabase
     .from('trips')
-    .insert({ share_id: trip.shareId, data: trip });
+    .insert({ share_id: trip.shareId, view_id: trip.viewId, data: trip });
 
   if (error) {
     console.error('createTrip error:', error);
@@ -114,6 +151,7 @@ export async function duplicateTrip(shareId: string): Promise<Trip | null> {
     id: nanoid(),
     title: `${original.title}（コピー）`,
     shareId: nanoid(12),
+    viewId: nanoid(12),
     createdAt: now,
     updatedAt: now,
     days: original.days.map(day => ({
@@ -135,7 +173,7 @@ export async function duplicateTrip(shareId: string): Promise<Trip | null> {
 
   const { error } = await supabase
     .from('trips')
-    .insert({ share_id: newTrip.shareId, data: newTrip });
+    .insert({ share_id: newTrip.shareId, view_id: newTrip.viewId, data: newTrip });
 
   if (error) {
     console.error('duplicateTrip error:', error);

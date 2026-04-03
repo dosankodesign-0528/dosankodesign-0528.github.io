@@ -51,7 +51,8 @@ export interface Trip {
   title: string;
   startDate: string;      // 出発日 (YYYY-MM-DD)
   endDate: string;        // 帰着日 (YYYY-MM-DD)
-  shareId: string;        // 共有用のランダムID
+  shareId: string;        // 編集用の共有ID
+  viewId: string;         // 閲覧専用の共有ID
   days: Day[];
   createdAt: string;
   updatedAt: string;

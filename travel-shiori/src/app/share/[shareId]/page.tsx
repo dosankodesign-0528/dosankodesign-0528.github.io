@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Search } from 'lucide-react';
 import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
-  getTripByShareId, updateTrip, addSpot, updateSpot, deleteSpot,
+  getTripByAnyShareId, updateTrip, addSpot, updateSpot, deleteSpot,
   deleteTrip as removeTripFromStorage, updateDayHeadline,
 } from '../../../lib/storage';
 import { SpotFormData } from '../../../components/SpotEditModal';
@@ -40,6 +40,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [readOnly, setReadOnly] = useState(false);
   const [selectedDayIdx, setSelectedDayIdx] = useState(1);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [editSpotId, setEditSpotId] = useState<string | null>(null);
@@ -100,9 +101,13 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   }, [handleDragMove, handleDragEnd]);
 
   useEffect(() => {
-    getTripByShareId(shareId).then((t) => {
-      if (t) setTrip(t);
-      else setNotFound(true);
+    getTripByAnyShareId(shareId).then((result) => {
+      if (result) {
+        setTrip(result.trip);
+        setReadOnly(result.readOnly);
+      } else {
+        setNotFound(true);
+      }
     });
   }, [shareId]);
 
@@ -146,8 +151,8 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
   const isScrollingByClick = useRef(false);
 
   const refreshTrip = useCallback(async () => {
-    const t = await getTripByShareId(shareId);
-    if (t) setTrip(t);
+    const result = await getTripByAnyShareId(shareId);
+    if (result) setTrip(result.trip);
   }, [shareId]);
 
   // IntersectionObserver: スクロール位置に応じてタブ自動切り替え
@@ -227,7 +232,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
   const handleSpotTap = (spotId: string) => {
     setSelectedSpotId(spotId);
-    setEditSpotId(spotId);
+    if (!readOnly) setEditSpotId(spotId);
   };
 
   const [editTitle, setEditTitle] = useState('');
@@ -268,11 +273,25 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     }
   };
 
-  const handleCopyShareUrl = () => {
-    const url = `${window.location.origin}/share/${shareId}`;
-    navigator.clipboard.writeText(url);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const showSnackbarMsg = (msg: string) => {
+    setSnackbarMsg(msg);
     setShowSnackbar(true);
     setTimeout(() => setShowSnackbar(false), 2500);
+  };
+
+  const handleCopyEditUrl = () => {
+    if (!trip) return;
+    const url = `${window.location.origin}/share/${trip.shareId}`;
+    navigator.clipboard.writeText(url);
+    showSnackbarMsg('編集用リンクをコピーしました');
+  };
+
+  const handleCopyViewUrl = () => {
+    if (!trip) return;
+    const url = `${window.location.origin}/share/${trip.viewId}`;
+    navigator.clipboard.writeText(url);
+    showSnackbarMsg('閲覧用リンクをコピーしました');
   };
 
   const handleStartReview = () => {
@@ -393,8 +412,11 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             />
           ) : (
             <span
-              onClick={() => { setInlineTitle(trip.title); setEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
-              className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 truncate max-w-[220px] cursor-pointer active:bg-white/60 transition-colors"
+              onClick={readOnly ? undefined : () => { setInlineTitle(trip.title); setEditingTitle(true); setTimeout(() => titleInputRef.current?.focus(), 50); }}
+              className={cn(
+                "inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-[16px] font-bold text-gray-900 truncate max-w-[220px] transition-colors",
+                !readOnly && "cursor-pointer active:bg-white/60"
+              )}
             >
               {trip.title}
             </span>
@@ -477,19 +499,21 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   </button>
                 ))}
               </div>
-              {/* 抜けチェック */}
-              <button
-                onClick={handleStartReview}
-                className={cn(
-                  'flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all whitespace-nowrap ml-auto',
-                  showReview
-                    ? 'text-orange-600'
-                    : 'text-gray-500 active:text-gray-700'
-                )}
-              >
-                <Search className="w-3 h-3" />
-                抜けチェック
-              </button>
+              {/* 抜けチェック（閲覧モードでは非表示） */}
+              {!readOnly && (
+                <button
+                  onClick={handleStartReview}
+                  className={cn(
+                    'flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all whitespace-nowrap ml-auto',
+                    showReview
+                      ? 'text-orange-600'
+                      : 'text-gray-500 active:text-gray-700'
+                  )}
+                >
+                  <Search className="w-3 h-3" />
+                  抜けチェック
+                </button>
+              )}
               {/* 人物フィルター */}
               <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5">
                 {([
@@ -523,21 +547,23 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
             onSpotSelect={handleSpotTap}
             onSpotDelete={handleDeleteSpot}
             onAdd={() => setShowAddSpot(true)}
-            readOnly={false}
+            readOnly={readOnly}
           />
         </div>
       </div>
 
-      {/* ── FAB ── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
-        <button
-          onClick={() => setShowAddSpot(true)}
-          className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
-          aria-label="スポットを追加"
-        >
-          <Plus className="w-6 h-6" strokeWidth={2.5} />
-        </button>
-      </div>
+      {/* ── FAB（閲覧モードでは非表示） ── */}
+      {!readOnly && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
+          <button
+            onClick={() => setShowAddSpot(true)}
+            className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
+            aria-label="スポットを追加"
+          >
+            <Plus className="w-6 h-6" strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       {/* ── モーダル類 ── */}
       {showAddSpot && (
@@ -695,7 +721,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       {/* ── スナックバー ── */}
       {showSnackbar && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 bg-gray-900 text-white text-[14px] font-medium rounded-2xl shadow-xl animate-[fadeInUp_0.3s_ease]">
-          共有リンクをコピーしました
+          {snackbarMsg}
         </div>
       )}
 
@@ -718,42 +744,56 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-              <span className="text-[16px] font-bold">設定</span>
-              <button
-                onClick={handleSaveSettings}
-                className="w-9 h-9 rounded-full bg-gray-900 flex items-center justify-center"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </button>
+              <span className="text-[16px] font-bold">{readOnly ? '情報' : '設定'}</span>
+              {!readOnly ? (
+                <button
+                  onClick={handleSaveSettings}
+                  className="w-9 h-9 rounded-full bg-gray-900 flex items-center justify-center"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+              ) : <div className="w-9" />}
             </div>
             <div className="px-4 space-y-4">
+              {!readOnly && (
+                <>
+                  <div>
+                    <label className="text-[12px] text-gray-400 mb-1 block font-medium">タイトル</label>
+                    <input type="text" className="ios-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="text-[12px] text-gray-400 mb-1 block font-medium">出発日</label>
+                      <input type="date" className="ios-input" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[12px] text-gray-400 mb-1 block font-medium">帰着日</label>
+                      <input type="date" className="ios-input" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
+                    </div>
+                  </div>
+                </>
+              )}
               <div>
-                <label className="text-[12px] text-gray-400 mb-1 block font-medium">タイトル</label>
-                <input type="text" className="ios-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="text-[12px] text-gray-400 mb-1 block font-medium">出発日</label>
-                  <input type="date" className="ios-input" value={editStart} onChange={(e) => setEditStart(e.target.value)} />
+                <label className="text-[12px] text-gray-400 mb-2 block font-medium">共有リンク</label>
+                <div className="flex flex-col gap-2">
+                  <button onClick={handleCopyEditUrl} className="flex items-center justify-center gap-2 w-full h-[44px] bg-blue-50 text-blue-600 rounded-xl text-[14px] font-medium active:bg-blue-100 transition-colors">
+                    <Share2 className="w-4 h-4" />
+                    編集用リンクをコピー
+                  </button>
+                  <button onClick={handleCopyViewUrl} className="flex items-center justify-center gap-2 w-full h-[44px] bg-gray-100 text-gray-600 rounded-xl text-[14px] font-medium active:bg-gray-200 transition-colors">
+                    <Share2 className="w-4 h-4" />
+                    閲覧用リンクをコピー
+                  </button>
                 </div>
-                <div className="flex-1">
-                  <label className="text-[12px] text-gray-400 mb-1 block font-medium">帰着日</label>
-                  <input type="date" className="ios-input" value={editEnd} onChange={(e) => setEditEnd(e.target.value)} />
-                </div>
               </div>
-              <div>
-                <label className="text-[12px] text-gray-400 mb-1 block font-medium">共有リンク</label>
-                <button onClick={handleCopyShareUrl} className="flex items-center justify-center gap-2 w-full h-[44px] bg-blue-50 text-blue-600 rounded-xl text-[14px] font-medium active:bg-blue-100 transition-colors">
-                  <Share2 className="w-4 h-4" />
-                  共有リンクをコピー
+              {!readOnly && (
+                <button onClick={handleDeleteTrip} className="flex items-center justify-center gap-2 w-full h-[44px] bg-red-50 text-red-600 rounded-xl text-[15px] font-medium mt-4">
+                  <Trash2 className="w-4 h-4" />
+                  旅行プランを削除
                 </button>
-              </div>
-              <button onClick={handleDeleteTrip} className="flex items-center justify-center gap-2 w-full h-[44px] bg-red-50 text-red-600 rounded-xl text-[15px] font-medium mt-4">
-                <Trash2 className="w-4 h-4" />
-                旅行プランを削除
-              </button>
+              )}
             </div>
           </div>
         </div>
