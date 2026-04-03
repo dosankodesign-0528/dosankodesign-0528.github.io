@@ -154,6 +154,7 @@ export async function duplicateTrip(shareId: string): Promise<Trip | null> {
     viewId: nanoid(12),
     createdAt: now,
     updatedAt: now,
+    deletedAt: undefined,
     days: original.days.map(day => ({
       ...day,
       id: nanoid(),
@@ -176,7 +177,7 @@ export async function duplicateTrip(shareId: string): Promise<Trip | null> {
     .insert({ share_id: newTrip.shareId, view_id: newTrip.viewId, data: newTrip });
 
   if (error) {
-    console.error('duplicateTrip error:', error);
+    console.error('duplicateTrip error:', error.message, error.details, error.hint);
     return null;
   }
   return newTrip;
