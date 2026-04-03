@@ -11,6 +11,7 @@ export const SEED_TRIP: Trip = {
   startDate: '2026-04-10',
   endDate: '2026-04-13',
   shareId: 'share-family-2026',
+  viewId: 'view-family-2026',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   days: [
