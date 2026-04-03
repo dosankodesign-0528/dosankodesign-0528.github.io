@@ -228,8 +228,9 @@ function MapController({
 }
 
 // ========================================
-// PCトラックパッド: スクロール→パン（移動）に変換
-// ピンチ操作（Ctrl+scroll）→ ズーム
+// PCトラックパッド: Google Maps風のスムーズ操作
+// 2本指スワイプ → 地図移動（パン）
+// ピンチイン/アウト → ズームイン/アウト
 // ========================================
 function TrackpadPanHandler() {
   const map = useMap();
@@ -237,29 +238,65 @@ function TrackpadPanHandler() {
   useEffect(() => {
     const container = map.getContainer();
 
+    // ズーム用の累積値（スムーズズーム）
+    let zoomAccum = 0;
+    let zoomRafId: number | null = null;
+    let zoomCenter: L.LatLng | null = null;
+
+    const applyZoom = () => {
+      zoomRafId = null;
+      if (Math.abs(zoomAccum) < 0.001) return;
+      const currentZoom = map.getZoom();
+      const newZoom = Math.min(20, Math.max(3, currentZoom + zoomAccum));
+      if (zoomCenter) {
+        map.setZoomAround(zoomCenter, newZoom, { animate: false });
+      }
+      zoomAccum = 0;
+    };
+
+    // パン用の累積値（スムーズパン）
+    let panDx = 0;
+    let panDy = 0;
+    let panRafId: number | null = null;
+
+    const applyPan = () => {
+      panRafId = null;
+      if (Math.abs(panDx) < 0.5 && Math.abs(panDy) < 0.5) return;
+      map.panBy([panDx, panDy], { animate: false });
+      panDx = 0;
+      panDy = 0;
+    };
+
     const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
       // ピンチズーム（トラックパッド2本指ピンチ = ctrlKey + wheel）
       if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        const zoomDelta = -e.deltaY * 0.01;
-        const currentZoom = map.getZoom();
-        const newZoom = Math.min(19, Math.max(3, currentZoom + zoomDelta));
-        // マウスカーソル位置を基準にズーム
         const mousePoint = map.mouseEventToContainerPoint(e);
-        const mouseLatLng = map.containerPointToLatLng(mousePoint);
-        map.setZoomAround(mouseLatLng, newZoom, { animate: false });
+        zoomCenter = map.containerPointToLatLng(mousePoint);
+        // ピンチの感度を上げてGoogleマップに近づける
+        zoomAccum += -e.deltaY * 0.02;
+        if (!zoomRafId) {
+          zoomRafId = requestAnimationFrame(applyZoom);
+        }
         return;
       }
 
-      // 通常スクロール → パン（移動）に変換
-      e.preventDefault();
-      e.stopPropagation();
-      map.panBy([e.deltaX, e.deltaY], { animate: false });
+      // 通常スクロール（2本指スワイプ）→ パン（移動）
+      panDx += e.deltaX;
+      panDy += e.deltaY;
+      if (!panRafId) {
+        panRafId = requestAnimationFrame(applyPan);
+      }
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      if (zoomRafId) cancelAnimationFrame(zoomRafId);
+      if (panRafId) cancelAnimationFrame(panRafId);
+    };
   }, [map]);
 
   return null;
@@ -338,9 +375,15 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
       zoomControl={false}
       attributionControl={false}
       inertia
-      inertiaDeceleration={3000}
+      inertiaDeceleration={2000}
+      inertiaMaxSpeed={1500}
       zoomAnimation
+      zoomAnimationThreshold={4}
       markerZoomAnimation
+      fadeAnimation
+      zoomSnap={0.1}
+      zoomDelta={0.5}
+      wheelDebounceTime={40}
     >
       <TileLayer
         url={TILE_URL}
