@@ -346,8 +346,6 @@ const MapViewInner = forwardRef<MapViewHandle, MapViewProps>(function MapViewInn
         url={TILE_URL}
         attribution={TILE_ATTRIBUTION}
         maxZoom={20}
-        tileSize={512}
-        zoomOffset={-1}
       />
 
       <FitBounds spots={geoSpots} />
