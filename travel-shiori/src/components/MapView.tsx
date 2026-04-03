@@ -29,11 +29,11 @@ export interface MapViewHandle {
   locateMe: () => void;
 }
 
-// 日本語ラベルのマップタイル（OpenStreetMap Japan）
+// Google Maps風タイル（日本語ラベル対応）
 const TILE_URL =
-  'https://tile.openstreetmap.jp/styles/osm-bright-ja/512/{z}/{x}/{y}.png';
+  'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ja';
 const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  '&copy; Google Maps';
 
 // ─── 型定義 ───
 interface MapViewProps {
