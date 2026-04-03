@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown } from 'lucide-react';
+import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown, Share2, Link, Eye } from 'lucide-react';
 import { Trip } from '../lib/types';
 import { getTrips, createTrip, deleteTrip, duplicateTrip, getTrashedTrips, restoreTrip, permanentlyDeleteTrip, updateTrip } from '../lib/storage';
 import { cn } from '../lib/utils';
@@ -34,7 +34,13 @@ function Logo() {
   );
 }
 
-function TripMenu({ shareId, onDelete, onDuplicate }: { shareId: string; onDelete: (id: string) => void; onDuplicate: (id: string) => void }) {
+function TripMenu({ shareId, viewId, onDelete, onDuplicate, onSnackbar }: {
+  shareId: string;
+  viewId?: string;
+  onDelete: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onSnackbar: (msg: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +59,19 @@ function TripMenu({ shareId, onDelete, onDuplicate }: { shareId: string; onDelet
     };
   }, [open]);
 
+  const copyEditUrl = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/share/${shareId}`);
+    onSnackbar('編集用リンクをコピーしました');
+    setOpen(false);
+  };
+
+  const copyViewUrl = () => {
+    if (!viewId) return;
+    navigator.clipboard.writeText(`${window.location.origin}/share/${viewId}`);
+    onSnackbar('閲覧用リンクをコピーしました');
+    setOpen(false);
+  };
+
   return (
     <div ref={menuRef} className="relative flex-shrink-0">
       <button
@@ -62,7 +81,27 @@ function TripMenu({ shareId, onDelete, onDuplicate }: { shareId: string; onDelet
         <MoreHorizontal className="w-5 h-5 text-gray-400" />
       </button>
       {open && (
-        <div className="absolute right-0 top-9 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/[0.08] overflow-hidden min-w-[140px]">
+        <div className="absolute right-0 top-9 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/[0.08] overflow-hidden min-w-[180px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); copyEditUrl(); }}
+            className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <Link className="w-4 h-4 text-blue-500" />
+            編集用リンクをコピー
+          </button>
+          {viewId && (
+            <>
+              <div className="h-px bg-gray-100" />
+              <button
+                onClick={(e) => { e.stopPropagation(); copyViewUrl(); }}
+                className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              >
+                <Eye className="w-4 h-4 text-green-500" />
+                閲覧用リンクをコピー
+              </button>
+            </>
+          )}
+          <div className="h-px bg-gray-100" />
           <button
             onClick={(e) => { e.stopPropagation(); setOpen(false); onDuplicate(shareId); }}
             className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
@@ -99,6 +138,13 @@ export default function HomePage() {
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [editingTripTitle, setEditingTripTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const [snackbar, setSnackbar] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const handleSnackbar = (msg: string) => {
+    setSnackbar(msg);
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 2500);
+  };
 
   const refreshAll = async () => {
     const [t, trashed] = await Promise.all([getTrips(), getTrashedTrips()]);
@@ -237,8 +283,10 @@ export default function HomePage() {
                     </div>
                     <TripMenu
                       shareId={trip.shareId}
+                      viewId={trip.viewId}
                       onDelete={(id) => setDeleteConfirm(id)}
                       onDuplicate={handleDuplicate}
+                      onSnackbar={handleSnackbar}
                     />
                     <ChevronRight
                       className="w-5 h-5 text-gray-300 flex-shrink-0 cursor-pointer"
@@ -412,6 +460,13 @@ export default function HomePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* スナックバー */}
+      {showSnackbar && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 bg-gray-900 text-white text-[14px] font-medium rounded-2xl shadow-xl animate-[fadeInUp_0.3s_ease]">
+          {snackbar}
         </div>
       )}
     </div>
