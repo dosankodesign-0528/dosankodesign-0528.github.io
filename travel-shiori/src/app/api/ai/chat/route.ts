@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         ? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
         : 'https://api.openai.com/v1/chat/completions';
       const model = process.env.AI_MODEL
-        || (isGemini ? 'gemini-2.5-flash' : 'gpt-4o-mini');
+        || (isGemini ? 'gemini-3.1-pro-preview' : 'gpt-4o-mini');
 
       const systemMessage = {
         role: 'system' as const,
