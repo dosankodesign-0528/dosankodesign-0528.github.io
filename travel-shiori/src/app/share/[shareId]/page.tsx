@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Search } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Plus, Share2, Trash2, Bot } from 'lucide-react';
 import { Trip, Day, Spot, AssigneeType, ASSIGNEE_CONFIG } from '../../../lib/types';
 import {
   getTripByAnyShareId, updateTrip, addSpot, updateSpot, deleteSpot,
@@ -37,6 +37,7 @@ function formatDateWithDay(dateStr: string, dayOffset: number): string {
 export default function SharePage({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -294,7 +295,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
     showSnackbarMsg('閲覧用リンクをコピーしました');
   };
 
-  const handleStartReview = () => {
+  const handleStartReview = useCallback(() => {
     if (!trip) return;
     setShowReview(true);
     setReviewLoading(true);
@@ -304,7 +305,17 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       setDraftSpots(results);
       setReviewLoading(false);
     }, 1200);
-  };
+  }, [trip]);
+
+  // AIチャットページから ?review=1 で戻ってきたら抜けチェックを自動起動
+  useEffect(() => {
+    if (!trip) return;
+    if (searchParams.get('review') === '1' && !showReview) {
+      handleStartReview();
+      // URLからパラメータを取り除く
+      router.replace(`/share/${shareId}`);
+    }
+  }, [trip, searchParams, showReview, handleStartReview, router, shareId]);
 
   const handleApplyReview = async () => {
     if (!trip) return;
@@ -499,23 +510,8 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
                   </button>
                 ))}
               </div>
-              {/* 抜けチェック（閲覧モードでは非表示） */}
-              {!readOnly && (
-                <button
-                  onClick={handleStartReview}
-                  className={cn(
-                    'flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold transition-all whitespace-nowrap ml-auto',
-                    showReview
-                      ? 'text-orange-600'
-                      : 'text-gray-500 active:text-gray-700'
-                  )}
-                >
-                  <Search className="w-3 h-3" />
-                  抜けチェック
-                </button>
-              )}
               {/* 人物フィルター */}
-              <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5">
+              <div className="flex-shrink-0 inline-flex items-center bg-gray-100 rounded-lg p-0.5 ml-auto">
                 {([
                   { key: 'all' as const, label: '全員', activeText: 'text-gray-700' },
                   { key: 'parents' as const, label: '両親', activeText: 'text-orange-600' },
@@ -555,6 +551,15 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
       {/* ── FAB（閲覧モードでは非表示） ── */}
       {!readOnly && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
+          {/* AIチャットボタン（+ボタンの上） */}
+          <button
+            onClick={() => router.push(`/share/${shareId}/ai-chat`)}
+            className="absolute bottom-[72px] right-5 w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full shadow-lg shadow-purple-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
+            aria-label="AIアシスタント"
+          >
+            <Bot className="w-6 h-6" strokeWidth={2.5} />
+          </button>
+          {/* スポット追加ボタン */}
           <button
             onClick={() => setShowAddSpot(true)}
             className="absolute bottom-0 right-5 w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
@@ -573,17 +578,14 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
         <SpotEditModal isOpen={true} onClose={() => setEditSpotId(null)} onSave={handleEditSpot} initialData={editingSpot} dayOptions={dayOptions} />
       )}
 
-      {/* ── 抜けチェック プレビュー ── */}
+      {/* ── 抜けチェック プレビュー（メインシート内オーバーレイ） ── */}
       {showReview && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/40 modal-overlay flex items-end justify-center"
-          onClick={(e) => { if (e.target === e.currentTarget) { setShowReview(false); setDraftSpots([]); } }}
-        >
-          <div className="w-full max-w-lg bg-[#f2f2f7] rounded-t-2xl modal-sheet pb-8 max-h-[85vh] flex flex-col">
-            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
-            </div>
+        <div className="absolute left-0 right-0 bottom-0 z-30 flex flex-col bg-[#f2f2f7] rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.12)]" style={{ top: `${sheetTopVh}vh` }}>
+          <div className="flex justify-center items-center py-2 flex-shrink-0">
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          </div>
 
+          <div className="flex-1 flex flex-col overflow-hidden">
             {/* 編集画面 or リスト画面 */}
             {editingDraftId && editingDraft ? (
               <DraftEditForm

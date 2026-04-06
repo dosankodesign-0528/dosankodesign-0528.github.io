@@ -1,0 +1,458 @@
+'use client';
+
+import { useEffect, useState, useRef, useCallback, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, Send, Loader2, Plus, Check, MapPin, Utensils, Hotel, Train, Bot, ClipboardCheck } from 'lucide-react';
+import { Trip, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_CONFIG } from '../../../../lib/types';
+import { getTripByAnyShareId, addSpot } from '../../../../lib/storage';
+
+// ---------- Types ----------
+
+interface SuggestedSpot {
+  name: string;
+  type: SpotType;
+  time?: string;
+  endTime?: string;
+  dayNum: number;
+  memo?: string;
+  transport?: TransportType;
+}
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  spots?: SuggestedSpot[];
+  addedSpotNames?: string[];  // しおりに追加済みのスポット名
+}
+
+// ---------- Helpers ----------
+
+/** しおりデータをAIに渡す用のテキストに変換 */
+function tripToContext(trip: Trip): string {
+  const lines: string[] = [];
+  lines.push(`旅行: ${trip.title}`);
+  lines.push(`期間: ${trip.startDate} 〜 ${trip.endDate}`);
+  for (const day of trip.days) {
+    lines.push(`\n■ Day${day.dayNum} ${day.headline || ''}`);
+    if (day.spots.length === 0) {
+      lines.push('  （スポットなし）');
+    }
+    for (const spot of day.spots) {
+      const time = spot.time ? `${spot.time}` : '';
+      const endTime = spot.endTime ? `〜${spot.endTime}` : '';
+      const transport = spot.transport ? ` (${TRANSPORT_CONFIG[spot.transport]?.label || spot.transport})` : '';
+      lines.push(`  ${time}${endTime} ${spot.name} [${spot.type}]${transport}${spot.memo ? ` メモ: ${spot.memo}` : ''}`);
+    }
+  }
+  return lines.join('\n');
+}
+
+/** AI応答テキストからスポット提案JSONを抽出 */
+function parseSpots(text: string): { displayText: string; spots: SuggestedSpot[] } {
+  const match = text.match(/%%%SPOTS_START%%%([\s\S]*?)%%%SPOTS_END%%%/);
+  if (!match) return { displayText: text, spots: [] };
+
+  const displayText = text.replace(/%%%SPOTS_START%%%[\s\S]*?%%%SPOTS_END%%%/, '').trim();
+  try {
+    const spots: SuggestedSpot[] = JSON.parse(match[1].trim());
+    return { displayText, spots };
+  } catch {
+    return { displayText: text, spots: [] };
+  }
+}
+
+/** スポットタイプのアイコン */
+function SpotIcon({ type, className, style }: { type: SpotType; className?: string; style?: React.CSSProperties }) {
+  const iconClass = className || 'w-4 h-4';
+  switch (type) {
+    case 'destination': return <MapPin className={iconClass} style={style} />;
+    case 'food': return <Utensils className={iconClass} style={style} />;
+    case 'hotel': return <Hotel className={iconClass} style={style} />;
+    case 'transit': return <Train className={iconClass} style={style} />;
+  }
+}
+
+// ---------- Component ----------
+
+export default function AiChatPage({ params }: { params: Promise<{ shareId: string }> }) {
+  const { shareId } = use(params);
+  const router = useRouter();
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [readOnly, setReadOnly] = useState(false);
+  const storageKey = `ai-chat-${shareId}`;
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // メッセージが変わったらsessionStorageに保存
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  }, [messages, storageKey]);
+
+  useEffect(() => {
+    getTripByAnyShareId(shareId).then((result) => {
+      if (result) {
+        setTrip(result.trip);
+        setReadOnly(result.readOnly);
+      } else {
+        router.back();
+      }
+    });
+  }, [shareId, router]);
+
+  const scrollToBottom = useCallback(() => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, streamingText, scrollToBottom]);
+
+  /** ストリーミングでAIからの応答を読み取る */
+  const readStream = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+        const data = trimmed.slice(6);
+        if (data === '[DONE]') break;
+
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            fullText += content;
+            setStreamingText(fullText);
+          }
+        } catch {
+          // パースエラーは無視
+        }
+      }
+    }
+    return fullText;
+  };
+
+  const handleSend = async (text?: string) => {
+    const msgText = (text || input).trim();
+    if (!msgText || loading || !trip) return;
+
+    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: msgText };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+    setStreamingText('');
+
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+          tripContext: tripToContext(trip),
+        }),
+      });
+
+      if (!res.ok) throw new Error('API error');
+
+      let fullText: string;
+
+      if (res.headers.get('Content-Type')?.includes('text/event-stream')) {
+        const reader = res.body!.getReader();
+        fullText = await readStream(reader);
+      } else {
+        const data = await res.json();
+        fullText = data.message;
+      }
+
+      const { displayText, spots } = parseSpots(fullText);
+
+      const assistantMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: displayText,
+        spots: spots.length > 0 ? spots : undefined,
+        addedSpotNames: [],
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch {
+      const errorMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'すみません、エラーが発生しました。もう一度お試しください。',
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+      setStreamingText('');
+    }
+  };
+
+  /** 提案されたスポットをしおりに追加 */
+  const handleAddSpot = async (msgId: string, spot: SuggestedSpot) => {
+    if (!trip || readOnly) return;
+
+    const day = trip.days.find((d) => d.dayNum === spot.dayNum) || trip.days[0];
+    if (!day) return;
+
+    const updated = await addSpot(shareId, day.id, {
+      name: spot.name,
+      type: spot.type,
+      isMain: spot.type === 'destination',
+      time: spot.time || '',
+      endTime: spot.endTime,
+      transport: spot.transport,
+      memo: spot.memo,
+    });
+
+    if (updated) {
+      setTrip(updated);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? { ...m, addedSpotNames: [...(m.addedSpotNames || []), spot.name] }
+            : m
+        )
+      );
+    }
+  };
+
+  /** 抜けチェック：旅程ページのボトムシート抜けチェック画面に遷移 */
+  const handleReviewCheck = () => {
+    router.push(`/share/${shareId}?review=1`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  };
+
+  // ストリーミング中の表示用テキスト（JSONブロックは非表示）
+  const displayStreamingText = streamingText.replace(/%%%SPOTS_START%%%[\s\S]*$/, '').trim();
+
+  return (
+    <div className="h-full flex flex-col bg-[var(--color-bg)]">
+      {/* ── ヘッダー ── */}
+      <header className="ios-nav flex items-center h-11 px-4 flex-shrink-0 z-10">
+        <button onClick={() => router.back()} className="flex items-center gap-0.5 text-blue-500 active:opacity-60 -ml-1">
+          <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
+          <span className="text-[17px]">戻る</span>
+        </button>
+        <h1 className="flex-1 text-center text-[17px] font-semibold truncate mx-4">
+          AIアシスタント
+        </h1>
+        <div className="w-14" />
+      </header>
+
+      {/* ── メッセージ一覧 ── */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {messages.length === 0 && !loading && (
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 text-center gap-3">
+            <Bot className="w-32 h-32 text-gray-300 -mb-3" strokeWidth={1.5} />
+            <div>
+              <p className="text-[15px] font-medium text-gray-600">旅のAIアシスタント</p>
+              <p className="text-[13px] mt-0.5 leading-relaxed text-gray-400">
+                プランの提案やアドバイスをAIがお手伝いします
+              </p>
+            </div>
+
+            {/* クイックアクション */}
+            <div className="flex flex-col gap-2 w-full max-w-xs mt-2">
+              <button
+                onClick={() => handleSend('おすすめのスポットを提案して')}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 text-left shadow-sm active:scale-[0.98] transition-transform"
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="text-[14px] text-gray-700">おすすめスポットを提案して</span>
+              </button>
+              <button
+                onClick={handleReviewCheck}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 text-left shadow-sm active:scale-[0.98] transition-transform"
+              >
+                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <ClipboardCheck className="w-4 h-4 text-amber-500" />
+                </div>
+                <span className="text-[14px] text-gray-700">旅程の抜けをチェック</span>
+              </button>
+              <button
+                onClick={() => handleSend('空いている時間帯に何か追加したい')}
+                className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 text-left shadow-sm active:scale-[0.98] transition-transform"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-4 h-4 text-emerald-500" />
+                </div>
+                <span className="text-[14px] text-gray-700">空き時間を埋める提案をして</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg) => (
+          <div key={msg.id}>
+            {/* メッセージ吹き出し */}
+            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
+                  msg.role === 'user'
+                    ? 'bg-blue-500 text-white rounded-br-md'
+                    : 'bg-white text-gray-800 rounded-bl-md shadow-sm'
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+
+            {/* スポット提案カード */}
+            {msg.spots && msg.spots.length > 0 && (
+              <div className="mt-2 space-y-2 ml-0 mr-8">
+                {msg.spots.map((spot, idx) => {
+                  const added = msg.addedSpotNames?.includes(spot.name);
+                  const config = SPOT_CONFIG[spot.type];
+                  return (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100"
+                    >
+                      <div className="flex items-center gap-3 px-3 py-2.5">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${config?.color}15` }}
+                        >
+                          <SpotIcon type={spot.type} className="w-4 h-4" style={{ color: config?.color } as React.CSSProperties} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-medium text-gray-800 truncate">{spot.name}</p>
+                          <p className="text-[12px] text-gray-400">
+                            Day{spot.dayNum}
+                            {spot.time && ` · ${spot.time}`}
+                            {spot.endTime && `〜${spot.endTime}`}
+                            {spot.transport && ` · ${TRANSPORT_CONFIG[spot.transport]?.label || ''}`}
+                          </p>
+                        </div>
+                        {!readOnly && (
+                          <button
+                            onClick={() => handleAddSpot(msg.id, spot)}
+                            disabled={added}
+                            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex-shrink-0 ${
+                              added
+                                ? 'bg-emerald-50 text-emerald-600'
+                                : 'bg-blue-500 text-white active:scale-95'
+                            }`}
+                          >
+                            {added ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                追加済み
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3 h-3" />
+                                追加
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      {spot.memo && (
+                        <div className="px-3 pb-2.5 -mt-0.5">
+                          <p className="text-[12px] text-gray-400">{spot.memo}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* ストリーミング中の表示 */}
+        {loading && displayStreamingText && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] bg-white rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm text-[15px] leading-relaxed whitespace-pre-wrap text-gray-800">
+              {displayStreamingText}
+              <span className="inline-block w-1.5 h-4 bg-gray-400 rounded-sm ml-0.5 animate-pulse align-text-bottom" />
+            </div>
+          </div>
+        )}
+
+        {/* ローディングドット（ストリーミング開始前） */}
+        {loading && !streamingText && (
+          <div className="flex justify-start">
+            <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 入力エリア ── */}
+      <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-white px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom))]">
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="メッセージを入力..."
+            rows={1}
+            className="flex-1 resize-none rounded-2xl bg-[var(--color-bg)] px-4 py-2.5 text-[15px] outline-none focus:ring-2 focus:ring-blue-500 max-h-[120px]"
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={!input.trim() || loading}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 text-white disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

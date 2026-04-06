@@ -400,7 +400,7 @@ export default function HomePage() {
             <div className="px-4 space-y-3">
               <div>
                 <label className="text-[12px] text-gray-500 mb-1 block">タイトル</label>
-                <input type="text" className="ios-input" placeholder="例：沖縄家族旅行" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} autoFocus />
+                <input type="text" className="ios-input" placeholder="例：沖縄家族旅行" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
               </div>
               <div className="flex gap-3">
                 <div className="flex-1">
