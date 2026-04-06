@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy houmon-app to GitHub Pages
 
 on:
   push:
@@ -14,19 +14,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: houmon-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: houmon-app
+        run: npm ci
+
+      - name: Build
+        working-directory: houmon-app
+        run: npm run build
+
+      - name: SPA fallback (copy index.html to 404.html)
+        run: cp houmon-app/out/index.html houmon-app/out/404.html
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: "Retro Games"
+          path: houmon-app/out
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
