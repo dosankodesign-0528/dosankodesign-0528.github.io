@@ -54,23 +54,32 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'メッセージが空です' }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    // API設定を決定（Gemini優先、次にOpenAI）
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const apiKey = geminiKey || openaiKey;
 
     if (apiKey) {
-      // --- OpenAI API ストリーミングモード ---
+      const isGemini = !!geminiKey;
+      const apiUrl = isGemini
+        ? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+        : 'https://api.openai.com/v1/chat/completions';
+      const model = process.env.AI_MODEL
+        || (isGemini ? 'gemini-2.0-flash' : 'gpt-4o-mini');
+
       const systemMessage = {
         role: 'system' as const,
         content: `${SYSTEM_PROMPT}\n\n--- 現在の旅行データ ---\n${tripContext}`,
       };
 
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          model,
           messages: [systemMessage, ...messages],
           max_tokens: 2048,
           temperature: 0.7,
@@ -80,7 +89,7 @@ export async function POST(request: NextRequest) {
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error('OpenAI API error:', errText);
+        console.error(`${isGemini ? 'Gemini' : 'OpenAI'} API error:`, errText);
         return Response.json({ error: 'AI APIエラーが発生しました' }, { status: 502 });
       }
 
