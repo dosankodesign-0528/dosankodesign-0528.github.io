@@ -255,7 +255,10 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
         }),
       });
 
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error(err?.error || `API error ${res.status}`);
+      }
 
       let fullText: string;
 
@@ -277,11 +280,12 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
         addedSpotNames: [],
       };
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
+    } catch (e) {
+      const detail = e instanceof Error ? e.message : '';
       const errorMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'すみません、エラーが発生しました。もう一度お試しください。',
+        content: `すみません、エラーが発生しました。\n${detail}`,
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {

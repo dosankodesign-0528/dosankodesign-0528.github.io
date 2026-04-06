@@ -89,8 +89,11 @@ export async function POST(request: NextRequest) {
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error(`${isGemini ? 'Gemini' : 'OpenAI'} API error:`, errText);
-        return Response.json({ error: 'AI APIエラーが発生しました' }, { status: 502 });
+        console.error(`${isGemini ? 'Gemini' : 'OpenAI'} API error:`, res.status, errText);
+        return Response.json(
+          { error: `AI APIエラー (${res.status}): ${errText.slice(0, 200)}` },
+          { status: 502 },
+        );
       }
 
       // SSEストリームをそのままプロキシ
