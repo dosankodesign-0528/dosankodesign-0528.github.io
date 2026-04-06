@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Send, Loader2, Plus, Check, MapPin, Utensils, Hotel, Train, Bot, ClipboardCheck } from 'lucide-react';
+import { ChevronLeft, Send, Loader2, Plus, Check, MapPin, Utensils, Hotel, Train, Bot, ClipboardCheck, ImagePlus, X } from 'lucide-react';
 import { Trip, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_CONFIG } from '../../../../lib/types';
 import { getTripByAnyShareId, addSpot } from '../../../../lib/storage';
 
@@ -22,8 +22,37 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  images?: string[];           // base64 data URLs
   spots?: SuggestedSpot[];
   addedSpotNames?: string[];  // しおりに追加済みのスポット名
+}
+
+/** 画像をリサイズして base64 data URL を返す */
+function resizeImage(file: File, maxPx = 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxPx || height > maxPx) {
+          const ratio = Math.min(maxPx / width, maxPx / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ---------- Helpers ----------
@@ -94,13 +123,18 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // メッセージが変わったらsessionStorageに保存
+  // メッセージが変わったらsessionStorageに保存（画像は除外して容量節約）
   useEffect(() => {
     if (messages.length > 0) {
-      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+      try {
+        const toSave = messages.map((m) => ({ ...m, images: undefined }));
+        sessionStorage.setItem(storageKey, JSON.stringify(toSave));
+      } catch { /* quota exceeded — ignore */ }
     }
   }, [messages, storageKey]);
 
@@ -160,13 +194,36 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
     return fullText;
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newImages: string[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) continue;
+      try {
+        const dataUrl = await resizeImage(file, 1024);
+        newImages.push(dataUrl);
+      } catch { /* skip broken files */ }
+    }
+    setPendingImages((prev) => [...prev, ...newImages]);
+    // reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
   const handleSend = async (text?: string) => {
     const msgText = (text || input).trim();
-    if (!msgText || loading || !trip) return;
+    const images = [...pendingImages];
+    if ((!msgText && images.length === 0) || loading || !trip) return;
 
-    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: 'user', content: msgText };
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: msgText || '(画像を送信)',
+      images: images.length > 0 ? images : undefined,
+    };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    setPendingImages([]);
     setLoading(true);
     setStreamingText('');
 
@@ -174,12 +231,26 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
       inputRef.current.style.height = 'auto';
     }
 
+    // API用のメッセージ配列を構築（画像つきはvision形式）
+    const apiMessages = [...messages, userMsg].map((m) => {
+      if (m.images && m.images.length > 0) {
+        return {
+          role: m.role,
+          content: [
+            ...m.images.map((url: string) => ({ type: 'image_url' as const, image_url: { url, detail: 'low' as const } })),
+            { type: 'text' as const, text: m.content },
+          ],
+        };
+      }
+      return { role: m.role, content: m.content };
+    });
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+          messages: apiMessages,
           tripContext: tripToContext(trip),
         }),
       });
@@ -340,7 +411,14 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
                     : 'bg-white text-gray-800 rounded-bl-md shadow-sm'
                 }`}
               >
-                {msg.content}
+                {msg.images && msg.images.length > 0 && (
+                  <div className={`flex flex-wrap gap-1.5 ${msg.content && msg.content !== '(画像を送信)' ? 'mb-2' : ''}`}>
+                    {msg.images.map((src, i) => (
+                      <img key={i} src={src} alt="" className="rounded-lg max-w-[200px] max-h-[200px] object-cover" />
+                    ))}
+                  </div>
+                )}
+                {msg.content !== '(画像を送信)' && msg.content}
               </div>
             </div>
 
@@ -434,7 +512,38 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
 
       {/* ── 入力エリア ── */}
       <div className="flex-shrink-0 border-t border-[var(--color-border)] bg-white px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom))]">
+        {/* 添付画像プレビュー */}
+        {pendingImages.length > 0 && (
+          <div className="flex gap-2 mb-2 overflow-x-auto no-scrollbar">
+            {pendingImages.map((src, i) => (
+              <div key={i} className="relative flex-shrink-0">
+                <img src={src} alt="" className="w-16 h-16 object-cover rounded-xl" />
+                <button
+                  onClick={() => setPendingImages((prev) => prev.filter((_, j) => j !== i))}
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800/70 text-white rounded-full flex items-center justify-center"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 active:text-gray-600 active:scale-95 transition-all flex-shrink-0 disabled:opacity-40"
+          >
+            <ImagePlus className="w-5 h-5" />
+          </button>
           <textarea
             ref={inputRef}
             value={input}
@@ -446,7 +555,7 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
           />
           <button
             onClick={() => handleSend()}
-            disabled={!input.trim() || loading}
+            disabled={(!input.trim() && pendingImages.length === 0) || loading}
             className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 text-white disabled:opacity-40 active:scale-95 transition-transform flex-shrink-0"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
