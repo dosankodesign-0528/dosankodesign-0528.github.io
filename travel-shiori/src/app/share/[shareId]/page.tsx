@@ -550,7 +550,7 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
 
       {/* ── FAB（閲覧モードでは非表示） ── */}
       {!readOnly && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[920px] pointer-events-none">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-[1366px] pointer-events-none">
           {/* AIチャットボタン（+ボタンの上） */}
           <button
             onClick={() => router.push(`/share/${shareId}/ai-chat`)}
