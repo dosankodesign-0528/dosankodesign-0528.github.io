@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown, Share2, Link, Eye } from 'lucide-react';
+import { Plus, ChevronRight, Calendar, MoreHorizontal, Trash2, Copy, RotateCcw, ChevronDown, Share2, Link, Eye, Pencil } from 'lucide-react';
 import { Trip } from '../lib/types';
 import { getTrips, createTrip, deleteTrip, duplicateTrip, getTrashedTrips, restoreTrip, permanentlyDeleteTrip, updateTrip } from '../lib/storage';
 import { cn } from '../lib/utils';
@@ -34,12 +34,13 @@ function Logo() {
   );
 }
 
-function TripMenu({ shareId, viewId, onDelete, onDuplicate, onSnackbar }: {
+function TripMenu({ shareId, viewId, onDelete, onDuplicate, onSnackbar, onRename }: {
   shareId: string;
   viewId?: string;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
   onSnackbar: (msg: string) => void;
+  onRename: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -82,6 +83,14 @@ function TripMenu({ shareId, viewId, onDelete, onDuplicate, onSnackbar }: {
       </button>
       {open && (
         <div className="absolute right-0 top-9 z-50 bg-white rounded-xl shadow-lg ring-1 ring-black/[0.08] overflow-hidden min-w-[180px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onRename(); }}
+            className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <Pencil className="w-4 h-4 text-gray-500" />
+            名前を編集
+          </button>
+          <div className="h-px bg-gray-100" />
           <button
             onClick={(e) => { e.stopPropagation(); copyEditUrl(); }}
             className="flex items-center gap-2.5 w-full px-4 py-3 text-[14px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
@@ -237,12 +246,13 @@ export default function HomePage() {
               const spotCount = trip.days.reduce((sum, d) => sum + d.spots.length, 0);
 
               return (
-                <div key={trip.id} className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04]">
+                <div
+                  key={trip.id}
+                  className="bg-white rounded-2xl shadow-sm ring-1 ring-black/[0.04] active:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => { if (editingTripId !== trip.id) router.push(`/share/${trip.shareId}`); }}
+                >
                   <div className="flex items-center gap-2 p-4">
-                    <div
-                      onClick={() => { if (editingTripId !== trip.id) router.push(`/share/${trip.shareId}`); }}
-                      className="flex-1 min-w-0 text-left active:opacity-70 transition-opacity cursor-pointer"
-                    >
+                    <div className="flex-1 min-w-0">
                       {editingTripId === trip.id ? (
                         <input
                           ref={titleInputRef}
@@ -265,15 +275,7 @@ export default function HomePage() {
                           className="text-[17px] font-bold text-gray-900 w-full bg-transparent outline-none ring-1 ring-blue-500/40 rounded-lg px-2 py-0.5 -ml-2"
                         />
                       ) : (
-                        <h3
-                          className="text-[17px] font-bold text-gray-900 truncate"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingTripId(trip.id);
-                            setEditingTripTitle(trip.title);
-                            setTimeout(() => titleInputRef.current?.focus(), 50);
-                          }}
-                        >{trip.title}</h3>
+                        <h3 className="text-[17px] font-bold text-gray-900 truncate">{trip.title}</h3>
                       )}
                       <div className="flex items-center gap-1.5 mt-1.5 text-[13px] text-gray-500">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
@@ -287,11 +289,13 @@ export default function HomePage() {
                       onDelete={(id) => setDeleteConfirm(id)}
                       onDuplicate={handleDuplicate}
                       onSnackbar={handleSnackbar}
+                      onRename={() => {
+                        setEditingTripId(trip.id);
+                        setEditingTripTitle(trip.title);
+                        setTimeout(() => titleInputRef.current?.focus(), 50);
+                      }}
                     />
-                    <ChevronRight
-                      className="w-5 h-5 text-gray-300 flex-shrink-0 cursor-pointer"
-                      onClick={() => router.push(`/share/${trip.shareId}`)}
-                    />
+                    <ChevronRight className="w-5 h-5 text-gray-300 flex-shrink-0" />
                   </div>
                 </div>
               );
