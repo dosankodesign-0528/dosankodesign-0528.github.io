@@ -1,0 +1,3 @@
+[submodule "nittei-chousei"]
+	path = nittei-chousei
+	url = https://github.com/hideyuki-yamanaka/nittei-chousei.git
