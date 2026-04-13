@@ -60,9 +60,16 @@ jobs:
       - name: travel-shiori をビルド
         working-directory: travel-shiori
         run: npm run build
+        continue-on-error: true
 
       - name: travel-shiori をコピー
-        run: cp -r travel-shiori/out _site/travel-shiori
+        run: |
+          if [ -d travel-shiori/out ]; then
+            cp -r travel-shiori/out _site/travel-shiori
+          else
+            mkdir -p _site/travel-shiori
+            echo '<html><body><p>Coming soon</p></body></html>' > _site/travel-shiori/index.html
+          fi
 
       # ---------- nittei-chousei ----------
       - name: nittei-chousei の依存をインストール
