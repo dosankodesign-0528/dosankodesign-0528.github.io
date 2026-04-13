@@ -147,7 +147,10 @@
 <div id="lock">
   <div class="lock-box">
     <h1>ENTER PASSWORD</h1>
-    <input type="password" id="pw" placeholder="password" autofocus>
+    <div style="position:relative;display:inline-block;">
+      <input type="password" id="pw" placeholder="password" autofocus>
+      <button type="button" id="toggle-pw" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;padding:4px;" aria-label="パスワード表示切替">👁</button>
+    </div>
   </div>
 </div>
 
@@ -225,6 +228,14 @@
   if (sessionStorage.getItem(KEY) === '1') {
     unlock();
   }
+
+  document.getElementById('toggle-pw').addEventListener('click', function() {
+    const pw = document.getElementById('pw');
+    const isHidden = pw.type === 'password';
+    pw.type = isHidden ? 'text' : 'password';
+    this.textContent = isHidden ? '🙈' : '👁';
+    pw.focus();
+  });
 
   document.getElementById('pw').addEventListener('keydown', async function(e) {
     if (e.key !== 'Enter') return;
