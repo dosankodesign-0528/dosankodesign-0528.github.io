@@ -1,7 +1,7 @@
 import SharePageClient from './SharePageClient';
 
-export function generateStaticParams() {
-  return [];
+export async function generateStaticParams() {
+  return [] as { shareId: string }[];
 }
 
 export default function Page({ params }: { params: Promise<{ shareId: string }> }) {
