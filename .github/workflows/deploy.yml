@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
 
       - uses: actions/setup-node@v4
@@ -26,6 +27,37 @@ jobs:
           node-version: 22
 
       # ---------- ポータル ----------
+      - name: 制作期間を算出してポータルに埋め込み
+        run: |
+          calc_period() {
+            local dir="$1" placeholder="$2" is_submodule="${3:-false}"
+            if [ "$is_submodule" = "true" ]; then
+              first=$(git -C "$dir" log --format="%at %ai" --reverse | head -1)
+              last=$(git -C "$dir" log --format="%at %ai" | head -1)
+            else
+              first=$(git log --format="%at %ai" --reverse -- "$dir" | head -1)
+              last=$(git log --format="%at %ai" -- "$dir" | head -1)
+            fi
+            ts_first=$(echo "$first" | awk '{print $1}')
+            ts_last=$(echo "$last" | awk '{print $1}')
+            date_first=$(echo "$first" | awk '{print $2}')
+            date_last=$(echo "$last" | awk '{print $2}')
+            y1=$(echo "$date_first" | cut -d- -f1)
+            m1=$(echo "$date_first" | cut -d- -f2 | sed 's/^0//')
+            d1=$(echo "$date_first" | cut -d- -f3 | sed 's/^0//')
+            m2=$(echo "$date_last" | cut -d- -f2 | sed 's/^0//')
+            d2=$(echo "$date_last" | cut -d- -f3 | sed 's/^0//')
+            diff=$(( (ts_last - ts_first) ))
+            days=$(( diff / 86400 ))
+            hours=$(( (diff % 86400) / 3600 ))
+            period="${y1}/${m1}/${d1} → ${m2}/${d2}（${days}日${hours}時間）"
+            sed -i "s|{{${placeholder}}}|${period}|g" portal/index.html
+          }
+          calc_period "Retro Games"   "PERIOD_RETRO_GAMES"
+          calc_period "travel-shiori" "PERIOD_TRAVEL_SHIORI"
+          calc_period "nittei-chousei" "PERIOD_NITTEI_CHOUSEI" true
+          calc_period "houmon-app"    "PERIOD_HOUMON_APP"
+
       - name: ポータルページをコピー
         run: |
           mkdir -p _site
