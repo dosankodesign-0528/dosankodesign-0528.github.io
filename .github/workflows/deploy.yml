@@ -48,6 +48,8 @@ jobs:
       - name: houmon-app をビルド
         working-directory: houmon-app
         run: npm run build
+        env:
+          BASE_PATH: /houmon-app
 
       - name: houmon-app をコピー
         run: cp -r houmon-app/out _site/houmon-app
