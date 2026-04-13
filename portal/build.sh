@@ -1,6 +1,7 @@
 #!/bin/bash
 # portal/build.sh — products.meta.json を自動スキャンしてポータルHTMLを生成
 set -euo pipefail
+trap '' PIPE
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATE="$REPO_ROOT/portal/index.html"
