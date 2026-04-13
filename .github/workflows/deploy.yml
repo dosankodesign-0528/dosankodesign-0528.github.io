@@ -1,4 +1,4 @@
-name: Deploy houmon-app to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -22,25 +22,64 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: houmon-app/package-lock.json
 
-      - name: Install dependencies
+      # ---------- ポータル ----------
+      - name: ポータルページをコピー
+        run: |
+          mkdir -p _site
+          cp portal/index.html _site/index.html
+
+      # ---------- Retro Games ----------
+      - name: レトロゲームをコピー
+        run: |
+          mkdir -p "_site/retro-games"
+          cp "Retro Games/index.html" "_site/retro-games/index.html"
+          cp "Retro Games/plusman.html" "_site/retro-games/plusman.html"
+          cp "Retro Games/samurai_fighter.html" "_site/retro-games/samurai_fighter.html"
+          cp "Retro Games/space_invaders.html" "_site/retro-games/space_invaders.html"
+
+      # ---------- houmon-app ----------
+      - name: houmon-app の依存をインストール
         working-directory: houmon-app
         run: npm ci
 
-      - name: Build
+      - name: houmon-app をビルド
         working-directory: houmon-app
         run: npm run build
 
-      - name: SPA fallback (copy index.html to 404.html)
-        run: cp houmon-app/out/index.html houmon-app/out/404.html
+      - name: houmon-app をコピー
+        run: cp -r houmon-app/out _site/houmon-app
 
+      # ---------- travel-shiori ----------
+      - name: travel-shiori の依存をインストール
+        working-directory: travel-shiori
+        run: npm ci
+
+      - name: travel-shiori をビルド
+        working-directory: travel-shiori
+        run: npm run build
+
+      - name: travel-shiori をコピー
+        run: cp -r travel-shiori/out _site/travel-shiori
+
+      # ---------- nittei-chousei ----------
+      - name: nittei-chousei の依存をインストール
+        working-directory: nittei-chousei
+        run: npm ci
+
+      - name: nittei-chousei をビルド
+        working-directory: nittei-chousei
+        run: npm run build
+
+      - name: nittei-chousei をコピー
+        run: cp -r nittei-chousei/out _site/nittei-chousei
+
+      # ---------- デプロイ ----------
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: houmon-app/out
+          path: _site
 
   deploy:
     needs: build
