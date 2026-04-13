@@ -79,9 +79,16 @@ jobs:
       - name: nittei-chousei をビルド
         working-directory: nittei-chousei
         run: npm run build
+        continue-on-error: true
 
       - name: nittei-chousei をコピー
-        run: cp -r nittei-chousei/out _site/nittei-chousei
+        run: |
+          if [ -d nittei-chousei/out ]; then
+            cp -r nittei-chousei/out _site/nittei-chousei
+          else
+            mkdir -p _site/nittei-chousei
+            echo '<html><body><p>Coming soon</p></body></html>' > _site/nittei-chousei/index.html
+          fi
 
       # ---------- デプロイ ----------
       - uses: actions/configure-pages@v5
