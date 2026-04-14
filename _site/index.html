@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Products</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ---------- Lock screen ---------- */
+  #lock {
+    position: fixed; inset: 0;
+    background: #0a0a0a;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .lock-box {
+    text-align: center;
+    color: #ccc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .lock-box h1 {
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+  .lock-box input {
+    width: 220px;
+    padding: 10px 14px;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #161616;
+    color: #fff;
+    font-size: 1rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lock-box input:focus { border-color: #555; }
+  .lock-box input.shake {
+    animation: shake 0.3s;
+    border-color: #c0392b;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* ---------- Main ---------- */
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+  #app {
+    display: none;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  header {
+    margin-bottom: 48px;
+  }
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  header p {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .products {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .product {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    background: #141414;
+    border: 1px solid #1e1e1e;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .product:hover {
+    background: #1a1a1a;
+    border-color: #333;
+  }
+
+  .product-icon {
+    font-size: 2rem;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .product-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .product-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .product-desc {
+    font-size: 0.8rem;
+    color: #777;
+    line-height: 1.5;
+  }
+  .product-period {
+    font-size: 0.7rem;
+    color: #555;
+    margin-top: 6px;
+  }
+
+  .product-arrow {
+    color: #444;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .product:hover .product-arrow { color: #888; }
+
+  footer {
+    margin-top: 60px;
+    text-align: center;
+    color: #333;
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- Lock Screen -->
+<div id="lock">
+  <div class="lock-box">
+    <h1>ENTER PASSWORD</h1>
+    <div style="position:relative;display:inline-block;">
+      <input type="password" id="pw" placeholder="password" autofocus>
+      <button type="button" id="toggle-pw" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;font-size:1.1rem;cursor:pointer;padding:4px;" aria-label="パスワード表示切替">👁</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div id="app">
+  <header>
+    <h1>Products</h1>
+  </header>
+
+  <div class="products">
+    <a class="product" href="/retro-games/">
+      <div class="product-icon" style="background:#1a1028;">🕹</div>
+      <div class="product-info">
+        <div class="product-name">Retro Games</div>
+        <div class="product-desc">ブラウザで遊べるレトロゲーム集。侍格闘・ボンバーマン風・インベーダー。</div>
+        <div class="product-period">2026/3/21 → 4/13（23日5時間）</div>
+      </div>
+      <div class="product-arrow">&#8250;</div>
+    </a>
+    <a class="product" href="/travel-shiori/">
+      <div class="product-icon" style="background:#0a1a1a;">🗺</div>
+      <div class="product-info">
+        <div class="product-name">旅のしおり</div>
+        <div class="product-desc">旅行の行程を地図付きで管理できるアプリ。</div>
+        <div class="product-period">2026/3/29 → 4/14（15日21時間）</div>
+      </div>
+      <div class="product-arrow">&#8250;</div>
+    </a>
+    <a class="product" href="/nittei-chousei/">
+      <div class="product-icon" style="background:#1a1a0a;">📅</div>
+      <div class="product-info">
+        <div class="product-name">日程調整</div>
+        <div class="product-desc">みんなの都合を合わせて日程を決められるツール。</div>
+        <div class="product-period">2026/4/3 → 4/13（10日1時間）</div>
+      </div>
+      <div class="product-arrow">&#8250;</div>
+    </a>
+    <a class="product" href="/houmon-app/">
+      <div class="product-icon" style="background:#0a1a12;">🏠</div>
+      <div class="product-info">
+        <div class="product-name">家庭訪問アプリ</div>
+        <div class="product-desc">家庭訪問の記録・管理ツール。地図表示・ルート管理対応。</div>
+        <div class="product-period">2026/4/4 → 4/14（9日14時間）</div>
+      </div>
+      <div class="product-arrow">&#8250;</div>
+    </a>
+    <a class="product" href="/akijikan-mitsukeru-kun/">
+      <div class="product-icon" style="background:#1a1a1a;">⏰</div>
+      <div class="product-info">
+        <div class="product-name">空き時間みつける君</div>
+        <div class="product-desc">Googleカレンダーから空き時間を自動で見つけてくれるツール。</div>
+        <div class="product-period">2026/4/14 → 4/14（0日0時間）</div>
+      </div>
+      <div class="product-arrow">&#8250;</div>
+    </a>
+
+  </div>
+
+  <footer>&copy; Hideyuki Yamanaka</footer>
+</div>
+
+<script>
+(function() {
+  // SHA-256 hash of the password — change this to set a new password
+  // Default: "products" → hash below
+  const HASH = 'b1fcd05d3630fa459f747c83b2c65a01bd166dacd7a1d0d2521aa16598c9e63c';
+
+  const KEY = 'portal_auth';
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256',
+      new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)]
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function unlock() {
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+
+  // Check if already authenticated
+  if (sessionStorage.getItem(KEY) === '1') {
+    unlock();
+  }
+
+  document.getElementById('toggle-pw').addEventListener('click', function() {
+    const pw = document.getElementById('pw');
+    const isHidden = pw.type === 'password';
+    pw.type = isHidden ? 'text' : 'password';
+    this.textContent = isHidden ? '🙈' : '👁';
+    pw.focus();
+  });
+
+  document.getElementById('pw').addEventListener('keydown', async function(e) {
+    if (e.key !== 'Enter') return;
+    const hash = await sha256(this.value);
+    if (hash === HASH) {
+      sessionStorage.setItem(KEY, '1');
+      unlock();
+    } else {
+      this.value = '';
+      this.classList.add('shake');
+      setTimeout(() => this.classList.remove('shake'), 350);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
