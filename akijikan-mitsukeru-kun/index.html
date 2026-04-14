@@ -248,6 +248,12 @@
 <script>
   let tokenClient, accessToken=null, calendars=[], selectedCalIds=new Set(), icsFiles=[], gsiLoaded=false;
 
+  // --- Token persistence (keep "connected" across reloads) ---
+  const TOKEN_KEY='gcal_token';
+  function saveToken(at,exp){try{localStorage.setItem(TOKEN_KEY,JSON.stringify({access_token:at,expires_at:Date.now()+((exp||3600)-60)*1000}));}catch(e){}}
+  function loadSavedToken(){try{const s=JSON.parse(localStorage.getItem(TOKEN_KEY)||'{}');if(s.access_token&&s.expires_at>Date.now())return s.access_token;}catch(e){}return null;}
+  function clearSavedToken(){try{localStorage.removeItem(TOKEN_KEY);}catch(e){} accessToken=null; document.getElementById('authChip').classList.remove('connected'); document.getElementById('authLabel').textContent='未接続'; document.getElementById('generateBtn').disabled=true;}
+
   const today=new Date(), twoWeeks=new Date(today);
   twoWeeks.setDate(twoWeeks.getDate()+14);
   document.getElementById('startDate').value=today.toISOString().split('T')[0];
