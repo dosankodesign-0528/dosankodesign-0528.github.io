@@ -39,6 +39,12 @@ jobs:
           cp "Retro Games/samurai_fighter.html" "_site/retro-games/samurai_fighter.html"
           cp "Retro Games/space_invaders.html" "_site/retro-games/space_invaders.html"
 
+      # ---------- 空き時間みつける君 ----------
+      - name: 空き時間みつける君をコピー
+        run: |
+          mkdir -p "_site/akijikan-mitsukeru-kun"
+          cp akijikan-mitsukeru-kun/index.html "_site/akijikan-mitsukeru-kun/index.html"
+
       # ---------- houmon-app ----------
       - name: houmon-app の依存をインストール
         working-directory: houmon-app
