@@ -283,8 +283,13 @@
 
   function initTokenClient(){
     tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/calendar.readonly',
-      callback:r=>{if(r.access_token){accessToken=r.access_token;onConnected();}}});
+      callback:r=>{if(r.access_token){accessToken=r.access_token;saveToken(r.access_token,r.expires_in);onConnected();}}});
     document.getElementById('authChip').onclick=()=>{if(!accessToken)tokenClient.requestAccessToken();};
+    // 1) Restore from localStorage if still valid
+    const saved=loadSavedToken();
+    if(saved){accessToken=saved;onConnected();return;}
+    // 2) Try silent refresh (no popup if user is already signed into Google)
+    try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
   }
 
   async function onConnected(){
