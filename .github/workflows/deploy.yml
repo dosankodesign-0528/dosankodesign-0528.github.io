@@ -30,6 +30,9 @@ jobs:
       - name: ポータルHTML自動生成
         run: bash portal/build.sh
 
+      - name: ポータルのファビコンをコピー
+        run: cp portal/favicon.png _site/favicon.png
+
       # ---------- Retro Games ----------
       - name: レトロゲームをコピー
         run: |
