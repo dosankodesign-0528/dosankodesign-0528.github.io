@@ -2,8 +2,8 @@
 # デザインギャラリー 自動スクレイピングスクリプト
 # cron で定期実行される
 
-LOG_DIR="/Users/hideyuki/Library/CloudStorage/Dropbox/Work/x_others/#practice/Cursor/design-gallery/scripts/logs"
-PROJECT_DIR="/Users/hideyuki/Library/CloudStorage/Dropbox/Work/x_others/#practice/Cursor/design-gallery"
+LOG_DIR="/Users/hideyuki/Library/CloudStorage/Dropbox/Work/x_others/#practice/Claude Code/design-gallery/scripts/logs"
+PROJECT_DIR="/Users/hideyuki/Library/CloudStorage/Dropbox/Work/x_others/#practice/Claude Code/design-gallery"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # ログディレクトリ作成
