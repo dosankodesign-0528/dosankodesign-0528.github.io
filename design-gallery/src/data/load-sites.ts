@@ -16,12 +16,14 @@ try {
     agency?: string;
     date: string;
     starred: boolean;
+    isAgency?: boolean;
   }>;
   scrapedSites = data.map((item) => ({
     ...item,
     source: item.source as SiteEntry["source"],
     category: item.category as SiteEntry["category"],
     taste: item.taste as SiteEntry["taste"],
+    isAgency: item.isAgency ?? false,
   }));
 } catch {
   // スクレイピングデータがなければサンプルのみ使用
@@ -48,17 +50,19 @@ for (const site of [...scrapedSites, ...sampleFor81webAndAwwwards]) {
 /** 全サイトデータ */
 export const allSites: SiteEntry[] = merged;
 
-/** 全エージェンシーリスト */
-export const allAgencies: string[] = [
-  ...new Set(
-    allSites
-      .map((s) => s.agency)
-      .filter((a): a is string => !!a)
-  ),
-].sort();
-
 /** 日付範囲 */
 export const dateRange: [string, string] = (() => {
   const dates = allSites.map((s) => s.date).sort();
   return [dates[0] || "2020-01", dates[dates.length - 1] || "2026-04"];
+})();
+
+/** スクリーンショットが存在するサイトIDのセット */
+export const screenshotIds: Set<string> = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const ids = require("./screenshot-ids.json") as string[];
+    return new Set(ids);
+  } catch {
+    return new Set<string>();
+  }
 })();

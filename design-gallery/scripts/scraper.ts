@@ -18,7 +18,7 @@ interface ScrapedSite {
   title: string;
   url: string;
   thumbnailUrl: string;
-  source: "sankou" | "81web" | "muuuuu" | "awwwards";
+  source: "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip";
   category: string[];
   taste: string[];
   agency?: string;
@@ -368,13 +368,116 @@ async function scrapeAwwwards(pages: number = 2): Promise<ScrapedSite[]> {
 }
 
 // ============================================================
+// Web Design Clip スクレイパー（4サブドメイン）
+// ============================================================
+const WDC_SECTIONS = [
+  { name: "Japan", baseUrl: "https://webdesignclip.com" },
+  { name: "World", baseUrl: "https://world.webdesignclip.com" },
+  { name: "Landing Page", baseUrl: "https://lp.webdesignclip.com" },
+  { name: "Smartphone", baseUrl: "https://sp.webdesignclip.com" },
+];
+
+async function scrapeWebDesignClip(pagesPerSection: number = 10): Promise<ScrapedSite[]> {
+  console.log("\n📝 Web Design Clip からスクレイピング開始...");
+  const results: ScrapedSite[] = [];
+
+  for (const section of WDC_SECTIONS) {
+    console.log(`  [${section.name}] ${section.baseUrl}`);
+
+    for (let page = 1; page <= pagesPerSection; page++) {
+      const url = page === 1 ? `${section.baseUrl}/` : `${section.baseUrl}/page/${page}/`;
+      try {
+        const html = await fetchPage(url);
+        const $ = cheerio.load(html);
+
+        $("li.post_li:not(.post_ad)").each((_, el) => {
+          const $el = $(el);
+
+          // サムネイル
+          const img = $el.find(".post_img img").attr("src") || $el.find(".post_img img").attr("data-src") || "";
+          if (!img || img.startsWith("data:")) return;
+
+          // タイトル
+          const title = ($el.find("figcaption.post_title h2 a").attr("title") ||
+            $el.find("figcaption.post_title h2 a").text().trim() || "");
+          if (!title) return;
+
+          // サイトURL（実際のウェブサイト）
+          const siteUrl = $el.find(".post_inner--launch a").attr("href") ||
+            $el.find("figcaption.post_title h2 a").attr("href") || "";
+          if (!siteUrl || !siteUrl.startsWith("http")) return;
+
+          // カテゴリ
+          const cats: string[] = [];
+          $el.find(".post_inner--category a").each((_, catEl) => {
+            const t = $(catEl).text().trim();
+            if (t && t.length < 30) cats.push(t);
+          });
+
+          // 日付
+          let dateStr = new Date().toISOString().slice(0, 7);
+          const timeEl = $el.find(".post_inner--date time");
+          const dateP = $el.find(".post_inner--date");
+          if (timeEl.length > 0 && timeEl.attr("datetime")) {
+            dateStr = timeEl.attr("datetime")!.slice(0, 7);
+          } else if (dateP.length > 0) {
+            const dateText = dateP.text().trim();
+            // "Apr 13, 2026" 形式をパース
+            const parsed = new Date(dateText);
+            if (!isNaN(parsed.getTime())) {
+              dateStr = parsed.toISOString().slice(0, 7);
+            }
+          }
+
+          results.push({
+            id: generateId(siteUrl, "webdesignclip"),
+            title: title.slice(0, 100),
+            url: siteUrl,
+            thumbnailUrl: img.startsWith("http") ? img : `${section.baseUrl}${img}`,
+            source: "webdesignclip",
+            category: cats.length > 0 ? cats : ["uncategorized"],
+            taste: [],
+            date: dateStr,
+            starred: false,
+          });
+        });
+
+        console.log(`  [${section.name}] ページ ${page}: 累計 ${results.length} 件`);
+      } catch (e) {
+        const msg = (e as Error).message;
+        if (msg.includes("404")) {
+          console.log(`  [${section.name}] ページ ${page}: 最終ページ到達`);
+          break; // 404なら最終ページ
+        }
+        console.error(`  [${section.name}] ページ ${page} エラー:`, msg);
+      }
+
+      await sleep(1500);
+    }
+  }
+
+  return results;
+}
+
+// ============================================================
 // 重複排除
 // ============================================================
+function normalizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    // www有無を統一、末尾スラッシュ除去、小文字化
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const path = u.pathname.replace(/\/$/, "").toLowerCase();
+    return `${host}${path}`;
+  } catch {
+    return url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "").toLowerCase();
+  }
+}
+
 function deduplicateByUrl(sites: ScrapedSite[]): ScrapedSite[] {
   const seen = new Set<string>();
   return sites.filter((site) => {
-    // URLの正規化
-    const normalized = site.url.replace(/\/$/, "").toLowerCase();
+    const normalized = normalizeUrl(site.url);
     if (seen.has(normalized)) return false;
     seen.add(normalized);
     return true;
@@ -391,28 +494,31 @@ async function main() {
   const allResults: ScrapedSite[] = [];
 
   // 各スクレイパーを実行（順番に。並列だとサーバーに負荷かかるので）
-  const sankouResults = await scrapeSankou(2);
+  const sankouResults = await scrapeSankou(30);
   allResults.push(...sankouResults);
 
-  const muuuuuResults = await scrapeMuuuuu(2);
+  const muuuuuResults = await scrapeMuuuuu(30);
   allResults.push(...muuuuuResults);
 
+  const wdcResults = await scrapeWebDesignClip(10);
+  allResults.push(...wdcResults);
+
   // 81-web.com と Awwwards は SPA（Nuxt3/React）のためcheerioでは取得不可
-  // ブラウザレンダリングが必要。将来的に Playwright で対応予定
   console.log("\n⚠️  81-web.com: Nuxt3 SPA のためスキップ（Playwright対応が必要）");
   console.log("⚠️  Awwwards: React SPA のためスキップ（Playwright対応が必要）");
 
-  // 重複排除
+  // 重複排除（URLベースでソース横断）
   const deduplicated = deduplicateByUrl(allResults);
 
   console.log("\n" + "=".repeat(50));
   console.log(`📊 結果サマリー:`);
-  console.log(`  SANKOU!:     ${sankouResults.length} 件`);
-  console.log(`  MUUUUU.ORG:  ${muuuuuResults.length} 件`);
-  console.log(`  81-web.com:  スキップ（SPA）`);
-  console.log(`  Awwwards:    スキップ（SPA）`);
-  console.log(`  合計:        ${allResults.length} 件`);
-  console.log(`  重複排除後:  ${deduplicated.length} 件`);
+  console.log(`  SANKOU!:          ${sankouResults.length} 件`);
+  console.log(`  MUUUUU.ORG:       ${muuuuuResults.length} 件`);
+  console.log(`  Web Design Clip:  ${wdcResults.length} 件`);
+  console.log(`  81-web.com:       スキップ（SPA）`);
+  console.log(`  Awwwards:         スキップ（SPA）`);
+  console.log(`  合計:             ${allResults.length} 件`);
+  console.log(`  重複排除後:       ${deduplicated.length} 件`);
 
   // JSON保存
   const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");

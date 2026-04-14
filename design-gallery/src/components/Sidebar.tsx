@@ -11,7 +11,7 @@ import {
   TASTE_LABELS,
   FilterState,
 } from "@/types";
-import { allAgencies, dateRange as globalDateRange } from "@/data/load-sites";
+import { dateRange as globalDateRange } from "@/data/load-sites";
 
 interface SidebarProps {
   filter: FilterState;
@@ -130,7 +130,7 @@ export function Sidebar({
     filter.sources.length > 0 ||
     filter.categories.length > 0 ||
     filter.tastes.length > 0 ||
-    filter.agencies.length > 0 ||
+    filter.agencyOnly ||
     filter.starredOnly ||
     filter.dateRange[0] !== globalDateRange[0] ||
     filter.dateRange[1] !== globalDateRange[1];
@@ -235,28 +235,14 @@ export function Sidebar({
           </div>
         )}
 
-        {/* エージェンシー */}
-        <SectionTitle open={openSections.agency} onToggle={() => toggle("agency")}>
-          Agency & Studio
-        </SectionTitle>
-        {openSections.agency && (
-          <div className="pb-2 max-h-[240px] overflow-y-auto sidebar-scroll">
-            {allAgencies.map((a) => (
-              <CheckItem
-                key={a}
-                label={a}
-                checked={filter.agencies.includes(a)}
-                onChange={() =>
-                  updateFilter({
-                    agencies: filter.agencies.includes(a)
-                      ? filter.agencies.filter((x) => x !== a)
-                      : [...filter.agencies, a],
-                  })
-                }
-              />
-            ))}
-          </div>
-        )}
+        {/* 制作会社 */}
+        <div className="px-3 py-1">
+          <CheckItem
+            label="制作会社のみ表示"
+            checked={filter.agencyOnly}
+            onChange={() => updateFilter({ agencyOnly: !filter.agencyOnly })}
+          />
+        </div>
 
         {/* 日付 */}
         <SectionTitle open={openSections.date} onToggle={() => toggle("date")}>

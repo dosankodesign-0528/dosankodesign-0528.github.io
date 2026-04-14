@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Design Gallery",
   description: "デザインギャラリー - 複数サイトからキュレーションしたWebデザイン集",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

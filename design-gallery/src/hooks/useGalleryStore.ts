@@ -14,9 +14,11 @@ const initialFilter: FilterState = {
   sources: [],
   categories: [],
   tastes: [],
-  agencies: [],
+  agencyOnly: false,
   dateRange: dateRange,
   starredOnly: false,
+  sortOrder: "newest",
+  viewMode: "unchecked",
 };
 
 export function useGalleryStore() {
@@ -27,9 +29,13 @@ export function useGalleryStore() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
-  // フィルタリング
+  // フィルタリング + ソート
   const filteredSites = useMemo(() => {
-    return sites.filter((site) => {
+    const filtered = sites.filter((site) => {
+      // ビューモード: "unchecked"ならチェック済み（starred）を非表示
+      if (filter.viewMode === "unchecked" && site.starred) {
+        return false;
+      }
       // テキスト検索
       if (filter.search) {
         const q = filter.search.toLowerCase();
@@ -57,23 +63,30 @@ export function useGalleryStore() {
       ) {
         return false;
       }
-      // エージェンシー
-      if (
-        filter.agencies.length > 0 &&
-        (!site.agency || !filter.agencies.includes(site.agency))
-      ) {
+      // 制作会社フィルター
+      if (filter.agencyOnly && !site.isAgency) {
         return false;
       }
       // 日付範囲
       if (site.date < filter.dateRange[0] || site.date > filter.dateRange[1]) {
         return false;
       }
-      // スター
+      // スター（starredOnlyは「すべて」モードでチェック済みだけ見たい時用）
       if (filter.starredOnly && !site.starred) {
         return false;
       }
       return true;
     });
+
+    // ソート（日付順）
+    filtered.sort((a, b) => {
+      if (filter.sortOrder === "newest") {
+        return b.date.localeCompare(a.date);
+      }
+      return a.date.localeCompare(b.date);
+    });
+
+    return filtered;
   }, [sites, filter]);
 
   // スター切り替え

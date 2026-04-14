@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "81-web.com" },
       { protocol: "https", hostname: "www.awwwards.com" },
       { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "webdesignclip.com" },
+      { protocol: "https", hostname: "world.webdesignclip.com" },
+      { protocol: "https", hostname: "lp.webdesignclip.com" },
+      { protocol: "https", hostname: "sp.webdesignclip.com" },
+      { protocol: "https", hostname: "image.thum.io" },
     ],
   },
 };

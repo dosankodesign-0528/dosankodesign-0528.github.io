@@ -5,6 +5,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { screenshotIds } from "@/data/load-sites";
 
 export default function Home() {
   const store = useGalleryStore();
@@ -50,6 +51,7 @@ export default function Home() {
         onClearSelection={store.clearSelection}
         onColumnsChange={store.setColumns}
         onSetSelection={store.setSelection}
+        screenshotIds={screenshotIds}
       />
     </div>
   );

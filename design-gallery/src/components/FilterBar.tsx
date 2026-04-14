@@ -6,8 +6,10 @@ import {
   SOURCE_LABELS,
   SOURCE_COLORS,
   FilterState,
+  ViewMode,
+  SortOrder,
 } from "@/types";
-import { allAgencies, dateRange as globalDateRange } from "@/data/load-sites";
+import { dateRange as globalDateRange } from "@/data/load-sites";
 
 interface FilterBarProps {
   filter: FilterState;
@@ -17,7 +19,7 @@ interface FilterBarProps {
   resetFilter: () => void;
 }
 
-const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "awwwards"];
+const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "awwwards", "webdesignclip"];
 
 /** 日付レンジ用のYYYY-MM配列を生成 */
 function generateMonths(from: string, to: string): string[] {
@@ -140,8 +142,9 @@ export function FilterBar({
 
   const hasActiveFilter =
     filter.sources.length > 0 ||
-    filter.agencies.length > 0 ||
+    filter.agencyOnly ||
     filter.starredOnly ||
+    filter.sortOrder !== "newest" ||
     filter.dateRange[0] !== globalDateRange[0] ||
     filter.dateRange[1] !== globalDateRange[1];
 
@@ -151,17 +154,45 @@ export function FilterBar({
 
   return (
     <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border bg-bg-secondary flex-wrap">
-      {/* ソースタブ */}
+      {/* ビューモード: 未確認 / すべて */}
       <button
-        onClick={onClearSources}
+        onClick={() => updateFilter({ viewMode: "unchecked" as ViewMode, starredOnly: false })}
         className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
-          allSourcesActive
+          filter.viewMode === "unchecked"
+            ? "bg-text-primary text-white"
+            : "text-text-secondary hover:bg-bg-primary"
+        }`}
+      >
+        未確認
+      </button>
+      <button
+        onClick={() => updateFilter({ viewMode: "all" as ViewMode, starredOnly: false })}
+        className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
+          filter.viewMode === "all" && !filter.starredOnly
             ? "bg-text-primary text-white"
             : "text-text-secondary hover:bg-bg-primary"
         }`}
       >
         すべて
       </button>
+      <button
+        onClick={() => updateFilter({ viewMode: "all" as ViewMode, starredOnly: true })}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
+          filter.starredOnly
+            ? "bg-emerald-500 text-white"
+            : "text-text-secondary hover:bg-bg-primary"
+        }`}
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+        確認済み
+      </button>
+
+      {/* 区切り */}
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* ソースタブ */}
       {sources.map((source) => {
         const active = filter.sources.includes(source);
         return (
@@ -185,48 +216,39 @@ export function FilterBar({
       {/* 区切り */}
       <div className="w-px h-5 bg-border mx-1" />
 
-      {/* お気に入りフィルター */}
+      {/* ソート切り替え */}
       <button
-        onClick={() => updateFilter({ starredOnly: !filter.starredOnly })}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
-          filter.starredOnly
-            ? "bg-accent text-white"
-            : "text-text-secondary hover:bg-bg-primary"
-        }`}
+        onClick={() =>
+          updateFilter({
+            sortOrder: (filter.sortOrder === "newest" ? "oldest" : "newest") as SortOrder,
+          })
+        }
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border border-border text-text-secondary hover:border-gray-300 hover:text-text-primary transition-all"
       >
-        <svg
-          className="w-3.5 h-3.5"
-          viewBox="0 0 24 24"
-          fill={filter.starredOnly ? "currentColor" : "none"}
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {filter.sortOrder === "newest" ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5m4 0l4-4m0 0l4 4m-4-4v12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h9m4 0l4 4m0 0l-4 4m4-4H9" />
+          )}
         </svg>
-        お気に入り
+        {filter.sortOrder === "newest" ? "新しい順" : "古い順"}
       </button>
 
-      {/* エージェンシードロップダウン */}
-      <Dropdown
-        label={`Agency${filter.agencies.length > 0 ? ` (${filter.agencies.length})` : ""}`}
-        open={openDropdown === "agency"}
-        onToggle={() => toggle("agency")}
+      {/* 制作会社トグル */}
+      <button
+        onClick={() => updateFilter({ agencyOnly: !filter.agencyOnly })}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all ${
+          filter.agencyOnly
+            ? "border-accent text-accent bg-blue-50"
+            : "border-border text-text-secondary hover:border-gray-300 hover:text-text-primary"
+        }`}
       >
-        {allAgencies.map((a) => (
-          <CheckItem
-            key={a}
-            label={a}
-            checked={filter.agencies.includes(a)}
-            onChange={() =>
-              updateFilter({
-                agencies: filter.agencies.includes(a)
-                  ? filter.agencies.filter((x) => x !== a)
-                  : [...filter.agencies, a],
-              })
-            }
-          />
-        ))}
-      </Dropdown>
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+        制作会社
+      </button>
 
       {/* 日付ドロップダウン */}
       <Dropdown

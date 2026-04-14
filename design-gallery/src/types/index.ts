@@ -1,11 +1,12 @@
 /** 引用元サイト */
-export type SourceSite = "sankou" | "81web" | "muuuuu" | "awwwards";
+export type SourceSite = "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip";
 
 export const SOURCE_LABELS: Record<SourceSite, string> = {
   sankou: "SANKOU!",
   "81web": "81-web.com",
   muuuuu: "MUUUUU.ORG",
   awwwards: "Awwwards",
+  webdesignclip: "Web Design Clip",
 };
 
 export const SOURCE_COLORS: Record<SourceSite, string> = {
@@ -13,6 +14,7 @@ export const SOURCE_COLORS: Record<SourceSite, string> = {
   "81web": "#4A90D9",
   muuuuu: "#2ECC71",
   awwwards: "#F5A623",
+  webdesignclip: "#9B59B6",
 };
 
 /** カテゴリ（業種） */
@@ -88,10 +90,17 @@ export interface SiteEntry {
   color?: string;
   date: string; // YYYY-MM 形式
   starred: boolean;
+  isAgency?: boolean;
 }
 
 /** レイアウトモード */
 export type LayoutMode = "grid" | "waterfall";
+
+/** ソート順 */
+export type SortOrder = "newest" | "oldest";
+
+/** 表示モード（リマインダー的） */
+export type ViewMode = "unchecked" | "all";
 
 /** フィルター状態 */
 export interface FilterState {
@@ -99,7 +108,9 @@ export interface FilterState {
   sources: SourceSite[];
   categories: Category[];
   tastes: DesignTaste[];
-  agencies: string[];
+  agencyOnly: boolean;
   dateRange: [string, string]; // [from, to] YYYY-MM
   starredOnly: boolean;
+  sortOrder: SortOrder;
+  viewMode: ViewMode;
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { SiteEntry, LayoutMode } from "@/types";
 import { SiteCard } from "./SiteCard";
+
+const PAGE_SIZE = 100;
 
 interface GalleryProps {
   sites: SiteEntry[];
@@ -14,6 +16,7 @@ interface GalleryProps {
   onClearSelection: () => void;
   onColumnsChange: (cols: number) => void;
   onSetSelection: (ids: string[]) => void;
+  screenshotIds: Set<string>;
 }
 
 export function Gallery({
@@ -26,14 +29,49 @@ export function Gallery({
   onClearSelection,
   onColumnsChange,
   onSetSelection,
+  screenshotIds,
 }: GalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
   const [dragBox, setDragBox] = useState<{
     startX: number;
     startY: number;
     currentX: number;
     currentY: number;
   } | null>(null);
+
+  // フィルターが変わったらdisplayCountをリセット
+  const sitesKey = sites.length;
+  useEffect(() => {
+    setDisplayCount(PAGE_SIZE);
+    // スクロール位置もリセット
+    containerRef.current?.scrollTo(0, 0);
+  }, [sitesKey]);
+
+  // 表示するサイト
+  const visibleSites = useMemo(
+    () => sites.slice(0, displayCount),
+    [sites, displayCount]
+  );
+  const hasMore = displayCount < sites.length;
+
+  // 無限スクロール: 下端に近づいたら追加ロード
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      if (!hasMore) return;
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      // 下端から500px以内で追加ロード
+      if (scrollHeight - scrollTop - clientHeight < 500) {
+        setDisplayCount((prev) => Math.min(prev + PAGE_SIZE, sites.length));
+      }
+    };
+
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [hasMore, sites.length]);
 
   // Ctrl+スクロール / ピンチで列数変更
   useEffect(() => {
@@ -52,25 +90,12 @@ export function Gallery({
     return () => el.removeEventListener("wheel", handleWheel);
   }, [columns, onColumnsChange]);
 
-  // 背景クリックで選択解除
-  const handleBackgroundClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === containerRef.current || e.target === (containerRef.current?.firstChild as HTMLElement)) {
-        onClearSelection();
-      }
-    },
-    [onClearSelection]
-  );
-
   // ドラッグ選択（iOS風）
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      // カードの上でのクリックはスキップ（カード側のonSelectで処理）
       const target = e.target as HTMLElement;
       if (target.closest("[data-site-id]")) return;
       if (target.closest("button") || target.closest("a")) return;
-
-      // 左ボタンのみ
       if (e.button !== 0) return;
 
       const startX = e.clientX;
@@ -79,7 +104,7 @@ export function Gallery({
 
       const handleMouseMove = (moveE: MouseEvent) => {
         const dist = Math.abs(moveE.clientX - startX) + Math.abs(moveE.clientY - startY);
-        if (dist < 5 && !isDragging) return; // 微小移動は無視
+        if (dist < 5 && !isDragging) return;
         isDragging = true;
 
         setDragBox({
@@ -89,7 +114,6 @@ export function Gallery({
           currentY: moveE.clientY,
         });
 
-        // ドラッグボックスと重なるカードを選択
         const box = {
           left: Math.min(startX, moveE.clientX),
           right: Math.max(startX, moveE.clientX),
@@ -116,7 +140,6 @@ export function Gallery({
 
       const handleMouseUp = () => {
         if (!isDragging) {
-          // ドラッグなし = 背景クリック = 選択解除
           onClearSelection();
         }
         setDragBox(null);
@@ -151,7 +174,7 @@ export function Gallery({
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
           }}
         >
-          {sites.map((site) => (
+          {visibleSites.map((site) => (
             <SiteCard
               key={site.id}
               site={site}
@@ -159,6 +182,7 @@ export function Gallery({
               onSelect={onSelect}
               onToggleStar={onToggleStar}
               layout="grid"
+              hasScreenshot={screenshotIds.has(site.id)}
             />
           ))}
         </div>
@@ -167,7 +191,7 @@ export function Gallery({
           className="masonry-grid"
           style={{ columnCount: columns }}
         >
-          {sites.map((site) => (
+          {visibleSites.map((site) => (
             <SiteCard
               key={site.id}
               site={site}
@@ -175,8 +199,18 @@ export function Gallery({
               onSelect={onSelect}
               onToggleStar={onToggleStar}
               layout="waterfall"
+              hasScreenshot={screenshotIds.has(site.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* もっと読み込み表示 */}
+      {hasMore && (
+        <div className="flex justify-center py-8">
+          <span className="text-[13px] text-text-secondary">
+            {visibleSites.length} / {sites.length}件を表示中…スクロールで続きを読み込み
+          </span>
         </div>
       )}
 
@@ -191,6 +225,48 @@ export function Gallery({
             height: Math.abs(dragBox.currentY - dragBox.startY),
           }}
         />
+      )}
+
+      {/* 選択中アクションバー */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl bg-gray-900/95 text-white shadow-2xl backdrop-blur-sm">
+          <span className="text-sm font-medium">
+            {selectedIds.size}件を選択中
+          </span>
+          <div className="w-px h-5 bg-white/20" />
+          <button
+            onClick={() => {
+              const selected = sites.filter((s) => selectedIds.has(s.id));
+              selected.forEach((s) => {
+                window.open(s.url, "_blank", "noopener,noreferrer");
+              });
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-sm font-medium transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            一括で開く
+          </button>
+          <button
+            onClick={() => {
+              const selected = sites.filter((s) => selectedIds.has(s.id));
+              selected.forEach((s) => onToggleStar(s.id));
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-medium transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+            一括チェック
+          </button>
+          <button
+            onClick={onClearSelection}
+            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition-colors"
+          >
+            選択解除
+          </button>
+        </div>
       )}
     </div>
   );
