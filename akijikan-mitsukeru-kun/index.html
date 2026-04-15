@@ -440,8 +440,15 @@
 
   async function fetchEvents(calId,tMin,tMax){
     const p=new URLSearchParams({timeMin:tMin.toISOString(),timeMax:tMax.toISOString(),singleEvents:'true',orderBy:'startTime',maxResults:'2500'});
-    try{const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?${p}`,{headers:{'Authorization':`Bearer ${accessToken}`}});
-      const d=await r.json();return(d.items||[]).map(ev=>{const s=ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date),e=ev.end.dateTime?new Date(ev.end.dateTime):new Date(ev.end.date);return{start:s,end:e,allDay:!ev.start.dateTime,summary:ev.summary||''};});
+    try{
+      const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?${p}`,{headers:{'Authorization':`Bearer ${accessToken}`}});
+      if(r.status===401){
+        clearSavedToken();
+        markReconnectNeeded('Googleへの接続が切れました。再接続してください。');
+        return[];
+      }
+      const d=await r.json();
+      return(d.items||[]).map(ev=>{const s=ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date),e=ev.end.dateTime?new Date(ev.end.dateTime):new Date(ev.end.date);return{start:s,end:e,allDay:!ev.start.dateTime,summary:ev.summary||''};});
     }catch(e){return[];}
   }
 
