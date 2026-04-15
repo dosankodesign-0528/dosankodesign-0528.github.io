@@ -367,14 +367,39 @@
   }
 
   function initTokenClient(){
-    tokenClient=google.accounts.oauth2.initTokenClient({client_id:clientId,scope:'https://www.googleapis.com/auth/calendar.readonly',
-      callback:r=>{if(r.access_token){accessToken=r.access_token;saveToken(r.access_token,r.expires_in);onConnected();}}});
-    document.getElementById('authChip').onclick=()=>{if(!accessToken)tokenClient.requestAccessToken();};
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:clientId,
+      scope:'https://www.googleapis.com/auth/calendar.readonly',
+      callback:r=>{
+        if(r.access_token){
+          accessToken=r.access_token;
+          saveToken(r.access_token,r.expires_in);
+          const chip=document.getElementById('authChip');
+          chip.classList.remove('reconnect');
+          hideToast();
+          onConnected();
+        } else if(r.error){
+          console.error('OAuth error:',r.error);
+          markReconnectNeeded('Google認証に失敗しました。ボタンから再接続してください。');
+        }
+      },
+      error_callback:e=>{
+        console.error('OAuth error_callback:',e);
+        markReconnectNeeded('Google認証に失敗しました。ボタンから再接続してください。');
+      }
+    });
+    document.getElementById('authChip').onclick=()=>{
+      if(!accessToken){hideToast();try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
+    };
     // 1) Restore from localStorage if still valid
     const saved=loadSavedToken();
     if(saved){accessToken=saved;onConnected();return;}
-    // 2) Try silent refresh (no popup if user is already signed into Google)
-    try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
+    // 2) Silent refresh を試す。ただし Safari は ITP で通らへんのでスキップ（再接続UIを出す）
+    if(isSafari){
+      document.getElementById('authLabel').textContent='未接続（タップで接続）';
+    } else {
+      try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
+    }
   }
 
   async function onConnected(){
