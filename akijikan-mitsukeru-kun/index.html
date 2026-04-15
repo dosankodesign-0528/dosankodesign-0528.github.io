@@ -128,9 +128,61 @@
   .placeholder-text { font-size:14px; }
   .placeholder-sub { font-size:12px; opacity:0.7; }
 
+  /* --- トースト（再接続うながし等） --- */
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120%); background:var(--white); border:1px solid var(--border); border-left:4px solid var(--amber); box-shadow:0 8px 24px rgba(0,0,0,0.12); border-radius:var(--radius); padding:14px 18px; font-size:13px; color:var(--text); display:flex; align-items:center; gap:12px; z-index:200; transition:transform 0.3s ease; max-width:calc(100% - 32px); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast button { background:var(--blue); color:#fff; border:none; border-radius:var(--radius-sm); padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; font-family:'Noto Sans JP',sans-serif; }
+  .toast button:hover { filter:brightness(1.1); }
+
+  /* auth-chip が「要再接続」状態のとき */
+  .auth-chip.reconnect { border-color:var(--amber); color:var(--amber); }
+  .auth-chip.reconnect .auth-dot { background:var(--amber); box-shadow:0 0 6px rgba(217,119,6,0.4); }
+
+  /* --- モバイル最適化 --- */
   @media (max-width:800px) {
     .layout { grid-template-columns:1fr; }
-    .panel-left { border-right:none; border-bottom:1px solid var(--border); }
+    .panel-left {
+      border-right:none;
+      border-bottom:1px solid var(--border);
+      padding:14px 14px;
+      gap:12px;
+    }
+    .panel-right { padding:16px 14px; min-height:auto; }
+    .topbar { padding:10px 14px; }
+    .topbar h1 { font-size:14px; }
+    .section-label { margin-bottom:4px; }
+    .setup-toggle { padding:5px 10px; font-size:10px; }
+    .auth-chip { padding:5px 12px; font-size:11px; }
+    .setting-row { gap:6px; }
+    .field-input { padding:8px 10px; font-size:12px; }
+    .day-btn { padding:7px 0; font-size:11px; }
+    .generate-btn { padding:11px; font-size:13px; }
+    .ics-section summary { padding:10px 12px; }
+    .cal-item { padding:7px 10px; font-size:12px; }
+
+    /* 結果エリアの高さを適度に */
+    .output-area { min-height:220px; }
+    .results-header { margin-bottom:12px; }
+    .results-header h2 { font-size:13px; }
+    .placeholder { padding:32px 16px; gap:6px; }
+    .placeholder-icon { font-size:28px; }
+    .placeholder-text { font-size:13px; }
+    .placeholder-sub { font-size:11px; }
+
+    /* 設定項目を 2 カラムグリッドにしてコンパクトに */
+    .mobile-compact-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    /* 結果（右パネル）を先に置きたい場合のスクロール位置調整 */
+    html { scroll-padding-top:56px; }
+  }
+
+  @media (max-width:380px) {
+    .topbar h1 { font-size:13px; }
+    .day-btn { font-size:10px; }
   }
 </style>
 </head>
