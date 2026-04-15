@@ -86,7 +86,3 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* カード選択状態はTailwindのring-*で実装 */
 
-/* ウォーターフォールレイアウト */
-.masonry-grid {
-  column-gap: 16px;
-}

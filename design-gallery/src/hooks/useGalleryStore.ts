@@ -5,7 +5,6 @@ import {
   SiteEntry,
   SourceSite,
   FilterState,
-  LayoutMode,
 } from "@/types";
 import { allSites, dateRange } from "@/data/load-sites";
 
@@ -24,7 +23,6 @@ const initialFilter: FilterState = {
 export function useGalleryStore() {
   const [sites, setSites] = useState<SiteEntry[]>(allSites);
   const [filter, setFilter] = useState<FilterState>(initialFilter);
-  const [layout, setLayout] = useState<LayoutMode>("grid");
   const [columns, setColumns] = useState(4);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
@@ -86,7 +84,30 @@ export function useGalleryStore() {
       return a.date.localeCompare(b.date);
     });
 
-    return filtered;
+    // ソース（メディア）ごとにラウンドロビンで混ぜて、
+    // 特定のメディアが連続してファーストビューを独占しないようにする。
+    // 各メディアは既に日付順なので、先頭から1件ずつ順番に取り出すと
+    // 「各メディアの最新」が冒頭に揃い、かつまばらに散る。
+    const bySource = new Map<SourceSite, SiteEntry[]>();
+    for (const site of filtered) {
+      const arr = bySource.get(site.source);
+      if (arr) {
+        arr.push(site);
+      } else {
+        bySource.set(site.source, [site]);
+      }
+    }
+    const queues = Array.from(bySource.values());
+    const interleaved: SiteEntry[] = [];
+    let idx = 0;
+    while (interleaved.length < filtered.length) {
+      const q = queues[idx % queues.length];
+      const next = q.shift();
+      if (next) interleaved.push(next);
+      idx++;
+    }
+
+    return interleaved;
   }, [sites, filter]);
 
   // スター切り替え
@@ -182,8 +203,6 @@ export function useGalleryStore() {
     updateFilter,
     resetFilter,
     toggleSource,
-    layout,
-    setLayout,
     columns,
     setColumns,
     selectedIds,

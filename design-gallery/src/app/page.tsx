@@ -5,7 +5,6 @@ import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { screenshotIds } from "@/data/load-sites";
 
 export default function Home() {
   const store = useGalleryStore();
@@ -23,8 +22,6 @@ export default function Home() {
       <Header
         search={store.filter.search}
         onSearchChange={(search) => store.updateFilter({ search })}
-        layout={store.layout}
-        onLayoutChange={store.setLayout}
         columns={store.columns}
         onColumnsChange={store.setColumns}
         totalCount={store.sites.length}
@@ -43,7 +40,6 @@ export default function Home() {
       {/* ギャラリー */}
       <Gallery
         sites={store.filteredSites}
-        layout={store.layout}
         columns={store.columns}
         selectedIds={store.selectedIds}
         onSelect={store.handleSelect}
@@ -51,7 +47,6 @@ export default function Home() {
         onClearSelection={store.clearSelection}
         onColumnsChange={store.setColumns}
         onSetSelection={store.setSelection}
-        screenshotIds={screenshotIds}
       />
     </div>
   );

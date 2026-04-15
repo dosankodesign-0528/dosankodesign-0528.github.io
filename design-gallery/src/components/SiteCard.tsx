@@ -12,8 +12,6 @@ interface SiteCardProps {
   selected: boolean;
   onSelect: (id: string, e: { shiftKey: boolean; metaKey: boolean }) => void;
   onToggleStar: (id: string) => void;
-  layout: "grid" | "waterfall";
-  hasScreenshot?: boolean;
 }
 
 export const SiteCard = memo(function SiteCard({
@@ -21,8 +19,6 @@ export const SiteCard = memo(function SiteCard({
   selected,
   onSelect,
   onToggleStar,
-  layout,
-  hasScreenshot,
 }: SiteCardProps) {
   const [hovered, setHovered] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -52,7 +48,7 @@ export const SiteCard = memo(function SiteCard({
       data-site-id={site.id}
       className={`group relative rounded-xl bg-bg-secondary transition-shadow duration-200 cursor-pointer ${
         selected ? "outline outline-2 outline-blue-500 outline-offset-2" : ""
-      } ${layout === "waterfall" ? "break-inside-avoid mb-4" : ""}`}
+      }`}
       style={{
         boxShadow: hovered
           ? "var(--card-shadow-hover)"
@@ -63,23 +59,11 @@ export const SiteCard = memo(function SiteCard({
       onClick={(e) => onSelect(site.id, { shiftKey: e.shiftKey, metaKey: e.metaKey })}
     >
       {/* サムネイル */}
-      <div
-        className={`relative overflow-hidden bg-gray-100 rounded-t-xl ${
-          layout === "waterfall" ? "" : "aspect-[4/3]"
-        }`}
-      >
+      <div className="relative overflow-hidden bg-gray-100 rounded-t-xl aspect-[4/3]">
         <img
-          src={
-            layout === "waterfall" && hasScreenshot
-              ? `/screenshots/${site.id}.jpg`
-              : site.thumbnailUrl
-          }
+          src={site.thumbnailUrl}
           alt={site.title}
-          className={`w-full object-cover transition-transform duration-300 group-hover:scale-[1.02] ${
-            layout === "waterfall"
-              ? "object-top"
-              : "h-full"
-          }`}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           loading="lazy"
         />
 
@@ -190,7 +174,5 @@ export const SiteCard = memo(function SiteCard({
   prev.site.id === next.site.id &&
   prev.site.starred === next.site.starred &&
   prev.site.date === next.site.date &&
-  prev.selected === next.selected &&
-  prev.layout === next.layout &&
-  prev.hasScreenshot === next.hasScreenshot
+  prev.selected === next.selected
 );

@@ -1,12 +1,8 @@
 "use client";
 
-import { LayoutMode } from "@/types";
-
 interface HeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
-  layout: LayoutMode;
-  onLayoutChange: (mode: LayoutMode) => void;
   columns: number;
   onColumnsChange: (cols: number) => void;
   totalCount: number;
@@ -16,8 +12,6 @@ interface HeaderProps {
 export function Header({
   search,
   onSearchChange,
-  layout,
-  onLayoutChange,
   columns,
   onColumnsChange,
   totalCount,
@@ -63,42 +57,6 @@ export function Header({
           ? `${totalCount} sites`
           : `${filteredCount} / ${totalCount} sites`}
       </span>
-
-      {/* レイアウト切り替え */}
-      <div className="flex items-center bg-bg-primary rounded-lg p-0.5 gap-0.5">
-        <button
-          onClick={() => onLayoutChange("grid")}
-          className={`p-1.5 rounded-md transition-colors ${
-            layout === "grid"
-              ? "bg-bg-secondary shadow-sm text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-          title="グリッド表示"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-            <rect x="1" y="1" width="6" height="6" rx="1" />
-            <rect x="9" y="1" width="6" height="6" rx="1" />
-            <rect x="1" y="9" width="6" height="6" rx="1" />
-            <rect x="9" y="9" width="6" height="6" rx="1" />
-          </svg>
-        </button>
-        <button
-          onClick={() => onLayoutChange("waterfall")}
-          className={`p-1.5 rounded-md transition-colors ${
-            layout === "waterfall"
-              ? "bg-bg-secondary shadow-sm text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-          title="ウォーターフォール表示"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
-            <rect x="1" y="1" width="6" height="4" rx="1" />
-            <rect x="9" y="1" width="6" height="7" rx="1" />
-            <rect x="1" y="7" width="6" height="8" rx="1" />
-            <rect x="9" y="10" width="6" height="5" rx="1" />
-          </svg>
-        </button>
-      </div>
 
       {/* 列数スライダー */}
       <div className="flex items-center gap-2">

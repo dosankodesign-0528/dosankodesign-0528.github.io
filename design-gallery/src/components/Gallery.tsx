@@ -1,14 +1,13 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState, useMemo } from "react";
-import { SiteEntry, LayoutMode } from "@/types";
+import { SiteEntry } from "@/types";
 import { SiteCard } from "./SiteCard";
 
 const PAGE_SIZE = 100;
 
 interface GalleryProps {
   sites: SiteEntry[];
-  layout: LayoutMode;
   columns: number;
   selectedIds: Set<string>;
   onSelect: (id: string, e: { shiftKey: boolean; metaKey: boolean }) => void;
@@ -16,12 +15,10 @@ interface GalleryProps {
   onClearSelection: () => void;
   onColumnsChange: (cols: number) => void;
   onSetSelection: (ids: string[]) => void;
-  screenshotIds: Set<string>;
 }
 
 export function Gallery({
   sites,
-  layout,
   columns,
   selectedIds,
   onSelect,
@@ -29,7 +26,6 @@ export function Gallery({
   onClearSelection,
   onColumnsChange,
   onSetSelection,
-  screenshotIds,
 }: GalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
@@ -167,7 +163,7 @@ export function Gallery({
           <p className="text-[15px] font-medium">該当するサイトがありません</p>
           <p className="text-[13px] mt-1">フィルター条件を変更してみてください</p>
         </div>
-      ) : layout === "grid" ? (
+      ) : (
         <div
           className="grid gap-4"
           style={{
@@ -181,25 +177,6 @@ export function Gallery({
               selected={selectedIds.has(site.id)}
               onSelect={onSelect}
               onToggleStar={onToggleStar}
-              layout="grid"
-              hasScreenshot={screenshotIds.has(site.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <div
-          className="masonry-grid"
-          style={{ columnCount: columns }}
-        >
-          {visibleSites.map((site) => (
-            <SiteCard
-              key={site.id}
-              site={site}
-              selected={selectedIds.has(site.id)}
-              onSelect={onSelect}
-              onToggleStar={onToggleStar}
-              layout="waterfall"
-              hasScreenshot={screenshotIds.has(site.id)}
             />
           ))}
         </div>

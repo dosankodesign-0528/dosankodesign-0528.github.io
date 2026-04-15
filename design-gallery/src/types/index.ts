@@ -93,9 +93,6 @@ export interface SiteEntry {
   isAgency?: boolean;
 }
 
-/** レイアウトモード */
-export type LayoutMode = "grid" | "waterfall";
-
 /** ソート順 */
 export type SortOrder = "newest" | "oldest";
 
