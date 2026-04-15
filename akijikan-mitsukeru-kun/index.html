@@ -299,8 +299,39 @@
   </div>
 </div>
 
+<div class="toast" id="toast">
+  <span id="toastMsg">Googleへの接続が切れました。再接続してください。</span>
+  <button id="toastBtn">再接続</button>
+</div>
+
 <script>
   let tokenClient, accessToken=null, calendars=[], selectedCalIds=new Set(), icsFiles=[], gsiLoaded=false;
+
+  // Safari 判定（Chromium系Safariを除外）
+  const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
+  // トースト表示
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    if(msg) document.getElementById('toastMsg').textContent=msg;
+    t.classList.add('show');
+  }
+  function hideToast(){document.getElementById('toast').classList.remove('show');}
+  document.getElementById('toastBtn').addEventListener('click',()=>{
+    hideToast();
+    if(tokenClient){try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
+  });
+
+  // 要再接続状態にする（認証切れ時）
+  function markReconnectNeeded(msg){
+    accessToken=null;
+    const chip=document.getElementById('authChip');
+    chip.classList.remove('connected');
+    chip.classList.add('reconnect');
+    document.getElementById('authLabel').textContent='要再接続';
+    document.getElementById('generateBtn').disabled=true;
+    showToast(msg||'Googleへの接続が切れました。再接続してください。');
+  }
 
   // --- Token persistence (keep "connected" across reloads) ---
   const TOKEN_KEY='gcal_token';
