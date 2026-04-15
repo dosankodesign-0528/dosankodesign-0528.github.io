@@ -412,7 +412,15 @@
   async function loadCalendars(){
     try{
       const r=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{headers:{'Authorization':`Bearer ${accessToken}`}});
-      if(r.status===401){clearSavedToken();try{tokenClient.requestAccessToken({prompt:''});}catch(e){}return;}
+      if(r.status===401){
+        clearSavedToken();
+        if(isSafari){
+          markReconnectNeeded('Googleへの接続が切れました。再接続してください。');
+        } else {
+          try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
+        }
+        return;
+      }
       const d=await r.json(); calendars=d.items||[]; selectedCalIds=new Set(calendars.map(c=>c.id)); renderCalendars();
     }catch(e){console.error(e);}
   }
