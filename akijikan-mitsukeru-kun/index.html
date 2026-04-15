@@ -508,6 +508,13 @@
     else{ph.style.display='none';out.style.display='block';const pad=n=>String(n).padStart(2,'0');
       out.textContent=slots.map(s=>{const d=`${s.date.getMonth()+1}/${s.date.getDate()}（${dn[s.dow]}）`,st=`${pad(s.start.getHours())}:${pad(s.start.getMinutes())}`,et=`${pad(s.end.getHours())}:${pad(s.end.getMinutes())}`;return`${d} ${st}〜${et}`;}).join('\n');
       cnt.textContent=`${slots.length}件`;}
+
+    // モバイルでは検出結果までオートスクロール（ファーストビューに表示）
+    if(window.innerWidth<=800){
+      requestAnimationFrame(()=>{
+        document.querySelector('.panel-right')?.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    }
   });
 
   document.getElementById('copyBtn').addEventListener('click',()=>{
