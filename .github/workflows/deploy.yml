@@ -41,12 +41,22 @@ jobs:
           cp "Retro Games/plusman.html" "_site/retro-games/plusman.html"
           cp "Retro Games/samurai_fighter.html" "_site/retro-games/samurai_fighter.html"
           cp "Retro Games/space_invaders.html" "_site/retro-games/space_invaders.html"
+          cp "Retro Games/manifest.json" "_site/retro-games/manifest.json"
+          cp "Retro Games/icon-192.png" "_site/retro-games/icon-192.png"
+          cp "Retro Games/icon-512.png" "_site/retro-games/icon-512.png"
+          cp "Retro Games/apple-touch-icon.png" "_site/retro-games/apple-touch-icon.png"
+          cp "Retro Games/favicon-32.png" "_site/retro-games/favicon-32.png"
 
       # ---------- 空き時間みつける君 ----------
       - name: 空き時間みつける君をコピー
         run: |
           mkdir -p "_site/akijikan-mitsukeru-kun"
           cp akijikan-mitsukeru-kun/index.html "_site/akijikan-mitsukeru-kun/index.html"
+          cp akijikan-mitsukeru-kun/manifest.json "_site/akijikan-mitsukeru-kun/manifest.json"
+          cp akijikan-mitsukeru-kun/icon-192.png "_site/akijikan-mitsukeru-kun/icon-192.png"
+          cp akijikan-mitsukeru-kun/icon-512.png "_site/akijikan-mitsukeru-kun/icon-512.png"
+          cp akijikan-mitsukeru-kun/apple-touch-icon.png "_site/akijikan-mitsukeru-kun/apple-touch-icon.png"
+          cp akijikan-mitsukeru-kun/favicon-32.png "_site/akijikan-mitsukeru-kun/favicon-32.png"
 
       # ---------- houmon-app ----------
       - name: houmon-app の依存をインストール
