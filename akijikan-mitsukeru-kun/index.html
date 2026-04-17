@@ -522,6 +522,13 @@
 
   document.querySelectorAll('.day-btn').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('active')));
 
+  // 日付・時刻入力：テキスト部分をタップしてもピッカーが開くように
+  document.querySelectorAll('.range-field input').forEach(inp=>{
+    const open=()=>{try{if(typeof inp.showPicker==='function')inp.showPicker();}catch(e){}};
+    inp.addEventListener('click',open);
+    inp.addEventListener('focus',open);
+  });
+
   // Generate
   document.getElementById('generateBtn').addEventListener('click',async()=>{
     const btn=document.getElementById('generateBtn');btn.classList.add('loading');btn.disabled=true;
