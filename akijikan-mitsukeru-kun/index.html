@@ -464,15 +464,24 @@
   document.getElementById('setupClose').addEventListener('click',()=>document.getElementById('setupOverlay').classList.remove('show'));
   document.getElementById('setupOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
 
-  // Client ID
-  let clientId='';
-  try{clientId=localStorage.getItem('gcal_client_id')||'';}catch(e){}
+  // Client ID（多層保存で Safari ITP のlocalStorage削除にも耐える）
+  const CID_KEY='gcal_client_id';
+  let clientId=storageRead(CID_KEY);
   document.getElementById('clientIdInput').value=clientId;
-  if(clientId)loadGsi();
+  if(clientId){
+    // Client ID が残っている＝前回ログイン済みとみなして見た目は接続中に
+    setChipConnectedLook();
+    loadGsi();
+  }
 
   document.getElementById('saveIdBtn').addEventListener('click',()=>{
     clientId=document.getElementById('clientIdInput').value.trim();
-    if(clientId){try{localStorage.setItem('gcal_client_id',clientId);}catch(e){} loadGsi(); document.getElementById('setupOverlay').classList.remove('show');}
+    if(clientId){
+      storageWrite(CID_KEY,clientId);
+      setChipConnectedLook();
+      loadGsi();
+      document.getElementById('setupOverlay').classList.remove('show');
+    }
   });
 
   function loadGsi(){
