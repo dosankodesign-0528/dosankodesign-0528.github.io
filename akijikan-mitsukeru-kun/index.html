@@ -373,22 +373,86 @@
     if(tokenClient){try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
   });
 
-  // 要再接続状態にする（認証切れ時）
-  function markReconnectNeeded(msg){
-    accessToken=null;
-    const chip=document.getElementById('authChip');
-    chip.classList.remove('connected');
-    chip.classList.add('reconnect');
-    document.getElementById('authLabel').textContent='要再接続';
-    document.getElementById('generateBtn').disabled=true;
-    showToast(msg||'Googleへの接続が切れました。再接続してください。');
+  // --- 多層ストレージ（Safari ITPでlocalStorageが消えてもCookie/sessionStorageから復元） ---
+  function storageWrite(k,v){
+    try{localStorage.setItem(k,v);}catch(e){}
+    try{sessionStorage.setItem(k,v);}catch(e){}
+    try{
+      const exp=new Date(Date.now()+400*86400000).toUTCString();
+      document.cookie=`${encodeURIComponent(k)}=${encodeURIComponent(v)};expires=${exp};path=/;SameSite=Lax`;
+    }catch(e){}
+  }
+  function storageRead(k){
+    try{const v=localStorage.getItem(k);if(v)return v;}catch(e){}
+    try{const v=sessionStorage.getItem(k);if(v)return v;}catch(e){}
+    try{
+      for(const p of document.cookie.split('; ')){
+        const i=p.indexOf('=');if(i<0)continue;
+        if(decodeURIComponent(p.slice(0,i))===k)return decodeURIComponent(p.slice(i+1));
+      }
+    }catch(e){}
+    return '';
+  }
+  function storageRemove(k){
+    try{localStorage.removeItem(k);}catch(e){}
+    try{sessionStorage.removeItem(k);}catch(e){}
+    try{document.cookie=`${encodeURIComponent(k)}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;}catch(e){}
   }
 
-  // --- Token persistence (keep "connected" across reloads) ---
+  // auth chip を「接続中」表示にする（疑似的に常時接続に見せる）
+  function setChipConnectedLook(){
+    const chip=document.getElementById('authChip');
+    chip.classList.add('connected');
+    chip.classList.remove('reconnect');
+    document.getElementById('authLabel').textContent='接続中';
+    document.getElementById('generateBtn').disabled=false;
+  }
+  function setChipDisconnectedLook(){
+    const chip=document.getElementById('authChip');
+    chip.classList.remove('connected');
+    chip.classList.remove('reconnect');
+    document.getElementById('authLabel').textContent='未接続';
+    document.getElementById('generateBtn').disabled=(icsFiles.length===0);
+  }
+
+  // 認証切れは静かに処理。Client ID があれば見た目は「接続中」を維持し、必要なときだけ再認証を走らせる
+  function markReconnectNeeded(msg){
+    accessToken=null;
+    if(clientId){setChipConnectedLook();}
+    else{setChipDisconnectedLook();}
+  }
+
+  // --- Token persistence (多層) ---
   const TOKEN_KEY='gcal_token';
-  function saveToken(at,exp){try{localStorage.setItem(TOKEN_KEY,JSON.stringify({access_token:at,expires_at:Date.now()+((exp||3600)-60)*1000}));}catch(e){}}
-  function loadSavedToken(){try{const s=JSON.parse(localStorage.getItem(TOKEN_KEY)||'{}');if(s.access_token&&s.expires_at>Date.now())return s.access_token;}catch(e){}return null;}
-  function clearSavedToken(){try{localStorage.removeItem(TOKEN_KEY);}catch(e){} accessToken=null; document.getElementById('authChip').classList.remove('connected'); document.getElementById('authLabel').textContent='未接続'; document.getElementById('generateBtn').disabled=true;}
+  function saveToken(at,exp){
+    const payload=JSON.stringify({access_token:at,expires_at:Date.now()+((exp||3600)-60)*1000});
+    storageWrite(TOKEN_KEY,payload);
+  }
+  function loadSavedToken(){
+    try{const s=JSON.parse(storageRead(TOKEN_KEY)||'{}');if(s.access_token&&s.expires_at>Date.now())return s.access_token;}catch(e){}
+    return null;
+  }
+  function clearSavedToken(){
+    storageRemove(TOKEN_KEY);
+    accessToken=null;
+    // Client ID があれば見た目は接続中のまま（次回の操作時に自動再認証）
+    if(clientId){setChipConnectedLook();}
+    else{setChipDisconnectedLook();}
+  }
+
+  // 必要に応じて認証ポップアップを開いてトークンを取得する Promise
+  function ensureToken(){
+    if(accessToken)return Promise.resolve(accessToken);
+    if(!tokenClient)return Promise.resolve(null);
+    return new Promise(resolve=>{
+      const t0=Date.now();
+      const iv=setInterval(()=>{
+        if(accessToken){clearInterval(iv);resolve(accessToken);}
+        else if(Date.now()-t0>60000){clearInterval(iv);resolve(null);}
+      },150);
+      try{tokenClient.requestAccessToken();}catch(e){clearInterval(iv);resolve(null);}
+    });
+  }
 
   const today=new Date(), twoWeeks=new Date(today);
   twoWeeks.setDate(twoWeeks.getDate()+14);
