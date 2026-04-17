@@ -603,6 +603,13 @@
   // Generate
   document.getElementById('generateBtn').addEventListener('click',async()=>{
     const btn=document.getElementById('generateBtn');btn.classList.add('loading');btn.disabled=true;
+
+    // トークン切れならここで自動的に再認証（見た目は接続中のまま、ユーザー操作は継続）
+    if(!accessToken&&clientId&&tokenClient){
+      await ensureToken();
+      if(accessToken&&calendars.length===0){await loadCalendars();}
+    }
+
     const sD=new Date(document.getElementById('startDate').value+'T00:00:00'),eD=new Date(document.getElementById('endDate').value+'T23:59:59');
     const[stH,stM]=document.getElementById('startTime').value.split(':').map(Number),[etH,etM]=document.getElementById('endTime').value.split(':').map(Number);
     const minD=+document.getElementById('minDuration').value,actDays=new Set();
