@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b2f7a"/>
+      <stop offset="1" stop-color="#0f0a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
+  <g fill="#5eead4">
+    <rect x="208" y="128" width="28" height="28"/>
+    <rect x="276" y="128" width="28" height="28"/>
+    <rect x="208" y="156" width="28" height="28"/>
+    <rect x="276" y="156" width="28" height="28"/>
+    <rect x="180" y="184" width="28" height="28"/>
+    <rect x="208" y="184" width="28" height="28"/>
+    <rect x="236" y="184" width="28" height="28"/>
+    <rect x="276" y="184" width="28" height="28"/>
+    <rect x="304" y="184" width="28" height="28"/>
+    <rect x="152" y="212" width="28" height="28"/>
+    <rect x="180" y="212" width="28" height="28"/>
+    <rect x="208" y="212" width="28" height="28"/>
+    <rect x="236" y="212" width="28" height="28"/>
+    <rect x="276" y="212" width="28" height="28"/>
+    <rect x="304" y="212" width="28" height="28"/>
+    <rect x="332" y="212" width="28" height="28"/>
+    <rect x="152" y="240" width="28" height="28"/>
+    <rect x="180" y="240" width="28" height="28"/>
+    <rect x="208" y="240" width="28" height="28"/>
+    <rect x="236" y="240" width="28" height="28"/>
+    <rect x="276" y="240" width="28" height="28"/>
+    <rect x="304" y="240" width="28" height="28"/>
+    <rect x="332" y="240" width="28" height="28"/>
+    <rect x="152" y="268" width="28" height="28"/>
+    <rect x="208" y="268" width="28" height="28"/>
+    <rect x="276" y="268" width="28" height="28"/>
+    <rect x="332" y="268" width="28" height="28"/>
+    <rect x="180" y="296" width="28" height="28"/>
+    <rect x="236" y="296" width="28" height="28"/>
+    <rect x="276" y="296" width="28" height="28"/>
+    <rect x="332" y="296" width="28" height="28"/>
+    <rect x="152" y="324" width="28" height="28"/>
+    <rect x="208" y="324" width="28" height="28"/>
+    <rect x="304" y="324" width="28" height="28"/>
+    <rect x="360" y="324" width="28" height="28"/>
+  </g>
+  <rect x="200" y="370" width="112" height="14" fill="#ec4899" fill-opacity="0.7"/>
+</svg>
