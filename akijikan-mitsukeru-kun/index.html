@@ -113,6 +113,12 @@
     line-height:normal;
     appearance:none;
     -webkit-appearance:none;
+    cursor:pointer;
+  }
+  /* テキスト部分もタップ領域として有効化（アイコンだけでなく全体で開く） */
+  .range-field input::-webkit-calendar-picker-indicator {
+    cursor:pointer;
+    margin-left:0;
   }
   .range-field input::-webkit-date-and-time-value { text-align:left; }
   .range-sep {
