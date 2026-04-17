@@ -515,13 +515,14 @@
     document.getElementById('authChip').onclick=()=>{
       if(!accessToken){hideToast();try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
     };
-    // 1) Restore from localStorage if still valid
+    // 1) Restore from storage if still valid
     const saved=loadSavedToken();
     if(saved){accessToken=saved;onConnected();return;}
-    // 2) Silent refresh を試す。ただし Safari は ITP で通らへんのでスキップ（再接続UIを出す）
-    if(isSafari){
-      document.getElementById('authLabel').textContent='未接続（タップで接続）';
-    } else {
+    // 2) Client ID があれば見た目は「接続中」を維持（疑似的に常時接続）
+    //    実際のトークンは、検出ボタン押下時に自動で取得する
+    setChipConnectedLook();
+    // Chromium系ならサイレントリフレッシュも試す（成功すれば即実トークン化）
+    if(!isSafari){
       try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
     }
   }
