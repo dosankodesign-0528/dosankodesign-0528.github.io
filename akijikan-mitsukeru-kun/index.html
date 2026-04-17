@@ -538,12 +538,8 @@
     try{
       const r=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{headers:{'Authorization':`Bearer ${accessToken}`}});
       if(r.status===401){
+        // 静かにトークン破棄。見た目は接続中のまま（次のアクションで自動再認証）
         clearSavedToken();
-        if(isSafari){
-          markReconnectNeeded('Googleへの接続が切れました。再接続してください。');
-        } else {
-          try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
-        }
         return;
       }
       const d=await r.json(); calendars=d.items||[]; selectedCalIds=new Set(calendars.map(c=>c.id)); renderCalendars();
