@@ -1,11 +1,10 @@
 /** 引用元サイト */
-export type SourceSite = "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip";
+export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip";
 
 export const SOURCE_LABELS: Record<SourceSite, string> = {
   sankou: "SANKOU!",
   "81web": "81-web.com",
   muuuuu: "MUUUUU.ORG",
-  awwwards: "Awwwards",
   webdesignclip: "Web Design Clip",
 };
 
@@ -13,7 +12,6 @@ export const SOURCE_COLORS: Record<SourceSite, string> = {
   sankou: "#E85D75",
   "81web": "#4A90D9",
   muuuuu: "#2ECC71",
-  awwwards: "#F5A623",
   webdesignclip: "#9B59B6",
 };
 
