@@ -72,6 +72,20 @@ jobs:
       - name: houmon-app をコピー
         run: cp -r houmon-app/out _site/houmon-app
 
+      # ---------- design-gallery ----------
+      - name: design-gallery の依存をインストール
+        working-directory: design-gallery
+        run: npm ci
+
+      - name: design-gallery をビルド
+        working-directory: design-gallery
+        run: npm run build
+        env:
+          BASE_PATH: /design-gallery
+
+      - name: design-gallery をコピー
+        run: cp -r design-gallery/out _site/design-gallery
+
       # ---------- travel-shiori ----------
       - name: travel-shiori の依存をインストール
         working-directory: travel-shiori
