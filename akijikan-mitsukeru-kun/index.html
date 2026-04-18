@@ -1005,7 +1005,7 @@
       const r=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?${p}`,{headers:{'Authorization':`Bearer ${accessToken}`}});
       if(r.status===401){clearSavedToken();return[];}
       const d=await r.json();
-      return(d.items||[]).map(ev=>{const s=ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date),e=ev.end.dateTime?new Date(ev.end.dateTime):new Date(ev.end.date);return{start:s,end:e,allDay:!ev.start.dateTime,summary:ev.summary||''};});
+      return(d.items||[]).map(ev=>{const s=ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date),e=ev.end.dateTime?new Date(ev.end.dateTime):new Date(ev.end.date);return{start:s,end:e,allDay:!ev.start.dateTime,summary:ev.summary||'',calId:calId};});
     }catch(e){return[];}
   }
 
