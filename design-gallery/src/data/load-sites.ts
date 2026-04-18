@@ -30,9 +30,9 @@ try {
   console.log("scraped-sites.json not found, using sample data only");
 }
 
-// マージ: スクレイピングデータ + サンプルデータ（81-web, awwwards分を補完）
+// マージ: スクレイピングデータ + サンプルデータ（81-web分を補完）
 const sampleFor81webAndAwwwards = sampleSites.filter(
-  (s) => s.source === "81web" || s.source === "awwwards"
+  (s) => s.source === "81web"
 );
 
 // URLベースで重複排除
