@@ -415,10 +415,9 @@
   }
   .cv-hour-bg:nth-child(2n) { background:rgba(0,0,0,0.012); }
 
-  /* 予定ブロック（一色） */
+  /* 予定ブロック（一色・列分割対応：left/width はJSで設定） */
   .cv-event {
     position:absolute;
-    left:1px; right:1px;
     background:rgba(37,99,235,0.13);
     border-left:2px solid var(--blue);
     border-radius:3px;
@@ -430,6 +429,7 @@
     box-sizing:border-box;
     pointer-events:auto;
     cursor:default;
+    border-right:1px solid rgba(37,99,235,0.2);
   }
   .cv-event-title {
     white-space:nowrap;
