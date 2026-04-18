@@ -1315,9 +1315,21 @@
         end:e.end>dayEnd?dayEnd:e.end,
         summary:e.summary
       }));
+      // calId → color のヘルパー
+      const colorOf=(calId)=>{
+        if(!calId)return '#6b7280';
+        if(calId.startsWith('__ics__:'))return '#6b7280';
+        const cal=calendars.find(c=>c.id===calId);
+        return cal&&cal.backgroundColor?cal.backgroundColor:'#6b7280';
+      };
+      // timed の calId は元イベントから引き継ぐ必要があるので、map時に付ける（上で書き換え済）
       allday.forEach(e=>{
+        const color=colorOf(e.calId);
         const div=document.createElement('div');
         div.className='cv-allday-event';
+        div.style.background=hexToRgba(color,0.18);
+        div.style.borderLeftColor=color;
+        div.style.color=color;
         div.textContent=e.summary||'予定あり';
         div.title=e.summary||'予定あり';
         allCells[i].appendChild(div);
@@ -1327,6 +1339,7 @@
       laid.forEach(({ev,col,cols})=>{
         const startMin=(ev.start-dayStart)/60000;
         const dur=Math.max(15,(ev.end-ev.start)/60000);
+        const color=colorOf(ev.calId);
         const div=document.createElement('div');
         div.className='cv-event';
         div.style.top=(startMin/60*hourH)+'px';
@@ -1335,6 +1348,11 @@
         const widthPct=100/cols;
         div.style.left=`calc(${col*widthPct}% + 1px)`;
         div.style.width=`calc(${widthPct}% - 2px)`;
+        // カレンダーごとの色
+        div.style.background=hexToRgba(color,0.18);
+        div.style.borderLeftColor=color;
+        div.style.borderRightColor=hexToRgba(color,0.3);
+        div.style.color=color;
         const t=ev.summary||'予定あり';
         div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
         div.title=t;
