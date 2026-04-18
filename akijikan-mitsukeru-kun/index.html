@@ -1123,19 +1123,46 @@
     return `${sY}/${sM}/${sD} 〜 ${eY}/${eM}/${eD}`;
   }
 
-  function cvSwitchTab(view){
-    const isCal=view==='calendar';
-    document.getElementById('tabSettings').classList.toggle('active',!isCal);
-    document.getElementById('tabCalendar').classList.toggle('active',isCal);
-    document.querySelector('.layout').style.display=isCal?'none':'';
-    document.getElementById('calendarView').classList.toggle('show',isCal);
-    if(isCal){
-      if(!cvWeekStart)cvWeekStart=cvStartOfWeek(new Date());
-      cvRender(true);
-    }
+  // ----- モーダル開閉 / 拡大 / 全画面 -----
+  function cvOpen(){
+    if(!cvWeekStart)cvWeekStart=cvStartOfWeek(new Date());
+    document.getElementById('cvOverlay').classList.add('show');
+    document.body.style.overflow='hidden';
+    cvRender(true);
   }
-  document.getElementById('tabSettings').addEventListener('click',()=>cvSwitchTab('settings'));
-  document.getElementById('tabCalendar').addEventListener('click',()=>cvSwitchTab('calendar'));
+  function cvClose(){
+    document.getElementById('cvOverlay').classList.remove('show');
+    document.body.style.overflow='';
+  }
+  document.getElementById('cvOpenBtn').addEventListener('click',cvOpen);
+  document.getElementById('cvCloseBtn').addEventListener('click',cvClose);
+  document.getElementById('cvOverlay').addEventListener('click',e=>{
+    if(e.target===e.currentTarget)cvClose();
+  });
+  // ESCキーで閉じる
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&document.getElementById('cvOverlay').classList.contains('show'))cvClose();
+  });
+
+  // 拡大ボタン：normal ⇄ expanded
+  document.getElementById('cvExpandBtn').addEventListener('click',()=>{
+    const m=document.getElementById('cvModal'), b=document.getElementById('cvExpandBtn');
+    if(m.classList.contains('fullscreen')){m.classList.remove('fullscreen');document.getElementById('cvFullBtn').classList.remove('active');}
+    m.classList.toggle('expanded');
+    b.classList.toggle('active',m.classList.contains('expanded'));
+    requestAnimationFrame(()=>cvRender(false));
+  });
+  // 全画面ボタン
+  document.getElementById('cvFullBtn').addEventListener('click',()=>{
+    const m=document.getElementById('cvModal'), b=document.getElementById('cvFullBtn');
+    m.classList.toggle('fullscreen');
+    b.classList.toggle('active',m.classList.contains('fullscreen'));
+    if(m.classList.contains('fullscreen')){
+      m.classList.remove('expanded');
+      document.getElementById('cvExpandBtn').classList.remove('active');
+    }
+    requestAnimationFrame(()=>cvRender(false));
+  });
 
   document.getElementById('cvPrev').addEventListener('click',()=>{cvWeekStart.setDate(cvWeekStart.getDate()-7);cvRender(true);});
   document.getElementById('cvNext').addEventListener('click',()=>{cvWeekStart.setDate(cvWeekStart.getDate()+7);cvRender(true);});
@@ -1144,7 +1171,7 @@
   // リサイズ時に高さ係数が変わるので再描画
   let cvResizeTimer=null;
   window.addEventListener('resize',()=>{
-    if(!document.getElementById('calendarView').classList.contains('show'))return;
+    if(!document.getElementById('cvOverlay').classList.contains('show'))return;
     clearTimeout(cvResizeTimer);
     cvResizeTimer=setTimeout(()=>cvRender(false),200);
   });
