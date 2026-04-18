@@ -11,6 +11,14 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "旅のしおり",
   },
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+  },
 };
 
 export const viewport: Viewport = {
@@ -29,7 +37,6 @@ export default function RootLayout({
   return (
     <html lang="ja" className="h-full">
       <head>
-        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
