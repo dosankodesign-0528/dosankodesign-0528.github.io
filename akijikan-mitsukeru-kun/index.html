@@ -629,26 +629,54 @@
   </div>
 </div>
 
-<div class="calendar-view" id="calendarView">
-  <div class="cv-toolbar">
-    <div class="cv-nav">
-      <button id="cvPrev" title="前の週">‹</button>
-      <button id="cvToday" class="cv-today-btn">今週</button>
-      <button id="cvNext" title="次の週">›</button>
-      <span class="cv-title" id="cvTitle">　</span>
+<div class="cv-overlay" id="cvOverlay" aria-hidden="true">
+  <div class="cv-modal" id="cvModal" role="dialog" aria-modal="true" aria-labelledby="cvTitle">
+    <div class="cv-modal-header">
+      <div class="cv-nav">
+        <button id="cvPrev" title="前の週" aria-label="前の週">‹</button>
+        <button id="cvToday" class="cv-today-btn">今週</button>
+        <button id="cvNext" title="次の週" aria-label="次の週">›</button>
+        <span class="cv-title" id="cvTitle">　</span>
+      </div>
+      <div class="cv-modal-actions">
+        <div class="cv-legend">
+          <span class="cv-legend-item"><span class="swatch busy"></span>予定あり</span>
+          <span class="cv-legend-item"><span class="swatch free"></span>空き候補</span>
+        </div>
+        <button class="cv-icon-btn" id="cvExpandBtn" title="拡大" aria-label="拡大">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 3 21 3 21 9"/>
+            <polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </button>
+        <button class="cv-icon-btn" id="cvFullBtn" title="全画面" aria-label="全画面">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+            <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+          </svg>
+        </button>
+        <button class="cv-icon-btn cv-close-btn" id="cvCloseBtn" title="閉じる" aria-label="閉じる">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
     </div>
-    <div class="cv-legend">
-      <span class="cv-legend-item"><span class="swatch busy"></span>予定あり</span>
-      <span class="cv-legend-item"><span class="swatch free"></span>空き候補</span>
+    <div class="cv-modal-body">
+      <div class="cv-grid-wrap">
+        <div class="cv-header-row" id="cvHeaderRow"></div>
+        <div class="cv-allday-row" id="cvAlldayRow"></div>
+        <div class="cv-body" id="cvBody"></div>
+      </div>
+      <div class="cv-empty" id="cvEmpty" style="display:none;">
+        カレンダーに接続すると、ここに予定が表示されます。
+      </div>
     </div>
-  </div>
-  <div class="cv-grid-wrap">
-    <div class="cv-header-row" id="cvHeaderRow"></div>
-    <div class="cv-allday-row" id="cvAlldayRow"></div>
-    <div class="cv-body" id="cvBody"></div>
-  </div>
-  <div class="cv-empty" id="cvEmpty" style="display:none;">
-    カレンダーに接続すると、ここに予定が表示されます。
   </div>
 </div>
 
