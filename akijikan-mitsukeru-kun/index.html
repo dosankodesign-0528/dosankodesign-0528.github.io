@@ -1732,6 +1732,7 @@
         const t=ev.summary||'予定あり';
         div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
         div.title=t;
+        div.addEventListener('click',e2=>{e2.stopPropagation();cvOpenDetail(ev._orig||ev);});
         dayCols[i].appendChild(div);
       });
     }
