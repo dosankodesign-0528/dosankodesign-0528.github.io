@@ -1136,23 +1136,11 @@
     if(e.key==='Escape'&&document.getElementById('cvOverlay').classList.contains('show'))cvClose();
   });
 
-  // 拡大ボタン：normal ⇄ expanded
+  // 拡大ボタン：通常 ⇄ 全画面（縦横とも画面いっぱい）
   document.getElementById('cvExpandBtn').addEventListener('click',()=>{
     const m=document.getElementById('cvModal'), b=document.getElementById('cvExpandBtn');
-    if(m.classList.contains('fullscreen')){m.classList.remove('fullscreen');document.getElementById('cvFullBtn').classList.remove('active');}
-    m.classList.toggle('expanded');
-    b.classList.toggle('active',m.classList.contains('expanded'));
-    requestAnimationFrame(()=>cvRender(false));
-  });
-  // 全画面ボタン
-  document.getElementById('cvFullBtn').addEventListener('click',()=>{
-    const m=document.getElementById('cvModal'), b=document.getElementById('cvFullBtn');
     m.classList.toggle('fullscreen');
     b.classList.toggle('active',m.classList.contains('fullscreen'));
-    if(m.classList.contains('fullscreen')){
-      m.classList.remove('expanded');
-      document.getElementById('cvExpandBtn').classList.remove('active');
-    }
     requestAnimationFrame(()=>cvRender(false));
   });
 
