@@ -478,13 +478,15 @@
   /* スマホ：縦に圧縮 */
   @media (max-width:800px) {
     :root { --cv-hour-h: 22px; }
-    .calendar-view { padding:10px 8px 16px; }
-    .view-tabs { padding:0 12px; }
-    .view-tabs .tab { padding:10px 12px; font-size:12px; }
-    .cv-toolbar { gap:8px; margin-bottom:10px; }
+    .cv-overlay { padding:0; }
+    .cv-modal { max-width:100vw !important; max-height:100vh !important; height:100vh; border-radius:0; }
+    .cv-modal-header { padding:10px 12px; gap:8px; }
+    .cv-modal-actions { gap:6px; }
+    .cv-modal-body { padding:10px 8px 14px; }
+    .cv-icon-btn { width:28px; height:28px; }
     .cv-nav button { padding:5px 9px; font-size:11px; }
     .cv-title { font-size:12px; padding:0 4px; }
-    .cv-legend { font-size:10px; gap:10px; width:100%; justify-content:center; }
+    .cv-legend { font-size:10px; gap:10px; width:100%; justify-content:center; order:3; }
     .cv-header-row, .cv-allday-row, .cv-body {
       grid-template-columns:24px repeat(7, 1fr);
     }
@@ -495,6 +497,8 @@
     .cv-hour-label { font-size:8px; padding:1px 2px 0 0; }
     .cv-event { font-size:8px; padding:0 2px; }
     .cv-allday-event { font-size:8px; }
+    .cv-open-btn { padding:6px 10px; font-size:11px; }
+    .results-actions { flex-wrap:wrap; }
   }
 
   /* --- モバイル最適化 --- */
