@@ -1687,7 +1687,8 @@
         start:e.start<dayStart?dayStart:e.start,
         end:e.end>dayEnd?dayEnd:e.end,
         summary:e.summary,
-        calId:e.calId
+        calId:e.calId,
+        _orig:e   // クリック時は元イベントを開く
       }));
       // 終日
       allday.forEach(e=>{
