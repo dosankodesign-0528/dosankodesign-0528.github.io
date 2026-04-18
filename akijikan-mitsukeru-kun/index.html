@@ -1313,7 +1313,8 @@
       const timed=todays.filter(e=>!e.allDay).map(e=>({
         start:e.start<dayStart?dayStart:e.start,
         end:e.end>dayEnd?dayEnd:e.end,
-        summary:e.summary
+        summary:e.summary,
+        calId:e.calId
       }));
       // calId → color のヘルパー
       const colorOf=(calId)=>{
