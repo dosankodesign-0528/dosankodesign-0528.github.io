@@ -990,7 +990,7 @@
     const c=document.getElementById('calList'); document.getElementById('calendarSelector').classList.add('show');
     c.innerHTML=calendars.map(cal=>{
       const sel=selectedCalIds.has(cal.id)?'selected':'', col=cal.backgroundColor||'#2563eb', own=cal.accessRole==='owner', type=own?'':'外部';
-      return `<div class="cal-item ${sel}" data-id="${cal.id}"><div class="cal-check"><span class="cal-check-mark">✓</span></div><div class="cal-color" style="background:${col}"></div><div class="cal-name">${cal.summary||cal.id}</div>${type?`<div class="cal-type">${type}</div>`:''}</div>`;
+      return `<div class="cal-item ${sel}" data-id="${cal.id}"><div class="cal-check"><span class="cal-check-mark">✓</span></div><div class="cal-color" style="background:${col}"></div><div class="cal-name">${escapeHtml(calDisplayName(cal))}</div>${type?`<div class="cal-type">${type}</div>`:''}</div>`;
     }).join('');
     c.querySelectorAll('.cal-item').forEach(el=>el.addEventListener('click',()=>{
       const id=el.dataset.id;
