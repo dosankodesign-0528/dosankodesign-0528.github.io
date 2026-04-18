@@ -729,6 +729,23 @@
 <script>
   let tokenClient, accessToken=null, calendars=[], selectedCalIds=new Set(), icsFiles=[], gsiLoaded=false;
 
+  // カレンダー名のエイリアス（表示名を上書き）
+  const CAL_NAME_ALIAS = {
+    'hideyuki.yamanaka@fuller.co.jp': 'フラー',
+    'ワーク': 'iOSカレンダー',
+  };
+  function calDisplayName(cal){
+    if(!cal)return '';
+    return CAL_NAME_ALIAS[cal.summary]||CAL_NAME_ALIAS[cal.id]||cal.summary||cal.id;
+  }
+  // #RRGGBB → rgba(r,g,b,a)
+  function hexToRgba(hex,a){
+    if(!hex)return `rgba(107,114,128,${a})`;
+    const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m)return `rgba(107,114,128,${a})`;
+    return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
+  }
+
   // Safari 判定（Chromium系Safariを除外）
   const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
