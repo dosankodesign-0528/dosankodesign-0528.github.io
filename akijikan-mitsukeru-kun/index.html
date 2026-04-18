@@ -1221,9 +1221,9 @@
     const tMin=new Date(cvWeekStart);
     const tMax=new Date(cvWeekStart); tMax.setDate(tMax.getDate()+7);
     const all=[];
-    // ICS
+    // ICS（ファイル名を calId として擬似タグ付け）
     icsFiles.forEach(f=>f.events.forEach(e=>{
-      if(e.start<tMax&&e.end>tMin)all.push(e);
+      if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name});
     }));
     // Google
     if(selectedCalIds.size>0){
