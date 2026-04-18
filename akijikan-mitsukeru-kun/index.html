@@ -525,13 +525,6 @@
     document.getElementById('toastMsg').textContent=msg;
     document.getElementById('toastBtn').textContent='OK';
     t.classList.add('show');
-    // 単発：OKでクリア
-    document.getElementById('toastBtn').onclick=()=>{
-      t.classList.remove('show');
-      t.classList.remove('success');
-      document.getElementById('toastBtn').textContent='再接続';
-      document.getElementById('toastBtn').onclick=null; // デフォルトに戻す
-    };
   }
 
   document.getElementById('saveIdBtn').addEventListener('click',()=>{
