@@ -485,24 +485,53 @@
   document.getElementById('setupClose').addEventListener('click',()=>document.getElementById('setupOverlay').classList.remove('show'));
   document.getElementById('setupOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
 
-  // Client ID（多層保存で Safari ITP のlocalStorage削除にも耐える）
+  // Client ID（URLハッシュ＋多層ストレージ。Safari ITPでlocalStorageが消えてもURL/ブックマークから復元）
   const CID_KEY='gcal_client_id';
-  let clientId=storageRead(CID_KEY);
-  document.getElementById('clientIdInput').value=clientId;
+  // 優先順位：URLハッシュ > localStorage > sessionStorage > Cookie
+  let clientId = readCidFromUrl() || storageRead(CID_KEY);
   if(clientId){
-    // Client ID が残っている＝前回ログイン済みとみなして見た目は接続中に
+    // どこから読めても、URL+全ストレージに同期して書き戻す（次回以降も生き残るように）
+    storageWrite(CID_KEY,clientId);
+    writeCidToUrl(clientId);
     setChipConnectedLook();
     loadGsi();
   }
+  document.getElementById('clientIdInput').value=clientId;
+
+  // 初回保存時のブックマーク案内をすでに見せたか
+  const HINT_SHOWN_KEY='gcal_bookmark_hint_shown';
+  function maybeShowBookmarkHint(){
+    if(storageRead(HINT_SHOWN_KEY))return;
+    storageWrite(HINT_SHOWN_KEY,'1');
+    const isiOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const msg=isiOS
+      ? '✅ 接続できました！次回も自動接続するため「共有 → ホーム画面に追加」してください'
+      : '✅ 接続できました！このページをブックマークすると次回以降の設定が不要になります';
+    const t=document.getElementById('toast');
+    t.classList.add('success');
+    document.getElementById('toastMsg').textContent=msg;
+    document.getElementById('toastBtn').textContent='OK';
+    t.classList.add('show');
+    // 単発：OKでクリア
+    document.getElementById('toastBtn').onclick=()=>{
+      t.classList.remove('show');
+      t.classList.remove('success');
+      document.getElementById('toastBtn').textContent='再接続';
+      document.getElementById('toastBtn').onclick=null; // デフォルトに戻す
+    };
+  }
 
   document.getElementById('saveIdBtn').addEventListener('click',()=>{
-    clientId=document.getElementById('clientIdInput').value.trim();
-    if(clientId){
-      storageWrite(CID_KEY,clientId);
-      setChipConnectedLook();
-      loadGsi();
-      document.getElementById('setupOverlay').classList.remove('show');
-    }
+    const v=document.getElementById('clientIdInput').value.trim();
+    if(!v)return;
+    const isFirst=!clientId;
+    clientId=v;
+    storageWrite(CID_KEY,clientId);
+    writeCidToUrl(clientId);   // ★ URLハッシュにも書く（ブックマークで永続化）
+    setChipConnectedLook();
+    loadGsi();
+    document.getElementById('setupOverlay').classList.remove('show');
+    if(isFirst)maybeShowBookmarkHint();
   });
 
   function loadGsi(){
