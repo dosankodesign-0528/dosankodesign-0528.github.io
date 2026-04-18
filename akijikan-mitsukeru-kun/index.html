@@ -399,6 +399,27 @@
     try{document.cookie=`${encodeURIComponent(k)}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;}catch(e){}
   }
 
+  // --- URLハッシュ保存（Safari ITPで全ストレージが消されてもURLには残る） ---
+  // ブックマーク or ホーム画面追加するとClient IDがURLごと焼き付くので、永続化される
+  function readCidFromUrl(){
+    try{
+      const h=window.location.hash.replace(/^#/,'');
+      if(!h)return '';
+      const params=new URLSearchParams(h);
+      const v=params.get('cid');
+      return v&&v.includes('apps.googleusercontent.com')?v:'';
+    }catch(e){return '';}
+  }
+  function writeCidToUrl(cid){
+    try{
+      const params=new URLSearchParams(window.location.hash.replace(/^#/,''));
+      if(cid)params.set('cid',cid); else params.delete('cid');
+      const newHash=params.toString();
+      const url=`${window.location.pathname}${window.location.search}${newHash?'#'+newHash:''}`;
+      history.replaceState(null,'',url);
+    }catch(e){}
+  }
+
   // auth chip を「接続中」表示にする（疑似的に常時接続に見せる）
   function setChipConnectedLook(){
     const chip=document.getElementById('authChip');
