@@ -1126,27 +1126,7 @@
     }catch(e){return[];}
   }
 
-  // ICS
-  function parseICS(text){
-    const events=[],lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n[ \t]/g,'').split('\n');
-    let inE=false,ev={};
-    for(const line of lines){const l=line.trim();
-      if(l==='BEGIN:VEVENT'){inE=true;ev={};}
-      else if(l==='END:VEVENT'){inE=false;if(ev.start){if(!ev.end){ev.end=new Date(ev.start);ev.end.setDate(ev.end.getDate()+1);}events.push(ev);}}
-      else if(inE){if(l.startsWith('DTSTART')){ev.start=pICSDate(l);ev.allDay=l.includes('VALUE=DATE:')||l.split(':').pop().length===8;}else if(l.startsWith('DTEND'))ev.end=pICSDate(l);else if(l.startsWith('SUMMARY'))ev.summary=l.split(':').slice(1).join(':');}}
-    return events;
-  }
-  function pICSDate(line){const v=line.split(':').pop().trim();if(/^\d{8}$/.test(v))return new Date(+v.slice(0,4),+v.slice(4,6)-1,+v.slice(6,8));if(/^\d{8}T\d{6}Z?$/.test(v)){const y=+v.slice(0,4),m=+v.slice(4,6)-1,d=+v.slice(6,8),h=+v.slice(9,11),mi=+v.slice(11,13),s=+v.slice(13,15);return v.endsWith('Z')?new Date(Date.UTC(y,m,d,h,mi,s)):new Date(y,m,d,h,mi,s);}return new Date(v);}
-
-  const dz=document.getElementById('dropzone'),fi=document.getElementById('fileInput');
-  dz.addEventListener('click',()=>fi.click());
-  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
-  dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
-  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');handleICS(e.dataTransfer.files);});
-  fi.addEventListener('change',e=>handleICS(e.target.files));
-
-  function handleICS(files){Array.from(files).forEach(f=>{if(!f.name.endsWith('.ics'))return;const r=new FileReader();r.onload=e=>{icsFiles.push({name:f.name,events:parseICS(e.target.result)});renderICS();document.getElementById('generateBtn').disabled=false;};r.readAsText(f);});}
-  function renderICS(){const l=document.getElementById('fileList');if(!icsFiles.length){l.innerHTML='';dz.classList.remove('has-files');dz.textContent='ICSファイルをドロップ or クリック';return;}dz.classList.add('has-files');dz.textContent='＋ 追加';l.innerHTML=icsFiles.map((f,i)=>`<li><span style="color:var(--green)">✓</span> ${f.name} (${f.events.length}件) <button class="file-remove" onclick="icsFiles.splice(${i},1);renderICS();">×</button></li>`).join('');}
+  // ICS 機能は削除済み
 
   document.querySelectorAll('.day-btn').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('active')));
 
