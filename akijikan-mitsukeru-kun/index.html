@@ -1232,37 +1232,83 @@
   });
 
   // ============================================
-  //  カレンダービュー（週表示・読み取り専用）
+  //  カレンダービュー（週/日/月表示・読み取り専用）
   // ============================================
-  let latestSlots = [];     // 最新の検出結果（候補ハイライト用）
-  let cvWeekStart = null;   // 表示中の週の日曜 00:00
-  let cvCacheKey = null;    // 直近フェッチした週キー（重複fetch回避）
-  let cvCacheEvents = [];   // 直近フェッチしたイベント
+  const HOUR_START = 7;            // 表示開始時（0〜HOUR_START時は非表示）
+  const HOUR_END   = 24;
+  const HOUR_COUNT = HOUR_END - HOUR_START; // 17
+  const DOW_LABEL  = ['日','月','火','水','木','金','土'];
+
+  let latestSlots = [];     // 最新の検出結果
+  let cvViewMode  = 'week'; // 'week' | 'day' | 'month'
+  let cvAnchor    = null;   // 表示の基準日（Date）
+  let cvCacheKey  = null;
+  let cvCacheEvents = [];
 
   function cvHourH(){
-    return window.matchMedia('(max-width:800px)').matches ? 22 : 30;
+    // CSS変数に追従
+    const v=getComputedStyle(document.documentElement).getPropertyValue('--cv-hour-h');
+    const n=parseFloat(v);
+    return n||(window.matchMedia('(max-width:800px)').matches?22:36);
+  }
+  function cvStartOfDay(d){
+    const x=new Date(d); x.setHours(0,0,0,0);
+    return x;
   }
   function cvStartOfWeek(d){
-    const x=new Date(d); x.setHours(0,0,0,0);
+    const x=cvStartOfDay(d);
     x.setDate(x.getDate()-x.getDay()); // 日曜
     return x;
   }
-  function cvFmtTitle(start){
-    const end=new Date(start); end.setDate(end.getDate()+6);
-    const sameYear=start.getFullYear()===end.getFullYear();
-    const sameMonth=sameYear&&start.getMonth()===end.getMonth();
-    const sY=start.getFullYear(), sM=start.getMonth()+1, sD=start.getDate();
-    const eY=end.getFullYear(), eM=end.getMonth()+1, eD=end.getDate();
-    if(sameMonth)return `${sY}年 ${sM}月${sD}日 〜 ${eD}日`;
-    if(sameYear)return `${sY}年 ${sM}/${sD} 〜 ${eM}/${eD}`;
-    return `${sY}/${sM}/${sD} 〜 ${eY}/${eM}/${eD}`;
+  function cvStartOfMonth(d){
+    const x=cvStartOfDay(d); x.setDate(1);
+    return x;
+  }
+
+  function cvFmtTitle(){
+    const a=cvAnchor;
+    if(cvViewMode==='week'){
+      const start=cvStartOfWeek(a);
+      const end=new Date(start); end.setDate(end.getDate()+6);
+      const sameYear=start.getFullYear()===end.getFullYear();
+      const sameMonth=sameYear&&start.getMonth()===end.getMonth();
+      if(sameMonth)return `${start.getFullYear()}年 ${start.getMonth()+1}月${start.getDate()}日 〜 ${end.getDate()}日`;
+      if(sameYear) return `${start.getFullYear()}年 ${start.getMonth()+1}/${start.getDate()} 〜 ${end.getMonth()+1}/${end.getDate()}`;
+      return `${start.getFullYear()}/${start.getMonth()+1}/${start.getDate()} 〜 ${end.getFullYear()}/${end.getMonth()+1}/${end.getDate()}`;
+    }
+    if(cvViewMode==='day'){
+      return `${a.getFullYear()}年 ${a.getMonth()+1}月${a.getDate()}日 (${DOW_LABEL[a.getDay()]})`;
+    }
+    return `${a.getFullYear()}年 ${a.getMonth()+1}月`;
+  }
+
+  // 表示範囲
+  function cvRange(){
+    if(cvViewMode==='week'){
+      const start=cvStartOfWeek(cvAnchor);
+      const end=new Date(start); end.setDate(end.getDate()+7);
+      return {start,end,days:7};
+    }
+    if(cvViewMode==='day'){
+      const start=cvStartOfDay(cvAnchor);
+      const end=new Date(start); end.setDate(end.getDate()+1);
+      return {start,end,days:1};
+    }
+    // month: 月初を含む週日曜から 6 週分（42 日）
+    const m0=cvStartOfMonth(cvAnchor);
+    const start=cvStartOfWeek(m0);
+    const end=new Date(start); end.setDate(end.getDate()+42);
+    return {start,end,days:42};
   }
 
   // ----- モーダル開閉 / 拡大 / 全画面 -----
   function cvOpen(){
-    if(!cvWeekStart)cvWeekStart=cvStartOfWeek(new Date());
+    if(!cvAnchor)cvAnchor=cvStartOfDay(new Date());
     document.getElementById('cvOverlay').classList.add('show');
     document.body.style.overflow='hidden';
+    // 列数を反映
+    const wrap=document.getElementById('cvGridWrap');
+    wrap.style.setProperty('--cv-cols', cvViewMode==='day'?1:7);
     cvRender(true);
   }
   function cvClose(){
@@ -1279,7 +1325,7 @@
     if(e.key==='Escape'&&document.getElementById('cvOverlay').classList.contains('show'))cvClose();
   });
 
-  // 拡大ボタン：通常 ⇄ 全画面（縦横とも画面いっぱい）
+  // 拡大ボタン：通常 ⇄ 全画面
   document.getElementById('cvExpandBtn').addEventListener('click',()=>{
     const m=document.getElementById('cvModal'), b=document.getElementById('cvExpandBtn');
     m.classList.toggle('fullscreen');
@@ -1287,9 +1333,39 @@
     requestAnimationFrame(()=>cvRender(false));
   });
 
-  document.getElementById('cvPrev').addEventListener('click',()=>{cvWeekStart.setDate(cvWeekStart.getDate()-7);cvRender(true);});
-  document.getElementById('cvNext').addEventListener('click',()=>{cvWeekStart.setDate(cvWeekStart.getDate()+7);cvRender(true);});
-  document.getElementById('cvToday').addEventListener('click',()=>{cvWeekStart=cvStartOfWeek(new Date());cvRender(true);});
+  // ナビゲーション（モード依存）
+  function cvNavigate(delta){
+    const a=new Date(cvAnchor);
+    if(cvViewMode==='week')      a.setDate(a.getDate()+delta*7);
+    else if(cvViewMode==='day')  a.setDate(a.getDate()+delta);
+    else                          a.setMonth(a.getMonth()+delta);
+    cvAnchor=a;
+    cvRender(true);
+  }
+  document.getElementById('cvPrev').addEventListener('click',()=>cvNavigate(-1));
+  document.getElementById('cvNext').addEventListener('click',()=>cvNavigate(1));
+  document.getElementById('cvToday').addEventListener('click',()=>{
+    cvAnchor=cvStartOfDay(new Date());
+    cvRender(true);
+  });
+
+  // ビュー切替
+  function cvSetMode(mode){
+    if(mode===cvViewMode)return;
+    cvViewMode=mode;
+    const ids={day:'cvModeDay',week:'cvModeWeek',month:'cvModeMonth'};
+    for(const k of Object.keys(ids)){
+      const b=document.getElementById(ids[k]);
+      if(b)b.classList.toggle('active',k===mode);
+    }
+    document.getElementById('cvToday').textContent=({week:'今週',day:'今日',month:'今月'})[mode];
+    const wrap=document.getElementById('cvGridWrap');
+    wrap.style.setProperty('--cv-cols', mode==='day'?1:7);
+    cvRender(true);
+  }
+  document.getElementById('cvModeDay').addEventListener('click',()=>cvSetMode('day'));
+  document.getElementById('cvModeWeek').addEventListener('click',()=>cvSetMode('week'));
+  document.getElementById('cvModeMonth').addEventListener('click',()=>cvSetMode('month'));
 
   // リサイズ時に高さ係数が変わるので再描画
   let cvResizeTimer=null;
@@ -1299,52 +1375,67 @@
     cvResizeTimer=setTimeout(()=>cvRender(false),200);
   });
 
-  // ヘッダー行・本体グリッドを構築（イベント描画は別関数）
+  // ヘッダー行・本体グリッドを構築（週/日 用）
   function cvBuildSkeleton(){
-    document.getElementById('cvTitle').textContent=cvFmtTitle(cvWeekStart);
-    const dows=['日','月','火','水','木','金','土'];
-    const today=new Date(); today.setHours(0,0,0,0);
+    document.getElementById('cvTitle').textContent=cvFmtTitle();
+    const today=cvStartOfDay(new Date()).getTime();
+    const {start}=cvRange();
+    const headDays=cvViewMode==='day'?1:7;
     // ヘッダー
     const head=document.getElementById('cvHeaderRow');
     let html='<div class="cv-corner"></div>';
-    for(let i=0;i<7;i++){
-      const d=new Date(cvWeekStart); d.setDate(d.getDate()+i);
-      const isToday=d.getTime()===today.getTime();
-      const cls=(i===0?'sun':i===6?'sat':'')+(isToday?' today':'');
-      html+=`<div class="cv-headcell ${cls}"><div class="dow">${dows[i]}</div><div class="dom">${d.getDate()}</div></div>`;
+    for(let i=0;i<headDays;i++){
+      const d=new Date(start); d.setDate(d.getDate()+i);
+      const isToday=d.getTime()===today;
+      const dow=d.getDay();
+      const cls=(dow===0?'sun':dow===6?'sat':'')+(isToday?' today':'');
+      html+=`<div class="cv-headcell ${cls}"><div class="dow">${DOW_LABEL[dow]}</div><div class="dom">${d.getDate()}</div></div>`;
     }
     head.innerHTML=html;
     // 終日行
     const ar=document.getElementById('cvAlldayRow');
     let arHtml='<div class="cv-allday-label">終日</div>';
-    for(let i=0;i<7;i++)arHtml+=`<div class="cv-allday-cell" data-d="${i}"></div>`;
+    for(let i=0;i<headDays;i++)arHtml+=`<div class="cv-allday-cell" data-d="${i}"></div>`;
     ar.innerHTML=arHtml;
-    // 本体
+    // 本体（HOUR_START〜HOUR_END）
     const body=document.getElementById('cvBody');
     let bHtml='<div class="cv-timecol">';
-    for(let h=0;h<24;h++)bHtml+=`<div class="cv-hour-label">${h}</div>`;
+    for(let h=HOUR_START;h<HOUR_END;h++)bHtml+=`<div class="cv-hour-label">${h}</div>`;
     bHtml+='</div>';
-    for(let i=0;i<7;i++){
+    for(let i=0;i<headDays;i++){
       bHtml+=`<div class="cv-daycol" data-d="${i}">`;
-      for(let h=0;h<24;h++)bHtml+='<div class="cv-hour-bg"></div>';
+      for(let h=HOUR_START;h<HOUR_END;h++)bHtml+='<div class="cv-hour-bg"></div>';
       bHtml+='</div>';
     }
     body.innerHTML=bHtml;
   }
 
   async function cvRender(refetch){
-    cvBuildSkeleton();
-    // 取得：refetch=trueの場合のみ、もしくはキャッシュキーが違えば再取得
-    const key=`${cvWeekStart.getTime()}_${[...selectedCalIds].sort().join(',')}_${icsFiles.length}`;
+    const wrap=document.getElementById('cvGridWrap');
+    const monthEl=document.getElementById('cvMonth');
+    const isMonth=(cvViewMode==='month');
+    wrap.style.display=isMonth?'none':'';
+    monthEl.classList.toggle('show', isMonth);
+
+    document.getElementById('cvTitle').textContent=cvFmtTitle();
+
+    const {start,end}=cvRange();
+    const key=`${cvViewMode}_${start.getTime()}_${end.getTime()}_${[...selectedCalIds].sort().join(',')}_${icsFiles.length}`;
     let events=cvCacheEvents;
     if(refetch||cvCacheKey!==key){
-      events=await cvFetchEvents();
+      events=await cvFetchEvents(start,end);
       cvCacheKey=key;
       cvCacheEvents=events;
     }
     cvUpdateLegend();
-    cvDrawEvents(events);
-    cvDrawNowLine();
+
+    if(isMonth){
+      cvDrawMonth(events);
+    } else {
+      cvBuildSkeleton();
+      cvDrawEvents(events);
+      cvDrawNowLine();
+    }
   }
 
   // 凡例：選択中のカレンダーごとの色＋表示名を並べる
@@ -1364,17 +1455,12 @@
     el.innerHTML=items.join('');
   }
 
-  async function cvFetchEvents(){
-    const tMin=new Date(cvWeekStart);
-    const tMax=new Date(cvWeekStart); tMax.setDate(tMax.getDate()+7);
+  async function cvFetchEvents(tMin, tMax){
     const all=[];
-    // ICS（ファイル名を calId として擬似タグ付け）
     icsFiles.forEach(f=>f.events.forEach(e=>{
       if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name});
     }));
-    // Google
     if(selectedCalIds.size>0){
-      // トークン切れなら自動再認証
       if(!accessToken&&clientId&&tokenClient){
         await ensureToken();
         if(accessToken&&calendars.length===0)await loadCalendars();
@@ -1386,7 +1472,6 @@
         }catch(e){console.error(e);}
       }
     }
-    // 空状態判定
     const emp=document.getElementById('cvEmpty');
     if(!accessToken&&icsFiles.length===0){
       emp.style.display='block';
@@ -1397,10 +1482,16 @@
     return all;
   }
 
+  // calId → 色
+  function cvColorOf(calId){
+    if(!calId)return '#6b7280';
+    if(calId.startsWith('__ics__:'))return '#6b7280';
+    const cal=calendars.find(c=>c.id===calId);
+    return cal&&cal.backgroundColor?cal.backgroundColor:'#6b7280';
+  }
+
   // Googleカレンダー風の列分割アルゴリズム
-  // 重なる予定をクラスタ化し、各クラスタ内でレーン（列）を割り当てる
   function cvLayoutDay(events){
-    // 開始時刻順、同じ開始なら長い順
     const sorted=events.slice().sort((a,b)=>(a.start-b.start)||((b.end-b.start)-(a.end-a.start)));
     const clusters=[]; let cur=null, curMaxEnd=null;
     for(const ev of sorted){
@@ -1413,7 +1504,7 @@
     }
     const placed=[];
     for(const cluster of clusters){
-      const laneEnds=[]; // 各レーンの最終終了時刻
+      const laneEnds=[];
       const cols=[];
       for(const ev of cluster){
         let lane=-1;
@@ -1432,13 +1523,15 @@
 
   function cvDrawEvents(events){
     const hourH=cvHourH();
+    const maxPx=HOUR_COUNT*hourH;
     const dayCols=document.querySelectorAll('#cvBody .cv-daycol');
     const allCells=document.querySelectorAll('#cvAlldayRow .cv-allday-cell');
-    for(let i=0;i<7;i++){
-      const dayStart=new Date(cvWeekStart); dayStart.setDate(dayStart.getDate()+i);
+    const {start}=cvRange();
+    const dayCount=cvViewMode==='day'?1:7;
+    for(let i=0;i<dayCount;i++){
+      const dayStart=new Date(start); dayStart.setDate(dayStart.getDate()+i);
       const dayEnd=new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
       const todays=events.filter(e=>e.start<dayEnd&&e.end>dayStart);
-      // allDayは別エリア
       const allday=todays.filter(e=>e.allDay);
       const timed=todays.filter(e=>!e.allDay).map(e=>({
         start:e.start<dayStart?dayStart:e.start,
@@ -1446,16 +1539,9 @@
         summary:e.summary,
         calId:e.calId
       }));
-      // calId → color のヘルパー
-      const colorOf=(calId)=>{
-        if(!calId)return '#6b7280';
-        if(calId.startsWith('__ics__:'))return '#6b7280';
-        const cal=calendars.find(c=>c.id===calId);
-        return cal&&cal.backgroundColor?cal.backgroundColor:'#6b7280';
-      };
-      // timed の calId は元イベントから引き継ぐ必要があるので、map時に付ける（上で書き換え済）
+      // 終日
       allday.forEach(e=>{
-        const color=colorOf(e.calId);
+        const color=cvColorOf(e.calId);
         const div=document.createElement('div');
         div.className='cv-allday-event';
         div.style.background=hexToRgba(color,0.18);
@@ -1465,21 +1551,28 @@
         div.title=e.summary||'予定あり';
         allCells[i].appendChild(div);
       });
-      // 時間あり：列分割して描画
+      // 時間あり：列分割
       const laid=cvLayoutDay(timed);
       laid.forEach(({ev,col,cols})=>{
         const startMin=(ev.start-dayStart)/60000;
         const dur=Math.max(15,(ev.end-ev.start)/60000);
-        const color=colorOf(ev.calId);
+        // HOUR_START オフセットを引く
+        let topPx=(startMin/60 - HOUR_START)*hourH;
+        let h=dur/60*hourH;
+        // 上端クリップ（HOUR_START より前に始まる予定）
+        if(topPx<0){ h+=topPx; topPx=0; }
+        // 下端クリップ（HOUR_END を超える予定）
+        if(topPx>=maxPx)return;
+        if(topPx+h>maxPx)h=maxPx-topPx;
+        if(h<=0)return;
+        const color=cvColorOf(ev.calId);
         const div=document.createElement('div');
         div.className='cv-event';
-        div.style.top=(startMin/60*hourH)+'px';
-        div.style.height=(dur/60*hourH)+'px';
-        // 列ごとに左右配置（％指定）
+        div.style.top=topPx+'px';
+        div.style.height=h+'px';
         const widthPct=100/cols;
         div.style.left=`calc(${col*widthPct}% + 1px)`;
         div.style.width=`calc(${widthPct}% - 2px)`;
-        // カレンダーごとの色
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
         div.style.borderRightColor=hexToRgba(color,0.3);
@@ -1492,39 +1585,83 @@
     }
   }
 
-  function cvDrawCandidates(){
-    if(!latestSlots.length)return;
-    const hourH=cvHourH();
-    const dayCols=document.querySelectorAll('#cvBody .cv-daycol');
-    const weekEnd=new Date(cvWeekStart); weekEnd.setDate(weekEnd.getDate()+7);
-    for(const s of latestSlots){
-      const d=new Date(s.date); d.setHours(0,0,0,0);
-      if(d<cvWeekStart||d>=weekEnd)continue;
-      const dayIdx=Math.round((d-cvWeekStart)/86400000);
-      const startMin=(s.start-d)/60000;
-      const dur=(s.end-s.start)/60000;
-      const div=document.createElement('div');
-      div.className='cv-candidate';
-      div.style.top=(startMin/60*hourH)+'px';
-      div.style.height=(dur/60*hourH)+'px';
-      div.title=`空き候補：${dur}分`;
-      dayCols[dayIdx].appendChild(div);
-    }
-  }
-
   function cvDrawNowLine(){
     const now=new Date();
-    const weekEnd=new Date(cvWeekStart); weekEnd.setDate(weekEnd.getDate()+7);
-    if(now<cvWeekStart||now>=weekEnd)return;
+    const {start,end}=cvRange();
+    if(now<start||now>=end)return;
+    const dayCount=cvViewMode==='day'?1:7;
     const hourH=cvHourH();
-    const dayIdx=Math.floor((now-cvWeekStart)/86400000);
-    const dayStart=new Date(cvWeekStart); dayStart.setDate(dayStart.getDate()+dayIdx);
+    const dayIdx=Math.floor((now-start)/86400000);
+    if(dayIdx<0||dayIdx>=dayCount)return;
+    const dayStart=new Date(start); dayStart.setDate(dayStart.getDate()+dayIdx);
     const m=(now-dayStart)/60000;
+    const topMin=m - HOUR_START*60;
+    if(topMin<0||topMin>HOUR_COUNT*60)return;
     const dayCols=document.querySelectorAll('#cvBody .cv-daycol');
+    if(!dayCols[dayIdx])return;
     const div=document.createElement('div');
     div.className='cv-now-line';
-    div.style.top=(m/60*hourH)+'px';
+    div.style.top=(topMin/60*hourH)+'px';
     dayCols[dayIdx].appendChild(div);
+  }
+
+  // 月ビュー描画
+  function cvDrawMonth(events){
+    const head=document.getElementById('cvMonthHeader');
+    const grid=document.getElementById('cvMonthGrid');
+    let hHtml='';
+    for(let i=0;i<7;i++){
+      const cls=i===0?'sun':i===6?'sat':'';
+      hHtml+=`<div class="${cls}">${DOW_LABEL[i]}</div>`;
+    }
+    head.innerHTML=hHtml;
+    const {start}=cvRange();
+    const today=cvStartOfDay(new Date()).getTime();
+    const monthIdx=cvAnchor.getMonth();
+    let gHtml='';
+    for(let i=0;i<42;i++){
+      const d=new Date(start); d.setDate(d.getDate()+i);
+      const isOtherMonth=d.getMonth()!==monthIdx;
+      const isToday=d.getTime()===today;
+      gHtml+=`<div class="cv-month-cell${isOtherMonth?' other-month':''}" data-i="${i}">`+
+        `<div class="cv-month-num-wrap"><div class="cv-month-num${isToday?' today':''}">${d.getDate()}</div></div>`+
+        `<div class="cv-month-events"></div></div>`;
+    }
+    grid.innerHTML=gHtml;
+    const cells=grid.querySelectorAll('.cv-month-cell');
+    const MAX_SHOW=3;
+    for(let i=0;i<42;i++){
+      const dayStart=new Date(start); dayStart.setDate(dayStart.getDate()+i);
+      const dayEnd=new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
+      const todays=events
+        .filter(e=>e.start<dayEnd&&e.end>dayStart)
+        .sort((a,b)=>(b.allDay?1:0)-(a.allDay?1:0)||(a.start-b.start));
+      const evWrap=cells[i].querySelector('.cv-month-events');
+      todays.slice(0,MAX_SHOW).forEach(e=>{
+        const color=cvColorOf(e.calId);
+        const div=document.createElement('div');
+        div.className='cv-month-event';
+        div.style.background=hexToRgba(color,0.18);
+        div.style.borderLeftColor=color;
+        div.style.color=color;
+        const t=e.summary||'予定あり';
+        let label=t;
+        if(!e.allDay){
+          const hh=String(e.start.getHours()).padStart(2,'0');
+          const mm=String(e.start.getMinutes()).padStart(2,'0');
+          label=`${hh}:${mm} ${t}`;
+        }
+        div.textContent=label;
+        div.title=label;
+        evWrap.appendChild(div);
+      });
+      if(todays.length>MAX_SHOW){
+        const more=document.createElement('div');
+        more.className='cv-month-more';
+        more.textContent=`+${todays.length-MAX_SHOW} 件`;
+        evWrap.appendChild(more);
+      }
+    }
   }
 
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
