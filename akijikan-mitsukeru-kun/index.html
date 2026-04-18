@@ -371,9 +371,18 @@
     if(msg) document.getElementById('toastMsg').textContent=msg;
     t.classList.add('show');
   }
-  function hideToast(){document.getElementById('toast').classList.remove('show');}
+  function hideToast(){
+    const t=document.getElementById('toast');
+    t.classList.remove('show');
+    t.classList.remove('success');
+    document.getElementById('toastBtn').textContent='再接続';
+  }
   document.getElementById('toastBtn').addEventListener('click',()=>{
+    const t=document.getElementById('toast');
+    const wasSuccess=t.classList.contains('success');
     hideToast();
+    // success（ブックマーク案内）の OK 押下では再接続しない
+    if(wasSuccess)return;
     if(tokenClient){try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
   });
 
