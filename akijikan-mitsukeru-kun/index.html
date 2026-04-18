@@ -518,6 +518,149 @@
     font-size:12px;
   }
 
+  /* イベントクリック可能 */
+  .cv-event, .cv-allday-event, .cv-month-event {
+    cursor:pointer;
+    transition:filter 0.12s, transform 0.06s;
+  }
+  .cv-event:hover, .cv-allday-event:hover, .cv-month-event:hover {
+    filter:brightness(0.96) saturate(1.05);
+  }
+  .cv-event:active, .cv-allday-event:active, .cv-month-event:active {
+    transform:translateY(0.5px);
+  }
+
+  /* ===== 予定詳細モーダル ===== */
+  .cv-detail-overlay {
+    position:fixed; inset:0;
+    background:rgba(15,23,42,0.58);
+    display:none;
+    align-items:center; justify-content:center;
+    z-index:2200;
+    padding:16px;
+  }
+  .cv-detail-overlay.show { display:flex; }
+  .cv-detail-modal {
+    background:var(--white);
+    border-radius:var(--radius);
+    box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    width:100%;
+    max-width:480px;
+    max-height:85vh;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .cv-detail-header {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:14px 14px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  .cv-detail-color {
+    flex:0 0 auto;
+    width:14px; height:14px;
+    border-radius:4px;
+    margin-top:5px;
+    background:#6b7280;
+  }
+  .cv-detail-title-wrap { flex:1; min-width:0; }
+  .cv-detail-title {
+    margin:0;
+    font-size:16px;
+    font-weight:700;
+    color:var(--text);
+    line-height:1.35;
+    word-break:break-word;
+  }
+  .cv-detail-cal {
+    margin-top:4px;
+    font-size:11px;
+    color:var(--text-sub);
+  }
+  .cv-detail-body {
+    overflow:auto;
+    padding:12px 14px 16px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .cv-detail-row {
+    display:flex; gap:10px; align-items:flex-start;
+    font-size:13px;
+    color:var(--text);
+    line-height:1.5;
+  }
+  .cv-detail-icon {
+    flex:0 0 auto;
+    width:20px;
+    text-align:center;
+    color:var(--text-sub);
+    font-size:14px;
+    margin-top:1px;
+  }
+  .cv-detail-content {
+    flex:1; min-width:0;
+    word-break:break-word;
+  }
+  .cv-detail-content a {
+    color:var(--blue);
+    text-decoration:none;
+    word-break:break-all;
+  }
+  .cv-detail-content a:hover { text-decoration:underline; }
+  .cv-detail-meet-btns { display:flex; flex-wrap:wrap; gap:8px; }
+  .cv-meet-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px;
+    font-size:12px;
+    font-weight:600;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border);
+    background:var(--white);
+    color:var(--text);
+    cursor:pointer;
+    text-decoration:none;
+    transition:all 0.12s;
+  }
+  .cv-meet-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-soft); }
+  .cv-meet-btn.meet { color:#1a73e8; border-color:#1a73e8; }
+  .cv-meet-btn.meet:hover { background:rgba(26,115,232,0.08); }
+  .cv-meet-btn.zoom { color:#2d8cff; border-color:#2d8cff; }
+  .cv-meet-btn.zoom:hover { background:rgba(45,140,255,0.08); }
+  .cv-meet-btn.teams { color:#5059c9; border-color:#5059c9; }
+  .cv-meet-btn.teams:hover { background:rgba(80,89,201,0.08); }
+  .cv-detail-desc {
+    background:var(--surface-2);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--text);
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-height:240px;
+    overflow:auto;
+  }
+  .cv-detail-desc a { color:var(--blue); text-decoration:none; word-break:break-all; }
+  .cv-detail-desc a:hover { text-decoration:underline; }
+  .cv-detail-footer {
+    border-top:1px solid var(--border);
+    padding-top:10px;
+    margin-top:2px;
+  }
+  .cv-detail-link {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px;
+    color:var(--blue);
+    text-decoration:none;
+    font-weight:500;
+  }
+  .cv-detail-link:hover { text-decoration:underline; }
+
+  @media (max-width:800px) {
+    .cv-detail-overlay { padding:0; align-items:flex-end; }
+    .cv-detail-modal { max-width:100vw; max-height:92vh; border-radius:14px 14px 0 0; }
+    .cv-detail-title { font-size:15px; }
+    .cv-detail-body { padding:12px 12px 18px; }
+  }
+
   /* ===== 月ビュー ===== */
   .cv-month { display:none; flex-direction:column; }
   .cv-month.show { display:flex; }
