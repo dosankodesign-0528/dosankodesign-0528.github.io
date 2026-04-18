@@ -1699,6 +1699,7 @@
         div.style.color=color;
         div.textContent=e.summary||'予定あり';
         div.title=e.summary||'予定あり';
+        div.addEventListener('click',ev=>{ev.stopPropagation();cvOpenDetail(e);});
         allCells[i].appendChild(div);
       });
       // 時間あり：列分割
