@@ -518,6 +518,83 @@
     font-size:12px;
   }
 
+  /* ===== 月ビュー ===== */
+  .cv-month { display:none; flex-direction:column; }
+  .cv-month.show { display:flex; }
+  .cv-month-header {
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    position:sticky; top:0; z-index:10;
+    background:var(--white);
+    box-shadow:0 1px 0 var(--border);
+  }
+  .cv-month-header > div {
+    padding:8px 0;
+    text-align:center;
+    font-size:11px;
+    color:var(--text-sub);
+    font-weight:600;
+    border-right:1px solid var(--border);
+  }
+  .cv-month-header > div:last-child { border-right:none; }
+  .cv-month-header .sun { color:var(--red); }
+  .cv-month-header .sat { color:var(--blue); }
+  .cv-month-grid {
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    grid-auto-rows:minmax(96px, 1fr);
+    flex:1;
+  }
+  .cv-month-cell {
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    padding:4px 4px 6px;
+    overflow:hidden;
+    background:var(--white);
+    min-width:0;
+  }
+  .cv-month-cell:nth-child(7n) { border-right:none; }
+  .cv-month-cell.other-month { background:var(--surface-2); }
+  .cv-month-cell.other-month .cv-month-num { color:var(--text-dim); }
+  .cv-month-num {
+    font-size:11px;
+    font-weight:600;
+    color:var(--text-sub);
+    text-align:right;
+    margin-bottom:3px;
+    padding:0 2px;
+  }
+  .cv-month-num.today {
+    background:var(--blue);
+    color:#fff !important;
+    border-radius:50%;
+    width:20px; height:20px; line-height:20px;
+    display:inline-block;
+    margin-left:auto;
+    text-align:center;
+    padding:0;
+  }
+  .cv-month-num-wrap { display:flex; justify-content:flex-end; align-items:center; }
+  .cv-month-events { display:flex; flex-direction:column; gap:2px; }
+  .cv-month-event {
+    font-size:10px;
+    line-height:1.3;
+    padding:1px 4px;
+    border-radius:3px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    border-left:2px solid;
+    cursor:default;
+  }
+  .cv-month-more {
+    font-size:9px;
+    color:var(--text-sub);
+    padding:1px 4px;
+    cursor:pointer;
+  }
+  .cv-month-more:hover { color:var(--blue); text-decoration:underline; }
+
   /* スマホ：縦に圧縮 */
   @media (max-width:800px) {
     :root { --cv-hour-h: 22px; }
