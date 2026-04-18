@@ -439,7 +439,7 @@
   /* 時刻軸＋日カラム */
   .cv-timecol, .cv-daycol {
     position:relative;
-    height:calc(24 * var(--cv-hour-h));
+    height:calc(var(--cv-hours) * var(--cv-hour-h));
     border-right:1px solid var(--border);
   }
   .cv-daycol:last-child { border-right:none; }
