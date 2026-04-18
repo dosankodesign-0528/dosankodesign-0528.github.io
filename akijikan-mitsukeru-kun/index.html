@@ -1257,6 +1257,39 @@
     return all;
   }
 
+  // Googleカレンダー風の列分割アルゴリズム
+  // 重なる予定をクラスタ化し、各クラスタ内でレーン（列）を割り当てる
+  function cvLayoutDay(events){
+    // 開始時刻順、同じ開始なら長い順
+    const sorted=events.slice().sort((a,b)=>(a.start-b.start)||((b.end-b.start)-(a.end-a.start)));
+    const clusters=[]; let cur=null, curMaxEnd=null;
+    for(const ev of sorted){
+      if(cur===null||ev.start>=curMaxEnd){
+        cur=[ev]; curMaxEnd=new Date(ev.end); clusters.push(cur);
+      } else {
+        cur.push(ev);
+        if(ev.end>curMaxEnd)curMaxEnd=new Date(ev.end);
+      }
+    }
+    const placed=[];
+    for(const cluster of clusters){
+      const laneEnds=[]; // 各レーンの最終終了時刻
+      const cols=[];
+      for(const ev of cluster){
+        let lane=-1;
+        for(let l=0;l<laneEnds.length;l++){
+          if(laneEnds[l]<=ev.start){lane=l;break;}
+        }
+        if(lane<0){lane=laneEnds.length;laneEnds.push(null);}
+        laneEnds[lane]=new Date(ev.end);
+        cols.push(lane);
+      }
+      const total=laneEnds.length;
+      cluster.forEach((ev,i)=>placed.push({ev,col:cols[i],cols:total}));
+    }
+    return placed;
+  }
+
   function cvDrawEvents(events){
     const hourH=cvHourH();
     const dayCols=document.querySelectorAll('#cvBody .cv-daycol');
@@ -1265,28 +1298,37 @@
       const dayStart=new Date(cvWeekStart); dayStart.setDate(dayStart.getDate()+i);
       const dayEnd=new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
       const todays=events.filter(e=>e.start<dayEnd&&e.end>dayStart);
-      // 時間ありとallDayに分けて描画
-      todays.forEach(e=>{
-        if(e.allDay){
-          const div=document.createElement('div');
-          div.className='cv-allday-event';
-          div.textContent=e.summary||'予定あり';
-          div.title=e.summary||'予定あり';
-          allCells[i].appendChild(div);
-        } else {
-          const s=e.start<dayStart?dayStart:e.start;
-          const en=e.end>dayEnd?dayEnd:e.end;
-          const startMin=(s-dayStart)/60000;
-          const dur=Math.max(15,(en-s)/60000); // 最小15分の見た目高さ
-          const div=document.createElement('div');
-          div.className='cv-event';
-          div.style.top=(startMin/60*hourH)+'px';
-          div.style.height=(dur/60*hourH)+'px';
-          const t=e.summary||'予定あり';
-          div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
-          div.title=t;
-          dayCols[i].appendChild(div);
-        }
+      // allDayは別エリア
+      const allday=todays.filter(e=>e.allDay);
+      const timed=todays.filter(e=>!e.allDay).map(e=>({
+        start:e.start<dayStart?dayStart:e.start,
+        end:e.end>dayEnd?dayEnd:e.end,
+        summary:e.summary
+      }));
+      allday.forEach(e=>{
+        const div=document.createElement('div');
+        div.className='cv-allday-event';
+        div.textContent=e.summary||'予定あり';
+        div.title=e.summary||'予定あり';
+        allCells[i].appendChild(div);
+      });
+      // 時間あり：列分割して描画
+      const laid=cvLayoutDay(timed);
+      laid.forEach(({ev,col,cols})=>{
+        const startMin=(ev.start-dayStart)/60000;
+        const dur=Math.max(15,(ev.end-ev.start)/60000);
+        const div=document.createElement('div');
+        div.className='cv-event';
+        div.style.top=(startMin/60*hourH)+'px';
+        div.style.height=(dur/60*hourH)+'px';
+        // 列ごとに左右配置（％指定）
+        const widthPct=100/cols;
+        div.style.left=`calc(${col*widthPct}% + 1px)`;
+        div.style.width=`calc(${widthPct}% - 2px)`;
+        const t=ev.summary||'予定あり';
+        div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
+        div.title=t;
+        dayCols[i].appendChild(div);
       });
     }
   }
