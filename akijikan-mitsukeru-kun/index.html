@@ -837,6 +837,26 @@
   </div>
 </div>
 
+<!-- 予定の詳細モーダル -->
+<div class="cv-detail-overlay" id="cvDetailOverlay" aria-hidden="true">
+  <div class="cv-detail-modal" role="dialog" aria-modal="true" aria-labelledby="cvDetailTitle">
+    <div class="cv-detail-header">
+      <span class="cv-detail-color" id="cvDetailColor"></span>
+      <div class="cv-detail-title-wrap">
+        <h3 class="cv-detail-title" id="cvDetailTitle"></h3>
+        <div class="cv-detail-cal" id="cvDetailCal"></div>
+      </div>
+      <button class="cv-icon-btn cv-close-btn" id="cvDetailClose" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="cv-detail-body" id="cvDetailBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast">
   <span id="toastMsg">Googleへの接続が切れました。再接続してください。</span>
   <button id="toastBtn">再接続</button>
