@@ -1212,9 +1212,26 @@
       cvCacheKey=key;
       cvCacheEvents=events;
     }
+    cvUpdateLegend();
     cvDrawEvents(events);
-    cvDrawCandidates();
     cvDrawNowLine();
+  }
+
+  // 凡例：選択中のカレンダーごとの色＋表示名を並べる
+  function cvUpdateLegend(){
+    const el=document.getElementById('cvLegend');
+    if(!el)return;
+    const items=[];
+    for(const cal of calendars){
+      if(!selectedCalIds.has(cal.id))continue;
+      const color=cal.backgroundColor||'#6b7280';
+      const name=calDisplayName(cal);
+      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(name)}</span>`);
+    }
+    for(const f of icsFiles){
+      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:rgba(107,114,128,0.18);border-left:3px solid #6b7280"></span>${escapeHtml(f.name)}</span>`);
+    }
+    el.innerHTML=items.join('');
   }
 
   async function cvFetchEvents(){
