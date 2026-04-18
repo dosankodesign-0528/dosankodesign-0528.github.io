@@ -152,47 +152,68 @@ export function FilterBar({
     setOpenDropdown((prev) => (prev === name ? null : name));
   };
 
+  const viewModeState: "unchecked" | "all" | "checked" = filter.starredOnly
+    ? "checked"
+    : filter.viewMode === "unchecked"
+      ? "unchecked"
+      : "all";
+
   return (
     <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border bg-bg-secondary flex-wrap">
-      {/* ビューモード: 未確認 / すべて */}
+      {/* 状態: セグメントコントロール（未確認 / すべて / 確認済み） */}
+      <div className="inline-flex p-0.5 bg-bg-primary rounded-lg">
+        <button
+          onClick={() =>
+            updateFilter({ viewMode: "unchecked" as ViewMode, starredOnly: false })
+          }
+          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
+            viewModeState === "unchecked"
+              ? "bg-white text-text-primary shadow-sm"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          未確認
+        </button>
+        <button
+          onClick={() =>
+            updateFilter({ viewMode: "all" as ViewMode, starredOnly: false })
+          }
+          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
+            viewModeState === "all"
+              ? "bg-white text-text-primary shadow-sm"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          すべて
+        </button>
+        <button
+          onClick={() =>
+            updateFilter({ viewMode: "all" as ViewMode, starredOnly: true })
+          }
+          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
+            viewModeState === "checked"
+              ? "bg-white text-text-primary shadow-sm"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          確認済み
+        </button>
+      </div>
+
+      {/* 区切り */}
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* メディア: ブランド色の丸ピル */}
       <button
-        onClick={() => updateFilter({ viewMode: "unchecked" as ViewMode, starredOnly: false })}
+        onClick={onClearSources}
         className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
-          filter.viewMode === "unchecked"
-            ? "bg-text-primary text-white"
-            : "text-text-secondary hover:bg-bg-primary"
-        }`}
-      >
-        未確認
-      </button>
-      <button
-        onClick={() => updateFilter({ viewMode: "all" as ViewMode, starredOnly: false })}
-        className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
-          filter.viewMode === "all" && !filter.starredOnly
+          allSourcesActive
             ? "bg-text-primary text-white"
             : "text-text-secondary hover:bg-bg-primary"
         }`}
       >
         すべて
       </button>
-      <button
-        onClick={() => updateFilter({ viewMode: "all" as ViewMode, starredOnly: true })}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
-          filter.starredOnly
-            ? "bg-emerald-500 text-white"
-            : "text-text-secondary hover:bg-bg-primary"
-        }`}
-      >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        確認済み
-      </button>
-
-      {/* 区切り */}
-      <div className="w-px h-5 bg-border mx-1" />
-
-      {/* ソースタブ */}
       {sources.map((source) => {
         const active = filter.sources.includes(source);
         return (
