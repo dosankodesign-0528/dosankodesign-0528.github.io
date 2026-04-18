@@ -1250,7 +1250,7 @@
     const emp=document.getElementById('cvEmpty');
     if(!accessToken&&icsFiles.length===0){
       emp.style.display='block';
-      emp.textContent=clientId?'カレンダーに接続中…「📅 カレンダー」タブをもう一度押すか、ページを再読み込みしてください。':'⚙ 初回設定からClient IDを保存してください。';
+      emp.textContent=clientId?'カレンダーに接続中…ページを再読み込みするか、もう一度ボタンを押してください。':'⚙ 初回設定からClient IDを保存してください。';
     } else {
       emp.style.display='none';
     }
