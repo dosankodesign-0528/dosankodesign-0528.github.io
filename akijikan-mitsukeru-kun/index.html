@@ -979,6 +979,9 @@
     }
 
     btn.classList.remove('loading');btn.disabled=false;
+    // カレンダービュー用に最新の候補を保存（次にカレンダータブを開いたら破線で表示）
+    latestSlots=slots.slice();
+    cvCacheKey=null; // 次回 cvRender で再フェッチ
     const ph=document.getElementById('placeholder'),out=document.getElementById('output'),cnt=document.getElementById('slotCount'),cpb=document.getElementById('copyBtn');
     cnt.style.display='inline-flex';cpb.style.display='flex';
 
