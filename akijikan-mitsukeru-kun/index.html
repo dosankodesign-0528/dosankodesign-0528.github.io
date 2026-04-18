@@ -1814,6 +1814,124 @@
     }
   }
 
+  // ============================================
+  //  予定詳細モーダル
+  // ============================================
+  function cvFmtDateTime(ev){
+    const w=DOW_LABEL;
+    const fmtD=d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${w[d.getDay()]})`;
+    const fmtT=d=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    if(ev.allDay){
+      const endInc=new Date(ev.end); endInc.setDate(endInc.getDate()-1);
+      const sameDay=ev.start.toDateString()===endInc.toDateString();
+      if(sameDay)return `${fmtD(ev.start)}（終日）`;
+      return `${fmtD(ev.start)} 〜 ${fmtD(endInc)}（終日）`;
+    }
+    const sameDay=ev.start.toDateString()===ev.end.toDateString();
+    if(sameDay)return `${fmtD(ev.start)} ${fmtT(ev.start)} 〜 ${fmtT(ev.end)}`;
+    return `${fmtD(ev.start)} ${fmtT(ev.start)} 〜 ${fmtD(ev.end)} ${fmtT(ev.end)}`;
+  }
+
+  // 文字列から URL を抽出（重複排除）
+  function cvExtractUrls(text){
+    if(!text)return [];
+    const re=/https?:\/\/[^\s<>"'）)]+/g;
+    const out=[]; const seen=new Set();
+    let m;
+    while((m=re.exec(text))!==null){
+      // 末尾の句読点を除去
+      let u=m[0].replace(/[、。.,!?;:]+$/,'');
+      if(seen.has(u))continue;
+      seen.add(u); out.push(u);
+    }
+    return out;
+  }
+
+  // URL からプロバイダ名を判定
+  function cvMeetingProvider(url){
+    if(/meet\.google\.com/.test(url))return {name:'Google Meet', cls:'meet', icon:'📹'};
+    if(/zoom\.us|zoom\.com/.test(url))return {name:'Zoom', cls:'zoom', icon:'🎥'};
+    if(/teams\.microsoft\.com|teams\.live\.com/.test(url))return {name:'Microsoft Teams', cls:'teams', icon:'💬'};
+    if(/webex\.com/.test(url))return {name:'Webex', cls:'', icon:'📞'};
+    return null;
+  }
+
+  // 説明文を HTML 化（URL を a タグ化）
+  function cvLinkifyHtml(text){
+    const safe=escapeHtml(text);
+    return safe.replace(/(https?:\/\/[^\s<]+)/g, (m)=>{
+      // エスケープ後に文字実体参照になっている可能性 → そのまま href に入れる
+      const u=m.replace(/&amp;/g,'&');
+      return `<a href="${u}" target="_blank" rel="noopener">${m}</a>`;
+    });
+  }
+
+  function cvOpenDetail(ev){
+    if(!ev)return;
+    const ov=document.getElementById('cvDetailOverlay');
+    const color=cvColorOf(ev.calId);
+    const cal=calendars.find(c=>c.id===ev.calId);
+    const calName=cal?calDisplayName(cal):(ev.calId&&ev.calId.startsWith('__ics__:')?ev.calId.replace('__ics__:',''):'');
+    document.getElementById('cvDetailColor').style.background=color;
+    document.getElementById('cvDetailTitle').textContent=ev.summary||'(タイトルなし)';
+    document.getElementById('cvDetailCal').textContent=calName?`📅 ${calName}`:'';
+
+    // ミーティング URL の収集
+    const meetingUrls=[];
+    const pushIfMeeting=(url,nameHint)=>{
+      if(!url)return;
+      if(meetingUrls.find(x=>x.url===url))return;
+      const p=cvMeetingProvider(url);
+      if(p){meetingUrls.push({url, ...p});}
+      else if(nameHint){meetingUrls.push({url, name:nameHint, cls:'', icon:'🔗'});}
+    };
+    if(ev.hangoutLink)pushIfMeeting(ev.hangoutLink,'Google Meet');
+    if(ev.conferenceData&&Array.isArray(ev.conferenceData.entryPoints)){
+      ev.conferenceData.entryPoints.forEach(ep=>{
+        if(ep.entryPointType==='video'&&ep.uri)pushIfMeeting(ep.uri, ev.conferenceData.conferenceSolution&&ev.conferenceData.conferenceSolution.name);
+      });
+    }
+    cvExtractUrls(ev.location).forEach(u=>pushIfMeeting(u));
+    cvExtractUrls(ev.description).forEach(u=>pushIfMeeting(u));
+
+    // 本文を組み立て
+    const rows=[];
+    rows.push(`<div class="cv-detail-row"><div class="cv-detail-icon">🕒</div><div class="cv-detail-content">${escapeHtml(cvFmtDateTime(ev))}</div></div>`);
+    if(ev.location){
+      // 場所が URL を含む場合はリンク化
+      const linked=cvLinkifyHtml(ev.location);
+      rows.push(`<div class="cv-detail-row"><div class="cv-detail-icon">📍</div><div class="cv-detail-content">${linked}</div></div>`);
+    }
+    if(meetingUrls.length){
+      const btns=meetingUrls.map(m=>`<a class="cv-meet-btn ${m.cls}" href="${m.url}" target="_blank" rel="noopener"><span>${m.icon}</span><span>${escapeHtml(m.name||'リンク')}</span></a>`).join('');
+      rows.push(`<div class="cv-detail-row"><div class="cv-detail-icon">📹</div><div class="cv-detail-content"><div class="cv-detail-meet-btns">${btns}</div></div></div>`);
+    }
+    if(ev.attendees&&ev.attendees.length){
+      const cnt=ev.attendees.length;
+      const yes=ev.attendees.filter(a=>a.responseStatus==='accepted').length;
+      rows.push(`<div class="cv-detail-row"><div class="cv-detail-icon">👥</div><div class="cv-detail-content">参加者 ${cnt} 名（承諾 ${yes} 名）</div></div>`);
+    }
+    if(ev.description){
+      rows.push(`<div class="cv-detail-row"><div class="cv-detail-icon">📝</div><div class="cv-detail-content"><div class="cv-detail-desc">${cvLinkifyHtml(ev.description)}</div></div></div>`);
+    }
+    if(ev.htmlLink){
+      rows.push(`<div class="cv-detail-footer"><a class="cv-detail-link" href="${ev.htmlLink}" target="_blank" rel="noopener">↗ Googleカレンダーで開く</a></div>`);
+    }
+    document.getElementById('cvDetailBody').innerHTML=rows.join('');
+
+    ov.classList.add('show');
+  }
+  function cvCloseDetail(){
+    document.getElementById('cvDetailOverlay').classList.remove('show');
+  }
+  document.getElementById('cvDetailClose').addEventListener('click',cvCloseDetail);
+  document.getElementById('cvDetailOverlay').addEventListener('click',e=>{
+    if(e.target===e.currentTarget)cvCloseDetail();
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&document.getElementById('cvDetailOverlay').classList.contains('show'))cvCloseDetail();
+  });
+
   function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 </script>
 </body>
