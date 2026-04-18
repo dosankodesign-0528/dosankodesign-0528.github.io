@@ -117,7 +117,7 @@ export function Sidebar({
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "awwwards"];
+  const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "webdesignclip"];
   const categories = Object.keys(CATEGORY_LABELS) as Category[];
   const tastes = Object.keys(TASTE_LABELS) as DesignTaste[];
 
