@@ -100,6 +100,9 @@ jobs:
         working-directory: nittei-chousei
         run: npm run build
         continue-on-error: true
+        env:
+          BASE_PATH: /nittei-chousei
+          NEXT_EXPORT: "1"
 
       - name: nittei-chousei をコピー
         run: |

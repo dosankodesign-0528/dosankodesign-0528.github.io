@@ -1,0 +1,49 @@
+name: Scrape Design Gallery
+
+on:
+  schedule:
+    # 毎日 00:00 UTC = 09:00 JST
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scrape-design-gallery
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: design-gallery/package-lock.json
+
+      - name: 依存インストール
+        working-directory: design-gallery
+        run: npm ci
+
+      - name: スクレイパー実行
+        working-directory: design-gallery
+        run: npx tsx scripts/scraper.ts
+
+      - name: 変更があればコミット＆プッシュ
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- design-gallery/src/data/scraped-sites.json; then
+            echo "変更なし。スキップ。"
+            exit 0
+          fi
+          git add design-gallery/src/data/scraped-sites.json
+          git commit -m "chore(design-gallery): scraped-sites.json 自動更新 ($(date -u +%Y-%m-%d))"
+          git push
