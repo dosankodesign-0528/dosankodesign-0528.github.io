@@ -988,10 +988,11 @@
     });
   }
 
-  const today=new Date(), twoWeeks=new Date(today);
-  twoWeeks.setDate(twoWeeks.getDate()+14);
+  // デフォルト期間：開いた日 〜 1週間後
+  const today=new Date(), oneWeek=new Date(today);
+  oneWeek.setDate(oneWeek.getDate()+7);
   document.getElementById('startDate').value=today.toISOString().split('T')[0];
-  document.getElementById('endDate').value=twoWeeks.toISOString().split('T')[0];
+  document.getElementById('endDate').value=oneWeek.toISOString().split('T')[0];
 
   // Setup modal
   document.getElementById('setupToggle').addEventListener('click',()=>document.getElementById('setupOverlay').classList.add('show'));
