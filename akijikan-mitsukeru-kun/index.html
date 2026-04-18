@@ -192,6 +192,19 @@
   .toast.success { border-left-color:var(--green); }
   .toast.success button { background:var(--green); }
 
+  /* ブックマーク案内（設定モーダル内） */
+  .bookmark-note {
+    margin-top:10px;
+    padding:10px 12px;
+    background:rgba(217,119,6,0.08);
+    border-left:3px solid var(--amber);
+    border-radius:var(--radius-sm);
+    font-size:11px;
+    color:var(--text-sub);
+    line-height:1.6;
+  }
+  .bookmark-note strong { color:var(--text); font-weight:600; }
+
   /* --- モバイル最適化 --- */
   @media (max-width:800px) {
     .layout { grid-template-columns:1fr; }
