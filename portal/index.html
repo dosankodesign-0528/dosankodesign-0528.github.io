@@ -79,31 +79,33 @@
 
   .products {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 16px;
   }
 
   .product {
     display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 20px 24px;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
     background: #141414;
     border: 1px solid #1e1e1e;
     border-radius: 12px;
     text-decoration: none;
     color: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    position: relative;
   }
   .product:hover {
     background: #1a1a1a;
     border-color: #333;
+    transform: translateY(-2px);
   }
 
   .product-icon {
-    font-size: 2rem;
-    width: 56px;
-    height: 56px;
+    font-size: 1.8rem;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,32 +114,44 @@
   }
 
   .product-info {
-    flex: 1;
     min-width: 0;
   }
   .product-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #fff;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    line-height: 1.3;
   }
   .product-desc {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #777;
     line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   .product-period {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #555;
-    margin-top: 6px;
+    margin-top: 8px;
   }
 
   .product-arrow {
-    color: #444;
-    font-size: 1.2rem;
-    flex-shrink: 0;
+    display: none;
   }
-  .product:hover .product-arrow { color: #888; }
+
+  @media (max-width: 480px) {
+    .products {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .product { padding: 16px; }
+    .product-icon { width: 44px; height: 44px; font-size: 1.5rem; }
+    .product-name { font-size: 0.85rem; }
+    .product-desc { font-size: 0.7rem; }
+  }
 
   footer {
     margin-top: 60px;
