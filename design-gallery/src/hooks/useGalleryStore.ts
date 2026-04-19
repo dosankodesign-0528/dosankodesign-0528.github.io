@@ -131,17 +131,33 @@ export function useGalleryStore() {
       setSelectedIds((prev) => {
         const next = new Set(prev);
 
-        if (e.shiftKey && lastSelectedId) {
+        if (e.shiftKey) {
           // Shift+クリック: 範囲選択
           const ids = filteredSites.map((s) => s.id);
-          const startIdx = ids.indexOf(lastSelectedId);
-          const endIdx = ids.indexOf(id);
-          const [from, to] = [
-            Math.min(startIdx, endIdx),
-            Math.max(startIdx, endIdx),
-          ];
-          for (let i = from; i <= to; i++) {
-            next.add(ids[i]);
+          // アンカー決定: lastSelectedId → 既に選択済みのうち最初のもの → なし
+          let anchor: string | null = lastSelectedId;
+          if (!anchor || !ids.includes(anchor)) {
+            anchor = ids.find((i) => prev.has(i)) ?? null;
+          }
+          if (anchor) {
+            const startIdx = ids.indexOf(anchor);
+            const endIdx = ids.indexOf(id);
+            if (startIdx >= 0 && endIdx >= 0) {
+              const [from, to] = [
+                Math.min(startIdx, endIdx),
+                Math.max(startIdx, endIdx),
+              ];
+              for (let i = from; i <= to; i++) {
+                next.add(ids[i]);
+              }
+            } else {
+              next.clear();
+              next.add(id);
+            }
+          } else {
+            // アンカー無し（初回 Shift+クリック）→ 単一選択
+            next.clear();
+            next.add(id);
           }
         } else if (e.metaKey) {
           // Cmd+クリック: トグル
@@ -178,8 +194,12 @@ export function useGalleryStore() {
   }, []);
 
   // ドラッグ選択で一括セット（置き換え）
-  const setSelection = useCallback((ids: string[]) => {
+  // lastId を指定すると、次の Shift+クリックの範囲アンカーとして使われる
+  const setSelection = useCallback((ids: string[], lastId?: string) => {
     setSelectedIds(new Set(ids));
+    if (lastId !== undefined) {
+      setLastSelectedId(lastId || null);
+    }
   }, []);
 
   // フィルター更新ヘルパー

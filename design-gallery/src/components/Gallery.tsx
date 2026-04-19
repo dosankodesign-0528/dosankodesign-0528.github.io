@@ -15,7 +15,7 @@ interface GalleryProps {
   onSetStarredMany: (ids: string[], starred: boolean) => void;
   onClearSelection: () => void;
   onColumnsChange: (cols: number) => void;
-  onSetSelection: (ids: string[]) => void;
+  onSetSelection: (ids: string[], lastId?: string) => void;
 }
 
 export function Gallery({
@@ -110,20 +110,19 @@ export function Gallery({
       const startedOnCard = !!target.closest("[data-site-id]");
       const additive = e.shiftKey || e.metaKey || e.ctrlKey;
 
-      // Shift/Cmd+カード上 は「範囲クリック」の意図なので、ドラッグ選択を開始しない
-      // （数px手ブレしても click が抑止されず、SiteCard.onClick → 範囲選択が走る）
-      if (additive && startedOnCard) return;
-
       const startX = e.clientX;
       const startY = e.clientY;
       const initialSelection = new Set(selectedIdsRef.current);
+      // Shift/Cmd+カード上はクリック意図が強いので閾値を大きめに（手ブレ耐性）
+      const threshold = additive && startedOnCard ? 15 : 8;
       let isDragging = false;
+      let lastTouchedId: string | null = null;
 
       const handleMouseMove = (moveE: MouseEvent) => {
         const dx = moveE.clientX - startX;
         const dy = moveE.clientY - startY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 8 && !isDragging) return;
+        if (dist < threshold && !isDragging) return;
         isDragging = true;
 
         setDragBox({
@@ -155,13 +154,16 @@ export function Gallery({
           }
         });
 
+        // 次回 Shift+クリックのアンカー候補：ドラッグで最後に触れたカード
+        lastTouchedId = intersecting[intersecting.length - 1] ?? lastTouchedId;
+
         if (additive) {
           // 既存選択 + ドラッグ範囲
           const merged = new Set(initialSelection);
           intersecting.forEach((id) => merged.add(id));
-          onSetSelection(Array.from(merged));
+          onSetSelection(Array.from(merged), lastTouchedId ?? undefined);
         } else {
-          onSetSelection(intersecting);
+          onSetSelection(intersecting, lastTouchedId ?? undefined);
         }
 
         // ドラッグ中のテキスト選択を解除
@@ -181,6 +183,11 @@ export function Gallery({
             capture: true,
             once: true,
           });
+          // click が発火しないまま次の操作に入ると将来のクリックが誤抑止されるため、
+          // 500ms で保険的にクリーンアップ
+          setTimeout(() => {
+            window.removeEventListener("click", suppressClick, true);
+          }, 500);
         } else if (!startedOnCard) {
           // ドラッグしなかった & カード外のクリック → 選択クリア
           // カード上の純粋クリックは SiteCard.onClick が処理するので触らない
