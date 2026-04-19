@@ -127,7 +127,7 @@ function P02() {
   return (
     <Wrap title="02. ロゴ行の右端にセグメント" note="行1右端にviewMode、行2はソース+ソート">
       <div className="px-5 py-3 space-y-3 bg-white">
-        <div className="flex items-center gap-4"><Logo /><Search /><Count /><div className="ml-auto"><Segment mode={f.mode} setMode={f.setMode} /></div><IconBtn>↻</IconBtn></div>
+        <div className="flex items-center gap-4"><Logo /><Search /><Count /><div className="ml-auto"><IconBtn>↻</IconBtn></div><Segment mode={f.mode} setMode={f.setMode} /></div>
         <div className="flex items-center gap-1.5 flex-wrap"><Sources {...f} /><div className="ml-auto flex items-center gap-1.5"><GhostBtn>↓ 新しい順</GhostBtn><GhostBtn>制作会社</GhostBtn><GhostBtn>▾ Date</GhostBtn></div></div>
       </div>
     </Wrap>
