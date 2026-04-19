@@ -29,6 +29,13 @@ export default function Home() {
     onClearSelection: store.clearSelection,
   });
 
+  // メインギャラリー画面ではbody全体をロック（Gallery内部で自前スクロール）。
+  // モックページ等はこのクラスが付かないので通常スクロールが効く。
+  useEffect(() => {
+    document.body.classList.add("lock-body-scroll");
+    return () => document.body.classList.remove("lock-body-scroll");
+  }, []);
+
   // 初回マウントで「新規追加サイト」を検出しモーダル表示判定
   useEffect(() => {
     try {

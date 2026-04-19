@@ -3,17 +3,22 @@
 /**
  * Eagleトグル UX 検討モック。
  *
- * 問題: 現状、Eagle重複フィルタをON/OFF切替すると
- *   「〇件非表示中」チップの有無によりヘッダー右側のレイアウトが
- *   横にずれる（リロード/モード切替/スライダの位置が変わる）。
+ * 構成:
+ *  1. インタラクティブ実画面プレビュー — 各案A〜Fを現状のギャラリー画面に組み込んだ
+ *     リアルなイメージで比較。Eagleトグルと案の切替がその場で出来る。
+ *  2. 横並び比較 — OFF/ONを隣同士で見てレイアウトシフトの有無を確認。
+ *  3. 推奨まとめ。
  *
- * 各バリエーションで、OFF⇄ON時のずれ方を比較できるようにしている。
+ * スクロール: bodyレベルで縦スクロールが自然に効くようにしてある
+ *  （h-screen/overflow-hiddenは使わない）。
  */
 
 import { useState } from "react";
 
+type VariantId = "A" | "B" | "C" | "D" | "E" | "F";
+
 /* ========================================================
-   共通UIパーツ
+   共通UIパーツ（ヘッダー部品の再現）
    ======================================================== */
 function ReloadBtn() {
   return (
@@ -40,8 +45,7 @@ function ModeSeg() {
           <span
             className="w-1.5 h-1.5 rounded-full"
             style={{
-              background:
-                i === 0 ? "#EF4444" : i === 1 ? "#6B7280" : "#10B981",
+              background: i === 0 ? "#EF4444" : i === 1 ? "#6B7280" : "#10B981",
             }}
           />
           {l}
@@ -79,16 +83,17 @@ function Search() {
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
       <input
-        placeholder="検索..."
+        placeholder="サイト名、URL、エージェンシーで検索..."
         className="w-full h-8 pl-9 pr-3 text-[13px] bg-white border border-gray-200 rounded-lg"
       />
     </div>
   );
 }
-function Count() {
+function Count({ on }: { on: boolean }) {
+  // ON時は Eagle除外858件ぶんヒット数が減る想定
   return (
     <span className="text-[12px] text-gray-500 whitespace-nowrap">
-      3,905 / 4,763 sites
+      {on ? "3,905" : "4,763"} / 4,763 sites
     </span>
   );
 }
@@ -119,7 +124,7 @@ function StatusDot() {
 }
 
 /* ========================================================
-   バリエーション（それぞれの Right Cluster 実装）
+   バリエーション（ヘッダー右クラスタ）
    ======================================================== */
 
 /** A. 現行 — チップが後から追加され、右側が左にずれる */
@@ -127,7 +132,7 @@ function VariantA({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border ${
+        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
           on ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white"
         }`}
       >
@@ -155,7 +160,7 @@ function VariantB({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border ${
+        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
           on ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white"
         }`}
       >
@@ -165,7 +170,6 @@ function VariantB({ on }: { on: boolean }) {
         </div>
         <Toggle on={on} />
       </div>
-      {/* 固定幅のチップ枠 */}
       <button
         className={`h-8 min-w-[120px] inline-flex items-center justify-center gap-1.5 px-2.5 rounded-lg border text-[12px] font-medium transition-colors ${
           on
@@ -183,7 +187,7 @@ function VariantB({ on }: { on: boolean }) {
   );
 }
 
-/** C. ピル内カウント統合 — 件数をEagleピルの中へ */
+/** C. ピル内カウント統合 */
 function VariantC({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -191,7 +195,6 @@ function VariantC({ on }: { on: boolean }) {
         className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
           on ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white"
         }`}
-        title={on ? "クリックで除外一覧を見る" : ""}
       >
         <div className="inline-flex items-center gap-1.5 px-1 text-[12px] text-gray-500">
           <StatusDot />
@@ -212,12 +215,12 @@ function VariantC({ on }: { on: boolean }) {
   );
 }
 
-/** D. アイコン+バッジのみ — テキストなし、超コンパクト */
+/** D. アイコン+バッジのみ — テキスト無し */
 function VariantD({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border ${
+        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
           on ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white"
         }`}
       >
@@ -227,13 +230,11 @@ function VariantD({ on }: { on: boolean }) {
         </div>
         <Toggle on={on} />
       </div>
-      {/* バッジ付きアイコンボタン（固定サイズ・OFF時は非活性） */}
       <button
         className={`relative w-8 h-8 rounded-lg inline-flex items-center justify-center transition-colors ${
           on ? "text-blue-600 hover:bg-blue-50" : "text-gray-300 cursor-not-allowed"
         }`}
         disabled={!on}
-        title={on ? "除外858件の一覧" : ""}
       >
         <EagleIcon className="w-4 h-4" />
         {on && (
@@ -249,12 +250,12 @@ function VariantD({ on }: { on: boolean }) {
   );
 }
 
-/** E. 件数はEagleピル横のインフォ欄(左寄せ配置)へ移動 — 右側は不動 */
+/** E. セカンダリバー版(右クラスタ単体) — ヘッダー内は常に不動 */
 function VariantE({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border ${
+        className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
           on ? "border-blue-300 bg-blue-50" : "border-gray-200 bg-white"
         }`}
       >
@@ -271,7 +272,7 @@ function VariantE({ on }: { on: boolean }) {
   );
 }
 
-/** F. トグル自体にカウントを内包 — スイッチの上に件数が乗る */
+/** F. トグル自体にカウントを内包 */
 function VariantF({ on }: { on: boolean }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -301,20 +302,308 @@ function VariantF({ on }: { on: boolean }) {
   );
 }
 
+const VARIANTS: Record<
+  VariantId,
+  {
+    label: string;
+    tldr: string;
+    Component: React.FC<{ on: boolean }>;
+    recommended?: boolean;
+  }
+> = {
+  A: {
+    label: "現行（問題あり）",
+    tldr: "ON時にチップが追加され、右側が左にずれる。",
+    Component: VariantA,
+  },
+  B: {
+    label: "固定スペース確保",
+    tldr: "チップ枠を常に存在させ、OFF時は透明にする。",
+    Component: VariantB,
+    recommended: true,
+  },
+  C: {
+    label: "ピル内統合",
+    tldr: "件数バッジを Eagle ピルの中に入れる。",
+    Component: VariantC,
+  },
+  D: {
+    label: "アイコン＋バッジ",
+    tldr: "件数はバッジ数字のみ、テキスト無しで超コンパクト。",
+    Component: VariantD,
+  },
+  E: {
+    label: "セカンダリバー",
+    tldr: "ヘッダー下に別行でチップを出す。ヘッダー内は不動。",
+    Component: VariantE,
+  },
+  F: {
+    label: "トグル内カウント内包",
+    tldr: "Eagle ピル自体に件数を固定幅で内包。",
+    Component: VariantF,
+  },
+};
+
 /* ========================================================
-   Variant Frame（カード表示）
+   サンプルギャラリー（実画面イメージ用の疑似カード）
    ======================================================== */
-interface VariantProps {
-  id: string;
-  title: string;
-  tldr: string;
-  pros: string[];
-  cons: string[];
-  Component: React.FC<{ on: boolean }>;
-  recommended?: boolean;
+const SAMPLE_THUMBS = [
+  "linear-gradient(135deg,#F3D3BD 0%,#E97C6B 100%)",
+  "linear-gradient(135deg,#2E2E38 0%,#0F1021 100%)",
+  "linear-gradient(135deg,#FFD93D 0%,#FF6B6B 100%)",
+  "linear-gradient(135deg,#A8E6CF 0%,#3D84A8 100%)",
+  "linear-gradient(135deg,#FCE38A 0%,#F38181 100%)",
+  "linear-gradient(135deg,#95E1D3 0%,#38ADA9 100%)",
+  "linear-gradient(135deg,#EAFFD0 0%,#6B5B95 100%)",
+  "linear-gradient(135deg,#F8B195 0%,#C06C84 100%)",
+  "linear-gradient(135deg,#D9A7C7 0%,#FFFCDC 100%)",
+  "linear-gradient(135deg,#B8B5FF 0%,#7579E7 100%)",
+  "linear-gradient(135deg,#FDEB71 0%,#F8D800 100%)",
+  "linear-gradient(135deg,#E0C3FC 0%,#8EC5FC 100%)",
+];
+const SAMPLE_SOURCES: { label: string; color: string }[] = [
+  { label: "SANKOU!", color: "#E85D75" },
+  { label: "MUUUUU.ORG", color: "#2ECC71" },
+  { label: "Web Design Clip", color: "#9B59B6" },
+  { label: "81-web.com", color: "#4A90D9" },
+];
+const SAMPLE_TITLES = [
+  "株式会社ブルーパッション",
+  "tokyo minimal studio",
+  "YURAGI ブランドサイト",
+  "Slow Life Magazine",
+  "Awaji Food Collective",
+  "紫陽花の季節に",
+  "Niigata Design Fair",
+  "Forest & River Co.",
+  "Kyoto Craft Works",
+  "HOSHI Architects",
+  "Urban Harvest",
+  "Monochrome Press",
+];
+
+function SampleCard({ i }: { i: number }) {
+  const src = SAMPLE_SOURCES[i % SAMPLE_SOURCES.length];
+  return (
+    <div className="rounded-lg overflow-hidden bg-white border border-gray-200 hover:shadow-md transition-shadow">
+      <div
+        className="aspect-[4/3] relative"
+        style={{ background: SAMPLE_THUMBS[i % SAMPLE_THUMBS.length] }}
+      >
+        <span
+          className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-semibold text-white"
+          style={{ background: src.color }}
+        >
+          {src.label}
+        </span>
+      </div>
+      <div className="px-2.5 py-2">
+        <div className="text-[12px] font-medium text-gray-900 truncate">
+          {SAMPLE_TITLES[i % SAMPLE_TITLES.length]}
+        </div>
+        <div className="text-[10px] text-gray-400 mt-0.5">2025-10</div>
+      </div>
+    </div>
+  );
 }
 
-function VariantFrame({ id, title, tldr, pros, cons, Component, recommended }: VariantProps) {
+function SampleFilterBar() {
+  return (
+    <div className="h-[48px] bg-white border-b border-gray-200 flex items-center px-5 gap-2 text-[12px]">
+      <div className="inline-flex gap-1">
+        {SAMPLE_SOURCES.map((s) => (
+          <button
+            key={s.label}
+            className="h-7 px-2.5 rounded-md border border-gray-200 bg-white text-gray-600 inline-flex items-center gap-1.5"
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: s.color }}
+            />
+            {s.label}
+          </button>
+        ))}
+      </div>
+      <div className="w-px h-5 bg-gray-200 mx-1" />
+      <button className="h-7 px-2.5 rounded-md border border-gray-200 bg-white text-gray-600">
+        ★ チェック済み
+      </button>
+      <button className="h-7 px-2.5 rounded-md border border-gray-200 bg-white text-gray-600">
+        エージェンシー
+      </button>
+      <button className="h-7 px-2.5 rounded-md border border-gray-200 bg-white text-gray-600">
+        日付
+      </button>
+      <button className="h-7 px-2.5 rounded-md bg-white text-gray-400 ml-auto">
+        並び順: 新しい順 ▾
+      </button>
+    </div>
+  );
+}
+
+/* ========================================================
+   実画面プレビュー（ヘッダー＋FilterBar＋Gallery）
+   ======================================================== */
+function FullPreview({
+  variant,
+  on,
+}: {
+  variant: VariantId;
+  on: boolean;
+}) {
+  const { Component } = VARIANTS[variant];
+  const isSecondary = variant === "E";
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-gray-300 bg-gray-50 shadow-sm">
+      {/* Header */}
+      <div className="h-[56px] bg-white border-b border-gray-200 flex items-center px-5 gap-4">
+        <Search />
+        <Count on={on} />
+        <div className="ml-auto">
+          <Component on={on} />
+        </div>
+      </div>
+
+      {/* 案E: セカンダリバーで件数表示 */}
+      {isSecondary && (
+        <div
+          className={`overflow-hidden transition-all duration-200 ${
+            on ? "h-10 opacity-100" : "h-0 opacity-0"
+          }`}
+        >
+          <div className="h-10 flex items-center px-5 gap-3 bg-blue-50/70 border-b border-blue-100 text-[12px]">
+            <EagleIcon className="w-3.5 h-3.5 text-blue-500" />
+            <span className="text-blue-700 font-medium">
+              Eagle重複 858件を非表示中
+            </span>
+            <button className="text-blue-600 underline">一覧を見る</button>
+          </div>
+        </div>
+      )}
+
+      {/* FilterBar */}
+      <SampleFilterBar />
+
+      {/* Gallery */}
+      <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 bg-gray-50">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <SampleCard key={i} i={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ========================================================
+   インタラクティブ実画面セクション
+   ======================================================== */
+function InteractivePreviewSection() {
+  const [variant, setVariant] = useState<VariantId>("B");
+  const [on, setOn] = useState(false);
+
+  const v = VARIANTS[variant];
+
+  return (
+    <section className="mb-12">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-[18px] font-bold text-gray-900">
+            1. 実画面プレビュー（インタラクティブ）
+          </h2>
+          <p className="text-[13px] text-gray-600 mt-1">
+            案と Eagle トグルを切替して、実際のギャラリー画面に組み込んだ時の見え方・レイアウトシフトの有無を検証できる。
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-[12px] text-gray-500">Eagleトグル:</label>
+          <button
+            onClick={() => setOn((v) => !v)}
+            className={`h-9 px-4 rounded-lg text-[12px] font-semibold transition-colors ${
+              on
+                ? "bg-blue-500 text-white hover:bg-blue-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {on ? "ON (断捨離モード)" : "OFF"}
+          </button>
+        </div>
+      </div>
+
+      {/* Variant tabs */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {(Object.keys(VARIANTS) as VariantId[]).map((id) => {
+          const active = id === variant;
+          const vx = VARIANTS[id];
+          return (
+            <button
+              key={id}
+              onClick={() => setVariant(id)}
+              className={`h-9 pl-2 pr-3 rounded-lg inline-flex items-center gap-2 text-[12px] border transition-colors ${
+                active
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <span
+                className={`w-6 h-6 rounded inline-flex items-center justify-center font-bold ${
+                  active ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {id}
+              </span>
+              <span className="font-medium">{vx.label}</span>
+              {vx.recommended && (
+                <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                  おすすめ
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mb-3 text-[12px] text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+        <b>案{variant}:</b> {v.tldr}
+      </div>
+
+      {/* 実画面プレビュー */}
+      <FullPreview variant={variant} on={on} />
+
+      {/* 二画面同時比較（OFF/ON） */}
+      <div className="mt-6">
+        <div className="mb-2 text-[12px] font-semibold text-gray-500">
+          OFF/ON を同時に並べて比較（右側のガタつきを目視チェック）
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+              OFF
+            </div>
+            <FullPreview variant={variant} on={false} />
+          </div>
+          <div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+              ON
+            </div>
+            <FullPreview variant={variant} on={true} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ========================================================
+   横並び比較カード（右クラスタのみ）
+   ======================================================== */
+interface VariantFrameProps {
+  id: VariantId;
+  pros: string[];
+  cons: string[];
+}
+function VariantFrame({ id, pros, cons }: VariantFrameProps) {
+  const { label, tldr, Component, recommended } = VARIANTS[id];
   return (
     <section className="border border-gray-200 rounded-2xl overflow-hidden bg-white">
       <header className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
@@ -323,7 +612,7 @@ function VariantFrame({ id, title, tldr, pros, cons, Component, recommended }: V
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-[14px] font-bold text-gray-900">{title}</h3>
+            <h3 className="text-[14px] font-bold text-gray-900">{label}</h3>
             {recommended && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">
                 おすすめ
@@ -339,7 +628,7 @@ function VariantFrame({ id, title, tldr, pros, cons, Component, recommended }: V
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
             OFF
           </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 h-[56px] flex items-center justify-end">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 h-[56px] flex items-center justify-end overflow-x-auto">
             <Component on={false} />
           </div>
         </div>
@@ -347,7 +636,7 @@ function VariantFrame({ id, title, tldr, pros, cons, Component, recommended }: V
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
             ON（Eagle重複を隠す）
           </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 h-[56px] flex items-center justify-end">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 h-[56px] flex items-center justify-end overflow-x-auto">
             <Component on={true} />
           </div>
         </div>
@@ -389,176 +678,115 @@ function VariantFrame({ id, title, tldr, pros, cons, Component, recommended }: V
    Page
    ======================================================== */
 export default function Page() {
-  const [secondaryOn, setSecondaryOn] = useState(false);
-
   return (
-    <main className="min-h-screen bg-gray-100 py-10">
+    <main
+      className="min-h-screen bg-gray-100 py-10"
+      // bodyレベルで自然スクロール。親でh-screen/overflow制限しない
+    >
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
             Eagleトグル 切替時レイアウトシフト改善案
           </h1>
           <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-            現状、Eagleトグルを ON にすると「〇件非表示中」チップが突如現れてヘッダー右側が左にずれる。
-            6案を比較して、切替時のガタつきを最小にしたい。
+            現状、Eagle トグルを ON にすると「〇件非表示中」チップが突如現れてヘッダー右側が左にずれる。
             <br />
-            <span className="text-gray-500">
-              各カード: ヘッダー右側の <b>OFF</b> / <b>ON</b> を並べて表示、位置ズレが一目で比較できる。
-            </span>
+            6案を、<b>実画面プレビュー（上）と右クラスタ単体比較（下）</b>の 2 視点で検証できるようにした。
           </p>
         </div>
 
-        {/* 案E 用の特別版：ヘッダー全体デモ（セカンダリバー配置） */}
-        <section className="mb-10 border border-gray-200 rounded-2xl overflow-hidden bg-white">
-          <header className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 font-semibold inline-flex items-center justify-center shrink-0">
-              E
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[14px] font-bold text-gray-900">
-                  ヘッダー下にセカンダリバー
-                </h3>
-              </div>
-              <p className="text-[12px] text-gray-500 mt-0.5">
-                ヘッダーには常に「Eagle + トグル」だけ。ON時は下の薄いバーに「N件非表示中」と「一覧を見る」ボタンが生える。ヘッダー内は何も動かない。
-              </p>
-            </div>
-            <button
-              onClick={() => setSecondaryOn((v) => !v)}
-              className="text-[12px] px-3 py-1 rounded bg-gray-900 text-white"
-            >
-              トグル: {secondaryOn ? "ON" : "OFF"}
-            </button>
-          </header>
+        {/* 1. インタラクティブ実画面プレビュー */}
+        <InteractivePreviewSection />
 
-          <div className="bg-gray-50/50 p-5">
-            {/* ヘッダー再現 */}
-            <div className="bg-white border border-gray-200 rounded-t-lg">
-              <div className="h-[56px] flex items-center px-5 gap-4 border-b border-gray-100">
-                <Search />
-                <Count />
-                <div className="ml-auto">
-                  <VariantE on={secondaryOn} />
-                </div>
-              </div>
-              {/* セカンダリバー: ON時のみ出現 */}
-              <div
-                className={`overflow-hidden transition-all duration-200 ${
-                  secondaryOn ? "h-10 opacity-100" : "h-0 opacity-0"
-                }`}
-              >
-                <div className="h-10 flex items-center px-5 gap-3 bg-blue-50/50 border-b border-blue-100 text-[12px]">
-                  <EagleIcon className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-blue-700 font-medium">
-                    Eagle重複 858件を非表示中
-                  </span>
-                  <button className="text-blue-600 underline">一覧を見る</button>
-                </div>
-              </div>
-            </div>
+        {/* 2. 横並び比較 */}
+        <div>
+          <h2 className="text-[18px] font-bold text-gray-900 mb-1">
+            2. 右クラスタのみ静的比較（OFF / ON）
+          </h2>
+          <p className="text-[13px] text-gray-600 mb-4">
+            各案のヘッダー右側だけを切り出して、OFF/ONを並べた。レイアウトが動くかどうかがスパッと分かる。
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <VariantFrame
+              id="A"
+              pros={["実装シンプル", "情報量豊富"]}
+              cons={[
+                "切替時にガタつく（ユーザビリティ問題）",
+                "右側要素の位置が変わるので目が追いづらい",
+              ]}
+            />
+            <VariantFrame
+              id="B"
+              pros={[
+                "レイアウトが1ミリも動かない",
+                "ON化したときに視線誘導がスムーズ",
+                "実装もシンプル",
+              ]}
+              cons={["OFF時に余白がちょっと不自然（情報密度の無駄）"]}
+            />
+            <VariantFrame
+              id="C"
+              pros={[
+                "1つの関連情報として凝集している",
+                "情報と操作が同じピル内で完結",
+              ]}
+              cons={[
+                "ピル全体の幅がON/OFFで変わる → 他要素は少しずれる",
+                "トグル/モーダルの用途が曖昧になりがち",
+              ]}
+            />
+            <VariantFrame
+              id="D"
+              pros={[
+                "超コンパクト、レイアウト完全固定",
+                "通知感があり気づきやすい",
+              ]}
+              cons={[
+                "「何の件数か」が初見で分かりにくい（要ツールチップ）",
+                "役割がEagleピルと分離して混乱の可能性",
+              ]}
+            />
+            <VariantFrame
+              id="E"
+              pros={[
+                "ヘッダー内のレイアウトは一切動かない",
+                "情報量豊富（件数・案内・ボタン）",
+                "通常OFFで邪魔にならない",
+              ]}
+              cons={[
+                "縦方向にコンテンツ領域が1行削られる",
+                "画面全体の縦スクロール位置がズレる",
+              ]}
+            />
+            <VariantFrame
+              id="F"
+              pros={[
+                "ピル幅が常に一定（min-width固定）",
+                "ON/OFFで状態が明確に切り替わる",
+                "情報が1ピルに凝集",
+              ]}
+              cons={[
+                "ピル自体がやや横長になる",
+                "『一覧を見る』動線が弱い",
+              ]}
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-0 border-t border-gray-100">
-            <div className="p-4 border-r border-gray-100">
-              <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-wide mb-2">Pros</h4>
-              <ul className="space-y-1 text-[12px] text-gray-700">
-                <li>✓ ヘッダー内のレイアウトは一切動かない</li>
-                <li>✓ 情報量豊富に書ける（件数、案内、ボタン等）</li>
-                <li>✓ 通常OFFで邪魔にならない、ON時だけ存在感</li>
-              </ul>
-            </div>
-            <div className="p-4">
-              <h4 className="text-[11px] font-bold text-rose-600 uppercase tracking-wide mb-2">Cons</h4>
-              <ul className="space-y-1 text-[12px] text-gray-700">
-                <li>– 縦方向にコンテンツ領域が1行削られる</li>
-                <li>– 画面全体の縦スクロール位置がズレる</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* 比較グリッド */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <VariantFrame
-            id="A"
-            title="現行（問題あり）"
-            tldr="ON時にチップが追加され、右側の要素が左にずれる。"
-            pros={["実装シンプル", "情報量豊富"]}
-            cons={[
-              "切替時にガタつく（ユーザビリティ問題）",
-              "右側要素の位置が変わるので目が追いづらい",
-            ]}
-            Component={VariantA}
-          />
-          <VariantFrame
-            id="B"
-            title="固定スペース確保"
-            tldr="チップ枠を常に存在させ、OFF時は透明にする。"
-            pros={[
-              "レイアウトが1ミリも動かない",
-              "ON化したときに視線誘導がスムーズ",
-              "実装もシンプル",
-            ]}
-            cons={[
-              "OFF時に余白がちょっと不自然（情報密度の無駄）",
-            ]}
-            Component={VariantB}
-            recommended
-          />
-          <VariantFrame
-            id="C"
-            title="ピル内統合"
-            tldr="件数バッジを Eagle ピルの中に含める。ピル自体の幅は増えるが、ピル右側の要素の相対位置は保たれる。"
-            pros={[
-              "1つの関連情報として凝集している",
-              "情報と操作が同じピル内で完結",
-            ]}
-            cons={[
-              "ピル全体の幅がON/OFFで変わる → 他要素はやはり少しずれる",
-              "クリック領域の用途(トグルvsモーダル)が曖昧になりがち",
-            ]}
-            Component={VariantC}
-          />
-          <VariantFrame
-            id="D"
-            title="アイコン＋バッジ"
-            tldr="件数はテキスト無しでバッジ数字のみ。ボタンは常に同じ枠サイズ。"
-            pros={[
-              "超コンパクト、レイアウト完全固定",
-              "通知感があり気づきやすい",
-            ]}
-            cons={[
-              "「何の件数か」が初見で分かりにくい（要ツールチップ）",
-              "ボタン役割がEagleピルと分離してて混乱の可能性",
-            ]}
-            Component={VariantD}
-          />
-          <VariantFrame
-            id="F"
-            title="トグル内にカウント内包"
-            tldr="Eagle ピル内にカウント表示を固定幅で配置、OFF時は『全件表示』と出す。"
-            pros={[
-              "ピル幅が常に一定（min-width固定）",
-              "ON/OFFで状態が明確に切り替わる",
-              "全ての情報が1ピルに凝集",
-            ]}
-            cons={[
-              "ピル自体がやや横長になる",
-              "『一覧を見る』動線が弱い（ピル全体クリックで開く設計が必要）",
-            ]}
-            Component={VariantF}
-          />
         </div>
 
         <div className="mt-10 p-5 rounded-xl bg-white border border-gray-200">
           <h2 className="text-[15px] font-bold text-gray-900">個人的な推し</h2>
           <p className="text-[13px] text-gray-600 mt-2 leading-relaxed">
-            <b className="text-gray-900">B（固定スペース確保）</b> が最も無難で実装コストも低い。
+            <b className="text-gray-900">B（固定スペース確保）</b> が最も無難で実装コスト低い。
             <br />
-            情報性と見た目のリッチさを両立したいなら <b className="text-gray-900">E（セカンダリバー）</b> が有力。OFF時は完全に消えるが、ON時は「一覧を見る」動線と件数が同居できる。
+            情報性と見た目のリッチさを両立したいなら{" "}
+            <b className="text-gray-900">E（セカンダリバー）</b>。OFF時は完全に消えるが、ON時は
+            「一覧を見る」動線と件数が同居できる。
             <br />
-            コンパクトさ最優先なら <b className="text-gray-900">F（ピル内統合 + min-width）</b>。
+            コンパクトさ最優先なら{" "}
+            <b className="text-gray-900">F（ピル内統合 + min-width）</b>。
+          </p>
+          <p className="text-[12px] text-gray-500 mt-3">
+            上の「1. 実画面プレビュー」で A〜F を切替しながらお好みの案を教えてもらえれば、本番ヘッダーに反映します。
           </p>
         </div>
       </div>
