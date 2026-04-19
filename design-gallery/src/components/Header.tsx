@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { FilterState, ViewMode } from "@/types";
 
 interface HeaderProps {
@@ -41,6 +42,14 @@ export function Header({
     } else {
       updateFilter({ viewMode: id as ViewMode, starredOnly: false });
     }
+  };
+
+  const [isReloading, setIsReloading] = useState(false);
+  const handleReload = () => {
+    if (isReloading) return;
+    setIsReloading(true);
+    // スピンが見える程度に少しだけ待ってからリロード
+    window.setTimeout(() => window.location.reload(), 280);
   };
 
   return (
@@ -85,13 +94,18 @@ export function Header({
       <div className="ml-auto flex items-center gap-1.5">
         {/* 手動リロード */}
         <button
-          onClick={() => window.location.reload()}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
+          onClick={handleReload}
+          disabled={isReloading}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+            isReloading
+              ? "text-accent bg-bg-primary cursor-wait"
+              : "text-text-secondary hover:text-text-primary hover:bg-bg-primary"
+          }`}
           title="最新のデータを読み込み直す"
           aria-label="最新のデータを読み込み直す"
         >
           <svg
-            className="w-4 h-4"
+            className={`w-4 h-4 ${isReloading ? "animate-spin" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

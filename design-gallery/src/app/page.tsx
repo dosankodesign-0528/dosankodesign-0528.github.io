@@ -28,6 +28,18 @@ export default function Home() {
   // 初回マウントで「新規追加サイト」を検出しモーダル表示判定
   useEffect(() => {
     try {
+      // デモ用: ?demo=update でダミーカウントを表示
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("demo") === "update") {
+        setUpdateCounts({
+          sankou: 12,
+          muuuuu: 8,
+          webdesignclip: 5,
+          "81web": 3,
+        });
+        return;
+      }
+
       const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
       const baseline = lastScrapedAt ?? new Date().toISOString();
 
