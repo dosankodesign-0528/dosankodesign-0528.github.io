@@ -86,6 +86,13 @@ jobs:
         run: npm ci
         continue-on-error: true
 
+      # npm のフラッキーバグ対策: Linux 用ネイティブ SWC を明示インストール
+      # （これがないと Turbopack が WASM フォールバックして build エラーになる）
+      - name: design-gallery の Linux 用 SWC を明示インストール
+        working-directory: design-gallery
+        run: npm install --no-save @next/swc-linux-x64-gnu@16.2.3
+        continue-on-error: true
+
       - name: design-gallery をビルド
         working-directory: design-gallery
         run: npm run build
@@ -102,48 +109,10 @@ jobs:
             echo '<html><body><p>Coming soon</p></body></html>' > _site/design-gallery/index.html
           fi
 
-      # ---------- travel-shiori ----------
-      - name: travel-shiori の依存をインストール
-        working-directory: travel-shiori
-        run: npm ci
-        continue-on-error: true
-
-      - name: travel-shiori をビルド
-        working-directory: travel-shiori
-        run: npm run build
-        continue-on-error: true
-
-      - name: travel-shiori をコピー
-        run: |
-          if [ -d travel-shiori/out ]; then
-            cp -r travel-shiori/out _site/travel-shiori
-          else
-            mkdir -p _site/travel-shiori
-            echo '<html><body><p>Coming soon</p></body></html>' > _site/travel-shiori/index.html
-          fi
-
-      # ---------- nittei-chousei ----------
-      - name: nittei-chousei の依存をインストール
-        working-directory: nittei-chousei
-        run: npm ci
-        continue-on-error: true
-
-      - name: nittei-chousei をビルド
-        working-directory: nittei-chousei
-        run: npm run build
-        continue-on-error: true
-        env:
-          BASE_PATH: /nittei-chousei
-          NEXT_EXPORT: "1"
-
-      - name: nittei-chousei をコピー
-        run: |
-          if [ -d nittei-chousei/out ]; then
-            cp -r nittei-chousei/out _site/nittei-chousei
-          else
-            mkdir -p _site/nittei-chousei
-            echo '<html><body><p>Coming soon</p></body></html>' > _site/nittei-chousei/index.html
-          fi
+      # ---------- travel-shiori / nittei-chousei ----------
+      # 本番は Vercel (travel-shiori.vercel.app / nittei-chousei.vercel.app)。
+      # GitHub Pages 側ではビルドせず、ポータルから外部リンクで飛ばす運用に変更。
+      # （product.meta.json の "path" に Vercel URL を設定済み）
 
       # ---------- デプロイ ----------
       - uses: actions/configure-pages@v5
