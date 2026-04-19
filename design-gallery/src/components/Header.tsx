@@ -20,6 +20,8 @@ interface HeaderProps {
   hideEagleDuplicates: boolean;
   onToggleHideEagleDuplicates: () => void;
   onEagleRefresh: () => void;
+  eagleExcludedCount: number;
+  onOpenEagleExcluded: () => void;
 }
 
 /** ISO → 「〇分前 / 〇時間前 / 〇日前」 */
@@ -58,6 +60,8 @@ export function Header({
   hideEagleDuplicates,
   onToggleHideEagleDuplicates,
   onEagleRefresh,
+  eagleExcludedCount,
+  onOpenEagleExcluded,
 }: HeaderProps) {
   // Eagleステータスの見せ方
   const eagleDotColor =
@@ -162,11 +166,6 @@ export function Header({
               style={{ backgroundColor: eagleDotColor }}
             />
             <span className="font-medium">Eagle</span>
-            {eagleItemCount > 0 && (
-              <span className="text-[11px] text-text-secondary tabular-nums">
-                {eagleItemCount}
-              </span>
-            )}
           </button>
           <button
             onClick={onToggleHideEagleDuplicates}
@@ -193,6 +192,30 @@ export function Header({
             />
           </button>
         </div>
+
+        {/* 非表示中のサイトを見るボタン（トグルON & 除外があれば表示） */}
+        {hideEagleDuplicates && eagleExcludedCount > 0 && (
+          <button
+            onClick={onOpenEagleExcluded}
+            className="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-accent/30 bg-accent/5 text-accent hover:bg-accent/10 transition-colors text-[12px] font-medium tabular-nums"
+            title="Eagle重複で非表示中のサイトを一覧表示"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+              />
+            </svg>
+            {eagleExcludedCount} 件非表示中
+          </button>
+        )}
 
         {/* 手動リロード */}
         <button

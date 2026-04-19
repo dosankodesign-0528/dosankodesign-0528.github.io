@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
 import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
+import { EagleExcludedModal } from "@/components/EagleExcludedModal";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useEagleSync } from "@/hooks/useEagleSync";
@@ -19,6 +20,7 @@ export default function Home() {
   const [updateCounts, setUpdateCounts] = useState<Partial<
     Record<SourceSite, number>
   > | null>(null);
+  const [showEagleExcluded, setShowEagleExcluded] = useState(false);
 
   useKeyboardShortcuts({
     selectedIds: store.selectedIds,
@@ -99,6 +101,8 @@ export default function Home() {
         hideEagleDuplicates={store.hideEagleDuplicates}
         onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
         onEagleRefresh={() => void eagle.refresh()}
+        eagleExcludedCount={store.eagleExcludedSites.length}
+        onOpenEagleExcluded={() => setShowEagleExcluded(true)}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}
@@ -127,6 +131,14 @@ export default function Home() {
         <UpdateNotificationModal
           counts={updateCounts}
           onClose={handleCloseModal}
+        />
+      )}
+
+      {/* Eagle重複で非表示中の一覧モーダル */}
+      {showEagleExcluded && (
+        <EagleExcludedModal
+          sites={store.eagleExcludedSites}
+          onClose={() => setShowEagleExcluded(false)}
         />
       )}
     </div>

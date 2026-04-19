@@ -61,21 +61,10 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     return m;
   }, [sites]);
 
-  // フィルタリング + ソート
-  const filteredSites = useMemo(() => {
-    const applyEagleFilter =
-      hideEagleDuplicates && eagleUrls && eagleUrls.size > 0;
+  // Eagle以外のフィルタを通したベース（ソート・ラウンドロビンまで済）
+  const baseFiltered = useMemo(() => {
     const filtered = sites.filter((site) => {
-      // Eagle重複: 有効時、正規化URLがEagleに含まれていれば非表示
-      if (applyEagleFilter) {
-        const n = normalizedUrlBySite.get(site.id);
-        if (n && eagleUrls.has(n)) return false;
-      }
-      // ビューモード: "unchecked"ならチェック済み（starred）を非表示
-      if (filter.viewMode === "unchecked" && site.starred) {
-        return false;
-      }
-      // テキスト検索
+      if (filter.viewMode === "unchecked" && site.starred) return false;
       if (filter.search) {
         const q = filter.search.toLowerCase();
         const match =
@@ -84,59 +73,40 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
           (site.agency?.toLowerCase().includes(q) ?? false);
         if (!match) return false;
       }
-      // ソースフィルター
       if (filter.sources.length > 0 && !filter.sources.includes(site.source)) {
         return false;
       }
-      // カテゴリ
       if (
         filter.categories.length > 0 &&
         !site.category.some((c) => filter.categories.includes(c))
       ) {
         return false;
       }
-      // テイスト
       if (
         filter.tastes.length > 0 &&
         !site.taste.some((t) => filter.tastes.includes(t))
       ) {
         return false;
       }
-      // 制作会社フィルター
-      if (filter.agencyOnly && !site.isAgency) {
-        return false;
-      }
-      // 日付範囲
+      if (filter.agencyOnly && !site.isAgency) return false;
       if (site.date < filter.dateRange[0] || site.date > filter.dateRange[1]) {
         return false;
       }
-      // スター（starredOnlyは「すべて」モードでチェック済みだけ見たい時用）
-      if (filter.starredOnly && !site.starred) {
-        return false;
-      }
+      if (filter.starredOnly && !site.starred) return false;
       return true;
     });
 
-    // ソート（日付順）
     filtered.sort((a, b) => {
-      if (filter.sortOrder === "newest") {
-        return b.date.localeCompare(a.date);
-      }
+      if (filter.sortOrder === "newest") return b.date.localeCompare(a.date);
       return a.date.localeCompare(b.date);
     });
 
-    // ソース（メディア）ごとにラウンドロビンで混ぜて、
-    // 特定のメディアが連続してファーストビューを独占しないようにする。
-    // 各メディアは既に日付順なので、先頭から1件ずつ順番に取り出すと
-    // 「各メディアの最新」が冒頭に揃い、かつまばらに散る。
+    // ソース（メディア）ごとにラウンドロビン
     const bySource = new Map<SourceSite, SiteEntry[]>();
     for (const site of filtered) {
       const arr = bySource.get(site.source);
-      if (arr) {
-        arr.push(site);
-      } else {
-        bySource.set(site.source, [site]);
-      }
+      if (arr) arr.push(site);
+      else bySource.set(site.source, [site]);
     }
     const queues = Array.from(bySource.values());
     const interleaved: SiteEntry[] = [];
@@ -147,9 +117,28 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       if (next) interleaved.push(next);
       idx++;
     }
-
     return interleaved;
-  }, [sites, filter, hideEagleDuplicates, eagleUrls, normalizedUrlBySite]);
+  }, [sites, filter]);
+
+  // Eagleに含まれていて「本来なら表示されるはず」だったサイト
+  const eagleExcludedSites = useMemo<SiteEntry[]>(() => {
+    if (!eagleUrls || eagleUrls.size === 0) return [];
+    return baseFiltered.filter((s) => {
+      const n = normalizedUrlBySite.get(s.id);
+      return n ? eagleUrls.has(n) : false;
+    });
+  }, [baseFiltered, eagleUrls, normalizedUrlBySite]);
+
+  // 実際にギャラリーへ出すサイト
+  const filteredSites = useMemo<SiteEntry[]>(() => {
+    if (!hideEagleDuplicates || !eagleUrls || eagleUrls.size === 0) {
+      return baseFiltered;
+    }
+    return baseFiltered.filter((s) => {
+      const n = normalizedUrlBySite.get(s.id);
+      return n ? !eagleUrls.has(n) : true;
+    });
+  }, [baseFiltered, hideEagleDuplicates, eagleUrls, normalizedUrlBySite]);
 
   // スター切り替え
   const toggleStar = useCallback((id: string) => {
@@ -283,5 +272,6 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     setStarredMany,
     hideEagleDuplicates,
     toggleHideEagleDuplicates,
+    eagleExcludedSites,
   };
 }
