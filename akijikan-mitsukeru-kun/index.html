@@ -137,6 +137,27 @@
     user-select:none;
   }
 
+  /* コアタイム */
+  .core-row {
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:8px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .core-row input[type="checkbox"] {
+    width:16px; height:16px;
+    accent-color:var(--blue);
+    cursor:pointer;
+    margin:0;
+  }
+  .core-label { font-size:13px; color:var(--text); font-weight:500; }
+  .core-times {
+    opacity:0.45;
+    pointer-events:none;
+    transition:opacity 0.15s;
+  }
+  .core-times.enabled { opacity:1; pointer-events:auto; }
+
   .days-row { display:flex; gap:4px; }
   .day-btn { flex:1; padding:8px 0; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--white); color:var(--text-dim); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.12s; text-align:center; }
   .day-btn.active { background:var(--blue-soft); border-color:var(--blue); color:var(--blue); }
@@ -889,6 +910,19 @@
     </div>
 
     <div>
+      <div class="section-label">コアタイム</div>
+      <label class="core-row">
+        <input type="checkbox" id="avoidCore">
+        <span class="core-label">コアタイムを避ける</span>
+      </label>
+      <div class="range-field core-times" id="coreTimesRow">
+        <input type="time" id="coreStart" value="10:00">
+        <span class="range-sep">〜</span>
+        <input type="time" id="coreEnd" value="15:00">
+      </div>
+    </div>
+
+    <div>
       <div class="section-label">曜日</div>
       <div class="days-row">
         <button class="day-btn active" data-day="1">月</button>
@@ -1310,6 +1344,14 @@
 
   document.querySelectorAll('.day-btn').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('active')));
 
+  // コアタイム：チェック時だけ時刻入力を有効化
+  function updateCoreTimesUI(){
+    const enabled=document.getElementById('avoidCore').checked;
+    document.getElementById('coreTimesRow').classList.toggle('enabled', enabled);
+  }
+  document.getElementById('avoidCore').addEventListener('change',updateCoreTimesUI);
+  updateCoreTimesUI();
+
   // 日付・時刻入力：テキスト部分をタップしてもピッカーが開くように
   document.querySelectorAll('.range-field input').forEach(inp=>{
     const open=()=>{try{if(typeof inp.showPicker==='function')inp.showPicker();}catch(e){}};
@@ -1331,6 +1373,10 @@
     const[stH,stM]=document.getElementById('startTime').value.split(':').map(Number),[etH,etM]=document.getElementById('endTime').value.split(':').map(Number);
     const minD=+document.getElementById('minDuration').value,actDays=new Set();
     document.querySelectorAll('.day-btn.active').forEach(el=>actDays.add(+el.dataset.day));
+    // コアタイム設定
+    const avoidCore=document.getElementById('avoidCore').checked;
+    const[coreStH,coreStM]=document.getElementById('coreStart').value.split(':').map(Number);
+    const[coreEtH,coreEtM]=document.getElementById('coreEnd').value.split(':').map(Number);
 
     let allEv=[];
     if(accessToken&&selectedCalIds.size>0){const res=await Promise.all([...selectedCalIds].map(id=>fetchEvents(id,sD,eD)));res.forEach(evs=>allEv.push(...evs));}
@@ -1342,6 +1388,16 @@
       const dow=cur.getDay();if(!actDays.has(dow)){cur.setDate(cur.getDate()+1);continue;}
       const ds=new Date(cur);ds.setHours(stH,stM,0,0);const de=new Date(cur);de.setHours(etH,etM,0,0);
       const devs=allEv.filter(e=>{if(e.allDay){const es=new Date(e.start);es.setHours(0,0,0,0);const ee=new Date(e.end);ee.setHours(0,0,0,0);const c=new Date(cur);c.setHours(0,0,0,0);return c>=es&&c<ee;}return e.start<de&&e.end>ds;}).map(e=>e.allDay?{start:ds,end:de}:{start:e.start<ds?ds:e.start,end:e.end>de?de:e.end}).sort((a,b)=>a.start-b.start);
+      // コアタイムを避ける：該当時間帯を仮想的な予定として追加して除外
+      if(avoidCore){
+        const coreS=new Date(cur); coreS.setHours(coreStH,coreStM,0,0);
+        const coreE=new Date(cur); coreE.setHours(coreEtH,coreEtM,0,0);
+        const cs2=coreS<ds?ds:coreS, ce2=coreE>de?de:coreE;
+        if(cs2<ce2){
+          devs.push({start:cs2,end:ce2});
+          devs.sort((a,b)=>a.start-b.start);
+        }
+      }
       const mg=[];for(const ev of devs){if(!mg.length||ev.start>mg[mg.length-1].end)mg.push({start:new Date(ev.start),end:new Date(ev.end)});else mg[mg.length-1].end=new Date(Math.max(mg[mg.length-1].end,ev.end));}
       let cs=new Date(ds);for(const m of mg){if(cs<m.start){const dur=(m.start-cs)/60000;if(dur>=minD)slots.push({date:new Date(cur),dow,start:new Date(cs),end:new Date(m.start)});}cs=new Date(Math.max(cs,m.end));}
       if(cs<de){const dur=(de-cs)/60000;if(dur>=minD)slots.push({date:new Date(cur),dow,start:new Date(cs),end:new Date(de)});}
