@@ -38,6 +38,12 @@ export function Gallery({
     currentY: number;
   } | null>(null);
 
+  // ドラッグ選択ハンドラから最新の選択状態を参照するための ref
+  const selectedIdsRef = useRef(selectedIds);
+  useEffect(() => {
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
+
   // フィルターが変わったらdisplayCountをリセット
   const sitesKey = sites.length;
   useEffect(() => {
@@ -89,20 +95,28 @@ export function Gallery({
   }, [columns, onColumnsChange]);
 
   // ドラッグ選択（iOS風）
+  // - カード上から始めても OK（動いたらドラッグ、動かなければ通常クリック扱い）
+  // - Shift / Cmd / Ctrl を押しながらドラッグすると既存選択に「追加」
+  // - ドラッグ終了後の click を 1 回抑止して、カード onClick との競合を防ぐ
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("[data-site-id]")) return;
+      // ボタン・リンク（チェック、外部リンク、URLコピー等）はドラッグ開始しない
       if (target.closest("button") || target.closest("a")) return;
       if (e.button !== 0) return;
 
       const startX = e.clientX;
       const startY = e.clientY;
+      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+      const initialSelection = new Set(selectedIdsRef.current);
+      const startedOnCard = !!target.closest("[data-site-id]");
       let isDragging = false;
 
       const handleMouseMove = (moveE: MouseEvent) => {
-        const dist = Math.abs(moveE.clientX - startX) + Math.abs(moveE.clientY - startY);
-        if (dist < 5 && !isDragging) return;
+        const dx = moveE.clientX - startX;
+        const dy = moveE.clientY - startY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 6 && !isDragging) return;
         isDragging = true;
 
         setDragBox({
@@ -133,12 +147,40 @@ export function Gallery({
             if (id) intersecting.push(id);
           }
         });
-        onSetSelection(intersecting);
+
+        if (additive) {
+          // 既存選択 + ドラッグ範囲
+          const merged = new Set(initialSelection);
+          intersecting.forEach((id) => merged.add(id));
+          onSetSelection(Array.from(merged));
+        } else {
+          onSetSelection(intersecting);
+        }
+
+        // ドラッグ中のテキスト選択を解除
+        window.getSelection?.()?.removeAllRanges?.();
       };
 
-      const handleMouseUp = () => {
-        if (!isDragging) {
-          onClearSelection();
+      const handleMouseUp = (upE: MouseEvent) => {
+        if (isDragging) {
+          // ドラッグ完了 → 直後に発火する click を 1 回だけ抑止
+          // （カード上から始めた場合、mouseup 後に SiteCard の onClick が走って
+          //  選択を上書きしてしまうのを防ぐ）
+          const suppressClick = (ce: MouseEvent) => {
+            ce.stopPropagation();
+            ce.preventDefault();
+          };
+          window.addEventListener("click", suppressClick, {
+            capture: true,
+            once: true,
+          });
+        } else if (!startedOnCard) {
+          // ドラッグしなかった & カード外のクリック → 選択クリア
+          // カード上の純粋クリックは SiteCard.onClick が処理するので触らない
+          const target = upE.target as HTMLElement | null;
+          if (!target?.closest?.("[data-site-id]")) {
+            onClearSelection();
+          }
         }
         setDragBox(null);
         document.removeEventListener("mousemove", handleMouseMove);
@@ -154,7 +196,7 @@ export function Gallery({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto p-5"
+      className="flex-1 overflow-y-auto p-5 select-none"
       onMouseDown={handleMouseDown}
     >
       {sites.length === 0 ? (

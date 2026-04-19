@@ -65,6 +65,7 @@ export const SiteCard = memo(function SiteCard({
           alt={site.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           loading="lazy"
+          draggable={false}
         />
 
         {/* ホバーオーバーレイ */}
