@@ -11,6 +11,8 @@ import { normalizeUrl } from "@/lib/eagle";
 
 const HIDE_EAGLE_KEY = "design-gallery:hideEagleDuplicates";
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
+const FILTER_KEY = "design-gallery:filter";
+const COLUMNS_KEY = "design-gallery:columns";
 
 const initialFilter: FilterState = {
   search: "",
@@ -35,6 +37,46 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   const [columns, setColumns] = useState(4);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  // filter・columns も localStorage で永続化。
+  // リロードボタンを押しても検索/ソース選択/ソート順/列数などは保たれる。
+  const [persistLoaded, setPersistLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const rawFilter = window.localStorage.getItem(FILTER_KEY);
+      if (rawFilter) {
+        const saved = JSON.parse(rawFilter);
+        if (saved && typeof saved === "object") {
+          // initialFilter とマージ（形が変わったとき欠けたフィールドは初期値が入る）
+          setFilter({ ...initialFilter, ...saved });
+        }
+      }
+    } catch {
+      // 壊れていたら無視
+    }
+    try {
+      const rawCols = window.localStorage.getItem(COLUMNS_KEY);
+      if (rawCols) {
+        const n = Number(rawCols);
+        if (Number.isFinite(n) && n >= 2 && n <= 8) setColumns(n);
+      }
+    } catch {}
+    setPersistLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!persistLoaded) return;
+    try {
+      window.localStorage.setItem(FILTER_KEY, JSON.stringify(filter));
+    } catch {}
+  }, [filter, persistLoaded]);
+
+  useEffect(() => {
+    if (!persistLoaded) return;
+    try {
+      window.localStorage.setItem(COLUMNS_KEY, String(columns));
+    } catch {}
+  }, [columns, persistLoaded]);
 
   // 確認済み(star)状態の永続化
   // - 真実の源は localStorage の ID 集合。scraped-sites.json 側の starred は常に false なので、
