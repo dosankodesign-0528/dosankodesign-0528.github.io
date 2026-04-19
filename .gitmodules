@@ -3,4 +3,4 @@
 	url = https://github.com/hideyuki-yamanaka/nittei-chousei.git
 [submodule "houmon-app"]
 	path = houmon-app
-	url = git@github.com:hideyuki-yamanaka/houmon-app.git
+	url = https://github.com/hideyuki-yamanaka/houmon-app.git
