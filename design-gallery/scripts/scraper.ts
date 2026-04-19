@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
 
 // ============================================================
 // 型定義
@@ -503,9 +504,10 @@ async function main() {
   const wdcResults = await scrapeWebDesignClip(10);
   allResults.push(...wdcResults);
 
-  // 81-web.com と Awwwards は SPA（Nuxt3/React）のためcheerioでは取得不可
-  console.log("\n⚠️  81-web.com: Nuxt3 SPA のためスキップ（Playwright対応が必要）");
-  console.log("⚠️  Awwwards: React SPA のためスキップ（Playwright対応が必要）");
+  // 81-web.com は Nuxt3 SPA なので Playwright で取得
+  const target81 = parseInt(process.env.MAX_81WEB_SITES || "2000", 10);
+  const web81Results = await scrape81WebPlaywright(target81);
+  allResults.push(...web81Results);
 
   // 重複排除（URLベースでソース横断）
   const deduplicated = deduplicateByUrl(allResults);
@@ -515,8 +517,7 @@ async function main() {
   console.log(`  SANKOU!:          ${sankouResults.length} 件`);
   console.log(`  MUUUUU.ORG:       ${muuuuuResults.length} 件`);
   console.log(`  Web Design Clip:  ${wdcResults.length} 件`);
-  console.log(`  81-web.com:       スキップ（SPA）`);
-  console.log(`  Awwwards:         スキップ（SPA）`);
+  console.log(`  81-web.com:       ${web81Results.length} 件`);
   console.log(`  合計:             ${allResults.length} 件`);
   console.log(`  重複排除後:       ${deduplicated.length} 件`);
 

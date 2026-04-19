@@ -32,9 +32,15 @@ jobs:
         working-directory: design-gallery
         run: npm ci
 
+      - name: Playwright ブラウザインストール
+        working-directory: design-gallery
+        run: npx playwright install --with-deps chromium
+
       - name: スクレイパー実行
         working-directory: design-gallery
         run: npx tsx scripts/scraper.ts
+        env:
+          MAX_81WEB_SITES: "3000"
 
       - name: 変更があればコミット＆プッシュ
         run: |
