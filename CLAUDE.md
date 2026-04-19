@@ -38,6 +38,20 @@
 
 注意: **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
 
+## ⚠️ git config（超重要・過去の本番未反映主犯）
+
+コミット前に必ず `git log -1 --format='%ae'` で author email を確認。
+`*@Mac.lan` のようなローカルホスト由来メールだと Vercel がデプロイを拒否する。
+
+正しい設定:
+```
+user.name  = hideyuki-yamanaka
+user.email = dosanko.design@gmail.com
+```
+
+もし過去のコミットが壊れた author で入ってたら、Claude は `git commit --amend --reset-author` ＋
+`git push --force-with-lease` で修正する（force push の是非はユーザーに確認）。
+
 ## 🔑 環境変数
 
 各プロジェクトに `.env.example` を置いている。ローカルでは `.env.local` にコピーして値を入れる。
