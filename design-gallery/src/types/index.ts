@@ -90,6 +90,8 @@ export interface SiteEntry {
   starred: boolean;
   isAgency?: boolean;
   firstSeen?: string; // ISO datetime, 初めて取得した時刻
+  isDead?: boolean; // リンク切れならtrue（check-dead-links スクリプトが埋める）
+  lastCheckedAt?: string; // リンク疎通の最終チェック時刻 ISO
 }
 
 /** ソート順 */

@@ -36,12 +36,16 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
-  // Eagle重複非表示トグル（localStorage永続化）
-  const [hideEagleDuplicates, setHideEagleDuplicates] = useState(false);
+  // Eagle重複非表示トグル（localStorage永続化、デフォルトON）
+  // 「既に見たもの（Eagle収録済み）は常に隠す」のが基本姿勢。ユーザーが明示的に
+  // "false" に切り替えた時だけ表示に戻す。
+  const [hideEagleDuplicates, setHideEagleDuplicates] = useState(true);
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(HIDE_EAGLE_KEY);
-      if (saved === "true") setHideEagleDuplicates(true);
+      if (saved === "false") setHideEagleDuplicates(false);
+      else if (saved === "true") setHideEagleDuplicates(true);
+      // saved が null（初回）の場合はデフォルト true のまま
     } catch {}
   }, []);
   const toggleHideEagleDuplicates = useCallback(() => {
@@ -64,6 +68,8 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   // Eagle以外のフィルタを通したベース（ソート・ラウンドロビンまで済）
   const baseFiltered = useMemo(() => {
     const filtered = sites.filter((site) => {
+      // リンク切れは常に非表示（断捨離）
+      if (site.isDead) return false;
       if (filter.viewMode === "unchecked" && site.starred) return false;
       if (filter.search) {
         const q = filter.search.toLowerCase();

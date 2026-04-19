@@ -18,6 +18,8 @@ try {
     starred: boolean;
     isAgency?: boolean;
     firstSeen?: string;
+    isDead?: boolean;
+    lastCheckedAt?: string;
   }>;
   scrapedSites = data.map((item) => ({
     ...item,
