@@ -97,6 +97,8 @@ export function Gallery({
   // ドラッグ選択（iOS風）
   // - カード上から始めても OK（動いたらドラッグ、動かなければ通常クリック扱い）
   // - Shift / Cmd / Ctrl を押しながらドラッグすると既存選択に「追加」
+  // - ただし Shift/Cmd + カード上で始めた場合は「範囲クリック」の意図なので
+  //   ドラッグ判定せず、SiteCard 側の onClick に委ねる
   // - ドラッグ終了後の click を 1 回抑止して、カード onClick との競合を防ぐ
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
@@ -105,18 +107,23 @@ export function Gallery({
       if (target.closest("button") || target.closest("a")) return;
       if (e.button !== 0) return;
 
+      const startedOnCard = !!target.closest("[data-site-id]");
+      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+
+      // Shift/Cmd+カード上 は「範囲クリック」の意図なので、ドラッグ選択を開始しない
+      // （数px手ブレしても click が抑止されず、SiteCard.onClick → 範囲選択が走る）
+      if (additive && startedOnCard) return;
+
       const startX = e.clientX;
       const startY = e.clientY;
-      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
       const initialSelection = new Set(selectedIdsRef.current);
-      const startedOnCard = !!target.closest("[data-site-id]");
       let isDragging = false;
 
       const handleMouseMove = (moveE: MouseEvent) => {
         const dx = moveE.clientX - startX;
         const dy = moveE.clientY - startY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 6 && !isDragging) return;
+        if (dist < 8 && !isDragging) return;
         isDragging = true;
 
         setDragBox({
