@@ -25,6 +25,7 @@ interface ScrapedSite {
   agency?: string;
   date: string; // YYYY-MM
   starred: boolean;
+  firstSeen?: string; // ISO datetime, 初めて取得した時刻
 }
 
 // ============================================================
@@ -521,10 +522,63 @@ async function main() {
   console.log(`  合計:             ${allResults.length} 件`);
   console.log(`  重複排除後:       ${deduplicated.length} 件`);
 
-  // JSON保存
+  // 既存データの firstSeen を引き継ぎ、新規エントリに今の時刻を埋める
   const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
+  const metaPath = path.join(__dirname, "..", "src", "data", "scrape-meta.json");
+  const now = new Date().toISOString();
+
+  const previouslyKnownUrls = new Set<string>();
+  const previousFirstSeen = new Map<string, string>();
+  try {
+    const prev = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as ScrapedSite[];
+    for (const p of prev) {
+      const key = normalizeUrl(p.url);
+      previouslyKnownUrls.add(key);
+      if (p.firstSeen) previousFirstSeen.set(key, p.firstSeen);
+    }
+    console.log(`  既知URL: ${previouslyKnownUrls.size} 件（うち firstSeen 付き ${previousFirstSeen.size} 件）`);
+  } catch {
+    console.log(`  既存データなし。初回実行として扱います`);
+  }
+
+  // 前回のスクレイプ時刻（マーカー無しの既存URLはこの時刻で埋めて「新着扱い」を避ける）
+  let previousScrapedAt: string | null = null;
+  try {
+    const m = JSON.parse(fs.readFileSync(metaPath, "utf-8")) as { scrapedAt?: string };
+    previousScrapedAt = m.scrapedAt ?? null;
+  } catch {}
+  const grandfatheredTime =
+    previousScrapedAt ?? new Date(Date.now() - 60_000).toISOString();
+
+  let newlyDetected = 0;
+  for (const site of deduplicated) {
+    const key = normalizeUrl(site.url);
+    const prior = previousFirstSeen.get(key);
+    if (prior) {
+      // 既に firstSeen が記録済み → 引き継ぎ
+      site.firstSeen = prior;
+    } else if (previouslyKnownUrls.has(key)) {
+      // 前回スクレイプ時には存在したがマーカーなし → 後方扱い
+      site.firstSeen = grandfatheredTime;
+    } else {
+      // 真の新規
+      site.firstSeen = now;
+      newlyDetected++;
+    }
+  }
+  console.log(`  新規検出: ${newlyDetected} 件`);
+
+  // JSON保存
   fs.writeFileSync(outputPath, JSON.stringify(deduplicated, null, 2), "utf-8");
   console.log(`\n✅ 保存完了: ${outputPath}`);
+
+  // メタ情報保存（クライアントがベースライン時刻として使う）
+  fs.writeFileSync(
+    metaPath,
+    JSON.stringify({ scrapedAt: now, newlyDetected }, null, 2),
+    "utf-8"
+  );
+  console.log(`✅ メタ保存完了: ${metaPath}`);
 }
 
 main().catch(console.error);

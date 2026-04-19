@@ -89,6 +89,7 @@ export interface SiteEntry {
   date: string; // YYYY-MM 形式
   starred: boolean;
   isAgency?: boolean;
+  firstSeen?: string; // ISO datetime, 初めて取得した時刻
 }
 
 /** ソート順 */

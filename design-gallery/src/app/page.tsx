@@ -1,13 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
 import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
+import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { lastScrapedAt } from "@/data/load-sites";
+import { SourceSite } from "@/types";
+
+const LAST_SEEN_KEY = "design-gallery:lastSeenAt";
 
 export default function Home() {
   const store = useGalleryStore();
+  const [updateCounts, setUpdateCounts] = useState<Partial<
+    Record<SourceSite, number>
+  > | null>(null);
 
   useKeyboardShortcuts({
     selectedIds: store.selectedIds,
@@ -15,6 +24,48 @@ export default function Home() {
     onToggleStar: store.toggleStar,
     onClearSelection: store.clearSelection,
   });
+
+  // 初回マウントで「新規追加サイト」を検出しモーダル表示判定
+  useEffect(() => {
+    try {
+      const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
+      const baseline = lastScrapedAt ?? new Date().toISOString();
+
+      // 初回アクセス: モーダル出さず、ベースラインだけ保存
+      if (!lastSeen) {
+        localStorage.setItem(LAST_SEEN_KEY, baseline);
+        return;
+      }
+
+      // 前回見た時刻より後に追加されたサイトをソース別にカウント
+      const counts: Partial<Record<SourceSite, number>> = {};
+      for (const site of store.sites) {
+        if (site.firstSeen && site.firstSeen > lastSeen) {
+          counts[site.source] = (counts[site.source] ?? 0) + 1;
+        }
+      }
+
+      const total = Object.values(counts).reduce((a, b) => a + (b ?? 0), 0);
+      if (total > 0) {
+        setUpdateCounts(counts);
+      }
+    } catch (e) {
+      // localStorage 使えない環境（プライベートブラウジング等）は黙ってスキップ
+      console.warn("update notification skipped:", e);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleCloseModal = () => {
+    try {
+      if (lastScrapedAt) {
+        localStorage.setItem(LAST_SEEN_KEY, lastScrapedAt);
+      }
+    } catch {
+      // 無視
+    }
+    setUpdateCounts(null);
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -50,6 +101,14 @@ export default function Home() {
         onClearSelection={store.clearSelection}
         onColumnsChange={store.setColumns}
       />
+
+      {/* 更新通知モーダル */}
+      {updateCounts && (
+        <UpdateNotificationModal
+          counts={updateCounts}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 }

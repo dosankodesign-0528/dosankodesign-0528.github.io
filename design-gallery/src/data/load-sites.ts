@@ -17,6 +17,7 @@ try {
     date: string;
     starred: boolean;
     isAgency?: boolean;
+    firstSeen?: string;
   }>;
   scrapedSites = data.map((item) => ({
     ...item,
@@ -64,5 +65,16 @@ export const screenshotIds: Set<string> = (() => {
     return new Set(ids);
   } catch {
     return new Set<string>();
+  }
+})();
+
+/** 最終スクレイプ時刻（ISO）。更新通知モーダルのベースラインに使う */
+export const lastScrapedAt: string | null = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const meta = require("./scrape-meta.json") as { scrapedAt: string };
+    return meta.scrapedAt ?? null;
+  } catch {
+    return null;
   }
 })();
