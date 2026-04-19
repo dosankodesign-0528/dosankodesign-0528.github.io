@@ -7,13 +7,15 @@ import { Gallery } from "@/components/Gallery";
 import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useEagleSync } from "@/hooks/useEagleSync";
 import { lastScrapedAt } from "@/data/load-sites";
 import { SourceSite } from "@/types";
 
 const LAST_SEEN_KEY = "design-gallery:lastSeenAt";
 
 export default function Home() {
-  const store = useGalleryStore();
+  const eagle = useEagleSync();
+  const store = useGalleryStore({ eagleUrls: eagle.eagleUrls });
   const [updateCounts, setUpdateCounts] = useState<Partial<
     Record<SourceSite, number>
   > | null>(null);
@@ -91,6 +93,12 @@ export default function Home() {
         filteredCount={store.filteredSites.length}
         filter={store.filter}
         updateFilter={store.updateFilter}
+        eagleStatus={eagle.status}
+        eagleLastSyncAt={eagle.lastSyncAt}
+        eagleItemCount={eagle.itemCount}
+        hideEagleDuplicates={store.hideEagleDuplicates}
+        onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
+        onEagleRefresh={() => void eagle.refresh()}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}

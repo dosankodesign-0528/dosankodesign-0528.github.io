@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   SiteEntry,
   SourceSite,
   FilterState,
 } from "@/types";
 import { allSites, dateRange } from "@/data/load-sites";
+import { normalizeUrl } from "@/lib/eagle";
+
+const HIDE_EAGLE_KEY = "design-gallery:hideEagleDuplicates";
 
 const initialFilter: FilterState = {
   search: "",
@@ -20,16 +23,54 @@ const initialFilter: FilterState = {
   viewMode: "unchecked",
 };
 
-export function useGalleryStore() {
+interface UseGalleryStoreOptions {
+  /** Eagleに既に入っているサイトの正規化済みURL集合（hideEagleDuplicates有効時に利用） */
+  eagleUrls?: Set<string>;
+}
+
+export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
+  const { eagleUrls } = options;
   const [sites, setSites] = useState<SiteEntry[]>(allSites);
   const [filter, setFilter] = useState<FilterState>(initialFilter);
   const [columns, setColumns] = useState(4);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
+  // Eagle重複非表示トグル（localStorage永続化）
+  const [hideEagleDuplicates, setHideEagleDuplicates] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(HIDE_EAGLE_KEY);
+      if (saved === "true") setHideEagleDuplicates(true);
+    } catch {}
+  }, []);
+  const toggleHideEagleDuplicates = useCallback(() => {
+    setHideEagleDuplicates((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(HIDE_EAGLE_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // サイトごとの正規化URLを一度だけ計算
+  const normalizedUrlBySite = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of sites) m.set(s.id, normalizeUrl(s.url));
+    return m;
+  }, [sites]);
+
   // フィルタリング + ソート
   const filteredSites = useMemo(() => {
+    const applyEagleFilter =
+      hideEagleDuplicates && eagleUrls && eagleUrls.size > 0;
     const filtered = sites.filter((site) => {
+      // Eagle重複: 有効時、正規化URLがEagleに含まれていれば非表示
+      if (applyEagleFilter) {
+        const n = normalizedUrlBySite.get(site.id);
+        if (n && eagleUrls.has(n)) return false;
+      }
       // ビューモード: "unchecked"ならチェック済み（starred）を非表示
       if (filter.viewMode === "unchecked" && site.starred) {
         return false;
@@ -108,7 +149,7 @@ export function useGalleryStore() {
     }
 
     return interleaved;
-  }, [sites, filter]);
+  }, [sites, filter, hideEagleDuplicates, eagleUrls, normalizedUrlBySite]);
 
   // スター切り替え
   const toggleStar = useCallback((id: string) => {
@@ -240,5 +281,7 @@ export function useGalleryStore() {
     setSelection,
     toggleStar,
     setStarredMany,
+    hideEagleDuplicates,
+    toggleHideEagleDuplicates,
   };
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FilterState, ViewMode } from "@/types";
+import type { EagleStatus } from "@/hooks/useEagleSync";
 
 interface HeaderProps {
   search: string;
@@ -12,6 +13,28 @@ interface HeaderProps {
   filteredCount: number;
   filter: FilterState;
   updateFilter: (partial: Partial<FilterState>) => void;
+  // Eagle連携
+  eagleStatus: EagleStatus;
+  eagleLastSyncAt: string | null;
+  eagleItemCount: number;
+  hideEagleDuplicates: boolean;
+  onToggleHideEagleDuplicates: () => void;
+  onEagleRefresh: () => void;
+}
+
+/** ISO → 「〇分前 / 〇時間前 / 〇日前」 */
+function formatRelativeTime(iso: string | null): string {
+  if (!iso) return "未同期";
+  const then = new Date(iso).getTime();
+  const now = Date.now();
+  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
+  if (diffSec < 60) return "たった今";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}分前`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}時間前`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay}日前`;
 }
 
 const MODES: { id: "unchecked" | "all" | "checked"; label: string; dot: string }[] = [
@@ -29,7 +52,33 @@ export function Header({
   filteredCount,
   filter,
   updateFilter,
+  eagleStatus,
+  eagleLastSyncAt,
+  eagleItemCount,
+  hideEagleDuplicates,
+  onToggleHideEagleDuplicates,
+  onEagleRefresh,
 }: HeaderProps) {
+  // Eagleステータスの見せ方
+  const eagleDotColor =
+    eagleStatus === "live"
+      ? "#10B981" // 緑: 起動中
+      : eagleStatus === "cached"
+        ? "#F59E0B" // オレンジ: キャッシュ使用中
+        : eagleStatus === "syncing"
+          ? "#3B82F6" // 青: 同期中
+          : "#9CA3AF"; // グレー: 未接続/なし
+
+  const eagleStatusText =
+    eagleStatus === "live"
+      ? `Eagle接続中（${eagleItemCount}件）`
+      : eagleStatus === "cached"
+        ? `キャッシュ使用中・${formatRelativeTime(eagleLastSyncAt)}に同期（${eagleItemCount}件）`
+        : eagleStatus === "syncing"
+          ? "Eagle同期中…"
+          : eagleStatus === "empty"
+            ? "Eagle未接続（起動してリロードで連携）"
+            : "Eagle未同期";
   const viewModeState: "unchecked" | "all" | "checked" = filter.starredOnly
     ? "checked"
     : filter.viewMode === "unchecked"
@@ -92,6 +141,59 @@ export function Header({
 
       {/* スペーサー */}
       <div className="ml-auto flex items-center gap-1.5">
+        {/* Eagle連携トグル */}
+        <div
+          className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
+            hideEagleDuplicates
+              ? "border-accent/40 bg-accent/5"
+              : "border-border bg-bg-primary"
+          }`}
+          title={eagleStatusText}
+        >
+          <button
+            onClick={onEagleRefresh}
+            className="inline-flex items-center gap-1.5 px-1 text-[12px] text-text-secondary hover:text-text-primary"
+            aria-label={`Eagle同期 - ${eagleStatusText}`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full transition-colors ${
+                eagleStatus === "syncing" ? "animate-pulse" : ""
+              }`}
+              style={{ backgroundColor: eagleDotColor }}
+            />
+            <span className="font-medium">Eagle</span>
+            {eagleItemCount > 0 && (
+              <span className="text-[11px] text-text-secondary tabular-nums">
+                {eagleItemCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={onToggleHideEagleDuplicates}
+            disabled={eagleItemCount === 0}
+            className={`relative w-8 h-5 rounded-full transition-colors ${
+              hideEagleDuplicates ? "bg-accent" : "bg-gray-300"
+            } ${eagleItemCount === 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
+            title={
+              eagleItemCount === 0
+                ? "Eagleが未接続です"
+                : hideEagleDuplicates
+                  ? "Eagle重複を表示する"
+                  : "Eagle重複を隠す"
+            }
+            aria-label={
+              hideEagleDuplicates ? "Eagle重複を表示する" : "Eagle重複を隠す"
+            }
+            aria-pressed={hideEagleDuplicates}
+          >
+            <span
+              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                hideEagleDuplicates ? "left-[14px]" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
         {/* 手動リロード */}
         <button
           onClick={handleReload}
