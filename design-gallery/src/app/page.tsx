@@ -6,6 +6,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
 import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
 import { EagleExcludedModal } from "@/components/EagleExcludedModal";
+import { EagleExcludedBar } from "@/components/EagleExcludedBar";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useEagleSync } from "@/hooks/useEagleSync";
@@ -108,9 +109,15 @@ export default function Home() {
         hideEagleDuplicates={store.hideEagleDuplicates}
         onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
         onEagleRefresh={() => void eagle.refresh()}
-        eagleExcludedCount={store.eagleExcludedSites.length}
-        onOpenEagleExcluded={() => setShowEagleExcluded(true)}
       />
+
+      {/* Eagle重複セカンダリバー（トグルON & 除外 >0 のときだけ出現） */}
+      {store.hideEagleDuplicates && (
+        <EagleExcludedBar
+          excludedCount={store.eagleExcludedSites.length}
+          onOpenExcluded={() => setShowEagleExcluded(true)}
+        />
+      )}
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}
       <FilterBar
