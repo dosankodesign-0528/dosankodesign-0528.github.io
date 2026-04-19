@@ -90,7 +90,7 @@ function Wrap({ title, note, children }: { title: string; note: string; children
 function Row1({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4">
-      <Logo /><Search /><Count /><div className="ml-auto"><ReloadBtn /></div>{children}
+      <Logo /><Search /><Count /><div className="ml-auto flex items-center gap-1.5"><ReloadBtn />{children}</div>
     </div>
   );
 }
@@ -152,9 +152,9 @@ function V02() {
   const sort = (
     <div className="flex items-center gap-3 text-xs text-gray-600">
       <button className="hover:text-gray-900 hover:underline underline-offset-2">↓ 新しい順</button>
-      <span className="text-gray-300">/</span>
+      <span className="text-gray-300">|</span>
       <button className="hover:text-gray-900 hover:underline underline-offset-2">制作会社</button>
-      <span className="text-gray-300">/</span>
+      <span className="text-gray-300">|</span>
       <button className="hover:text-gray-900 hover:underline underline-offset-2">▾ Date</button>
     </div>
   );
