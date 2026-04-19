@@ -61,8 +61,7 @@ for meta in "$REPO_ROOT"/*/product.meta.json; do
     <a class=\"product\" href=\"${path}\">
       <div class=\"product-icon\" style=\"background:${iconBg};\">${icon}</div>
       <div class=\"product-info\">
-        <div class=\"product-name\">${name}</div>
-        <div class=\"product-desc\">${desc}</div>"
+        <div class=\"product-name\">${name}</div>"
   [ -n "$period" ] && card="$card
         <div class=\"product-period\">${period}</div>"
   card="$card
