@@ -111,13 +111,14 @@ export default function Home() {
         onEagleRefresh={() => void eagle.refresh()}
       />
 
-      {/* Eagle重複セカンダリバー（トグルON & 除外 >0 のときだけ出現） */}
-      {store.hideEagleDuplicates && (
-        <EagleExcludedBar
-          excludedCount={store.eagleExcludedSites.length}
-          onOpenExcluded={() => setShowEagleExcluded(true)}
-        />
-      )}
+      {/* Eagle重複セカンダリバー（常時マウント、表示切替は visible prop で滑らかに） */}
+      <EagleExcludedBar
+        excludedCount={store.eagleExcludedSites.length}
+        onOpenExcluded={() => setShowEagleExcluded(true)}
+        visible={
+          store.hideEagleDuplicates && store.eagleExcludedSites.length > 0
+        }
+      />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}
       <FilterBar
