@@ -37,9 +37,12 @@ function formatRelativeTime(iso: string | null): string {
   return `${diffDay}日前`;
 }
 
-const MODES: { id: "unchecked" | "all" | "checked"; label: string; dot: string }[] = [
-  { id: "unchecked", label: "未確認", dot: "#EF4444" },
+// 並び順は「すべて → 未確認 → 確認済み」。
+// デフォルト(initialFilter.viewMode="unchecked") が真ん中に来るので、
+// 左右に広げて選べる感覚になりやすい。
+const MODES: { id: "all" | "unchecked" | "checked"; label: string; dot: string }[] = [
   { id: "all", label: "すべて", dot: "#6B7280" },
+  { id: "unchecked", label: "未確認", dot: "#EF4444" },
   { id: "checked", label: "確認済み", dot: "#10B981" },
 ];
 
