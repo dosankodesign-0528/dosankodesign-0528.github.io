@@ -33,7 +33,7 @@
 |---|---|---|---|
 | houmon-app | https://houmon-app.vercel.app | submodule (main) | houmon-app |
 | travel-shiori | https://travel-shiori.vercel.app | 親リポ subdir (main) | travel-shiori |
-| design-gallery | https://design-gallery.vercel.app | 親リポ subdir (main) | design-gallery |
+| design-gallery | https://design-gallery-puce.vercel.app | 親リポ subdir (main) | design-gallery |
 | nittei-chousei | https://nittei-chousei.vercel.app | submodule (master) | nittei-chousei |
 
 注意: **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
