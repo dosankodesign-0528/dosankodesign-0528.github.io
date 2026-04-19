@@ -40,22 +40,15 @@ for meta in "$REPO_ROOT"/*/product.meta.json; do
     last_line=$(git -C "$REPO_ROOT" log --format="%at %ai" -- "$dirname" 2>/dev/null | head -1)
   fi
 
-  if [ -n "$first_line" ] && [ -n "$last_line" ]; then
+  if [ -n "$first_line" ]; then
     ts_first=$(echo "$first_line" | awk '{print $1}')
-    ts_last=$(echo "$last_line" | awk '{print $1}')
     date_first=$(echo "$first_line" | awk '{print $2}')
-    date_last=$(echo "$last_line" | awk '{print $2}')
 
     y1=$(echo "$date_first" | cut -d- -f1)
     m1=$(echo "$date_first" | cut -d- -f2 | sed 's/^0//')
     d1=$(echo "$date_first" | cut -d- -f3 | sed 's/^0//')
-    m2=$(echo "$date_last" | cut -d- -f2 | sed 's/^0//')
-    d2=$(echo "$date_last" | cut -d- -f3 | sed 's/^0//')
 
-    diff=$(( ts_last - ts_first ))
-    days=$(( diff / 86400 ))
-    hours=$(( (diff % 86400) / 3600 ))
-    period="${y1}/${m1}/${d1} → ${m2}/${d2}（${days}日${hours}時間）"
+    period="${y1}/${m1}/${d1} 〜"
     # ソート用キー（初回タイムスタンプ）
     sort_key="$ts_first"
   else
