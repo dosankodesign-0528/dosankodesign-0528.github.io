@@ -80,9 +80,9 @@
     display: none;
     flex-direction: column;
     min-height: 100vh;
-    max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
-    padding: 60px 24px 24px;
+    padding: 60px 48px 24px;
   }
   #app.visible { display: flex; }
 
@@ -92,10 +92,11 @@
     margin-bottom: 48px;
   }
   header h1 {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: #fff;
     margin-bottom: 8px;
+    letter-spacing: 0.5px;
   }
   header p {
     font-size: 0.85rem;
@@ -104,37 +105,38 @@
 
   .products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 
   .product {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 20px;
+    gap: 20px;
+    padding: 36px 32px;
     background: #141414;
     border: 1px solid #1e1e1e;
-    border-radius: 12px;
+    border-radius: 16px;
     text-decoration: none;
     color: inherit;
     transition: background 0.15s, border-color 0.15s, transform 0.15s;
     position: relative;
+    min-height: 200px;
   }
   .product:hover {
     background: #1a1a1a;
-    border-color: #333;
+    border-color: #444;
     transform: translateY(-2px);
   }
 
   .product-icon {
-    font-size: 1.8rem;
-    width: 52px;
-    height: 52px;
+    font-size: 2.6rem;
+    width: 76px;
+    height: 76px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 16px;
     flex-shrink: 0;
   }
 
@@ -142,15 +144,16 @@
     min-width: 0;
   }
   .product-name {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 700;
     color: #fff;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     line-height: 1.3;
+    letter-spacing: 0.2px;
   }
   .product-period {
-    font-size: 0.8rem;
-    color: #9a9a9a;
+    font-size: 0.95rem;
+    color: #b0b0b0;
     font-weight: 500;
     letter-spacing: 0.3px;
     margin-top: 4px;
@@ -161,14 +164,23 @@
     display: none;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 900px) {
+    #app { padding: 40px 20px 24px; }
     .products {
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 16px;
     }
-    .product { padding: 16px; }
-    .product-icon { width: 44px; height: 44px; font-size: 1.5rem; }
-    .product-name { font-size: 0.85rem; }
+    .product { padding: 24px 20px; min-height: 160px; gap: 14px; }
+    .product-icon { width: 60px; height: 60px; font-size: 2rem; }
+    .product-name { font-size: 1rem; }
+    .product-period { font-size: 0.8rem; }
+  }
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.3rem; }
+    .products { gap: 12px; }
+    .product { padding: 20px 16px; min-height: 140px; }
+    .product-icon { width: 52px; height: 52px; font-size: 1.7rem; }
+    .product-name { font-size: 0.9rem; }
     .product-period { font-size: 0.75rem; }
   }
 
@@ -209,7 +221,7 @@
 <div id="app">
   <div class="products-wrap">
     <header>
-      <h1>Products</h1>
+      <h1>Claude Codeで作ったプロダクト</h1>
     </header>
 
     <div class="products">
