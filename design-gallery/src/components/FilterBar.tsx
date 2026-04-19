@@ -130,32 +130,12 @@ export function FilterBar({
   const toIdx = allMonths.indexOf(filter.dateRange[1]);
   const toIdxSafe = toIdx >= 0 ? toIdx : allMonths.length - 1;
 
-  const hasActiveFilter =
-    filter.sources.length > 0 ||
-    filter.starredOnly ||
-    filter.sortOrder !== "newest" ||
-    filter.dateRange[0] !== globalDateRange[0] ||
-    filter.dateRange[1] !== globalDateRange[1];
-
   const toggle = (name: string) => {
     setOpenDropdown((prev) => (prev === name ? null : name));
   };
 
   return (
     <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border bg-bg-secondary flex-wrap">
-      {/* 左端: クリア導線（アクティブフィルタあり時のみ） */}
-      {hasActiveFilter && (
-        <>
-          <button
-            onClick={resetFilter}
-            className="text-[12px] text-accent hover:text-accent/80 hover:underline underline-offset-2 transition-colors"
-          >
-            ✕ クリア
-          </button>
-          <span className="text-border text-[12px]">|</span>
-        </>
-      )}
-
       {/* メディア: ブランド色の丸ピル */}
       <button
         onClick={onClearSources}
