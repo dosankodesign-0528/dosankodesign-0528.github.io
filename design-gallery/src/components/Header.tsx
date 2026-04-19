@@ -1,5 +1,7 @@
 "use client";
 
+import { FilterState, ViewMode } from "@/types";
+
 interface HeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
@@ -7,7 +9,15 @@ interface HeaderProps {
   onColumnsChange: (cols: number) => void;
   totalCount: number;
   filteredCount: number;
+  filter: FilterState;
+  updateFilter: (partial: Partial<FilterState>) => void;
 }
+
+const MODES: { id: "unchecked" | "all" | "checked"; label: string; dot: string }[] = [
+  { id: "unchecked", label: "未確認", dot: "#EF4444" },
+  { id: "all", label: "すべて", dot: "#6B7280" },
+  { id: "checked", label: "確認済み", dot: "#10B981" },
+];
 
 export function Header({
   search,
@@ -16,7 +26,23 @@ export function Header({
   onColumnsChange,
   totalCount,
   filteredCount,
+  filter,
+  updateFilter,
 }: HeaderProps) {
+  const viewModeState: "unchecked" | "all" | "checked" = filter.starredOnly
+    ? "checked"
+    : filter.viewMode === "unchecked"
+      ? "unchecked"
+      : "all";
+
+  const setMode = (id: "unchecked" | "all" | "checked") => {
+    if (id === "checked") {
+      updateFilter({ viewMode: "all" as ViewMode, starredOnly: true });
+    } else {
+      updateFilter({ viewMode: id as ViewMode, starredOnly: false });
+    }
+  };
+
   return (
     <header className="h-[56px] bg-bg-secondary border-b border-border flex items-center px-5 gap-4 shrink-0 z-30">
       {/* ロゴ */}
@@ -48,9 +74,6 @@ export function Header({
         />
       </div>
 
-      {/* スペーサー */}
-      <div className="flex-1" />
-
       {/* 件数 */}
       <span className="text-[12px] text-text-secondary whitespace-nowrap">
         {filteredCount === totalCount
@@ -58,27 +81,48 @@ export function Header({
           : `${filteredCount} / ${totalCount} sites`}
       </span>
 
-      {/* 手動リロード（最新データを取り直す） */}
-      <button
-        onClick={() => window.location.reload()}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
-        title="最新のデータを読み込み直す"
-        aria-label="最新のデータを読み込み直す"
-      >
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+      {/* スペーサー */}
+      <div className="ml-auto flex items-center gap-1.5">
+        {/* 手動リロード */}
+        <button
+          onClick={() => window.location.reload()}
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
+          title="最新のデータを読み込み直す"
+          aria-label="最新のデータを読み込み直す"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-          />
-        </svg>
-      </button>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+        </button>
+
+        {/* 状態セグメント（V02: 状態ドット付き） */}
+        <div className="inline-flex p-0.5 bg-bg-primary rounded-lg">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setMode(m.id)}
+              className={`px-3 h-7 rounded-md text-[12px] font-medium inline-flex items-center gap-1.5 transition-all ${
+                viewModeState === m.id
+                  ? "bg-white text-text-primary shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.dot }} />
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 列数スライダー */}
       <div className="flex items-center gap-2">

@@ -26,6 +26,8 @@ export default function Home() {
         onColumnsChange={store.setColumns}
         totalCount={store.sites.length}
         filteredCount={store.filteredSites.length}
+        filter={store.filter}
+        updateFilter={store.updateFilter}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}

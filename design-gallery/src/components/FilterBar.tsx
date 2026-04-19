@@ -65,23 +65,13 @@ function Dropdown({
   }, [open, onToggle]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative inline-flex">
       <button
         onClick={onToggle}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all border ${
-          open
-            ? "border-accent text-accent bg-blue-50"
-            : "border-border text-text-secondary hover:border-gray-300 hover:text-text-primary"
+        className={`text-[12px] transition-colors hover:text-text-primary hover:underline underline-offset-2 ${
+          open ? "text-text-primary font-medium" : "text-text-secondary"
         }`}
       >
-        <svg
-          className={`w-3 h-3 transition-transform ${open ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
         {label}
       </button>
       {open && (
@@ -152,57 +142,8 @@ export function FilterBar({
     setOpenDropdown((prev) => (prev === name ? null : name));
   };
 
-  const viewModeState: "unchecked" | "all" | "checked" = filter.starredOnly
-    ? "checked"
-    : filter.viewMode === "unchecked"
-      ? "unchecked"
-      : "all";
-
   return (
     <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border bg-bg-secondary flex-wrap">
-      {/* 状態: セグメントコントロール（未確認 / すべて / 確認済み） */}
-      <div className="inline-flex p-0.5 bg-bg-primary rounded-lg">
-        <button
-          onClick={() =>
-            updateFilter({ viewMode: "unchecked" as ViewMode, starredOnly: false })
-          }
-          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
-            viewModeState === "unchecked"
-              ? "bg-white text-text-primary shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          未確認
-        </button>
-        <button
-          onClick={() =>
-            updateFilter({ viewMode: "all" as ViewMode, starredOnly: false })
-          }
-          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
-            viewModeState === "all"
-              ? "bg-white text-text-primary shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          すべて
-        </button>
-        <button
-          onClick={() =>
-            updateFilter({ viewMode: "all" as ViewMode, starredOnly: true })
-          }
-          className={`px-3.5 py-1 rounded-md text-[12px] font-medium transition-all ${
-            viewModeState === "checked"
-              ? "bg-white text-text-primary shadow-sm"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          確認済み
-        </button>
-      </div>
-
-      {/* 区切り */}
-      <div className="w-px h-5 bg-border mx-1" />
-
       {/* メディア: ブランド色の丸ピル */}
       <button
         onClick={onClearSources}
@@ -234,49 +175,36 @@ export function FilterBar({
         );
       })}
 
-      {/* 区切り */}
-      <div className="w-px h-5 bg-border mx-1" />
+      {/* 右端: テキストリンク式フィルタ（V02 スタイル） */}
+      <div className="ml-auto flex items-center gap-3 text-[12px] text-text-secondary">
+        <button
+          onClick={() =>
+            updateFilter({
+              sortOrder: (filter.sortOrder === "newest" ? "oldest" : "newest") as SortOrder,
+            })
+          }
+          className={`hover:text-text-primary hover:underline underline-offset-2 transition-colors ${filter.sortOrder !== "newest" ? "text-text-primary font-medium" : ""}`}
+          title="並び順を切り替え"
+        >
+          ↓ {filter.sortOrder === "newest" ? "新しい順" : "古い順"}
+        </button>
 
-      {/* ソート切り替え */}
-      <button
-        onClick={() =>
-          updateFilter({
-            sortOrder: (filter.sortOrder === "newest" ? "oldest" : "newest") as SortOrder,
-          })
-        }
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border border-border text-text-secondary hover:border-gray-300 hover:text-text-primary transition-all"
-      >
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {filter.sortOrder === "newest" ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5m4 0l4-4m0 0l4 4m-4-4v12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h9m4 0l4 4m0 0l-4 4m4-4H9" />
-          )}
-        </svg>
-        {filter.sortOrder === "newest" ? "新しい順" : "古い順"}
-      </button>
+        <span className="text-border">|</span>
 
-      {/* 制作会社トグル */}
-      <button
-        onClick={() => updateFilter({ agencyOnly: !filter.agencyOnly })}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all ${
-          filter.agencyOnly
-            ? "border-accent text-accent bg-blue-50"
-            : "border-border text-text-secondary hover:border-gray-300 hover:text-text-primary"
-        }`}
-      >
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-        制作会社
-      </button>
+        <button
+          onClick={() => updateFilter({ agencyOnly: !filter.agencyOnly })}
+          className={`hover:text-text-primary hover:underline underline-offset-2 transition-colors ${filter.agencyOnly ? "text-accent font-medium" : ""}`}
+        >
+          制作会社
+        </button>
 
-      {/* 日付ドロップダウン */}
-      <Dropdown
-        label={`Date`}
-        open={openDropdown === "date"}
-        onToggle={() => toggle("date")}
-      >
+        <span className="text-border">|</span>
+
+        <Dropdown
+          label={`▾ Date`}
+          open={openDropdown === "date"}
+          onToggle={() => toggle("date")}
+        >
         <div className="px-4 py-3 min-w-[260px]">
           <div className="text-[13px] text-white mb-3 font-medium">
             {filter.dateRange[0]} — {filter.dateRange[1]}
@@ -324,20 +252,20 @@ export function FilterBar({
             リセット
           </button>
         </div>
-      </Dropdown>
+        </Dropdown>
 
-      {/* リセット */}
-      {hasActiveFilter && (
-        <>
-          <div className="w-px h-5 bg-border mx-1" />
-          <button
-            onClick={resetFilter}
-            className="text-[11px] text-accent hover:text-accent/80 transition-colors"
-          >
-            ✕ クリア
-          </button>
-        </>
-      )}
+        {hasActiveFilter && (
+          <>
+            <span className="text-border">|</span>
+            <button
+              onClick={resetFilter}
+              className="text-accent hover:text-accent/80 hover:underline underline-offset-2 transition-colors"
+            >
+              ✕ クリア
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
