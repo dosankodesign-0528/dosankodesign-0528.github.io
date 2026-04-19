@@ -45,6 +45,46 @@ const USER_AGENT =
 
 type CheckResult = "alive" | "dead" | "unknown";
 
+// ドメインパーキング / 販売中 / サイト消滅の典型パターン
+// （大文字小文字は正規化してマッチ）
+const PARKED_HOST_PATTERNS = [
+  /(^|\.)sedoparking\.com$/i,
+  /(^|\.)parking\.godaddy\.com$/i,
+  /(^|\.)parkingcrew\.net$/i,
+  /(^|\.)bodis\.com$/i,
+  /(^|\.)dan\.com$/i,
+  /(^|\.)afternic\.com$/i,
+  /(^|\.)hugedomains\.com$/i,
+  /(^|\.)uniregistry\.com$/i,
+  /(^|\.)undeveloped\.com$/i,
+  /(^|\.)above\.com$/i,
+  /(^|\.)namebright\.com$/i,
+  /(^|\.)cashparking\.com$/i,
+];
+
+const DEAD_TEXT_PATTERNS = [
+  /このドメインは販売中/,
+  /このドメインは、?お名前\.com/,
+  /このサイトは移転しました/,
+  /domain\s+is\s+for\s+sale/i,
+  /buy\s+this\s+domain/i,
+  /this\s+domain\s+may\s+be\s+for\s+sale/i,
+  /checkout\s+the\s+full\s+details/i,
+  /expired\s+domain/i,
+  /domain\s+has\s+expired/i,
+  /domain\s+parking/i,
+  /account\s+(has\s+been\s+)?suspended/i,
+  /this\s+account\s+has\s+been\s+suspended/i,
+  /site\s+not\s+found/i,
+  /404\s+not\s+found/i,
+  /ページが見つかりません/,
+  /お探しのページ.*見つかり/,
+  /サイトが見つかりません/,
+  /サービスは終了/,
+  /このサイトは閉鎖/,
+  /closed\s+permanently/i,
+];
+
 async function checkOne(url: string): Promise<CheckResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -63,24 +103,83 @@ async function checkOne(url: string): Promise<CheckResult> {
     try {
       res = await doFetch("HEAD");
       if (res.status === 405 || res.status === 501) {
-        // HEAD 未対応サーバー → GET で再挑戦
         res = await doFetch("GET");
       }
     } catch {
-      // HEADで即エラーなら GET を試す
       res = await doFetch("GET");
     }
-    clearTimeout(timer);
 
-    if (res.status >= 200 && res.status < 400) return "alive";
-    // 明らかな終端エラー
-    if ([404, 410, 451, 400].includes(res.status)) return "dead";
+    // 終端エラーはこの時点で確定
+    if ([404, 410, 451, 400].includes(res.status)) {
+      clearTimeout(timer);
+      return "dead";
+    }
+
+    // リダイレクト後のホスト名が典型的なパーキングドメインに変わっていたら dead
+    try {
+      const finalHost = new URL(res.url).hostname;
+      if (PARKED_HOST_PATTERNS.some((re) => re.test(finalHost))) {
+        clearTimeout(timer);
+        return "dead";
+      }
+    } catch {
+      // URL 解析失敗は無視
+    }
+
+    // 2xx/3xx の場合は本文も軽く覗いて「パーキング / サイト消滅」テキストを拾う
+    if (res.status >= 200 && res.status < 400) {
+      // HEAD だと本文が無いので GET を引き直す
+      let bodyRes: Response = res;
+      if (!res.body || res.headers.get("content-length") === "0") {
+        try {
+          bodyRes = await doFetch("GET");
+        } catch {
+          bodyRes = res;
+        }
+      }
+
+      // Content-Type が HTML 系の時だけテキスト判定
+      const ctype = bodyRes.headers.get("content-type") || "";
+      if (ctype.includes("text/html") || ctype.includes("application/xhtml")) {
+        try {
+          const buf = await bodyRes.arrayBuffer();
+          // 先頭 64KB だけ見れば十分
+          const slice = buf.slice(0, 64 * 1024);
+          const text = new TextDecoder("utf-8", { fatal: false }).decode(slice);
+
+          // パーキング / 消滅テキストを検出
+          if (DEAD_TEXT_PATTERNS.some((re) => re.test(text))) {
+            clearTimeout(timer);
+            return "dead";
+          }
+
+          // 極端に中身が薄い（HTMLタグ剥がして 200 文字未満）ケース：
+          // 怪しいけど誤検出怖いので unknown にとどめる
+          const stripped = text
+            .replace(/<script[\s\S]*?<\/script>/gi, "")
+            .replace(/<style[\s\S]*?<\/style>/gi, "")
+            .replace(/<[^>]+>/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (stripped.length < 40) {
+            clearTimeout(timer);
+            return "unknown";
+          }
+        } catch {
+          // 本文読取失敗は判定に使わない
+        }
+      }
+
+      clearTimeout(timer);
+      return "alive";
+    }
+
+    clearTimeout(timer);
     // 5xx や 403 は一時的かもしれないので unknown
     return "unknown";
   } catch (e) {
     clearTimeout(timer);
     const msg = (e as Error).message || "";
-    // ENOTFOUND / getaddrinfo 失敗 = ドメイン消滅 → dead
     if (
       msg.includes("ENOTFOUND") ||
       msg.includes("EAI_AGAIN") ||
@@ -88,7 +187,6 @@ async function checkOne(url: string): Promise<CheckResult> {
     ) {
       return "dead";
     }
-    // タイムアウトやネット切れは不明扱い
     return "unknown";
   }
 }

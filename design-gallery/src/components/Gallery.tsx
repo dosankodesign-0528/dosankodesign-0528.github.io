@@ -88,6 +88,23 @@ export function Gallery({
     onClearSelection();
   };
 
+  // 画面のどこをクリックしても、カード / アクションバー / モーダル以外なら選択解除
+  // （ヘッダーやフィルターバー、Eagleバーの余白なども対象）
+  useEffect(() => {
+    if (selectedIds.size === 0) return;
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      // カード自身 or アクションバー or モーダル内は無視
+      if (target.closest("[data-site-id]")) return;
+      if (target.closest("[data-selection-action-bar]")) return;
+      if (target.closest("[role=dialog]")) return;
+      onClearSelection();
+    };
+    document.addEventListener("mousedown", handleDocClick);
+    return () => document.removeEventListener("mousedown", handleDocClick);
+  }, [selectedIds, onClearSelection]);
+
   return (
     <div
       ref={containerRef}
@@ -132,7 +149,10 @@ export function Gallery({
 
       {/* 選択中アクションバー */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl bg-gray-900/95 text-white shadow-2xl backdrop-blur-sm">
+        <div
+          data-selection-action-bar
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl bg-gray-900/95 text-white shadow-2xl backdrop-blur-sm"
+        >
           <span className="text-sm font-medium">
             {selectedIds.size}件を選択中
           </span>

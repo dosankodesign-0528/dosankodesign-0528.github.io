@@ -99,7 +99,7 @@ export default function Home() {
         onSearchChange={(search) => store.updateFilter({ search })}
         columns={store.columns}
         onColumnsChange={store.setColumns}
-        totalCount={store.sites.length}
+        totalCount={store.sites.filter((s) => !s.isDead).length}
         filteredCount={store.filteredSites.length}
         filter={store.filter}
         updateFilter={store.updateFilter}
