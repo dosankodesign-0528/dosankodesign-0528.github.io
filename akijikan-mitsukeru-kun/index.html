@@ -1696,6 +1696,17 @@
     return cal&&cal.backgroundColor?cal.backgroundColor:'#6b7280';
   }
 
+  // タイトルが無い予定はカレンダー表示名にフォールバック
+  function cvEventLabel(ev){
+    if(ev&&ev.summary&&ev.summary.trim())return ev.summary;
+    if(ev&&ev.calId){
+      if(ev.calId.startsWith('__ics__:'))return ev.calId.replace('__ics__:','');
+      const cal=calendars.find(c=>c.id===ev.calId);
+      if(cal)return calDisplayName(cal);
+    }
+    return '予定あり';
+  }
+
   // Googleカレンダー風の列分割アルゴリズム
   function cvLayoutDay(events){
     const sorted=events.slice().sort((a,b)=>(a.start-b.start)||((b.end-b.start)-(a.end-a.start)));
@@ -1754,8 +1765,9 @@
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
         div.style.color=color;
-        div.textContent=e.summary||'予定あり';
-        div.title=e.summary||'予定あり';
+        const lbl=cvEventLabel(e);
+        div.textContent=lbl;
+        div.title=lbl;
         div.addEventListener('click',ev=>{ev.stopPropagation();cvOpenDetail(e);});
         allCells[i].appendChild(div);
       });
@@ -1785,7 +1797,7 @@
         div.style.borderLeftColor=color;
         div.style.borderRightColor=hexToRgba(color,0.3);
         div.style.color=color;
-        const t=ev.summary||'予定あり';
+        const t=cvEventLabel(ev._orig||ev);
         div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
         div.title=t;
         div.addEventListener('click',e2=>{e2.stopPropagation();cvOpenDetail(ev._orig||ev);});
@@ -1853,7 +1865,7 @@
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
         div.style.color=color;
-        const t=e.summary||'予定あり';
+        const t=cvEventLabel(e);
         let label=t;
         if(!e.allDay){
           const hh=String(e.start.getHours()).padStart(2,'0');
@@ -1933,7 +1945,7 @@
     const cal=calendars.find(c=>c.id===ev.calId);
     const calName=cal?calDisplayName(cal):(ev.calId&&ev.calId.startsWith('__ics__:')?ev.calId.replace('__ics__:',''):'');
     document.getElementById('cvDetailColor').style.background=color;
-    document.getElementById('cvDetailTitle').textContent=ev.summary||'(タイトルなし)';
+    document.getElementById('cvDetailTitle').textContent=cvEventLabel(ev);
     document.getElementById('cvDetailCal').textContent=calName?`📅 ${calName}`:'';
 
     // ミーティング URL の収集
