@@ -501,7 +501,7 @@ async function main() {
   const muuuuuResults = await scrapeMuuuuu(30);
   allResults.push(...muuuuuResults);
 
-  const wdcResults = await scrapeWebDesignClip(200);
+  const wdcResults = await scrapeWebDesignClip(10);
   allResults.push(...wdcResults);
 
   // 81-web.com は Nuxt3 SPA なので Playwright で取得
