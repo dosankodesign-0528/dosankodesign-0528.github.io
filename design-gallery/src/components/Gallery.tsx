@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { SiteEntry } from "@/types";
 import { SiteCard } from "./SiteCard";
 
@@ -15,7 +15,6 @@ interface GalleryProps {
   onSetStarredMany: (ids: string[], starred: boolean) => void;
   onClearSelection: () => void;
   onColumnsChange: (cols: number) => void;
-  onSetSelection: (ids: string[], lastId?: string) => void;
 }
 
 export function Gallery({
@@ -27,22 +26,9 @@ export function Gallery({
   onSetStarredMany,
   onClearSelection,
   onColumnsChange,
-  onSetSelection,
 }: GalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
-  const [dragBox, setDragBox] = useState<{
-    startX: number;
-    startY: number;
-    currentX: number;
-    currentY: number;
-  } | null>(null);
-
-  // ドラッグ選択ハンドラから最新の選択状態を参照するための ref
-  const selectedIdsRef = useRef(selectedIds);
-  useEffect(() => {
-    selectedIdsRef.current = selectedIds;
-  }, [selectedIds]);
 
   // フィルターが変わったらdisplayCountをリセット
   const sitesKey = sites.length;
@@ -94,124 +80,19 @@ export function Gallery({
     return () => el.removeEventListener("wheel", handleWheel);
   }, [columns, onColumnsChange]);
 
-  // ドラッグ選択（iOS風）
-  // - カード上から始めても OK（動いたらドラッグ、動かなければ通常クリック扱い）
-  // - Shift / Cmd / Ctrl を押しながらドラッグすると既存選択に「追加」
-  // - ただし Shift/Cmd + カード上で始めた場合は「範囲クリック」の意図なので
-  //   ドラッグ判定せず、SiteCard 側の onClick に委ねる
-  // - ドラッグ終了後の click を 1 回抑止して、カード onClick との競合を防ぐ
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // ボタン・リンク（チェック、外部リンク、URLコピー等）はドラッグ開始しない
-      if (target.closest("button") || target.closest("a")) return;
-      if (e.button !== 0) return;
-
-      const startedOnCard = !!target.closest("[data-site-id]");
-      const additive = e.shiftKey || e.metaKey || e.ctrlKey;
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const initialSelection = new Set(selectedIdsRef.current);
-      // Shift/Cmd+カード上はクリック意図が強いので閾値を大きめに（手ブレ耐性）
-      const threshold = additive && startedOnCard ? 15 : 8;
-      let isDragging = false;
-      let lastTouchedId: string | null = null;
-
-      const handleMouseMove = (moveE: MouseEvent) => {
-        const dx = moveE.clientX - startX;
-        const dy = moveE.clientY - startY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < threshold && !isDragging) return;
-        isDragging = true;
-
-        setDragBox({
-          startX,
-          startY,
-          currentX: moveE.clientX,
-          currentY: moveE.clientY,
-        });
-
-        const box = {
-          left: Math.min(startX, moveE.clientX),
-          right: Math.max(startX, moveE.clientX),
-          top: Math.min(startY, moveE.clientY),
-          bottom: Math.max(startY, moveE.clientY),
-        };
-
-        const cards = containerRef.current?.querySelectorAll("[data-site-id]");
-        const intersecting: string[] = [];
-        cards?.forEach((card) => {
-          const cardRect = card.getBoundingClientRect();
-          if (
-            cardRect.left < box.right &&
-            cardRect.right > box.left &&
-            cardRect.top < box.bottom &&
-            cardRect.bottom > box.top
-          ) {
-            const id = card.getAttribute("data-site-id");
-            if (id) intersecting.push(id);
-          }
-        });
-
-        // 次回 Shift+クリックのアンカー候補：ドラッグで最後に触れたカード
-        lastTouchedId = intersecting[intersecting.length - 1] ?? lastTouchedId;
-
-        if (additive) {
-          // 既存選択 + ドラッグ範囲
-          const merged = new Set(initialSelection);
-          intersecting.forEach((id) => merged.add(id));
-          onSetSelection(Array.from(merged), lastTouchedId ?? undefined);
-        } else {
-          onSetSelection(intersecting, lastTouchedId ?? undefined);
-        }
-
-        // ドラッグ中のテキスト選択を解除
-        window.getSelection?.()?.removeAllRanges?.();
-      };
-
-      const handleMouseUp = (upE: MouseEvent) => {
-        if (isDragging) {
-          // ドラッグ完了 → 直後に発火する click を 1 回だけ抑止
-          // （カード上から始めた場合、mouseup 後に SiteCard の onClick が走って
-          //  選択を上書きしてしまうのを防ぐ）
-          const suppressClick = (ce: MouseEvent) => {
-            ce.stopPropagation();
-            ce.preventDefault();
-          };
-          window.addEventListener("click", suppressClick, {
-            capture: true,
-            once: true,
-          });
-          // click が発火しないまま次の操作に入ると将来のクリックが誤抑止されるため、
-          // 500ms で保険的にクリーンアップ
-          setTimeout(() => {
-            window.removeEventListener("click", suppressClick, true);
-          }, 500);
-        } else if (!startedOnCard) {
-          // ドラッグしなかった & カード外のクリック → 選択クリア
-          // カード上の純粋クリックは SiteCard.onClick が処理するので触らない
-          const target = upE.target as HTMLElement | null;
-          if (!target?.closest?.("[data-site-id]")) {
-            onClearSelection();
-          }
-        }
-        setDragBox(null);
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [onClearSelection, onSetSelection]
-  );
+  // カード以外（空エリア）のクリックで選択解除
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-site-id]")) return;
+    if (target.closest("button") || target.closest("a")) return;
+    onClearSelection();
+  };
 
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto p-5 select-none"
-      onMouseDown={handleMouseDown}
+      className="flex-1 overflow-y-auto p-5"
+      onClick={handleContainerClick}
     >
       {sites.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-text-secondary">
@@ -247,19 +128,6 @@ export function Gallery({
             {visibleSites.length} / {sites.length}件を表示中…スクロールで続きを読み込み
           </span>
         </div>
-      )}
-
-      {/* ドラッグ選択ボックス */}
-      {dragBox && (
-        <div
-          className="selection-box"
-          style={{
-            left: Math.min(dragBox.startX, dragBox.currentX),
-            top: Math.min(dragBox.startY, dragBox.currentY),
-            width: Math.abs(dragBox.currentX - dragBox.startX),
-            height: Math.abs(dragBox.currentY - dragBox.startY),
-          }}
-        />
       )}
 
       {/* 選択中アクションバー */}

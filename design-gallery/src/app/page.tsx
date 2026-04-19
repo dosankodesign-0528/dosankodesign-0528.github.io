@@ -49,7 +49,6 @@ export default function Home() {
         onSetStarredMany={store.setStarredMany}
         onClearSelection={store.clearSelection}
         onColumnsChange={store.setColumns}
-        onSetSelection={store.setSelection}
       />
     </div>
   );
