@@ -159,7 +159,8 @@
   }
 
   footer {
-    margin-top: 60px;
+    margin-top: auto;
+    padding-top: 60px;
     text-align: center;
     color: #333;
     font-size: 0.75rem;
@@ -181,12 +182,14 @@
 
 <!-- Main Content -->
 <div id="app">
-  <header>
-    <h1>Products</h1>
-  </header>
+  <div class="products-wrap">
+    <header>
+      <h1>Products</h1>
+    </header>
 
-  <div class="products">
+    <div class="products">
 {{PRODUCT_CARDS}}
+    </div>
   </div>
 
   <footer>&copy; Hideyuki Yamanaka</footer>
@@ -209,7 +212,7 @@
 
   function unlock() {
     document.getElementById('lock').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
+    document.getElementById('app').classList.add('visible');
   }
 
   // Check if already authenticated
