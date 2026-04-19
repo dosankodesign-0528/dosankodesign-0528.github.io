@@ -10,6 +10,7 @@ import { allSites, dateRange } from "@/data/load-sites";
 import { normalizeUrl } from "@/lib/eagle";
 
 const HIDE_EAGLE_KEY = "design-gallery:hideEagleDuplicates";
+const STARRED_IDS_KEY = "design-gallery:starred-ids";
 
 const initialFilter: FilterState = {
   search: "",
@@ -30,11 +31,51 @@ interface UseGalleryStoreOptions {
 
 export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   const { eagleUrls } = options;
-  const [sites, setSites] = useState<SiteEntry[]>(allSites);
   const [filter, setFilter] = useState<FilterState>(initialFilter);
   const [columns, setColumns] = useState(4);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  // 確認済み(star)状態の永続化
+  // - 真実の源は localStorage の ID 集合。scraped-sites.json 側の starred は常に false なので、
+  //   ここでユーザー操作の結果だけを保持すれば良い。
+  // - ブラウザを閉じても再訪時に復元される。
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [starredLoaded, setStarredLoaded] = useState(false);
+
+  // マウント時に localStorage から starred ID を読み込む
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STARRED_IDS_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setStarredIds(new Set(arr.filter((x) => typeof x === "string")));
+      }
+    } catch {
+      // parse失敗時は空のままで継続
+    }
+    setStarredLoaded(true);
+  }, []);
+
+  // starredIds が変化したら localStorage に書き出す
+  // (初回ロード前のsaveは避けたいので starredLoaded を条件に)
+  useEffect(() => {
+    if (!starredLoaded) return;
+    try {
+      window.localStorage.setItem(
+        STARRED_IDS_KEY,
+        JSON.stringify([...starredIds])
+      );
+    } catch {}
+  }, [starredIds, starredLoaded]);
+
+  // allSites に starredIds を重ねた実体
+  const sites = useMemo<SiteEntry[]>(() => {
+    if (starredIds.size === 0) return allSites;
+    return allSites.map((s) =>
+      starredIds.has(s.id) ? { ...s, starred: true } : s
+    );
+  }, [starredIds]);
 
   // Eagle重複非表示トグル（localStorage永続化、デフォルトON）
   // 「既に見たもの（Eagle収録済み）は常に隠す」のが基本姿勢。ユーザーが明示的に
@@ -146,19 +187,27 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     });
   }, [baseFiltered, hideEagleDuplicates, eagleUrls, normalizedUrlBySite]);
 
-  // スター切り替え
+  // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
   const toggleStar = useCallback((id: string) => {
-    setSites((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, starred: !s.starred } : s))
-    );
+    setStarredIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
   // 複数まとめて starred を一括セット
   const setStarredMany = useCallback((ids: string[], starred: boolean) => {
-    const target = new Set(ids);
-    setSites((prev) =>
-      prev.map((s) => (target.has(s.id) ? { ...s, starred } : s))
-    );
+    setStarredIds((prev) => {
+      const next = new Set(prev);
+      if (starred) {
+        ids.forEach((id) => next.add(id));
+      } else {
+        ids.forEach((id) => next.delete(id));
+      }
+      return next;
+    });
   }, []);
 
   // 選択操作
