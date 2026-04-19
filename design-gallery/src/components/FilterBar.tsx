@@ -75,7 +75,7 @@ function Dropdown({
         {label}
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 bg-[#2a2a2a] rounded-xl shadow-2xl border border-white/10 z-50 min-w-[220px] py-2 max-h-[320px] overflow-y-auto">
+        <div className="absolute top-full right-0 mt-1.5 bg-[#2a2a2a] rounded-xl shadow-2xl border border-white/10 z-50 min-w-[220px] py-2 max-h-[320px] overflow-y-auto">
           {children}
         </div>
       )}
