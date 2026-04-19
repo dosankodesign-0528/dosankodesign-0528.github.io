@@ -107,11 +107,6 @@ export function Header({
 
   return (
     <header className="h-[56px] bg-bg-secondary border-b border-border flex items-center px-5 gap-4 shrink-0 z-30">
-      {/* ロゴ */}
-      <h1 className="text-[15px] font-bold tracking-tight whitespace-nowrap text-text-primary">
-        Design Gallery
-      </h1>
-
       {/* 検索 */}
       <div className="relative flex-1 max-w-[400px]">
         <svg

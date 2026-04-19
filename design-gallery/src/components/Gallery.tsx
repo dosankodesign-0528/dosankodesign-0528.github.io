@@ -153,7 +153,7 @@ export function Gallery({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            一括で開く
+            まとめて開く
           </button>
           {(() => {
             const ids = sites.filter((s) => selectedIds.has(s.id)).map((s) => s.id);
@@ -168,7 +168,7 @@ export function Gallery({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
-                {allStarred ? "チェックを外す" : "一括チェック"}
+                {allStarred ? "チェックを外す" : "まとめてチェック"}
               </button>
             );
           })()}
