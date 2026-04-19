@@ -160,7 +160,11 @@ export function Gallery({
             const allStarred = ids.length > 0 && ids.every((id) => sites.find((s) => s.id === id)?.starred);
             return (
               <button
-                onClick={() => onSetStarredMany(ids, !allStarred)}
+                onClick={() => {
+                  onSetStarredMany(ids, !allStarred);
+                  // アクション完了 → 選択解除してアクションバーを閉じる
+                  onClearSelection();
+                }}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   allStarred ? "bg-white/20 hover:bg-white/30" : "bg-emerald-600 hover:bg-emerald-500"
                 }`}
