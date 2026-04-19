@@ -12,6 +12,7 @@ interface GalleryProps {
   selectedIds: Set<string>;
   onSelect: (id: string, e: { shiftKey: boolean; metaKey: boolean }) => void;
   onToggleStar: (id: string) => void;
+  onSetStarredMany: (ids: string[], starred: boolean) => void;
   onClearSelection: () => void;
   onColumnsChange: (cols: number) => void;
   onSetSelection: (ids: string[]) => void;
@@ -23,6 +24,7 @@ export function Gallery({
   selectedIds,
   onSelect,
   onToggleStar,
+  onSetStarredMany,
   onClearSelection,
   onColumnsChange,
   onSetSelection,
@@ -214,6 +216,10 @@ export function Gallery({
           <button
             onClick={() => {
               const selected = sites.filter((s) => selectedIds.has(s.id));
+              if (selected.length > 10) {
+                const ok = window.confirm(`${selected.length}件のタブを開きます。よろしいですか？`);
+                if (!ok) return;
+              }
               selected.forEach((s) => {
                 window.open(s.url, "_blank", "noopener,noreferrer");
               });
@@ -225,18 +231,23 @@ export function Gallery({
             </svg>
             一括で開く
           </button>
-          <button
-            onClick={() => {
-              const selected = sites.filter((s) => selectedIds.has(s.id));
-              selected.forEach((s) => onToggleStar(s.id));
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-sm font-medium transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-            一括チェック
-          </button>
+          {(() => {
+            const ids = sites.filter((s) => selectedIds.has(s.id)).map((s) => s.id);
+            const allStarred = ids.length > 0 && ids.every((id) => sites.find((s) => s.id === id)?.starred);
+            return (
+              <button
+                onClick={() => onSetStarredMany(ids, !allStarred)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  allStarred ? "bg-white/20 hover:bg-white/30" : "bg-emerald-600 hover:bg-emerald-500"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                {allStarred ? "チェックを外す" : "一括チェック"}
+              </button>
+            );
+          })()}
           <button
             onClick={onClearSelection}
             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm transition-colors"

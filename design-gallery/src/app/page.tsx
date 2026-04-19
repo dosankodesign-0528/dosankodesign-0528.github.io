@@ -46,6 +46,7 @@ export default function Home() {
         selectedIds={store.selectedIds}
         onSelect={store.handleSelect}
         onToggleStar={store.toggleStar}
+        onSetStarredMany={store.setStarredMany}
         onClearSelection={store.clearSelection}
         onColumnsChange={store.setColumns}
         onSetSelection={store.setSelection}

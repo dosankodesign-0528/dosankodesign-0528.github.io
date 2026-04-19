@@ -117,6 +117,14 @@ export function useGalleryStore() {
     );
   }, []);
 
+  // 複数まとめて starred を一括セット
+  const setStarredMany = useCallback((ids: string[], starred: boolean) => {
+    const target = new Set(ids);
+    setSites((prev) =>
+      prev.map((s) => (target.has(s.id) ? { ...s, starred } : s))
+    );
+  }, []);
+
   // 選択操作
   const handleSelect = useCallback(
     (id: string, e: { shiftKey: boolean; metaKey: boolean }) => {
@@ -211,5 +219,6 @@ export function useGalleryStore() {
     addToSelection,
     setSelection,
     toggleStar,
+    setStarredMany,
   };
 }
