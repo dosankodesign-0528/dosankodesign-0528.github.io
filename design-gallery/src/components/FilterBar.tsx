@@ -132,7 +132,6 @@ export function FilterBar({
 
   const hasActiveFilter =
     filter.sources.length > 0 ||
-    filter.agencyOnly ||
     filter.starredOnly ||
     filter.sortOrder !== "newest" ||
     filter.dateRange[0] !== globalDateRange[0] ||
@@ -144,6 +143,19 @@ export function FilterBar({
 
   return (
     <div className="flex items-center gap-2 px-5 py-2.5 border-b border-border bg-bg-secondary flex-wrap">
+      {/* 左端: クリア導線（アクティブフィルタあり時のみ） */}
+      {hasActiveFilter && (
+        <>
+          <button
+            onClick={resetFilter}
+            className="text-[12px] text-accent hover:text-accent/80 hover:underline underline-offset-2 transition-colors"
+          >
+            ✕ クリア
+          </button>
+          <span className="text-border text-[12px]">|</span>
+        </>
+      )}
+
       {/* メディア: ブランド色の丸ピル */}
       <button
         onClick={onClearSources}
@@ -187,15 +199,6 @@ export function FilterBar({
           title="並び順を切り替え"
         >
           ↓ {filter.sortOrder === "newest" ? "新しい順" : "古い順"}
-        </button>
-
-        <span className="text-border">|</span>
-
-        <button
-          onClick={() => updateFilter({ agencyOnly: !filter.agencyOnly })}
-          className={`hover:text-text-primary hover:underline underline-offset-2 transition-colors ${filter.agencyOnly ? "text-accent font-medium" : ""}`}
-        >
-          制作会社
         </button>
 
         <span className="text-border">|</span>
@@ -253,18 +256,6 @@ export function FilterBar({
           </button>
         </div>
         </Dropdown>
-
-        {hasActiveFilter && (
-          <>
-            <span className="text-border">|</span>
-            <button
-              onClick={resetFilter}
-              className="text-accent hover:text-accent/80 hover:underline underline-offset-2 transition-colors"
-            >
-              ✕ クリア
-            </button>
-          </>
-        )}
       </div>
     </div>
   );
