@@ -1056,9 +1056,33 @@
     'hideyuki.yamanaka@fuller.co.jp': 'フラー',
     'ワーク': 'iOS',
   };
+  // カレンダー色のオーバーライド（凡例・ドット・カレンダービュー全てで反映）
+  // キーは Google の summary/id、または ICS のカレンダー名
+  const CAL_COLOR_OVERRIDE = {
+    'hideyuki.yamanaka@fuller.co.jp': '#3D5BA8', // フラー → 青
+    'フラー': '#3D5BA8',
+    'ワーク': '#9CA3AF',                          // iOS → グレー
+    'iOS': '#9CA3AF',
+    'Anyflow': '#E8489E',                         // Anyflow → ピンク
+  };
   function calDisplayName(cal){
     if(!cal)return '';
     return CAL_NAME_ALIAS[cal.summary]||CAL_NAME_ALIAS[cal.id]||cal.summary||cal.id;
+  }
+  // Googleカレンダーオブジェクトから色を取得
+  function calColor(cal){
+    if(!cal)return '#6b7280';
+    return CAL_COLOR_OVERRIDE[cal.summary]||CAL_COLOR_OVERRIDE[cal.id]||cal.backgroundColor||'#6b7280';
+  }
+  // calId（Google ID または "__ics__:NAME"）から色を取得
+  function calColorByCalId(calId){
+    if(!calId)return '#6b7280';
+    if(String(calId).startsWith('__ics__:')){
+      const name=String(calId).replace('__ics__:','');
+      return CAL_COLOR_OVERRIDE[name]||'#6b7280';
+    }
+    const cal=calendars.find(c=>c.id===calId);
+    return calColor(cal);
   }
   // #RRGGBB → rgba(r,g,b,a)
   function hexToRgba(hex,a){
@@ -1319,7 +1343,7 @@
   function renderCalendars(){
     const c=document.getElementById('calList'); document.getElementById('calendarSelector').classList.add('show');
     c.innerHTML=calendars.map(cal=>{
-      const sel=selectedCalIds.has(cal.id)?'selected':'', col=cal.backgroundColor||'#2563eb', own=cal.accessRole==='owner', type=own?'':'外部';
+      const sel=selectedCalIds.has(cal.id)?'selected':'', col=calColor(cal), own=cal.accessRole==='owner', type=own?'':'外部';
       return `<div class="cal-item ${sel}" data-id="${cal.id}"><div class="cal-check"><span class="cal-check-mark">✓</span></div><div class="cal-color" style="background:${col}"></div><div class="cal-name">${escapeHtml(calDisplayName(cal))}</div>${type?`<div class="cal-type">${type}</div>`:''}</div>`;
     }).join('');
     c.querySelectorAll('.cal-item').forEach(el=>el.addEventListener('click',()=>{
@@ -1491,7 +1515,7 @@
       div.className='cal-item '+sel;
       div.dataset.id=id;
       div.innerHTML=`<div class="cal-check"><span class="cal-check-mark">✓</span></div>`+
-        `<div class="cal-color" style="background:#6b7280"></div>`+
+        `<div class="cal-color" style="background:${calColorByCalId(id)}"></div>`+
         `<div class="cal-name">${escapeHtml(item.name)}</div>`+
         `<div class="cal-type">URL</div>`+
         `<button class="cal-delete" type="button" title="削除" data-url="${escapeHtml(item.url)}">×</button>`;
@@ -1883,12 +1907,13 @@
     const items=[];
     for(const cal of calendars){
       if(!selectedCalIds.has(cal.id))continue;
-      const color=cal.backgroundColor||'#6b7280';
+      const color=calColor(cal);
       const name=calDisplayName(cal);
       items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(name)}</span>`);
     }
     for(const f of icsFiles){
-      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:rgba(107,114,128,0.18);border-left:3px solid #6b7280"></span>${escapeHtml(f.name)}</span>`);
+      const color=CAL_COLOR_OVERRIDE[f.name]||'#6b7280';
+      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(f.name)}</span>`);
     }
     el.innerHTML=items.join('');
   }
@@ -1922,10 +1947,7 @@
 
   // calId → 色
   function cvColorOf(calId){
-    if(!calId)return '#6b7280';
-    if(calId.startsWith('__ics__:'))return '#6b7280';
-    const cal=calendars.find(c=>c.id===calId);
-    return cal&&cal.backgroundColor?cal.backgroundColor:'#6b7280';
+    return calColorByCalId(calId);
   }
 
   // タイトルが無い予定はカレンダー表示名にフォールバック
