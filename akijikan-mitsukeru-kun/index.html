@@ -1498,11 +1498,14 @@
 
   async function fetchIcsCalendar(item){
     // 複数プロキシを順番に試す（最初に成功したものを採用）
+    // 各プロキシ毎に AbortController で 6秒のタイムアウトを設定（ハング防止）
     let lastErr=null;
     for(const buildUrl of CORS_PROXIES){
+      const ac=new AbortController();
+      const tid=setTimeout(()=>ac.abort(),6000);
       try{
         const url=buildUrl(item.url);
-        const r=await fetch(url,{cache:'no-store'});
+        const r=await fetch(url,{cache:'no-store',signal:ac.signal});
         if(!r.ok)throw new Error('HTTP '+r.status);
         const text=await r.text();
         if(!text||!text.includes('BEGIN:VCALENDAR'))throw new Error('not an ICS payload');
@@ -1512,6 +1515,8 @@
       }catch(e){
         lastErr=e;
         console.warn('ICS proxy 失敗:',item.name,e&&e.message);
+      }finally{
+        clearTimeout(tid);
       }
     }
     // 全プロキシ失敗 → キャッシュにフォールバック
@@ -1524,9 +1529,16 @@
     return{name:item.name,events:[],error:String(lastErr)};
   }
 
-  async function refreshAllIcsCalendars(){
+  // 直近の取得時刻を覚えておき、60秒以内の再取得はスキップ（UI操作のたびにフェッチしない）
+  let icsLastFetchAt=0;
+  const ICS_REFETCH_INTERVAL=60*1000;
+  async function refreshAllIcsCalendars(force){
     if(icsCalendars.length===0){icsFiles=[];return;}
+    if(!force && icsFiles.length>0 && (Date.now()-icsLastFetchAt)<ICS_REFETCH_INTERVAL){
+      return; // 直近で取得済み、スキップ
+    }
     const results=await Promise.all(icsCalendars.map(fetchIcsCalendar));
+    icsLastFetchAt=Date.now();
     icsFiles=results;
   }
 
@@ -1931,20 +1943,32 @@
 
     document.getElementById('cvTitle').textContent=cvFmtTitle();
 
+    // ★重要: ICS取得（await）の前にスケルトンと凡例を先に描画。
+    // これをやらないと、プロキシが遅い時にカレンダーが真っ白のまま固まる。
+    if(!isMonth){
+      cvBuildSkeleton();
+    }
+    cvUpdateLegend();
+
     const {start,end}=cvRange();
     const key=`${cvViewMode}_${start.getTime()}_${end.getTime()}_${[...selectedCalIds].sort().join(',')}_${icsFiles.length}`;
     let events=cvCacheEvents;
     if(refetch||cvCacheKey!==key){
-      events=await cvFetchEvents(start,end);
-      cvCacheKey=key;
-      cvCacheEvents=events;
+      try{
+        events=await cvFetchEvents(start,end);
+        cvCacheKey=key;
+        cvCacheEvents=events;
+      }catch(e){
+        console.error('cvFetchEvents失敗:',e);
+        events=cvCacheEvents||[];
+      }
     }
     cvUpdateLegend();
 
     if(isMonth){
       cvDrawMonth(events);
     } else {
-      cvBuildSkeleton();
+      // スケルトンは既に描画済みなので、イベントだけ重ねる
       cvDrawEvents(events);
       cvDrawNowLine();
     }
