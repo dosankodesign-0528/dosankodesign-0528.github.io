@@ -1397,6 +1397,18 @@
   const ICS_CACHE_PREFIX='akijikan_ics_cache_';
   let icsCalendars=[]; // [{name,url}]
 
+  // 予定として扱わない（UIから非表示にする）タイトル一覧
+  // 例: Anyflow の「本業コアタイム」（平日10-15時の定例ブロック）は空き時間計算の
+  // ノイズになるので除外する。タイトル完全一致で判定。
+  const EVENT_EXCLUDE_TITLES=new Set([
+    '本業コアタイム',
+  ]);
+  function isExcludedEvent(ev){
+    if(!ev)return false;
+    const t=(ev.summary||'').trim();
+    return EVENT_EXCLUDE_TITLES.has(t);
+  }
+
   function loadIcsCalendarsList(){
     try{
       const raw=storageRead(ICS_CALS_KEY);
@@ -1682,7 +1694,8 @@
     icsFiles.forEach(f=>{
       if(selectedCalIds.has('__ics__:'+f.name))allEv.push(...f.events);
     });
-    allEv=allEv.filter(e=>e.start<eD&&e.end>sD);
+    // 本業コアタイム等の除外タイトルは空き時間検出のノイズなので弾く
+    allEv=allEv.filter(e=>!isExcludedEvent(e)&&e.start<eD&&e.end>sD);
 
     const dn=['日','月','火','水','木','金','土'],slots=[];let cur=new Date(sD);
     while(cur<=eD){
@@ -1965,7 +1978,10 @@
     }
     icsFiles.forEach(f=>{
       if(!selectedCalIds.has('__ics__:'+f.name))return;
-      f.events.forEach(e=>{ if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name}); });
+      f.events.forEach(e=>{
+        if(isExcludedEvent(e))return; // 本業コアタイム等は非表示
+        if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name});
+      });
     });
     if(selectedCalIds.size>0){
       if(!accessToken&&clientId&&tokenClient){
@@ -1976,7 +1992,7 @@
         try{
           const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:'));
           const arrs=await Promise.all(googleIds.map(id=>fetchEvents(id,tMin,tMax)));
-          arrs.forEach(a=>a.forEach(e=>all.push(e)));
+          arrs.forEach(a=>a.forEach(e=>{ if(!isExcludedEvent(e))all.push(e); }));
         }catch(e){console.error(e);}
       }
     }
