@@ -1995,15 +1995,17 @@
     return calColorByCalId(calId);
   }
 
-  // タイトルが無い予定はカレンダー表示名にフォールバック
+  // タイトルが無い・ダミータイトルの予定はカレンダー表示名にフォールバック
+  const CV_PLACEHOLDER_TITLES=new Set(['予定あり','Busy','busy','BUSY','(タイトルなし)','(no title)','(No title)','タイトルなし','no title','No title']);
   function cvEventLabel(ev){
-    if(ev&&ev.summary&&ev.summary.trim())return ev.summary;
+    const sum=ev&&ev.summary&&ev.summary.trim();
+    if(sum && !CV_PLACEHOLDER_TITLES.has(sum))return sum;
     if(ev&&ev.calId){
       if(ev.calId.startsWith('__ics__:'))return ev.calId.replace('__ics__:','');
       const cal=calendars.find(c=>c.id===ev.calId);
       if(cal)return calDisplayName(cal);
     }
-    return '予定あり';
+    return sum || '予定あり';
   }
 
   // Googleカレンダー風の列分割アルゴリズム
