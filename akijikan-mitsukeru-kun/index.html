@@ -1309,7 +1309,10 @@
         clearSavedToken();
         return;
       }
-      const d=await r.json(); calendars=d.items||[]; selectedCalIds=new Set(calendars.map(c=>c.id)); renderCalendars();
+      const d=await r.json(); calendars=d.items||[];
+      // Google カレンダーを selectedCalIds に追加（既存の ICS 選択は維持）
+      calendars.forEach(c=>selectedCalIds.add(c.id));
+      renderAllCalendars();
     }catch(e){console.error(e);}
   }
 
