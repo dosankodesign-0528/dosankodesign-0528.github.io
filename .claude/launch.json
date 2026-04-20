@@ -13,6 +13,12 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "3099"],
       "port": 3099,
       "cwd": "design-gallery"
+    },
+    {
+      "name": "akijikan",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /tmp/akijikan_preview && exec python3 -m http.server 8766"],
+      "port": 8766
     }
   ]
 }
