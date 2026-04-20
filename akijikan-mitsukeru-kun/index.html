@@ -771,12 +771,14 @@
     :root { --cv-hour-h: 22px; }
     .cv-overlay { padding:0; }
     .cv-modal { max-width:100vw !important; max-height:100vh !important; height:100vh; border-radius:0; }
-    .cv-modal-header { padding:10px 12px; gap:8px; }
+    .cv-modal-header { padding:10px 44px 10px 12px; gap:8px; position:relative; }
     .cv-modal-actions { gap:6px; }
     .cv-modal-body { padding:10px 8px 14px; }
     .cv-icon-btn { width:28px; height:28px; }
     .cv-nav button { padding:5px 9px; font-size:11px; }
     .cv-title { font-size:12px; padding:0 4px; }
+    /* スマホ: × ボタンは右上隅に絶対配置（凡例の改行に巻き込まれないように） */
+    .cv-modal-header .cv-close-btn { position:absolute; top:8px; right:8px; }
     .cv-legend { font-size:10px; gap:10px; width:100%; justify-content:center; order:3; }
     .cv-header-row, .cv-allday-row, .cv-body {
       grid-template-columns:30px repeat(var(--cv-cols, 7), 1fr);
@@ -1385,8 +1387,14 @@
   const ICS_CALS_KEY='akijikan_ics_cals_v1';
   const ICS_DEFAULT_SEEDED_KEY='akijikan_ics_seeded_v1';
   // CORSプロキシ: ブラウザから直接 calendar.google.com の ICS を fetch すると
-  // CORS でブロックされるので allorigins.win 経由で取得する
-  const CORS_PROXY='https://api.allorigins.win/raw?url=';
+  // CORS でブロックされるので公開プロキシ経由で取得する。
+  // QUIC エラー等でたまにコケるので複数プロキシをフォールバックチェーンで試す。
+  const CORS_PROXIES=[
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+    u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+    u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
+  ];
+  const ICS_CACHE_PREFIX='akijikan_ics_cache_';
   let icsCalendars=[]; // [{name,url}]
 
   function loadIcsCalendarsList(){
@@ -1461,18 +1469,47 @@
     return events;
   }
 
-  async function fetchIcsCalendar(item){
+  // localStorage キャッシュ（取得失敗時のフォールバック用）
+  function icsCacheRead(url){
     try{
-      const url=CORS_PROXY+encodeURIComponent(item.url);
-      const r=await fetch(url,{cache:'no-store'});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      const text=await r.text();
-      const events=parseIcs(text);
-      return{name:item.name,events};
-    }catch(e){
-      console.error('ICS取得失敗:',item.name,e);
-      return{name:item.name,events:[],error:String(e)};
+      const raw=storageRead(ICS_CACHE_PREFIX+url);
+      if(!raw)return null;
+      const obj=JSON.parse(raw);
+      // start/end は Date 復元
+      obj.events=(obj.events||[]).map(e=>({...e,start:new Date(e.start),end:new Date(e.end)}));
+      return obj;
+    }catch(e){return null;}
+  }
+  function icsCacheWrite(url,events){
+    try{storageWrite(ICS_CACHE_PREFIX+url,JSON.stringify({events,fetchedAt:Date.now()}));}catch(e){}
+  }
+
+  async function fetchIcsCalendar(item){
+    // 複数プロキシを順番に試す（最初に成功したものを採用）
+    let lastErr=null;
+    for(const buildUrl of CORS_PROXIES){
+      try{
+        const url=buildUrl(item.url);
+        const r=await fetch(url,{cache:'no-store'});
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const text=await r.text();
+        if(!text||!text.includes('BEGIN:VCALENDAR'))throw new Error('not an ICS payload');
+        const events=parseIcs(text);
+        icsCacheWrite(item.url,events);
+        return{name:item.name,events};
+      }catch(e){
+        lastErr=e;
+        console.warn('ICS proxy 失敗:',item.name,e&&e.message);
+      }
     }
+    // 全プロキシ失敗 → キャッシュにフォールバック
+    const cached=icsCacheRead(item.url);
+    if(cached){
+      console.warn('ICS取得失敗、キャッシュを使用:',item.name);
+      return{name:item.name,events:cached.events,fromCache:true};
+    }
+    console.error('ICS取得失敗（キャッシュもなし）:',item.name,lastErr);
+    return{name:item.name,events:[],error:String(lastErr)};
   }
 
   async function refreshAllIcsCalendars(){
@@ -1911,18 +1948,25 @@
       const name=calDisplayName(cal);
       items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(name)}</span>`);
     }
-    for(const f of icsFiles){
-      const color=CAL_COLOR_OVERRIDE[f.name]||'#6b7280';
-      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(f.name)}</span>`);
+    // ICS は設定済みのカレンダー一覧から描画（fetch状態に依存しない）
+    for(const c of icsCalendars){
+      if(!selectedCalIds.has('__ics__:'+c.name))continue;
+      const color=CAL_COLOR_OVERRIDE[c.name]||'#6b7280';
+      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(c.name)}</span>`);
     }
     el.innerHTML=items.join('');
   }
 
   async function cvFetchEvents(tMin, tMax){
     const all=[];
-    icsFiles.forEach(f=>f.events.forEach(e=>{
-      if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name});
-    }));
+    // ICS: まだ取得が走ってない / 失敗してる場合は再取得
+    if(icsCalendars.length>0){
+      try{await refreshAllIcsCalendars();}catch(e){console.error(e);}
+    }
+    icsFiles.forEach(f=>{
+      if(!selectedCalIds.has('__ics__:'+f.name))return;
+      f.events.forEach(e=>{ if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name}); });
+    });
     if(selectedCalIds.size>0){
       if(!accessToken&&clientId&&tokenClient){
         await ensureToken();
@@ -1930,7 +1974,8 @@
       }
       if(accessToken){
         try{
-          const arrs=await Promise.all([...selectedCalIds].map(id=>fetchEvents(id,tMin,tMax)));
+          const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:'));
+          const arrs=await Promise.all(googleIds.map(id=>fetchEvents(id,tMin,tMax)));
           arrs.forEach(a=>a.forEach(e=>all.push(e)));
         }catch(e){console.error(e);}
       }
