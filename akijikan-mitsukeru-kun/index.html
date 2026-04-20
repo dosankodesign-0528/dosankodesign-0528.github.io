@@ -1357,7 +1357,9 @@
   // 仕組み: localStorage に {name, url} を保存。CORSプロキシ経由で取得 → 簡易パース → icsFiles へ
   const ICS_CALS_KEY='akijikan_ics_cals_v1';
   const ICS_DEFAULT_SEEDED_KEY='akijikan_ics_seeded_v1';
-  const CORS_PROXY='https://corsproxy.io/?';
+  // CORSプロキシ: ブラウザから直接 calendar.google.com の ICS を fetch すると
+  // CORS でブロックされるので allorigins.win 経由で取得する
+  const CORS_PROXY='https://api.allorigins.win/raw?url=';
   let icsCalendars=[]; // [{name,url}]
 
   function loadIcsCalendarsList(){
