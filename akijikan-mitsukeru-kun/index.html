@@ -825,12 +825,18 @@
     .placeholder-text { font-size:13px; }
     .placeholder-sub { font-size:11px; }
 
-    /* 設定項目を 2 カラムグリッドにしてコンパクトに */
+    /* 設定項目のグリッド：画面幅に応じて 2カラム / 1カラムに自動切替
+       - min 220px 確保できる時だけ横並び（縦並びフォールバックで overflow 防止） */
     .mobile-compact-grid {
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
       gap:12px;
     }
+    /* range-field の中身（input/separator）が狭い画面で潰れないよう最低幅確保 */
+    .range-field { min-width:0; }
+    .range-field input { min-width:0; padding:0 8px; font-size:12px; }
+    .range-field input[type="date"]::-webkit-date-and-time-value,
+    .range-field input[type="time"]::-webkit-date-and-time-value { font-size:12px; }
 
     /* 結果（右パネル）を先に置きたい場合のスクロール位置調整 */
     html { scroll-padding-top:56px; }
