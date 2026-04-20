@@ -85,6 +85,20 @@
   .cal-color { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .cal-name { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cal-type { font-size:10px; color:var(--text-dim); padding:2px 6px; background:var(--surface-2); border-radius:4px; flex-shrink:0; }
+  .cal-delete { width:20px; height:20px; border:none; background:transparent; color:var(--text-dim); border-radius:4px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.12s; }
+  .cal-delete:hover { background:var(--surface-2); color:#ef4444; }
+  .cal-add-btn { display:flex; align-items:center; gap:6px; padding:8px 12px; border:1px dashed var(--border); background:transparent; color:var(--text-sub); border-radius:var(--radius-sm); cursor:pointer; font-size:12px; font-family:inherit; transition:all 0.12s; margin-top:4px; }
+  .cal-add-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-soft); }
+  .cal-add-form { display:none; flex-direction:column; gap:8px; padding:12px; background:var(--surface-2); border-radius:var(--radius-sm); margin-top:6px; }
+  .cal-add-form.show { display:flex; }
+  .cal-add-form input { padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:inherit; background:var(--white); color:var(--text); }
+  .cal-add-form input:focus { outline:none; border-color:var(--blue); }
+  .cal-add-form-actions { display:flex; gap:6px; justify-content:flex-end; }
+  .cal-add-form button { padding:6px 12px; border-radius:6px; font-size:11px; cursor:pointer; font-family:inherit; border:1px solid var(--border); background:var(--white); color:var(--text-sub); transition:all 0.12s; }
+  .cal-add-form button.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .cal-add-form button.primary:disabled { opacity:0.5; cursor:not-allowed; }
+  .cal-add-form button:hover:not(:disabled) { opacity:0.85; }
+  .cal-add-hint { font-size:10px; color:var(--text-dim); line-height:1.5; }
 
   .setting-row { display:flex; gap:10px; }
   .setting-group { flex:1; display:flex; flex-direction:column; gap:4px; }
@@ -870,6 +884,16 @@
     <div class="calendar-selector" id="calendarSelector">
       <div class="section-label">対象カレンダー</div>
       <div class="cal-list" id="calList"></div>
+      <button class="cal-add-btn" id="calAddBtn" type="button">＋ URLでカレンダーを追加</button>
+      <div class="cal-add-form" id="calAddForm">
+        <input type="text" id="calAddName" placeholder="カレンダー名（例: Anyflow）" maxlength="40">
+        <input type="url" id="calAddUrl" placeholder="ICS URL（https://… .ics）">
+        <div class="cal-add-hint">Googleカレンダーの「公開URL（iCal形式）」を貼り付けてください。</div>
+        <div class="cal-add-form-actions">
+          <button type="button" id="calAddCancel">キャンセル</button>
+          <button type="button" class="primary" id="calAddSave">追加</button>
+        </div>
+      </div>
     </div>
 
     <div class="mobile-compact-grid">
@@ -1176,6 +1200,10 @@
   document.getElementById('startDate').value=today.toISOString().split('T')[0];
   document.getElementById('endDate').value=oneWeek.toISOString().split('T')[0];
 
+  // ICS（URL購読型）カレンダーを起動時に読み込み
+  // 注意: initIcsCalendars 本体は後ろで定義されるが関数宣言なので巻き上げで参照可
+  setTimeout(()=>{ try{initIcsCalendars();}catch(e){console.error(e);} },0);
+
   // Setup modal
   document.getElementById('setupToggle').addEventListener('click',()=>document.getElementById('setupOverlay').classList.add('show'));
   document.getElementById('setupClose').addEventListener('click',()=>document.getElementById('setupOverlay').classList.remove('show'));
@@ -1325,7 +1353,219 @@
     }catch(e){return[];}
   }
 
-  // ICS 機能は削除済み
+  // ===== ICS（URL購読型）カレンダー =====
+  // 仕組み: localStorage に {name, url} を保存。CORSプロキシ経由で取得 → 簡易パース → icsFiles へ
+  const ICS_CALS_KEY='akijikan_ics_cals_v1';
+  const ICS_DEFAULT_SEEDED_KEY='akijikan_ics_seeded_v1';
+  const CORS_PROXY='https://corsproxy.io/?';
+  let icsCalendars=[]; // [{name,url}]
+
+  function loadIcsCalendarsList(){
+    try{
+      const raw=storageRead(ICS_CALS_KEY);
+      icsCalendars=raw?JSON.parse(raw):[];
+    }catch(e){icsCalendars=[];}
+    // 初回のみ Anyflow をデフォルト追加
+    if(!storageRead(ICS_DEFAULT_SEEDED_KEY)){
+      const anyflowUrl='https://calendar.google.com/calendar/ical/hideyuki.yamanaka%40anyflow.co.jp/public/basic.ics';
+      if(!icsCalendars.some(c=>c.url===anyflowUrl)){
+        icsCalendars.push({name:'Anyflow',url:anyflowUrl});
+      }
+      storageWrite(ICS_DEFAULT_SEEDED_KEY,'1');
+      saveIcsCalendarsList();
+    }
+  }
+  function saveIcsCalendarsList(){
+    try{storageWrite(ICS_CALS_KEY,JSON.stringify(icsCalendars));}catch(e){}
+  }
+
+  // 簡易ICSパーサ（VEVENT のみ・行折り返しと TZID/DATE/DATETIME に対応）
+  function parseIcs(text){
+    if(!text)return[];
+    // RFC5545 行折り返し（次行が " " か "\t" で始まる場合）解除
+    const unfolded=text.replace(/\r?\n[ \t]/g,'');
+    const lines=unfolded.split(/\r?\n/);
+    const events=[]; let cur=null;
+    const parseDt=(val,isDate)=>{
+      // val: 20260105 / 20260105T100000 / 20260105T010000Z
+      const m=/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?$/.exec(val);
+      if(!m)return null;
+      const[,y,mo,d,hh,mi,ss,z]=m;
+      if(!hh){return new Date(+y,+mo-1,+d,0,0,0,0);} // all-day
+      if(z)return new Date(Date.UTC(+y,+mo-1,+d,+hh,+mi,+ss));
+      // TZ なし: ローカル時刻として扱う（簡易対応）
+      return new Date(+y,+mo-1,+d,+hh,+mi,+ss);
+    };
+    const unesc=s=>String(s||'').replace(/\\n/g,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+    for(const raw of lines){
+      const line=raw;
+      if(line==='BEGIN:VEVENT'){cur={};continue;}
+      if(line==='END:VEVENT'){
+        if(cur&&cur.start&&cur.end){
+          events.push({
+            id:cur.uid||('ics_'+Math.random().toString(36).slice(2)),
+            start:cur.start,
+            end:cur.end,
+            allDay:!!cur.allDay,
+            summary:cur.summary||'',
+            location:cur.location||'',
+            description:cur.description||'',
+            htmlLink:'',hangoutLink:'',conferenceData:null,attendees:null,
+          });
+        }
+        cur=null;continue;
+      }
+      if(!cur)continue;
+      const ci=line.indexOf(':');if(ci<0)continue;
+      const head=line.slice(0,ci),val=line.slice(ci+1);
+      const[name,...params]=head.split(';');
+      const isDate=params.some(p=>p==='VALUE=DATE');
+      switch(name){
+        case 'DTSTART': cur.start=parseDt(val,isDate); cur.allDay=isDate; break;
+        case 'DTEND': cur.end=parseDt(val,isDate); break;
+        case 'SUMMARY': cur.summary=unesc(val); break;
+        case 'LOCATION': cur.location=unesc(val); break;
+        case 'DESCRIPTION': cur.description=unesc(val); break;
+        case 'UID': cur.uid=val; break;
+      }
+    }
+    return events;
+  }
+
+  async function fetchIcsCalendar(item){
+    try{
+      const url=CORS_PROXY+encodeURIComponent(item.url);
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const text=await r.text();
+      const events=parseIcs(text);
+      return{name:item.name,events};
+    }catch(e){
+      console.error('ICS取得失敗:',item.name,e);
+      return{name:item.name,events:[],error:String(e)};
+    }
+  }
+
+  async function refreshAllIcsCalendars(){
+    if(icsCalendars.length===0){icsFiles=[];return;}
+    const results=await Promise.all(icsCalendars.map(fetchIcsCalendar));
+    icsFiles=results;
+  }
+
+  function addIcsCalendar(name,url){
+    name=(name||'').trim(); url=(url||'').trim();
+    if(!name||!url)return false;
+    if(!/^https?:\/\//.test(url))return false;
+    if(icsCalendars.some(c=>c.url===url))return false;
+    icsCalendars.push({name,url});
+    saveIcsCalendarsList();
+    return true;
+  }
+  function removeIcsCalendar(url){
+    icsCalendars=icsCalendars.filter(c=>c.url!==url);
+    icsFiles=icsFiles.filter(f=>!icsCalendars.every(c=>c.name!==f.name)); // 残す対象だけ
+    // よりシンプルに: 名前ベースで残す
+    saveIcsCalendarsList();
+  }
+
+  // 「対象カレンダー」セクションを常に表示（ICSが1件でもあれば）
+  function ensureCalendarSelectorVisible(){
+    if(icsCalendars.length>0||calendars.length>0){
+      document.getElementById('calendarSelector').classList.add('show');
+    }
+  }
+
+  // ICS 行を calList に追加描画（renderCalendars の後で呼ぶ）
+  function appendIcsToCalList(){
+    const c=document.getElementById('calList');
+    if(!c)return;
+    for(const item of icsCalendars){
+      const id='__ics__:'+item.name;
+      const sel=selectedCalIds.has(id)?'selected':'';
+      const div=document.createElement('div');
+      div.className='cal-item '+sel;
+      div.dataset.id=id;
+      div.innerHTML=`<div class="cal-check"><span class="cal-check-mark">✓</span></div>`+
+        `<div class="cal-color" style="background:#6b7280"></div>`+
+        `<div class="cal-name">${escapeHtml(item.name)}</div>`+
+        `<div class="cal-type">URL</div>`+
+        `<button class="cal-delete" type="button" title="削除" data-url="${escapeHtml(item.url)}">×</button>`;
+      div.addEventListener('click',e=>{
+        if(e.target.classList.contains('cal-delete'))return;
+        if(selectedCalIds.has(id)){selectedCalIds.delete(id);div.classList.remove('selected');}
+        else{selectedCalIds.add(id);div.classList.add('selected');}
+      });
+      div.querySelector('.cal-delete').addEventListener('click',e=>{
+        e.stopPropagation();
+        if(!confirm(`「${item.name}」を削除しますか？`))return;
+        removeIcsCalendar(item.url);
+        selectedCalIds.delete(id);
+        renderAllCalendars();
+      });
+      c.appendChild(div);
+    }
+  }
+
+  // Google + ICS を一括描画
+  function renderAllCalendars(){
+    // Google分（既存ロジックを再利用）
+    const c=document.getElementById('calList');
+    if(calendars.length>0){
+      renderCalendars();
+    }else{
+      c.innerHTML='';
+    }
+    appendIcsToCalList();
+    ensureCalendarSelectorVisible();
+  }
+
+  // 起動時の ICS 取り込み
+  async function initIcsCalendars(){
+    loadIcsCalendarsList();
+    // 全件 selectedCalIds に追加（デフォルトON）
+    for(const item of icsCalendars){selectedCalIds.add('__ics__:'+item.name);}
+    renderAllCalendars();
+    if(icsCalendars.length>0){
+      // ICS が1件でもあれば検出ボタンは押せる
+      document.getElementById('generateBtn').disabled=false;
+      await refreshAllIcsCalendars();
+    }
+  }
+
+  // === Add フォームの開閉と送信 ===
+  document.getElementById('calAddBtn').addEventListener('click',()=>{
+    const f=document.getElementById('calAddForm');
+    f.classList.toggle('show');
+    if(f.classList.contains('show')){
+      setTimeout(()=>document.getElementById('calAddName').focus(),50);
+    }
+  });
+  document.getElementById('calAddCancel').addEventListener('click',()=>{
+    document.getElementById('calAddForm').classList.remove('show');
+    document.getElementById('calAddName').value='';
+    document.getElementById('calAddUrl').value='';
+  });
+  document.getElementById('calAddSave').addEventListener('click',async()=>{
+    const nameEl=document.getElementById('calAddName'),urlEl=document.getElementById('calAddUrl');
+    const name=nameEl.value.trim(),url=urlEl.value.trim();
+    if(!name){alert('カレンダー名を入力してください。');return;}
+    if(!/^https?:\/\//.test(url)){alert('https:// で始まる URL を入力してください。');return;}
+    if(!addIcsCalendar(name,url)){alert('追加できませんでした（同じURLが既にあるかも）。');return;}
+    selectedCalIds.add('__ics__:'+name);
+    nameEl.value='';urlEl.value='';
+    document.getElementById('calAddForm').classList.remove('show');
+    const btn=document.getElementById('calAddSave');btn.disabled=true;btn.textContent='取得中…';
+    try{
+      const item=icsCalendars[icsCalendars.length-1];
+      const result=await fetchIcsCalendar(item);
+      icsFiles=icsFiles.filter(f=>f.name!==item.name);
+      icsFiles.push(result);
+      if(result.error){alert(`「${name}」のカレンダー取得に失敗しました。\nURLが正しいか確認してください。`);}
+    }finally{
+      btn.disabled=false;btn.textContent='追加';
+      renderAllCalendars();
+    }
+  });
 
   document.querySelectorAll('.day-btn').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('active')));
 
@@ -1364,8 +1604,18 @@
     const[coreEtH,coreEtM]=document.getElementById('coreEnd').value.split(':').map(Number);
 
     let allEv=[];
-    if(accessToken&&selectedCalIds.size>0){const res=await Promise.all([...selectedCalIds].map(id=>fetchEvents(id,sD,eD)));res.forEach(evs=>allEv.push(...evs));}
-    icsFiles.forEach(f=>allEv.push(...f.events));
+    // Google: アクセストークン必須 + selectedCalIds に含まれる Google カレンダーのみ
+    if(accessToken){
+      const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:'));
+      if(googleIds.length>0){const res=await Promise.all(googleIds.map(id=>fetchEvents(id,sD,eD)));res.forEach(evs=>allEv.push(...evs));}
+    }
+    // ICS: 毎回最新を取りに行く（CORSプロキシ経由）
+    if(icsCalendars.length>0){
+      try{await refreshAllIcsCalendars();}catch(e){console.error(e);}
+    }
+    icsFiles.forEach(f=>{
+      if(selectedCalIds.has('__ics__:'+f.name))allEv.push(...f.events);
+    });
     allEv=allEv.filter(e=>e.start<eD&&e.end>sD);
 
     const dn=['日','月','火','水','木','金','土'],slots=[];let cur=new Date(sD);
