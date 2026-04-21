@@ -1,5 +1,33 @@
 [
   {
+    "id": "ffb97b69afcb",
+    "title": "【公式】MEGAMIS 毎日のケアで女神級の美しさへ",
+    "url": "https://megamis.lion.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/megamis_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z"
+  },
+  {
+    "id": "d41b61391b38",
+    "title": "『ちいかわぽけっと』1st Anniversary 特設サイト",
+    "url": "https://jp.chiikawa-pocket.com/ja/1st/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/chiikawapocket1st_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-21T02:57:00.462Z"
+  },
+  {
     "id": "3a28d3db5669",
     "title": "横浜ティンバーワーフ",
     "url": "https://yokohama-timberwharf.com/",
@@ -33978,25 +34006,11 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "6ab9f28c9968",
-    "title": "戸越銀座KT矯正歯科",
-    "url": "https://togoshi-kt-shika.yukenkai.com/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/togoshiktshika-1-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
-  },
-  {
-    "id": "91e59cfb3ab3",
-    "title": "大人の七難すんなり解決 プリオール | 資生堂",
-    "url": "https://www.shiseido.co.jp/pr/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/prior-1-400x350.jpg",
-    "source": "sankou",
+    "id": "77d01288007c",
+    "title": "金山町観光物産協会 公式サイト",
+    "url": "https://www.kaneyama-kankou.ne.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/04.webp",
+    "source": "muuuuu",
     "category": [
       "uncategorized"
     ],
@@ -34433,19 +34447,32 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "325443465631",
-    "title": "株式会社ギフティ 採用サイト",
-    "url": "https://careers.giftee.co.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/20.webp",
-    "source": "muuuuu",
+    "id": "d5690926228d",
+    "title": "バーグハンバーグバーグ",
+    "url": "https://bhb.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260420_03-498x328.jpg",
+    "source": "webdesignclip",
     "category": [
-      "uncategorized"
+      "デザイン事務所・制作会社"
     ],
     "taste": [],
-    "agency": "Torque",
     "date": "2026-04",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
+    "firstSeen": "2026-04-21T02:57:00.462Z"
+  },
+  {
+    "id": "abff3720d8d1",
+    "title": "DoKomi",
+    "url": "https://www.dokomi.de/ja",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260420_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "アート・デザイン・展覧会"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-21T02:57:00.462Z"
   },
   {
     "id": "1c62789975c3",
@@ -35176,6 +35203,20 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
+    "id": "bf00c07ace82",
+    "title": "株式会社ギフティ 採用サイト",
+    "url": "https://careers.giftee.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260313_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "採用サイト・転職・求人"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z"
+  },
+  {
     "id": "eb91c2f06261",
     "title": "博展 採用サイト",
     "url": "https://recruit.hakuten.co.jp/",
@@ -35659,20 +35700,6 @@
     "source": "webdesignclip",
     "category": [
       "建築・住宅・不動産・オフィス"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
-  },
-  {
-    "id": "9766eacce783",
-    "title": "金山町観光物産協会 公式サイト",
-    "url": "https://www.kaneyama-kankou.ne.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260212_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "旅行・交通"
     ],
     "taste": [],
     "date": "2026-02",
@@ -38648,18 +38675,18 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "15b78f147cd9",
-    "title": "コロンビア・ワークス新卒採用サイト",
-    "url": "https://recruit.columbiaworks.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250817_01-498x328.jpg",
+    "id": "a5a8a0668b6c",
+    "title": "ORYZO AI",
+    "url": "https://oryzo.ai/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd202604020_01-498x328.jpg",
     "source": "webdesignclip",
     "category": [
-      "採用サイト・転職・求人"
+      "インテリア・雑貨"
     ],
     "taste": [],
-    "date": "2025-08",
+    "date": "2026-04",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
+    "firstSeen": "2026-04-21T02:57:00.462Z"
   },
   {
     "id": "51df6f402808",
@@ -44430,18 +44457,18 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "acfc8d59579f",
-    "title": "amo",
-    "url": "https://amo.co/",
-    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/20231120_01-500x328.jpg",
+    "id": "0653a65a8068",
+    "title": "YOSSクラウドサービス",
+    "url": "https://yoss.kodomomiraishakai.org/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260420_01-500x817.jpg",
     "source": "webdesignclip",
     "category": [
-      "ソフトウェア・アプリ"
+      "学校・資格・教育"
     ],
     "taste": [],
-    "date": "2023-11",
+    "date": "2026-04",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
+    "firstSeen": "2026-04-21T02:57:00.462Z"
   },
   {
     "id": "e4b0db5c2d8c",
@@ -47370,20 +47397,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "beddaca7d375",
-    "title": "みんなを応援 ジェネちゃん | 沢井製薬",
-    "url": "https://genechan.sawai.co.jp/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250519_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ビジネス・会社"
-    ],
-    "taste": [],
-    "date": "2025-05",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
-  },
-  {
     "id": "8719a750f6fe",
     "title": "有限会社わらしべ",
     "url": "https://taiyaki-warashibe.com/",
@@ -48784,20 +48797,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z"
   },
   {
-    "id": "72f1c326e64b",
-    "title": "MEGAMIS（メガミス）",
-    "url": "https://megamis.lion.co.jp/",
-    "thumbnailUrl": "https://sp.webdesignclip.com/wp-content/uploads/20250702_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "美容・健康・化粧品"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z"
-  },
-  {
     "id": "2cf69e701b47",
     "title": "え！愛媛",
     "url": "https://e-iju.net/e-ehime/",
@@ -50014,6 +50013,23 @@
     "date": "2024-12",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z"
+  },
+  {
+    "id": "d1f405fb90f6",
+    "title": "Favourite",
+    "url": "https://favourite.design/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/04/260421-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ポートフォリオサイト",
+      "企画",
+      "制作",
+      "開発"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-21T02:57:00.462Z"
   },
   {
     "id": "82a9563c7614",
@@ -85891,39 +85907,6 @@
       "ECサイト",
       "飲料",
       "食品"
-    ],
-    "taste": [],
-    "date": "2016-07",
-    "starred": false,
-    "firstSeen": "2026-04-20T03:03:42.023Z"
-  },
-  {
-    "id": "3ccbc19beaaf",
-    "title": "イチロー4257 まだ見ぬ数字へ 終わりなき旅 &#8211; スポーツ：朝日新聞デジタル:",
-    "url": "http://www.asahi.com/special/ichiro/4257/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2016/07/81web_160707_1-640x480.png",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "スポーツ"
-    ],
-    "taste": [],
-    "date": "2016-07",
-    "starred": false,
-    "firstSeen": "2026-04-20T03:03:42.023Z"
-  },
-  {
-    "id": "e7d719986afd",
-    "title": "Bascule Inc.",
-    "url": "https://beta.bascule.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2016/07/81web_160707_3-640x480.png",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
     ],
     "taste": [],
     "date": "2016-07",
