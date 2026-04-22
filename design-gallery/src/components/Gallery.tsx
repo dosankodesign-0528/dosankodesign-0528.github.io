@@ -30,12 +30,12 @@ export function Gallery({
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
-  // フィルターが変わったらdisplayCountをリセット
+  // フィルターが変わったら displayCount をリセット。
+  // スクロール位置は保持する（「確認済み」トグル等でカードが減っても位置が飛ばないように）。
+  // ブラウザは scrollHeight が縮めば自動で上限にクランプしてくれる。
   const sitesKey = sites.length;
   useEffect(() => {
     setDisplayCount(PAGE_SIZE);
-    // スクロール位置もリセット
-    containerRef.current?.scrollTo(0, 0);
   }, [sitesKey]);
 
   // 表示するサイト

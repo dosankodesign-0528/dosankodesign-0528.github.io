@@ -20,6 +20,9 @@ interface HeaderProps {
   hideEagleDuplicates: boolean;
   onToggleHideEagleDuplicates: () => void;
   onEagleRefresh: () => void;
+  // 確認済みリセット
+  starredCount: number;
+  onClearAllStarred: () => void;
 }
 
 /** ISO → 「〇分前 / 〇時間前 / 〇日前」 */
@@ -61,6 +64,8 @@ export function Header({
   hideEagleDuplicates,
   onToggleHideEagleDuplicates,
   onEagleRefresh,
+  starredCount,
+  onClearAllStarred,
 }: HeaderProps) {
   // Eagleステータスの見せ方
   const eagleDotColor =
@@ -213,6 +218,26 @@ export function Header({
             />
           </svg>
         </button>
+
+        {/* 確認済みリセット（確認済みが1件以上ある時だけ出す） */}
+        {starredCount > 0 && (
+          <button
+            onClick={() => {
+              const ok = window.confirm(
+                `確認済みの${starredCount}件をすべて未確認に戻します。よろしいですか？`
+              );
+              if (ok) onClearAllStarred();
+            }}
+            className="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-border bg-bg-primary text-[12px] text-text-secondary hover:text-text-primary hover:border-accent/40 transition-colors"
+            title={`確認済みの${starredCount}件を一括で未確認に戻す`}
+            aria-label="確認済みを一括リセット"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="tabular-nums">{starredCount}</span>
+          </button>
+        )}
 
         {/* 状態セグメント（V02: 状態ドット付き） */}
         <div className="inline-flex p-0.5 bg-bg-primary rounded-lg">

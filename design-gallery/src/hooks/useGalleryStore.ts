@@ -13,6 +13,9 @@ const HIDE_EAGLE_KEY = "design-gallery:hideEagleDuplicates";
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
+// 2026-04: 大規模スクレイプ後にユーザー依頼で全starredを一度だけリセット。
+// 値がtrueになっているブラウザは以後リセットしない（再度消したくなったらキー名を変える）
+const STARRED_MIGRATION_KEY = "design-gallery:starred-cleared:2026-04";
 
 const initialFilter: FilterState = {
   search: "",
@@ -58,7 +61,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       const rawCols = window.localStorage.getItem(COLUMNS_KEY);
       if (rawCols) {
         const n = Number(rawCols);
-        if (Number.isFinite(n) && n >= 2 && n <= 8) setColumns(n);
+        if (Number.isFinite(n) && n >= 2 && n <= 10) setColumns(n);
       }
     } catch {}
     setPersistLoaded(true);
@@ -88,6 +91,15 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   // マウント時に localStorage から starred ID を読み込む
   useEffect(() => {
     try {
+      // 一度だけのマイグレーション: スクレイプ範囲を絞り直したので既存starredを破棄
+      const migrated = window.localStorage.getItem(STARRED_MIGRATION_KEY);
+      if (migrated !== "done") {
+        window.localStorage.removeItem(STARRED_IDS_KEY);
+        window.localStorage.setItem(STARRED_MIGRATION_KEY, "done");
+        setStarredLoaded(true);
+        return;
+      }
+
       const raw = window.localStorage.getItem(STARRED_IDS_KEY);
       if (raw) {
         const arr = JSON.parse(raw);
@@ -97,6 +109,11 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       // parse失敗時は空のままで継続
     }
     setStarredLoaded(true);
+  }, []);
+
+  // 「確認済みを全部クリア」ボタン用
+  const clearAllStarred = useCallback(() => {
+    setStarredIds(new Set());
   }, []);
 
   // starredIds が変化したら localStorage に書き出す
@@ -367,6 +384,8 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     setSelection,
     toggleStar,
     setStarredMany,
+    clearAllStarred,
+    starredCount: starredIds.size,
     hideEagleDuplicates,
     toggleHideEagleDuplicates,
     eagleExcludedSites,

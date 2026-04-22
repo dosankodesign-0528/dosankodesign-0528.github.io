@@ -73,9 +73,15 @@ function sleep(ms: number): Promise<void> {
 // ============================================================
 // SANKOU! (sankoudesign.com) スクレイパー
 // ============================================================
+// カテゴリ取得の仕組み:
+//   SANKOU! のトップ/一覧 HTML には各サイトのカテゴリ情報が入っていない。
+//   ただし WordPress REST API (`/wp-json/wp/v2/posts/{id}?_embed`) に
+//   post の category/taste/color タームが1リクエストで全部ぶら下がってくる。
+//   トップページに `data-postid="NNNNN"` が埋まっているので、それを拾ってから
+//   並列で REST を叩いて enrichment する。
 async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
   console.log("\n📝 SANKOU! からスクレイピング開始...");
-  const results: ScrapedSite[] = [];
+  const results: (ScrapedSite & { sankouPostId?: number })[] = [];
 
   for (let page = 1; page <= pages; page++) {
     const url = page === 1 ? "https://sankoudesign.com/" : `https://sankoudesign.com/page/${page}/`;
@@ -87,6 +93,7 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
       // article > ul > li > figure > a[href=実サイトURL] > img[alt=タイトル]
       // + div[class^="site_more"] > p > a にタイトルとURL
       // + div[class^="time_designer"] > p[class^="list_time"] に "YYYY/MM/DD" 形式の掲載日
+      // + div.simplefavorite-button[data-postid="NNNNN"] → WP の post ID
       $("article li").each((_, el) => {
         const $el = $(el);
         const $figure = $el.find("figure");
@@ -110,8 +117,12 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
         // 掲載日(YYYY/MM/DD)→YYYY-MM
         let dateStr = new Date().toISOString().slice(0, 7);
         const rawDate = $el.find('p[class^="list_time"]').first().text().trim();
-        const m = rawDate.match(/^(\d{4})[/-](\d{2})/);
-        if (m) dateStr = `${m[1]}-${m[2]}`;
+        const dm = rawDate.match(/^(\d{4})[/-](\d{2})/);
+        if (dm) dateStr = `${dm[1]}-${dm[2]}`;
+
+        // data-postid 取得（REST API で categories を引くキー）
+        const rawPostId = $el.find("[data-postid]").first().attr("data-postid");
+        const postId = rawPostId ? parseInt(rawPostId, 10) : undefined;
 
         if (title && img) {
           results.push({
@@ -124,6 +135,7 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
             taste: [],
             date: dateStr,
             starred: false,
+            sankouPostId: postId && Number.isFinite(postId) ? postId : undefined,
           });
         }
       });
@@ -136,7 +148,83 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
     await sleep(1500);
   }
 
-  return results;
+  // WP REST API でカテゴリ enrichment（10並列）
+  const withPostId = results.filter((r) => r.sankouPostId);
+  console.log(`  🏷  WP REST で category 取得: ${withPostId.length}/${results.length} 件`);
+  await enrichSankouCategories(withPostId);
+
+  // 一時フィールド sankouPostId を落として返す
+  return results.map(({ sankouPostId, ...rest }) => {
+    void sankouPostId;
+    return rest as ScrapedSite;
+  });
+}
+
+/**
+ * 与えられた SANKOU! サイトに対して WP REST API を並列で叩き、
+ * `_embedded.wp:term` からカテゴリ名（日本語ラベル）を引いて category に詰め直す。
+ *
+ * SANKOU! のタクソノミーは業種・テイスト・色・技術などが全部 "category" 扱いで混在している。
+ * UI 側で分離せず、とりあえず全部を `category` に入れることで、検索もフィルタもヒットしやすくする。
+ * テクニカルに分類したい場合は後段で slug ベースで振り分けるのが拡張しやすい。
+ */
+async function enrichSankouCategories(
+  sites: { sankouPostId?: number; category: string[] }[]
+): Promise<void> {
+  type Term = { taxonomy?: string; slug?: string; name?: string };
+  type WpPost = { _embedded?: { "wp:term"?: Term[][] } };
+  const CONCURRENCY = 10;
+  let done = 0;
+  let failed = 0;
+  const total = sites.length;
+  const startedAt = Date.now();
+
+  let cursor = 0;
+  const workers = Array.from({ length: CONCURRENCY }, async () => {
+    while (cursor < sites.length) {
+      const i = cursor++;
+      const site = sites[i];
+      const id = site.sankouPostId;
+      if (!id) continue;
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
+        const res = await fetch(
+          `https://sankoudesign.com/wp-json/wp/v2/posts/${id}?_embed=wp:term`,
+          {
+            headers: { "User-Agent": "design-gallery-scraper/1.0" },
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(timer);
+        if (!res.ok) {
+          failed++;
+          continue;
+        }
+        const post = (await res.json()) as WpPost;
+        const groups = post._embedded?.["wp:term"] ?? [];
+        const names = new Set<string>();
+        for (const group of groups) {
+          for (const term of group) {
+            if (term.name && term.taxonomy === "category") names.add(term.name);
+          }
+        }
+        if (names.size > 0) site.category = Array.from(names);
+      } catch {
+        failed++;
+      } finally {
+        done++;
+        if (done % 50 === 0 || done === total) {
+          const elapsed = ((Date.now() - startedAt) / 1000).toFixed(0);
+          process.stdout.write(
+            `\r    category enrichment: ${done}/${total} (失敗${failed}) 経過${elapsed}s  `
+          );
+        }
+      }
+    }
+  });
+  await Promise.all(workers);
+  process.stdout.write("\n");
 }
 
 // ============================================================
@@ -496,6 +584,18 @@ async function main() {
   console.log("🚀 デザインギャラリー スクレイパー起動");
   console.log("=".repeat(50));
 
+  // ONLY_SOURCE=sankou/muuuuu/webdesignclip/81web を指定すると、そのソースだけ再取得し、
+  // 他のソースは既存 JSON から引き継いでマージする（時間短縮用）。
+  const onlySource = (process.env.ONLY_SOURCE || "").trim().toLowerCase();
+  const validSources = new Set(["", "sankou", "muuuuu", "webdesignclip", "81web"]);
+  if (!validSources.has(onlySource)) {
+    console.error(`❌ ONLY_SOURCE の値が不正です: "${onlySource}"。sankou/muuuuu/webdesignclip/81web のいずれか、または未指定。`);
+    process.exit(1);
+  }
+  if (onlySource) {
+    console.log(`\n🎯 ONLY_SOURCE="${onlySource}" — そのソースだけ再スクレイプし、他は既存JSONから引き継ぎます`);
+  }
+
   const allResults: ScrapedSite[] = [];
 
   // 先に Eagle の保存済みURLを引いておく（スクレイプ段階で除外するため）
@@ -503,20 +603,36 @@ async function main() {
   const eagleUrls = await fetchEagleUrls();
 
   // 各スクレイパーを実行（順番に。並列だとサーバーに負荷かかるので）
-  const sankouResults = await scrapeSankou(30);
+  const shouldRun = (src: string) => !onlySource || onlySource === src;
+
+  const sankouResults = shouldRun("sankou") ? await scrapeSankou(30) : [];
   allResults.push(...sankouResults);
 
   const muuuuuTarget = parseInt(process.env.MAX_MUUUUU || "1500", 10);
-  const muuuuuResults = await scrapeMuuuuu(muuuuuTarget);
+  const muuuuuResults = shouldRun("muuuuu") ? await scrapeMuuuuu(muuuuuTarget) : [];
   allResults.push(...muuuuuResults);
 
-  const wdcResults = await scrapeWebDesignClip(10);
+  const wdcResults = shouldRun("webdesignclip") ? await scrapeWebDesignClip(10) : [];
   allResults.push(...wdcResults);
 
   // 81-web.com は Nuxt3 SPA なので Playwright で取得
   const target81 = parseInt(process.env.MAX_81WEB_SITES || "2000", 10);
-  const web81Results = await scrape81WebPlaywright(target81);
+  const web81Results = shouldRun("81web") ? await scrape81WebPlaywright(target81) : [];
   allResults.push(...web81Results);
+
+  // ONLY_SOURCE 指定時は、他のソースの既存エントリを JSON から読み込んで混ぜる。
+  // 既に Eagle/2024-01 フィルタ通過済みの状態で入っているので、そのまま追加して OK。
+  const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
+  if (onlySource) {
+    try {
+      const prev = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as ScrapedSite[];
+      const carryover = prev.filter((p) => p.source !== onlySource);
+      allResults.push(...carryover);
+      console.log(`\n♻️  他ソースを既存JSONから引き継ぎ: ${carryover.length} 件`);
+    } catch (e) {
+      console.log(`\n⚠️  既存JSONの読み込み失敗（引き継ぎスキップ）: ${(e as Error).message}`);
+    }
+  }
 
   // 重複排除（URLベースでソース横断）
   const deduplicated = deduplicateByUrl(allResults);
@@ -546,7 +662,6 @@ async function main() {
   console.log(`  Eagle 既知除外後:   ${afterEagle.length} 件 (${droppedByEagle} 件カット)`);
 
   // 既存データの firstSeen を引き継ぎ、新規エントリに今の時刻を埋める
-  const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
   const metaPath = path.join(__dirname, "..", "src", "data", "scrape-meta.json");
   const now = new Date().toISOString();
 
