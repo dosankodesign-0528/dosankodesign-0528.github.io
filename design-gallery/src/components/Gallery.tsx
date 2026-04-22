@@ -72,7 +72,7 @@ export function Gallery({
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const delta = e.deltaY > 0 ? 1 : -1;
-        onColumnsChange(Math.max(2, Math.min(8, columns + delta)));
+        onColumnsChange(Math.max(2, Math.min(10, columns + delta)));
       }
     };
 

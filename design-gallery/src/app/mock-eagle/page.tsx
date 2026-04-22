@@ -70,7 +70,7 @@ function Cols() {
         className="w-[80px] accent-blue-500"
         defaultValue={4}
         min={2}
-        max={8}
+        max={10}
         readOnly
       />
     </div>

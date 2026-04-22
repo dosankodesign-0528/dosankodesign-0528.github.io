@@ -250,7 +250,7 @@ export function Header({
         <input
           type="range"
           min={2}
-          max={8}
+          max={10}
           value={columns}
           onChange={(e) => onColumnsChange(Number(e.target.value))}
           className="w-[80px] accent-accent"
