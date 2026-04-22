@@ -86,6 +86,7 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
       // SANKOU! の構造:
       // article > ul > li > figure > a[href=実サイトURL] > img[alt=タイトル]
       // + div[class^="site_more"] > p > a にタイトルとURL
+      // + div[class^="time_designer"] > p[class^="list_time"] に "YYYY/MM/DD" 形式の掲載日
       $("article li").each((_, el) => {
         const $el = $(el);
         const $figure = $el.find("figure");
@@ -106,6 +107,12 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
         // 詳細ページURL
         const detailUrl = $figure.find("a.detail-link").attr("href") || "";
 
+        // 掲載日(YYYY/MM/DD)→YYYY-MM
+        let dateStr = new Date().toISOString().slice(0, 7);
+        const rawDate = $el.find('p[class^="list_time"]').first().text().trim();
+        const m = rawDate.match(/^(\d{4})[/-](\d{2})/);
+        if (m) dateStr = `${m[1]}-${m[2]}`;
+
         if (title && img) {
           results.push({
             id: generateId(siteUrl || img, "sankou"),
@@ -115,7 +122,7 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
             source: "sankou",
             category: ["uncategorized"],
             taste: [],
-            date: new Date().toISOString().slice(0, 7),
+            date: dateStr,
             starred: false,
           });
         }
