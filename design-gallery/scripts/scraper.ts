@@ -10,6 +10,17 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
+import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
+
+// ============================================================
+// 設定
+// ============================================================
+// 古いサイトは既に確認済みなのでスクレイプ対象から外す
+// (YYYY-MM 形式。この月より前の date を持つエントリは最終出力から除外)
+const CUTOFF_DATE = "2024-01";
+
+// Eagle ローカル API（起動中なら localhost:41595 で叩ける）
+const EAGLE_API = "http://localhost:41595/api/item/list?limit=10000";
 
 // ============================================================
 // 型定義
@@ -26,6 +37,8 @@ interface ScrapedSite {
   date: string; // YYYY-MM
   starred: boolean;
   firstSeen?: string; // ISO datetime, 初めて取得した時刻
+  isDead?: boolean;
+  lastCheckedAt?: string;
 }
 
 // ============================================================
@@ -120,75 +133,58 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
 }
 
 // ============================================================
-// MUUUUU.ORG スクレイパー
+// MUUUUU.ORG スクレイパー（Playwright版を呼ぶだけのラッパー）
+// 旧 /page/N 方式は機能しないので scrape-muuuuu.ts に実装を分離
 // ============================================================
-async function scrapeMuuuuu(pages: number = 3): Promise<ScrapedSite[]> {
-  console.log("\n📝 MUUUUU.ORG からスクレイピング開始...");
-  const results: ScrapedSite[] = [];
+async function scrapeMuuuuu(targetCount: number = 1500): Promise<ScrapedSite[]> {
+  const raw = await scrapeMuuuuuPlaywright(targetCount);
+  // 型を scraper.ts 側の ScrapedSite に合わせる
+  return raw.map((r) => ({
+    id: r.id,
+    title: r.title,
+    url: r.url,
+    thumbnailUrl: r.thumbnailUrl,
+    source: "muuuuu" as const,
+    category: r.category,
+    taste: r.taste,
+    agency: r.agency,
+    date: r.date,
+    starred: r.starred,
+  }));
+}
 
-  for (let page = 1; page <= pages; page++) {
-    const url = page === 1 ? "https://muuuuu.org/" : `https://muuuuu.org/page/${page}`;
-    try {
-      const html = await fetchPage(url);
-      const $ = cheerio.load(html);
-
-      // MUUUUU.ORG はリスト形式
-      $("article, li, .entry, .post").each((_, el) => {
-        const $el = $(el);
-
-        // サムネイル
-        const img =
-          $el.find("img").attr("src") ||
-          $el.find("img").attr("data-src");
-        if (!img || img.startsWith("data:") || img.includes("icon") || img.includes("logo")) return;
-
-        // タイトル
-        const title = ($el.find("h2, h3").first().text().trim() || $el.find("a").first().text().trim());
-        if (!title || title.length < 2) return;
-
-        // URL
-        const siteUrl =
-          $el.find("a[target='_blank']").attr("href") ||
-          $el.find("a").attr("href") ||
-          "";
-
-        // カテゴリ
-        const cats: string[] = [];
-        $el.find("a[rel='tag'], .category a, .tag").each((_, catEl) => {
-          const t = $(catEl).text().trim();
-          if (t && t.length < 30) cats.push(t);
-        });
-
-        // エージェンシー（Credit By の後）
-        const creditText = $el.text();
-        const creditMatch = creditText.match(/Credit\s*(?:By|by|:)\s*(.+?)(?:\n|$)/);
-        const agency = creditMatch ? creditMatch[1].trim().slice(0, 50) : undefined;
-
-        if (title && img) {
-          results.push({
-            id: generateId(siteUrl || img, "muuuuu"),
-            title: title.slice(0, 100),
-            url: siteUrl.startsWith("http") ? siteUrl : `https://muuuuu.org${siteUrl}`,
-            thumbnailUrl: img.startsWith("http") ? img : `https://muuuuu.org${img}`,
-            source: "muuuuu",
-            category: cats.length > 0 ? cats : ["uncategorized"],
-            taste: [],
-            agency,
-            date: new Date().toISOString().slice(0, 7),
-            starred: false,
-          });
-        }
-      });
-
-      console.log(`  ページ ${page}: ${results.length} 件取得`);
-    } catch (e) {
-      console.error(`  ページ ${page} エラー:`, (e as Error).message);
+// ============================================================
+// Eagle ローカル API から既に保存済みのURL一覧を取得
+// Eagle が起動していなければ空セットを返す（スクレイプは続行）
+// ============================================================
+async function fetchEagleUrls(): Promise<Set<string>> {
+  const result = new Set<string>();
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(EAGLE_API, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) {
+      console.log(`  Eagle API 応答: HTTP ${res.status}（スキップ）`);
+      return result;
     }
-
-    await sleep(1500);
+    const json = (await res.json()) as { data?: Array<{ url?: string; website?: string }> };
+    const items = json.data || [];
+    for (const it of items) {
+      const u = it.url || it.website;
+      if (!u) continue;
+      result.add(normalizeUrl(u));
+    }
+    console.log(`  Eagle 保存済みURL: ${result.size} 件（スクレイプから除外）`);
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (msg.includes("ECONNREFUSED") || msg.includes("aborted") || msg.includes("fetch failed")) {
+      console.log("  Eagle 未起動 or 応答なし。重複除外はスキップ");
+    } else {
+      console.log(`  Eagle API 取得エラー: ${msg}（スキップ）`);
+    }
   }
-
-  return results;
+  return result;
 }
 
 // ============================================================
@@ -495,11 +491,16 @@ async function main() {
 
   const allResults: ScrapedSite[] = [];
 
+  // 先に Eagle の保存済みURLを引いておく（スクレイプ段階で除外するため）
+  console.log("\n🦅 Eagle の既知URLを取得中...");
+  const eagleUrls = await fetchEagleUrls();
+
   // 各スクレイパーを実行（順番に。並列だとサーバーに負荷かかるので）
   const sankouResults = await scrapeSankou(30);
   allResults.push(...sankouResults);
 
-  const muuuuuResults = await scrapeMuuuuu(30);
+  const muuuuuTarget = parseInt(process.env.MAX_MUUUUU || "1500", 10);
+  const muuuuuResults = await scrapeMuuuuu(muuuuuTarget);
   allResults.push(...muuuuuResults);
 
   const wdcResults = await scrapeWebDesignClip(10);
@@ -513,14 +514,29 @@ async function main() {
   // 重複排除（URLベースでソース横断）
   const deduplicated = deduplicateByUrl(allResults);
 
+  // 2024年以降に絞る（古いサイトは既にユーザーが確認済み）
+  const afterCutoff = deduplicated.filter((s) => {
+    if (!s.date) return true; // 日付不明は残す
+    return s.date >= CUTOFF_DATE;
+  });
+  const droppedByCutoff = deduplicated.length - afterCutoff.length;
+
+  // Eagle に既に保存済みのURLを除外
+  const afterEagle = eagleUrls.size === 0
+    ? afterCutoff
+    : afterCutoff.filter((s) => !eagleUrls.has(normalizeUrl(s.url)));
+  const droppedByEagle = afterCutoff.length - afterEagle.length;
+
   console.log("\n" + "=".repeat(50));
   console.log(`📊 結果サマリー:`);
-  console.log(`  SANKOU!:          ${sankouResults.length} 件`);
-  console.log(`  MUUUUU.ORG:       ${muuuuuResults.length} 件`);
-  console.log(`  Web Design Clip:  ${wdcResults.length} 件`);
-  console.log(`  81-web.com:       ${web81Results.length} 件`);
-  console.log(`  合計:             ${allResults.length} 件`);
-  console.log(`  重複排除後:       ${deduplicated.length} 件`);
+  console.log(`  SANKOU!:            ${sankouResults.length} 件`);
+  console.log(`  MUUUUU.ORG:         ${muuuuuResults.length} 件`);
+  console.log(`  Web Design Clip:    ${wdcResults.length} 件`);
+  console.log(`  81-web.com:         ${web81Results.length} 件`);
+  console.log(`  合計:               ${allResults.length} 件`);
+  console.log(`  重複排除後:         ${deduplicated.length} 件`);
+  console.log(`  ${CUTOFF_DATE} 以降に絞込:  ${afterCutoff.length} 件 (${droppedByCutoff} 件カット)`);
+  console.log(`  Eagle 既知除外後:   ${afterEagle.length} 件 (${droppedByEagle} 件カット)`);
 
   // 既存データの firstSeen を引き継ぎ、新規エントリに今の時刻を埋める
   const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
@@ -529,14 +545,20 @@ async function main() {
 
   const previouslyKnownUrls = new Set<string>();
   const previousFirstSeen = new Map<string, string>();
+  const previousIsDead = new Map<string, boolean>();
+  const previousLastCheckedAt = new Map<string, string>();
+  const previousStarred = new Map<string, boolean>();
   try {
     const prev = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as ScrapedSite[];
     for (const p of prev) {
       const key = normalizeUrl(p.url);
       previouslyKnownUrls.add(key);
       if (p.firstSeen) previousFirstSeen.set(key, p.firstSeen);
+      if (typeof p.isDead === "boolean") previousIsDead.set(key, p.isDead);
+      if (p.lastCheckedAt) previousLastCheckedAt.set(key, p.lastCheckedAt);
+      if (p.starred) previousStarred.set(key, p.starred);
     }
-    console.log(`  既知URL: ${previouslyKnownUrls.size} 件（うち firstSeen 付き ${previousFirstSeen.size} 件）`);
+    console.log(`  既知URL: ${previouslyKnownUrls.size} 件（firstSeen付 ${previousFirstSeen.size} / isDead付 ${previousIsDead.size} / starred ${previousStarred.size}）`);
   } catch {
     console.log(`  既存データなし。初回実行として扱います`);
   }
@@ -551,7 +573,7 @@ async function main() {
     previousScrapedAt ?? new Date(Date.now() - 60_000).toISOString();
 
   let newlyDetected = 0;
-  for (const site of deduplicated) {
+  for (const site of afterEagle) {
     const key = normalizeUrl(site.url);
     const prior = previousFirstSeen.get(key);
     if (prior) {
@@ -565,11 +587,19 @@ async function main() {
       site.firstSeen = now;
       newlyDetected++;
     }
+
+    // isDead / lastCheckedAt / starred はそのまま引き継ぎ（毎回のスクレイプで失いたくない）
+    const prevDead = previousIsDead.get(key);
+    if (typeof prevDead === "boolean") site.isDead = prevDead;
+    const prevChecked = previousLastCheckedAt.get(key);
+    if (prevChecked) site.lastCheckedAt = prevChecked;
+    const prevStar = previousStarred.get(key);
+    if (prevStar) site.starred = prevStar;
   }
   console.log(`  新規検出: ${newlyDetected} 件`);
 
   // JSON保存
-  fs.writeFileSync(outputPath, JSON.stringify(deduplicated, null, 2), "utf-8");
+  fs.writeFileSync(outputPath, JSON.stringify(afterEagle, null, 2), "utf-8");
   console.log(`\n✅ 保存完了: ${outputPath}`);
 
   // メタ情報保存（クライアントがベースライン時刻として使う）
