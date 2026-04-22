@@ -17,8 +17,6 @@ interface HeaderProps {
   eagleStatus: EagleStatus;
   eagleLastSyncAt: string | null;
   eagleItemCount: number;
-  hideEagleDuplicates: boolean;
-  onToggleHideEagleDuplicates: () => void;
   onEagleRefresh: () => void;
   // 確認済みリセット
   starredCount: number;
@@ -61,8 +59,6 @@ export function Header({
   eagleStatus,
   eagleLastSyncAt,
   eagleItemCount,
-  hideEagleDuplicates,
-  onToggleHideEagleDuplicates,
   onEagleRefresh,
   starredCount,
   onClearAllStarred,
@@ -144,53 +140,21 @@ export function Header({
 
       {/* スペーサー */}
       <div className="ml-auto flex items-center gap-1.5">
-        {/* Eagle連携トグル */}
-        <div
-          className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
-            hideEagleDuplicates
-              ? "border-accent/40 bg-accent/5"
-              : "border-border bg-bg-primary"
-          }`}
+        {/* Eagle連携ステータス（重複非表示は常時ONなのでトグルは廃止、状態表示＋リロードのみ） */}
+        <button
+          onClick={onEagleRefresh}
+          className="h-8 inline-flex items-center gap-2 px-2.5 rounded-lg border border-border bg-bg-primary text-[12px] text-text-secondary hover:text-text-primary hover:border-accent/40 transition-colors"
           title={eagleStatusText}
+          aria-label={`Eagle同期 - ${eagleStatusText}`}
         >
-          <button
-            onClick={onEagleRefresh}
-            className="inline-flex items-center gap-1.5 px-1 text-[12px] text-text-secondary hover:text-text-primary"
-            aria-label={`Eagle同期 - ${eagleStatusText}`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full transition-colors ${
-                eagleStatus === "syncing" ? "animate-pulse" : ""
-              }`}
-              style={{ backgroundColor: eagleDotColor }}
-            />
-            <span className="font-medium">Eagle</span>
-          </button>
-          <button
-            onClick={onToggleHideEagleDuplicates}
-            disabled={eagleItemCount === 0}
-            className={`relative w-8 h-5 rounded-full transition-colors ${
-              hideEagleDuplicates ? "bg-accent" : "bg-gray-300"
-            } ${eagleItemCount === 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
-            title={
-              eagleItemCount === 0
-                ? "Eagleが未接続です"
-                : hideEagleDuplicates
-                  ? "Eagle重複を表示する"
-                  : "Eagle重複を隠す"
-            }
-            aria-label={
-              hideEagleDuplicates ? "Eagle重複を表示する" : "Eagle重複を隠す"
-            }
-            aria-pressed={hideEagleDuplicates}
-          >
-            <span
-              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                hideEagleDuplicates ? "left-[14px]" : "left-0.5"
-              }`}
-            />
-          </button>
-        </div>
+          <span
+            className={`w-2 h-2 rounded-full transition-colors ${
+              eagleStatus === "syncing" ? "animate-pulse" : ""
+            }`}
+            style={{ backgroundColor: eagleDotColor }}
+          />
+          <span className="font-medium">Eagle</span>
+        </button>
 
         {/* 手動リロード */}
         <button

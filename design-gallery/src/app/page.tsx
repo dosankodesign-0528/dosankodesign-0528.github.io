@@ -99,27 +99,23 @@ export default function Home() {
         onSearchChange={(search) => store.updateFilter({ search })}
         columns={store.columns}
         onColumnsChange={store.setColumns}
-        totalCount={store.sites.filter((s) => !s.isDead).length}
+        totalCount={store.totalCount}
         filteredCount={store.filteredSites.length}
         filter={store.filter}
         updateFilter={store.updateFilter}
         eagleStatus={eagle.status}
         eagleLastSyncAt={eagle.lastSyncAt}
         eagleItemCount={eagle.itemCount}
-        hideEagleDuplicates={store.hideEagleDuplicates}
-        onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
         onEagleRefresh={() => void eagle.refresh()}
         starredCount={store.starredCount}
         onClearAllStarred={store.clearAllStarred}
       />
 
-      {/* Eagle重複セカンダリバー（常時マウント、表示切替は visible prop で滑らかに） */}
+      {/* Eagle重複セカンダリバー（Eagle重複は常時非表示。透明性のため件数とリンクだけ残す） */}
       <EagleExcludedBar
         excludedCount={store.eagleExcludedSites.length}
         onOpenExcluded={() => setShowEagleExcluded(true)}
-        visible={
-          store.hideEagleDuplicates && store.eagleExcludedSites.length > 0
-        }
+        visible={store.eagleExcludedSites.length > 0}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}

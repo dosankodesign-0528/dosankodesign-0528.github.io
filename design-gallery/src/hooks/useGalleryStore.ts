@@ -9,7 +9,6 @@ import {
 import { allSites, dateRange } from "@/data/load-sites";
 import { normalizeUrl } from "@/lib/eagle";
 
-const HIDE_EAGLE_KEY = "design-gallery:hideEagleDuplicates";
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
@@ -30,7 +29,7 @@ const initialFilter: FilterState = {
 };
 
 interface UseGalleryStoreOptions {
-  /** Eagleに既に入っているサイトの正規化済みURL集合（hideEagleDuplicates有効時に利用） */
+  /** Eagleに既に入っているサイトの正規化済みURL集合（常に非表示扱い） */
   eagleUrls?: Set<string>;
 }
 
@@ -136,27 +135,8 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     );
   }, [starredIds]);
 
-  // Eagle重複非表示トグル（localStorage永続化、デフォルトON）
-  // 「既に見たもの（Eagle収録済み）は常に隠す」のが基本姿勢。ユーザーが明示的に
-  // "false" に切り替えた時だけ表示に戻す。
-  const [hideEagleDuplicates, setHideEagleDuplicates] = useState(true);
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(HIDE_EAGLE_KEY);
-      if (saved === "false") setHideEagleDuplicates(false);
-      else if (saved === "true") setHideEagleDuplicates(true);
-      // saved が null（初回）の場合はデフォルト true のまま
-    } catch {}
-  }, []);
-  const toggleHideEagleDuplicates = useCallback(() => {
-    setHideEagleDuplicates((prev) => {
-      const next = !prev;
-      try {
-        window.localStorage.setItem(HIDE_EAGLE_KEY, String(next));
-      } catch {}
-      return next;
-    });
-  }, []);
+  // Eagle重複は常に非表示。以前はトグルだったが、ユーザー要望で「そもそも隠す」方針に変更。
+  // 透明性のため、非表示になっている件数は EagleExcludedBar / EagleExcludedModal で見られる。
 
   // サイトごとの正規化URLを一度だけ計算
   const normalizedUrlBySite = useMemo(() => {
@@ -235,16 +215,25 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     });
   }, [baseFiltered, eagleUrls, normalizedUrlBySite]);
 
-  // 実際にギャラリーへ出すサイト
+  // 実際にギャラリーへ出すサイト（Eagle重複は常に除外）
   const filteredSites = useMemo<SiteEntry[]>(() => {
-    if (!hideEagleDuplicates || !eagleUrls || eagleUrls.size === 0) {
-      return baseFiltered;
-    }
+    if (!eagleUrls || eagleUrls.size === 0) return baseFiltered;
     return baseFiltered.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     });
-  }, [baseFiltered, hideEagleDuplicates, eagleUrls, normalizedUrlBySite]);
+  }, [baseFiltered, eagleUrls, normalizedUrlBySite]);
+
+  // 分母に使う「生きていてEagleにも入ってない」全サイト数。
+  // Header の「X sites」表示やフィルタ件数比較の母数として使う。
+  const totalCount = useMemo<number>(() => {
+    const alive = sites.filter((s) => !s.isDead);
+    if (!eagleUrls || eagleUrls.size === 0) return alive.length;
+    return alive.filter((s) => {
+      const n = normalizedUrlBySite.get(s.id);
+      return n ? !eagleUrls.has(n) : true;
+    }).length;
+  }, [sites, eagleUrls, normalizedUrlBySite]);
 
   // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
   const toggleStar = useCallback((id: string) => {
@@ -386,8 +375,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     setStarredMany,
     clearAllStarred,
     starredCount: starredIds.size,
-    hideEagleDuplicates,
-    toggleHideEagleDuplicates,
     eagleExcludedSites,
+    totalCount,
   };
 }
