@@ -117,7 +117,7 @@ export default function Home() {
       <EagleExcludedBar
         excludedCount={store.eagleExcludedSites.length}
         onOpenExcluded={() => setShowEagleExcluded(true)}
-        visible={store.eagleExcludedSites.length > 0}
+        visible={store.hideEagleDuplicates && store.eagleExcludedSites.length > 0}
         hideEagleDuplicates={store.hideEagleDuplicates}
       />
 
