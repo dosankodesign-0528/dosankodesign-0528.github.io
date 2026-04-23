@@ -33,30 +33,46 @@ jobs:
       - name: ポータルのファビコンをコピー
         run: cp portal/favicon.png _site/favicon.png
 
-      # ---------- Retro Games ----------
-      - name: レトロゲームをコピー
+      # ---------- Retro Games / 空き時間みつける君 ----------
+      # 全プロジェクトを Vercel に統一済み。旧 GH Pages URL は redirect でVercel へ誘導する。
+      # （ブックマーク救済用。ポータルカードは直接 Vercel URL に飛ぶ）
+      - name: Retro Games は Vercel にリダイレクト
         run: |
           mkdir -p "_site/retro-games"
-          cp "Retro Games/index.html" "_site/retro-games/index.html"
-          cp "Retro Games/plusman.html" "_site/retro-games/plusman.html"
-          cp "Retro Games/samurai_fighter.html" "_site/retro-games/samurai_fighter.html"
-          cp "Retro Games/space_invaders.html" "_site/retro-games/space_invaders.html"
-          cp "Retro Games/manifest.json" "_site/retro-games/manifest.json"
-          cp "Retro Games/icon-192.png" "_site/retro-games/icon-192.png"
-          cp "Retro Games/icon-512.png" "_site/retro-games/icon-512.png"
-          cp "Retro Games/apple-touch-icon.png" "_site/retro-games/apple-touch-icon.png"
-          cp "Retro Games/favicon-32.png" "_site/retro-games/favicon-32.png"
+          cat > "_site/retro-games/index.html" <<'EOF'
+          <!doctype html>
+          <html lang="ja">
+            <head>
+              <meta charset="utf-8">
+              <title>Retro Games — 移動しました</title>
+              <meta http-equiv="refresh" content="0; url=https://retro-games-one.vercel.app/">
+              <link rel="canonical" href="https://retro-games-one.vercel.app/">
+              <style>body{font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center;color:#333;}a{color:#0070f3;text-decoration:none;font-weight:bold;}</style>
+            </head>
+            <body>
+              <p>Retro Games は <a href="https://retro-games-one.vercel.app/">retro-games-one.vercel.app</a> に移動しました。</p>
+            </body>
+          </html>
+          EOF
 
-      # ---------- 空き時間みつける君 ----------
-      - name: 空き時間みつける君をコピー
+      - name: 空き時間みつける君 は Vercel にリダイレクト
         run: |
           mkdir -p "_site/akijikan-mitsukeru-kun"
-          cp akijikan-mitsukeru-kun/index.html "_site/akijikan-mitsukeru-kun/index.html"
-          cp akijikan-mitsukeru-kun/manifest.json "_site/akijikan-mitsukeru-kun/manifest.json"
-          cp akijikan-mitsukeru-kun/icon-192.png "_site/akijikan-mitsukeru-kun/icon-192.png"
-          cp akijikan-mitsukeru-kun/icon-512.png "_site/akijikan-mitsukeru-kun/icon-512.png"
-          cp akijikan-mitsukeru-kun/apple-touch-icon.png "_site/akijikan-mitsukeru-kun/apple-touch-icon.png"
-          cp akijikan-mitsukeru-kun/favicon-32.png "_site/akijikan-mitsukeru-kun/favicon-32.png"
+          cat > "_site/akijikan-mitsukeru-kun/index.html" <<'EOF'
+          <!doctype html>
+          <html lang="ja">
+            <head>
+              <meta charset="utf-8">
+              <title>空き時間みつける君 — 移動しました</title>
+              <meta http-equiv="refresh" content="0; url=https://akijikan-mitsukeru-kun.vercel.app/">
+              <link rel="canonical" href="https://akijikan-mitsukeru-kun.vercel.app/">
+              <style>body{font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center;color:#333;}a{color:#0070f3;text-decoration:none;font-weight:bold;}</style>
+            </head>
+            <body>
+              <p>空き時間みつける君 は <a href="https://akijikan-mitsukeru-kun.vercel.app/">akijikan-mitsukeru-kun.vercel.app</a> に移動しました。</p>
+            </body>
+          </html>
+          EOF
 
       # ---------- houmon-app ----------
       # houmon-app は Vercel に統一済み（https://houmon-app-lilac.vercel.app/）。
@@ -86,33 +102,27 @@ jobs:
           EOF
 
       # ---------- design-gallery ----------
-      - name: design-gallery の依存をインストール
-        working-directory: design-gallery
-        run: npm ci
-        continue-on-error: true
-
-      # npm のフラッキーバグ対策: Linux 用ネイティブ SWC を明示インストール
-      # （これがないと Turbopack が WASM フォールバックして build エラーになる）
-      - name: design-gallery の Linux 用 SWC を明示インストール
-        working-directory: design-gallery
-        run: npm install --no-save @next/swc-linux-x64-gnu@16.2.3
-        continue-on-error: true
-
-      - name: design-gallery をビルド
-        working-directory: design-gallery
-        run: npm run build
-        continue-on-error: true
-        env:
-          BASE_PATH: /design-gallery
-
-      - name: design-gallery をコピー
+      # Vercel に統一済み（https://design-gallery-puce.vercel.app/）。
+      # GH Pages 側ではビルドせず、旧URLにアクセスした人を Vercel に誘導する。
+      # これで swc のフラッキーバグ（Linux ネイティブ SWC が入らず Turbopack が落ちる）問題から解放。
+      - name: design-gallery は Vercel にリダイレクト
         run: |
-          if [ -d design-gallery/out ]; then
-            cp -r design-gallery/out _site/design-gallery
-          else
-            mkdir -p _site/design-gallery
-            echo '<html><body><p>Coming soon</p></body></html>' > _site/design-gallery/index.html
-          fi
+          mkdir -p _site/design-gallery
+          cat > _site/design-gallery/index.html <<'EOF'
+          <!doctype html>
+          <html lang="ja">
+            <head>
+              <meta charset="utf-8">
+              <title>Design Gallery — 移動しました</title>
+              <meta http-equiv="refresh" content="0; url=https://design-gallery-puce.vercel.app/">
+              <link rel="canonical" href="https://design-gallery-puce.vercel.app/">
+              <style>body{font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center;color:#333;}a{color:#0070f3;text-decoration:none;font-weight:bold;}</style>
+            </head>
+            <body>
+              <p>Design Gallery は <a href="https://design-gallery-puce.vercel.app/">design-gallery-puce.vercel.app</a> に移動しました。</p>
+            </body>
+          </html>
+          EOF
 
       # ---------- travel-shiori / nittei-chousei ----------
       # 本番は Vercel (travel-shiori.vercel.app / nittei-chousei.vercel.app)。

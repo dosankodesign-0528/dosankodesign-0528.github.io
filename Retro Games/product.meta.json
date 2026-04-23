@@ -3,5 +3,5 @@
   "desc": "ブラウザで遊べるレトロゲーム集。侍格闘・ボンバーマン風・インベーダー。",
   "icon": "🕹",
   "iconBg": "#1a1028",
-  "path": "/retro-games/"
+  "path": "https://retro-games-one.vercel.app/"
 }

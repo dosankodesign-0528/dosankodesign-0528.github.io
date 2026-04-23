@@ -39,27 +39,28 @@
 
 ## 🚀 各プロジェクトの本番 URL とデプロイ先
 
-### Vercel 勢（動的サイト・Supabase 連携あり）
+### Vercel 勢（アプリ本体は全部 Vercel に統一）
 
 | プロジェクト | 本番 URL | Git | Vercel Project | 自動 deploy |
 |---|---|---|---|---|
 | **houmon-app** | **https://houmon-app-lilac.vercel.app** | submodule (main) | houmon-app | ✅ main push で自動 |
+| **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | 手動（`vercel --prod`） |
+| **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
+| **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | travel-shiori | https://travel-shiori.vercel.app | 親リポ subdir (main) | travel-shiori | - |
 | nittei-chousei | https://nittei-chousei.vercel.app | submodule (master) | nittei-chousei | - |
 
-### GitHub Pages 勢（静的サイト、ポータル配下）
+### GitHub Pages 勢（ポータル本体のみ）
 
 | プロジェクト | 本番 URL | デプロイ元 |
 |---|---|---|
 | ポータル本体 | https://hideyuki-yamanaka.github.io/ | 親リポ `.github/workflows/deploy.yml` |
-| Retro Games | /retro-games/ | 親リポ subdir の静的 HTML をコピー |
-| 空き時間みつける君 | /akijikan-mitsukeru-kun/ | 親リポ subdir の静的 HTML をコピー |
-| design-gallery | /design-gallery/ | 親リポ subdir を `npm run build` |
 
 注意事項：
-- **houmon-app は Vercel 一本**。以前は GH Pages にも deploy されてたが、Supabase 接続しないモックモード（10 名固定）でバグの温床だった。現在は `hideyuki-yamanaka.github.io/houmon-app/` にアクセスすると Vercel へリダイレクトされるだけ。
+- **アプリは全部 Vercel 一本**（2026-04-23 統一）。以前は GH Pages にも複製 deploy されてたが、houmon-app の mock モード問題や design-gallery の swc バグなどトラブルの温床だった。現在は各 `hideyuki-yamanaka.github.io/<app>/` にアクセスすると Vercel へリダイレクトされるだけ。
 - **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
-- ポータルの `product.meta.json` の `path` が絶対 URL（`https://...`）なら Vercel、未指定 or 相対パスなら GH Pages。
+- ポータルの `product.meta.json` の `path` が絶対 URL（`https://...`）なら Vercel、未指定 or 相対パスなら GH Pages。今は全アプリが絶対URL指定済み。
+- **design-gallery / 空き時間みつける君 / Retro Games は親リポの subdir に直置き**（submodule ではない）のでデプロイは手動。houmon-app と違って GitHub Auto Deploy は設定されていない（subdir の変更検知が厄介なため）。更新時は該当ディレクトリで `npx vercel --prod --yes` を叩く。
 
 ## 🧭 houmon-app のデプロイ手順（auto 連携あり）
 

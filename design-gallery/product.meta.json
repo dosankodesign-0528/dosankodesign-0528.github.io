@@ -2,5 +2,6 @@
   "name": "Design Gallery",
   "desc": "SANKOU!・81-web.com・MUUUUU.ORG・Web Design Clipを横断で巡回できるWebデザイン事例ギャラリー。",
   "icon": "🎨",
-  "iconBg": "#1a1a2e"
+  "iconBg": "#1a1a2e",
+  "path": "https://design-gallery-puce.vercel.app/"
 }
