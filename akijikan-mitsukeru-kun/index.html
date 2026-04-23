@@ -1131,6 +1131,26 @@
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})`;
   }
 
+  // カレンダー色をイベントの「文字色」として使う時の調整関数。
+  // Gmail の黄色(#F4C101 系)や、Googleが返す薄い色だと 18% 背景の上で
+  // 同じ色の文字が全く読めなくなる問題があるので、十分暗くする。
+  // YIQ 輝度 > 約0.55 の色は、輝度が 0.35 まで落ちるように黒側に寄せる。
+  function darkenForText(hex){
+    if(!hex)return '#374151';
+    const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m)return hex;
+    const r=parseInt(m[1],16), g=parseInt(m[2],16), b=parseInt(m[3],16);
+    // 知覚輝度 (0..1)
+    const lum=(0.299*r + 0.587*g + 0.114*b)/255;
+    if(lum<=0.55) return hex; // 元から十分暗いのでそのまま
+    // 目標輝度 0.35 になるようにスケールダウン
+    const factor=0.35/lum;
+    const dr=Math.max(0,Math.min(255,Math.round(r*factor)));
+    const dg=Math.max(0,Math.min(255,Math.round(g*factor)));
+    const db=Math.max(0,Math.min(255,Math.round(b*factor)));
+    return `rgb(${dr},${dg},${db})`;
+  }
+
   // Safari 判定（Chromium系Safariを除外）
   const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
@@ -2142,7 +2162,7 @@
         div.className='cv-allday-event';
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
-        div.style.color=color;
+        div.style.color=darkenForText(color);
         const lbl=cvEventLabel(e);
         div.textContent=lbl;
         div.title=lbl;
@@ -2174,7 +2194,7 @@
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
         div.style.borderRightColor=hexToRgba(color,0.3);
-        div.style.color=color;
+        div.style.color=darkenForText(color);
         const t=cvEventLabel(ev._orig||ev);
         div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
         div.title=t;
@@ -2242,7 +2262,7 @@
         div.className='cv-month-event';
         div.style.background=hexToRgba(color,0.18);
         div.style.borderLeftColor=color;
-        div.style.color=color;
+        div.style.color=darkenForText(color);
         const t=cvEventLabel(e);
         let label=t;
         if(!e.allDay){
