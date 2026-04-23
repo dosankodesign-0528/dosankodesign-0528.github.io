@@ -157,7 +157,12 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DualSlider({
+/**
+ * 丸ポチ2つ + その間の青ラインが一体になったスライダーバー。
+ * - ネイティブの黒トラックは完全に殺す
+ * - 青ラインはまるぽちと同じタイミングで動く（transitionなし）
+ */
+function SliderBar({
   fromIdx,
   toIdx,
   setFromIdx,
@@ -168,8 +173,15 @@ function DualSlider({
   setFromIdx: (v: number) => void;
   setToIdx: (v: number) => void;
 }) {
+  const leftPct = (fromIdx / (MONTHS.length - 1)) * 100;
+  const rightPct = (toIdx / (MONTHS.length - 1)) * 100;
   return (
-    <div className="relative h-5 pointer-events-none">
+    <div className="relative h-[18px] select-none">
+      {/* 青ライン（まるぽち間） - transition なしでリアルタイム追従 */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-[2px] bg-blue-500 rounded-full pointer-events-none"
+        style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
+      />
       <input
         type="range"
         min={0}
@@ -179,7 +191,7 @@ function DualSlider({
           const v = Number(e.target.value);
           if (v <= toIdx) setFromIdx(v);
         }}
-        className="absolute inset-0 w-full h-5 appearance-none bg-transparent dual-slider"
+        className="bare-range"
         style={{ zIndex: fromIdx > MONTHS.length - 2 ? 5 : 3 }}
       />
       <input
@@ -191,15 +203,42 @@ function DualSlider({
           const v = Number(e.target.value);
           if (v >= fromIdx) setToIdx(v);
         }}
-        className="absolute inset-0 w-full h-5 appearance-none bg-transparent dual-slider"
+        className="bare-range"
         style={{ zIndex: 4 }}
       />
       <style jsx>{`
-        .dual-slider {
+        .bare-range {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 18px;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          background: transparent !important;
+          outline: none;
+          border: none;
+          margin: 0;
+          padding: 0;
           pointer-events: none;
         }
-        .dual-slider::-webkit-slider-thumb {
+        .bare-range::-webkit-slider-runnable-track {
           -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          height: 18px;
+          border: none;
+          box-shadow: none;
+        }
+        .bare-range::-moz-range-track {
+          background: transparent;
+          height: 18px;
+          border: none;
+          box-shadow: none;
+        }
+        .bare-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
           width: 18px;
           height: 18px;
           border-radius: 50%;
@@ -208,16 +247,12 @@ function DualSlider({
           cursor: grab;
           pointer-events: auto;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-          transition: transform 0.1s;
+          margin-top: 0;
         }
-        .dual-slider::-webkit-slider-thumb:hover {
-          transform: scale(1.15);
-        }
-        .dual-slider::-webkit-slider-thumb:active {
+        .bare-range::-webkit-slider-thumb:active {
           cursor: grabbing;
-          transform: scale(1.1);
         }
-        .dual-slider::-moz-range-thumb {
+        .bare-range::-moz-range-thumb {
           width: 18px;
           height: 18px;
           border-radius: 50%;
@@ -227,13 +262,8 @@ function DualSlider({
           pointer-events: auto;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
         }
-        .dual-slider::-webkit-slider-runnable-track {
-          background: transparent;
-          height: 20px;
-        }
-        .dual-slider::-moz-range-track {
-          background: transparent;
-          height: 20px;
+        .bare-range::-moz-focus-outer {
+          border: 0;
         }
       `}</style>
     </div>
@@ -289,44 +319,30 @@ function VariantHistogram() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative pb-3">
-        {/* ヒストグラム背景 */}
-        <div className="flex items-end gap-[2px] h-12">
-          {COUNTS.map((c, i) => {
-            const inRange = i >= fromIdx && i <= toIdx;
-            const h = Math.max(4, (c / MAX_COUNT) * 48);
-            return (
-              <div
-                key={i}
-                className={`flex-1 rounded-t-sm transition-colors ${
-                  inRange ? "bg-blue-400" : "bg-gray-200"
-                }`}
-                style={{ height: `${h}px` }}
-                title={`${MONTHS[i]}: ${c}件`}
-              />
-            );
-          })}
-        </div>
-        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
-        <div className="relative h-0 mt-1">
-          <div
-            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
-        {/* 丸ポチ */}
-        <div className="absolute inset-x-0 bottom-0 h-5">
-          <DualSlider
-            fromIdx={fromIdx}
-            toIdx={toIdx}
-            setFromIdx={setFromIdx}
-            setToIdx={setToIdx}
-          />
-        </div>
+      {/* ヒストグラム背景 */}
+      <div className="flex items-end gap-[2px] h-12">
+        {COUNTS.map((c, i) => {
+          const inRange = i >= fromIdx && i <= toIdx;
+          const h = Math.max(4, (c / MAX_COUNT) * 48);
+          return (
+            <div
+              key={i}
+              className={`flex-1 rounded-t-sm transition-colors ${
+                inRange ? "bg-blue-400" : "bg-gray-200"
+              }`}
+              style={{ height: `${h}px` }}
+              title={`${MONTHS[i]}: ${c}件`}
+            />
+          );
+        })}
       </div>
+      {/* スライダー（丸ポチ + 青ライン）をチャート直下にベタ付け */}
+      <SliderBar
+        fromIdx={fromIdx}
+        toIdx={toIdx}
+        setFromIdx={setFromIdx}
+        setToIdx={setToIdx}
+      />
 
       <Footer
         onReset={() => {
@@ -372,13 +388,12 @@ function VariantArea() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative pb-3">
-        {/* エリアチャート */}
-        <svg
-          viewBox="0 0 1000 60"
-          preserveAspectRatio="none"
-          className="w-full h-12 overflow-visible"
-        >
+      {/* エリアチャート */}
+      <svg
+        viewBox="0 0 1000 60"
+        preserveAspectRatio="none"
+        className="w-full h-12 block"
+      >
           <defs>
             <linearGradient id="area-grad-selected" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
@@ -410,25 +425,15 @@ function VariantArea() {
             strokeOpacity="0.8"
             clipPath="url(#clip-selected)"
           />
-        </svg>
+      </svg>
 
-        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
-        <div className="relative h-0 mt-1">
-          <div
-            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
-            style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
-          />
-        </div>
-        {/* 丸ポチ */}
-        <div className="absolute inset-x-0 bottom-0 h-5">
-          <DualSlider
-            fromIdx={fromIdx}
-            toIdx={toIdx}
-            setFromIdx={setFromIdx}
-            setToIdx={setToIdx}
-          />
-        </div>
-      </div>
+      {/* スライダー（丸ポチ + 青ライン）をチャート直下にベタ付け */}
+      <SliderBar
+        fromIdx={fromIdx}
+        toIdx={toIdx}
+        setFromIdx={setFromIdx}
+        setToIdx={setToIdx}
+      />
 
       <Footer
         onReset={() => {
@@ -449,48 +454,34 @@ function VariantHeatmap() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative py-3">
-        {/* ヒートマップ帯 */}
-        <div className="flex gap-[1px] h-4 rounded-md overflow-hidden">
-          {COUNTS.map((c, i) => {
-            const inRange = i >= fromIdx && i <= toIdx;
-            const intensity = c / MAX_COUNT; // 0..1
-            // 5段階の濃淡
-            const bucket = intensity < 0.2 ? 0 : intensity < 0.4 ? 1 : intensity < 0.6 ? 2 : intensity < 0.8 ? 3 : 4;
-            const selectedColors = ["#dbeafe", "#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"];
-            const mutedColors = ["#f3f4f6", "#e5e7eb", "#d1d5db", "#9ca3af", "#6b7280"];
-            const color = inRange ? selectedColors[bucket] : mutedColors[bucket];
-            return (
-              <div
-                key={i}
-                className="flex-1 transition-colors"
-                style={{ backgroundColor: color }}
-                title={`${MONTHS[i]}: ${c}件`}
-              />
-            );
-          })}
-        </div>
-
-        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
-        <div className="relative h-0 mt-2">
-          <div
-            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
-        {/* 丸ポチ */}
-        <div className="absolute inset-x-0 bottom-0 h-5">
-          <DualSlider
-            fromIdx={fromIdx}
-            toIdx={toIdx}
-            setFromIdx={setFromIdx}
-            setToIdx={setToIdx}
-          />
-        </div>
+      {/* ヒートマップ帯 */}
+      <div className="flex gap-[1px] h-4 rounded-md overflow-hidden">
+        {COUNTS.map((c, i) => {
+          const inRange = i >= fromIdx && i <= toIdx;
+          const intensity = c / MAX_COUNT; // 0..1
+          // 5段階の濃淡
+          const bucket = intensity < 0.2 ? 0 : intensity < 0.4 ? 1 : intensity < 0.6 ? 2 : intensity < 0.8 ? 3 : 4;
+          const selectedColors = ["#dbeafe", "#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"];
+          const mutedColors = ["#f3f4f6", "#e5e7eb", "#d1d5db", "#9ca3af", "#6b7280"];
+          const color = inRange ? selectedColors[bucket] : mutedColors[bucket];
+          return (
+            <div
+              key={i}
+              className="flex-1 transition-colors"
+              style={{ backgroundColor: color }}
+              title={`${MONTHS[i]}: ${c}件`}
+            />
+          );
+        })}
       </div>
+
+      {/* スライダー（丸ポチ + 青ライン）をチャート直下にベタ付け */}
+      <SliderBar
+        fromIdx={fromIdx}
+        toIdx={toIdx}
+        setFromIdx={setFromIdx}
+        setToIdx={setToIdx}
+      />
 
       <Footer
         onReset={() => {
@@ -526,43 +517,29 @@ function VariantHistogramPlus() {
         </div>
       </div>
 
-      <div className="relative pb-3">
-        <div className="flex items-end gap-[2px] h-14">
-          {COUNTS.map((c, i) => {
-            const inRange = i >= fromIdx && i <= toIdx;
-            const h = Math.max(4, (c / MAX_COUNT) * 56);
-            return (
-              <div
-                key={i}
-                className={`flex-1 rounded-t-sm transition-colors ${
-                  inRange ? "bg-blue-500" : "bg-gray-200"
-                }`}
-                style={{ height: `${h}px`, opacity: inRange ? 0.85 : 1 }}
-                title={`${MONTHS[i]}: ${c}件`}
-              />
-            );
-          })}
-        </div>
-        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
-        <div className="relative h-0 mt-1">
-          <div
-            className="absolute h-[2px] bg-blue-600 rounded-full transition-all"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
-        {/* 丸ポチ */}
-        <div className="absolute inset-x-0 bottom-0 h-5">
-          <DualSlider
-            fromIdx={fromIdx}
-            toIdx={toIdx}
-            setFromIdx={setFromIdx}
-            setToIdx={setToIdx}
-          />
-        </div>
+      <div className="flex items-end gap-[2px] h-14">
+        {COUNTS.map((c, i) => {
+          const inRange = i >= fromIdx && i <= toIdx;
+          const h = Math.max(4, (c / MAX_COUNT) * 56);
+          return (
+            <div
+              key={i}
+              className={`flex-1 rounded-t-sm transition-colors ${
+                inRange ? "bg-blue-500" : "bg-gray-200"
+              }`}
+              style={{ height: `${h}px`, opacity: inRange ? 0.85 : 1 }}
+              title={`${MONTHS[i]}: ${c}件`}
+            />
+          );
+        })}
       </div>
+      {/* スライダー（丸ポチ + 青ライン）をチャート直下にベタ付け */}
+      <SliderBar
+        fromIdx={fromIdx}
+        toIdx={toIdx}
+        setFromIdx={setFromIdx}
+        setToIdx={setToIdx}
+      />
 
       {/* 年ティック */}
       <div className="relative h-4 mt-1">
@@ -604,43 +581,29 @@ function VariantDots() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative py-2 pb-4">
-        <div className="flex items-center gap-[2px] h-8">
-          {COUNTS.map((c, i) => {
-            const inRange = i >= fromIdx && i <= toIdx;
-            const size = Math.max(3, Math.round((c / MAX_COUNT) * 9));
-            return (
-              <div key={i} className="flex-1 flex items-center justify-center" title={`${MONTHS[i]}: ${c}件`}>
-                <div
-                  className={`rounded-full transition-colors ${
-                    inRange ? "bg-blue-500" : "bg-gray-300"
-                  }`}
-                  style={{ width: size, height: size }}
-                />
-              </div>
-            );
-          })}
-        </div>
-        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
-        <div className="relative h-0 mt-1">
-          <div
-            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
-        {/* 丸ポチ */}
-        <div className="absolute inset-x-0 bottom-0 h-5">
-          <DualSlider
-            fromIdx={fromIdx}
-            toIdx={toIdx}
-            setFromIdx={setFromIdx}
-            setToIdx={setToIdx}
-          />
-        </div>
+      <div className="flex items-center gap-[2px] h-8">
+        {COUNTS.map((c, i) => {
+          const inRange = i >= fromIdx && i <= toIdx;
+          const size = Math.max(3, Math.round((c / MAX_COUNT) * 9));
+          return (
+            <div key={i} className="flex-1 flex items-center justify-center" title={`${MONTHS[i]}: ${c}件`}>
+              <div
+                className={`rounded-full transition-colors ${
+                  inRange ? "bg-blue-500" : "bg-gray-300"
+                }`}
+                style={{ width: size, height: size }}
+              />
+            </div>
+          );
+        })}
       </div>
+      {/* スライダー（丸ポチ + 青ライン）をチャート直下にベタ付け */}
+      <SliderBar
+        fromIdx={fromIdx}
+        toIdx={toIdx}
+        setFromIdx={setFromIdx}
+        setToIdx={setToIdx}
+      />
 
       <Footer
         onReset={() => {
