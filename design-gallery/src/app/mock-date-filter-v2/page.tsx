@@ -307,7 +307,17 @@ function VariantHistogram() {
             );
           })}
         </div>
-        {/* 丸ポチだけ（トラックなし）、ビズのベースラインに浮かべる */}
+        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
+        <div className="relative h-0 mt-1">
+          <div
+            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
+            style={{
+              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
+              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
+            }}
+          />
+        </div>
+        {/* 丸ポチ */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
@@ -402,7 +412,14 @@ function VariantArea() {
           />
         </svg>
 
-        {/* 丸ポチだけ（トラックなし）、ビズのベースラインに浮かべる */}
+        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
+        <div className="relative h-0 mt-1">
+          <div
+            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
+            style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
+          />
+        </div>
+        {/* 丸ポチ */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
@@ -454,7 +471,17 @@ function VariantHeatmap() {
           })}
         </div>
 
-        {/* 丸ポチだけ（トラックなし）、帯のすぐ下に浮かべる */}
+        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
+        <div className="relative h-0 mt-2">
+          <div
+            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
+            style={{
+              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
+              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
+            }}
+          />
+        </div>
+        {/* 丸ポチ */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
@@ -516,7 +543,17 @@ function VariantHistogramPlus() {
             );
           })}
         </div>
-        {/* 丸ポチだけ（トラックなし） */}
+        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
+        <div className="relative h-0 mt-1">
+          <div
+            className="absolute h-[2px] bg-blue-600 rounded-full transition-all"
+            style={{
+              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
+              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
+            }}
+          />
+        </div>
+        {/* 丸ポチ */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
@@ -584,7 +621,17 @@ function VariantDots() {
             );
           })}
         </div>
-        {/* 丸ポチだけ（トラックなし） */}
+        {/* 選択範囲を示す青いライン（これがスライダーのトラック役） */}
+        <div className="relative h-0 mt-1">
+          <div
+            className="absolute h-[2px] bg-blue-500 rounded-full transition-all"
+            style={{
+              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
+              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
+            }}
+          />
+        </div>
+        {/* 丸ポチ */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
