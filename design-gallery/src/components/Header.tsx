@@ -18,6 +18,9 @@ interface HeaderProps {
   eagleLastSyncAt: string | null;
   eagleItemCount: number;
   onEagleRefresh: () => void;
+  // Eagle重複の表示/非表示トグル
+  hideEagleDuplicates: boolean;
+  onToggleHideEagleDuplicates: () => void;
   // 確認済みリセット
   starredCount: number;
   onClearAllStarred: () => void;
@@ -60,9 +63,12 @@ export function Header({
   eagleLastSyncAt,
   eagleItemCount,
   onEagleRefresh,
+  hideEagleDuplicates,
+  onToggleHideEagleDuplicates,
   starredCount,
   onClearAllStarred,
 }: HeaderProps) {
+  void onEagleRefresh; // Eagleの再取得はリロードボタン経由（ページ全体リロード）に集約
   // Eagleステータスの見せ方
   const eagleDotColor =
     eagleStatus === "live"
@@ -140,12 +146,17 @@ export function Header({
 
       {/* スペーサー */}
       <div className="ml-auto flex items-center gap-1.5">
-        {/* Eagle連携ステータス（重複非表示は常時ONなのでトグルは廃止、状態表示＋リロードのみ） */}
+        {/* Eagle連携ステータス + 重複非表示トグル（クリックでON/OFF切替） */}
         <button
-          onClick={onEagleRefresh}
-          className="h-8 inline-flex items-center gap-2 px-2.5 rounded-lg border border-border bg-bg-primary text-[12px] text-text-secondary hover:text-text-primary hover:border-accent/40 transition-colors"
-          title={eagleStatusText}
-          aria-label={`Eagle同期 - ${eagleStatusText}`}
+          onClick={onToggleHideEagleDuplicates}
+          className={`h-8 inline-flex items-center gap-2 px-2.5 rounded-lg border text-[12px] transition-colors ${
+            hideEagleDuplicates
+              ? "border-accent/50 bg-accent/10 text-accent hover:bg-accent/15"
+              : "border-border bg-bg-primary text-text-secondary hover:text-text-primary hover:border-accent/40"
+          }`}
+          title={`${eagleStatusText}\nクリックでEagle重複の${hideEagleDuplicates ? "表示" : "非表示"}を切替`}
+          aria-label={`Eagle重複の表示切替 - 現在${hideEagleDuplicates ? "非表示" : "表示"}中`}
+          aria-pressed={hideEagleDuplicates}
         >
           <span
             className={`w-2 h-2 rounded-full transition-colors ${
@@ -154,6 +165,19 @@ export function Header({
             style={{ backgroundColor: eagleDotColor }}
           />
           <span className="font-medium">Eagle</span>
+          {/* ミニトグルスイッチ */}
+          <span
+            className={`relative w-6 h-3.5 rounded-full transition-colors ${
+              hideEagleDuplicates ? "bg-accent" : "bg-border"
+            }`}
+            aria-hidden="true"
+          >
+            <span
+              className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white shadow-sm transition-transform ${
+                hideEagleDuplicates ? "translate-x-[13px]" : "translate-x-0.5"
+              }`}
+            />
+          </span>
         </button>
 
         {/* 手動リロード */}

@@ -107,6 +107,8 @@ export default function Home() {
         eagleLastSyncAt={eagle.lastSyncAt}
         eagleItemCount={eagle.itemCount}
         onEagleRefresh={() => void eagle.refresh()}
+        hideEagleDuplicates={store.hideEagleDuplicates}
+        onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
         starredCount={store.starredCount}
         onClearAllStarred={store.clearAllStarred}
       />
@@ -117,7 +119,6 @@ export default function Home() {
         onOpenExcluded={() => setShowEagleExcluded(true)}
         visible={store.eagleExcludedSites.length > 0}
         hideEagleDuplicates={store.hideEagleDuplicates}
-        onToggleHide={store.toggleHideEagleDuplicates}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}
