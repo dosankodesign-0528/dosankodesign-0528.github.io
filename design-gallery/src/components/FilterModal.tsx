@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   FilterState,
   SortOrder,
   SiteSignal,
   SIGNAL_LABELS,
 } from "@/types";
-import { dateRange as globalDateRange } from "@/data/load-sites";
+import { allSites, dateRange as globalDateRange } from "@/data/load-sites";
 
 interface FilterModalProps {
   filter: FilterState;
@@ -52,10 +52,59 @@ export function FilterModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const allMonths = generateMonths(globalDateRange[0], globalDateRange[1]);
+  const allMonths = useMemo(
+    () => generateMonths(globalDateRange[0], globalDateRange[1]),
+    []
+  );
   const fromIdx = Math.max(0, allMonths.indexOf(filter.dateRange[0]));
   const toIdx = allMonths.indexOf(filter.dateRange[1]);
   const toIdxSafe = toIdx >= 0 ? toIdx : allMonths.length - 1;
+
+  // 月別件数（ボリュームゾーン表示用）
+  const monthlyCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of allSites) {
+      if (!s.date) continue;
+      map.set(s.date, (map.get(s.date) ?? 0) + 1);
+    }
+    return allMonths.map((m) => map.get(m) ?? 0);
+  }, [allMonths]);
+  const maxCount = Math.max(1, ...monthlyCounts);
+  const selectedTotal = useMemo(() => {
+    let total = 0;
+    for (let i = fromIdx; i <= toIdxSafe; i++) total += monthlyCounts[i] ?? 0;
+    return total;
+  }, [monthlyCounts, fromIdx, toIdxSafe]);
+  const grandTotal = monthlyCounts.reduce((a, b) => a + b, 0);
+
+  // スムースなエリアチャートのSVGパス（中点経由の2次ベジェで柔らかく）
+  const areaPathD = useMemo(() => {
+    const w = 1000;
+    const h = 60;
+    const n = monthlyCounts.length;
+    if (n === 0) return "";
+    const pts = monthlyCounts.map((c, i) => {
+      const x = n === 1 ? w / 2 : (i / (n - 1)) * w;
+      const y = h - (c / maxCount) * h;
+      return { x, y };
+    });
+    let d = `M 0,${h} L ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const midX = (prev.x + curr.x) / 2;
+      d += ` Q ${midX.toFixed(2)},${prev.y.toFixed(2)} ${(
+        (midX + curr.x) /
+        2
+      ).toFixed(2)},${((prev.y + curr.y) / 2).toFixed(2)}`;
+    }
+    d += ` L ${w},${pts[pts.length - 1].y.toFixed(2)} L ${w},${h} Z`;
+    return d;
+  }, [monthlyCounts, maxCount]);
+
+  const leftPct = allMonths.length > 1 ? (fromIdx / (allMonths.length - 1)) * 100 : 0;
+  const rightPct =
+    allMonths.length > 1 ? (toIdxSafe / (allMonths.length - 1)) * 100 : 100;
 
   const toggleSignal = (sig: SiteSignal) => {
     const has = filter.signals.includes(sig);
@@ -155,64 +204,86 @@ export function FilterModal({
             </div>
           </section>
 
-          {/* 日付 */}
+          {/* 日付レンジ（スムースなエリアチャート + デュアルハンドル） */}
           <section>
-            <h3 className="text-[11px] uppercase tracking-wider text-text-secondary mb-2">
-              日付レンジ
-            </h3>
-            <div className="text-[13px] text-text-primary font-medium mb-3">
-              {filter.dateRange[0]} — {filter.dateRange[1]}
-            </div>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-[10px] text-text-secondary uppercase">
-                  From
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={allMonths.length - 1}
-                  value={fromIdx}
-                  onChange={(e) => {
-                    const idx = Number(e.target.value);
-                    const newFrom = allMonths[idx];
-                    if (newFrom <= filter.dateRange[1]) {
-                      updateFilter({
-                        dateRange: [newFrom, filter.dateRange[1]],
-                      });
-                    }
-                  }}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-text-secondary uppercase">
-                  To
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={allMonths.length - 1}
-                  value={toIdxSafe}
-                  onChange={(e) => {
-                    const idx = Number(e.target.value);
-                    const newTo = allMonths[idx];
-                    if (newTo >= filter.dateRange[0]) {
-                      updateFilter({
-                        dateRange: [filter.dateRange[0], newTo],
-                      });
-                    }
-                  }}
-                  className="w-full"
-                />
+            <div className="flex items-end justify-between mb-2">
+              <h3 className="text-[11px] uppercase tracking-wider text-text-secondary">
+                日付レンジ
+              </h3>
+              <div className="flex items-baseline gap-3">
+                <span className="text-[11px] text-text-secondary tabular-nums">
+                  {selectedTotal.toLocaleString()} / {grandTotal.toLocaleString()} 件
+                </span>
+                <span className="text-[13px] font-semibold text-text-primary tabular-nums">
+                  {allMonths[fromIdx]} — {allMonths[toIdxSafe]}
+                </span>
               </div>
             </div>
-            <button
-              onClick={() => updateFilter({ dateRange: globalDateRange })}
-              className="mt-2 text-[11px] text-accent hover:text-accent/80"
+
+            {/* エリアチャート */}
+            <svg
+              viewBox="0 0 1000 60"
+              preserveAspectRatio="none"
+              className="w-full h-12 block overflow-visible"
             >
-              日付をリセット
-            </button>
+              <defs>
+                <linearGradient id="fm-area-selected" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.05" />
+                </linearGradient>
+                <linearGradient id="fm-area-muted" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#9ca3af" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#9ca3af" stopOpacity="0.05" />
+                </linearGradient>
+                <clipPath id="fm-clip-selected">
+                  <rect
+                    x={leftPct * 10}
+                    y={0}
+                    width={(rightPct - leftPct) * 10}
+                    height={60}
+                  />
+                </clipPath>
+                <clipPath id="fm-clip-muted-left">
+                  <rect x={0} y={0} width={leftPct * 10} height={60} />
+                </clipPath>
+                <clipPath id="fm-clip-muted-right">
+                  <rect x={rightPct * 10} y={0} width={1000 - rightPct * 10} height={60} />
+                </clipPath>
+              </defs>
+              <path d={areaPathD} fill="url(#fm-area-muted)" clipPath="url(#fm-clip-muted-left)" />
+              <path d={areaPathD} fill="url(#fm-area-muted)" clipPath="url(#fm-clip-muted-right)" />
+              <path d={areaPathD} fill="url(#fm-area-selected)" clipPath="url(#fm-clip-selected)" />
+            </svg>
+
+            {/* スライダー（丸ポチ + 青ライン一体型、チャート直下にベタ付け） */}
+            <DateSliderBar
+              totalMonths={allMonths.length}
+              fromIdx={fromIdx}
+              toIdx={toIdxSafe}
+              onFromChange={(v) => {
+                const newFrom = allMonths[v];
+                if (newFrom <= filter.dateRange[1]) {
+                  updateFilter({ dateRange: [newFrom, filter.dateRange[1]] });
+                }
+              }}
+              onToChange={(v) => {
+                const newTo = allMonths[v];
+                if (newTo >= filter.dateRange[0]) {
+                  updateFilter({ dateRange: [filter.dateRange[0], newTo] });
+                }
+              }}
+            />
+
+            <div className="flex items-center justify-between text-[10px] text-text-secondary tabular-nums mt-2">
+              <span>{allMonths[0]}</span>
+              <button
+                onClick={() => updateFilter({ dateRange: globalDateRange })}
+                className="text-accent hover:underline"
+              >
+                日付をリセット
+              </button>
+              <span>{allMonths[allMonths.length - 1]}</span>
+            </div>
           </section>
 
           {/* タグ（Framer / Studio / Production） */}
@@ -292,6 +363,120 @@ export function FilterModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * 日付レンジ用のデュアルハンドル・スライダーバー。
+ * - ネイティブ range の黒トラックを全ブラウザで完全無効化
+ * - 2つのつまみの間に選択範囲を示す青ライン（transition なし＝リアルタイム追従）
+ */
+function DateSliderBar({
+  totalMonths,
+  fromIdx,
+  toIdx,
+  onFromChange,
+  onToChange,
+}: {
+  totalMonths: number;
+  fromIdx: number;
+  toIdx: number;
+  onFromChange: (v: number) => void;
+  onToChange: (v: number) => void;
+}) {
+  const leftPct = totalMonths > 1 ? (fromIdx / (totalMonths - 1)) * 100 : 0;
+  const rightPct = totalMonths > 1 ? (toIdx / (totalMonths - 1)) * 100 : 100;
+  return (
+    <div className="relative h-[18px] select-none">
+      {/* 青ライン（つまみの間） */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 h-[2px] bg-accent rounded-full pointer-events-none"
+        style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
+      />
+      <input
+        type="range"
+        min={0}
+        max={totalMonths - 1}
+        value={fromIdx}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (v <= toIdx) onFromChange(v);
+        }}
+        className="fm-date-range"
+        style={{ zIndex: fromIdx > totalMonths - 2 ? 5 : 3 }}
+      />
+      <input
+        type="range"
+        min={0}
+        max={totalMonths - 1}
+        value={toIdx}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (v >= fromIdx) onToChange(v);
+        }}
+        className="fm-date-range"
+        style={{ zIndex: 4 }}
+      />
+      <style jsx>{`
+        .fm-date-range {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 18px;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          background: transparent !important;
+          outline: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+          pointer-events: none;
+        }
+        .fm-date-range::-webkit-slider-runnable-track {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          height: 18px;
+          border: none;
+          box-shadow: none;
+        }
+        .fm-date-range::-moz-range-track {
+          background: transparent;
+          height: 18px;
+          border: none;
+          box-shadow: none;
+        }
+        .fm-date-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: white;
+          border: 2px solid var(--accent);
+          cursor: grab;
+          pointer-events: auto;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        .fm-date-range::-webkit-slider-thumb:active {
+          cursor: grabbing;
+        }
+        .fm-date-range::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: white;
+          border: 2px solid var(--accent);
+          cursor: grab;
+          pointer-events: auto;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+        .fm-date-range::-moz-focus-outer {
+          border: 0;
+        }
+      `}</style>
     </div>
   );
 }
