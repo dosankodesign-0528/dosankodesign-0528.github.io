@@ -111,11 +111,13 @@ export default function Home() {
         onClearAllStarred={store.clearAllStarred}
       />
 
-      {/* Eagle重複セカンダリバー（Eagle重複は常時非表示。透明性のため件数とリンクだけ残す） */}
+      {/* Eagle重複セカンダリバー（トグルで ON/OFF 切替可能） */}
       <EagleExcludedBar
         excludedCount={store.eagleExcludedSites.length}
         onOpenExcluded={() => setShowEagleExcluded(true)}
         visible={store.eagleExcludedSites.length > 0}
+        hideEagleDuplicates={store.hideEagleDuplicates}
+        onToggleHide={store.toggleHideEagleDuplicates}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}

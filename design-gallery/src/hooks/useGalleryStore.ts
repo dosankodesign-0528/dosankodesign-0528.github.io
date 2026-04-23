@@ -13,6 +13,7 @@ import { normalizeUrl } from "@/lib/eagle";
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
+const HIDE_EAGLE_KEY = "design-gallery:hide-eagle-dupes";
 // 2026-04: 大規模スクレイプ後にユーザー依頼で全starredを一度だけリセット。
 // 値がtrueになっているブラウザは以後リセットしない（再度消したくなったらキー名を変える）
 const STARRED_MIGRATION_KEY = "design-gallery:starred-cleared:2026-04";
@@ -39,6 +40,9 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   const { eagleUrls } = options;
   const [filter, setFilter] = useState<FilterState>(initialFilter);
   const [columns, setColumns] = useState(4);
+  // Eagle 重複を隠すかどうか（ユーザー要望で再導入）。
+  // デフォルト true = 従来通り非表示。false にすると全部出てくる。
+  const [hideEagleDuplicates, setHideEagleDuplicates] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
 
@@ -65,6 +69,11 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
         if (Number.isFinite(n) && n >= 2 && n <= 10) setColumns(n);
       }
     } catch {}
+    try {
+      const rawHide = window.localStorage.getItem(HIDE_EAGLE_KEY);
+      // 未設定 or "true" ならデフォルトの true を維持、"false" の時だけ false
+      if (rawHide === "false") setHideEagleDuplicates(false);
+    } catch {}
     setPersistLoaded(true);
   }, []);
 
@@ -81,6 +90,13 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       window.localStorage.setItem(COLUMNS_KEY, String(columns));
     } catch {}
   }, [columns, persistLoaded]);
+
+  useEffect(() => {
+    if (!persistLoaded) return;
+    try {
+      window.localStorage.setItem(HIDE_EAGLE_KEY, String(hideEagleDuplicates));
+    } catch {}
+  }, [hideEagleDuplicates, persistLoaded]);
 
   // 確認済み(star)状態の永続化
   // - 真実の源は localStorage の ID 集合。scraped-sites.json 側の starred は常に false なので、
@@ -223,25 +239,28 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     });
   }, [baseFiltered, eagleUrls, normalizedUrlBySite]);
 
-  // 実際にギャラリーへ出すサイト（Eagle重複は常に除外）
+  // 実際にギャラリーへ出すサイト。
+  // hideEagleDuplicates=true のとき Eagle 重複を除外、false なら全部出す。
   const filteredSites = useMemo<SiteEntry[]>(() => {
+    if (!hideEagleDuplicates) return baseFiltered;
     if (!eagleUrls || eagleUrls.size === 0) return baseFiltered;
     return baseFiltered.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     });
-  }, [baseFiltered, eagleUrls, normalizedUrlBySite]);
+  }, [baseFiltered, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
-  // 分母に使う「生きていてEagleにも入ってない」全サイト数。
-  // Header の「X sites」表示やフィルタ件数比較の母数として使う。
+  // 分母に使う「生きてる」全サイト数。
+  // hideEagleDuplicates=true の時は Eagle 重複を母数から外し、false の時は含める。
   const totalCount = useMemo<number>(() => {
     const alive = sites.filter((s) => !s.isDead);
+    if (!hideEagleDuplicates) return alive.length;
     if (!eagleUrls || eagleUrls.size === 0) return alive.length;
     return alive.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     }).length;
-  }, [sites, eagleUrls, normalizedUrlBySite]);
+  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // シグナル（Framer / スタジオ / プロダクション）ごとの件数。
   // FilterModal に渡して「何件ヒットしているか」の目安表示に使う。
@@ -250,7 +269,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     const counts: Partial<Record<SiteSignal, number>> = {};
     const aliveNonEagle = sites.filter((s) => {
       if (s.isDead) return false;
-      if (eagleUrls && eagleUrls.size > 0) {
+      if (hideEagleDuplicates && eagleUrls && eagleUrls.size > 0) {
         const n = normalizedUrlBySite.get(s.id);
         if (n && eagleUrls.has(n)) return false;
       }
@@ -263,7 +282,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       }
     }
     return counts;
-  }, [sites, eagleUrls, normalizedUrlBySite]);
+  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
   const toggleStar = useCallback((id: string) => {
@@ -408,5 +427,9 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     eagleExcludedSites,
     totalCount,
     signalCounts,
+    hideEagleDuplicates,
+    toggleHideEagleDuplicates: () =>
+      setHideEagleDuplicates((v) => !v),
+    setHideEagleDuplicates,
   };
 }

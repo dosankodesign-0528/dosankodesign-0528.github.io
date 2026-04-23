@@ -3,26 +3,33 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Eagle重複で非表示中の件数を案内する「セカンダリバー」。
+ * Eagle重複を扱うセカンダリバー。
  *
  * - ヘッダーのすぐ下、FilterBar の上に配置する。
  * - `visible=false` でも DOM は残して、max-height と opacity でスッと出入りさせる。
  * - 直近の excludedCount をキャッシュしておき、退場中に「0件」に切り替わらないようにする。
+ * - `hideEagleDuplicates` で「非表示中」「表示中」の文言とトグルボタンを切り替える。
  */
 
 interface EagleExcludedBarProps {
-  /** 現在 Eagle 重複で非表示になっている件数 */
+  /** Eagle 重複で「非表示 or 表示」の対象になっている件数 */
   excludedCount: number;
-  /** バー本体（または「一覧を見る」）クリック時に呼ぶ */
+  /** バーの「一覧を見る」クリック時に呼ぶ（現在の非表示一覧モーダルを開く） */
   onOpenExcluded: () => void;
   /** 表示状態。false なら max-height=0 + opacity=0 に遷移 */
   visible: boolean;
+  /** true なら Eagle 重複を非表示中、false なら表示中 */
+  hideEagleDuplicates: boolean;
+  /** ON/OFF トグル */
+  onToggleHide: () => void;
 }
 
 export function EagleExcludedBar({
   excludedCount,
   onOpenExcluded,
   visible,
+  hideEagleDuplicates,
+  onToggleHide,
 }: EagleExcludedBarProps) {
   // 退場アニメ中は直前の件数を残しておく（0件表示にならないように）
   const lastCountRef = useRef(excludedCount);
@@ -32,7 +39,6 @@ export function EagleExcludedBar({
   // 初回マウント直後は transition を無効化して「ポッ」と出るのを避ける
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    // 次フレームで有効化することで、初期状態 → visible への遷移を滑らかに
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -64,8 +70,37 @@ export function EagleExcludedBar({
         </svg>
         <span className="text-accent font-medium tabular-nums">
           Eagle重複{" "}
-          <span className="font-bold">{displayCount.toLocaleString()}</span> 件を非表示中
+          <span className="font-bold">{displayCount.toLocaleString()}</span>{" "}
+          件を{hideEagleDuplicates ? "非表示中" : "表示中"}
         </span>
+
+        {/* ON/OFF トグル */}
+        <button
+          onClick={onToggleHide}
+          tabIndex={visible ? 0 : -1}
+          className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border border-accent/40 text-accent hover:bg-accent/10 transition-colors"
+          title={
+            hideEagleDuplicates
+              ? "Eagle 重複も表示する"
+              : "Eagle 重複を非表示にする"
+          }
+        >
+          <span
+            className={`w-6 h-3 rounded-full relative transition-colors ${
+              hideEagleDuplicates ? "bg-accent" : "bg-accent/30"
+            }`}
+          >
+            <span
+              className={`absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white transition-transform ${
+                hideEagleDuplicates ? "left-0.5" : "left-[calc(100%-0.625rem-0.125rem)]"
+              }`}
+            />
+          </span>
+          <span className="text-[11px] font-medium">
+            {hideEagleDuplicates ? "隠す" : "表示"}
+          </span>
+        </button>
+
         <button
           onClick={onOpenExcluded}
           tabIndex={visible ? 0 : -1}
