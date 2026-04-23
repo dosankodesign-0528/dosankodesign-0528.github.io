@@ -349,7 +349,7 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
     <div className="h-full flex flex-col bg-[var(--color-bg)]">
       {/* ── ヘッダー ── */}
       <header className="ios-nav flex items-center h-11 px-4 flex-shrink-0 z-10">
-        <button onClick={() => router.back()} className="flex items-center gap-0.5 text-blue-500 active:opacity-60 -ml-1">
+        <button onClick={() => router.push(`/share/${shareId}`)} className="flex items-center gap-0.5 text-blue-500 active:opacity-60 -ml-1">
           <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
           <span className="text-[17px]">戻る</span>
         </button>
