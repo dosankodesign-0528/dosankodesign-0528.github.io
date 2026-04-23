@@ -77,6 +77,15 @@ export const TASTE_LABELS: Record<DesignTaste, string> = {
   photo: "写真メイン",
 };
 
+/** 制作ツールや運営主体のタグ。enrichment スクリプトが埋める。 */
+export type SiteSignal = "framer" | "studio" | "production";
+
+export const SIGNAL_LABELS: Record<SiteSignal, string> = {
+  framer: "Framer で作られたサイト",
+  studio: "スタジオが作ったサイト",
+  production: "Web制作会社・プロダクション",
+};
+
 /** メインのサイトデータ */
 export interface SiteEntry {
   id: string;
@@ -94,6 +103,8 @@ export interface SiteEntry {
   firstSeen?: string; // ISO datetime, 初めて取得した時刻
   isDead?: boolean; // リンク切れならtrue（check-dead-links スクリプトが埋める）
   lastCheckedAt?: string; // リンク疎通の最終チェック時刻 ISO
+  signals?: SiteSignal[]; // enrich-tags.ts が埋めるタグ（Framer/studio/production）
+  enrichedAt?: string; // signals を最後に検出した時刻 ISO
 }
 
 /** ソート順 */
@@ -113,4 +124,6 @@ export interface FilterState {
   starredOnly: boolean;
   sortOrder: SortOrder;
   viewMode: ViewMode;
+  /** 必要な信号（AND条件）。例: ["framer"] なら Framer 製のみ。 */
+  signals: SiteSignal[];
 }

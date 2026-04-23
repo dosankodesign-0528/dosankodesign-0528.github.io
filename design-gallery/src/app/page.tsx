@@ -125,6 +125,7 @@ export default function Home() {
         toggleSource={store.toggleSource}
         onClearSources={() => store.updateFilter({ sources: [] })}
         resetFilter={store.resetFilter}
+        signalCounts={store.signalCounts}
       />
 
       {/* ギャラリー */}

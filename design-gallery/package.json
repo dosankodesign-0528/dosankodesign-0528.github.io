@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "scrape": "tsx scripts/scraper.ts",
-    "check-links": "tsx scripts/check-dead-links.ts"
+    "check-links": "tsx scripts/check-dead-links.ts",
+    "enrich-tags": "tsx scripts/enrich-tags.ts"
   },
   "dependencies": {
     "cheerio": "^1.1.0",

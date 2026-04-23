@@ -5,6 +5,7 @@ import {
   SiteEntry,
   SourceSite,
   FilterState,
+  SiteSignal,
 } from "@/types";
 import { allSites, dateRange } from "@/data/load-sites";
 import { normalizeUrl } from "@/lib/eagle";
@@ -26,6 +27,7 @@ const initialFilter: FilterState = {
   starredOnly: false,
   sortOrder: "newest",
   viewMode: "unchecked",
+  signals: [],
 };
 
 interface UseGalleryStoreOptions {
@@ -179,6 +181,12 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
         return false;
       }
       if (filter.starredOnly && !site.starred) return false;
+      // signals: 選択された全シグナルを持つサイトだけを通す（AND条件）
+      if (filter.signals.length > 0) {
+        const mySignals = site.signals ?? [];
+        const hasAll = filter.signals.every((sig) => mySignals.includes(sig));
+        if (!hasAll) return false;
+      }
       return true;
     });
 
@@ -233,6 +241,28 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     }).length;
+  }, [sites, eagleUrls, normalizedUrlBySite]);
+
+  // シグナル（Framer / スタジオ / プロダクション）ごとの件数。
+  // FilterModal に渡して「何件ヒットしているか」の目安表示に使う。
+  // 生きてて Eagle にも入ってない母集団で数える。
+  const signalCounts = useMemo<Partial<Record<SiteSignal, number>>>(() => {
+    const counts: Partial<Record<SiteSignal, number>> = {};
+    const aliveNonEagle = sites.filter((s) => {
+      if (s.isDead) return false;
+      if (eagleUrls && eagleUrls.size > 0) {
+        const n = normalizedUrlBySite.get(s.id);
+        if (n && eagleUrls.has(n)) return false;
+      }
+      return true;
+    });
+    for (const s of aliveNonEagle) {
+      const sigs = s.signals ?? [];
+      for (const sig of sigs) {
+        counts[sig] = (counts[sig] ?? 0) + 1;
+      }
+    }
+    return counts;
   }, [sites, eagleUrls, normalizedUrlBySite]);
 
   // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
@@ -377,5 +407,6 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     starredCount: starredIds.size,
     eagleExcludedSites,
     totalCount,
+    signalCounts,
   };
 }
