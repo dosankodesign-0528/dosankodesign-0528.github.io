@@ -39,6 +39,10 @@ interface ScrapedSite {
   firstSeen?: string; // ISO datetime, 初めて取得した時刻
   isDead?: boolean;
   lastCheckedAt?: string;
+  // 以下は enrich-tags.ts が埋める領域。スクレイプ時点で確実に分かる場合は
+  // ここで先出ししておく（例: Awwwards の Framer 棚から来たものは framer 確定）
+  signals?: string[];
+  enrichedAt?: string;
 }
 
 // ============================================================
@@ -404,7 +408,14 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
  *   タイトル・サムネイル・タグ・掲載日（Unix秒）が一撃で取れる。外部URLは
  *   figure-rollover__bt[href] から取得（awwwardsページではなく、実サイトのURL）。
  */
-const AWWWARDS_SECTIONS = [
+/**
+ * Awwwards のセクション定義。
+ * - Framer は「Made with Framer」専用棚。ここから来た結果は必ず framer シグナル確定。
+ *   SOTD / Developer と重複したらこちらが先勝ち（seenSlugs）で framer シグナルを保持。
+ * - 順序重要：Framer を先頭に置いて先勝ちさせる。
+ */
+const AWWWARDS_SECTIONS: { name: string; path: string; forceSignals?: string[] }[] = [
+  { name: "Framer", path: "framer", forceSignals: ["framer"] },
   { name: "SOTD", path: "sites_of_the_day" },
   { name: "Developer", path: "developer" },
 ];
@@ -512,6 +523,8 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
             taste: [],
             date: dateStr,
             starred: false,
+            // Framer 棚由来なら framer シグナルを先出し（enrich-tags が後で上書きしない）
+            ...(section.forceSignals ? { signals: [...section.forceSignals] } : {}),
           });
           pageAdded++;
         });

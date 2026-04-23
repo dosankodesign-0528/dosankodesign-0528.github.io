@@ -70,9 +70,20 @@ const LIMIT = (() => {
 // 判定ルール
 // ============================================================
 
-/** Framer 製かどうか */
-function detectFramer(html: string, finalUrl: string): boolean {
-  // ドメインが *.framer.website または framer.com 系
+/** Framer 製かどうか（HTML + レスポンスヘッダー） */
+function detectFramer(
+  html: string,
+  finalUrl: string,
+  headers: Record<string, string>
+): boolean {
+  // --- B: レスポンスヘッダーで判定（最強）----
+  // Framer ホスティングなら server: Framer が返る。CDN 経由でもたまに残る。
+  const server = (headers["server"] || "").toLowerCase();
+  const poweredBy = (headers["x-powered-by"] || "").toLowerCase();
+  if (server.includes("framer")) return true;
+  if (poweredBy.includes("framer")) return true;
+
+  // --- A 経由: ドメインが *.framer.website / *.framer.app ----
   try {
     const host = new URL(finalUrl).hostname.toLowerCase();
     if (host.endsWith(".framer.website") || host.endsWith(".framer.app")) {
@@ -81,21 +92,26 @@ function detectFramer(html: string, finalUrl: string): boolean {
   } catch {
     // ignore
   }
+
+  // --- C: HTML フィンガープリント（パターン拡充）----
   // <meta name="generator" content="Framer">
   if (/<meta[^>]+name=["']generator["'][^>]+content=["'][^"']*Framer/i.test(html)) {
     return true;
   }
-  // 静的アセット CDN
-  if (/https?:\/\/[^"'\s]*\.?framer\.com\//i.test(html)) {
-    return true;
-  }
-  if (/https?:\/\/framerusercontent\.com\//i.test(html)) {
-    return true;
-  }
-  // data-framer-hydrate-v2 など Framer ランタイム属性
-  if (/data-framer-(hydrate|name|component)/i.test(html)) {
-    return true;
-  }
+  // アセット CDN
+  if (/https?:\/\/[^"'\s]*\.?framer\.com\//i.test(html)) return true;
+  if (/https?:\/\/framerusercontent\.com\//i.test(html)) return true;
+  if (/https?:\/\/(?:[a-z0-9-]+\.)?framerstatic\.com\//i.test(html)) return true;
+  // Framer ランタイム属性 / ハイドレーションマーカー
+  if (/data-framer-(hydrate|name|component|root|appear)/i.test(html)) return true;
+  if (/__framer_hydration_data/i.test(html)) return true;
+  if (/id=["']__framer__["']/i.test(html)) return true;
+  if (/class=["'][^"']*\bframer-[^"']*["']/i.test(html)) return true;
+  // modulepreload に framer CDN
+  if (/<link[^>]+rel=["']modulepreload["'][^>]*framer/i.test(html)) return true;
+  // og:image が framer hosting 特有
+  if (/property=["']og:image["'][^>]*framerusercontent/i.test(html)) return true;
+
   return false;
 }
 
@@ -179,7 +195,9 @@ function detectProduction(
 // フェッチ
 // ============================================================
 
-async function fetchWithLimit(url: string): Promise<{ html: string; finalUrl: string } | null> {
+async function fetchWithLimit(
+  url: string
+): Promise<{ html: string; finalUrl: string; headers: Record<string, string> } | null> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), TIMEOUT_MS);
   try {
@@ -193,6 +211,14 @@ async function fetchWithLimit(url: string): Promise<{ html: string; finalUrl: st
       },
     });
     if (!res.ok || !res.body) return null;
+
+    // 気になるヘッダーだけ抜き出す（Framer検出用）
+    const relevantHeaders: Record<string, string> = {};
+    const wanted = ["server", "x-powered-by", "x-framer-cache-status"];
+    for (const k of wanted) {
+      const v = res.headers.get(k);
+      if (v) relevantHeaders[k] = v;
+    }
 
     // ボディを MAX_HTML_BYTES まで読む
     const reader = res.body.getReader();
@@ -216,7 +242,7 @@ async function fetchWithLimit(url: string): Promise<{ html: string; finalUrl: st
     }
     // 文字コードは最悪UTF-8決め打ち。Framer系もJP系もUTF-8多数なので許容
     const html = new TextDecoder("utf-8", { fatal: false }).decode(merged);
-    return { html, finalUrl: res.url || url };
+    return { html, finalUrl: res.url || url, headers: relevantHeaders };
   } catch {
     return null;
   } finally {
@@ -296,18 +322,26 @@ async function main() {
         return;
       }
       okCount++;
-      const { html, finalUrl } = fetched;
+      const { html, finalUrl, headers } = fetched;
       const $ = cheerio.load(html);
 
-      const signals: Signal[] = [];
-      if (detectFramer(html, finalUrl)) signals.push("framer");
-      if (detectStudio($, finalUrl)) signals.push("studio");
-      if (detectProduction($, finalUrl)) signals.push("production");
+      const detected: Signal[] = [];
+      if (detectFramer(html, finalUrl, headers)) detected.push("framer");
+      if (detectStudio($, finalUrl)) detected.push("studio");
+      if (detectProduction($, finalUrl)) detected.push("production");
 
-      for (const s of signals) tally[s]++;
+      // 既存 signals（スクレイパが Framer 棚から先出ししたものなど）は温存。
+      // 検出結果と UNION する。
+      const unionSet = new Set<Signal>([
+        ...((site.signals ?? []) as Signal[]),
+        ...detected,
+      ]);
+      const finalSignals: Signal[] = [...unionSet];
+
+      for (const s of finalSignals) tally[s]++;
 
       // 元配列を直接書き換える
-      site.signals = signals;
+      site.signals = finalSignals;
       site.enrichedAt = new Date().toISOString();
     },
     CONCURRENCY
