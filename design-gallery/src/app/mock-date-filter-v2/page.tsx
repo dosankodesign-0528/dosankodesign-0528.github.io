@@ -289,9 +289,9 @@ function VariantHistogram() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative">
+      <div className="relative pb-3">
         {/* ヒストグラム背景 */}
-        <div className="flex items-end gap-[2px] h-12 mb-[-2px]">
+        <div className="flex items-end gap-[2px] h-12">
           {COUNTS.map((c, i) => {
             const inRange = i >= fromIdx && i <= toIdx;
             const h = Math.max(4, (c / MAX_COUNT) * 48);
@@ -307,26 +307,14 @@ function VariantHistogram() {
             );
           })}
         </div>
-        {/* 範囲トラック */}
-        <div className="relative h-1 bg-gray-200 rounded-full">
-          <div
-            className="absolute h-1 bg-blue-500 rounded-full"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
+        {/* 丸ポチだけ（トラックなし）、ビズのベースラインに浮かべる */}
+        <div className="absolute inset-x-0 bottom-0 h-5">
+          <DualSlider
+            fromIdx={fromIdx}
+            toIdx={toIdx}
+            setFromIdx={setFromIdx}
+            setToIdx={setToIdx}
           />
-        </div>
-        {/* スライダー（トラックの上に被せる） */}
-        <div className="absolute inset-x-0 -top-[8px] bottom-0">
-          <div className="absolute left-0 right-0 bottom-0">
-            <DualSlider
-              fromIdx={fromIdx}
-              toIdx={toIdx}
-              setFromIdx={setFromIdx}
-              setToIdx={setToIdx}
-            />
-          </div>
         </div>
       </div>
 
@@ -374,12 +362,12 @@ function VariantArea() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative">
+      <div className="relative pb-3">
         {/* エリアチャート */}
         <svg
           viewBox="0 0 1000 60"
           preserveAspectRatio="none"
-          className="w-full h-12 mb-[-2px] overflow-visible"
+          className="w-full h-12 overflow-visible"
         >
           <defs>
             <linearGradient id="area-grad-selected" x1="0" y1="0" x2="0" y2="1">
@@ -414,22 +402,14 @@ function VariantArea() {
           />
         </svg>
 
-        {/* 範囲トラック */}
-        <div className="relative h-1 bg-gray-200 rounded-full">
-          <div
-            className="absolute h-1 bg-blue-500 rounded-full"
-            style={{ left: `${leftPct}%`, right: `${100 - rightPct}%` }}
+        {/* 丸ポチだけ（トラックなし）、ビズのベースラインに浮かべる */}
+        <div className="absolute inset-x-0 bottom-0 h-5">
+          <DualSlider
+            fromIdx={fromIdx}
+            toIdx={toIdx}
+            setFromIdx={setFromIdx}
+            setToIdx={setToIdx}
           />
-        </div>
-        <div className="absolute inset-x-0 -top-[8px] bottom-0">
-          <div className="absolute left-0 right-0 bottom-0">
-            <DualSlider
-              fromIdx={fromIdx}
-              toIdx={toIdx}
-              setFromIdx={setFromIdx}
-              setToIdx={setToIdx}
-            />
-          </div>
         </div>
       </div>
 
@@ -474,16 +454,7 @@ function VariantHeatmap() {
           })}
         </div>
 
-        {/* 範囲トラック（帯のすぐ下） */}
-        <div className="relative h-1 bg-gray-200 rounded-full mt-3">
-          <div
-            className="absolute h-1 bg-blue-500 rounded-full"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
+        {/* 丸ポチだけ（トラックなし）、帯のすぐ下に浮かべる */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
@@ -528,8 +499,8 @@ function VariantHistogramPlus() {
         </div>
       </div>
 
-      <div className="relative">
-        <div className="flex items-end gap-[2px] h-14 mb-[-2px]">
+      <div className="relative pb-3">
+        <div className="flex items-end gap-[2px] h-14">
           {COUNTS.map((c, i) => {
             const inRange = i >= fromIdx && i <= toIdx;
             const h = Math.max(4, (c / MAX_COUNT) * 56);
@@ -545,24 +516,14 @@ function VariantHistogramPlus() {
             );
           })}
         </div>
-        <div className="relative h-1 bg-gray-200 rounded-full">
-          <div
-            className="absolute h-1 bg-blue-600 rounded-full"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
+        {/* 丸ポチだけ（トラックなし） */}
+        <div className="absolute inset-x-0 bottom-0 h-5">
+          <DualSlider
+            fromIdx={fromIdx}
+            toIdx={toIdx}
+            setFromIdx={setFromIdx}
+            setToIdx={setToIdx}
           />
-        </div>
-        <div className="absolute inset-x-0 -top-[8px] bottom-0">
-          <div className="absolute left-0 right-0 bottom-0">
-            <DualSlider
-              fromIdx={fromIdx}
-              toIdx={toIdx}
-              setFromIdx={setFromIdx}
-              setToIdx={setToIdx}
-            />
-          </div>
         </div>
       </div>
 
@@ -606,7 +567,7 @@ function VariantDots() {
     <div>
       <RangeHeader fromIdx={fromIdx} toIdx={toIdx} selectedTotal={selectedTotal} />
 
-      <div className="relative py-2">
+      <div className="relative py-2 pb-4">
         <div className="flex items-center gap-[2px] h-8">
           {COUNTS.map((c, i) => {
             const inRange = i >= fromIdx && i <= toIdx;
@@ -623,15 +584,7 @@ function VariantDots() {
             );
           })}
         </div>
-        <div className="relative h-1 bg-gray-200 rounded-full mt-1">
-          <div
-            className="absolute h-1 bg-blue-500 rounded-full"
-            style={{
-              left: `${(fromIdx / (MONTHS.length - 1)) * 100}%`,
-              right: `${100 - (toIdx / (MONTHS.length - 1)) * 100}%`,
-            }}
-          />
-        </div>
+        {/* 丸ポチだけ（トラックなし） */}
         <div className="absolute inset-x-0 bottom-0 h-5">
           <DualSlider
             fromIdx={fromIdx}
