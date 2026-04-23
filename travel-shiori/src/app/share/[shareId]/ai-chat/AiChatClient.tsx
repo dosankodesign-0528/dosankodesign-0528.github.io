@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Send, Loader2, Plus, Check, MapPin, Utensils, Hotel, Train, Bot, ClipboardCheck, ImagePlus, X } from 'lucide-react';
+import { ChevronLeft, Send, Loader2, Plus, Check, MapPin, Utensils, Hotel, Train, Bot, ClipboardCheck, ImagePlus, X, MessageCircle, PenSquare } from 'lucide-react';
 import { Trip, SpotType, TransportType, SPOT_CONFIG, TRANSPORT_CONFIG } from '../../../../lib/types';
 import { getTripByAnyShareId, addSpot } from '../../../../lib/storage';
 
@@ -25,6 +25,43 @@ interface ChatMessage {
   images?: string[];           // base64 data URLs
   spots?: SuggestedSpot[];
   addedSpotNames?: string[];  // しおりに追加済みのスポット名
+}
+
+interface ChatSession {
+  id: string;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
+const MAX_SESSIONS = 3;
+
+function loadSessions(key: string): ChatSession[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const arr = JSON.parse(raw) as ChatSession[];
+    return arr.filter((s) => s?.id && Array.isArray(s.messages))
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, MAX_SESSIONS);
+  } catch { return []; }
+}
+
+function sessionTitle(s: ChatSession): string {
+  const firstUser = s.messages.find((m) => m.role === 'user');
+  const text = (firstUser?.content || '(無題の会話)').replace(/\s+/g, ' ').trim();
+  return text.length > 28 ? text.slice(0, 28) + '…' : text;
+}
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'たった今';
+  if (min < 60) return `${min}分前`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}時間前`;
+  const day = Math.floor(hr / 24);
+  return `${day}日前`;
 }
 
 /** 画像をリサイズして base64 data URL を返す */
@@ -110,16 +147,10 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [readOnly, setReadOnly] = useState(false);
-  const storageKey = `ai-chat-${shareId}`;
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = sessionStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const sessionsKey = `ai-chat-sessions-${shareId}`;
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
@@ -128,15 +159,43 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // メッセージが変わったらsessionStorageに保存（画像は除外して容量節約）
+  // 起動時に過去のセッション一覧を読み込む
   useEffect(() => {
-    if (messages.length > 0) {
+    setSessions(loadSessions(sessionsKey));
+  }, [sessionsKey]);
+
+  // メッセージが変わったら現在セッションをlocalStorageに保存（画像は除外して容量節約）
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const id = sessionId || crypto.randomUUID();
+    if (!sessionId) setSessionId(id);
+
+    const toSave: ChatMessage[] = messages.map((m) => ({ ...m, images: undefined }));
+    const now = Date.now();
+    const updated: ChatSession = { id, messages: toSave, updatedAt: now };
+
+    setSessions((prev) => {
+      const filtered = prev.filter((s) => s.id !== id);
+      const next = [updated, ...filtered].slice(0, MAX_SESSIONS);
       try {
-        const toSave = messages.map((m) => ({ ...m, images: undefined }));
-        sessionStorage.setItem(storageKey, JSON.stringify(toSave));
+        localStorage.setItem(sessionsKey, JSON.stringify(next));
       } catch { /* quota exceeded — ignore */ }
-    }
-  }, [messages, storageKey]);
+      return next;
+    });
+  }, [messages, sessionId, sessionsKey]);
+
+  const handleResume = (s: ChatSession) => {
+    setSessionId(s.id);
+    setMessages(s.messages);
+  };
+
+  const handleNewChat = () => {
+    setSessionId(null);
+    setMessages([]);
+    setInput('');
+    setPendingImages([]);
+    setStreamingText('');
+  };
 
   useEffect(() => {
     getTripByAnyShareId(shareId).then((result) => {
@@ -356,7 +415,17 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
         <h1 className="flex-1 text-center text-[17px] font-semibold truncate mx-4">
           AIアシスタント
         </h1>
-        <div className="w-14" />
+        {messages.length > 0 ? (
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-1 text-blue-500 active:opacity-60 -mr-1"
+            aria-label="新しい会話を始める"
+          >
+            <PenSquare className="w-5 h-5" strokeWidth={2} />
+          </button>
+        ) : (
+          <div className="w-14" />
+        )}
       </header>
 
       {/* ── メッセージ一覧 ── */}
@@ -401,6 +470,30 @@ export default function AiChatPage({ params }: { params: Promise<{ shareId: stri
                 <span className="text-[14px] text-gray-700">空き時間を埋める提案をして</span>
               </button>
             </div>
+
+            {/* 過去の会話から再開 */}
+            {sessions.length > 0 && (
+              <div className="w-full max-w-xs mt-4">
+                <p className="text-[12px] text-gray-400 mb-2 text-left px-1">過去の会話から再開</p>
+                <div className="flex flex-col gap-2">
+                  {sessions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleResume(s)}
+                      className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 text-left shadow-sm active:scale-[0.98] transition-transform"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] text-gray-700 truncate">{sessionTitle(s)}</p>
+                        <p className="text-[11px] text-gray-400">{timeAgo(s.updatedAt)}・{s.messages.length}件</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
