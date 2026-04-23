@@ -340,10 +340,6 @@ export function FilterModal({
                 );
               })}
             </div>
-            <p className="text-[11px] text-text-secondary mt-2 leading-relaxed">
-              ※ タグは HTML を自動解析して付与しています（Framer のメタ情報、タイトル中の &ldquo;Web制作&rdquo; /
-              &ldquo;Studio&rdquo; などのキーワードを検出）。未検出の場合は 0 件表示になります。
-            </p>
           </section>
         </div>
 
