@@ -59,26 +59,31 @@ jobs:
           cp akijikan-mitsukeru-kun/favicon-32.png "_site/akijikan-mitsukeru-kun/favicon-32.png"
 
       # ---------- houmon-app ----------
-      - name: houmon-app の依存をインストール
-        working-directory: houmon-app
-        run: npm ci
-        continue-on-error: true
-
-      - name: houmon-app をビルド
-        working-directory: houmon-app
-        run: npm run build
-        continue-on-error: true
-        env:
-          BASE_PATH: /houmon-app
-
-      - name: houmon-app をコピー
+      # houmon-app は Vercel に統一済み（https://houmon-app-lilac.vercel.app/）。
+      # このリダイレクト HTML は「旧 GH Pages 版をブックマークしてる人」救済用。
+      # ポータルサイトのカードは直接 Vercel URL に飛ぶので、通常はここを踏まない。
+      - name: houmon-app は Vercel にリダイレクト
         run: |
-          if [ -d houmon-app/out ]; then
-            cp -r houmon-app/out _site/houmon-app
-          else
-            mkdir -p _site/houmon-app
-            echo '<html><body><p>Coming soon</p></body></html>' > _site/houmon-app/index.html
-          fi
+          mkdir -p _site/houmon-app
+          cat > _site/houmon-app/index.html <<'EOF'
+          <!doctype html>
+          <html lang="ja">
+            <head>
+              <meta charset="utf-8">
+              <title>家庭訪問アプリ — 移動しました</title>
+              <meta http-equiv="refresh" content="0; url=https://houmon-app-lilac.vercel.app/">
+              <link rel="canonical" href="https://houmon-app-lilac.vercel.app/">
+              <style>
+                body { font-family: system-ui, -apple-system, sans-serif; padding: 2rem; text-align: center; color: #333; }
+                a { color: #0070f3; text-decoration: none; font-weight: bold; }
+              </style>
+            </head>
+            <body>
+              <p>家庭訪問アプリは <a href="https://houmon-app-lilac.vercel.app/">houmon-app-lilac.vercel.app</a> に移動しました。</p>
+              <p>自動的に遷移しない場合は上のリンクをタップしてください。</p>
+            </body>
+          </html>
+          EOF
 
       # ---------- design-gallery ----------
       - name: design-gallery の依存をインストール
