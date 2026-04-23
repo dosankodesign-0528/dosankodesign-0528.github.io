@@ -19,7 +19,7 @@ interface FilterBarProps {
   resetFilter: () => void;
 }
 
-const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "webdesignclip"];
+const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "webdesignclip", "awwwards"];
 
 /** 日付レンジ用のYYYY-MM配列を生成 */
 function generateMonths(from: string, to: string): string[] {

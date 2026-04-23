@@ -8,7 +8,7 @@ interface SourceTabsProps {
   onClearSources: () => void;
 }
 
-const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "webdesignclip"];
+const sources: SourceSite[] = ["sankou", "81web", "muuuuu", "webdesignclip", "awwwards"];
 
 export function SourceTabs({
   activeSources,

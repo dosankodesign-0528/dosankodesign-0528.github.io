@@ -388,75 +388,151 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
 // ============================================================
 // Awwwards スクレイパー
 // ============================================================
-async function scrapeAwwwards(pages: number = 2): Promise<ScrapedSite[]> {
+/**
+ * Awwwards スクレイパー
+ *
+ * 対象: Sites of the Day（/websites/sites_of_the_day/）+ Developer Award（/websites/developer/）
+ * 戦略の選定理由:
+ *   - Nominees は量が膨大（2024-01以降で約9300件）かつ品質振れ幅あり、除外
+ *   - SOTD = Awwwards 編集部が日毎に1件だけ選ぶ受賞作。質が均一で最上位
+ *   - Developer Award = コーディング/WebGL/インタラクション評価。現ギャラリーに薄い
+ *     "海外の技術尖った作品" を補完できる
+ *
+ * 取得方法:
+ *   各カードの <li class="col-3 js-collectable"> に data-collectable-model-value という
+ *   属性があり、中身が JSON（title/slug/images/tags/createdAt/id）。これをパースすれば
+ *   タイトル・サムネイル・タグ・掲載日（Unix秒）が一撃で取れる。外部URLは
+ *   figure-rollover__bt[href] から取得（awwwardsページではなく、実サイトのURL）。
+ */
+const AWWWARDS_SECTIONS = [
+  { name: "SOTD", path: "sites_of_the_day" },
+  { name: "Developer", path: "developer" },
+];
+
+// 日本サイトの商用中心ソースと被りにくいよう、awwwards は最新1年に絞る。
+// 他ソース (CUTOFF_DATE=2024-01) と別設定にして運用しやすく。
+const AWWWARDS_CUTOFF_DATE = "2025-01";
+
+interface AwwwardsCardPayload {
+  collectableIdentifier?: string;
+  collectableImage?: string;
+  collectableTitle?: string;
+  title?: string;
+  slug?: string;
+  id?: number;
+  images?: { thumbnail?: string };
+  tags?: string[];
+  createdAt?: number; // Unix秒
+  type?: string;
+}
+
+async function scrapeAwwwards(): Promise<ScrapedSite[]> {
   console.log("\n📝 Awwwards からスクレイピング開始...");
   const results: ScrapedSite[] = [];
+  const seenSlugs = new Set<string>();
 
-  for (let page = 1; page <= pages; page++) {
-    const url = `https://www.awwwards.com/websites/?page=${page}`;
-    try {
-      const html = await fetchPage(url);
-      const $ = cheerio.load(html);
+  for (const section of AWWWARDS_SECTIONS) {
+    console.log(`  セクション: ${section.name}`);
+    let page = 1;
+    let stopped = false;
+    const MAX_PAGES = 40; // 安全弁。2025-01 カットオフなら SOTD ~13, Developer ~12 ページで到達
 
-      // Awwwards のサイトカードを探す
-      $("li, article, .js-collectable, [data-id]").each((_, el) => {
-        const $el = $(el);
+    while (!stopped && page <= MAX_PAGES) {
+      const url = `https://www.awwwards.com/websites/${section.path}/?page=${page}`;
+      try {
+        const html = await fetchPage(url);
+        const $ = cheerio.load(html);
 
-        // サムネイル
-        const img =
-          $el.find("img").attr("src") ||
-          $el.find("img").attr("data-src") ||
-          $el.find("img").attr("data-original");
-        if (!img || img.startsWith("data:") || img.length < 10) return;
+        const $cards = $("li.col-3.js-collectable");
+        if ($cards.length === 0) {
+          console.log(`    page=${page} カード0件 → セクション終了`);
+          break;
+        }
 
-        // タイトル
-        const title = (
-          $el.find("h2, h3, .title, .heading").first().text().trim() ||
-          $el.find("a").first().text().trim()
-        );
-        if (!title || title.length < 2 || title.length > 100) return;
+        let pageAdded = 0;
+        let pageAllOld = true; // このページのカードが全部カットオフより古いか
 
-        // URL
-        const siteUrl = $el.find("a").attr("href") || "";
+        $cards.each((_, el) => {
+          const raw = $(el).attr("data-collectable-model-value");
+          if (!raw) return;
 
-        // カテゴリ
-        const cats: string[] = [];
-        $el.find(".budget-tag, .tag, .category").each((_, catEl) => {
-          const t = $(catEl).text().trim();
-          if (t && t.length < 30) cats.push(t);
-        });
+          let payload: AwwwardsCardPayload;
+          try {
+            payload = JSON.parse(raw) as AwwwardsCardPayload;
+          } catch {
+            return;
+          }
 
-        if (title && img) {
+          const title = payload.collectableTitle || payload.title || "";
+          const slug = payload.slug || payload.collectableIdentifier || "";
+          if (!title || !slug) return;
+          if (seenSlugs.has(slug)) return; // SOTDとDeveloperで被ったら先勝ち
+
+          // 掲載月（YYYY-MM）。createdAt は Unix 秒
+          let dateStr = new Date().toISOString().slice(0, 7);
+          if (payload.createdAt) {
+            const d = new Date(payload.createdAt * 1000);
+            if (!Number.isNaN(d.getTime())) dateStr = d.toISOString().slice(0, 7);
+          }
+
+          // カットオフ判定：このカードが cutoff より新しいか
+          if (dateStr >= AWWWARDS_CUTOFF_DATE) pageAllOld = false;
+          // ページ末尾にも古いカードが混じるので、ここでは集めない判断はしない
+          // （最終的に main() の CUTOFF フィルタで落とすが、awwwards 専用の早期停止に使う）
+
+          // 実サイトURL: figure-rollover__bt が外部URL (target=_blank)
+          const $outbound = $(el).find("a.figure-rollover__bt[target='_blank']").first();
+          const outboundUrl = $outbound.attr("href") || "";
+          // awwwards 内部ページ
+          const detailUrl = `https://www.awwwards.com/sites/${slug}`;
+
+          // サムネイル: data-srcset から 1x の URL を抽出、失敗時は images.thumbnail から組み立て
+          let thumb = "";
+          const $img = $(el).find("img.lazy.figure-rollover__file").first();
+          const srcset = $img.attr("data-srcset") || "";
+          const m1x = srcset.match(/(https?:\/\/[^\s]+)\s+1x/);
+          if (m1x) thumb = m1x[1];
+          if (!thumb && payload.images?.thumbnail) {
+            thumb = `https://assets.awwwards.com/awards/media/cache/thumb_440_330/${payload.images.thumbnail}`;
+          }
+          if (!thumb) return;
+
+          const siteUrl = outboundUrl.startsWith("http") ? outboundUrl : detailUrl;
+
+          seenSlugs.add(slug);
           results.push({
-            id: generateId(siteUrl || img, "awwwards"),
+            id: generateId(siteUrl, "awwwards"),
             title: title.slice(0, 100),
-            url: siteUrl.startsWith("http")
-              ? siteUrl
-              : siteUrl.startsWith("/")
-                ? `https://www.awwwards.com${siteUrl}`
-                : siteUrl,
-            thumbnailUrl: img.startsWith("http")
-              ? img
-              : img.startsWith("//")
-                ? `https:${img}`
-                : `https://www.awwwards.com${img}`,
+            url: siteUrl,
+            thumbnailUrl: thumb,
             source: "awwwards",
-            category: cats.length > 0 ? cats : ["web design"],
+            // tags には業種（Portfolio, Fashion, Agency..）と技術（GSAP, WebGL, React..）が
+            // 混在。UI 側で分離せず全部 category に入れる（SANKOU!と同じ方針）
+            category: payload.tags && payload.tags.length > 0 ? payload.tags : ["web design"],
             taste: [],
-            date: new Date().toISOString().slice(0, 7),
+            date: dateStr,
             starred: false,
           });
+          pageAdded++;
+        });
+
+        console.log(`    page=${page} 新規${pageAdded}件（累積 ${results.length} 件）`);
+
+        // このページのカードが全部カットオフより古かったら以降も古いので打ち切り
+        if (pageAllOld) {
+          console.log(`    page=${page} 全て ${AWWWARDS_CUTOFF_DATE} 未満 → セクション終了`);
+          stopped = true;
         }
-      });
+      } catch (e) {
+        console.error(`    page=${page} エラー:`, (e as Error).message);
+      }
 
-      console.log(`  ページ ${page}: ${results.length} 件取得`);
-    } catch (e) {
-      console.error(`  ページ ${page} エラー:`, (e as Error).message);
+      page++;
+      await sleep(1500); // awwwards へ 1.5s インターバル
     }
-
-    await sleep(2000); // awwwards は少し長めに待つ
   }
 
+  console.log(`  Awwwards 合計: ${results.length} 件`);
   return results;
 }
 
@@ -587,9 +663,9 @@ async function main() {
   // ONLY_SOURCE=sankou/muuuuu/webdesignclip/81web を指定すると、そのソースだけ再取得し、
   // 他のソースは既存 JSON から引き継いでマージする（時間短縮用）。
   const onlySource = (process.env.ONLY_SOURCE || "").trim().toLowerCase();
-  const validSources = new Set(["", "sankou", "muuuuu", "webdesignclip", "81web"]);
+  const validSources = new Set(["", "sankou", "muuuuu", "webdesignclip", "81web", "awwwards"]);
   if (!validSources.has(onlySource)) {
-    console.error(`❌ ONLY_SOURCE の値が不正です: "${onlySource}"。sankou/muuuuu/webdesignclip/81web のいずれか、または未指定。`);
+    console.error(`❌ ONLY_SOURCE の値が不正です: "${onlySource}"。sankou/muuuuu/webdesignclip/81web/awwwards のいずれか、または未指定。`);
     process.exit(1);
   }
   if (onlySource) {
@@ -620,27 +696,43 @@ async function main() {
   const web81Results = shouldRun("81web") ? await scrape81WebPlaywright(target81) : [];
   allResults.push(...web81Results);
 
+  // Awwwards は SOTD + Developer Award のみ、最新1年（2025-01以降）に絞る
+  const awwwardsResults = shouldRun("awwwards") ? await scrapeAwwwards() : [];
+  allResults.push(...awwwardsResults);
+
   // ONLY_SOURCE 指定時は、他のソースの既存エントリを JSON から読み込んで混ぜる。
   // 既に Eagle/2024-01 フィルタ通過済みの状態で入っているので、そのまま追加して OK。
+  //
+  // 並び順は重要：カラリオーバー（既存）を "先に" 並べることで、
+  // 重複排除時に既存ソースが勝つ（URL が SANKOU! と Awwwards 両方にある場合、
+  // 後から入ってきた新ソースが既存を奪わないようにする）
   const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
+  let finalOrdered: ScrapedSite[];
   if (onlySource) {
+    let carryover: ScrapedSite[] = [];
     try {
       const prev = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as ScrapedSite[];
-      const carryover = prev.filter((p) => p.source !== onlySource);
-      allResults.push(...carryover);
+      carryover = prev.filter((p) => p.source !== onlySource);
       console.log(`\n♻️  他ソースを既存JSONから引き継ぎ: ${carryover.length} 件`);
     } catch (e) {
       console.log(`\n⚠️  既存JSONの読み込み失敗（引き継ぎスキップ）: ${(e as Error).message}`);
     }
+    // 既存を先、新ソースを後ろに
+    finalOrdered = [...carryover, ...allResults];
+  } else {
+    finalOrdered = allResults;
   }
 
   // 重複排除（URLベースでソース横断）
-  const deduplicated = deduplicateByUrl(allResults);
+  const deduplicated = deduplicateByUrl(finalOrdered);
 
-  // 2024年以降に絞る（古いサイトは既にユーザーが確認済み）
+  // ソース別カットオフを適用（古いサイトは既にユーザーが確認済み）
+  // - awwwards: 最新1年（2025-01以降）
+  // - その他:    2024-01以降
   const afterCutoff = deduplicated.filter((s) => {
-    if (!s.date) return true; // 日付不明は残す
-    return s.date >= CUTOFF_DATE;
+    if (!s.date) return true;
+    const cutoff = s.source === "awwwards" ? AWWWARDS_CUTOFF_DATE : CUTOFF_DATE;
+    return s.date >= cutoff;
   });
   const droppedByCutoff = deduplicated.length - afterCutoff.length;
 
@@ -656,9 +748,10 @@ async function main() {
   console.log(`  MUUUUU.ORG:         ${muuuuuResults.length} 件`);
   console.log(`  Web Design Clip:    ${wdcResults.length} 件`);
   console.log(`  81-web.com:         ${web81Results.length} 件`);
-  console.log(`  合計:               ${allResults.length} 件`);
+  console.log(`  Awwwards:           ${awwwardsResults.length} 件`);
+  console.log(`  合計（引き継ぎ含む）: ${finalOrdered.length} 件`);
   console.log(`  重複排除後:         ${deduplicated.length} 件`);
-  console.log(`  ${CUTOFF_DATE} 以降に絞込:  ${afterCutoff.length} 件 (${droppedByCutoff} 件カット)`);
+  console.log(`  カットオフ絞込:     ${afterCutoff.length} 件 (${droppedByCutoff} 件カット、awwwards ${AWWWARDS_CUTOFF_DATE}+ / 他 ${CUTOFF_DATE}+)`);
   console.log(`  Eagle 既知除外後:   ${afterEagle.length} 件 (${droppedByEagle} 件カット)`);
 
   // 既存データの firstSeen を引き継ぎ、新規エントリに今の時刻を埋める

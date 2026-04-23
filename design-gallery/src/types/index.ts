@@ -1,11 +1,12 @@
 /** 引用元サイト */
-export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip";
+export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip" | "awwwards";
 
 export const SOURCE_LABELS: Record<SourceSite, string> = {
   sankou: "SANKOU!",
   "81web": "81-web.com",
   muuuuu: "MUUUUU.ORG",
   webdesignclip: "Web Design Clip",
+  awwwards: "Awwwards",
 };
 
 export const SOURCE_COLORS: Record<SourceSite, string> = {
@@ -13,6 +14,7 @@ export const SOURCE_COLORS: Record<SourceSite, string> = {
   "81web": "#4A90D9",
   muuuuu: "#2ECC71",
   webdesignclip: "#9B59B6",
+  awwwards: "#F5B301",
 };
 
 /** カテゴリ（業種） */
