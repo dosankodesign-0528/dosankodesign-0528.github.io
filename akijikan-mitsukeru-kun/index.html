@@ -1062,6 +1062,32 @@
 </div>
 
 <script>
+  // ===== 旧 GH Pages 版(hideyuki-yamanaka.github.io/akijikan-mitsukeru-kun/) から移行する人向け =====
+  // URL hash に #migrate=<base64-json> が付いてたら localStorage に書き戻す。
+  // 旧ドメインの localStorage を新ドメインに自動引越しするための一度きりの処理。
+  (function migrateFromOldOrigin(){
+    try{
+      const m = (location.hash||'').match(/#migrate=([A-Za-z0-9+/=_-]+)/);
+      if(!m) return;
+      // URL-safe base64 → 通常 base64 に変換
+      const b64 = m[1].replace(/-/g,'+').replace(/_/g,'/');
+      const json = decodeURIComponent(escape(atob(b64)));
+      const data = JSON.parse(json);
+      let applied = 0;
+      for(const k in data){
+        if(typeof data[k] === 'string'){
+          try{ localStorage.setItem(k, data[k]); applied++; }catch(_e){}
+        }
+      }
+      // hash を消してリロード（移行済みの状態でキレイに再起動）
+      history.replaceState(null, '', location.pathname + location.search);
+      if(applied > 0){
+        // alert を使わず軽い通知だけ（UI初期化前なのでシンプルに）
+        setTimeout(()=>{ alert('旧URLの設定を'+applied+'件引き継ぎました。'); }, 100);
+      }
+    }catch(e){ console.error('migrate failed', e); }
+  })();
+
   let tokenClient, accessToken=null, calendars=[], selectedCalIds=new Set(), icsFiles=[], gsiLoaded=false;
 
   // カレンダー名のエイリアス（表示名を上書き）

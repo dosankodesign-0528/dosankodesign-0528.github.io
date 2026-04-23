@@ -47,7 +47,7 @@
 | **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | 手動（`vercel --prod`） |
 | **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
-| travel-shiori | https://travel-shiori.vercel.app | 親リポ subdir (main) | travel-shiori | - |
+| travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei.vercel.app | submodule (master) | nittei-chousei | - |
 
 ### GitHub Pages 勢（ポータル本体のみ）

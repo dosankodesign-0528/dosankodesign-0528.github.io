@@ -55,7 +55,10 @@ jobs:
           </html>
           EOF
 
-      - name: 空き時間みつける君 は Vercel にリダイレクト
+      # 空き時間みつける君は localStorage にカレンダー設定を保持するため、
+      # 旧ドメインで設定してた人のデータを新ドメインに引き継ぐブリッジページを配置。
+      # JS で localStorage を読み → base64 化 → 新URL の #migrate= に乗せて飛ばす。
+      - name: 空き時間みつける君 は Vercel へ移行ブリッジ
         run: |
           mkdir -p "_site/akijikan-mitsukeru-kun"
           cat > "_site/akijikan-mitsukeru-kun/index.html" <<'EOF'
@@ -63,13 +66,54 @@ jobs:
           <html lang="ja">
             <head>
               <meta charset="utf-8">
-              <title>空き時間みつける君 — 移動しました</title>
-              <meta http-equiv="refresh" content="0; url=https://akijikan-mitsukeru-kun.vercel.app/">
+              <title>空き時間みつける君 — 新URLへ移行</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1">
               <link rel="canonical" href="https://akijikan-mitsukeru-kun.vercel.app/">
-              <style>body{font-family:system-ui,-apple-system,sans-serif;padding:2rem;text-align:center;color:#333;}a{color:#0070f3;text-decoration:none;font-weight:bold;}</style>
+              <style>
+                body { font-family: system-ui, -apple-system, sans-serif; padding: 2rem; max-width: 480px; margin: 0 auto; color: #222; line-height: 1.7; }
+                h1 { font-size: 18px; margin-bottom: 12px; }
+                p { font-size: 14px; color: #555; }
+                .btn { display: inline-block; background: #0070f3; color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; margin-top: 16px; border: none; font-size: 15px; cursor: pointer; }
+                .btn:active { opacity: 0.8; }
+                .muted { font-size: 12px; color: #888; margin-top: 24px; }
+                .muted a { color: #0070f3; }
+              </style>
             </head>
             <body>
-              <p>空き時間みつける君 は <a href="https://akijikan-mitsukeru-kun.vercel.app/">akijikan-mitsukeru-kun.vercel.app</a> に移動しました。</p>
+              <h1>空き時間みつける君は新URLに移行しました</h1>
+              <p id="msg">このブラウザに保存されてた設定（カレンダーURL、Google Client ID など）を新URLに引き継ぎます。</p>
+              <button class="btn" id="migrateBtn">新URLに移行する</button>
+              <p class="muted">移行不要の場合は <a href="https://akijikan-mitsukeru-kun.vercel.app/">こちら</a> から直接アクセス。</p>
+              <script>
+                (function(){
+                  var KEYS = ['akijikan_ics_cals_v1','akijikan_ics_seeded_v1','gcal_token','gcal_client_id','gcal_bookmark_hint_shown'];
+                  var data = {};
+                  var count = 0;
+                  for (var i=0; i<KEYS.length; i++){
+                    var v = null;
+                    try { v = localStorage.getItem(KEYS[i]); } catch(e){}
+                    if (v != null) { data[KEYS[i]] = v; count++; }
+                  }
+                  var msg = document.getElementById('msg');
+                  var btn = document.getElementById('migrateBtn');
+                  if (count === 0) {
+                    msg.textContent = 'このブラウザには引き継ぐデータがないようです。新URLに直接移動します。';
+                    btn.textContent = '新URLへ';
+                  } else {
+                    msg.textContent = 'このブラウザに保存されてた設定 ' + count + ' 件を新URLに引き継ぎます。';
+                  }
+                  btn.onclick = function(){
+                    var url = 'https://akijikan-mitsukeru-kun.vercel.app/';
+                    if (count > 0) {
+                      try {
+                        var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+                        url += '#migrate=' + b64;
+                      } catch(e){ console.error(e); }
+                    }
+                    location.href = url;
+                  };
+                })();
+              </script>
             </body>
           </html>
           EOF
