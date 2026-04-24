@@ -109,8 +109,6 @@ export default function Home() {
         onEagleRefresh={() => void eagle.refresh()}
         hideEagleDuplicates={store.hideEagleDuplicates}
         onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
-        starredCount={store.starredCount}
-        onClearAllStarred={store.clearAllStarred}
       />
 
       {/* Eagle重複セカンダリバー（トグルで ON/OFF 切替可能） */}
