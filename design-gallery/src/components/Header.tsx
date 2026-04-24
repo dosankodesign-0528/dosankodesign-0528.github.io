@@ -68,15 +68,11 @@ export function Header({
   starredCount,
   onClearAllStarred,
 }: HeaderProps) {
-  // Eagleステータスの見せ方
-  const eagleDotColor =
-    eagleStatus === "live"
-      ? "#10B981" // 緑: 起動中
-      : eagleStatus === "cached"
-        ? "#F59E0B" // オレンジ: キャッシュ使用中
-        : eagleStatus === "syncing"
-          ? "#3B82F6" // 青: 同期中
-          : "#9CA3AF"; // グレー: 未接続/なし
+  // Eagleステータスドットの色はトグルのON/OFFに連動
+  // - ON (重複非表示中): 青 = 効いてる状態
+  // - OFF: グレー = 無効
+  // - 同期中のみ青で pulse アニメーションさせる
+  const eagleDotColor = hideEagleDuplicates ? "#3B82F6" : "#9CA3AF";
 
   const eagleStatusText =
     eagleStatus === "live"
