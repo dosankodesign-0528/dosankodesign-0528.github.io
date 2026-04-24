@@ -116,12 +116,22 @@ function detectFramer(
 }
 
 /**
- * スタジオ判定：サイトのtitle / meta description / h1 / ドメイン名 に
- * 「スタジオ系」のキーワードが含まれている。
- * Web制作会社よりも少人数・ブティック寄りのニュアンス。
+ * スタジオ判定（デザイン/Web/クリエイティブ系のブティックスタジオに限定）。
+ *
+ * 旧実装の問題:
+ *   /\bstudio\b/  /\blabs?\b/  /スタジオ/ だけで拾っていたので、
+ *   - ヨガスタジオ / 写真スタジオ / 録音スタジオ / ダンススタジオ
+ *   - Research Labs / MS Labs など、Web制作と無関係なものまで "studio" タグになっていた。
+ *
+ * 新ルール:
+ *   1. 明らかに別業種の「スタジオ」(ヨガ/写真/録音/映像 etc) は先に除外
+ *   2. ドメインラベルに "studio" が屋号として入っている(studio.jp, xxx-studio.com 等)
+ *   3. "design studio" / "creative studio" / "デザインスタジオ" など明確なフレーズ
+ *   4. og:site_name が "XXX Studio" / "XXX Studios" のブランド名パターン
  */
 function detectStudio($: cheerio.CheerioAPI, finalUrl: string): boolean {
-  const title = ($("title").first().text() || "").toLowerCase();
+  const title = ($("title").first().text() || "").trim();
+  const titleLow = title.toLowerCase();
   const desc = (
     $('meta[name="description"]').attr("content") ||
     $('meta[property="og:description"]').attr("content") ||
@@ -130,7 +140,8 @@ function detectStudio($: cheerio.CheerioAPI, finalUrl: string): boolean {
   const h1 = ($("h1").first().text() || "").toLowerCase();
   const ogSiteName = (
     $('meta[property="og:site_name"]').attr("content") || ""
-  ).toLowerCase();
+  ).trim();
+  const ogSiteNameLow = ogSiteName.toLowerCase();
 
   let host = "";
   try {
@@ -139,15 +150,44 @@ function detectStudio($: cheerio.CheerioAPI, finalUrl: string): boolean {
     // ignore
   }
 
-  const blob = `${title} | ${desc} | ${h1} | ${ogSiteName} | ${host}`;
+  const blob = `${titleLow} | ${desc} | ${h1} | ${ogSiteNameLow}`;
 
-  // ドメインや屋号にstudio/labが入っている
-  if (/\bstudio\b/.test(blob)) return true;
-  if (/\blabs?\b/.test(blob)) return true;
-  if (/スタジオ/.test(blob)) return true;
+  // ── STEP 1: 別業種「スタジオ」を早期除外 ──
+  // 英語
+  const excludeEnStudio =
+    /\b(yoga|music|photo(graphy)?|recording|fitness|dance|pilates|film|cinema|tv|broadcast(ing)?|sound|voice|theater|theatre|ballet|boxing|cycling|pottery|ceramic|dental|beauty|nail|hair|makeup|tattoo|piano|guitar)\s+studios?\b/i;
+  // 日本語
+  const excludeJaStudio =
+    /(ヨガ|ピラティス|フィットネス|ダンス|バレエ|ボクシング|サイクリング|音楽|楽器|録音|写真|撮影|映像|映画|放送|テレビ|ラジオ|ナレーション|陶芸|ネイル|美容|ヘア|メイク|タトゥー|ボイス|ピアノ|ギター)スタジオ/;
+  if (excludeEnStudio.test(blob) || excludeJaStudio.test(blob)) return false;
+
+  // ── STEP 2: ホスト名のラベル(サブドメインとメインドメインを含む)に
+  //   "studio" が屋号として入っている。mystudio.com は曖昧なので除外し、
+  //   "studio", "xxx-studio", "studio-xxx" だけを拾う ──
+  //   例: studio.jp / nendo-studio.co.jp / studio-abc.com / xxx.studio(新TLD)
+  if (host.endsWith(".studio")) return true;
+  const hostLabels = host.split(".");
+  for (const lbl of hostLabels) {
+    if (/(^|-)studios?(-|$)/.test(lbl)) return true;
+  }
+
+  // ── STEP 3: 明確な業種フレーズ ──
+  if (/\b(design|creative|digital|web|brand(ing)?|motion|interactive|ux|ui)\s+studios?\b/i.test(blob))
+    return true;
+  if (
+    /(デザイン|クリエイティブ|デジタル|ウェブ|Web|ブランド|ブランディング|モーション|インタラクティブ)\s*スタジオ/.test(
+      blob
+    )
+  )
+    return true;
   if (/creative\s+(studio|lab|agency)/i.test(blob)) return true;
-  if (/design\s+studio/i.test(blob)) return true;
-  if (/クリエイティブ(スタジオ|ラボ)/.test(blob)) return true;
+  if (/クリエイティブ(ラボ)/.test(blob)) return true;
+
+  // ── STEP 4: og:site_name が "XXX Studio(s)" の屋号パターン ──
+  //   (ここに来てる時点で別業種除外はクリア済みなので、屋号と見なしてOK)
+  if (/^[A-Z][\w&'\-\.]+(?:\s+[A-Z][\w&'\-\.]+)*\s+studios?$/.test(ogSiteName)) return true;
+  if (/^studios?\s+[A-Z][\w&'\-\.]+/.test(ogSiteName)) return true;
+
   return false;
 }
 
@@ -330,13 +370,15 @@ async function main() {
       if (detectStudio($, finalUrl)) detected.push("studio");
       if (detectProduction($, finalUrl)) detected.push("production");
 
-      // 既存 signals（スクレイパが Framer 棚から先出ししたものなど）は温存。
-      // 検出結果と UNION する。
-      const unionSet = new Set<Signal>([
-        ...((site.signals ?? []) as Signal[]),
-        ...detected,
-      ]);
-      const finalSignals: Signal[] = [...unionSet];
+      // studio / production はルール改定に追従させるため、既存値は破棄して
+      // 新ルールの検出結果でそのまま上書きする。
+      // framer だけはスクレイパ(Awwwards の Framer 棚)が事前に付けてる可能性があるため、
+      // 既存に入っていたら温存する(HTMLフェッチでヘッダや DOM が変わっても失われない)。
+      const preservedFramer =
+        (site.signals ?? []).includes("framer" as Signal);
+      const finalSet = new Set<Signal>(detected);
+      if (preservedFramer) finalSet.add("framer" as Signal);
+      const finalSignals: Signal[] = [...finalSet];
 
       for (const s of finalSignals) tally[s]++;
 

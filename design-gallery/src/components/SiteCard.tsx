@@ -5,7 +5,12 @@ import {
   SiteEntry,
   SOURCE_LABELS,
   SOURCE_COLORS,
+  SIGNAL_LABELS,
+  SiteSignal,
 } from "@/types";
+
+/** カードに出す制作タグのハッシュタグ表示順 */
+const SIGNAL_DISPLAY_ORDER: SiteSignal[] = ["framer", "studio", "production"];
 
 interface SiteCardProps {
   site: SiteEntry;
@@ -141,6 +146,19 @@ export const SiteCard = memo(function SiteCard({
           <p className="text-[11px] text-text-secondary mt-0.5 truncate">
             {site.agency}
           </p>
+        )}
+        {/* 制作タグ（ハッシュタグ表記: #Framer / #Studio / #制作会社） */}
+        {site.signals && site.signals.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1.5">
+            {SIGNAL_DISPLAY_ORDER.filter((sig) => site.signals?.includes(sig)).map((sig) => (
+              <span
+                key={sig}
+                className="text-[10.5px] font-medium text-text-secondary/80 tracking-tight"
+              >
+                #{SIGNAL_LABELS[sig]}
+              </span>
+            ))}
+          </div>
         )}
         {/* URL + 日付 */}
         <div className="flex items-center gap-2 mt-1.5">

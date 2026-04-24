@@ -153,7 +153,7 @@ export function FilterModal({
               フィルター
             </h2>
             <p className="text-[12px] text-text-secondary mt-0.5">
-              並び順・日付・タグ（Framer / スタジオ / プロダクション）
+              並び順・日付・タグ（Framer / Studio / 制作会社）
             </p>
           </div>
           <button

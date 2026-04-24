@@ -80,10 +80,11 @@ export const TASTE_LABELS: Record<DesignTaste, string> = {
 /** 制作ツールや運営主体のタグ。enrichment スクリプトが埋める。 */
 export type SiteSignal = "framer" | "studio" | "production";
 
+// 短い表示ラベル(カードのハッシュタグ・フィルターモーダルの選択肢ともに共通)
 export const SIGNAL_LABELS: Record<SiteSignal, string> = {
-  framer: "Framer で作られたサイト",
-  studio: "スタジオが作ったサイト",
-  production: "Web制作会社・プロダクション",
+  framer: "Framer",
+  studio: "Studio",
+  production: "制作会社",
 };
 
 /** メインのサイトデータ */
