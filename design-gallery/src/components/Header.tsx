@@ -170,8 +170,10 @@ export function Header({
           <button
             onClick={onToggleHideEagleDuplicates}
             disabled={eagleItemCount === 0}
+            // OFF はハッキリとしたグレー、ON は明るい青。ユーザー要望で
+            // 2状態が一目で区別できるように accent ではなく固定色を使用。
             className={`relative w-8 h-5 rounded-full transition-colors ${
-              hideEagleDuplicates ? "bg-accent" : "bg-gray-300"
+              hideEagleDuplicates ? "bg-blue-500" : "bg-gray-400"
             } ${eagleItemCount === 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
             title={
               eagleItemCount === 0
