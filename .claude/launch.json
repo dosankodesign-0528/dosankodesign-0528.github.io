@@ -19,6 +19,13 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd /tmp/akijikan_preview && exec python3 -m http.server 8766"],
       "port": 8766
+    },
+    {
+      "name": "houmon-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3098"],
+      "port": 3098,
+      "cwd": "houmon-app"
     }
   ]
 }
