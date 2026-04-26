@@ -1230,6 +1230,14 @@
     document.getElementById('authLabel').textContent='接続中';
     document.getElementById('generateBtn').disabled=false;
   }
+  function setChipReconnectLook(label){
+    // Safari など silent refresh ができない場合: 黄色のチップで「タップして接続」を促す
+    const chip=document.getElementById('authChip');
+    chip.classList.remove('connected');
+    chip.classList.add('reconnect');
+    document.getElementById('authLabel').textContent=label||'タップで接続';
+    document.getElementById('generateBtn').disabled=false; // ICSはあるので押せる
+  }
   function setChipDisconnectedLook(){
     const chip=document.getElementById('authChip');
     chip.classList.remove('connected');
@@ -1238,11 +1246,14 @@
     document.getElementById('generateBtn').disabled=true;
   }
 
-  // 認証切れは静かに処理。Client ID があれば見た目は「接続中」を維持し、必要なときだけ再認証を走らせる
+  // 認証切れは静かに処理。
+  // Chromium系: clientId があれば見た目は「接続中」を維持（次の操作時に silent refresh で復活）
+  // Safari: silent refresh が効かないので「タップで接続」を明示
   function markReconnectNeeded(msg){
     accessToken=null;
-    if(clientId){setChipConnectedLook();}
-    else{setChipDisconnectedLook();}
+    if(!clientId){setChipDisconnectedLook();return;}
+    if(isSafari){setChipReconnectLook('Google に接続');}
+    else{setChipConnectedLook();}
   }
 
   // --- Token persistence (多層) ---
@@ -1258,9 +1269,9 @@
   function clearSavedToken(){
     storageRemove(TOKEN_KEY);
     accessToken=null;
-    // Client ID があれば見た目は接続中のまま（次回の操作時に自動再認証）
-    if(clientId){setChipConnectedLook();}
-    else{setChipDisconnectedLook();}
+    if(!clientId){setChipDisconnectedLook();return;}
+    if(isSafari){setChipReconnectLook('Google に接続');}
+    else{setChipConnectedLook();}
   }
 
   // 必要に応じて認証ポップアップを開いてトークンを取得する Promise
@@ -1368,13 +1379,30 @@
     // 1) Restore from storage if still valid
     const saved=loadSavedToken();
     if(saved){accessToken=saved;onConnected();return;}
-    // 2) Client ID があれば見た目は「接続中」を維持（疑似的に常時接続）
-    //    実際のトークンは、検出ボタン押下時に自動で取得する
-    setChipConnectedLook();
-    // Chromium系ならサイレントリフレッシュも試す（成功すれば即実トークン化）
+    // 2) Client ID はあるけどトークンが無い状態
+    //    Chromium系: silent refresh 試行 → 成功すれば即トークン化、失敗時は接続中表示維持
+    //    Safari: ITP で silent refresh が制限されるので、最初から「タップで接続」を提示
     if(!isSafari){
+      setChipConnectedLook();
       try{tokenClient.requestAccessToken({prompt:''});}catch(e){}
+    } else {
+      // Safari: silent refresh は無駄打ちで紛らわしいので、明示的に「要タップ」UIにする
+      setChipReconnectLook('Google に接続');
+      maybeShowSafariAuthHint();
     }
+  }
+
+  // Safari ユーザー向け：「タップして接続」のガイドトーストを表示（セッション中1回だけ）
+  // toastBtn は default 動作で interactive auth を起動するので、ここをワンタップで認証完了に持っていける
+  function maybeShowSafariAuthHint(){
+    try{ if(sessionStorage.getItem('akijikan_safari_hint_shown'))return; }catch(e){}
+    try{ sessionStorage.setItem('akijikan_safari_hint_shown','1'); }catch(e){}
+    const t=document.getElementById('toast');
+    if(!t)return;
+    document.getElementById('toastMsg').textContent='Safariはここから Google に接続してください';
+    document.getElementById('toastBtn').textContent='Google に接続';
+    t.classList.remove('success');
+    t.classList.add('show');
   }
 
   async function onConnected(){
