@@ -49615,17 +49615,17 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698e09ea2d375012411413.png",
     "source": "awwwards",
     "category": [
+      "Art & Illustration",
+      "Culture & Education",
+      "Other",
+      "Clean",
+      "Portfolio",
       "Gallery",
       "Content architecture",
       "Photo & Video",
-      "Art & Illustration",
       "About Page",
-      "Culture & Education",
       "Blender",
-      "Other",
-      "Framer",
-      "Clean",
-      "Portfolio"
+      "Framer"
     ],
     "taste": [],
     "date": "2026-02",
@@ -54426,6 +54426,27 @@
       "framer"
     ],
     "firstSeen": "2026-04-23T04:21:18.799Z"
+  },
+  {
+    "id": "613f9eb45d2c",
+    "title": "Don Molinico",
+    "url": "https://www.donmolinico.es/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ccd75c593b4048999459.jpg",
+    "source": "awwwards",
+    "category": [
+      "Food & Drink",
+      "Animation",
+      "Big Background Images",
+      "Colorful",
+      "Navigation Menu",
+      "GSAP",
+      "Nuxt.js",
+      "Prismic"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-23T03:41:52.422Z"
   },
   {
     "id": "4127b3e9379e",
@@ -61236,51 +61257,5 @@
     "date": "2025-01",
     "starred": false,
     "firstSeen": "2026-04-23T03:41:52.422Z"
-  },
-  {
-    "id": "613f9eb45d2c",
-    "title": "Don Molinico",
-    "url": "https://www.donmolinico.es/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ccd75c593b4048999459.jpg",
-    "source": "awwwards",
-    "category": [
-      "Food & Drink",
-      "Animation",
-      "Big Background Images",
-      "Colorful",
-      "Navigation Menu",
-      "GSAP",
-      "Nuxt.js",
-      "Prismic"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-23T03:41:52.422Z"
-  },
-  {
-    "id": "ba4874dca14d",
-    "title": "Detroit Paris",
-    "url": "https://www.detroit.paris/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699f1ad8d180c421546536.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Fashion",
-      "Animation",
-      "Infinite Scroll",
-      "Scrolling",
-      "Typography",
-      "Photography",
-      "Transitions",
-      "GSAP",
-      "Footer Design",
-      "Webflow",
-      "Javascript"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-24T03:01:35.047Z"
   }
 ]
