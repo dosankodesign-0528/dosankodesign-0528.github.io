@@ -1,2 +1,5 @@
 # portal build output (generated)
 _site/
+
+# Claude Code worktrees (生成物。リポジトリに追跡しない)
+.claude/worktrees/
