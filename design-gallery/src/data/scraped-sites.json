@@ -1,5 +1,47 @@
 [
   {
+    "id": "1c847409cb2a",
+    "title": "ずっと大好き！上野動物園のパンダたち | YOU+MORE! | フェリシモ",
+    "url": "https://www.felissimo.co.jp/youmore/thanks-panda/thanks-panda_ym.html",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/felissimothankspanda_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
+    "id": "f17ba9b83b3c",
+    "title": "RIM公式オンラインサイト",
+    "url": "https://rim.jins.com/jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/rim_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
+    "id": "8bfd9fb02eb3",
+    "title": "JINS HOLDINGS",
+    "url": "https://jinsholdings.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/jinsholdings_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
     "id": "86c5b12ab87b",
     "title": "点々",
     "url": "https://tenten.fun/",
@@ -19496,6 +19538,22 @@
     "lastCheckedAt": "2026-04-22T14:59:01.541Z"
   },
   {
+    "id": "6b4eca06363c",
+    "title": "ラヴィピュール",
+    "url": "https://www.la-viepure.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/04/28.webp",
+    "source": "muuuuu",
+    "category": [
+      "fashion"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-22T14:59:58.724Z"
+  },
+  {
     "id": "02b5eb97c359",
     "title": "白骨温泉",
     "url": "https://www.shirahone.org/",
@@ -29422,6 +29480,20 @@
     "firstSeen": "2026-04-25T02:51:44.814Z"
   },
   {
+    "id": "616bf60e82dd",
+    "title": "合同会社レンズ",
+    "url": "https://lens-llc.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260427_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
     "id": "5d32b09db2b8",
     "title": "イッツ・コミュニケーションズ採用ポータルサイト",
     "url": "https://www.itscom.co.jp/corporate/recruit/",
@@ -29906,22 +29978,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-22T14:59:58.748Z"
-  },
-  {
-    "id": "05acdf2cc6fd",
-    "title": "ラヴィピュール",
-    "url": "https://www.la-viepure.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260403_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ウェディング・結婚"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-22T14:59:58.724Z"
   },
   {
     "id": "169442351bc9",
@@ -33358,22 +33414,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-22T15:00:15.522Z"
-  },
-  {
-    "id": "7d7a8d327f24",
-    "title": "Patisserie PONO パティスリーポノ",
-    "url": "https://www.patisserie-pono.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250821_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-04-22T15:00:15.189Z"
   },
   {
     "id": "d967a9617d81",
@@ -44860,6 +44900,23 @@
     "lastCheckedAt": "2026-04-22T15:01:25.607Z"
   },
   {
+    "id": "715b2c6d39c9",
+    "title": "Satoshi Watanabe",
+    "url": "https://satoshiwatanabe.org/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/04/260427-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ポートフォリオサイト",
+      "アート",
+      "デザイン"
+    ],
+    "taste": [],
+    "agency": "L/O",
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
     "id": "22dfcc06266d",
     "title": "東京のWEB制作会社・デザイン制作会社｜ストリクス株式会社",
     "url": "https://strix-inc.jp/",
@@ -48675,6 +48732,28 @@
     "lastCheckedAt": "2026-04-22T15:01:37.954Z"
   },
   {
+    "id": "e682f642debc",
+    "title": "Wild Week - Athens",
+    "url": "https://week.wild.plus/athens-26",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cd01f17ed16959291353.jpg",
+    "source": "awwwards",
+    "category": [
+      "Events",
+      "Clean",
+      "WebGL",
+      "Gestures / Interaction",
+      "Filters and Effects",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "signals": [
+      "framer"
+    ],
+    "firstSeen": "2026-04-23T04:21:18.799Z"
+  },
+  {
     "id": "a28c66349956",
     "title": "KZIADOVA — UI/UX DESIGNER",
     "url": "https://kziadova.framer.website/",
@@ -48887,28 +48966,6 @@
       "SEO",
       "Interaction Design",
       "Contact Page"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-04-23T04:21:18.799Z"
-  },
-  {
-    "id": "e682f642debc",
-    "title": "Wild Week - Athens",
-    "url": "https://week.wild.plus/athens-26",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cd01f17ed16959291353.jpg",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Clean",
-      "WebGL",
-      "Gestures / Interaction",
-      "Filters and Effects",
-      "Framer"
     ],
     "taste": [],
     "date": "2026-04",
@@ -61257,5 +61314,54 @@
     "date": "2025-01",
     "starred": false,
     "firstSeen": "2026-04-23T03:41:52.422Z"
+  },
+  {
+    "id": "7e53197da61f",
+    "title": "Silent House",
+    "url": "https://silent-house.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69dbe88e993f2144574924.jpg",
+    "source": "awwwards",
+    "category": [
+      "Events",
+      "Film & TV",
+      "Music & Sound",
+      "Clean",
+      "CSS",
+      "Minimal",
+      "Navigation Menu",
+      "Portfolio",
+      "GSAP",
+      "Project Page",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
+  },
+  {
+    "id": "ba4874dca14d",
+    "title": "Detroit Paris",
+    "url": "https://www.detroit.paris/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699f1ad8d180c421546536.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Fashion",
+      "Animation",
+      "Infinite Scroll",
+      "Scrolling",
+      "Typography",
+      "Photography",
+      "Transitions",
+      "GSAP",
+      "Footer Design",
+      "Webflow",
+      "Javascript"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z"
   }
 ]
