@@ -482,16 +482,16 @@
   }
   .cv-allday-cell:last-child { border-right:none; }
   .cv-allday-event {
-    background:rgba(37,99,235,0.12);
-    border-left:2px solid var(--blue);
-    border-radius:2px;
+    background:#5B95F1;
+    border-radius:3px;
     font-size:9px;
-    color:var(--blue);
-    padding:1px 3px;
+    color:#fff;
+    padding:1px 5px;
     line-height:1.3;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    box-shadow:0 1px 1px rgba(0,0,0,0.04);
   }
 
   /* 時刻軸＋日カラム */
@@ -516,21 +516,21 @@
   }
   .cv-hour-bg:nth-child(2n) { background:rgba(0,0,0,0.012); }
 
-  /* 予定ブロック（一色・列分割対応：left/width はJSで設定） */
+  /* 予定ブロック（Pattern A: 塗り＋白文字 / 列分割対応：left/width はJSで設定） */
   .cv-event {
     position:absolute;
-    background:rgba(37,99,235,0.13);
-    border-left:2px solid var(--blue);
-    border-radius:3px;
-    padding:1px 3px;
+    background:#5B95F1;
+    border:none;
+    border-radius:4px;
+    padding:2px 5px;
     font-size:10px;
     line-height:1.2;
-    color:var(--blue);
+    color:#fff;
     overflow:hidden;
     box-sizing:border-box;
     pointer-events:auto;
     cursor:default;
-    border-right:1px solid rgba(37,99,235,0.2);
+    box-shadow:0 1px 1.5px rgba(0,0,0,0.05);
   }
   .cv-event-title {
     white-space:nowrap;
@@ -882,13 +882,14 @@
   .cv-month-event {
     font-size:10px;
     line-height:1.3;
-    padding:1px 4px;
+    padding:1px 5px;
     border-radius:3px;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    border-left:2px solid;
     cursor:default;
+    background:#5B95F1;
+    color:#fff;
   }
   .cv-month-more {
     font-size:9px;
@@ -1661,6 +1662,31 @@
     const dg=Math.max(0,Math.min(255,Math.round(g*factor)));
     const db=Math.max(0,Math.min(255,Math.round(b*factor)));
     return `rgb(${dr},${dg},${db})`;
+  }
+
+  // カレンダーチップ用：原色を白寄せして「優しい Google カレンダー風」に
+  // amt は白とのミックス比率（0..1）。0.18 くらいで本家っぽい柔らかさ。
+  function softenColor(hex, amt){
+    if(!hex)return '#9aa3b2';
+    const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m)return hex;
+    if(amt==null)amt=0.18;
+    const r=parseInt(m[1],16), g=parseInt(m[2],16), b=parseInt(m[3],16);
+    const r2=Math.round(r+(255-r)*amt);
+    const g2=Math.round(g+(255-g)*amt);
+    const b2=Math.round(b+(255-b)*amt);
+    return '#'+[r2,g2,b2].map(v=>v.toString(16).padStart(2,'0')).join('');
+  }
+
+  // チップ背景に対して読みやすい文字色（白 / 黒系）を選ぶ。
+  // 黄色やセージ等の薄い色は黒文字になる（Google カレンダー本家と同じ挙動）。
+  function pickTextColor(hex){
+    if(!hex)return '#fff';
+    const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if(!m)return '#fff';
+    const r=parseInt(m[1],16), g=parseInt(m[2],16), b=parseInt(m[3],16);
+    const lum=(0.299*r + 0.587*g + 0.114*b)/255;
+    return lum > 0.62 ? '#3a2f12' : '#ffffff';
   }
 
   // Safari 判定（Chromium系Safariを除外）
@@ -2726,7 +2752,7 @@
       if(!selectedCalIds.has(cal.id))continue;
       const color=calColor(cal);
       const name=calDisplayName(cal);
-      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${hexToRgba(color,0.18)};border-left:3px solid ${color}"></span>${escapeHtml(name)}</span>`);
+      items.push(`<span class="cv-legend-item"><span class="swatch" style="background:${softenColor(color,0.18)}"></span>${escapeHtml(name)}</span>`);
     }
     // ICS は設定済みのカレンダー一覧から描画（fetch状態に依存しない）
     for(const c of icsCalendars){
@@ -2855,11 +2881,11 @@
       // 終日
       allday.forEach(e=>{
         const color=cvColorOf(e.calId);
+        const chipBg=softenColor(color,0.18);
         const div=document.createElement('div');
         div.className='cv-allday-event';
-        div.style.background=hexToRgba(color,0.18);
-        div.style.borderLeftColor=color;
-        div.style.color=darkenForText(color);
+        div.style.background=chipBg;
+        div.style.color=pickTextColor(chipBg);
         const lbl=cvEventLabel(e);
         div.textContent=lbl;
         div.title=lbl;
@@ -2881,6 +2907,7 @@
         if(topPx+h>maxPx)h=maxPx-topPx;
         if(h<=0)return;
         const color=cvColorOf(ev.calId);
+        const chipBg=softenColor(color,0.18);
         const div=document.createElement('div');
         div.className='cv-event';
         div.style.top=topPx+'px';
@@ -2888,10 +2915,8 @@
         const widthPct=100/cols;
         div.style.left=`calc(${col*widthPct}% + 1px)`;
         div.style.width=`calc(${widthPct}% - 2px)`;
-        div.style.background=hexToRgba(color,0.18);
-        div.style.borderLeftColor=color;
-        div.style.borderRightColor=hexToRgba(color,0.3);
-        div.style.color=darkenForText(color);
+        div.style.background=chipBg;
+        div.style.color=pickTextColor(chipBg);
         const t=cvEventLabel(ev._orig||ev);
         div.innerHTML=`<div class="cv-event-title">${escapeHtml(t)}</div>`;
         div.title=t;
@@ -2955,11 +2980,11 @@
       const evWrap=cells[i].querySelector('.cv-month-events');
       todays.slice(0,MAX_SHOW).forEach(e=>{
         const color=cvColorOf(e.calId);
+        const chipBg=softenColor(color,0.18);
         const div=document.createElement('div');
         div.className='cv-month-event';
-        div.style.background=hexToRgba(color,0.18);
-        div.style.borderLeftColor=color;
-        div.style.color=darkenForText(color);
+        div.style.background=chipBg;
+        div.style.color=pickTextColor(chipBg);
         const t=cvEventLabel(e);
         let label=t;
         if(!e.allDay){
