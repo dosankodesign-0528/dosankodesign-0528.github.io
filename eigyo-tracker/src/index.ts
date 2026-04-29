@@ -4,7 +4,6 @@ import { buildGmailClient, fetchMessages, getMyEmail } from "./gmail.js";
 import {
   addCompany,
   buildNotionClient,
-  EXCLUDED_REACTION,
   fetchAllCompanies,
   findCompany,
   getCompaniesDbId,
@@ -74,10 +73,6 @@ async function main() {
           classified.companyDomain,
           classified.companyName
         );
-        if (existing && existing.reaction === EXCLUDED_REACTION) {
-          stats.skipped++;
-          continue;
-        }
         if (existing) {
           const updated = await updateCompany(notion, existing, year, source.tag);
           if (updated) {
@@ -105,7 +100,6 @@ async function main() {
             url: classified.companyUrl,
             contactYears: [year],
             mediaTags: [source.tag],
-            reaction: null,
           });
           stats.added++;
           console.log(`  added: ${classified.companyName} (${classified.companyDomain})`);

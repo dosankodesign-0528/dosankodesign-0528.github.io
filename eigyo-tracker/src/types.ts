@@ -31,7 +31,6 @@ export interface CompanyRecord {
   url: string | null;
   contactYears: string[];
   mediaTags: string[];
-  reaction: string | null;
 }
 
 export interface SyncStats {

@@ -1,0 +1,42 @@
+name: eigyo-tracker monthly report
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'previous (先月分) or current (今月分・途中経過)'
+        required: false
+        default: 'previous'
+        type: choice
+        options:
+          - previous
+          - current
+
+concurrency:
+  group: eigyo-tracker-monthly
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: eigyo-tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: eigyo-tracker/package-lock.json
+      - run: npm ci
+      - name: Generate monthly report
+        run: npx tsx src/monthly-report.ts
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
+          NOTION_REPORT_DB_ID: ${{ secrets.NOTION_REPORT_DB_ID }}
+          REPORT_MODE: ${{ inputs.mode || 'previous' }}
