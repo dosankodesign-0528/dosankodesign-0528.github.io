@@ -1,0 +1,57 @@
+name: Design Gallery 健全性チェック
+
+# 月次でスクレイプ件数とクレジットカバレッジを点検する。
+# 異常があったときだけ GitHub Issue を自動作成する設計。
+# 健全なら GitHub Actions の summary に出力するだけ（通知は飛ばさない）。
+
+on:
+  schedule:
+    # 毎月 1日 00:00 UTC = JST 09:00
+    - cron: '0 0 1 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: design-gallery/package-lock.json
+
+      - name: 依存インストール
+        working-directory: design-gallery
+        run: npm ci
+
+      - name: 健全性レポート生成
+        id: report
+        working-directory: design-gallery
+        run: |
+          npx tsx scripts/check-credit-coverage.ts --markdown > /tmp/coverage-report.md
+          npx tsx scripts/check-credit-coverage.ts --json > /tmp/coverage-report.json
+          OK=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/coverage-report.json','utf8')).ok)")
+          echo "ok=$OK" >> "$GITHUB_OUTPUT"
+          # Actions summary にも貼る（健全な月の確認用）
+          cat /tmp/coverage-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 健全な場合はここまで
+        if: steps.report.outputs.ok == 'true'
+        run: echo "::notice::✅ 健全性チェック合格 — Issue は作成しません"
+
+      - name: 異常検出時に GitHub Issue を作成
+        if: steps.report.outputs.ok == 'false'
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "🚨 [自動] Design Gallery 健全性チェック異常"
+          content-filepath: /tmp/coverage-report.md
+          labels: |
+            health-check
+            automated
+            design-gallery
