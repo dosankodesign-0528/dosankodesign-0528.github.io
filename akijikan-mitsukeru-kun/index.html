@@ -296,6 +296,28 @@
     flex-wrap:wrap;
   }
   .cv-modal-actions { display:flex; align-items:center; gap:8px; }
+
+  /* 除外リストを開くボタン（カレンダービュー内の目立つアクション） */
+  .cv-mgmt-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    height:34px; padding:0 12px;
+    background:var(--white);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+    transition:all 0.15s;
+    line-height:1;
+  }
+  .cv-mgmt-btn:hover { background:#fef2f2; border-color:#fca5a5; color:#b91c1c; }
+  .cv-mgmt-btn .cv-mgmt-icon { font-size:16px; line-height:1; }
+  .cv-mgmt-btn .cv-mgmt-label { white-space:nowrap; }
+  @media (max-width:800px) {
+    /* モバイルではアイコンだけにしてスペース確保 */
+    .cv-mgmt-btn { padding:0 10px; gap:0; }
+    .cv-mgmt-btn .cv-mgmt-label { display:none; }
+  }
   .cv-icon-btn {
     width:30px; height:30px;
     border:1px solid var(--border);
@@ -977,10 +999,7 @@
 <div class="layout">
   <div class="panel-left">
     <div class="calendar-selector" id="calendarSelector">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div class="section-label" style="margin:0;">対象カレンダー</div>
-        <button class="exclude-mgmt-open-btn" id="excludeMgmtOpen" type="button" title="非表示にしたカレンダー / 除外した予定を管理">⚙ 除外管理</button>
-      </div>
+      <div class="section-label">対象カレンダー</div>
       <div class="cal-list" id="calList"></div>
       <button class="cal-add-btn" id="calAddBtn" type="button">＋ URLでカレンダーを追加</button>
       <div class="cal-add-form" id="calAddForm">
@@ -1096,6 +1115,10 @@
           <button data-mode="month" id="cvModeMonth">月</button>
         </div>
         <div class="cv-legend" id="cvLegend"></div>
+        <button class="cv-mgmt-btn" id="excludeMgmtOpen" type="button" title="除外した予定を管理">
+          <span class="cv-mgmt-icon" aria-hidden="true">🗑️</span>
+          <span class="cv-mgmt-label">除外リスト</span>
+        </button>
         <button class="cv-icon-btn cv-close-btn" id="cvCloseBtn" title="閉じる" aria-label="閉じる">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -1555,31 +1578,11 @@
   });
   document.getElementById('undoToastClose').addEventListener('click',hideUndoToast);
 
-  // --- 除外管理モーダル：非表示にしたカレンダー / 除外した予定の一覧と復元 ---
+  // --- 除外管理モーダル：除外した予定の一覧と復元（カレンダー単位の非表示は管理外） ---
   function renderExcludeMgmt(){
     const body=document.getElementById('excludeMgmtBody');
     if(!body)return;
     const sections=[];
-
-    // 非表示カレンダー一覧
-    const hiddenList=[...hiddenGoogleCalIds].map(id=>{
-      const cal=calendars.find(c=>c.id===id);
-      return {id, label:cal?calDisplayName(cal):id, color:cal?calColor(cal):'#6b7280'};
-    });
-    let calHtml='<div class="exclude-mgmt-section"><h4>非表示にしたカレンダー</h4>';
-    if(hiddenList.length===0){
-      calHtml+='<div class="exclude-mgmt-empty">非表示にしたカレンダーはありません</div>';
-    } else {
-      calHtml+=hiddenList.map(h=>(
-        `<div class="exclude-row" data-cal-id="${escapeHtml(h.id)}">`+
-          `<span class="ex-color" style="background:${h.color}"></span>`+
-          `<span class="ex-title">${escapeHtml(h.label)}</span>`+
-          `<button class="ex-restore" data-restore-cal="${escapeHtml(h.id)}" type="button">復元</button>`+
-        `</div>`
-      )).join('');
-    }
-    calHtml+='</div>';
-    sections.push(calHtml);
 
     // 除外した予定一覧
     let evHtml='<div class="exclude-mgmt-section"><h4>除外した予定</h4>';
@@ -1609,13 +1612,7 @@
 
     body.innerHTML=sections.join('');
 
-    // ハンドラ登録
-    body.querySelectorAll('[data-restore-cal]').forEach(btn=>btn.addEventListener('click',()=>{
-      const id=btn.dataset.restoreCal;
-      restoreGoogleCal(id);
-      renderAllCalendars();
-      renderExcludeMgmt();
-    }));
+    // 除外予定の復元ハンドラ
     body.querySelectorAll('[data-restore-ex]').forEach(btn=>btn.addEventListener('click',()=>{
       const key=btn.dataset.restoreEx;
       removeExcludedEvent(key);
@@ -2917,33 +2914,22 @@
       rows.push(`<div class="cv-detail-footer"><a class="cv-detail-link" href="${ev.htmlLink}" target="_blank" rel="noopener">↗ Googleカレンダーで開く</a></div>`);
     }
 
-    // 除外アクション。繰り返し検出済み or ユーザーが「繰り返しで」と明示した時だけ 3択ダイアログを出す
+    // 除外アクション: ボタンは1つだけ。繰り返し予定なら押した時に3択ダイアログを出す。
     const recDetected=isEventRecurring(ev);
     const recBadge=recDetected?`<span style="font-size:11px;color:#92400e;background:#fef3c7;border-radius:4px;padding:2px 8px;margin-right:6px;">🔁 繰り返し</span>`:'';
-    const actions=[`<button class="cv-exclude-btn" id="cvExcludeBtn" type="button">${recBadge}🚫 除外する</button>`];
-    // 繰り返しが検出されてなくても、ユーザーが「これは本当は繰り返し」と感じた時のフォールバック
-    if(!recDetected){
-      actions.push(`<button class="cv-exclude-btn" id="cvExcludeForceRec" type="button" style="background:#fffbeb;color:#92400e;border-color:#fde68a;">🔁 繰り返しで除外…</button>`);
-    }
-    rows.push(`<div class="cv-detail-actions">${actions.join('')}</div>`);
+    rows.push(`<div class="cv-detail-actions"><button class="cv-exclude-btn" id="cvExcludeBtn" type="button">${recBadge}🚫 除外する</button></div>`);
     rows.push(`<div class="cv-exclude-dialog" id="cvExcludeDialog" style="display:none;"></div>`);
 
     document.getElementById('cvDetailBody').innerHTML=rows.join('');
 
-    // メインの除外ボタン: 検出された場合は3択ダイアログ、単発なら即除外
-    const btn=document.getElementById('cvExcludeBtn');
-    btn.addEventListener('click',()=>{
+    // 除外ボタン: 繰り返し検出時は3択ダイアログ、単発なら即除外
+    document.getElementById('cvExcludeBtn').addEventListener('click',()=>{
       if(isEventRecurring(ev)){
         showExcludeDialog(ev,false);
       } else {
         executeExclude(ev,'single');
       }
     });
-    // フォールバックボタン: 強制的に3択ダイアログを開く（誤検出救済）
-    const forceBtn=document.getElementById('cvExcludeForceRec');
-    if(forceBtn){
-      forceBtn.addEventListener('click',()=>showExcludeDialog(ev,true));
-    }
 
     // デバッグ用にコンソール出力（ユーザーが繰り返し未検出を報告したときの診断材料）
     try{
