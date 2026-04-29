@@ -14,6 +14,10 @@ const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
 const HIDE_EAGLE_KEY = "design-gallery:hide-eagle-dupes";
+// 「もう見ない」で非表示にしたサイトのID集合。データは消さず、見た目上だけ消す。
+// 全モード(すべて/未確認/確認済み)から除外され、totalCount からも引かれる。
+// 復元はヘッダー歯車アイコンのモーダルから可能。
+const HIDDEN_IDS_KEY = "design-gallery:hidden-ids";
 // 2026-04: 大規模スクレイプ後にユーザー依頼で全starredを一度だけリセット。
 // 値がtrueになっているブラウザは以後リセットしない（再度消したくなったらキー名を変える）
 const STARRED_MIGRATION_KEY = "design-gallery:starred-cleared:2026-04";
@@ -133,6 +137,56 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     setStarredIds(new Set());
   }, []);
 
+  // 非表示(hidden)状態の永続化
+  // - 真実の源は localStorage の ID 集合。データ自体は触らず、フィルター時に除外する。
+  // - 復元するときは hiddenIds から消すだけ。
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [hiddenLoaded, setHiddenLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HIDDEN_IDS_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) setHiddenIds(new Set(arr.filter((x) => typeof x === "string")));
+      }
+    } catch {
+      // 壊れていたら空のままで継続
+    }
+    setHiddenLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hiddenLoaded) return;
+    try {
+      window.localStorage.setItem(HIDDEN_IDS_KEY, JSON.stringify([...hiddenIds]));
+    } catch {}
+  }, [hiddenIds, hiddenLoaded]);
+
+  // 一括非表示
+  const hideMany = useCallback((ids: string[]) => {
+    setHiddenIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }, []);
+
+  // 個別復元
+  const unhideOne = useCallback((id: string) => {
+    setHiddenIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  // 全復元
+  const unhideAll = useCallback(() => {
+    setHiddenIds(new Set());
+  }, []);
+
   // starredIds が変化したら localStorage に書き出す
   // (初回ロード前のsaveは避けたいので starredLoaded を条件に)
   useEffect(() => {
@@ -168,6 +222,8 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     const filtered = sites.filter((site) => {
       // リンク切れは常に非表示（断捨離）
       if (site.isDead) return false;
+      // 「もう見ない」で非表示化されたサイトは全モードから除外
+      if (hiddenIds.has(site.id)) return false;
       if (filter.viewMode === "unchecked" && site.starred) return false;
       if (filter.search) {
         const q = filter.search.toLowerCase();
@@ -228,7 +284,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       idx++;
     }
     return interleaved;
-  }, [sites, filter]);
+  }, [sites, filter, hiddenIds]);
 
   // Eagleに含まれていて「本来なら表示されるはず」だったサイト
   const eagleExcludedSites = useMemo<SiteEntry[]>(() => {
@@ -252,15 +308,24 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
 
   // 分母に使う「生きてる」全サイト数。
   // hideEagleDuplicates=true の時は Eagle 重複を母数から外し、false の時は含める。
+  // hiddenIds で非表示にしたサイトも母数から外す（ユーザー視点では「もう存在しない」扱い）。
   const totalCount = useMemo<number>(() => {
-    const alive = sites.filter((s) => !s.isDead);
+    const alive = sites.filter((s) => !s.isDead && !hiddenIds.has(s.id));
     if (!hideEagleDuplicates) return alive.length;
     if (!eagleUrls || eagleUrls.size === 0) return alive.length;
     return alive.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     }).length;
-  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
+  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates, hiddenIds]);
+
+  // 非表示にしたサイトの実体（モーダル表示用）。新しい順。
+  const hiddenSites = useMemo<SiteEntry[]>(() => {
+    if (hiddenIds.size === 0) return [];
+    return sites
+      .filter((s) => hiddenIds.has(s.id))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [sites, hiddenIds]);
 
   // シグナル（Framer / スタジオ / プロダクション）ごとの件数。
   // FilterModal に渡して「何件ヒットしているか」の目安表示に使う。
@@ -431,5 +496,11 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     toggleHideEagleDuplicates: () =>
       setHideEagleDuplicates((v) => !v),
     setHideEagleDuplicates,
+    // 「もう見ない」非表示化
+    hiddenSites,
+    hiddenCount: hiddenIds.size,
+    hideMany,
+    unhideOne,
+    unhideAll,
   };
 }
