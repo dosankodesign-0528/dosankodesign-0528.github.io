@@ -9,6 +9,7 @@ import {
   getTripByAnyShareId, updateTrip, addSpot, updateSpot, deleteSpot,
   deleteTrip as removeTripFromStorage, updateDayHeadline,
 } from '../../../lib/storage';
+import { supabase } from '../../../lib/supabase';
 import { SpotFormData } from '../../../components/SpotEditModal';
 import Timeline from '../../../components/Timeline';
 import type { DaySection } from '../../../components/Timeline';
@@ -110,6 +111,30 @@ export default function SharePage({ params }: { params: Promise<{ shareId: strin
         setNotFound(true);
       }
     });
+  }, [shareId]);
+
+  // ─── iPhone / iPad シームレス同期: Supabase Realtime 購読 ───
+  // trips テーブルに変更があれば debounce 付きで再フェッチ → 別端末の編集が即時反映。
+  // trips テーブルは Supabase 側で Realtime publication に登録されている前提
+  // (sql/2026-04-29-realtime.sql で ALTER PUBLICATION 済)。
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefetch = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        getTripByAnyShareId(shareId).then((result) => {
+          if (result) setTrip(result.trip);
+        });
+      }, 500);
+    };
+    const channel = supabase
+      .channel(`travel-shiori-realtime-${shareId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, scheduleRefetch)
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
   }, [shareId]);
 
   // DaySection データを構築（常に全Day表示、フィルタはスポットレベルで適用）
