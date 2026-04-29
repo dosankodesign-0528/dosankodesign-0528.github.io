@@ -1211,17 +1211,101 @@
   let hiddenGoogleCalIds=new Set();
   let excludedEvents=[]; // [{key,title,calLabel,excludedAt,scope}]
 
+  // ===== IndexedDB レイヤー（Safari ITP / Cookie 4KB制限の保険として併用） =====
+  // localStorage と IndexedDB の両方に書き込み、読み込み時はマージして
+  // どちらかが消されてももう片方から復元できるようにする。
+  const IDB_DB='akijikan_db_v1';
+  const IDB_STORE='settings';
+  function idbOpen(){
+    return new Promise((resolve,reject)=>{
+      try{
+        const req=indexedDB.open(IDB_DB,1);
+        req.onupgradeneeded=()=>{
+          const db=req.result;
+          if(!db.objectStoreNames.contains(IDB_STORE))db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
+      }catch(e){reject(e);}
+    });
+  }
+  async function idbGet(key){
+    try{
+      const db=await idbOpen();
+      return await new Promise((resolve)=>{
+        const tx=db.transaction(IDB_STORE,'readonly');
+        const req=tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess=()=>resolve(req.result==null?null:req.result);
+        req.onerror=()=>resolve(null);
+      });
+    }catch(e){return null;}
+  }
+  async function idbPut(key,value){
+    try{
+      const db=await idbOpen();
+      return await new Promise((resolve)=>{
+        const tx=db.transaction(IDB_STORE,'readwrite');
+        tx.objectStore(IDB_STORE).put(value,key);
+        tx.oncomplete=()=>resolve(true);
+        tx.onerror=()=>resolve(false);
+      });
+    }catch(e){return false;}
+  }
+
+  // ===== 非表示カレンダー / 除外予定の保存と復元 =====
+  // localStorage / IndexedDB の両方に保存（片方が消えても復元可）
   function loadHiddenCals(){
     try{const raw=storageRead(HIDDEN_CALS_KEY); hiddenGoogleCalIds=new Set(raw?JSON.parse(raw):[]);}catch(e){hiddenGoogleCalIds=new Set();}
+    // 非同期で IndexedDB からもマージ（localStorage が空 or 古い場合の保険）
+    idbGet(HIDDEN_CALS_KEY).then(idbVal=>{
+      if(!idbVal)return;
+      try{
+        const idbSet=new Set(JSON.parse(idbVal));
+        const before=hiddenGoogleCalIds.size;
+        idbSet.forEach(id=>hiddenGoogleCalIds.add(id));
+        if(hiddenGoogleCalIds.size!==before){
+          // IndexedDB に新しい情報があった → localStorage にも反映
+          saveHiddenCals();
+          renderAllCalendars && renderAllCalendars();
+        }
+      }catch(e){}
+    });
   }
   function saveHiddenCals(){
-    try{storageWrite(HIDDEN_CALS_KEY,JSON.stringify([...hiddenGoogleCalIds]));}catch(e){}
+    const json=JSON.stringify([...hiddenGoogleCalIds]);
+    try{storageWrite(HIDDEN_CALS_KEY,json);}catch(e){}
+    idbPut(HIDDEN_CALS_KEY,json); // fire-and-forget
   }
   function loadExcludedEvents(){
     try{const raw=storageRead(EXCLUDED_EVENTS_KEY); excludedEvents=raw?JSON.parse(raw):[];}catch(e){excludedEvents=[];}
+    // 非同期で IndexedDB からもマージ（key 単位で重複排除して結合）
+    idbGet(EXCLUDED_EVENTS_KEY).then(idbVal=>{
+      if(!idbVal)return;
+      try{
+        const idbList=JSON.parse(idbVal);
+        if(!Array.isArray(idbList))return;
+        const seen=new Set(excludedEvents.map(e=>e.key));
+        let added=0;
+        for(const e of idbList){
+          if(!seen.has(e.key)){excludedEvents.push(e);seen.add(e.key);added++;}
+        }
+        if(added>0){
+          // 新規エントリがあった → localStorage にも書き戻して同期
+          saveExcludedEvents();
+          // カレンダービューが開いていれば再描画
+          try{
+            if(document.getElementById('cvOverlay').classList.contains('show')){
+              cvCacheKey=null; cvCacheEvents=null; cvRender(false);
+            }
+          }catch(_e){}
+        }
+      }catch(e){}
+    });
   }
   function saveExcludedEvents(){
-    try{storageWrite(EXCLUDED_EVENTS_KEY,JSON.stringify(excludedEvents));}catch(e){}
+    const json=JSON.stringify(excludedEvents);
+    try{storageWrite(EXCLUDED_EVENTS_KEY,json);}catch(e){}
+    idbPut(EXCLUDED_EVENTS_KEY,json); // fire-and-forget
   }
 
   // 単発予定の除外キー: その1件だけを一意に指す
