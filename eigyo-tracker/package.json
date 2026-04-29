@@ -1,0 +1,20 @@
+{
+  "name": "eigyo-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gmail から営業情報を集めて Notion に同期するツール",
+  "scripts": {
+    "sync": "tsx src/index.ts",
+    "auth:gmail": "tsx scripts/gmail-auth.ts"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5",
+    "googleapis": "^144.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
