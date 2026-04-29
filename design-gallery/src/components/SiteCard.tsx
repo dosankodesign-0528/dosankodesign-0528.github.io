@@ -33,6 +33,9 @@ export const SiteCard = memo(function SiteCard({
   onToggleStar,
 }: SiteCardProps) {
   const [hovered, setHovered] = useState(false);
+  // 制作クレジットの全文ホバー表示用ステート。
+  // 省略(...)されてても、ホバーで全文がふわっと出る保険的なツールチップ。
+  const [agencyHovered, setAgencyHovered] = useState(false);
 
   return (
     <div
@@ -165,16 +168,20 @@ export const SiteCard = memo(function SiteCard({
             </svg>
             {formatCuratedAt(site.date)}
           </span>
-          {/* クレジット（制作会社／作り手）— ある時だけ表示 */}
+          {/* クレジット（制作会社／作り手）— ある時だけ表示。
+              省略表示中でも、ホバーで全文ツールチップが出るようにしてある。
+              アイコンと会社名はカード内で少し強調（text-text-secondary, medium）して
+              「これは制作者情報や」と見て分かるようにしてる。 */}
           {site.agency && (
             <>
               <span className="text-text-secondary/30 shrink-0">·</span>
               <span
-                className="inline-flex items-center gap-1 min-w-0"
-                title={`制作: ${site.agency}`}
+                className="inline-flex items-center gap-1 min-w-0 relative cursor-default"
+                onMouseEnter={() => setAgencyHovered(true)}
+                onMouseLeave={() => setAgencyHovered(false)}
               >
                 <svg
-                  className="w-3 h-3 shrink-0"
+                  className="w-3 h-3 shrink-0 text-text-secondary"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -186,7 +193,31 @@ export const SiteCard = memo(function SiteCard({
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                   />
                 </svg>
-                <span className="truncate">{site.agency}</span>
+                <span className="truncate font-medium text-text-secondary">
+                  {site.agency}
+                </span>
+
+                {/* カスタムツールチップ: ホバー時に全文表示。
+                    pointer-events-none で領域から外れたらすぐ消える。
+                    max-w で長すぎるクレジットも複数行で表示できる。 */}
+                {agencyHovered && (
+                  <span
+                    role="tooltip"
+                    className="absolute left-0 bottom-full mb-1.5 z-50 px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-[11px] font-normal leading-snug shadow-xl pointer-events-none max-w-[280px] break-words whitespace-normal"
+                  >
+                    <span className="opacity-60">制作: </span>
+                    <span className="font-medium">{site.agency}</span>
+                    {/* 三角の矢印（下向き） */}
+                    <span
+                      className="absolute top-full left-3 w-0 h-0"
+                      style={{
+                        borderLeft: "4px solid transparent",
+                        borderRight: "4px solid transparent",
+                        borderTop: "4px solid rgb(17 24 39)",
+                      }}
+                    />
+                  </span>
+                )}
               </span>
             </>
           )}
@@ -199,5 +230,6 @@ export const SiteCard = memo(function SiteCard({
   prev.site.id === next.site.id &&
   prev.site.starred === next.site.starred &&
   prev.site.date === next.site.date &&
+  prev.site.agency === next.site.agency &&
   prev.selected === next.selected
 );
