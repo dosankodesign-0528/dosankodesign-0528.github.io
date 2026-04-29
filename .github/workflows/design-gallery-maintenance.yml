@@ -1,0 +1,66 @@
+name: Design Gallery 月次メンテナンス
+
+# 月次でリンク切れ再チェック + シグナル(Framer/Studio/制作会社)再エンリッチ。
+# 既存の毎日スクレイプ + 月初の健全性チェックとは別軸。
+# - 毎日: 新規追加サイトを取り込む（scrape-design-gallery.yml）
+# - 月初(1日): 健全性チェック → 異常時のみ Issue（design-gallery-coverage-check.yml）
+# - 月初(2日): リンク切れ + シグナル再判定（このファイル）
+#
+# 健全性チェックの翌日にずらしてあるのは、メンテで scraped-sites.json が
+# 大きく変わっても、その月の健全性スナップショットを先に取れるようにするため。
+
+on:
+  schedule:
+    # 毎月 2日 02:00 UTC = JST 11:00
+    - cron: '0 2 2 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: design-gallery-maintenance
+  cancel-in-progress: false
+
+jobs:
+  refresh-links-and-signals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: design-gallery/package-lock.json
+
+      - name: 依存インストール
+        working-directory: design-gallery
+        run: npm ci
+
+      # === Step 1: リンク切れ再チェック（403/5xx は連続検出で dead 認定） ===
+      - name: リンク切れ再チェック
+        working-directory: design-gallery
+        run: npx tsx scripts/check-dead-links.ts
+
+      # === Step 2: シグナル再エンリッチ（Framer/Studio/制作会社 判定） ===
+      - name: シグナル再エンリッチ
+        working-directory: design-gallery
+        run: npx tsx scripts/enrich-tags.ts
+
+      # === Step 3: 変更があればコミット ===
+      - name: 結果をコミット & プッシュ
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- design-gallery/src/data/scraped-sites.json; then
+            echo "変更なし、スキップ。"
+            exit 0
+          fi
+          git add design-gallery/src/data/scraped-sites.json
+          git commit -m "chore(design-gallery): 月次メンテナンス - リンク切れ + シグナル更新 ($(date -u +%Y-%m-%d))"
+          git push
