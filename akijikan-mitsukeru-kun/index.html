@@ -628,6 +628,23 @@
     color:var(--text);
     line-height:1.35;
     word-break:break-word;
+    cursor:text;
+  }
+  .cv-detail-title[title]:hover { text-decoration:underline dotted; text-underline-offset:3px; }
+  /* タイトル編集モード: H3 を input に置き換える */
+  .cv-detail-title-input {
+    margin:0;
+    width:100%;
+    font-size:16px;
+    font-weight:700;
+    color:var(--text);
+    line-height:1.35;
+    background:#fffbeb;
+    border:1px solid var(--amber);
+    border-radius:6px;
+    padding:6px 8px;
+    outline:none;
+    font-family:'Noto Sans JP',sans-serif;
   }
   .cv-detail-cal {
     margin-top:4px;
@@ -727,6 +744,15 @@
     transition:all 0.12s;
   }
   .cv-exclude-btn:hover { background:#fee2e2; border-color:#fca5a5; }
+  .cv-rename-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#eff6ff; color:#1d4ed8;
+    border:1px solid #bfdbfe; border-radius:var(--radius-sm);
+    padding:8px 12px; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+    transition:all 0.12s;
+  }
+  .cv-rename-btn:hover { background:#dbeafe; border-color:#93c5fd; }
 
   /* 繰り返し予定の除外スコープ選択ダイアログ（Google カレンダー風） */
   .cv-exclude-dialog {
@@ -1508,6 +1534,61 @@
     excludedEvents=excludedEvents.filter(e=>e.key!==key);
     if(excludedEvents.length!==before)saveExcludedEvents();
   }
+
+  // ===== 予定リネーム =====
+  // 予定にマッチするリネームエントリ（あれば）を返す
+  function getRenameForEvent(ev){
+    if(!ev||!renamedEvents.length)return null;
+    const sKey=singleEventKey(ev);
+    const rKeys=new Set(buildAllSeriesKeys(ev));
+    // 直近のリネームを優先（後勝ち）
+    for(let i=renamedEvents.length-1;i>=0;i--){
+      const r=renamedEvents[i];
+      if(r.scope==='single' && r.key===sKey)return r.newTitle;
+      if(r.scope==='recurring' && rKeys.has(r.recurringKey))return r.newTitle;
+    }
+    return null;
+  }
+  // リネーム保存。繰り返し検出時は scope='recurring' にしてシリーズ全体に適用
+  function addRenamedEvent(ev, newTitle){
+    if(!ev||typeof newTitle!=='string')return null;
+    const trimmed=newTitle.trim();
+    if(!trimmed)return null;
+    const cal=calendars.find(c=>c.id===ev.calId);
+    const calLabel=cal?calDisplayName(cal):(ev.calId&&String(ev.calId).startsWith('__ics__:')?String(ev.calId).replace('__ics__:',''):'');
+    const originalTitle=(ev.summary||'').trim()||'(タイトルなし)';
+    const isRec=isEventRecurring(ev);
+    let entry;
+    if(isRec){
+      const rKey=recurringSeriesKey(ev);
+      if(!rKey){
+        // recurringSeriesKey が null の場合は単発で保存
+        const k=singleEventKey(ev); if(!k)return null;
+        // 同じkey既存なら上書き
+        const idx=renamedEvents.findIndex(e=>e.scope==='single'&&e.key===k);
+        entry={key:k,scope:'single',newTitle:trimmed,originalTitle,calLabel,renamedAt:Date.now()};
+        if(idx>=0)renamedEvents[idx]=entry; else renamedEvents.push(entry);
+      } else {
+        // 繰り返し全体に適用（既存があれば上書き）
+        const idx=renamedEvents.findIndex(e=>e.scope==='recurring'&&e.recurringKey===rKey);
+        entry={key:`renamerec:${rKey}`,scope:'recurring',recurringKey:rKey,newTitle:trimmed,originalTitle,calLabel,renamedAt:Date.now()};
+        if(idx>=0)renamedEvents[idx]=entry; else renamedEvents.push(entry);
+      }
+    } else {
+      const k=singleEventKey(ev); if(!k)return null;
+      const idx=renamedEvents.findIndex(e=>e.scope==='single'&&e.key===k);
+      entry={key:k,scope:'single',newTitle:trimmed,originalTitle,calLabel,renamedAt:Date.now()};
+      if(idx>=0)renamedEvents[idx]=entry; else renamedEvents.push(entry);
+    }
+    saveRenamedEvents();
+    return entry.key;
+  }
+  function removeRenamedEvent(key){
+    const before=renamedEvents.length;
+    renamedEvents=renamedEvents.filter(e=>e.key!==key);
+    if(renamedEvents.length!==before)saveRenamedEvents();
+  }
+
   function hideGoogleCal(calId){
     if(!calId||String(calId).startsWith('__ics__:'))return;
     hiddenGoogleCalIds.add(calId);
@@ -1665,6 +1746,25 @@
     evHtml+='</div>';
     sections.push(evHtml);
 
+    // リネームした予定一覧
+    let rnHtml='<div class="exclude-mgmt-section"><h4>名前を変更した予定</h4>';
+    if(renamedEvents.length===0){
+      rnHtml+='<div class="exclude-mgmt-empty">名前を変更した予定はありません</div>';
+    } else {
+      const sorted=[...renamedEvents].sort((a,b)=>(b.renamedAt||0)-(a.renamedAt||0));
+      rnHtml+=sorted.map(r=>{
+        const scopeBadge=r.scope==='recurring'?'🔁 すべての繰り返し':'単発';
+        const orig=r.originalTitle?`元: ${r.originalTitle}`:'';
+        return `<div class="exclude-row" data-rn-key="${escapeHtml(r.key)}">`+
+          `<span class="ex-title">${escapeHtml(r.newTitle||'(空)')}</span>`+
+          `<span class="ex-meta">${escapeHtml(r.calLabel||'')} · ${scopeBadge}${orig?' · '+escapeHtml(orig):''}</span>`+
+          `<button class="ex-restore" data-restore-rn="${escapeHtml(r.key)}" type="button">元に戻す</button>`+
+        `</div>`;
+      }).join('');
+    }
+    rnHtml+='</div>';
+    sections.push(rnHtml);
+
     body.innerHTML=sections.join('');
 
     // 除外予定の復元ハンドラ
@@ -1673,6 +1773,16 @@
       removeExcludedEvent(key);
       renderExcludeMgmt();
       // カレンダービューが開いていれば再描画
+      if(document.getElementById('cvOverlay').classList.contains('show')){
+        cvCacheKey=null; cvCacheEvents=null;
+        cvRender(false);
+      }
+    }));
+    // リネームの元に戻すハンドラ
+    body.querySelectorAll('[data-restore-rn]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.restoreRn;
+      removeRenamedEvent(key);
+      renderExcludeMgmt();
       if(document.getElementById('cvOverlay').classList.contains('show')){
         cvCacheKey=null; cvCacheEvents=null;
         cvRender(false);
@@ -2677,8 +2787,13 @@
   // タイトルが無い・ダミータイトルの予定はカレンダー表示名にフォールバック
   const CV_PLACEHOLDER_TITLES=new Set(['予定あり','Busy','busy','BUSY','(タイトルなし)','(no title)','(No title)','タイトルなし','no title','No title']);
   function cvEventLabel(ev){
+    // 1. ユーザーが付けたリネームがあれば最優先
+    const renamed=getRenameForEvent(ev);
+    if(renamed)return renamed;
+    // 2. 予定本来のタイトル
     const sum=ev&&ev.summary&&ev.summary.trim();
     if(sum && !CV_PLACEHOLDER_TITLES.has(sum))return sum;
+    // 3. プレースホルダーや空タイトルはカレンダー名にフォールバック
     if(ev&&ev.calId){
       if(ev.calId.startsWith('__ics__:'))return ev.calId.replace('__ics__:','');
       const cal=calendars.find(c=>c.id===ev.calId);
@@ -2925,7 +3040,11 @@
     const cal=calendars.find(c=>c.id===ev.calId);
     const calName=cal?calDisplayName(cal):(ev.calId&&ev.calId.startsWith('__ics__:')?ev.calId.replace('__ics__:',''):'');
     document.getElementById('cvDetailColor').style.background=color;
-    document.getElementById('cvDetailTitle').textContent=cvEventLabel(ev);
+    const titleEl=document.getElementById('cvDetailTitle');
+    titleEl.textContent=cvEventLabel(ev);
+    titleEl.title='ダブルクリックで名前を変更';
+    // ダブルクリックでインライン編集モード
+    titleEl.ondblclick=()=>startTitleEdit(ev);
     document.getElementById('cvDetailCal').textContent=calName?`📅 ${calName}`:'';
 
     // ミーティング URL の収集
@@ -2970,14 +3089,21 @@
       rows.push(`<div class="cv-detail-footer"><a class="cv-detail-link" href="${ev.htmlLink}" target="_blank" rel="noopener">↗ Googleカレンダーで開く</a></div>`);
     }
 
-    // 除外アクション: ボタンは1つだけ。繰り返し予定なら押した時に3択ダイアログを出す。
+    // アクション: 名前を変更 + 除外する。繰り返し予定なら除外時に3択ダイアログ
     const recDetected=isEventRecurring(ev);
     const recBadge=recDetected?`<span style="font-size:11px;color:#92400e;background:#fef3c7;border-radius:4px;padding:2px 8px;margin-right:6px;">🔁 繰り返し</span>`:'';
-    rows.push(`<div class="cv-detail-actions"><button class="cv-exclude-btn" id="cvExcludeBtn" type="button">${recBadge}🚫 除外する</button></div>`);
+    rows.push(
+      `<div class="cv-detail-actions">`+
+        `<button class="cv-rename-btn" id="cvRenameBtn" type="button">✏️ 名前を変更</button>`+
+        `<button class="cv-exclude-btn" id="cvExcludeBtn" type="button">${recBadge}🚫 除外する</button>`+
+      `</div>`
+    );
     rows.push(`<div class="cv-exclude-dialog" id="cvExcludeDialog" style="display:none;"></div>`);
 
     document.getElementById('cvDetailBody').innerHTML=rows.join('');
 
+    // 名前を変更ボタン: モバイル/タブ用の代替UI
+    document.getElementById('cvRenameBtn').addEventListener('click',()=>startTitleEdit(ev));
     // 除外ボタン: 繰り返し検出時は3択ダイアログ、単発なら即除外
     document.getElementById('cvExcludeBtn').addEventListener('click',()=>{
       if(isEventRecurring(ev)){
@@ -3050,6 +3176,65 @@
   function cvCloseDetail(){
     document.getElementById('cvDetailOverlay').classList.remove('show');
   }
+
+  // タイトルをインライン編集モードに切替（H3 → input）
+  // 保存時: 繰り返し予定なら自動でシリーズ全体に反映、単発はその1件のみ
+  function startTitleEdit(ev){
+    const titleEl=document.getElementById('cvDetailTitle');
+    if(!titleEl)return;
+    const wrap=titleEl.parentNode;
+    const currentLabel=cvEventLabel(ev);
+    // 入力要素を作る
+    const input=document.createElement('input');
+    input.type='text';
+    input.value=currentLabel;
+    input.maxLength=120;
+    input.className='cv-detail-title-input';
+    input.id='cvDetailTitleInput';
+    titleEl.style.display='none';
+    wrap.insertBefore(input,titleEl);
+    setTimeout(()=>{ input.focus(); input.select(); }, 30);
+    let committed=false;
+    function commit(save){
+      if(committed)return;
+      committed=true;
+      const newVal=input.value.trim();
+      if(save && newVal && newVal!==currentLabel){
+        addRenamedEvent(ev,newVal);
+        titleEl.textContent=newVal;
+        // カレンダービュー再描画
+        cvCacheKey=null; cvCacheEvents=null;
+        cvRender(false);
+        const isRec=isEventRecurring(ev);
+        const scopeLabel=isRec?'シリーズ全体':'この予定';
+        showUndoToast(`${scopeLabel}を「${newVal}」にリネームしました`,()=>{
+          // Undo: そのリネームエントリを除去して元に戻す
+          const sKey=singleEventKey(ev);
+          const rKey=recurringSeriesKey(ev);
+          const target=renamedEvents.find(r=>{
+            if(r.scope==='single'&&r.key===sKey)return true;
+            if(r.scope==='recurring'&&r.recurringKey===rKey)return true;
+            return false;
+          });
+          if(target){
+            removeRenamedEvent(target.key);
+            titleEl.textContent=cvEventLabel(ev);
+            cvCacheKey=null; cvCacheEvents=null;
+            cvRender(false);
+          }
+        });
+      }
+      // input を撤去して H3 を表示に戻す
+      try{input.remove();}catch(_e){}
+      titleEl.style.display='';
+    }
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();commit(true);}
+      else if(e.key==='Escape'){e.preventDefault();commit(false);}
+    });
+    input.addEventListener('blur',()=>commit(true));
+  }
+
   document.getElementById('cvDetailClose').addEventListener('click',cvCloseDetail);
   document.getElementById('cvDetailOverlay').addEventListener('click',e=>{
     if(e.target===e.currentTarget)cvCloseDetail();
