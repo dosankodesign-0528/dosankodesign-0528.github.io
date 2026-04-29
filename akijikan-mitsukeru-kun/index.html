@@ -2925,7 +2925,7 @@
     // 除外ボタン: 繰り返し検出時は3択ダイアログ、単発なら即除外
     document.getElementById('cvExcludeBtn').addEventListener('click',()=>{
       if(isEventRecurring(ev)){
-        showExcludeDialog(ev,false);
+        showExcludeDialog(ev);
       } else {
         executeExclude(ev,'single');
       }
@@ -2946,17 +2946,13 @@
   }
 
   // 繰り返し予定向けの 3択スコープダイアログをインラインで描画
-  // forceTitle が true の場合は「繰り返しが見つからなかったかもしれません」と注記する
-  function showExcludeDialog(ev, forceTitle){
+  function showExcludeDialog(ev){
     const dlg=document.getElementById('cvExcludeDialog');
     if(!dlg)return;
     const main=document.getElementById('cvExcludeBtn');
-    const force=document.getElementById('cvExcludeForceRec');
     if(main)main.style.display='none';
-    if(force)force.style.display='none';
-    const titleText=forceTitle?'繰り返し予定として除外します。どこまで除外しますか？':'どこまで除外しますか？';
     dlg.innerHTML=
-      `<div class="ed-title">${titleText}</div>`+
+      `<div class="ed-title">🔁 繰り返し予定です。どこまで除外しますか？</div>`+
       `<div class="ed-options">`+
         `<label><input type="radio" name="cvExcScope" value="single"> <span class="ed-label-text">この予定のみ</span></label>`+
         `<label><input type="radio" name="cvExcScope" value="future" checked> <span class="ed-label-text">これ以降の予定（同じシリーズ）</span></label>`+
@@ -2970,12 +2966,11 @@
     document.getElementById('cvExcCancel').addEventListener('click',()=>{
       dlg.style.display='none';
       if(main)main.style.display='';
-      if(force)force.style.display='';
     });
     document.getElementById('cvExcOk').addEventListener('click',()=>{
       const sel=document.querySelector('input[name=cvExcScope]:checked');
       const scope=sel?sel.value:'single';
-      executeExclude(ev,scope,forceTitle);
+      executeExclude(ev,scope);
     });
   }
 
