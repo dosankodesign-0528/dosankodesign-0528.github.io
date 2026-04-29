@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState } from "react";
 import {
   SiteEntry,
   SOURCE_LABELS,
@@ -19,6 +19,13 @@ interface SiteCardProps {
   onToggleStar: (id: string) => void;
 }
 
+/** "2024-09" → "2024年9月にキュレーション" */
+function formatCuratedAt(yyyymm: string): string {
+  const m = yyyymm.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return yyyymm;
+  return `${m[1]}年${parseInt(m[2], 10)}月`;
+}
+
 export const SiteCard = memo(function SiteCard({
   site,
   selected,
@@ -26,27 +33,6 @@ export const SiteCard = memo(function SiteCard({
   onToggleStar,
 }: SiteCardProps) {
   const [hovered, setHovered] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyUrl = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      navigator.clipboard.writeText(site.url).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      });
-    },
-    [site.url]
-  );
-
-  // URLのドメインだけ表示
-  const displayUrl = (() => {
-    try {
-      return new URL(site.url).hostname.replace("www.", "");
-    } catch {
-      return site.url;
-    }
-  })();
 
   return (
     <div
@@ -142,14 +128,9 @@ export const SiteCard = memo(function SiteCard({
         <h3 className="text-[13px] font-semibold text-text-primary truncate leading-tight">
           {site.title}
         </h3>
-        {site.agency && (
-          <p className="text-[11px] text-text-secondary mt-0.5 truncate">
-            {site.agency}
-          </p>
-        )}
         {/* 制作タグ（ハッシュタグ表記: #Framer / #Studio / #制作会社） */}
         {site.signals && site.signals.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1.5">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-1">
             {SIGNAL_DISPLAY_ORDER.filter((sig) => site.signals?.includes(sig)).map((sig) => (
               <span
                 key={sig}
@@ -160,30 +141,55 @@ export const SiteCard = memo(function SiteCard({
             ))}
           </div>
         )}
-        {/* URL + 日付 */}
-        <div className="flex items-center gap-2 mt-1.5">
-        <button
-          onClick={handleCopyUrl}
-          className="flex items-center gap-1 text-[11px] text-text-secondary/70 hover:text-accent transition-colors min-w-0"
-          title="URLをコピー"
-        >
-          <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {copied ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            ) : (
+        {/* キュレーション日 + クレジット（制作会社・デザイナー）
+            旧: ドメイン表示+コピー → 削除（ホバー時の外部リンクボタンで開ける）
+            新: いつ取得されたサイトか + 誰が作ったか */}
+        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-text-secondary/70 min-w-0">
+          {/* キュレーション日 */}
+          <span
+            className="inline-flex items-center gap-1 shrink-0 tabular-nums"
+            title={`キュレーション日: ${site.date}`}
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
-            )}
-          </svg>
-          <span className="truncate">
-            {copied ? "コピーしました!" : displayUrl}
+            </svg>
+            {formatCuratedAt(site.date)}
           </span>
-        </button>
-        <span className="text-[11px] text-text-secondary/50 shrink-0">{site.date}</span>
+          {/* クレジット（制作会社／作り手）— ある時だけ表示 */}
+          {site.agency && (
+            <>
+              <span className="text-text-secondary/30 shrink-0">·</span>
+              <span
+                className="inline-flex items-center gap-1 min-w-0"
+                title={`制作: ${site.agency}`}
+              >
+                <svg
+                  className="w-3 h-3 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                <span className="truncate">{site.agency}</span>
+              </span>
+            </>
+          )}
         </div>
       </div>
     </div>
