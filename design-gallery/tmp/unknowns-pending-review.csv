@@ -1,3 +1,24 @@
-url,title,source,reason
-"https://alpha.plaid.co.jp/","PLAID ALPHA",sankou,"ナビゲーションタイムアウト"
-"https://www.woolrich.jp/woolrichwonderfulwinter","星野リゾートLP WOOLRICH 公式オンラインストア",sankou,"HTTP 503 (一時障害かも)"
+id,url,title,source,reason,screenshot
+f91c2d3fc95c,"https://alpha.plaid.co.jp/","PLAID ALPHA",sankou,"ナビゲーションタイムアウト",tmp/screenshots/f91c2d3fc95c.png
+490398268a96,"https://www.woolrich.jp/woolrichwonderfulwinter","星野リゾートLP WOOLRICH 公式オンラインストア",sankou,"HTTP 503 (一時障害かも)",tmp/screenshots/490398268a96.png
+f0ec38e0b8c3,"https://www.proglab.education/","ProgLab 子ども向けロボットプログラミング教室",sankou,"ナビゲーションタイムアウト",tmp/screenshots/f0ec38e0b8c3.png
+1d2d9ac7efc7,"https://yuika-portfolio-b.site/index.html","かわかみゆいか",sankou,"Playwright nav 失敗: page.goto: net::ERR_SSL_PROTOCOL_ERROR at https://yuika-portfolio-b.site/index.h",
+79cc45f4194d,"https://neoai.jp/","株式会社neoAI",sankou,"ナビゲーションタイムアウト",tmp/screenshots/79cc45f4194d.png
+27f37859a8db,"https://www.luminaireauthentik.com/","Luminaire Authentik",muuuuu,"ナビゲーションタイムアウト",tmp/screenshots/27f37859a8db.png
+ec71db660cf7,"https://haptikos.tech/","haptikos",muuuuu,"ナビゲーションタイムアウト",tmp/screenshots/ec71db660cf7.png
+4f8cd30cac67,"https://www.hucord.com/kr/?reloaded","휴코드 HUCORD",muuuuu,"ナビゲーションタイムアウト",tmp/screenshots/4f8cd30cac67.png
+b1ef95c67d7f,"https://koffiracha.com/","Koffiracha Hot Sauce",muuuuu,"HTTP 402 判定保留 (text=548, html=15118, el=70)",tmp/screenshots/b1ef95c67d7f.png
+d0fb40e51f8e,"https://hematogenix.com/","Hematogenix",muuuuu,"HTTP 429 判定保留 (text=86, html=4123, el=35)",tmp/screenshots/d0fb40e51f8e.png
+46044ed13db3,"https://www.timevillas.com/main","타임빌라스 수원",webdesignclip,"ナビゲーションタイムアウト",
+eccf6fbe0530,"https://stubborn-room.funnyworks.co.kr/","FUNNYWORKS",webdesignclip,"ナビゲーションタイムアウト",tmp/screenshots/eccf6fbe0530.png
+f2d92a8de224,"https://saporienatura.it/","Sapori e Natura di Calabria",webdesignclip,"Playwright nav 失敗: page.goto: net::ERR_CONNECTION_RESET at https://saporienatura.it/
+Call log:
+  - ",
+9ffa7a268c00,"https://www.unbiasproject.com/","(un)bias by SISTA",webdesignclip,"Playwright nav 失敗: page.goto: net::ERR_SSL_PROTOCOL_ERROR at https://www.unbiasproject.com/
+Call lo",
+0a220fdba60e,"https://hagukumidesign.com/","HAGUKUMI DESIGN",webdesignclip,"ナビゲーションタイムアウト",tmp/screenshots/0a220fdba60e.png
+cd955a13f809,"https://packet-panic.nl","Packet Panic",awwwards,"ナビゲーションタイムアウト",
+908392ff7959,"https://docemilmusic.com/","12 Mil",awwwards,"HTTP 402 判定保留 (text=76, html=237, el=15)",tmp/screenshots/908392ff7959.png
+1c4475c0e708,"https://freshman.tv/","Freshman",awwwards,"ナビゲーションタイムアウト",
+9b7a3dd52e83,"https://www.ariostea.it/en","Ariostea",awwwards,"ナビゲーションタイムアウト",
+d0fa59ccb649,"https://the-shirt.bymatthew.com/","By:Matthew The Shirt",awwwards,"HTTP 502 (一時障害かも)",

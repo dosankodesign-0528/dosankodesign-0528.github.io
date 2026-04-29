@@ -1233,8 +1233,12 @@
   //   - title/calLabel/excludedAt を保持（除外管理UIで表示・復元するため）
   const HIDDEN_CALS_KEY='akijikan_hidden_cals_v1';
   const EXCLUDED_EVENTS_KEY='akijikan_excluded_events_v1';
+  const RENAMED_EVENTS_KEY='akijikan_renamed_events_v1';
   let hiddenGoogleCalIds=new Set();
   let excludedEvents=[]; // [{key,title,calLabel,excludedAt,scope}]
+  // リネーム済み予定: [{key,recurringKey?,scope,newTitle,originalTitle,calLabel,renamedAt}]
+  // scope='single' は単発、'recurring' は繰り返しシリーズ全体
+  let renamedEvents=[];
 
   // ===== IndexedDB レイヤー（Safari ITP / Cookie 4KB制限の保険として併用） =====
   // localStorage と IndexedDB の両方に書き込み、読み込み時はマージして
@@ -1331,6 +1335,36 @@
     const json=JSON.stringify(excludedEvents);
     try{storageWrite(EXCLUDED_EVENTS_KEY,json);}catch(e){}
     idbPut(EXCLUDED_EVENTS_KEY,json); // fire-and-forget
+  }
+
+  // リネーム情報のロード/セーブ（除外と同じく localStorage + IndexedDB の二重保存）
+  function loadRenamedEvents(){
+    try{const raw=storageRead(RENAMED_EVENTS_KEY); renamedEvents=raw?JSON.parse(raw):[];}catch(e){renamedEvents=[];}
+    idbGet(RENAMED_EVENTS_KEY).then(idbVal=>{
+      if(!idbVal)return;
+      try{
+        const idbList=JSON.parse(idbVal);
+        if(!Array.isArray(idbList))return;
+        const seen=new Set(renamedEvents.map(e=>e.key));
+        let added=0;
+        for(const e of idbList){
+          if(!seen.has(e.key)){renamedEvents.push(e);seen.add(e.key);added++;}
+        }
+        if(added>0){
+          saveRenamedEvents();
+          try{
+            if(document.getElementById('cvOverlay').classList.contains('show')){
+              cvCacheKey=null; cvCacheEvents=null; cvRender(false);
+            }
+          }catch(_e){}
+        }
+      }catch(e){}
+    });
+  }
+  function saveRenamedEvents(){
+    const json=JSON.stringify(renamedEvents);
+    try{storageWrite(RENAMED_EVENTS_KEY,json);}catch(e){}
+    idbPut(RENAMED_EVENTS_KEY,json);
   }
 
   // 単発予定の除外キー: その1件だけを一意に指す
@@ -1777,9 +1811,10 @@
   document.getElementById('startDate').value=today.toISOString().split('T')[0];
   document.getElementById('endDate').value=oneWeek.toISOString().split('T')[0];
 
-  // 起動時に状態をロード（除外予定 + 非表示カレンダー）
+  // 起動時に状態をロード（除外予定 + 非表示カレンダー + リネーム）
   loadHiddenCals();
   loadExcludedEvents();
+  loadRenamedEvents();
 
   // ICS（URL購読型）カレンダーを起動時に読み込み
   // 注意: initIcsCalendars 本体は後ろで定義されるが関数宣言なので巻き上げで参照可
