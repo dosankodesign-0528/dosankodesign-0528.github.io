@@ -14,11 +14,25 @@
     "memo": "応募完了・スカウト通知メール"
   },
   {
-    "name": "問合せフォーム自動返信",
+    "name": "問合せ受信",
     "enabled": true,
-    "query": "subject:(お問い合わせ OR お問合せ) (自動返信 OR 自動配信)",
+    "query": "subject:(お問い合わせ OR お問合せ OR お問い合せ OR 問い合わせ)",
     "tag": "問合せフォーム",
-    "memo": "フォーム送信後の自動返信"
+    "memo": "問合せ系メール（自動返信・直接返信両方）"
+  },
+  {
+    "name": "採用・選考通知",
+    "enabled": true,
+    "query": "subject:(書類選考 OR 選考結果 OR ご応募 OR 応募ありがとう OR 採用 OR スカウト)",
+    "tag": "問合せフォーム",
+    "memo": "採用関連の通知メール"
+  },
+  {
+    "name": "業務委託・案件依頼",
+    "enabled": true,
+    "query": "subject:(業務委託 OR 案件 OR ご依頼 OR ご提案 OR 秘密保持)",
+    "tag": "問合せフォーム",
+    "memo": "業務委託・案件依頼・NDA等"
   },
   {
     "name": "直営業送信",
