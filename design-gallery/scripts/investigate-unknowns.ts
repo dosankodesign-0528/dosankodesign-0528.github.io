@@ -40,6 +40,7 @@ const dnsLookup = promisify(dns.lookup);
 const DATA_PATH = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
 const REVIEW_CSV_PATH = path.join(__dirname, "..", "tmp", "unknowns-pending-review.csv");
 const REVIEW_DIR = path.dirname(REVIEW_CSV_PATH);
+const SCREENSHOT_DIR = path.join(__dirname, "..", "tmp", "screenshots");
 
 const LIMIT = parseInt(process.env.LIMIT || "0", 10);
 const SKIP_PLAYWRIGHT = process.env.SKIP_PLAYWRIGHT === "1";
@@ -162,16 +163,34 @@ async function checkPlaywright(
       return { result: "dead", reason: `HTTP ${status} (Playwright)` };
     }
 
-    // タイトル + 本文テキストを抜き出す
+    // タイトル + 本文テキスト + DOM サイズを取得
     const title = (await page.title().catch(() => "")) || "";
-    const bodyText = await page
+    const metrics = await page
       .evaluate(() => {
-        const t = document.body?.innerText || "";
-        return t.slice(0, 5000); // 先頭5000文字あれば判定十分
+        const innerText = document.body?.innerText || "";
+        const innerHTMLLen = document.body?.innerHTML?.length ?? 0;
+        // 「画像が1枚以上ある」「リンクが3つ以上ある」「DOM が深い」のいずれかで
+        // 普通のWebページっぽさを判定
+        const imgCount = document.querySelectorAll("img").length;
+        const linkCount = document.querySelectorAll("a[href]").length;
+        const elementCount = document.querySelectorAll("*").length;
+        return {
+          innerText: innerText.slice(0, 5000),
+          innerHTMLLen,
+          imgCount,
+          linkCount,
+          elementCount,
+        };
       })
-      .catch(() => "");
+      .catch(() => ({
+        innerText: "",
+        innerHTMLLen: 0,
+        imgCount: 0,
+        linkCount: 0,
+        elementCount: 0,
+      }));
 
-    const blob = `${title}\n${bodyText}`;
+    const blob = `${title}\n${metrics.innerText}`;
     if (DEAD_PATTERNS.some((re) => re.test(blob))) {
       return {
         result: "dead",
@@ -179,32 +198,59 @@ async function checkPlaywright(
       };
     }
 
-    // 本文テキストが極端に少ない（タイトルもほぼ空 + 本文 50 文字未満）→ 真っ白疑い
-    const cleanLen = bodyText.replace(/\s+/g, " ").trim().length;
-    if (cleanLen < 50 && title.replace(/\s+/g, " ").trim().length < 5) {
-      return { result: "dead", reason: "本文ほぼ空 (cleanLen=" + cleanLen + ")" };
+    const cleanLen = metrics.innerText.replace(/\s+/g, " ").trim().length;
+    const titleLen = title.replace(/\s+/g, " ").trim().length;
+
+    // 本文テキスト極小 + タイトル極小 + DOM も貧弱 → ほぼ真っ白
+    if (
+      cleanLen < 30 &&
+      titleLen < 5 &&
+      metrics.innerHTMLLen < 500 &&
+      metrics.elementCount < 30
+    ) {
+      return {
+        result: "dead",
+        reason: `ほぼ真っ白 (text=${cleanLen}, html=${metrics.innerHTMLLen}, el=${metrics.elementCount})`,
+      };
     }
 
-    // 403 だけど Playwright でレンダリング成功してコンテンツある → alive 認定
-    if (status === 403 && cleanLen > 100) {
-      return { result: "alive", reason: "Playwright で 403 を回避してコンテンツ取得" };
+    // 「普通のWebサイトっぽさ」がある → alive 認定。SPA も innerHTML が大きければ alive。
+    const looksLikeWebsite =
+      titleLen >= 3 ||
+      cleanLen >= 50 ||
+      metrics.innerHTMLLen >= 2000 ||
+      metrics.imgCount >= 1 ||
+      metrics.linkCount >= 3 ||
+      metrics.elementCount >= 30;
+
+    if (status === 404 || status === 410 || status === 451) {
+      return { result: "dead", reason: `HTTP ${status} (Playwright 後)` };
     }
 
-    // ステータス OK or 何かしらコンテンツある → alive
-    if (status >= 200 && status < 400 && cleanLen >= 50) {
-      return { result: "alive", reason: `HTTP ${status} + コンテンツ ${cleanLen} 字` };
+    if (status >= 200 && status < 400 && looksLikeWebsite) {
+      return {
+        result: "alive",
+        reason: `HTTP ${status} OK (text=${cleanLen}, html=${metrics.innerHTMLLen}, el=${metrics.elementCount})`,
+      };
     }
-    if (status === 0) {
-      // resp なし（about:blank等）。コンテンツあれば alive
-      if (cleanLen >= 50) return { result: "alive", reason: "コンテンツあり (status=0)" };
-      return { result: "unknown", reason: "status=0 + 本文薄い" };
+    if (status === 403 && looksLikeWebsite) {
+      return {
+        result: "alive",
+        reason: `403 だが Playwright で実コンテンツ取得 (html=${metrics.innerHTMLLen})`,
+      };
+    }
+    if (status === 0 && looksLikeWebsite) {
+      return { result: "alive", reason: "status=0 だが Web サイトっぽさあり" };
     }
 
-    // 5xx でレンダリング失敗系 → unknown
+    // 5xx は一時障害かもしれないので unknown のまま
     if (status >= 500) {
       return { result: "unknown", reason: `HTTP ${status} (一時障害かも)` };
     }
-    return { result: "unknown", reason: `HTTP ${status} 判定保留` };
+    return {
+      result: "unknown",
+      reason: `HTTP ${status} 判定保留 (text=${cleanLen}, html=${metrics.innerHTMLLen}, el=${metrics.elementCount})`,
+    };
   } finally {
     await context.close().catch(() => {});
   }
@@ -295,7 +341,7 @@ async function main() {
   let aliveCount = 0;
   let deadCount = 0;
   let pendingCount = 0;
-  const pending: { site: ScrapedSite; reason: string }[] = [];
+  const pending: { site: ScrapedSite; reason: string; screenshotPath?: string }[] = [];
   const nowIso = new Date().toISOString();
 
   for (const { s, i } of targets) {
@@ -326,22 +372,86 @@ async function main() {
   console.log(`  dead  認定: ${deadCount}`);
   console.log(`  保留 (要目視): ${pendingCount}`);
 
-  // 保留分は CSV に出力
+  // ----- Step 3: 保留分のスクショを撮影（Claude が画像で目視判定するため） -----
+  if (pending.length > 0 && !SKIP_PLAYWRIGHT) {
+    console.log(
+      `\n[Step 3] 保留 ${pending.length} 件のスクショ撮影 (Claude 目視判定用)...`
+    );
+    if (!fs.existsSync(SCREENSHOT_DIR))
+      fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+
+    const browser = await chromium.launch({ headless: true });
+    let shotDone = 0;
+    let shotCursor = 0;
+    await Promise.all(
+      Array.from({ length: PLAYWRIGHT_CONCURRENCY }, async () => {
+        while (shotCursor < pending.length) {
+          const i = shotCursor++;
+          const item = pending[i];
+          const filename = `${item.site.id}.png`;
+          const fullPath = path.join(SCREENSHOT_DIR, filename);
+          const ctx = await browser.newContext({
+            userAgent:
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport: { width: 1280, height: 800 },
+            locale: "ja-JP",
+            ignoreHTTPSErrors: true,
+          });
+          const page = await ctx.newPage();
+          try {
+            await page.goto(item.site.url, {
+              waitUntil: "domcontentloaded",
+              timeout: 25_000,
+            });
+            // ちょっと待って描画完了させる
+            await page.waitForTimeout(2500);
+            await page.screenshot({
+              path: fullPath,
+              fullPage: false,
+              type: "png",
+            });
+            item.screenshotPath = path.relative(
+              path.join(__dirname, ".."),
+              fullPath
+            );
+          } catch (e) {
+            // 撮れないサイト = 多分 dead 寄り。ファイルは作らない。
+            void e;
+          } finally {
+            await ctx.close().catch(() => {});
+            shotDone++;
+            if (shotDone % 5 === 0 || shotDone === pending.length) {
+              process.stdout.write(`\r  撮影 ${shotDone}/${pending.length}`);
+            }
+          }
+        }
+      })
+    );
+    process.stdout.write("\n");
+    await browser.close();
+  }
+
+  // 保留分は CSV に出力（Claude が読んで目視判定する用）
   if (pending.length > 0) {
     if (!fs.existsSync(REVIEW_DIR)) fs.mkdirSync(REVIEW_DIR, { recursive: true });
     const lines = [
-      "url,title,source,reason",
-      ...pending.map(({ site, reason }) =>
+      "id,url,title,source,reason,screenshot",
+      ...pending.map(({ site, reason, screenshotPath }) =>
         [
+          site.id,
           `"${site.url.replace(/"/g, '""')}"`,
           `"${(site.title ?? "").replace(/"/g, '""')}"`,
           site.source,
           `"${reason.replace(/"/g, '""')}"`,
+          screenshotPath ?? "",
         ].join(",")
       ),
     ];
     fs.writeFileSync(REVIEW_CSV_PATH, lines.join("\n"), "utf-8");
     console.log(`\n📝 目視確認用 CSV: ${REVIEW_CSV_PATH}`);
+    const withShot = pending.filter((p) => p.screenshotPath).length;
+    console.log(`   スクショ撮影成功: ${withShot}/${pending.length} 件`);
+    console.log(`   スクショなし(撮影失敗=dead寄り): ${pending.length - withShot} 件`);
   }
 
   if (DRY) {
