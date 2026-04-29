@@ -9,7 +9,8 @@ import {
   getCompaniesDbId,
   updateCompany,
 } from "./notion.js";
-import { classifyMessage } from "./classify.js";
+import { classifyMessage, shouldSkipDomain } from "./classify.js";
+import { reportUnclassifiedCandidates } from "./learn.js";
 import type { SyncStats } from "./types.js";
 
 async function main() {
@@ -61,7 +62,7 @@ async function main() {
 
       const classified = classifyMessage(msg, source);
 
-      if (!classified.companyDomain || classified.companyDomain.length < 3) {
+      if (shouldSkipDomain(classified.companyDomain)) {
         stats.skipped++;
         continue;
       }
@@ -111,6 +112,8 @@ async function main() {
       }
     }
   }
+
+  await reportUnclassifiedCandidates(gmail, myEmail, seenIds, lookbackDays);
 
   const finishedAt = new Date();
   const duration = (finishedAt.getTime() - startedAt.getTime()) / 1000;
