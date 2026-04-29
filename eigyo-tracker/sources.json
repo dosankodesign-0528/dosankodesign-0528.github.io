@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Wantedly",
+    "enabled": true,
+    "query": "from:wantedly.com",
+    "tag": "Wantedly",
+    "memo": "応募完了・スカウト・メッセージ通知メール"
+  },
+  {
+    "name": "Green",
+    "enabled": true,
+    "query": "from:(green-japan.com OR greenjapan.com)",
+    "tag": "Green",
+    "memo": "応募完了・スカウト通知メール"
+  },
+  {
+    "name": "問合せフォーム自動返信",
+    "enabled": true,
+    "query": "subject:(お問い合わせ OR お問合せ) (自動返信 OR 自動配信)",
+    "tag": "問合せフォーム",
+    "memo": "フォーム送信後の自動返信"
+  },
+  {
+    "name": "直営業送信",
+    "enabled": false,
+    "query": "in:sent newer_than:7d",
+    "tag": "直営業",
+    "memo": "自分が送った営業メール（最初OFF、本番確認後にON）"
+  }
+]
