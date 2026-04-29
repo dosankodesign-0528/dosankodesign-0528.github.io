@@ -67,37 +67,78 @@ function extractDomainFromText(text: string): string | null {
   return domain;
 }
 
+const COMPANY_PATTERN = /(株式会社[一-龯぀-ゟ゠-ヿ\w・]{1,25}|[一-龯぀-ゟ゠-ヿ\w・]{1,25}株式会社|有限会社[一-龯぀-ゟ゠-ヿ\w・]{1,25}|合同会社[一-龯぀-ゟ゠-ヿ\w・]{1,25}|[一-龯぀-ゟ゠-ヿ\w・]{1,25}(?:Inc|Co\.,?\s*Ltd|Ltd|Corp|LLC)\.?)/;
+
+const PERSON_NAME_PATTERN = [
+  /^[一-龯]{2,4}\s+[一-龯]{2,4}$/,
+  /^[A-Z][a-z]+\s[A-Z][a-z]+$/,
+  /[゠-ヿ]{2,5}\s[゠-ヿ]{2,5}/,
+];
+
+export function isPersonalName(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  if (looksLikeCompany(trimmed)) return false;
+  return PERSON_NAME_PATTERN.some((p) => p.test(trimmed));
+}
+
+function looksLikeCompany(text: string): boolean {
+  return /株式会社|（株）|\(株\)|有限会社|合同会社|\bInc\b|\bCo\.?,?\s*Ltd|\bLtd\b|\bCorp\b|\bLLC\b/i.test(text);
+}
+
+function cleanCompanyName(name: string): string {
+  let cleaned = name.split("|")[0]!.split(/[／\/]/)[0]!.trim();
+  cleaned = cleaned.replace(/　/g, " ");
+  cleaned = cleaned.replace(/\s+(採用|採用担当|人事|HR|事業部|info|お問い合わせ).*/i, "");
+  cleaned = cleaned.replace(/[\s\-—–_]+$/, "");
+  return cleaned.slice(0, 50).trim();
+}
+
+function extractCompanyFromText(text: string): string | null {
+  const match = text.match(COMPANY_PATTERN);
+  if (match && match[1]) return cleanCompanyName(match[1]);
+  return null;
+}
+
 export function extractCompanyNameFromSubject(subject: string): string | null {
+  const fromCompanyPattern = extractCompanyFromText(subject);
+  if (fromCompanyPattern) return fromCompanyPattern;
+
   const bracketMatches = subject.match(/【([^】]+?)】|\[([^\]]+?)\]/g);
   if (bracketMatches) {
     for (const m of bracketMatches) {
       const inner = m.replace(/^[【\[]|[】\]]$/g, "").trim();
       if (inner.length < 2 || inner.length > 40) continue;
       if (SUBJECT_NOISE_PATTERN.test(inner)) continue;
-      if (/[株式会社\(株\)（株）有限会社合同会社]/.test(inner) || /[A-Za-z]/.test(inner)) {
-        return inner;
+      if (isPersonalName(inner)) continue;
+      if (looksLikeCompany(inner) || /[A-Za-z]/.test(inner)) {
+        return cleanCompanyName(inner);
       }
     }
   }
-  const corpMatch = subject.match(/(株式会社[一-龯぀-ゟ゠-ヿA-Za-z0-9・\s]{1,20}|[一-龯぀-ゟ゠-ヿA-Za-z0-9・\s]{1,20}株式会社)/);
-  if (corpMatch && corpMatch[1]) return corpMatch[1].trim();
   return null;
 }
 
 export function extractCompanyName(msg: RawMessage, domain: string): string {
   const fromSubject = extractCompanyNameFromSubject(msg.subject);
   if (fromSubject) return fromSubject;
+
+  const fromSnippet = extractCompanyFromText(msg.snippet);
+  if (fromSnippet) return fromSnippet;
+
   if (msg.fromName && !msg.fromName.includes("@")) {
     const cleaned = msg.fromName
       .replace(/<.+?>/g, "")
       .replace(/^["']|["']$/g, "")
       .trim();
-    if (cleaned && cleaned.length <= 50 && cleaned !== "gmail" && cleaned !== "Gmail") {
-      return cleaned;
+    if (cleaned && cleaned.length <= 50 && looksLikeCompany(cleaned) && !isPersonalName(cleaned)) {
+      return cleanCompanyName(cleaned);
     }
   }
+
   const sld = domain.split(".")[0];
-  return sld ?? domain;
+  if (!sld || sld === "gmail" || sld === "Gmail") return domain;
+  return sld;
 }
 
 export function buildCompanyUrl(domain: string): string {

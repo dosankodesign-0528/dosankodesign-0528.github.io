@@ -5,6 +5,9 @@ const NAME_PROP = "名前";
 const URL_PROP = "企業URL";
 const CONTACT_PROP = "コンタクト";
 const MEDIA_PROP = "媒体";
+const REACTION_PROP = "反応";
+
+export const EXCLUDED_REACTION = "N: 対象外";
 
 export function buildNotionClient() {
   const token = process.env.NOTION_TOKEN;
@@ -36,7 +39,8 @@ export async function fetchAllCompanies(
       const url = readUrl(props[URL_PROP]);
       const contactYears = readMultiSelect(props[CONTACT_PROP]);
       const mediaTags = readMultiSelect(props[MEDIA_PROP]);
-      records.push({ pageId: page.id, name, url, contactYears, mediaTags });
+      const reaction = readSelect(props[REACTION_PROP]);
+      records.push({ pageId: page.id, name, url, contactYears, mediaTags, reaction });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
   } while (cursor);
@@ -111,6 +115,11 @@ function readUrl(prop: any): string | null {
 function readMultiSelect(prop: any): string[] {
   if (!prop || prop.type !== "multi_select") return [];
   return (prop.multi_select ?? []).map((m: any) => m.name as string);
+}
+
+function readSelect(prop: any): string | null {
+  if (!prop || prop.type !== "select") return null;
+  return prop.select?.name ?? null;
 }
 
 function extractHost(url: string): string {
