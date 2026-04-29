@@ -271,7 +271,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社土と風",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:44.191Z"
+    "enrichedAt": "2026-04-29T14:16:44.191Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3ec854d258d7",
@@ -443,7 +446,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:44.451Z"
+    "enrichedAt": "2026-04-29T14:16:44.451Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1bc735492d6a",
@@ -540,7 +546,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "unium Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:44.584Z"
+    "enrichedAt": "2026-04-29T14:16:44.584Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "cf7ce292bfbf",
@@ -618,7 +627,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "najimi.inc",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:44.794Z"
+    "enrichedAt": "2026-04-29T14:16:44.794Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "cd1d4a982ab9",
@@ -673,7 +685,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Director山本 亜希帆",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:44.795Z"
+    "enrichedAt": "2026-04-29T14:16:44.795Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f184ba3119d5",
@@ -829,7 +844,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社アイティプラス",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:45.075Z"
+    "enrichedAt": "2026-04-29T14:16:45.075Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1ddaf668363b",
@@ -1142,7 +1160,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:50.016Z"
+    "enrichedAt": "2026-04-29T14:16:50.016Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "0bd34d99f20d",
@@ -1277,7 +1298,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "WEBデザイン工藤駿",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:45.837Z"
+    "enrichedAt": "2026-04-29T14:16:45.837Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "82b7a12b5b3e",
@@ -1410,7 +1434,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "@taeko84",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:46.135Z"
+    "enrichedAt": "2026-04-29T14:16:46.135Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "af1715084830",
@@ -1427,7 +1454,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "クリエイティブディレクターTAKAHIRO MAEHARA",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:46.208Z"
+    "enrichedAt": "2026-04-29T14:16:46.208Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c9b1a5beb97e",
@@ -1589,7 +1619,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "PRIME X Co., Ltd.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:46.782Z"
+    "enrichedAt": "2026-04-29T14:16:46.782Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1f1b6ec10a31",
@@ -1625,7 +1658,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社レガロニコ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:47.724Z"
+    "enrichedAt": "2026-04-29T14:16:47.724Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "bbffae25f83d",
@@ -2874,7 +2910,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Eat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:50.012Z"
+    "enrichedAt": "2026-04-29T14:16:50.012Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "29c81a78f04c",
@@ -3402,7 +3441,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Eat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:51.292Z"
+    "enrichedAt": "2026-04-29T14:16:51.292Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5ddcba68d3bb",
@@ -3419,7 +3461,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Design青木 猛",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:51.138Z"
+    "enrichedAt": "2026-04-29T14:16:51.138Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4bb12b08f4ea",
@@ -3650,7 +3695,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "ディレクター秦 正顕",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:51.555Z"
+    "enrichedAt": "2026-04-29T14:16:51.555Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5ed088e0c8b1",
@@ -3729,7 +3777,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Creative Direction / Planning / Art DirectionOHTA Yoshitaka",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:51.763Z"
+    "enrichedAt": "2026-04-29T14:16:51.763Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "755acf5eca1b",
@@ -3765,7 +3816,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社人生は上々だ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:51.765Z"
+    "enrichedAt": "2026-04-29T14:16:51.765Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "12521da72f2b",
@@ -3862,7 +3916,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:16:52.053Z"
+    "enrichedAt": "2026-04-29T14:16:52.053Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "490398268a96",
@@ -3878,7 +3935,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:29.086Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "e8f9537e482f",
@@ -3915,8 +3973,9 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "@CTL_1983",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:29.166Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": false
   },
   {
     "id": "88e5313cb758",
@@ -3972,7 +4031,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:52.328Z"
+    "enrichedAt": "2026-04-29T14:16:52.328Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "2a04935d3d14",
@@ -4007,7 +4069,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:52.501Z"
+    "enrichedAt": "2026-04-29T14:16:52.501Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4feb092af531",
@@ -4729,7 +4794,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:53.860Z"
+    "enrichedAt": "2026-04-29T14:16:53.860Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "d124c5d35677",
@@ -4810,7 +4878,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:16:54.092Z"
+    "enrichedAt": "2026-04-29T14:16:54.092Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3ba838f021d8",
@@ -4904,7 +4975,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "ZIZO",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:54.274Z"
+    "enrichedAt": "2026-04-29T14:16:54.274Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "eeb0340b27f4",
@@ -4960,7 +5034,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Creative Director松本 龍彦",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:54.385Z"
+    "enrichedAt": "2026-04-29T14:16:54.385Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "d71ffa09577c",
@@ -5932,7 +6009,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Direction, Design, Illustration, Studio北川太我",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:56.256Z"
+    "enrichedAt": "2026-04-29T14:16:56.256Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "167567703451",
@@ -6301,7 +6381,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "NEWTOWN",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:57.249Z"
+    "enrichedAt": "2026-04-29T14:16:57.249Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "63e7668bb5ac",
@@ -6454,7 +6537,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:16:59.820Z"
+    "enrichedAt": "2026-04-29T14:16:59.820Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "082cf05155ad",
@@ -6533,7 +6619,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Creative Direction / Planning / Art DirectionNAKAMURA Goki @",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:57.743Z"
+    "enrichedAt": "2026-04-29T14:16:57.743Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c3c5b348b40a",
@@ -6550,7 +6639,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Direction, Design, Illustration, Studio北川太我",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:57.742Z"
+    "enrichedAt": "2026-04-29T14:16:57.742Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ac5d46644dfa",
@@ -6685,7 +6777,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:16:58.064Z"
+    "enrichedAt": "2026-04-29T14:16:58.064Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "d9aef1546c5c",
@@ -6825,7 +6920,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:38.008Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "81a9e3d8e744",
@@ -7278,7 +7374,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "FunTech inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:16:59.102Z"
+    "enrichedAt": "2026-04-29T14:16:59.102Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f36306b1cb36",
@@ -7995,7 +8094,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "パーソルキャリア",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:01.201Z"
+    "enrichedAt": "2026-04-29T14:17:01.201Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3c3157628bb5",
@@ -8214,7 +8316,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社メアリーアンドディーン",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:01.764Z"
+    "enrichedAt": "2026-04-29T14:17:01.764Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4e994c5d1d00",
@@ -8723,8 +8828,9 @@
     "date": "2025-04",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:42.763Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "c1aff256dbe2",
@@ -8783,7 +8889,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Eat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:02.953Z"
+    "enrichedAt": "2026-04-29T14:17:02.953Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a3a2042f279d",
@@ -8840,7 +8949,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Hitonoha",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:03.065Z"
+    "enrichedAt": "2026-04-29T14:17:03.065Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "97971eb9fd61",
@@ -8955,7 +9067,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Planningハグリ @thisis8911",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:03.297Z"
+    "enrichedAt": "2026-04-29T14:17:03.297Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "191da9a6b794",
@@ -9008,7 +9123,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Produce / Creative Direction / InterviewKamada",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:03.298Z"
+    "enrichedAt": "2026-04-29T14:17:03.298Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c83ae29575d3",
@@ -9380,7 +9498,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "gaz",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:04.156Z"
+    "enrichedAt": "2026-04-29T14:17:04.156Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0ba6471eefd8",
@@ -9517,8 +9638,9 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "partner",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:45.207Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "ec6de8ad7d5e",
@@ -9631,7 +9753,8 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "かわかみゆいか",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:45.317Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "f2d003ab6cac",
@@ -10002,7 +10125,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社ベイジ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:05.755Z"
+    "enrichedAt": "2026-04-29T14:17:05.755Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3aec67f34c8f",
@@ -10096,7 +10222,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Freelance",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:05.776Z"
+    "enrichedAt": "2026-04-29T14:17:05.776Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "bb59071576e2",
@@ -10353,7 +10482,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "MEFILAS",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:06.301Z"
+    "enrichedAt": "2026-04-29T14:17:06.301Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e65db1552cd0",
@@ -10709,7 +10841,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Directionプロメテ･メディアデザイン株式会社",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:07.149Z"
+    "enrichedAt": "2026-04-29T14:17:07.149Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "755a0538274b",
@@ -10746,7 +10881,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:31:54.772Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "429134f23c51",
@@ -11077,7 +11213,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社アイティプラス",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:08.359Z"
+    "enrichedAt": "2026-04-29T14:17:08.359Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "8ba2ef4d0276",
@@ -11155,7 +11294,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:08.720Z"
+    "enrichedAt": "2026-04-29T14:17:08.720Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "03cadcf86707",
@@ -11250,7 +11392,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "アートディレクター/デザイナー/Studio実装横澤由香里",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:09.067Z"
+    "enrichedAt": "2026-04-29T14:17:09.067Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f26aed4fa1d9",
@@ -11289,7 +11434,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:09.167Z"
+    "enrichedAt": "2026-04-29T14:17:09.167Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "43050427d1e7",
@@ -11575,7 +11723,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "producer川上鉄太郎",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:09.928Z"
+    "enrichedAt": "2026-04-29T14:17:09.928Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "39ad800b7888",
@@ -11809,7 +11960,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "中根佳菜子",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:11.369Z"
+    "enrichedAt": "2026-04-29T14:17:11.369Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "dabddbf2dffd",
@@ -11866,7 +12020,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "RYDEN Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:11.422Z"
+    "enrichedAt": "2026-04-29T14:17:11.422Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7fbe5bba0a4a",
@@ -12216,7 +12373,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:12.441Z"
+    "enrichedAt": "2026-04-29T14:17:12.441Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7f8379688593",
@@ -12331,7 +12491,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Direction矢島 彩花",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:12.619Z"
+    "enrichedAt": "2026-04-29T14:17:12.619Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ad3a57677161",
@@ -12446,11 +12609,11 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:31:55.797Z",
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "agency": "RYOZEN",
     "signals": [],
     "enrichedAt": "2026-04-29T14:17:13.359Z",
-    "failedChecks": 1
+    "failedChecks": 0
   },
   {
     "id": "e3253d330306",
@@ -12486,7 +12649,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:13.263Z"
+    "enrichedAt": "2026-04-29T14:17:13.263Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "62a4ae0aceb4",
@@ -12839,7 +13005,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "NEWTOWN",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:14.579Z"
+    "enrichedAt": "2026-04-29T14:17:14.579Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "b372dd058ebb",
@@ -13231,7 +13400,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Eat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:16.727Z"
+    "enrichedAt": "2026-04-29T14:17:16.727Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "51dd1a9cd2eb",
@@ -13347,7 +13519,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "@cddd_design",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:18.260Z"
+    "enrichedAt": "2026-04-29T14:17:18.260Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0d83c0cb1526",
@@ -13917,7 +14092,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "平氏",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:18.111Z"
+    "enrichedAt": "2026-04-29T14:17:18.111Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "2782367309cc",
@@ -14469,7 +14647,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社電通",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:20.081Z"
+    "enrichedAt": "2026-04-29T14:17:20.081Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9ef892fc3e11",
@@ -14506,7 +14687,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "5ive Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:20.234Z"
+    "enrichedAt": "2026-04-29T14:17:20.234Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "6bc0c7d8eebd",
@@ -15075,7 +15259,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社フィールド",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:20.891Z"
+    "enrichedAt": "2026-04-29T14:17:20.891Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9c099f860bb1",
@@ -15289,8 +15476,9 @@
     "date": "2024-10",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:03.719Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "ef9071b3db65",
@@ -15326,7 +15514,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:21.332Z"
+    "enrichedAt": "2026-04-29T14:17:21.332Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3ecad10829ac",
@@ -15499,7 +15690,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "GEKI Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:21.755Z"
+    "enrichedAt": "2026-04-29T14:17:21.755Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5309ca977e34",
@@ -15577,7 +15771,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "NEWPEACE inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:21.933Z"
+    "enrichedAt": "2026-04-29T14:17:21.933Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c1c3592a29c4",
@@ -15934,7 +16131,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "RYDEN Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:22.904Z"
+    "enrichedAt": "2026-04-29T14:17:22.904Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "99e686b46c06",
@@ -15951,7 +16151,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "ISAPlan",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:22.933Z"
+    "enrichedAt": "2026-04-29T14:17:22.933Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "54303541edb2",
@@ -16202,7 +16405,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:23.325Z"
+    "enrichedAt": "2026-04-29T14:17:23.325Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e8dce1382214",
@@ -16354,7 +16560,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "北川裕紀乃",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:23.579Z"
+    "enrichedAt": "2026-04-29T14:17:23.579Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "faa9ff6bfcf5",
@@ -16727,7 +16936,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "spicato Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:24.500Z"
+    "enrichedAt": "2026-04-29T14:17:24.500Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "34468bb0bd68",
@@ -16925,7 +17137,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:17:25.020Z"
+    "enrichedAt": "2026-04-29T14:17:25.020Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3f6ee4998cd4",
@@ -17082,7 +17297,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Re:design － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.351Z"
+    "enrichedAt": "2026-04-29T14:17:25.351Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1b8289422947",
@@ -17099,7 +17317,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社アイティプラス － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.353Z"
+    "enrichedAt": "2026-04-29T14:17:25.353Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "cc38989d306a",
@@ -17255,7 +17476,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Jona.Yawaraka",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.580Z"
+    "enrichedAt": "2026-04-29T14:17:25.580Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "d81ec38d45bf",
@@ -17272,7 +17496,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "企画･コンテンツディレクションEat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.618Z"
+    "enrichedAt": "2026-04-29T14:17:25.618Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "79cc45f4194d",
@@ -17289,7 +17516,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Re:design － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.657Z"
+    "enrichedAt": "2026-04-29T14:17:25.657Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "da9027c48167",
@@ -17326,7 +17556,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社ノックデザイン － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.655Z"
+    "enrichedAt": "2026-04-29T14:17:25.655Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0568fc7a3eae",
@@ -17343,7 +17576,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Jona.Yawaraka",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.665Z"
+    "enrichedAt": "2026-04-29T14:17:25.665Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3e1e01a701e7",
@@ -17437,7 +17673,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "工藤駿 － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:25.970Z"
+    "enrichedAt": "2026-04-29T14:17:25.970Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1c6c64e8625a",
@@ -17492,7 +17731,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "飛企画 － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:26.122Z"
+    "enrichedAt": "2026-04-29T14:17:26.122Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e8c999a616fe",
@@ -17630,7 +17872,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:26.081Z"
+    "enrichedAt": "2026-04-29T14:17:26.081Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7e4b42855d4d",
@@ -17879,7 +18124,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:26.492Z"
+    "enrichedAt": "2026-04-29T14:17:26.492Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7aa22697d236",
@@ -18052,7 +18300,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "STUDIO DETAILS Inc. － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:26.894Z"
+    "enrichedAt": "2026-04-29T14:17:26.894Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ff8c4b45976a",
@@ -18069,7 +18320,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "MABATAKI, inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:26.892Z"
+    "enrichedAt": "2026-04-29T14:17:26.892Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "27431c20e0d0",
@@ -18088,7 +18342,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:26.896Z"
+    "enrichedAt": "2026-04-29T14:17:26.896Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "195b8532505e",
@@ -18125,7 +18382,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "UNDERLINE － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:27.060Z"
+    "enrichedAt": "2026-04-29T14:17:27.060Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "424048b9fc2a",
@@ -18177,7 +18437,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社アイティプラス － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:27.136Z"
+    "enrichedAt": "2026-04-29T14:17:27.136Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f67e078be9b4",
@@ -18576,7 +18839,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:27.795Z"
+    "enrichedAt": "2026-04-29T14:17:27.795Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f6c83723b0ef",
@@ -19204,7 +19470,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:29.353Z"
+    "enrichedAt": "2026-04-29T14:17:29.353Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "716091d9cca3",
@@ -19492,7 +19761,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "高野菜々子 － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:30.039Z"
+    "enrichedAt": "2026-04-29T14:17:30.039Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "8205fb7496f0",
@@ -19529,7 +19801,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "関翔吾 － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:30.040Z"
+    "enrichedAt": "2026-04-29T14:17:30.040Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "be48079bc653",
@@ -19741,7 +20016,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "パーソルキャリア株式会社",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:30.963Z"
+    "enrichedAt": "2026-04-29T14:17:30.963Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e0bc9442a4b7",
@@ -19838,7 +20116,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "IDENCE Inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:30.875Z"
+    "enrichedAt": "2026-04-29T14:17:30.875Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1854c738aa81",
@@ -19912,7 +20193,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:30.785Z"
+    "enrichedAt": "2026-04-29T14:17:30.785Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a45899fbe3f4",
@@ -20008,7 +20292,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "ZIZO － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:31.905Z"
+    "enrichedAt": "2026-04-29T14:17:31.905Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a729552b570c",
@@ -20380,7 +20667,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:32.424Z"
+    "enrichedAt": "2026-04-29T14:17:32.424Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c13351b7efcf",
@@ -20475,7 +20765,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:17.869Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "c0e3ee419ecc",
@@ -20690,7 +20981,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "株式会社High Link － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:33.320Z"
+    "enrichedAt": "2026-04-29T14:17:33.320Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "58d0c076749a",
@@ -21303,7 +21597,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "KOOO － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:34.606Z"
+    "enrichedAt": "2026-04-29T14:17:34.606Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e5794b085371",
@@ -21362,7 +21659,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "spicato Inc. － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:34.806Z"
+    "enrichedAt": "2026-04-29T14:17:34.806Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ead2d3c45d28",
@@ -21715,7 +22015,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:35.399Z"
+    "enrichedAt": "2026-04-29T14:17:35.399Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "8783c6d6eb4b",
@@ -21731,7 +22034,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:35.345Z"
+    "enrichedAt": "2026-04-29T14:17:35.345Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a1955cd9211b",
@@ -21867,7 +22173,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Ryo Usami",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:38.444Z"
+    "enrichedAt": "2026-04-29T14:17:38.444Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a51d4841ff1c",
@@ -22119,7 +22428,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Makiko Sakamoto － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:36.372Z"
+    "enrichedAt": "2026-04-29T14:17:36.372Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "04f6be3a3200",
@@ -22234,7 +22546,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:17:36.593Z"
+    "enrichedAt": "2026-04-29T14:17:36.593Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "cf74f2b54a59",
@@ -22566,7 +22881,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:37.621Z"
+    "enrichedAt": "2026-04-29T14:17:37.621Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "6a9771a903c9",
@@ -22803,7 +23121,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:17:38.053Z"
+    "enrichedAt": "2026-04-29T14:17:38.053Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "140103b55554",
@@ -22980,7 +23301,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:41.050Z"
+    "enrichedAt": "2026-04-29T14:17:41.050Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e355ade62106",
@@ -23703,7 +24027,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "Eat, Play, Sleep inc.",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:40.758Z"
+    "enrichedAt": "2026-04-29T14:17:40.758Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "b629ad38fd3c",
@@ -23854,11 +24181,11 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:35.302Z",
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "agency": "情報科学芸術大学院大学 － 実績紹介ページ",
     "signals": [],
     "enrichedAt": "2026-04-29T14:17:41.792Z",
-    "failedChecks": 1
+    "failedChecks": 0
   },
   {
     "id": "07b7a8b3f587",
@@ -24069,7 +24396,10 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "agency": "gaz, Inc. － 実績紹介ページ",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:41.601Z"
+    "enrichedAt": "2026-04-29T14:17:41.601Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "6f7fcdba85b6",
@@ -24260,7 +24590,10 @@
     "starred": false,
     "firstSeen": "2026-04-24T03:01:35.047Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:42.102Z"
+    "enrichedAt": "2026-04-29T14:17:42.102Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "534e08d498ea",
@@ -24333,7 +24666,10 @@
     "starred": false,
     "firstSeen": "2026-04-20T03:03:42.023Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:42.330Z"
+    "enrichedAt": "2026-04-29T14:17:42.330Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5eb324380658",
@@ -24581,7 +24917,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:42.952Z"
+    "enrichedAt": "2026-04-29T14:17:42.952Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7d2cd78fd6aa",
@@ -24635,7 +24974,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:42.937Z"
+    "enrichedAt": "2026-04-29T14:17:42.937Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c1b655c29c69",
@@ -24978,7 +25320,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:17:44.554Z"
+    "enrichedAt": "2026-04-29T14:17:44.554Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4f18b62eb943",
@@ -26179,8 +26524,9 @@
     "date": "2025-11",
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:36.009Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "64b5a3f07416",
@@ -26597,8 +26943,9 @@
     "date": "2025-10",
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:34.762Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "4601e3135d5a",
@@ -26806,7 +27153,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:51.801Z"
+    "enrichedAt": "2026-04-29T14:17:51.801Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7850f1d0c9a8",
@@ -27629,8 +27979,9 @@
     "date": "2025-08",
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:41.950Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "ed60239db3e9",
@@ -27839,7 +28190,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:59.762Z"
+    "enrichedAt": "2026-04-29T14:17:59.762Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "7c78e71da43c",
@@ -28427,7 +28781,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:02.096Z"
+    "enrichedAt": "2026-04-29T14:18:02.096Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "551845a795c9",
@@ -28557,7 +28914,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:57.163Z"
+    "enrichedAt": "2026-04-29T14:17:57.163Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4f382d1ae2d7",
@@ -28765,8 +29125,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:44.784Z",
-    "failedChecks": 1
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "failedChecks": 0
   },
   {
     "id": "2aa861b703be",
@@ -28915,7 +29275,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:17:58.906Z"
+    "enrichedAt": "2026-04-29T14:17:58.906Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3a5e40e56af6",
@@ -29084,8 +29447,9 @@
     "date": "2025-05",
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:45.838Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "828599f0fe79",
@@ -29196,7 +29560,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:00.032Z"
+    "enrichedAt": "2026-04-29T14:18:00.032Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f110d1bc59b5",
@@ -29830,7 +30197,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:02.581Z"
+    "enrichedAt": "2026-04-29T14:18:02.581Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3ddce766fedb",
@@ -30072,7 +30442,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:03.940Z"
+    "enrichedAt": "2026-04-29T14:18:03.940Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "cc7fe25cc274",
@@ -31665,7 +32038,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:10.959Z"
+    "enrichedAt": "2026-04-29T14:18:10.959Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "222dc0902db2",
@@ -31700,7 +32076,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:10.314Z"
+    "enrichedAt": "2026-04-29T14:18:10.314Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4870507ee80a",
@@ -31716,7 +32095,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:10.422Z"
+    "enrichedAt": "2026-04-29T14:18:10.422Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "b3388c89e62b",
@@ -31770,7 +32152,8 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:32:58.794Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "8f57217e323d",
@@ -32399,8 +32782,9 @@
     "date": "2024-10",
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:00.883Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "d1524aaa3173",
@@ -32416,7 +32800,10 @@
     "starred": false,
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:13.224Z"
+    "enrichedAt": "2026-04-29T14:18:13.224Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "22d4058bbc00",
@@ -33082,7 +33469,8 @@
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:04.734Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "c9d7ec4cbcf2",
@@ -33649,8 +34037,9 @@
     "date": "2024-07",
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:09.660Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "b45750769a59",
@@ -33898,7 +34287,10 @@
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:21.083Z"
+    "enrichedAt": "2026-04-29T14:18:21.083Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "60ecfce2691d",
@@ -34258,7 +34650,8 @@
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:10.157Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "06129afd1be8",
@@ -34429,8 +34822,9 @@
     "date": "2024-06",
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:10.512Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "3834e9b3dfce",
@@ -35539,7 +35933,8 @@
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:15.657Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "92f251a6df36",
@@ -35979,7 +36374,10 @@
     "starred": false,
     "firstSeen": "2026-04-25T02:51:44.814Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:28.948Z"
+    "enrichedAt": "2026-04-29T14:18:28.948Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0273618fbf61",
@@ -36327,7 +36725,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:18.056Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "0eb81d92b7b7",
@@ -36852,7 +37251,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:30.594Z"
+    "enrichedAt": "2026-04-29T14:18:30.594Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "08b69a0210f3",
@@ -36929,7 +37331,10 @@
     "signals": [
       "production"
     ],
-    "enrichedAt": "2026-04-29T14:18:30.607Z"
+    "enrichedAt": "2026-04-29T14:18:30.607Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "807f55210121",
@@ -37173,7 +37578,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:31.217Z"
+    "enrichedAt": "2026-04-29T14:18:31.217Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "979defa5b6c1",
@@ -37227,7 +37635,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:31.163Z"
+    "enrichedAt": "2026-04-29T14:18:31.163Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1d5781b420a8",
@@ -37262,7 +37673,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:31.105Z"
+    "enrichedAt": "2026-04-29T14:18:31.105Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c7cbcad686cb",
@@ -37451,7 +37865,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:31.726Z"
+    "enrichedAt": "2026-04-29T14:18:31.726Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "64fac7479ac8",
@@ -37587,7 +38004,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:31.952Z"
+    "enrichedAt": "2026-04-29T14:18:31.952Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "49f456804686",
@@ -37951,12 +38371,12 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:21.683Z",
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "signals": [
       "production"
     ],
     "enrichedAt": "2026-04-29T14:18:32.797Z",
-    "failedChecks": 1
+    "failedChecks": 0
   },
   {
     "id": "08ffc9eb5660",
@@ -37991,7 +38411,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:32.824Z"
+    "enrichedAt": "2026-04-29T14:18:32.824Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7a585aea9cab",
@@ -38507,7 +38930,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:34.233Z"
+    "enrichedAt": "2026-04-29T14:18:34.233Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5281f8dcc397",
@@ -39197,7 +39623,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:35.980Z"
+    "enrichedAt": "2026-04-29T14:18:35.980Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "5c6375abe469",
@@ -39213,7 +39642,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:35.797Z"
+    "enrichedAt": "2026-04-29T14:18:35.797Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ef67135b83be",
@@ -39347,7 +39779,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:37.779Z"
+    "enrichedAt": "2026-04-29T14:18:37.779Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "aa7b6531df44",
@@ -39670,7 +40105,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:36.809Z"
+    "enrichedAt": "2026-04-29T14:18:36.809Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3b317a52c9b8",
@@ -39741,7 +40179,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:37.189Z"
+    "enrichedAt": "2026-04-29T14:18:37.189Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "6200d8c54e62",
@@ -39913,7 +40354,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:32.949Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "e0909a21f28d",
@@ -40165,7 +40607,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:28.050Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "e5fc297e387c",
@@ -40832,7 +41275,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:40.451Z"
+    "enrichedAt": "2026-04-29T14:18:40.451Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7d170b6edfd2",
@@ -41078,7 +41524,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:18:42.207Z"
+    "enrichedAt": "2026-04-29T14:18:42.207Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0f3c23740ec9",
@@ -41594,10 +42043,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:43.225Z",
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "signals": [],
     "enrichedAt": "2026-04-29T14:18:49.743Z",
-    "failedChecks": 1
+    "failedChecks": 0
   },
   {
     "id": "dc1c4339952f",
@@ -42130,8 +42579,9 @@
     "date": "2025-11",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:38.489Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "509a9282d482",
@@ -42535,7 +42985,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:37.702Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "44ddaedd05bf",
@@ -42764,8 +43215,9 @@
     "date": "2025-09",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:39.233Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "7287c5447e24",
@@ -43258,7 +43710,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:57.892Z"
+    "enrichedAt": "2026-04-29T14:18:57.892Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "b79c29960567",
@@ -43467,8 +43922,9 @@
     "date": "2025-05",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:42.179Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "10c827adca0f",
@@ -43560,7 +44016,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:42.446Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "a08897302ad8",
@@ -43616,7 +44073,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:43.375Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "e564984c298e",
@@ -43632,7 +44090,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:18:59.727Z"
+    "enrichedAt": "2026-04-29T14:18:59.727Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ce32f9aa7c2e",
@@ -43761,8 +44222,9 @@
     "date": "2025-04",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:45.291Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "366b8e1d41bd",
@@ -43801,7 +44263,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:19:02.937Z"
+    "enrichedAt": "2026-04-29T14:19:02.937Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "b594260ae053",
@@ -44069,8 +44534,8 @@
     "date": "2025-03",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:45.477Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "failedChecks": 1
   },
   {
@@ -44626,7 +45091,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:56.149Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "b923b646a14a",
@@ -45031,7 +45497,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:07.806Z"
+    "enrichedAt": "2026-04-29T14:19:07.806Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9f800e9efbb8",
@@ -45141,8 +45610,9 @@
     "date": "2024-10",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:50.741Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "e58f6055b113",
@@ -45274,7 +45744,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:05.729Z"
+    "enrichedAt": "2026-04-29T14:19:05.729Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "200e8e2d705b",
@@ -45349,7 +45822,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:49.943Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "45bd8925343c",
@@ -45631,7 +46105,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:51.335Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "a34b561af698",
@@ -45746,7 +46221,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:07.887Z"
+    "enrichedAt": "2026-04-29T14:19:07.887Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "db69d24647ba",
@@ -45762,7 +46240,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:10.718Z"
+    "enrichedAt": "2026-04-29T14:19:10.718Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4a17f6eb1f2c",
@@ -45873,7 +46354,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:08.609Z"
+    "enrichedAt": "2026-04-29T14:19:08.609Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "2d8ab978dc21",
@@ -46045,7 +46529,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:09.346Z"
+    "enrichedAt": "2026-04-29T14:19:09.346Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "06cde021ec17",
@@ -46155,8 +46642,9 @@
     "date": "2024-06",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:55.955Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "3c18360adafb",
@@ -46365,8 +46853,9 @@
     "date": "2024-06",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:56.752Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "1ce9f529c38c",
@@ -46674,8 +47163,9 @@
     "date": "2024-04",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:57.584Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "add1cb157178",
@@ -46769,7 +47259,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:33:59.371Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "515fd7f9bcf2",
@@ -46823,7 +47314,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:15.126Z"
+    "enrichedAt": "2026-04-29T14:19:15.126Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4919275b8020",
@@ -47054,7 +47548,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:00.079Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "04424b7de0a7",
@@ -47186,7 +47681,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:15.731Z"
+    "enrichedAt": "2026-04-29T14:19:15.731Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "e1988841dcb5",
@@ -47489,7 +47987,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:16.738Z"
+    "enrichedAt": "2026-04-29T14:19:16.738Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a67b8669c812",
@@ -47565,8 +48066,9 @@
     "date": "2024-01",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:04.883Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "5737e14d2407",
@@ -47582,7 +48084,9 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:17.236Z"
+    "enrichedAt": "2026-04-29T14:19:17.236Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "48d2378de975",
@@ -47598,7 +48102,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:02.845Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "a3cb9fc19dab",
@@ -48057,7 +48562,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:20.028Z"
+    "enrichedAt": "2026-04-29T14:19:20.028Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "3a5f637d4203",
@@ -48398,7 +48906,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:19:19.337Z"
+    "enrichedAt": "2026-04-29T14:19:19.337Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "d6e55c5effc4",
@@ -49095,8 +49606,9 @@
     "date": "2025-12",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:07.063Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "47b0f8292bc0",
@@ -49737,7 +50249,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:08.719Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "80a19d5670bb",
@@ -49753,7 +50266,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:22.565Z"
+    "enrichedAt": "2026-04-29T14:19:22.565Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a3e5929492ba",
@@ -50057,8 +50573,9 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
     "enrichedAt": "2026-04-29T14:19:24.595Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:18.720Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "1d50383fed62",
@@ -50206,7 +50723,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:24.338Z"
+    "enrichedAt": "2026-04-29T14:19:24.338Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "56cdc14a1587",
@@ -50354,8 +50874,9 @@
     "date": "2025-08",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:14.195Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "d88a2612d304",
@@ -50859,7 +51380,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:26.756Z"
+    "enrichedAt": "2026-04-29T14:19:26.756Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "08ae4edbcdd3",
@@ -50932,7 +51456,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:13.583Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "17aee2ed9f4e",
@@ -51786,7 +52311,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:29.254Z"
+    "enrichedAt": "2026-04-29T14:19:29.254Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7a1be1e1a4e2",
@@ -51802,7 +52330,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:29.402Z"
+    "enrichedAt": "2026-04-29T14:19:29.402Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "ce059a55e1f6",
@@ -52581,7 +53112,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:32.058Z"
+    "enrichedAt": "2026-04-29T14:19:32.058Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "670386f23bf4",
@@ -52844,7 +53378,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:32.728Z"
+    "enrichedAt": "2026-04-29T14:19:32.728Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c68dd093d4e3",
@@ -53640,7 +54177,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:34.823Z"
+    "enrichedAt": "2026-04-29T14:19:34.823Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "75396dc9de38",
@@ -53751,7 +54291,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:34.837Z"
+    "enrichedAt": "2026-04-29T14:19:34.837Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9e2198a3e0de",
@@ -53862,7 +54405,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:35.872Z"
+    "enrichedAt": "2026-04-29T14:19:35.872Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "16ee0162cb2f",
@@ -53878,7 +54424,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:44.045Z"
+    "enrichedAt": "2026-04-29T14:19:44.045Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0f9ca7caae77",
@@ -54068,8 +54617,9 @@
     "date": "2025-04",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:28.992Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "c5d4ddc55326",
@@ -54903,10 +55453,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:41.053Z",
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "signals": [],
     "enrichedAt": "2026-04-29T14:19:38.011Z",
-    "failedChecks": 1
+    "failedChecks": 0
   },
   {
     "id": "95fe41e4c5e4",
@@ -55799,7 +56349,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:33.260Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "9e2826453155",
@@ -55908,7 +56459,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:39.574Z"
+    "enrichedAt": "2026-04-29T14:19:39.574Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0919a65509cf",
@@ -56502,8 +57056,8 @@
     "date": "2025-06",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:35.834Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
     "failedChecks": 1
   },
   {
@@ -56860,7 +57414,9 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:43.402Z"
+    "enrichedAt": "2026-04-29T14:19:43.402Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "7947686b5064",
@@ -56991,8 +57547,9 @@
     "date": "2025-04",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:37.127Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "84c6edeb7635",
@@ -57216,7 +57773,10 @@
     "signals": [
       "studio"
     ],
-    "enrichedAt": "2026-04-29T14:19:42.270Z"
+    "enrichedAt": "2026-04-29T14:19:42.270Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "676edc16313b",
@@ -57348,7 +57908,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:37.710Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "cf65cf6a0635",
@@ -58032,8 +58593,9 @@
     "date": "2024-11",
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:39.615Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "c44015eab81f",
@@ -58159,7 +58721,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:44.407Z"
+    "enrichedAt": "2026-04-29T14:19:44.407Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1f12a7b720b5",
@@ -58283,7 +58848,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:44.410Z"
+    "enrichedAt": "2026-04-29T14:19:44.410Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "78e2d75db502",
@@ -58369,7 +58937,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:39.885Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "e00e94151923",
@@ -58473,7 +59042,10 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:19:44.481Z"
+    "enrichedAt": "2026-04-29T14:19:44.481Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f8f4d6f204b3",
@@ -58538,7 +59110,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:40.270Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "e7e5190f655d",
@@ -59048,7 +59621,8 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:41.972Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "facbc4b50dfa",
@@ -60009,7 +60583,10 @@
       "framer"
     ],
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "enrichedAt": "2026-04-29T14:19:47.932Z"
+    "enrichedAt": "2026-04-29T14:19:47.932Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "190f2daa615a",
@@ -62331,7 +62908,9 @@
       "framer"
     ],
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "enrichedAt": "2026-04-29T14:19:57.905Z"
+    "enrichedAt": "2026-04-29T14:19:57.905Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "cb9b0de9ccd3",
@@ -63178,7 +63757,10 @@
       "framer"
     ],
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "enrichedAt": "2026-04-29T14:19:59.351Z"
+    "enrichedAt": "2026-04-29T14:19:59.351Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "820daf798e71",
@@ -64842,7 +65424,8 @@
     ],
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:57.575Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "38f78c7de233",
@@ -65133,7 +65716,8 @@
     ],
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:34:58.386Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "c544f1ac87ca",
@@ -66167,7 +66751,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:09.017Z"
+    "enrichedAt": "2026-04-29T14:20:09.017Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4127b3e9379e",
@@ -66276,7 +66863,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:09.717Z"
+    "enrichedAt": "2026-04-29T14:20:09.717Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c10b0a6cda8c",
@@ -66416,7 +67006,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:09.003Z"
+    "enrichedAt": "2026-04-29T14:20:09.003Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0d0d65acc457",
@@ -66994,7 +67587,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:11.369Z"
+    "enrichedAt": "2026-04-29T14:20:11.369Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "62cbe95cd6b6",
@@ -67635,7 +68231,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:14.148Z"
+    "enrichedAt": "2026-04-29T14:20:14.148Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "8ac13919523a",
@@ -67984,8 +68583,9 @@
     "date": "2026-01",
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:06.041Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "211d7214ff79",
@@ -68011,7 +68611,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:14.673Z"
+    "enrichedAt": "2026-04-29T14:20:14.673Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "dcb148993555",
@@ -68089,7 +68692,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:15.530Z"
+    "enrichedAt": "2026-04-29T14:20:15.530Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "4ad9b4238c26",
@@ -68113,7 +68719,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:15.331Z"
+    "enrichedAt": "2026-04-29T14:20:15.331Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "67b9b9d9ce75",
@@ -68197,7 +68806,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:14.883Z"
+    "enrichedAt": "2026-04-29T14:20:14.883Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "fe01eb8afc38",
@@ -68554,7 +69166,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:07.613Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "8868ad611c6e",
@@ -68664,7 +69277,9 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:25.942Z"
+    "enrichedAt": "2026-04-29T14:20:25.942Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "3bab4eb7a47a",
@@ -69060,7 +69675,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:17.721Z"
+    "enrichedAt": "2026-04-29T14:20:17.721Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "27266d56cc3d",
@@ -69328,7 +69946,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:19.648Z"
+    "enrichedAt": "2026-04-29T14:20:19.648Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "61135e49644d",
@@ -69475,7 +70096,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:20.558Z"
+    "enrichedAt": "2026-04-29T14:20:20.558Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a74feb59089d",
@@ -69676,7 +70300,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:21.211Z"
+    "enrichedAt": "2026-04-29T14:20:21.211Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9460dc0b6cc2",
@@ -69700,8 +70327,9 @@
     "date": "2025-10",
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:14.657Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "71bbddca60af",
@@ -69947,7 +70575,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:23.236Z"
+    "enrichedAt": "2026-04-29T14:20:23.236Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "a16af5688e5e",
@@ -69999,7 +70630,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:24.018Z"
+    "enrichedAt": "2026-04-29T14:20:24.018Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "0e25334130ab",
@@ -70557,8 +71191,9 @@
     "date": "2025-08",
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:18.016Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "55eb7d2cc27b",
@@ -70717,8 +71352,9 @@
     "date": "2025-08",
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:20.378Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "2ef660b66090",
@@ -70744,7 +71380,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:27.861Z"
+    "enrichedAt": "2026-04-29T14:20:27.861Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "2556aa556900",
@@ -71110,7 +71749,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:28.873Z"
+    "enrichedAt": "2026-04-29T14:20:28.873Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "608c7c0f2ec7",
@@ -71239,7 +71881,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:29.409Z"
+    "enrichedAt": "2026-04-29T14:20:29.409Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "71df2f98121f",
@@ -71653,7 +72298,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:21.731Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "2afa16234d4a",
@@ -71727,8 +72373,9 @@
     "date": "2025-06",
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
-    "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:22.613Z"
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": false
   },
   {
     "id": "389e05402dd2",
@@ -71797,7 +72444,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:31.462Z"
+    "enrichedAt": "2026-04-29T14:20:31.462Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "69871133e131",
@@ -71940,7 +72590,10 @@
     "taste": [],
     "date": "2025-06",
     "starred": false,
-    "firstSeen": "2026-04-29T03:39:03.042Z"
+    "firstSeen": "2026-04-29T03:39:03.042Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "6221e377fce0",
@@ -72096,7 +72749,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:24.939Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "63ef1f1c9c96",
@@ -72303,7 +72957,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:24.050Z"
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z",
+    "isDead": true
   },
   {
     "id": "262b52350d6d",
@@ -72404,7 +73059,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:34.461Z"
+    "enrichedAt": "2026-04-29T14:20:34.461Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "af5bf75c8e46",
@@ -72560,7 +73218,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:36.353Z"
+    "enrichedAt": "2026-04-29T14:20:36.353Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f63a582d744c",
@@ -73180,7 +73841,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:37.558Z"
+    "enrichedAt": "2026-04-29T14:20:37.558Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "477d117ae995",
@@ -73279,7 +73943,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:38.413Z"
+    "enrichedAt": "2026-04-29T14:20:38.413Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "c449966bbbc1",
@@ -73380,7 +74047,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:31.650Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "1a396965f7fb",
@@ -73558,7 +74226,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:43.096Z"
+    "enrichedAt": "2026-04-29T14:20:43.096Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "f6104a1b1e0e",
@@ -73978,7 +74649,8 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "failedChecks": 1,
-    "lastCheckedAt": "2026-04-29T14:35:33.571Z"
+    "lastCheckedAt": "2026-04-29T14:52:27.981Z",
+    "isDead": true
   },
   {
     "id": "de33b237ec90",
@@ -74470,7 +75142,10 @@
     "starred": false,
     "firstSeen": "2026-04-29T03:39:03.042Z",
     "signals": [],
-    "enrichedAt": "2026-04-29T14:20:42.998Z"
+    "enrichedAt": "2026-04-29T14:20:42.998Z",
+    "isDead": false,
+    "failedChecks": 0,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "803cfb375f33",
