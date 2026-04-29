@@ -13,6 +13,10 @@ import { lastScrapedAt } from "@/data/load-sites";
 import { SourceSite } from "@/types";
 
 const LAST_SEEN_KEY = "design-gallery:lastSeenAt";
+// モーダルを最後に閉じた時刻。これから DAILY_QUIET_MS の間は再表示しない。
+// "毎回出るとうざい、1日1回見たら閉じてOK" という要望に対応。
+const MODAL_DISMISSED_AT_KEY = "design-gallery:updateModalDismissedAt";
+const DAILY_QUIET_MS = 24 * 60 * 60 * 1000;
 
 export default function Home() {
   const eagle = useEagleSync();
@@ -51,6 +55,15 @@ export default function Home() {
         return;
       }
 
+      // 直近 24h 以内に閉じてたら何もしない（うざがられないように）
+      const dismissedAt = localStorage.getItem(MODAL_DISMISSED_AT_KEY);
+      if (dismissedAt) {
+        const since = Date.now() - new Date(dismissedAt).getTime();
+        if (Number.isFinite(since) && since >= 0 && since < DAILY_QUIET_MS) {
+          return;
+        }
+      }
+
       const lastSeen = localStorage.getItem(LAST_SEEN_KEY);
       const baseline = lastScrapedAt ?? new Date().toISOString();
 
@@ -84,6 +97,8 @@ export default function Home() {
       if (lastScrapedAt) {
         localStorage.setItem(LAST_SEEN_KEY, lastScrapedAt);
       }
+      // 「今日はもう見た」マーカーを記録 → 24h 以内は再表示しない
+      localStorage.setItem(MODAL_DISMISSED_AT_KEY, new Date().toISOString());
     } catch {
       // 無視
     }
