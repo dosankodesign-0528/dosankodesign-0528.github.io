@@ -29,6 +29,13 @@ export function Gallery({
 }: GalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  // 現在ビューポート上端付近にあるカードのインデックス。
+  // スクロール位置インジケーター用。
+  const [currentIdx, setCurrentIdx] = useState(0);
+  // スクロール中フラグ。チップを濃く出すかどうかの切替に使う。
+  // 800ms 操作が無ければ自動で false に戻す。
+  const [scrolling, setScrolling] = useState(false);
+  const scrollEndTimer = useRef<number | null>(null);
 
   // フィルターが変わったら displayCount をリセット。
   // スクロール位置は保持する（「確認済み」トグル等でカードが減っても位置が飛ばないように）。
@@ -45,22 +52,49 @@ export function Gallery({
   );
   const hasMore = displayCount < sites.length;
 
-  // 無限スクロール: 下端に近づいたら追加ロード
+  // 無限スクロール + 現在位置インジケーター。
+  //   handleScroll の中でやってる事:
+  //     1. 下端500px以内なら追加ロード（無限スクロール）
+  //     2. ビューポート上端付近のカードを探して currentIdx に反映
+  //     3. scrolling=true にして 800ms 後 false に戻すタイマー仕込む
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const handleScroll = () => {
-      if (!hasMore) return;
       const { scrollTop, scrollHeight, clientHeight } = el;
-      // 下端から500px以内で追加ロード
-      if (scrollHeight - scrollTop - clientHeight < 500) {
+
+      // 1. 追加ロード判定
+      if (hasMore && scrollHeight - scrollTop - clientHeight < 500) {
         setDisplayCount((prev) => Math.min(prev + PAGE_SIZE, sites.length));
       }
+
+      // 2. 現在位置（ビューポート上端から少し下にあるカードのインデックス）
+      const containerTop = el.getBoundingClientRect().top;
+      // 上端から 100px 下を「今見てる」基準点に
+      const probeY = containerTop + 100;
+      const cards = el.querySelectorAll<HTMLElement>("[data-site-id]");
+      let idx = 0;
+      for (let i = 0; i < cards.length; i++) {
+        const r = cards[i].getBoundingClientRect();
+        if (r.top > probeY) break;
+        idx = i;
+      }
+      setCurrentIdx(idx);
+
+      // 3. スクロール中フラグ
+      setScrolling(true);
+      if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current);
+      scrollEndTimer.current = window.setTimeout(() => setScrolling(false), 800);
     };
 
     el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => el.removeEventListener("scroll", handleScroll);
+    // 初期表示時に1回呼ぶ（フィルター変更後の位置反映用）
+    handleScroll();
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      if (scrollEndTimer.current) window.clearTimeout(scrollEndTimer.current);
+    };
   }, [hasMore, sites.length]);
 
   // Ctrl+スクロール / ピンチで列数変更
@@ -144,6 +178,24 @@ export function Gallery({
           <span className="text-[13px] text-text-secondary">
             {visibleSites.length} / {sites.length}件を表示中…スクロールで続きを読み込み
           </span>
+        </div>
+      )}
+
+      {/* スクロール位置インジケーター（案A: ミニ件数チップ）
+          - 右上に固定。ヘッダー(56px)+FilterBar(44px)+少し余白。
+          - スクロール中は濃く・大きめ、停止中は薄く小さく。
+          - sites.length=0 のときは出さない（空状態のメッセージと被るので）。 */}
+      {sites.length > 0 && (
+        <div
+          aria-live="polite"
+          className={`fixed top-[116px] right-6 z-40 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur shadow-md border border-border text-[12px] tabular-nums transition-all duration-300 pointer-events-none select-none ${
+            scrolling ? "opacity-100 scale-100" : "opacity-50 scale-95"
+          }`}
+        >
+          <span className="font-bold text-text-primary">
+            {(currentIdx + 1).toLocaleString()}
+          </span>
+          <span className="text-text-secondary"> / {sites.length.toLocaleString()}</span>
         </div>
       )}
 
