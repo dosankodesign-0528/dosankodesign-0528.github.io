@@ -5,8 +5,6 @@ import { Header } from "@/components/Header";
 import { FilterBar } from "@/components/FilterBar";
 import { Gallery } from "@/components/Gallery";
 import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
-import { EagleExcludedModal } from "@/components/EagleExcludedModal";
-import { EagleExcludedBar } from "@/components/EagleExcludedBar";
 import { HiddenSitesModal } from "@/components/HiddenSitesModal";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -22,7 +20,6 @@ export default function Home() {
   const [updateCounts, setUpdateCounts] = useState<Partial<
     Record<SourceSite, number>
   > | null>(null);
-  const [showEagleExcluded, setShowEagleExcluded] = useState(false);
   const [showHiddenManager, setShowHiddenManager] = useState(false);
 
   useKeyboardShortcuts({
@@ -105,24 +102,9 @@ export default function Home() {
         filteredCount={store.filteredSites.length}
         filter={store.filter}
         updateFilter={store.updateFilter}
-        eagleStatus={eagle.status}
-        eagleLastSyncAt={eagle.lastSyncAt}
-        eagleItemCount={eagle.itemCount}
-        onEagleRefresh={() => void eagle.refresh()}
-        hideEagleDuplicates={store.hideEagleDuplicates}
-        onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
         filteredIds={store.filteredSites.map((s) => s.id)}
         onHideMany={store.hideMany}
-        hiddenCount={store.hiddenCount}
         onOpenHiddenManager={() => setShowHiddenManager(true)}
-      />
-
-      {/* Eagle重複セカンダリバー（トグルで ON/OFF 切替可能） */}
-      <EagleExcludedBar
-        excludedCount={store.eagleExcludedSites.length}
-        onOpenExcluded={() => setShowEagleExcluded(true)}
-        visible={store.hideEagleDuplicates && store.eagleExcludedSites.length > 0}
-        hideEagleDuplicates={store.hideEagleDuplicates}
       />
 
       {/* フィルターバー（ソースタブ + お気に入り + エージェンシー + 日付） */}
@@ -155,21 +137,19 @@ export default function Home() {
         />
       )}
 
-      {/* Eagle重複で非表示中の一覧モーダル */}
-      {showEagleExcluded && (
-        <EagleExcludedModal
-          sites={store.eagleExcludedSites}
-          onClose={() => setShowEagleExcluded(false)}
-        />
-      )}
-
-      {/* 「もう見ない」非表示管理モーダル（歯車アイコンから開く） */}
+      {/* 非表示の管理モーダル（Eagle重複 + 自分で非表示の統合） */}
       {showHiddenManager && (
         <HiddenSitesModal
           sites={store.hiddenSites}
           onClose={() => setShowHiddenManager(false)}
           onUnhideOne={store.unhideOne}
           onUnhideAll={store.unhideAll}
+          eagleStatus={eagle.status}
+          eagleItemCount={eagle.itemCount}
+          eagleExcludedSites={store.eagleExcludedSites}
+          hideEagleDuplicates={store.hideEagleDuplicates}
+          onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
+          onEagleRefresh={() => void eagle.refresh()}
         />
       )}
     </div>

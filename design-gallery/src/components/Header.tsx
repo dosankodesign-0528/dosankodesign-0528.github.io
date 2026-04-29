@@ -36,33 +36,10 @@ export function Header({
   filteredCount,
   filter,
   updateFilter,
-  eagleStatus,
-  eagleLastSyncAt,
-  eagleItemCount,
-  onEagleRefresh,
-  hideEagleDuplicates,
-  onToggleHideEagleDuplicates,
   filteredIds,
   onHideMany,
-  hiddenCount,
   onOpenHiddenManager,
 }: HeaderProps) {
-  // Eagleステータスドットの色はトグルのON/OFFに連動
-  // - ON (重複非表示中): 青 = 効いてる状態
-  // - OFF: グレー = 無効
-  // - 同期中のみ青で pulse アニメーションさせる
-  const eagleDotColor = hideEagleDuplicates ? "#3B82F6" : "#9CA3AF";
-
-  const eagleStatusText =
-    eagleStatus === "live"
-      ? `Eagle接続中（${eagleItemCount}件）`
-      : eagleStatus === "cached"
-        ? `キャッシュ使用中・${formatRelativeTime(eagleLastSyncAt)}に同期（${eagleItemCount}件）`
-        : eagleStatus === "syncing"
-          ? "Eagle同期中…"
-          : eagleStatus === "empty"
-            ? "Eagle未接続（起動してリロードで連携）"
-            : "Eagle未同期";
   const viewModeState: "unchecked" | "all" | "checked" = filter.starredOnly
     ? "checked"
     : filter.viewMode === "unchecked"
@@ -120,56 +97,6 @@ export function Header({
 
       {/* スペーサー */}
       <div className="ml-auto flex items-center gap-1.5">
-        {/* Eagle連携トグル（Eagleラベル + トグルスイッチの横並び） */}
-        <div
-          className={`h-8 inline-flex items-center gap-2 pl-2 pr-1 rounded-lg border transition-colors ${
-            hideEagleDuplicates
-              ? "border-accent/40 bg-accent/5"
-              : "border-border bg-bg-primary"
-          }`}
-          title={eagleStatusText}
-        >
-          <button
-            onClick={onEagleRefresh}
-            className="inline-flex items-center gap-1.5 px-1 text-[12px] text-text-secondary hover:text-text-primary"
-            aria-label={`Eagle同期 - ${eagleStatusText}`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full transition-colors ${
-                eagleStatus === "syncing" ? "animate-pulse" : ""
-              }`}
-              style={{ backgroundColor: eagleDotColor }}
-            />
-            <span className="font-medium">Eagle</span>
-          </button>
-          <button
-            onClick={onToggleHideEagleDuplicates}
-            disabled={eagleItemCount === 0}
-            // OFF はハッキリとしたグレー、ON は明るい青。ユーザー要望で
-            // 2状態が一目で区別できるように accent ではなく固定色を使用。
-            className={`relative w-8 h-5 rounded-full transition-colors ${
-              hideEagleDuplicates ? "bg-blue-500" : "bg-gray-400"
-            } ${eagleItemCount === 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
-            title={
-              eagleItemCount === 0
-                ? "Eagleが未接続です"
-                : hideEagleDuplicates
-                  ? "Eagle重複を表示する"
-                  : "Eagle重複を隠す"
-            }
-            aria-label={
-              hideEagleDuplicates ? "Eagle重複を表示する" : "Eagle重複を隠す"
-            }
-            aria-pressed={hideEagleDuplicates}
-          >
-            <span
-              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                hideEagleDuplicates ? "left-[14px]" : "left-0.5"
-              }`}
-            />
-          </button>
-        </div>
-
         {/* 手動リロード */}
         <button
           onClick={handleReload}
@@ -279,16 +206,12 @@ export function Header({
         </svg>
       </div>
 
-      {/* 歯車アイコン: 非表示サイトの管理（最右端） */}
+      {/* 歯車アイコン: Eagle重複と「もう見ない」非表示の統合管理（最右端） */}
       <button
         onClick={onOpenHiddenManager}
-        className="relative w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
-        title={
-          hiddenCount > 0
-            ? `非表示中のサイトを管理（${hiddenCount}件）`
-            : "非表示サイトの管理"
-        }
-        aria-label="非表示サイトの管理"
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
+        title="非表示の管理（Eagle連携 + もう見ない）"
+        aria-label="非表示の管理"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -304,14 +227,6 @@ export function Header({
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        {hiddenCount > 0 && (
-          <span
-            className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center tabular-nums"
-            aria-label={`${hiddenCount}件が非表示`}
-          >
-            {hiddenCount > 99 ? "99+" : hiddenCount}
-          </span>
-        )}
       </button>
     </header>
   );
