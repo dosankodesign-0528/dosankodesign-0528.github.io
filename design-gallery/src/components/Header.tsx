@@ -21,6 +21,11 @@ interface HeaderProps {
   // Eagle重複の表示/非表示トグル
   hideEagleDuplicates: boolean;
   onToggleHideEagleDuplicates: () => void;
+  // 「もう見ない」非表示化
+  filteredIds: string[]; // 現在表示中のサイトIDリスト（ゴミ箱の対象）
+  onHideMany: (ids: string[]) => void;
+  hiddenCount: number;
+  onOpenHiddenManager: () => void;
 }
 
 /** ISO → 「〇分前 / 〇時間前 / 〇日前」 */
@@ -62,6 +67,10 @@ export function Header({
   onEagleRefresh,
   hideEagleDuplicates,
   onToggleHideEagleDuplicates,
+  filteredIds,
+  onHideMany,
+  hiddenCount,
+  onOpenHiddenManager,
 }: HeaderProps) {
   // Eagleステータスドットの色はトグルのON/OFFに連動
   // - ON (重複非表示中): 青 = 効いてる状態
@@ -213,6 +222,34 @@ export function Header({
           </svg>
         </button>
 
+        {/* 確認済みモード時の「まとめて非表示」ボタン
+            一覧から消えてくれるとメンタルが楽になる、というユーザー要望。
+            データは消さず、復元は歯車アイコンのモーダルから。 */}
+        {viewModeState === "checked" && filteredCount > 0 && (
+          <button
+            onClick={() => {
+              const ok = window.confirm(
+                `表示中の確認済み${filteredCount}件を一覧から非表示にします。\n\n（データは消えません。歯車アイコンのメニューからいつでも戻せます）`
+              );
+              if (ok) onHideMany(filteredIds);
+            }}
+            className="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-lg border border-border bg-bg-primary text-[12px] text-text-secondary hover:text-red-500 hover:border-red-300 hover:bg-red-50 transition-colors"
+            title={`表示中の${filteredCount}件を一覧から非表示にする`}
+            aria-label="表示中のサイトを非表示にする"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            <span className="tabular-nums">{filteredCount}</span>
+            <span>件を非表示</span>
+          </button>
+        )}
+
         {/* 状態セグメント（V02: 状態ドット付き） */}
         <div className="inline-flex p-0.5 bg-bg-primary rounded-lg">
           {MODES.map((m) => (
@@ -266,6 +303,41 @@ export function Header({
           <rect x="9" y="9" width="6" height="6" rx="0.5" />
         </svg>
       </div>
+
+      {/* 歯車アイコン: 非表示サイトの管理（最右端） */}
+      <button
+        onClick={onOpenHiddenManager}
+        className="relative w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
+        title={
+          hiddenCount > 0
+            ? `非表示中のサイトを管理（${hiddenCount}件）`
+            : "非表示サイトの管理"
+        }
+        aria-label="非表示サイトの管理"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+        {hiddenCount > 0 && (
+          <span
+            className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center tabular-nums"
+            aria-label={`${hiddenCount}件が非表示`}
+          >
+            {hiddenCount > 99 ? "99+" : hiddenCount}
+          </span>
+        )}
+      </button>
     </header>
   );
 }

@@ -7,6 +7,7 @@ import { Gallery } from "@/components/Gallery";
 import { UpdateNotificationModal } from "@/components/UpdateNotificationModal";
 import { EagleExcludedModal } from "@/components/EagleExcludedModal";
 import { EagleExcludedBar } from "@/components/EagleExcludedBar";
+import { HiddenSitesModal } from "@/components/HiddenSitesModal";
 import { useGalleryStore } from "@/hooks/useGalleryStore";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useEagleSync } from "@/hooks/useEagleSync";
@@ -22,6 +23,7 @@ export default function Home() {
     Record<SourceSite, number>
   > | null>(null);
   const [showEagleExcluded, setShowEagleExcluded] = useState(false);
+  const [showHiddenManager, setShowHiddenManager] = useState(false);
 
   useKeyboardShortcuts({
     selectedIds: store.selectedIds,
@@ -109,6 +111,10 @@ export default function Home() {
         onEagleRefresh={() => void eagle.refresh()}
         hideEagleDuplicates={store.hideEagleDuplicates}
         onToggleHideEagleDuplicates={store.toggleHideEagleDuplicates}
+        filteredIds={store.filteredSites.map((s) => s.id)}
+        onHideMany={store.hideMany}
+        hiddenCount={store.hiddenCount}
+        onOpenHiddenManager={() => setShowHiddenManager(true)}
       />
 
       {/* Eagle重複セカンダリバー（トグルで ON/OFF 切替可能） */}
@@ -154,6 +160,16 @@ export default function Home() {
         <EagleExcludedModal
           sites={store.eagleExcludedSites}
           onClose={() => setShowEagleExcluded(false)}
+        />
+      )}
+
+      {/* 「もう見ない」非表示管理モーダル（歯車アイコンから開く） */}
+      {showHiddenManager && (
+        <HiddenSitesModal
+          sites={store.hiddenSites}
+          onClose={() => setShowHiddenManager(false)}
+          onUnhideOne={store.unhideOne}
+          onUnhideAll={store.unhideAll}
         />
       )}
     </div>
