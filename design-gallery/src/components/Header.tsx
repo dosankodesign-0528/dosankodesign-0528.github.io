@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { FilterState, ViewMode } from "@/types";
-import type { EagleStatus } from "@/hooks/useEagleSync";
 
 interface HeaderProps {
   search: string;
@@ -13,34 +12,10 @@ interface HeaderProps {
   filteredCount: number;
   filter: FilterState;
   updateFilter: (partial: Partial<FilterState>) => void;
-  // Eagle連携
-  eagleStatus: EagleStatus;
-  eagleLastSyncAt: string | null;
-  eagleItemCount: number;
-  onEagleRefresh: () => void;
-  // Eagle重複の表示/非表示トグル
-  hideEagleDuplicates: boolean;
-  onToggleHideEagleDuplicates: () => void;
-  // 「もう見ない」非表示化
+  // 「もう見ない」/ Eagle重複の管理を統合した歯車モーダルへの導線
   filteredIds: string[]; // 現在表示中のサイトIDリスト（ゴミ箱の対象）
   onHideMany: (ids: string[]) => void;
-  hiddenCount: number;
   onOpenHiddenManager: () => void;
-}
-
-/** ISO → 「〇分前 / 〇時間前 / 〇日前」 */
-function formatRelativeTime(iso: string | null): string {
-  if (!iso) return "未同期";
-  const then = new Date(iso).getTime();
-  const now = Date.now();
-  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
-  if (diffSec < 60) return "たった今";
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}分前`;
-  const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour}時間前`;
-  const diffDay = Math.floor(diffHour / 24);
-  return `${diffDay}日前`;
 }
 
 // 並び順は「すべて → 未確認 → 確認済み」。
