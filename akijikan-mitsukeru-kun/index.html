@@ -227,6 +227,14 @@
   .toast.success { border-left-color:var(--green); }
   .toast.success button { background:var(--green); }
 
+  /* --- Undo トースト（除外/非表示の取り消し用） --- */
+  .undo-toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120%); background:#1f2937; color:#fff; border-radius:var(--radius); padding:12px 16px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,0.25); display:flex; align-items:center; gap:14px; z-index:300; transition:transform 0.25s ease; max-width:calc(100% - 32px); }
+  .undo-toast.show { transform:translateX(-50%) translateY(0); }
+  .undo-toast .undo-msg { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .undo-toast .undo-btn { background:transparent; color:#60a5fa; border:none; font-weight:700; cursor:pointer; padding:4px 8px; font-size:13px; font-family:'Noto Sans JP',sans-serif; }
+  .undo-toast .undo-btn:hover { color:#93c5fd; }
+  .undo-toast .undo-close { background:transparent; color:#9ca3af; border:none; cursor:pointer; padding:4px; font-size:14px; line-height:1; }
+
   /* ブックマーク案内（設定モーダル内） */
   .bookmark-note {
     margin-top:10px;
@@ -682,6 +690,80 @@
   }
   .cv-detail-link:hover { text-decoration:underline; }
 
+  /* 予定の除外アクション群（カレンダービュー詳細モーダル下部） */
+  .cv-detail-actions {
+    display:flex; flex-wrap:wrap; gap:8px;
+    border-top:1px solid var(--border);
+    padding-top:12px; margin-top:4px;
+  }
+  .cv-exclude-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#fff5f5; color:#b91c1c;
+    border:1px solid #fecaca; border-radius:var(--radius-sm);
+    padding:8px 12px; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+    transition:all 0.12s;
+  }
+  .cv-exclude-btn:hover { background:#fee2e2; border-color:#fca5a5; }
+
+  /* 繰り返し予定の除外スコープ選択ダイアログ（Google カレンダー風） */
+  .cv-exclude-dialog {
+    border-top:1px solid var(--border);
+    padding-top:12px; margin-top:4px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .cv-exclude-dialog .ed-title {
+    font-size:13px; font-weight:600; color:var(--text);
+  }
+  .cv-exclude-dialog .ed-options {
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .cv-exclude-dialog label {
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--radius-sm); cursor:pointer; font-size:13px;
+    transition:all 0.12s;
+  }
+  .cv-exclude-dialog label:hover { background:var(--surface); border-color:var(--blue); }
+  .cv-exclude-dialog label input[type=radio]:checked + .ed-label-text { font-weight:600; color:var(--blue); }
+  .cv-exclude-dialog .ed-actions {
+    display:flex; gap:8px; justify-content:flex-end;
+  }
+  .cv-exclude-dialog .ed-cancel {
+    background:transparent; color:var(--text-dim);
+    border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:8px 14px; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+  }
+  .cv-exclude-dialog .ed-cancel:hover { background:var(--surface-2); }
+  .cv-exclude-dialog .ed-ok {
+    background:#dc2626; color:#fff;
+    border:none; border-radius:var(--radius-sm);
+    padding:8px 14px; font-size:12px; font-weight:600;
+    cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+  }
+  .cv-exclude-dialog .ed-ok:hover { background:#b91c1c; }
+
+  /* 除外管理パネル（モーダル/セクション） */
+  .exclude-mgmt-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:90; padding:16px; }
+  .exclude-mgmt-overlay.show { display:flex; }
+  .exclude-mgmt-modal { background:#fff; border-radius:var(--radius); max-width:520px; width:100%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 12px 40px rgba(0,0,0,0.18); }
+  .exclude-mgmt-header { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .exclude-mgmt-header h3 { font-size:14px; font-weight:600; margin:0; flex:1; }
+  .exclude-mgmt-body { padding:12px 16px; overflow:auto; flex:1; }
+  .exclude-mgmt-section { margin-bottom:18px; }
+  .exclude-mgmt-section:last-child { margin-bottom:0; }
+  .exclude-mgmt-section h4 { font-size:12px; font-weight:600; color:var(--text-dim); margin:0 0 8px 0; }
+  .exclude-mgmt-empty { font-size:12px; color:var(--text-dim); padding:6px 2px; }
+  .exclude-row { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; font-size:12px; }
+  .exclude-row .ex-color { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .exclude-row .ex-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .exclude-row .ex-meta { font-size:10px; color:var(--text-dim); flex-shrink:0; }
+  .exclude-row .ex-restore { background:#dbeafe; color:#1d4ed8; border:none; border-radius:4px; padding:5px 10px; font-size:11px; font-weight:600; cursor:pointer; flex-shrink:0; font-family:'Noto Sans JP',sans-serif; }
+  .exclude-row .ex-restore:hover { background:#bfdbfe; }
+  .exclude-mgmt-open-btn { background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; font-size:11px; color:var(--text-dim); cursor:pointer; font-family:'Noto Sans JP',sans-serif; }
+  .exclude-mgmt-open-btn:hover { background:var(--surface-2); color:var(--text); }
+
   @media (max-width:800px) {
     .cv-detail-overlay { padding:0; align-items:flex-end; }
     .cv-detail-modal { max-width:100vw; max-height:92vh; border-radius:14px 14px 0 0; }
@@ -895,7 +977,10 @@
 <div class="layout">
   <div class="panel-left">
     <div class="calendar-selector" id="calendarSelector">
-      <div class="section-label">対象カレンダー</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div class="section-label" style="margin:0;">対象カレンダー</div>
+        <button class="exclude-mgmt-open-btn" id="excludeMgmtOpen" type="button" title="非表示にしたカレンダー / 除外した予定を管理">⚙ 除外管理</button>
+      </div>
       <div class="cal-list" id="calList"></div>
       <button class="cal-add-btn" id="calAddBtn" type="button">＋ URLでカレンダーを追加</button>
       <div class="cal-add-form" id="calAddForm">
@@ -1061,6 +1146,29 @@
   <button id="toastBtn">再接続</button>
 </div>
 
+<!-- Undoトースト：除外/非表示などの操作を「取り消し」で戻せるようにするための独立トースト -->
+<div class="undo-toast" id="undoToast" role="status" aria-live="polite">
+  <span class="undo-msg" id="undoToastMsg"></span>
+  <button class="undo-btn" id="undoToastBtn" type="button">取り消し</button>
+  <button class="undo-close" id="undoToastClose" type="button" aria-label="閉じる">×</button>
+</div>
+
+<!-- 除外管理モーダル：非表示にしたカレンダー / 除外した予定を一覧表示・復元する -->
+<div class="exclude-mgmt-overlay" id="excludeMgmtOverlay" aria-hidden="true">
+  <div class="exclude-mgmt-modal" role="dialog" aria-modal="true">
+    <div class="exclude-mgmt-header">
+      <h3>除外管理</h3>
+      <button class="cv-icon-btn cv-close-btn" id="excludeMgmtClose" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="exclude-mgmt-body" id="excludeMgmtBody"></div>
+  </div>
+</div>
+
 <script>
   // ===== 旧 GH Pages 版(hideyuki-yamanaka.github.io/akijikan-mitsukeru-kun/) から移行する人向け =====
   // URL hash に #migrate=<base64-json> が付いてたら localStorage に書き戻す。
@@ -1090,9 +1198,132 @@
 
   let tokenClient, accessToken=null, calendars=[], selectedCalIds=new Set(), icsFiles=[], gsiLoaded=false;
 
+  // ========== 非表示カレンダー / 除外予定の管理 ==========
+  // ・hiddenGoogleCalIds: ユーザーが対象カレンダー一覧から×ボタンで隠したGoogleカレンダーID
+  //   （unhide で復活できる。Google APIから取得した時にフィルタする）
+  // ・excludedEvents: 個別予定の除外リスト（カレンダービューで×ボタンを押した予定）
+  //   - key 形式: "rec:<calId>:<recurringEventId>"  → 同じ繰り返し全インスタンスを除外
+  //               "ev:<calId>:<eventId>"             → その単発1件のみ除外
+  //               "ics:<icsName>:<uid>"              → ICSの同じUID(=同じ繰り返し)を全除外
+  //   - title/calLabel/excludedAt を保持（除外管理UIで表示・復元するため）
+  const HIDDEN_CALS_KEY='akijikan_hidden_cals_v1';
+  const EXCLUDED_EVENTS_KEY='akijikan_excluded_events_v1';
+  let hiddenGoogleCalIds=new Set();
+  let excludedEvents=[]; // [{key,title,calLabel,excludedAt,scope}]
+
+  function loadHiddenCals(){
+    try{const raw=storageRead(HIDDEN_CALS_KEY); hiddenGoogleCalIds=new Set(raw?JSON.parse(raw):[]);}catch(e){hiddenGoogleCalIds=new Set();}
+  }
+  function saveHiddenCals(){
+    try{storageWrite(HIDDEN_CALS_KEY,JSON.stringify([...hiddenGoogleCalIds]));}catch(e){}
+  }
+  function loadExcludedEvents(){
+    try{const raw=storageRead(EXCLUDED_EVENTS_KEY); excludedEvents=raw?JSON.parse(raw):[];}catch(e){excludedEvents=[];}
+  }
+  function saveExcludedEvents(){
+    try{storageWrite(EXCLUDED_EVENTS_KEY,JSON.stringify(excludedEvents));}catch(e){}
+  }
+
+  // 単発予定の除外キー: その1件だけを一意に指す
+  function singleEventKey(ev){
+    if(!ev||!ev.calId)return null;
+    return `ev:${ev.calId}:${ev.id||''}`;
+  }
+  // 繰り返し予定の除外キー: 同じシリーズの全インスタンスを指す
+  // - Google: recurringEventId（singleEvents=trueで展開された各インスタンスが共通で持つ）
+  // - ICS:    UID（Google ICS export は各インスタンスを別 VEVENT に展開するが UID は共通）
+  function recurringSeriesKey(ev){
+    if(!ev||!ev.calId)return null;
+    if(String(ev.calId).startsWith('__ics__:')){
+      const icsName=String(ev.calId).replace('__ics__:','');
+      return `ics:${icsName}:${ev.id||''}`;
+    }
+    if(ev.recurringEventId){
+      return `rec:${ev.calId}:${ev.recurringEventId}`;
+    }
+    return null;
+  }
+  // ICS 内で同じ UID を持つ VEVENT が複数あれば「繰り返し」扱い
+  function isIcsRecurring(ev){
+    if(!ev||!ev.calId||!String(ev.calId).startsWith('__ics__:'))return false;
+    const icsName=String(ev.calId).replace('__ics__:','');
+    const file=icsFiles.find(f=>f.name===icsName);
+    if(!file)return false;
+    return file.events.filter(e=>e.id===ev.id).length>1;
+  }
+  function isEventRecurring(ev){
+    if(!ev)return false;
+    if(ev.recurringEventId)return true;     // Google: 展開済み繰り返しインスタンス
+    if(isIcsRecurring(ev))return true;       // ICS: 同UIDが複数 = 繰り返し展開
+    return false;
+  }
+  // 除外判定: 各 excludedEvents エントリと予定をマッチング
+  // scope: 'single'=その1件 / 'recurring'=シリーズ全部 / 'future'=指定日以降のみ
+  function isEventExcluded(ev){
+    if(!ev||!excludedEvents.length)return false;
+    const sKey=singleEventKey(ev);
+    const rKey=recurringSeriesKey(ev);
+    const evMs=ev.start?new Date(ev.start).getTime():0;
+    for(const e of excludedEvents){
+      if(e.scope==='single' && e.key===sKey)return true;
+      if(e.scope==='recurring' && rKey && e.recurringKey===rKey)return true;
+      if(e.scope==='future' && rKey && e.recurringKey===rKey){
+        if(evMs>=new Date(e.fromDate).getTime())return true;
+      }
+    }
+    return false;
+  }
+  // scope: 'single' / 'recurring' / 'future'
+  // 'future' は ev.start を fromDate として扱う
+  function addExcludedEvent(ev, scope){
+    if(!ev)return null;
+    const cal=calendars.find(c=>c.id===ev.calId);
+    const calLabel=cal?calDisplayName(cal):(ev.calId&&String(ev.calId).startsWith('__ics__:')?String(ev.calId).replace('__ics__:',''):'');
+    const title=(typeof cvEventLabel==='function')?cvEventLabel(ev):(ev.summary||'(タイトルなし)');
+    let entry;
+    if(scope==='single' || !recurringSeriesKey(ev)){
+      const k=singleEventKey(ev); if(!k)return null;
+      // 重複チェック
+      if(excludedEvents.some(e=>e.scope==='single'&&e.key===k))return k;
+      entry={key:k, scope:'single', title, calLabel, excludedAt:Date.now()};
+    } else if(scope==='recurring'){
+      const rKey=recurringSeriesKey(ev);
+      // すでに「すべて除外」あれば追記しない
+      if(excludedEvents.some(e=>e.scope==='recurring'&&e.recurringKey===rKey))return rKey;
+      entry={key:`all:${rKey}`, scope:'recurring', recurringKey:rKey, title, calLabel, excludedAt:Date.now()};
+    } else { // 'future'
+      const rKey=recurringSeriesKey(ev);
+      const fromDate=new Date(ev.start);
+      const fromIso=fromDate.toISOString();
+      const k=`fut:${rKey}:${fromIso}`;
+      if(excludedEvents.some(e=>e.key===k))return k;
+      entry={key:k, scope:'future', recurringKey:rKey, fromDate:fromIso, title, calLabel, excludedAt:Date.now()};
+    }
+    excludedEvents.push(entry);
+    saveExcludedEvents();
+    return entry.key;
+  }
+  function removeExcludedEvent(key){
+    const before=excludedEvents.length;
+    excludedEvents=excludedEvents.filter(e=>e.key!==key);
+    if(excludedEvents.length!==before)saveExcludedEvents();
+  }
+  function hideGoogleCal(calId){
+    if(!calId||String(calId).startsWith('__ics__:'))return;
+    hiddenGoogleCalIds.add(calId);
+    selectedCalIds.delete(calId);
+    saveHiddenCals();
+  }
+  function restoreGoogleCal(calId){
+    hiddenGoogleCalIds.delete(calId);
+    selectedCalIds.add(calId);
+    saveHiddenCals();
+  }
+
   // カレンダー名のエイリアス（表示名を上書き）
   const CAL_NAME_ALIAS = {
     'hideyuki.yamanaka@fuller.co.jp': 'フラー',
+    'hideyuki.yamanaka@anyflow.co.jp': 'Anyflow',
     'ワーク': 'iOS',
   };
   // カレンダー色のオーバーライド（凡例・ドット・カレンダービュー全てで反映）
@@ -1173,6 +1404,118 @@
     // success（ブックマーク案内）の OK 押下では再接続しない
     if(wasSuccess)return;
     if(tokenClient){try{tokenClient.requestAccessToken();}catch(e){console.error(e);}}
+  });
+
+  // --- Undo トースト（除外・非表示の操作を取り消せる UI） ---
+  let undoToastTimer=null;
+  let undoToastHandler=null;
+  function showUndoToast(msg, undoFn, ms){
+    const t=document.getElementById('undoToast');
+    const m=document.getElementById('undoToastMsg');
+    if(!t||!m)return;
+    m.textContent=msg||'';
+    undoToastHandler=undoFn||null;
+    t.classList.add('show');
+    if(undoToastTimer)clearTimeout(undoToastTimer);
+    undoToastTimer=setTimeout(hideUndoToast, ms||6000);
+  }
+  function hideUndoToast(){
+    const t=document.getElementById('undoToast');
+    if(!t)return;
+    t.classList.remove('show');
+    undoToastHandler=null;
+    if(undoToastTimer){clearTimeout(undoToastTimer);undoToastTimer=null;}
+  }
+  document.getElementById('undoToastBtn').addEventListener('click',()=>{
+    const fn=undoToastHandler;
+    hideUndoToast();
+    if(fn)try{fn();}catch(e){console.error(e);}
+  });
+  document.getElementById('undoToastClose').addEventListener('click',hideUndoToast);
+
+  // --- 除外管理モーダル：非表示にしたカレンダー / 除外した予定の一覧と復元 ---
+  function renderExcludeMgmt(){
+    const body=document.getElementById('excludeMgmtBody');
+    if(!body)return;
+    const sections=[];
+
+    // 非表示カレンダー一覧
+    const hiddenList=[...hiddenGoogleCalIds].map(id=>{
+      const cal=calendars.find(c=>c.id===id);
+      return {id, label:cal?calDisplayName(cal):id, color:cal?calColor(cal):'#6b7280'};
+    });
+    let calHtml='<div class="exclude-mgmt-section"><h4>非表示にしたカレンダー</h4>';
+    if(hiddenList.length===0){
+      calHtml+='<div class="exclude-mgmt-empty">非表示にしたカレンダーはありません</div>';
+    } else {
+      calHtml+=hiddenList.map(h=>(
+        `<div class="exclude-row" data-cal-id="${escapeHtml(h.id)}">`+
+          `<span class="ex-color" style="background:${h.color}"></span>`+
+          `<span class="ex-title">${escapeHtml(h.label)}</span>`+
+          `<button class="ex-restore" data-restore-cal="${escapeHtml(h.id)}" type="button">復元</button>`+
+        `</div>`
+      )).join('');
+    }
+    calHtml+='</div>';
+    sections.push(calHtml);
+
+    // 除外した予定一覧
+    let evHtml='<div class="exclude-mgmt-section"><h4>除外した予定</h4>';
+    if(excludedEvents.length===0){
+      evHtml+='<div class="exclude-mgmt-empty">除外した予定はありません</div>';
+    } else {
+      // 新しい順で並べる
+      const sorted=[...excludedEvents].sort((a,b)=>(b.excludedAt||0)-(a.excludedAt||0));
+      evHtml+=sorted.map(e=>{
+        let scopeBadge;
+        if(e.scope==='recurring')scopeBadge='🔁 すべての繰り返し';
+        else if(e.scope==='future'){
+          const d=e.fromDate?new Date(e.fromDate):null;
+          const ds=d?`${d.getMonth()+1}/${d.getDate()}〜`:'';
+          scopeBadge=`📅 ${ds} 以降`;
+        }
+        else scopeBadge='単発';
+        return `<div class="exclude-row" data-ex-key="${escapeHtml(e.key)}">`+
+          `<span class="ex-title">${escapeHtml(e.title||'(タイトルなし)')}</span>`+
+          `<span class="ex-meta">${escapeHtml(e.calLabel||'')} · ${scopeBadge}</span>`+
+          `<button class="ex-restore" data-restore-ex="${escapeHtml(e.key)}" type="button">復元</button>`+
+        `</div>`;
+      }).join('');
+    }
+    evHtml+='</div>';
+    sections.push(evHtml);
+
+    body.innerHTML=sections.join('');
+
+    // ハンドラ登録
+    body.querySelectorAll('[data-restore-cal]').forEach(btn=>btn.addEventListener('click',()=>{
+      const id=btn.dataset.restoreCal;
+      restoreGoogleCal(id);
+      renderAllCalendars();
+      renderExcludeMgmt();
+    }));
+    body.querySelectorAll('[data-restore-ex]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.restoreEx;
+      removeExcludedEvent(key);
+      renderExcludeMgmt();
+      // カレンダービューが開いていれば再描画
+      if(document.getElementById('cvOverlay').classList.contains('show')){
+        cvCacheKey=null; cvCacheEvents=null;
+        cvRender(false);
+      }
+    }));
+  }
+  function openExcludeMgmt(){
+    renderExcludeMgmt();
+    document.getElementById('excludeMgmtOverlay').classList.add('show');
+  }
+  function closeExcludeMgmt(){
+    document.getElementById('excludeMgmtOverlay').classList.remove('show');
+  }
+  document.getElementById('excludeMgmtOpen').addEventListener('click',openExcludeMgmt);
+  document.getElementById('excludeMgmtClose').addEventListener('click',closeExcludeMgmt);
+  document.getElementById('excludeMgmtOverlay').addEventListener('click',e=>{
+    if(e.target===e.currentTarget)closeExcludeMgmt();
   });
 
   // --- 多層ストレージ（Safari ITPでlocalStorageが消えてもCookie/sessionStorageから復元） ---
@@ -1293,6 +1636,10 @@
   oneWeek.setDate(oneWeek.getDate()+7);
   document.getElementById('startDate').value=today.toISOString().split('T')[0];
   document.getElementById('endDate').value=oneWeek.toISOString().split('T')[0];
+
+  // 起動時に状態をロード（除外予定 + 非表示カレンダー）
+  loadHiddenCals();
+  loadExcludedEvents();
 
   // ICS（URL購読型）カレンダーを起動時に読み込み
   // 注意: initIcsCalendars 本体は後ろで定義されるが関数宣言なので巻き上げで参照可
@@ -1421,22 +1768,44 @@
         return;
       }
       const d=await r.json(); calendars=d.items||[];
-      // Google カレンダーを selectedCalIds に追加（既存の ICS 選択は維持）
-      calendars.forEach(c=>selectedCalIds.add(c.id));
+      // Google カレンダーを selectedCalIds に追加（既存の ICS 選択は維持。非表示にしたものは追加しない）
+      calendars.forEach(c=>{ if(!hiddenGoogleCalIds.has(c.id))selectedCalIds.add(c.id); });
       renderAllCalendars();
     }catch(e){console.error(e);}
   }
 
   function renderCalendars(){
     const c=document.getElementById('calList'); document.getElementById('calendarSelector').classList.add('show');
-    c.innerHTML=calendars.map(cal=>{
+    // 非表示にしたカレンダーは表示から外す（管理パネルから復元可能）
+    const visible=calendars.filter(cal=>!hiddenGoogleCalIds.has(cal.id));
+    c.innerHTML=visible.map(cal=>{
       const sel=selectedCalIds.has(cal.id)?'selected':'', col=calColor(cal), own=cal.accessRole==='owner', type=own?'':'外部';
-      return `<div class="cal-item ${sel}" data-id="${cal.id}"><div class="cal-check"><span class="cal-check-mark">✓</span></div><div class="cal-color" style="background:${col}"></div><div class="cal-name">${escapeHtml(calDisplayName(cal))}</div>${type?`<div class="cal-type">${type}</div>`:''}</div>`;
+      return `<div class="cal-item ${sel}" data-id="${cal.id}">`
+        +`<div class="cal-check"><span class="cal-check-mark">✓</span></div>`
+        +`<div class="cal-color" style="background:${col}"></div>`
+        +`<div class="cal-name">${escapeHtml(calDisplayName(cal))}</div>`
+        +(type?`<div class="cal-type">${type}</div>`:'')
+        +`<button class="cal-delete" type="button" title="このカレンダーを非表示" data-cal-id="${escapeHtml(cal.id)}">×</button>`
+      +`</div>`;
     }).join('');
-    c.querySelectorAll('.cal-item').forEach(el=>el.addEventListener('click',()=>{
+    c.querySelectorAll('.cal-item').forEach(el=>el.addEventListener('click',(e)=>{
+      // ×ボタンは非表示動作。本体クリックは選択トグル
+      if(e.target.classList.contains('cal-delete'))return;
       const id=el.dataset.id;
       if(selectedCalIds.has(id)){selectedCalIds.delete(id);el.classList.remove('selected');}
       else{selectedCalIds.add(id);el.classList.add('selected');}
+    }));
+    c.querySelectorAll('.cal-delete[data-cal-id]').forEach(btn=>btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const calId=btn.dataset.calId;
+      const cal=calendars.find(c=>c.id===calId);
+      const label=cal?calDisplayName(cal):calId;
+      hideGoogleCal(calId);
+      renderAllCalendars();
+      showUndoToast(`「${label}」を非表示にしました`,()=>{
+        restoreGoogleCal(calId);
+        renderAllCalendars();
+      });
     }));
   }
 
@@ -1461,6 +1830,8 @@
           hangoutLink:ev.hangoutLink||'',
           conferenceData:ev.conferenceData||null,
           attendees:ev.attendees||null,
+          recurringEventId:ev.recurringEventId||null, // 繰り返し予定の親ID（一括除外用）
+          iCalUID:ev.iCalUID||null,
           calId:calId
         };
       });
@@ -1779,9 +2150,9 @@
     const[coreEtH,coreEtM]=document.getElementById('coreEnd').value.split(':').map(Number);
 
     let allEv=[];
-    // Google: アクセストークン必須 + selectedCalIds に含まれる Google カレンダーのみ
+    // Google: アクセストークン必須 + selectedCalIds に含まれる Google カレンダーのみ（非表示は除く）
     if(accessToken){
-      const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:'));
+      const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:') && !hiddenGoogleCalIds.has(id));
       if(googleIds.length>0){const res=await Promise.all(googleIds.map(id=>fetchEvents(id,sD,eD)));res.forEach(evs=>allEv.push(...evs));}
     }
     // ICS: 毎回最新を取りに行く（CORSプロキシ経由）
@@ -1789,10 +2160,12 @@
       try{await refreshAllIcsCalendars();}catch(e){console.error(e);}
     }
     icsFiles.forEach(f=>{
-      if(selectedCalIds.has('__ics__:'+f.name))allEv.push(...f.events);
+      if(selectedCalIds.has('__ics__:'+f.name)){
+        f.events.forEach(e=>allEv.push({...e,calId:'__ics__:'+f.name}));
+      }
     });
-    // 本業コアタイム等の除外タイトルは空き時間検出のノイズなので弾く
-    allEv=allEv.filter(e=>!isExcludedEvent(e)&&e.start<eD&&e.end>sD);
+    // 本業コアタイム等のタイトル除外 + 個別除外（×ボタンで除外した予定）+ 期間フィルタ
+    allEv=allEv.filter(e=>!isExcludedEvent(e)&&!isEventExcluded(e)&&e.start<eD&&e.end>sD);
 
     const dn=['日','月','火','水','木','金','土'],slots=[];let cur=new Date(sD);
     while(cur<=eD){
@@ -2088,8 +2461,10 @@
     icsFiles.forEach(f=>{
       if(!selectedCalIds.has('__ics__:'+f.name))return;
       f.events.forEach(e=>{
-        if(isExcludedEvent(e))return; // 本業コアタイム等は非表示
-        if(e.start<tMax&&e.end>tMin)all.push({...e,calId:'__ics__:'+f.name});
+        if(isExcludedEvent(e))return; // 本業コアタイム等のタイトル除外
+        const withCal={...e,calId:'__ics__:'+f.name};
+        if(isEventExcluded(withCal))return; // 個別除外（UIで×を押した予定）
+        if(e.start<tMax&&e.end>tMin)all.push(withCal);
       });
     });
     if(selectedCalIds.size>0){
@@ -2099,9 +2474,13 @@
       }
       if(accessToken){
         try{
-          const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:'));
+          const googleIds=[...selectedCalIds].filter(id=>!String(id).startsWith('__ics__:') && !hiddenGoogleCalIds.has(id));
           const arrs=await Promise.all(googleIds.map(id=>fetchEvents(id,tMin,tMax)));
-          arrs.forEach(a=>a.forEach(e=>{ if(!isExcludedEvent(e))all.push(e); }));
+          arrs.forEach(a=>a.forEach(e=>{
+            if(isExcludedEvent(e))return;       // タイトル除外
+            if(isEventExcluded(e))return;       // 個別除外
+            all.push(e);
+          }));
         }catch(e){console.error(e);}
       }
     }
@@ -2415,9 +2794,68 @@
     if(ev.htmlLink){
       rows.push(`<div class="cv-detail-footer"><a class="cv-detail-link" href="${ev.htmlLink}" target="_blank" rel="noopener">↗ Googleカレンダーで開く</a></div>`);
     }
+
+    // 除外アクション。繰り返し予定の場合は Google カレンダー風 3択（この予定／これ以降／すべて）
+    rows.push(`<div class="cv-detail-actions"><button class="cv-exclude-btn" id="cvExcludeBtn" type="button">🚫 除外する</button></div>`);
+    rows.push(`<div class="cv-exclude-dialog" id="cvExcludeDialog" style="display:none;"></div>`);
+
     document.getElementById('cvDetailBody').innerHTML=rows.join('');
 
+    // 除外ボタン: 単発なら即除外、繰り返しならインラインで3択ダイアログを出す
+    const btn=document.getElementById('cvExcludeBtn');
+    btn.addEventListener('click',()=>{
+      if(isEventRecurring(ev)){
+        showExcludeDialog(ev);
+      } else {
+        executeExclude(ev,'single');
+      }
+    });
+
     ov.classList.add('show');
+  }
+
+  // 繰り返し予定向けの 3択スコープダイアログをインラインで描画
+  function showExcludeDialog(ev){
+    const dlg=document.getElementById('cvExcludeDialog');
+    if(!dlg)return;
+    document.getElementById('cvExcludeBtn').style.display='none';
+    dlg.innerHTML=
+      `<div class="ed-title">どこまで除外しますか？</div>`+
+      `<div class="ed-options">`+
+        `<label><input type="radio" name="cvExcScope" value="single"> <span class="ed-label-text">この予定のみ</span></label>`+
+        `<label><input type="radio" name="cvExcScope" value="future" checked> <span class="ed-label-text">これ以降の予定（同じシリーズ）</span></label>`+
+        `<label><input type="radio" name="cvExcScope" value="recurring"> <span class="ed-label-text">すべての繰り返し予定（過去含む）</span></label>`+
+      `</div>`+
+      `<div class="ed-actions">`+
+        `<button class="ed-cancel" id="cvExcCancel" type="button">キャンセル</button>`+
+        `<button class="ed-ok" id="cvExcOk" type="button">除外する</button>`+
+      `</div>`;
+    dlg.style.display='';
+    document.getElementById('cvExcCancel').addEventListener('click',()=>{
+      dlg.style.display='none';
+      document.getElementById('cvExcludeBtn').style.display='';
+    });
+    document.getElementById('cvExcOk').addEventListener('click',()=>{
+      const sel=document.querySelector('input[name=cvExcScope]:checked');
+      const scope=sel?sel.value:'single';
+      executeExclude(ev,scope);
+    });
+  }
+
+  // 除外を実行: 保存 → 再描画 → Undoトースト
+  function executeExclude(ev, scope){
+    const key=addExcludedEvent(ev,scope);
+    if(!key)return;
+    const label=cvEventLabel(ev);
+    const scopeLabel={single:'この予定', future:'これ以降の予定', recurring:'すべての繰り返し'}[scope]||'この予定';
+    cvCloseDetail();
+    cvCacheKey=null; cvCacheEvents=null;
+    cvRender(false);
+    showUndoToast(`${scopeLabel}「${label}」を除外しました`,()=>{
+      removeExcludedEvent(key);
+      cvCacheKey=null; cvCacheEvents=null;
+      cvRender(false);
+    });
   }
   function cvCloseDetail(){
     document.getElementById('cvDetailOverlay').classList.remove('show');
