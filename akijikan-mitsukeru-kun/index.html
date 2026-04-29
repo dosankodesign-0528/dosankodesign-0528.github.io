@@ -767,7 +767,9 @@
   .cv-exclude-dialog .ed-ok:hover { background:#b91c1c; }
 
   /* 除外管理パネル（モーダル/セクション） */
-  .exclude-mgmt-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:90; padding:16px; }
+  /* z-index 2400: cv-overlay(1000) と cv-detail-overlay(2200) の上に出す
+     （除外リストはカレンダービュー右上ボタンから開くので、カレンダービューより前に来る必要がある） */
+  .exclude-mgmt-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:2400; padding:16px; }
   .exclude-mgmt-overlay.show { display:flex; }
   .exclude-mgmt-modal { background:#fff; border-radius:var(--radius); max-width:520px; width:100%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 12px 40px rgba(0,0,0,0.18); }
   .exclude-mgmt-header { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); }
@@ -1338,7 +1340,7 @@
   }
   // 繰り返し予定の除外キー: 同じシリーズの全インスタンスを指す
   // - Google: recurringEventId（singleEvents=trueで展開された各インスタンスが共通で持つ）
-  //           recurringEventId が無くても iCalUID が同シリーズなら iCalUID で代用
+  //           recurringEventId が無くても iCalUID やID形式から親IDを推定
   // - ICS:    UID（Google ICS export は各インスタンスを別 VEVENT に展開するが UID は共通）
   function recurringSeriesKey(ev){
     if(!ev||!ev.calId)return null;
@@ -1348,6 +1350,11 @@
     }
     if(ev.recurringEventId){
       return `rec:${ev.calId}:${ev.recurringEventId}`;
+    }
+    // ID形式 "{baseId}_{timestamp}" から baseId を抽出して series key にする
+    if(ev.id && /_\d{8}(T\d{6}Z?)?$/.test(String(ev.id))){
+      const baseId=String(ev.id).replace(/_\d{8}(T\d{6}Z?)?$/,'');
+      if(baseId)return `rec:${ev.calId}:${baseId}`;
     }
     // フォールバック: iCalUID が同じインスタンスが複数キャッシュにあれば、それを繰り返しシリーズとして扱う
     if(ev.iCalUID && Array.isArray(cvCacheEvents) && cvCacheEvents.filter(x=>x.iCalUID===ev.iCalUID&&x.calId===ev.calId).length>1){
@@ -1369,11 +1376,20 @@
     if(!Array.isArray(cvCacheEvents))return false;
     return cvCacheEvents.filter(x=>x.iCalUID===ev.iCalUID&&x.calId===ev.calId).length>1;
   }
+  // Google の繰り返しインスタンスID は "{baseId}_{20260507T100000Z}" 形式
+  // この形式が見えたら、それは繰り返しシリーズの1インスタンスである可能性が高い
+  function isGoogleRecurringInstanceId(ev){
+    if(!ev||!ev.id||!ev.calId)return false;
+    if(String(ev.calId).startsWith('__ics__:'))return false;
+    // base_id の後ろに _20260507 / _20260507T100000Z などが続くパターン
+    return /_\d{8}(T\d{6}Z?)?$/.test(String(ev.id));
+  }
   function isEventRecurring(ev){
     if(!ev)return false;
-    if(ev.recurringEventId)return true;        // Google: 展開済み繰り返しインスタンス（標準）
-    if(isGoogleIcalUidRecurring(ev))return true; // Google: iCalUID 複数（recurringEventId が抜けてるケースの保険）
-    if(isIcsRecurring(ev))return true;          // ICS: 同UIDが複数 = 繰り返し展開
+    if(ev.recurringEventId)return true;             // Google: 展開済み繰り返しインスタンス（標準）
+    if(isGoogleRecurringInstanceId(ev))return true; // Google: ID形式から推測（recurringEventId が抜けてる救済）
+    if(isGoogleIcalUidRecurring(ev))return true;    // Google: iCalUID 複数（追加保険）
+    if(isIcsRecurring(ev))return true;              // ICS: 同UIDが複数 = 繰り返し展開
     return false;
   }
   // 除外判定: 各 excludedEvents エントリと予定をマッチング
@@ -1387,6 +1403,11 @@
     }
     if(ev.recurringEventId && ev.calId){
       keys.push(`rec:${ev.calId}:${ev.recurringEventId}`);
+    }
+    // インスタンスID "{baseId}_{timestamp}" → baseId 部分を rec: 形式で照合
+    if(ev.id && ev.calId && /_\d{8}(T\d{6}Z?)?$/.test(String(ev.id))){
+      const baseId=String(ev.id).replace(/_\d{8}(T\d{6}Z?)?$/,'');
+      if(baseId)keys.push(`rec:${ev.calId}:${baseId}`);
     }
     if(ev.id && ev.calId){
       keys.push(`evid:${ev.calId}:${ev.id}`);
