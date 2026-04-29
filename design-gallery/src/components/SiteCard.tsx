@@ -198,12 +198,13 @@ export const SiteCard = memo(function SiteCard({
                 </span>
 
                 {/* カスタムツールチップ: ホバー時に全文表示。
-                    pointer-events-none で領域から外れたらすぐ消える。
-                    max-w で長すぎるクレジットも複数行で表示できる。 */}
+                    - whitespace-nowrap で必ず1行に。日本語の文字単位改行を防ぐ。
+                    - inline-block + w-max で中身の幅ぴったりにする。
+                    - pointer-events-none で領域から外れたらすぐ消える。 */}
                 {agencyHovered && (
                   <span
                     role="tooltip"
-                    className="absolute left-0 bottom-full mb-1.5 z-50 px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-[11px] font-normal leading-snug shadow-xl pointer-events-none max-w-[280px] break-words whitespace-normal"
+                    className="absolute left-0 bottom-full mb-2 z-50 inline-block w-max max-w-[min(320px,80vw)] px-2.5 py-1.5 rounded-md bg-gray-900 text-white text-[11px] font-normal leading-snug shadow-xl pointer-events-none whitespace-nowrap overflow-hidden text-ellipsis"
                   >
                     <span className="opacity-60">制作: </span>
                     <span className="font-medium">{site.agency}</span>
