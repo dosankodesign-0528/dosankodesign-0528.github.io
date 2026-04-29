@@ -22,9 +22,9 @@
   },
   {
     "name": "直営業送信",
-    "enabled": false,
-    "query": "in:sent newer_than:7d",
+    "enabled": true,
+    "query": "in:sent",
     "tag": "直営業",
-    "memo": "自分が送った営業メール（最初OFF、本番確認後にON）"
+    "memo": "自分が送った営業メール（送信フォルダ全体）"
   }
 ]
