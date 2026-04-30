@@ -11,6 +11,7 @@ import {
 } from "./notion.js";
 import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
+import { notifyMention, type NotifyEntry } from "./notify.js";
 import type { SyncStats } from "./types.js";
 
 async function main() {
@@ -41,6 +42,7 @@ async function main() {
 
   const year = String(startedAt.getFullYear());
   const seenIds = new Set<string>();
+  const addedEntries: NotifyEntry[] = [];
 
   for (const source of sources) {
     console.log(`\n[${source.name}] query: ${source.query}`);
@@ -101,6 +103,11 @@ async function main() {
             contactYears: [year],
             mediaTags: [source.tag],
           });
+          addedEntries.push({
+            name: classified.companyName,
+            url: classified.companyUrl,
+            mediaTag: source.tag,
+          });
           stats.added++;
           console.log(`  added: ${classified.companyName} (${classified.companyDomain})`);
         }
@@ -114,6 +121,14 @@ async function main() {
   }
 
   await reportUnclassifiedCandidates(gmail, myEmail, seenIds, lookbackDays);
+
+  if (addedEntries.length > 0) {
+    await notifyMention(notion, {
+      title: `🆕 営業同期: ${addedEntries.length}社の新規追加`,
+      summary: `今回の同期で新たに${addedEntries.length}社が追加されました（更新: ${stats.updated}社）。`,
+      entries: addedEntries,
+    });
+  }
 
   const finishedAt = new Date();
   const duration = (finishedAt.getTime() - startedAt.getTime()) / 1000;

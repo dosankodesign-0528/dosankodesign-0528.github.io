@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { Client } from "@notionhq/client";
 import { buildNotionClient, getCompaniesDbId } from "./notion.js";
+import { notifyMention } from "./notify.js";
 
 interface PageInfo {
   pageId: string;
@@ -226,6 +227,13 @@ async function main() {
     });
   }
   console.log(`[monthly-report] 全ブロック追加完了 (合計 ${allBlocks.length} blocks)`);
+
+  await notifyMention(notion, {
+    title: `📊 ${label} を公開しました`,
+    summary: `新規追加: ${added.length}社、更新: ${updated.length}社（Wantedly: ${wantedlyCount} / Green: ${greenCount} / 問合せ: ${inquiryCount} / 直営業: ${directCount}）`,
+    linkUrl: created.url,
+    linkLabel: "▶ レポートを開く",
+  });
 }
 
 main().catch((err) => {
