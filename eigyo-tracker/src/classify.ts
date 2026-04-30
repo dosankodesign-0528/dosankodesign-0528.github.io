@@ -86,10 +86,12 @@ function looksLikeCompany(text: string): boolean {
   return /株式会社|（株）|\(株\)|有限会社|合同会社|\bInc\b|\bCo\.?,?\s*Ltd|\bLtd\b|\bCorp\b|\bLLC\b/i.test(text);
 }
 
-function cleanCompanyName(name: string): string {
+export function cleanCompanyName(name: string): string {
   let cleaned = name.split("|")[0]!.split(/[／\/]/)[0]!.trim();
   cleaned = cleaned.replace(/　/g, " ");
   cleaned = cleaned.replace(/\s+(採用|採用担当|人事|HR|事業部|info|お問い合わせ).*/i, "");
+  cleaned = cleaned.replace(/^(株式会社|（株）|\(株\)|㈱|有限会社|（有）|\(有\)|㈲|合同会社|合資会社|合名会社)\s*/, "");
+  cleaned = cleaned.replace(/\s*(株式会社|（株）|\(株\)|㈱|有限会社|（有）|\(有\)|㈲|合同会社|合資会社|合名会社)$/, "");
   cleaned = cleaned.replace(/[\s\-—–_]+$/, "");
   return cleaned.slice(0, 50).trim();
 }

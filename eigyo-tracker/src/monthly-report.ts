@@ -10,9 +10,17 @@ interface PageInfo {
   createdAt: Date;
   lastEditedAt: Date;
   mediaTags: string[];
+  contactYears: string[];
 }
 
 const MEDIA_TAGS = ["Wantedly", "Green", "SNS", "直メール/フォーム"];
+
+const MEDIA_ICONS: Record<string, string> = {
+  Wantedly: "💼",
+  Green: "🌱",
+  SNS: "📱",
+  "直メール/フォーム": "🌟",
+};
 
 function getReportDbId(): string {
   const id = process.env.NOTION_REPORT_DB_ID;
@@ -22,6 +30,14 @@ function getReportDbId(): string {
 
 function getTargetMonthRange(): { start: Date; end: Date; label: string } {
   const now = new Date();
+  const days = process.env.REPORT_DAYS ? Number(process.env.REPORT_DAYS) : null;
+  if (days && days > 0) {
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - days);
+    const label = `直近 ${days} 日間のレポート（${start.getMonth() + 1}/${start.getDate()} 〜 ${now.getMonth() + 1}/${now.getDate()}）`;
+    return { start, end, label };
+  }
   const mode = process.env.REPORT_MODE ?? "previous";
   let target: Date;
   if (mode === "current") {
@@ -32,7 +48,7 @@ function getTargetMonthRange(): { start: Date; end: Date; label: string } {
   const start = new Date(target.getFullYear(), target.getMonth(), 1);
   const end = new Date(target.getFullYear(), target.getMonth() + 1, 1);
   const suffix = mode === "current" ? "（途中経過）" : "";
-  const label = `${target.getFullYear()}年${target.getMonth() + 1}月レポート${suffix}`;
+  const label = `${target.getFullYear()}年${target.getMonth() + 1}月のレポート${suffix}`;
   return { start, end, label };
 }
 
@@ -68,6 +84,10 @@ async function fetchPagesInRange(
       const mediaTags = mediaProp?.type === "multi_select"
         ? (mediaProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
+      const contactProp = props["コンタクト"];
+      const contactYears = contactProp?.type === "multi_select"
+        ? (contactProp.multi_select ?? []).map((m: any) => m.name as string)
+        : [];
       pages.push({
         pageId: p.id,
         name,
@@ -75,6 +95,7 @@ async function fetchPagesInRange(
         createdAt: new Date(p.created_time),
         lastEditedAt: new Date(p.last_edited_time),
         mediaTags,
+        contactYears,
       });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
@@ -89,15 +110,18 @@ function formatDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function pageMentionLink(p: PageInfo): { type: "mention"; mention: { type: "page"; page: { id: string } } } {
+function formatJapaneseDate(d: Date): string {
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function pageMention(p: PageInfo): any {
   return { type: "mention", mention: { type: "page", page: { id: p.pageId } } };
 }
 
 function bullet(p: PageInfo): any {
-  const richText: any[] = [pageMentionLink(p)];
-  if (p.url) {
-    richText.push({ type: "text", text: { content: ` （${p.url}）`, link: { url: p.url } } });
-  }
+  const richText: any[] = [pageMention(p)];
+  const tags = p.mediaTags.length > 0 ? `（${p.mediaTags.join(" / ")}）` : "";
+  if (tags) richText.push({ type: "text", text: { content: tags } });
   return {
     object: "block",
     type: "bulleted_list_item",
@@ -105,21 +129,48 @@ function bullet(p: PageInfo): any {
   };
 }
 
-function heading(level: 2 | 3, content: string): any {
+function heading(level: 2 | 3, content: string, color?: string): any {
   const block: any = {
     object: "block",
     type: `heading_${level}`,
   };
-  block[`heading_${level}`] = { rich_text: [{ type: "text", text: { content } }] };
+  block[`heading_${level}`] = {
+    rich_text: [{ type: "text", text: { content } }],
+    ...(color ? { color } : {}),
+  };
   return block;
 }
 
-function paragraph(content: string): any {
+function paragraph(content: string, color?: string): any {
   return {
     object: "block",
     type: "paragraph",
-    paragraph: { rich_text: [{ type: "text", text: { content } }] },
+    paragraph: {
+      rich_text: [{ type: "text", text: { content } }],
+      ...(color ? { color } : {}),
+    },
   };
+}
+
+function divider(): any {
+  return { object: "block", type: "divider", divider: {} };
+}
+
+function callout(content: string, emoji = "💡", color = "yellow_background"): any {
+  return {
+    object: "block",
+    type: "callout",
+    callout: {
+      icon: { type: "emoji", emoji },
+      color,
+      rich_text: [{ type: "text", text: { content } }],
+    },
+  };
+}
+
+function makeBar(ratio: number, length = 10): string {
+  const filled = Math.round(ratio * length);
+  return "█".repeat(Math.max(0, Math.min(length, filled))) + "░".repeat(Math.max(0, length - filled));
 }
 
 function buildBlocks(args: {
@@ -127,38 +178,70 @@ function buildBlocks(args: {
   updated: PageInfo[];
   start: Date;
   end: Date;
+  mediaCounts: Record<string, number>;
+  totalForMedia: number;
 }): any[] {
   const blocks: any[] = [];
-  const { added, updated, start, end } = args;
+  const { added, updated, start, end, mediaCounts, totalForMedia } = args;
 
-  blocks.push(paragraph(`期間: ${formatDate(start)} 〜 ${formatDate(new Date(end.getTime() - 1))}`));
-  blocks.push(paragraph(`新規追加: ${added.length} 社、更新: ${updated.length} 社`));
+  const days = process.env.REPORT_DAYS ? Number(process.env.REPORT_DAYS) : 0;
+  const periodLabel = days > 0 ? `直近${days}日間で` : `${start.getFullYear()}年${start.getMonth() + 1}月は、`;
+  const mainSentence = added.length > 0
+    ? `${periodLabel}新しく ${added.length} 社が追加されました。ステータスが更新された会社は ${updated.length} 社です。`
+    : `${periodLabel}新しく追加された会社はありませんでした。ステータスが更新された会社は ${updated.length} 社です。`;
+  blocks.push(callout(mainSentence, "💡"));
 
-  blocks.push(heading(2, "🆕 新規追加された企業"));
+  blocks.push(paragraph(`期間: ${formatJapaneseDate(start)} 〜 ${formatJapaneseDate(new Date(end.getTime() - 1))}`, "gray"));
+  blocks.push(divider());
+
+  blocks.push(heading(2, "📈 今月の動き"));
+  blocks.push(paragraph(`🆕 新しく追加された会社        ${added.length} 社`));
+  blocks.push(paragraph(`♻️ ステータスが更新された会社  ${updated.length} 社`));
+  blocks.push(divider());
+
+  blocks.push(heading(2, "🎯 どこから来たか（媒体別の内訳）"));
+  if (totalForMedia === 0) {
+    blocks.push(paragraph("（媒体別のデータはまだありません）", "gray"));
+  } else {
+    for (const tag of MEDIA_TAGS) {
+      const count = mediaCounts[tag] ?? 0;
+      const ratio = count / totalForMedia;
+      const percent = (ratio * 100).toFixed(0);
+      const bar = makeBar(ratio);
+      const icon = MEDIA_ICONS[tag] ?? "▫️";
+      blocks.push(paragraph(`${icon}  ${tag.padEnd(15, "　")}  ${bar}  ${count} 社（${percent}%）`));
+    }
+  }
+  blocks.push(divider());
+
+  blocks.push(heading(2, "🆕 新しく追加された会社"));
   if (added.length === 0) {
-    blocks.push(paragraph("（新規追加なし）"));
+    blocks.push(paragraph("（今月の新規追加はありませんでした）", "gray"));
   } else {
     for (const tag of MEDIA_TAGS) {
       const matching = added.filter((p) => p.mediaTags.includes(tag));
       if (matching.length === 0) continue;
-      blocks.push(heading(3, `${tag} 経由 (${matching.length} 社)`));
+      const icon = MEDIA_ICONS[tag] ?? "▫️";
+      blocks.push(heading(3, `${icon} ${tag} から (${matching.length} 社)`));
       for (const p of matching) blocks.push(bullet(p));
     }
     const noTag = added.filter((p) => p.mediaTags.length === 0);
     if (noTag.length > 0) {
-      blocks.push(heading(3, `媒体タグなし (${noTag.length} 社)`));
+      blocks.push(heading(3, `▫️ 媒体タグなし (${noTag.length} 社)`));
       for (const p of noTag) blocks.push(bullet(p));
     }
   }
+  blocks.push(divider());
 
-  blocks.push(heading(2, "♻️ 更新された企業"));
+  blocks.push(heading(2, "♻️ ステータスが更新された会社"));
   if (updated.length === 0) {
-    blocks.push(paragraph("（更新なし）"));
+    blocks.push(paragraph("（今月のステータス更新はありませんでした）", "gray"));
   } else {
     for (const tag of MEDIA_TAGS) {
       const matching = updated.filter((p) => p.mediaTags.includes(tag));
       if (matching.length === 0) continue;
-      blocks.push(heading(3, `${tag} 経由 (${matching.length} 社)`));
+      const icon = MEDIA_ICONS[tag] ?? "▫️";
+      blocks.push(heading(3, `${icon} ${tag} (${matching.length} 社)`));
       for (const p of matching) blocks.push(bullet(p));
     }
   }
@@ -178,22 +261,25 @@ async function main() {
   const pages = await fetchPagesInRange(notion, companiesDbId, start, end);
   console.log(`[monthly-report] 期間内変更ページ: ${pages.length} 件`);
 
+  const currentYear = String(start.getFullYear());
   const added = pages.filter((p) => p.createdAt >= start && p.createdAt < end);
-  const updated = pages.filter((p) => !(p.createdAt >= start && p.createdAt < end));
+  const updated = pages.filter(
+    (p) =>
+      !(p.createdAt >= start && p.createdAt < end) &&
+      p.contactYears.includes(currentYear)
+  );
 
-  const mediaCount = (tag: string) =>
-    pages.filter((p) => p.mediaTags.includes(tag)).length;
+  const mediaCounts: Record<string, number> = {};
+  for (const tag of MEDIA_TAGS) {
+    mediaCounts[tag] = pages.filter((p) => p.mediaTags.includes(tag)).length;
+  }
+  const totalForMedia = Object.values(mediaCounts).reduce((a, b) => a + b, 0);
 
-  const wantedlyCount = mediaCount("Wantedly");
-  const greenCount = mediaCount("Green");
-  const snsCount = mediaCount("SNS");
-  const directMailCount = mediaCount("直メール/フォーム");
+  console.log(`  新しく追加された会社: ${added.length}`);
+  console.log(`  ステータスが更新された会社: ${updated.length}`);
+  console.log(`  媒体内訳:`, mediaCounts);
 
-  console.log(`  新規追加: ${added.length}`);
-  console.log(`  更新: ${updated.length}`);
-  console.log(`  Wantedly: ${wantedlyCount}, Green: ${greenCount}, SNS: ${snsCount}, 直メール/フォーム: ${directMailCount}`);
-
-  const allBlocks = buildBlocks({ added, updated, start, end });
+  const allBlocks = buildBlocks({ added, updated, start, end, mediaCounts, totalForMedia });
   const firstBatch = allBlocks.slice(0, 90);
   const restBatches: any[][] = [];
   for (let i = 90; i < allBlocks.length; i += 90) {
@@ -208,10 +294,10 @@ async function main() {
       終了日: { date: { start: formatDate(new Date(end.getTime() - 1)) } },
       新規追加件数: { number: added.length },
       更新件数: { number: updated.length },
-      "Wantedly件数": { number: wantedlyCount },
-      "Green件数": { number: greenCount },
-      "直メール/フォーム件数": { number: directMailCount },
-      "SNS件数": { number: snsCount },
+      "Wantedly件数": { number: mediaCounts["Wantedly"] ?? 0 },
+      "Green件数": { number: mediaCounts["Green"] ?? 0 },
+      "直メール/フォーム件数": { number: mediaCounts["直メール/フォーム"] ?? 0 },
+      "SNS件数": { number: mediaCounts["SNS"] ?? 0 },
       拾い損ねメール: { number: 0 },
       頻出キーワード: { rich_text: [{ text: { content: "" } }] },
       備考: { rich_text: [{ text: { content: "詳細はページを開いてください" } }] },
@@ -230,7 +316,7 @@ async function main() {
 
   await notifyMention(notion, {
     title: `📊 ${label} を公開しました`,
-    summary: `新規追加: ${added.length}社、更新: ${updated.length}社（Wantedly: ${wantedlyCount} / Green: ${greenCount} / SNS: ${snsCount} / 直メール/フォーム: ${directMailCount}）`,
+    summary: `新しく追加された会社: ${added.length} 社、ステータスが更新された会社: ${updated.length} 社`,
     linkUrl: created.url,
     linkLabel: "▶ レポートを開く",
   });
