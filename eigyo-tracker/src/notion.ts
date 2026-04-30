@@ -37,7 +37,8 @@ export async function fetchAllCompanies(
       const contactYears = readMultiSelect(props[CONTACT_PROP]);
       const mediaTags = readMultiSelect(props[MEDIA_PROP]);
       const status = readSelect(props["ステータス"]);
-      records.push({ pageId: page.id, name, url, contactYears, mediaTags, status });
+      const lastContactAt = readDate(props["最終接触日"]);
+      records.push({ pageId: page.id, name, url, contactYears, mediaTags, status, lastContactAt });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
   } while (cursor);
@@ -60,7 +61,7 @@ export function findCompany(
 export async function addCompany(
   notion: Client,
   dbId: string,
-  args: { name: string; url: string; year: string; mediaTag: string; status?: string }
+  args: { name: string; url: string; year: string; mediaTag: string; status?: string; lastContactAt?: Date }
 ) {
   const properties: Record<string, any> = {
     [NAME_PROP]: { title: [{ text: { content: args.name } }] },
@@ -70,6 +71,9 @@ export async function addCompany(
   };
   if (args.status) {
     properties["ステータス"] = { select: { name: args.status } };
+  }
+  if (args.lastContactAt) {
+    properties["最終接触日"] = { date: { start: args.lastContactAt.toISOString().slice(0, 10) } };
   }
   await notion.pages.create({
     parent: { database_id: dbId },
@@ -86,6 +90,20 @@ export async function updateCompanyStatus(
     page_id: pageId,
     properties: {
       ステータス: { select: { name: status } },
+    },
+  });
+}
+
+export async function updateLastContact(
+  notion: Client,
+  pageId: string,
+  date: Date
+): Promise<void> {
+  const iso = date.toISOString().slice(0, 10);
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      最終接触日: { date: { start: iso } },
     },
   });
 }
@@ -134,6 +152,11 @@ function readMultiSelect(prop: any): string[] {
 function readSelect(prop: any): string | null {
   if (!prop || prop.type !== "select") return null;
   return prop.select?.name ?? null;
+}
+
+function readDate(prop: any): Date | null {
+  if (!prop || prop.type !== "date" || !prop.date?.start) return null;
+  return new Date(prop.date.start);
 }
 
 function extractHost(url: string): string {

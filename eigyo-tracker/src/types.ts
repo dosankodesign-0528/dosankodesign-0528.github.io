@@ -32,6 +32,7 @@ export interface CompanyRecord {
   contactYears: string[];
   mediaTags: string[];
   status: string | null;
+  lastContactAt: Date | null;
 }
 
 export interface SyncStats {

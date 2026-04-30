@@ -9,6 +9,7 @@ import {
   getCompaniesDbId,
   updateCompany,
   updateCompanyStatus,
+  updateLastContact,
 } from "./notion.js";
 import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
@@ -83,6 +84,14 @@ async function main() {
         const detection = detectStatusFromMessage(msg);
 
         if (existing) {
+          if (!existing.lastContactAt || msg.date > existing.lastContactAt) {
+            try {
+              await updateLastContact(notion, existing.pageId, msg.date);
+              existing.lastContactAt = msg.date;
+            } catch (err: any) {
+              console.error(`  lastContact update error: ${existing.name}: ${err?.message ?? err}`);
+            }
+          }
           if (detection && shouldUpdateStatus(existing.status, detection.status)) {
             try {
               await updateCompanyStatus(notion, existing.pageId, detection.status);
@@ -122,6 +131,7 @@ async function main() {
             year,
             mediaTag: source.tag,
             status: initialStatus,
+            lastContactAt: msg.date,
           });
           companies.push({
             pageId: "",
@@ -130,6 +140,7 @@ async function main() {
             contactYears: [year],
             mediaTags: [source.tag],
             status: initialStatus,
+            lastContactAt: msg.date,
           });
           if (detection) {
             statusChanges.push({

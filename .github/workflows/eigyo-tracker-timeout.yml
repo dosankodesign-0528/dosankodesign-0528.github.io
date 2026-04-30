@@ -1,0 +1,39 @@
+name: eigyo-tracker timeout check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      timeout_days:
+        description: 'タイムアウト日数（デフォルト14）'
+        required: false
+        default: '14'
+
+concurrency:
+  group: eigyo-tracker-timeout
+  cancel-in-progress: false
+
+jobs:
+  timeout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: eigyo-tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: eigyo-tracker/package-lock.json
+      - run: npm ci
+      - name: Run timeout check
+        run: npm run timeout
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
+          NOTION_USER_ID: ${{ secrets.NOTION_USER_ID }}
+          NOTION_NOTIFY_PAGE_ID: ${{ secrets.NOTION_NOTIFY_PAGE_ID }}
+          TIMEOUT_DAYS: ${{ inputs.timeout_days || '14' }}
