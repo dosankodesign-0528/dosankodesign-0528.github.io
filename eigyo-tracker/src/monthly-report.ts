@@ -11,9 +11,13 @@ interface PageInfo {
   lastEditedAt: Date;
   mediaTags: string[];
   contactYears: string[];
+  status: string | null;
+  lastContactAt: Date | null;
 }
 
 const MEDIA_TAGS = ["Wantedly", "Green", "SNS", "直メール/フォーム"];
+const STATUS_D = "D:ご縁がなかった";
+const TIMEOUT_DAYS = Number(process.env.TIMEOUT_DAYS ?? "14");
 
 const MEDIA_ICONS: Record<string, string> = {
   Wantedly: "💼",
@@ -88,6 +92,12 @@ async function fetchPagesInRange(
       const contactYears = contactProp?.type === "multi_select"
         ? (contactProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
+      const statusProp = props["ステータス"];
+      const status = statusProp?.type === "select" ? statusProp.select?.name ?? null : null;
+      const lastContactProp = props["最終接触日"];
+      const lastContactAt = lastContactProp?.type === "date" && lastContactProp.date?.start
+        ? new Date(lastContactProp.date.start)
+        : null;
       pages.push({
         pageId: p.id,
         name,
@@ -96,6 +106,8 @@ async function fetchPagesInRange(
         lastEditedAt: new Date(p.last_edited_time),
         mediaTags,
         contactYears,
+        status,
+        lastContactAt,
       });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
@@ -176,13 +188,14 @@ function makeBar(ratio: number, length = 10): string {
 function buildBlocks(args: {
   added: PageInfo[];
   updated: PageInfo[];
+  timedOut: PageInfo[];
   start: Date;
   end: Date;
   mediaCounts: Record<string, number>;
   totalForMedia: number;
 }): any[] {
   const blocks: any[] = [];
-  const { added, updated, start, end, mediaCounts, totalForMedia } = args;
+  const { added, updated, timedOut, start, end, mediaCounts, totalForMedia } = args;
 
   const days = process.env.REPORT_DAYS ? Number(process.env.REPORT_DAYS) : 0;
   const periodLabel = days > 0 ? `直近${days}日間で` : `${start.getFullYear()}年${start.getMonth() + 1}月は、`;
@@ -197,6 +210,7 @@ function buildBlocks(args: {
   blocks.push(heading(2, "📈 今月の動き"));
   blocks.push(paragraph(`🆕 新しく追加された会社        ${added.length} 社`));
   blocks.push(paragraph(`♻️ ステータスが更新された会社  ${updated.length} 社`));
+  blocks.push(paragraph(`⏰ タイムアウト（${TIMEOUT_DAYS}日反応なし→D）  ${timedOut.length} 社`));
   blocks.push(divider());
 
   blocks.push(heading(2, "🎯 どこから来たか（媒体別の内訳）"));
@@ -245,6 +259,15 @@ function buildBlocks(args: {
       for (const p of matching) blocks.push(bullet(p));
     }
   }
+  blocks.push(divider());
+
+  blocks.push(heading(2, `⏰ タイムアウトで「ご縁がなかった」へ移行 (${timedOut.length} 社)`));
+  if (timedOut.length === 0) {
+    blocks.push(paragraph(`（今月の自動タイムアウト移行はありませんでした）`, "gray"));
+  } else {
+    blocks.push(paragraph(`${TIMEOUT_DAYS}日以上反応がなかった会社が D:ご縁がなかった に自動移行されました。`, "gray"));
+    for (const p of timedOut) blocks.push(bullet(p));
+  }
 
   return blocks;
 }
@@ -269,6 +292,15 @@ async function main() {
       p.contactYears.includes(currentYear)
   );
 
+  const timeoutMs = TIMEOUT_DAYS * 24 * 60 * 60 * 1000;
+  const timedOut = pages.filter((p) => {
+    if (p.status !== STATUS_D) return false;
+    if (!(p.lastEditedAt >= start && p.lastEditedAt < end)) return false;
+    if (!(p.createdAt < p.lastEditedAt)) return false;
+    if (!p.lastContactAt) return false;
+    return p.lastEditedAt.getTime() - p.lastContactAt.getTime() >= timeoutMs;
+  });
+
   const mediaCounts: Record<string, number> = {};
   for (const tag of MEDIA_TAGS) {
     mediaCounts[tag] = pages.filter((p) => p.mediaTags.includes(tag)).length;
@@ -277,9 +309,10 @@ async function main() {
 
   console.log(`  新しく追加された会社: ${added.length}`);
   console.log(`  ステータスが更新された会社: ${updated.length}`);
+  console.log(`  タイムアウトで D に移行（推定）: ${timedOut.length}`);
   console.log(`  媒体内訳:`, mediaCounts);
 
-  const allBlocks = buildBlocks({ added, updated, start, end, mediaCounts, totalForMedia });
+  const allBlocks = buildBlocks({ added, updated, timedOut, start, end, mediaCounts, totalForMedia });
   const firstBatch = allBlocks.slice(0, 90);
   const restBatches: any[][] = [];
   for (let i = 90; i < allBlocks.length; i += 90) {

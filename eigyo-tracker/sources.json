@@ -4,14 +4,16 @@
     "enabled": true,
     "query": "from:wantedly.com",
     "tag": "Wantedly",
-    "memo": "応募完了・スカウト・メッセージ通知メール"
+    "memo": "応募完了・スカウト・メッセージ通知メール（本文も判定）",
+    "fetchBody": true
   },
   {
     "name": "Green",
     "enabled": true,
     "query": "from:(green-japan.com OR greenjapan.com)",
     "tag": "Green",
-    "memo": "応募完了・スカウト通知メール"
+    "memo": "応募完了・スカウト通知メール（本文も判定）",
+    "fetchBody": true
   },
   {
     "name": "問合せ受信",

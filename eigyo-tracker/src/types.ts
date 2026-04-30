@@ -4,6 +4,7 @@ export interface Source {
   query: string;
   tag: string;
   memo?: string;
+  fetchBody?: boolean;
 }
 
 export interface RawMessage {
@@ -14,6 +15,7 @@ export interface RawMessage {
   fromDomain: string;
   subject: string;
   snippet: string;
+  body?: string;
   date: Date;
   isOutgoing: boolean;
 }

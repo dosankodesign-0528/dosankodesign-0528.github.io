@@ -54,7 +54,9 @@ async function main() {
     console.log(`\n[${source.name}] query: ${source.query}`);
     let messages;
     try {
-      messages = await fetchMessages(gmail, source.query, lookbackDays, myEmail);
+      messages = await fetchMessages(gmail, source.query, lookbackDays, myEmail, {
+        withBody: source.fetchBody === true,
+      });
     } catch (err: any) {
       console.error(`[${source.name}] fetch error:`, err?.message ?? err);
       stats.errors++;

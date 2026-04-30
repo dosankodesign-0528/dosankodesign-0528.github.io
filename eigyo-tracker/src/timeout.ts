@@ -11,8 +11,17 @@ import { STATUS } from "./status.js";
 const TIMEOUT_DAYS = Number(process.env.TIMEOUT_DAYS ?? "14");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const NOTIFICATION_ONLY_TAGS = new Set(["Wantedly", "Green"]);
+const REAL_CONTACT_TAGS = new Set(["直メール/フォーム", "SNS"]);
+
 function daysSince(date: Date): number {
   return (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+}
+
+function isNotificationOnly(mediaTags: string[]): boolean {
+  if (mediaTags.length === 0) return false;
+  if (mediaTags.some((t) => REAL_CONTACT_TAGS.has(t))) return false;
+  return mediaTags.every((t) => NOTIFICATION_ONLY_TAGS.has(t));
 }
 
 async function main() {
@@ -24,12 +33,16 @@ async function main() {
   const companies = await fetchAllCompanies(notion, dbId);
   console.log(`[timeout] 全企業: ${companies.length} 社`);
 
-  const targets = companies.filter((c) => {
+  const candidates = companies.filter((c) => {
     if (c.status !== STATUS.WAITING) return false;
     if (!c.lastContactAt) return false;
     return daysSince(c.lastContactAt) >= TIMEOUT_DAYS;
   });
-  console.log(`[timeout] タイムアウト対象（待機中・${TIMEOUT_DAYS}日以上前接触）: ${targets.length} 社`);
+  const targets = candidates.filter((c) => !isNotificationOnly(c.mediaTags));
+  const skippedNotifOnly = candidates.length - targets.length;
+  console.log(`[timeout] 待機中・${TIMEOUT_DAYS}日以上前接触: ${candidates.length} 社`);
+  console.log(`[timeout]   うち通知系のみ（Wantedly/Green）でスキップ: ${skippedNotifOnly} 社`);
+  console.log(`[timeout]   実際のタイムアウト対象: ${targets.length} 社`);
 
   if (targets.length === 0) {
     console.log("[timeout] タイムアウト対象なし");

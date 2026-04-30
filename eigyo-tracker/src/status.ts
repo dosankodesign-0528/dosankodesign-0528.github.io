@@ -14,11 +14,18 @@ const REJECTION_PATTERNS = [
   /お祈り/,
   /不採用/,
   /選考対象外/,
-  /見送り(ます|となりました|させて)/,
+  /見送り(ます|となりました|させて|たい)/,
   /ご期待に沿/,
   /採用に至りません/,
   /お見送り/,
   /残念ながら.*(難しい|採用|お見送り|お力に)/,
+  /今回は.*(マッチ|条件).*合(わ|い)(ない|ません)/,
+  /採用を見送らせて/,
+  /選考通過は(難しい|でき(ない|ません))/,
+  /募集.*(終了|締め切)/,
+  /ポジション.*(クローズ|終了)/,
+  /選考結果のご連絡.*(誠に|残念)/,
+  /またのご応募/,
 ];
 
 const ACTIVE_PROJECT_PATTERNS = [
@@ -63,7 +70,10 @@ export interface StatusDetectionResult {
 export function detectStatusFromMessage(msg: RawMessage): StatusDetectionResult | null {
   const subject = msg.subject ?? "";
   const snippet = msg.snippet ?? "";
-  const text = `${subject}\n${snippet}`;
+  const body = msg.body ?? "";
+  const text = body
+    ? `${subject}\n${snippet}\n${body}`
+    : `${subject}\n${snippet}`;
   const isReply = /^(re:|fwd?:|返信:)/i.test(subject.trim());
 
   for (const p of REJECTION_PATTERNS) {
