@@ -8,10 +8,12 @@ import {
   findCompany,
   getCompaniesDbId,
   updateCompany,
+  updateCompanyStatus,
 } from "./notion.js";
 import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
+import { detectStatusFromMessage, shouldUpdate as shouldUpdateStatus } from "./status.js";
 import type { SyncStats } from "./types.js";
 
 async function main() {
@@ -45,6 +47,7 @@ async function main() {
   const addedEntries: NotifyEntry[] = [];
   const updatedEntries: NotifyEntry[] = [];
   const skippedEntries: NotifyEntry[] = [];
+  const statusChanges: Array<{ name: string; from: string | null; to: string; reason: string; matchedKeyword: string }> = [];
 
   for (const source of sources) {
     console.log(`\n[${source.name}] query: ${source.query}`);
@@ -77,7 +80,25 @@ async function main() {
           classified.companyDomain,
           classified.companyName
         );
+        const detection = detectStatusFromMessage(msg);
+
         if (existing) {
+          if (detection && shouldUpdateStatus(existing.status, detection.status)) {
+            try {
+              await updateCompanyStatus(notion, existing.pageId, detection.status);
+              statusChanges.push({
+                name: existing.name,
+                from: existing.status,
+                to: detection.status,
+                reason: detection.reason,
+                matchedKeyword: detection.matchedKeyword,
+              });
+              existing.status = detection.status;
+              console.log(`  status: ${existing.name}  ${existing.status ?? "(未設定)"} → ${detection.status}  [${detection.matchedKeyword}]`);
+            } catch (err: any) {
+              console.error(`  status update error: ${existing.name}: ${err?.message ?? err}`);
+            }
+          }
           const updated = await updateCompany(notion, existing, year, source.tag);
           if (updated) {
             existing.contactYears = Array.from(
@@ -94,11 +115,13 @@ async function main() {
             stats.skipped++;
           }
         } else {
+          const initialStatus = detection?.status ?? "待機中";
           await addCompany(notion, dbId, {
             name: classified.companyName,
             url: classified.companyUrl,
             year,
             mediaTag: source.tag,
+            status: initialStatus,
           });
           companies.push({
             pageId: "",
@@ -106,7 +129,17 @@ async function main() {
             url: classified.companyUrl,
             contactYears: [year],
             mediaTags: [source.tag],
+            status: initialStatus,
           });
+          if (detection) {
+            statusChanges.push({
+              name: classified.companyName,
+              from: null,
+              to: detection.status,
+              reason: detection.reason,
+              matchedKeyword: detection.matchedKeyword,
+            });
+          }
           addedEntries.push({
             name: classified.companyName,
             url: classified.companyUrl,
@@ -127,18 +160,28 @@ async function main() {
   await reportUnclassifiedCandidates(gmail, myEmail, seenIds, lookbackDays);
 
   const forceNotify = process.env.FORCE_NOTIFY === "1";
-  if (addedEntries.length > 0 || updatedEntries.length > 0 || forceNotify) {
+  const hasChanges = addedEntries.length > 0 || updatedEntries.length > 0 || statusChanges.length > 0;
+  if (hasChanges || forceNotify) {
     const allEntries = [...addedEntries, ...updatedEntries];
     if (forceNotify && allEntries.length === 0) {
       allEntries.push(...skippedEntries);
     }
+    const statusLines = statusChanges.length > 0
+      ? `\n\n⚡ ステータス自動更新: ${statusChanges.length}件\n` +
+        statusChanges
+          .slice(0, 10)
+          .map((s) => `• ${s.name}: ${s.from ?? "(未設定)"} → ${s.to}（${s.matchedKeyword}）`)
+          .join("\n")
+      : "";
     const summary = forceNotify
-      ? `過去${lookbackDays}日でメール${stats.fetched}件を確認 → 新規 ${stats.added}社、更新 ${stats.updated}社、変更なし ${stats.skipped}社`
-      : `今回の同期で新規 ${stats.added}社、更新 ${stats.updated}社が反映されました。`;
+      ? `過去${lookbackDays}日でメール${stats.fetched}件を確認 → 新規${stats.added}社、更新${stats.updated}社、変更なし${stats.skipped}社${statusLines}`
+      : `今回の同期で新規${stats.added}社、更新${stats.updated}社が反映されました。${statusLines}`;
     await notifyMention(notion, {
       title: addedEntries.length > 0
         ? `🆕 営業同期: 新規${stats.added}社追加`
-        : `📬 営業同期: ${stats.updated}社の媒体タグ更新`,
+        : statusChanges.length > 0
+          ? `⚡ 営業同期: ${statusChanges.length}社のステータス自動更新`
+          : `📬 営業同期: ${stats.updated}社の媒体タグ更新`,
       summary,
       entries: allEntries.slice(0, 30),
     });

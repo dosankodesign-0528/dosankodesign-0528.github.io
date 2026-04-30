@@ -36,7 +36,8 @@ export async function fetchAllCompanies(
       const url = readUrl(props[URL_PROP]);
       const contactYears = readMultiSelect(props[CONTACT_PROP]);
       const mediaTags = readMultiSelect(props[MEDIA_PROP]);
-      records.push({ pageId: page.id, name, url, contactYears, mediaTags });
+      const status = readSelect(props["ステータス"]);
+      records.push({ pageId: page.id, name, url, contactYears, mediaTags, status });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
   } while (cursor);
@@ -59,15 +60,32 @@ export function findCompany(
 export async function addCompany(
   notion: Client,
   dbId: string,
-  args: { name: string; url: string; year: string; mediaTag: string }
+  args: { name: string; url: string; year: string; mediaTag: string; status?: string }
 ) {
+  const properties: Record<string, any> = {
+    [NAME_PROP]: { title: [{ text: { content: args.name } }] },
+    [URL_PROP]: { url: args.url },
+    [CONTACT_PROP]: { multi_select: [{ name: args.year }] },
+    [MEDIA_PROP]: { multi_select: [{ name: args.mediaTag }] },
+  };
+  if (args.status) {
+    properties["ステータス"] = { select: { name: args.status } };
+  }
   await notion.pages.create({
     parent: { database_id: dbId },
+    properties,
+  });
+}
+
+export async function updateCompanyStatus(
+  notion: Client,
+  pageId: string,
+  status: string
+): Promise<void> {
+  await notion.pages.update({
+    page_id: pageId,
     properties: {
-      [NAME_PROP]: { title: [{ text: { content: args.name } }] },
-      [URL_PROP]: { url: args.url },
-      [CONTACT_PROP]: { multi_select: [{ name: args.year }] },
-      [MEDIA_PROP]: { multi_select: [{ name: args.mediaTag }] },
+      ステータス: { select: { name: status } },
     },
   });
 }
@@ -111,6 +129,11 @@ function readUrl(prop: any): string | null {
 function readMultiSelect(prop: any): string[] {
   if (!prop || prop.type !== "multi_select") return [];
   return (prop.multi_select ?? []).map((m: any) => m.name as string);
+}
+
+function readSelect(prop: any): string | null {
+  if (!prop || prop.type !== "select") return null;
+  return prop.select?.name ?? null;
 }
 
 function extractHost(url: string): string {
