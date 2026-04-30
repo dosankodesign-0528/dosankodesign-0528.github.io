@@ -12,7 +12,7 @@ interface PageInfo {
   mediaTags: string[];
 }
 
-const MEDIA_TAGS = ["Wantedly", "Green", "問合せフォーム", "直営業", "その他"];
+const MEDIA_TAGS = ["Wantedly", "Green", "SNS", "直メール/フォーム"];
 
 function getReportDbId(): string {
   const id = process.env.NOTION_REPORT_DB_ID;
@@ -186,12 +186,12 @@ async function main() {
 
   const wantedlyCount = mediaCount("Wantedly");
   const greenCount = mediaCount("Green");
-  const inquiryCount = mediaCount("問合せフォーム");
-  const directCount = mediaCount("直営業");
+  const snsCount = mediaCount("SNS");
+  const directMailCount = mediaCount("直メール/フォーム");
 
   console.log(`  新規追加: ${added.length}`);
   console.log(`  更新: ${updated.length}`);
-  console.log(`  Wantedly: ${wantedlyCount}, Green: ${greenCount}, 問合せ: ${inquiryCount}, 直営業: ${directCount}`);
+  console.log(`  Wantedly: ${wantedlyCount}, Green: ${greenCount}, SNS: ${snsCount}, 直メール/フォーム: ${directMailCount}`);
 
   const allBlocks = buildBlocks({ added, updated, start, end });
   const firstBatch = allBlocks.slice(0, 90);
@@ -210,8 +210,8 @@ async function main() {
       更新件数: { number: updated.length },
       "Wantedly件数": { number: wantedlyCount },
       "Green件数": { number: greenCount },
-      問合せフォーム件数: { number: inquiryCount },
-      直営業件数: { number: directCount },
+      "直メール/フォーム件数": { number: directMailCount },
+      "SNS件数": { number: snsCount },
       拾い損ねメール: { number: 0 },
       頻出キーワード: { rich_text: [{ text: { content: "" } }] },
       備考: { rich_text: [{ text: { content: "詳細はページを開いてください" } }] },
@@ -230,7 +230,7 @@ async function main() {
 
   await notifyMention(notion, {
     title: `📊 ${label} を公開しました`,
-    summary: `新規追加: ${added.length}社、更新: ${updated.length}社（Wantedly: ${wantedlyCount} / Green: ${greenCount} / 問合せ: ${inquiryCount} / 直営業: ${directCount}）`,
+    summary: `新規追加: ${added.length}社、更新: ${updated.length}社（Wantedly: ${wantedlyCount} / Green: ${greenCount} / SNS: ${snsCount} / 直メール/フォーム: ${directMailCount}）`,
     linkUrl: created.url,
     linkLabel: "▶ レポートを開く",
   });

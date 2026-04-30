@@ -43,6 +43,8 @@ async function main() {
   const year = String(startedAt.getFullYear());
   const seenIds = new Set<string>();
   const addedEntries: NotifyEntry[] = [];
+  const updatedEntries: NotifyEntry[] = [];
+  const skippedEntries: NotifyEntry[] = [];
 
   for (const source of sources) {
     console.log(`\n[${source.name}] query: ${source.query}`);
@@ -84,9 +86,11 @@ async function main() {
             existing.mediaTags = Array.from(
               new Set([...existing.mediaTags, source.tag])
             );
+            updatedEntries.push({ name: existing.name, url: existing.url, mediaTag: source.tag });
             stats.updated++;
             console.log(`  updated: ${existing.name} (${classified.companyDomain})`);
           } else {
+            skippedEntries.push({ name: existing.name, url: existing.url, mediaTag: source.tag });
             stats.skipped++;
           }
         } else {
@@ -122,11 +126,21 @@ async function main() {
 
   await reportUnclassifiedCandidates(gmail, myEmail, seenIds, lookbackDays);
 
-  if (addedEntries.length > 0) {
+  const forceNotify = process.env.FORCE_NOTIFY === "1";
+  if (addedEntries.length > 0 || updatedEntries.length > 0 || forceNotify) {
+    const allEntries = [...addedEntries, ...updatedEntries];
+    if (forceNotify && allEntries.length === 0) {
+      allEntries.push(...skippedEntries);
+    }
+    const summary = forceNotify
+      ? `過去${lookbackDays}日でメール${stats.fetched}件を確認 → 新規 ${stats.added}社、更新 ${stats.updated}社、変更なし ${stats.skipped}社`
+      : `今回の同期で新規 ${stats.added}社、更新 ${stats.updated}社が反映されました。`;
     await notifyMention(notion, {
-      title: `🆕 営業同期: ${addedEntries.length}社の新規追加`,
-      summary: `今回の同期で新たに${addedEntries.length}社が追加されました（更新: ${stats.updated}社）。`,
-      entries: addedEntries,
+      title: addedEntries.length > 0
+        ? `🆕 営業同期: 新規${stats.added}社追加`
+        : `📬 営業同期: ${stats.updated}社の媒体タグ更新`,
+      summary,
+      entries: allEntries.slice(0, 30),
     });
   }
 
