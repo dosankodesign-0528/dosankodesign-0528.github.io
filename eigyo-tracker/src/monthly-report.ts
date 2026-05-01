@@ -198,6 +198,21 @@ function callout(content: string, emoji = "💡", color = "yellow_background"): 
   };
 }
 
+// Pattern γ: 媒体ごとに会社一覧をトグルで折りたたむ
+function toggleGroup(label: string, children: any[]): any {
+  return {
+    object: "block",
+    type: "toggle",
+    toggle: {
+      rich_text: [
+        { type: "text", text: { content: label }, annotations: { bold: true } },
+      ],
+      color: "default",
+      children,
+    },
+  };
+}
+
 // Pattern E: 媒体別の内訳をメダル順カード型で表示
 function mediaBreakdownBlocks(
   mediaCounts: Record<string, number>,
@@ -329,17 +344,16 @@ function buildBlocks(args: {
   if (added.length === 0) {
     blocks.push(paragraph(`（${periodNoun}の新規追加はありませんでした）`, "gray"));
   } else {
+    blocks.push(paragraph("各媒体グループをクリックすると会社一覧が開きます。", "gray"));
     for (const tag of MEDIA_TAGS) {
       const matching = added.filter((p) => p.mediaTags.includes(tag));
       if (matching.length === 0) continue;
       const icon = MEDIA_ICONS[tag] ?? "▫️";
-      blocks.push(heading(3, `${icon} ${tag} から (${matching.length} 社)`));
-      for (const p of matching) blocks.push(bullet(p));
+      blocks.push(toggleGroup(`${icon} ${tag} から (${matching.length} 社)`, matching.map((p) => bullet(p))));
     }
     const noTag = added.filter((p) => p.mediaTags.length === 0);
     if (noTag.length > 0) {
-      blocks.push(heading(3, `▫️ 媒体タグなし (${noTag.length} 社)`));
-      for (const p of noTag) blocks.push(bullet(p));
+      blocks.push(toggleGroup(`▫️ 媒体タグなし (${noTag.length} 社)`, noTag.map((p) => bullet(p))));
     }
   }
   blocks.push(divider());
