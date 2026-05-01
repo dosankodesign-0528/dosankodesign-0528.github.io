@@ -21,11 +21,11 @@ const DEFAULT_TEST_IDS = [
 ];
 
 async function main() {
-  const ids =
-    (process.env.CLEANUP_IDS ?? process.env.IDS)
-      ?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) ?? DEFAULT_TEST_IDS;
+  const inputIds = (process.env.CLEANUP_IDS ?? process.env.IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const ids = inputIds.length > 0 ? inputIds : DEFAULT_TEST_IDS;
   console.log(`[cleanup] ${ids.length} 件をゴミ箱へ移動します`);
   const notion = buildNotionClient();
   let ok = 0;
