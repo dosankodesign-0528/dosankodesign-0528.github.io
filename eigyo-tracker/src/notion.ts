@@ -5,6 +5,7 @@ const NAME_PROP = "名前";
 const URL_PROP = "企業URL";
 const CONTACT_PROP = "コンタクト";
 const MEDIA_PROP = "媒体";
+const LAST_KNOWN_STATUS_PROP = "前回ステータス（自動）";
 
 export function buildNotionClient() {
   const token = process.env.NOTION_TOKEN;
@@ -152,7 +153,17 @@ export async function fetchAllCompanies(
       const mediaTags = readMultiSelect(props[MEDIA_PROP]);
       const status = readSelect(props["ステータス"]);
       const lastContactAt = readDate(props["最終接触日"]);
-      records.push({ pageId: page.id, name, url, contactYears, mediaTags, status, lastContactAt });
+      const lastKnownStatus = readRichText(props[LAST_KNOWN_STATUS_PROP]);
+      records.push({
+        pageId: page.id,
+        name,
+        url,
+        contactYears,
+        mediaTags,
+        status,
+        lastContactAt,
+        lastKnownStatus: lastKnownStatus || null,
+      });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
   } while (cursor);
@@ -185,6 +196,8 @@ export async function addCompany(
   };
   if (args.status) {
     properties["ステータス"] = { select: { name: args.status } };
+    // 新規追加時も lastKnownStatus を同期させる（次回 sync で誤って手動変更扱いされない）
+    properties[LAST_KNOWN_STATUS_PROP] = { rich_text: [{ text: { content: args.status } }] };
   }
   if (args.lastContactAt) {
     properties["最終接触日"] = { date: { start: args.lastContactAt.toISOString().slice(0, 10) } };
@@ -200,10 +213,27 @@ export async function updateCompanyStatus(
   pageId: string,
   status: string
 ): Promise<void> {
+  // ステータス と 前回ステータス（自動）を同時に更新する。
+  // → 次回 sync で「自動更新なのに手動変更扱い」になるのを防ぐ。
+  // 人間が Notion 上でステータスだけ変更すると lastKnownStatus がズレるので、それで手動編集を検知する。
   await notion.pages.update({
     page_id: pageId,
     properties: {
       ステータス: { select: { name: status } },
+      [LAST_KNOWN_STATUS_PROP]: { rich_text: [{ text: { content: status } }] },
+    },
+  });
+}
+
+export async function syncLastKnownStatus(
+  notion: Client,
+  pageId: string,
+  status: string
+): Promise<void> {
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      [LAST_KNOWN_STATUS_PROP]: { rich_text: [{ text: { content: status } }] },
     },
   });
 }
@@ -266,6 +296,11 @@ function readMultiSelect(prop: any): string[] {
 function readSelect(prop: any): string | null {
   if (!prop || prop.type !== "select") return null;
   return prop.select?.name ?? null;
+}
+
+function readRichText(prop: any): string {
+  if (!prop || prop.type !== "rich_text") return "";
+  return (prop.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("");
 }
 
 function readDate(prop: any): Date | null {

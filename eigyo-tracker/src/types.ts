@@ -35,6 +35,8 @@ export interface CompanyRecord {
   mediaTags: string[];
   status: string | null;
   lastContactAt: Date | null;
+  /** 前回 sync 完了時に記録したステータス。手動編集検知に使う。 */
+  lastKnownStatus: string | null;
 }
 
 export interface SyncStats {

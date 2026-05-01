@@ -9,6 +9,7 @@ import {
   findCompany,
   getCompaniesDbId,
   getStatusChangeLogDbId,
+  syncLastKnownStatus,
   updateCompany,
   updateCompanyStatus,
   updateLastContact,
@@ -49,6 +50,56 @@ async function main() {
   const statusLogDbId = getStatusChangeLogDbId();
   const companies = await fetchAllCompanies(notion, dbId);
   console.log(`[eigyo-tracker] existing companies: ${companies.length}`);
+
+  // Phase 2: Notion 上での手動ステータス編集を検知
+  // ステータス !== lastKnownStatus なら、前回 sync 以降に Notion で人間が編集したと判定
+  const manualChanges: Array<{ name: string; from: string | null; to: string; url: string | null; mediaTags: string[] }> = [];
+  if (statusLogDbId) {
+    let initialized = 0;
+    for (const c of companies) {
+      if (!c.status) continue;
+      if (!c.lastKnownStatus) {
+        // 初期化（Phase 2 デプロイ後の初回 or 過去データに lastKnownStatus が無い）
+        try {
+          await syncLastKnownStatus(notion, c.pageId, c.status);
+          initialized++;
+        } catch (err: any) {
+          console.error(`  init lastKnownStatus error: ${c.name}: ${err?.message ?? err}`);
+        }
+        continue;
+      }
+      if (c.status !== c.lastKnownStatus) {
+        // 手動変更検知
+        try {
+          await addStatusChangeLog(notion, statusLogDbId, {
+            companyName: c.name,
+            companyPageId: c.pageId,
+            before: c.lastKnownStatus,
+            after: c.status,
+            mediaTags: c.mediaTags,
+            category: "手動変更",
+            evidence: "Notion上での手動編集を検知（前回 sync 以降にステータスが変更されていた）",
+          });
+          await syncLastKnownStatus(notion, c.pageId, c.status);
+          manualChanges.push({
+            name: c.name,
+            from: c.lastKnownStatus,
+            to: c.status,
+            url: c.url,
+            mediaTags: c.mediaTags,
+          });
+          c.lastKnownStatus = c.status;
+          console.log(`  📝 手動変更検知: ${c.name}  ${c.lastKnownStatus} → ${c.status}`);
+        } catch (err: any) {
+          console.error(`  manual-change log error: ${c.name}: ${err?.message ?? err}`);
+        }
+      }
+    }
+    if (initialized > 0) {
+      console.log(`[eigyo-tracker] lastKnownStatus 初期化: ${initialized} 社`);
+    }
+    console.log(`[eigyo-tracker] 手動編集検知: ${manualChanges.length} 件`);
+  }
 
   const year = String(startedAt.getFullYear());
   const seenIds = new Set<string>();
@@ -177,6 +228,7 @@ async function main() {
             mediaTags: [source.tag],
             status: initialStatus,
             lastContactAt: msg.date,
+            lastKnownStatus: initialStatus, // 新規追加時は status と同期
           });
           if (detection) {
             statusChanges.push({
