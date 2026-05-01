@@ -16,7 +16,11 @@ import {
 import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
-import { detectStatusFromMessage, shouldUpdate as shouldUpdateStatus } from "./status.js";
+import {
+  detectStatusFromMessage,
+  isManualReviewCandidate,
+  shouldUpdate as shouldUpdateStatus,
+} from "./status.js";
 import type { SyncStats } from "./types.js";
 
 async function main() {
@@ -52,6 +56,7 @@ async function main() {
   const updatedEntries: NotifyEntry[] = [];
   const skippedEntries: NotifyEntry[] = [];
   const statusChanges: Array<{ name: string; from: string | null; to: string; reason: string; matchedKeyword: string }> = [];
+  const skipCandidates: Array<{ name: string; current: string | null; suggested: string; reason: string; matchedKeyword: string; url: string | null }> = [];
 
   for (const source of sources) {
     console.log(`\n[${source.name}] query: ${source.query}`);
@@ -97,7 +102,7 @@ async function main() {
               console.error(`  lastContact update error: ${existing.name}: ${err?.message ?? err}`);
             }
           }
-          if (detection && shouldUpdateStatus(existing.status, detection.status)) {
+          if (detection && shouldUpdateStatus(existing.status, detection)) {
             try {
               const beforeStatus = existing.status;
               await updateCompanyStatus(notion, existing.pageId, detection.status);
@@ -128,6 +133,16 @@ async function main() {
             } catch (err: any) {
               console.error(`  status update error: ${existing.name}: ${err?.message ?? err}`);
             }
+          } else if (detection && isManualReviewCandidate(existing.status, detection)) {
+            skipCandidates.push({
+              name: existing.name,
+              current: existing.status,
+              suggested: detection.status,
+              reason: detection.reason,
+              matchedKeyword: detection.matchedKeyword,
+              url: existing.url,
+            });
+            console.log(`  ⚠️ skip候補: ${existing.name}  ${existing.status ?? "(未設定)"} → ${detection.status}（${detection.reason}「${detection.matchedKeyword}」）`);
           }
           const updated = await updateCompany(notion, existing, year, source.tag);
           if (updated) {
@@ -230,6 +245,20 @@ async function main() {
           : `📬 営業同期: ${stats.updated}社の媒体タグ更新`,
       summary,
       entries: allEntries.slice(0, 30),
+    });
+  }
+
+  // 段飛ばし候補・降格候補は別通知（人間の手動アクション要求なので埋もれないように）
+  if (skipCandidates.length > 0) {
+    const candidateLines = skipCandidates
+      .slice(0, 15)
+      .map((c) => `• ${c.name}: 現状【${c.current ?? "(未設定)"}】→ 検知【${c.suggested}】（${c.reason}「${c.matchedKeyword}」）`)
+      .join("\n");
+    const more = skipCandidates.length > 15 ? `\n…他 ${skipCandidates.length - 15} 件` : "";
+    await notifyMention(notion, {
+      title: `⚠️ 段飛ばし／降格候補: ${skipCandidates.length}件 — 手動確認推奨`,
+      summary: `自動更新条件を満たさないが、進行 or 降格シグナルを検知した会社です。Notionで手動更新するかどうか判断してください。\n\n${candidateLines}${more}`,
+      entries: skipCandidates.slice(0, 30).map((c) => ({ name: c.name, url: c.url, mediaTag: `${c.current ?? "(未設定)"} → ${c.suggested}` })),
     });
   }
 
