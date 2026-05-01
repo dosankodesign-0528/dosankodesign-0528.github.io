@@ -18,6 +18,8 @@ export interface RawMessage {
   body?: string;
   date: Date;
   isOutgoing: boolean;
+  /** 添付ファイル名のリスト（filename属性のあるpartのみ。署名画像など inline は除外） */
+  attachmentNames?: string[];
 }
 
 export interface ClassifiedMessage extends RawMessage {

@@ -18,6 +18,20 @@ export interface StatusDetectionResult {
   matchedKeyword: string;
 }
 
+// 自動返信メール検知（フォーム送信完了通知など）
+// マッチしたら status 検知をスキップする → 自分の送信内容がエコーされて誤検知するのを防ぐ
+const AUTO_REPLY_PATTERNS = [
+  /本メール(は|を)?自動(送信|配信)/,
+  /自動返信/,
+  /(お)?問(い|合)合?わ?せ.{0,15}(を)?(受け付け|お受け|頂戴|承り)/,
+  /(お)?(問い?合わ?せ|入力)(内容|頂いた|頂戴)/,
+  /返信(は)?不要/,
+  /折り返し.{0,15}(担当者|改めて|連絡)/,
+  /確認(の|出来|でき)次第/,
+  /3?営業日以内に.{0,15}(連絡|返信)/,
+  /担当者より.{0,15}(連絡|折り返し|ご案内)/,
+];
+
 // REJECTION: D へ移行（自動更新は待機中のみ、それ以外は段飛ばし通知）
 const REJECTION_PATTERNS = [
   /ご縁がな(い|かった)/,
@@ -62,6 +76,11 @@ const INVITE_KEYWORDS = [
 ];
 
 // CONTRACT: C → B（契約締結シグナル）
+// 複合判定:
+//   ・クラウドサインからの送信元 → 確定（添付不要）
+//   ・契約系キーワード + 添付ファイル → 確定
+//   ・契約系キーワード + 添付ファイル名に「契約|NDA|秘密保持|業務委託」 → 確定
+//   ・キーワード単独では発火しない（auto-reply で誤爆するため）
 const CONTRACT_FROM_DOMAINS = new Set([
   "cloudsign.jp",
   "mail.cloudsign.jp",
@@ -72,26 +91,33 @@ const CONTRACT_PATTERNS = [
   /契約締結/,
   /NDA/,
   /秘密保持契約/,
-  /署名(のお願い|済み)/,
+  /署名(のお願い|済み|依頼)/,
   /ご契約完了/,
   /契約(条件|内容)(の|を)?(ご)?確認/,
   /請書/,
   /覚書/,
 ];
+const CONTRACT_FILENAME_PATTERNS = [
+  /契約/,
+  /NDA/i,
+  /秘密保持/,
+  /業務委託/,
+  /覚書/,
+];
 
 // MEETING: 待機 → C（商談シグナル）
+// 「業務委託枠」「業務委託枠での」のような汎用語は削除（auto-reply で誤爆する）
+// 残すのは「明確な商談アクション」を示すもののみ
 const MEETING_PATTERNS = [
-  /面談/,
-  /面接/,
-  /(お)?打ち合わせ/,
-  /Zoom/i,
-  /Google\s*Meet/i,
-  /業務委託枠/,
-  /選考のご案内/,
-  /追加面談/,
-  /カレンダー(招待|を承諾)/,
+  /面談(の|を|させて|について|日程|お願い)/,
+  /面接(の|を|させて|について|日程|お願い)/,
+  /(お)?打ち?合わ?せ(の|を|させて|日程|お願い)/,
+  /Zoom.*(URL|リンク|ご案内|招待)/i,
+  /Google\s*Meet.*(URL|リンク|ご案内|招待)/i,
+  /カレンダー(招待|を承諾|の共有)/,
   /共有カレンダー/,
   /カジュアル(面談|にお話)/,
+  /(オンライン)?MTG.*(日程|お願い|設定)/i,
 ];
 
 function matchPatterns(text: string, patterns: RegExp[]): string | null {
@@ -102,21 +128,46 @@ function matchPatterns(text: string, patterns: RegExp[]): string | null {
   return null;
 }
 
+function matchFileName(names: string[] | undefined, patterns: RegExp[]): string | null {
+  if (!names || names.length === 0) return null;
+  for (const name of names) {
+    for (const p of patterns) {
+      if (p.test(name)) return name;
+    }
+  }
+  return null;
+}
+
 function matchInvite(msg: RawMessage, text: string): string | null {
   const fromDomain = (msg.fromDomain ?? "").toLowerCase();
   if (!INVITE_FROM_DOMAINS.has(fromDomain)) return null;
-  // Domain だけだと通常通知も拾う → keyword とAND判定
   return matchPatterns(text, INVITE_KEYWORDS);
 }
 
-function matchContract(msg: RawMessage, text: string): { keyword: string; isDomain: boolean } | null {
+interface ContractMatch {
+  keyword: string;
+  source: "domain" | "keyword+attachment" | "filename";
+}
+
+function matchContract(msg: RawMessage, text: string): ContractMatch | null {
   const fromDomain = (msg.fromDomain ?? "").toLowerCase();
+  // クラウドサイン送信元 → 確定
   if (CONTRACT_FROM_DOMAINS.has(fromDomain)) {
-    // クラウドサインからは契約案件しか来ないので送信元だけで確定
-    return { keyword: `送信元:${fromDomain}`, isDomain: true };
+    return { keyword: `送信元:${fromDomain}`, source: "domain" };
   }
+  // 添付ファイル名が契約系 → 確定
+  const fileMatch = matchFileName(msg.attachmentNames, CONTRACT_FILENAME_PATTERNS);
+  if (fileMatch) {
+    return { keyword: `添付:${fileMatch}`, source: "filename" };
+  }
+  // 契約キーワード + 任意の添付 → 確定（キーワード単独はNG）
   const kw = matchPatterns(text, CONTRACT_PATTERNS);
-  if (kw) return { keyword: kw, isDomain: false };
+  if (kw && msg.attachmentNames && msg.attachmentNames.length > 0) {
+    return {
+      keyword: `${kw} + 添付${msg.attachmentNames.length}件(${msg.attachmentNames.join(",")})`,
+      source: "keyword+attachment",
+    };
+  }
   return null;
 }
 
@@ -129,25 +180,32 @@ export function detectStatusFromMessage(msg: RawMessage): StatusDetectionResult 
     : `${subject}\n${snippet}`;
   const isReply = /^(re:|fwd?:|返信:)/i.test(subject.trim());
 
-  // Priority 1: REJECTION（最優先：「面談ありがとう、でもご縁が...」みたいなケースを正しく D に）
+  // Priority 0: 自動返信メール → status 検知スキップ
+  // 自分の問合せフォーム送信内容がエコーされて誤検知するのを防ぐ
+  const autoReplyKw = matchPatterns(text, AUTO_REPLY_PATTERNS);
+  if (autoReplyKw) {
+    return null;
+  }
+
+  // Priority 1: REJECTION（最優先）
   const rejKw = matchPatterns(text, REJECTION_PATTERNS);
   if (rejKw) {
     return { signal: "REJECTION", status: STATUS.D, reason: "拒絶系キーワード", matchedKeyword: rejKw };
   }
 
-  // Priority 2: INVITE（送信元 + キーワードのAND、最も精度高い）
+  // Priority 2: INVITE（送信元 + キーワードのAND）
   const inviteKw = matchInvite(msg, text);
   if (inviteKw) {
     return { signal: "INVITE", status: STATUS.A, reason: "招待メール", matchedKeyword: `${msg.fromDomain}「${inviteKw}」` };
   }
 
-  // Priority 3: CONTRACT
+  // Priority 3: CONTRACT（複合判定 — 単独キーワードは NG）
   const contract = matchContract(msg, text);
   if (contract) {
     return { signal: "CONTRACT", status: STATUS.B, reason: "契約締結シグナル", matchedKeyword: contract.keyword };
   }
 
-  // Priority 4: MEETING
+  // Priority 4: MEETING（明確な商談アクションのみ）
   const meetingKw = matchPatterns(text, MEETING_PATTERNS);
   if (meetingKw) {
     return { signal: "MEETING", status: STATUS.C, reason: "商談シグナル", matchedKeyword: meetingKw };
@@ -161,13 +219,13 @@ export function detectStatusFromMessage(msg: RawMessage): StatusDetectionResult 
   return null;
 }
 
-// 段階順設計: シグナル別に「自動更新できる現状ステータス」を制限
+// 段階順設計
 const ALLOWED_TRANSITIONS: Record<SignalType, ReadonlySet<string | null>> = {
-  REJECTION: new Set([null, STATUS.WAITING]), // 自動Dは待機中のみ。それ以外は手動推奨通知
-  MEETING: new Set([null, STATUS.WAITING]), // 待機 → C
-  CONTRACT: new Set([STATUS.C]), // C → B（待機中での検知は段飛ばし通知）
-  INVITE: new Set([STATUS.B]), // B → A（C/待機中での検知は段飛ばし通知）
-  REPLY: new Set([null, STATUS.WAITING]), // 待機 → C のフォールバック
+  REJECTION: new Set([null, STATUS.WAITING]),
+  MEETING: new Set([null, STATUS.WAITING]),
+  CONTRACT: new Set([STATUS.C]),
+  INVITE: new Set([STATUS.B]),
+  REPLY: new Set([null, STATUS.WAITING]),
 };
 
 export function shouldUpdate(
@@ -181,13 +239,6 @@ export function shouldUpdate(
 
 const STATUS_ORDER: string[] = [STATUS.WAITING, STATUS.C, STATUS.B, STATUS.A, STATUS.S];
 
-/**
- * 段飛ばし候補・降格候補かどうか（自動更新はしないが、人間に通知すべきケース）
- *
- * - 待機中で「契約書」検知 → CONTRACT は C 必須なので段飛ばし → true
- * - C段階で「不採用」検知 → REJECTION は待機中のみ自動 → 降格候補 → true
- * - A段階で「Re:返信」検知 → 後退方向 → false（無視）
- */
 export function isManualReviewCandidate(
   currentStatus: string | null,
   detection: StatusDetectionResult | null
@@ -195,11 +246,7 @@ export function isManualReviewCandidate(
   if (!detection) return false;
   if (currentStatus === detection.status) return false;
   if (ALLOWED_TRANSITIONS[detection.signal].has(currentStatus)) return false;
-
-  // REJECTION は降格候補としてどの段階からも通知
   if (detection.signal === "REJECTION") return true;
-
-  // 進行系シグナル（INVITE/CONTRACT/MEETING/REPLY）は前進方向のみ通知
   const currentIdx = currentStatus ? STATUS_ORDER.indexOf(currentStatus) : 0;
   const targetIdx = STATUS_ORDER.indexOf(detection.status);
   if (currentIdx === -1 || targetIdx === -1) return false;

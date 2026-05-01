@@ -73,6 +73,7 @@ function parseMessage(
   if (!target) return null;
 
   const body = withBody ? extractBody(data.payload).slice(0, 5000) : undefined;
+  const attachmentNames = withBody ? extractAttachmentNames(data.payload) : undefined;
 
   return {
     id: data.id,
@@ -85,7 +86,24 @@ function parseMessage(
     body,
     date: dateStr ? new Date(dateStr) : new Date(),
     isOutgoing,
+    attachmentNames,
   };
+}
+
+function extractAttachmentNames(payload: gmail_v1.Schema$MessagePart | undefined): string[] {
+  if (!payload) return [];
+  const names: string[] = [];
+  const walk = (part: gmail_v1.Schema$MessagePart) => {
+    // filename があり、attachmentId があれば添付ファイル
+    if (part.filename && part.body?.attachmentId) {
+      names.push(part.filename);
+    }
+    if (part.parts) {
+      for (const child of part.parts) walk(child);
+    }
+  };
+  walk(payload);
+  return names;
 }
 
 function extractBody(payload: gmail_v1.Schema$MessagePart | undefined): string {
