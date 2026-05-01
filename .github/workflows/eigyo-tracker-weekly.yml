@@ -1,21 +1,19 @@
-name: eigyo-tracker monthly report
+name: eigyo-tracker weekly report
 
 on:
   schedule:
-    - cron: '0 0 1 * *'
+    # 毎週月曜 0:00 UTC = JST 月曜 9:00
+    - cron: '0 0 * * 1'
   workflow_dispatch:
     inputs:
-      mode:
-        description: 'previous (先月分) or current (今月分・途中経過)'
+      days:
+        description: '対象期間（日数）。空の場合は 7 日間。テストで「昨日からの差分」を見るなら 1 を指定'
         required: false
-        default: 'previous'
-        type: choice
-        options:
-          - previous
-          - current
+        default: '7'
+        type: string
 
 concurrency:
-  group: eigyo-tracker-monthly
+  group: eigyo-tracker-weekly
   cancel-in-progress: false
 
 jobs:
@@ -33,10 +31,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: eigyo-tracker/package-lock.json
       - run: npm ci
-      - name: Generate monthly report
+      - name: Generate weekly report
         run: npx tsx src/monthly-report.ts
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
           NOTION_REPORT_DB_ID: ${{ secrets.NOTION_REPORT_DB_ID }}
-          REPORT_MODE: ${{ inputs.mode || 'previous' }}
+          REPORT_DAYS: ${{ inputs.days || '7' }}

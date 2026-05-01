@@ -199,6 +199,7 @@ function buildBlocks(args: {
 
   const days = process.env.REPORT_DAYS ? Number(process.env.REPORT_DAYS) : 0;
   const periodLabel = days > 0 ? `直近${days}日間で` : `${start.getFullYear()}年${start.getMonth() + 1}月は、`;
+  const periodNoun = days > 0 ? `この${days}日間` : "今月";
   const mainSentence = added.length > 0
     ? `${periodLabel}新しく ${added.length} 社が追加されました。ステータスが更新された会社は ${updated.length} 社です。`
     : `${periodLabel}新しく追加された会社はありませんでした。ステータスが更新された会社は ${updated.length} 社です。`;
@@ -207,7 +208,7 @@ function buildBlocks(args: {
   blocks.push(paragraph(`期間: ${formatJapaneseDate(start)} 〜 ${formatJapaneseDate(new Date(end.getTime() - 1))}`, "gray"));
   blocks.push(divider());
 
-  blocks.push(heading(2, "📈 今月の動き"));
+  blocks.push(heading(2, `📈 ${periodNoun}の動き`));
   blocks.push(paragraph(`🆕 新しく追加された会社        ${added.length} 社`));
   blocks.push(paragraph(`♻️ ステータスが更新された会社  ${updated.length} 社`));
   blocks.push(paragraph(`⏰ タイムアウト（${TIMEOUT_DAYS}日反応なし→D）  ${timedOut.length} 社`));
@@ -230,7 +231,7 @@ function buildBlocks(args: {
 
   blocks.push(heading(2, "🆕 新しく追加された会社"));
   if (added.length === 0) {
-    blocks.push(paragraph("（今月の新規追加はありませんでした）", "gray"));
+    blocks.push(paragraph(`（${periodNoun}の新規追加はありませんでした）`, "gray"));
   } else {
     for (const tag of MEDIA_TAGS) {
       const matching = added.filter((p) => p.mediaTags.includes(tag));
@@ -249,7 +250,7 @@ function buildBlocks(args: {
 
   blocks.push(heading(2, "♻️ ステータスが更新された会社"));
   if (updated.length === 0) {
-    blocks.push(paragraph("（今月のステータス更新はありませんでした）", "gray"));
+    blocks.push(paragraph(`（${periodNoun}のステータス更新はありませんでした）`, "gray"));
   } else {
     for (const tag of MEDIA_TAGS) {
       const matching = updated.filter((p) => p.mediaTags.includes(tag));
@@ -263,7 +264,7 @@ function buildBlocks(args: {
 
   blocks.push(heading(2, `⏰ タイムアウトで「ご縁がなかった」へ移行 (${timedOut.length} 社)`));
   if (timedOut.length === 0) {
-    blocks.push(paragraph(`（今月の自動タイムアウト移行はありませんでした）`, "gray"));
+    blocks.push(paragraph(`（${periodNoun}の自動タイムアウト移行はありませんでした）`, "gray"));
   } else {
     blocks.push(paragraph(`${TIMEOUT_DAYS}日以上反応がなかった会社が D:ご縁がなかった に自動移行されました。`, "gray"));
     for (const p of timedOut) blocks.push(bullet(p));
