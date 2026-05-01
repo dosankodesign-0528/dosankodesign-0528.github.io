@@ -22,6 +22,8 @@ export function getStatusChangeLogDbId(): string | null {
   return process.env.NOTION_STATUS_CHANGE_LOG_DB_ID ?? null;
 }
 
+export type StatusChangeCategory = "自動検知" | "手動変更" | "タイムアウト" | "新規追加";
+
 export interface StatusChangeLog {
   pageId: string;
   companyName: string;
@@ -30,6 +32,8 @@ export interface StatusChangeLog {
   after: string;
   mediaTags: string[];
   changedAt: Date;
+  category: StatusChangeCategory | null;
+  evidence: string;
 }
 
 export async function addStatusChangeLog(
@@ -42,12 +46,16 @@ export async function addStatusChangeLog(
     after: string;
     mediaTags: string[];
     changedAt?: Date;
+    category: StatusChangeCategory;
+    evidence: string;
   }
 ): Promise<void> {
   const properties: Record<string, any> = {
     会社名: { title: [{ text: { content: args.companyName } }] },
     Before: { select: { name: args.before ?? "(新規)" } },
     After: { select: { name: args.after } },
+    判定種別: { select: { name: args.category } },
+    判定根拠: { rich_text: [{ text: { content: args.evidence } }] },
     変更日時: {
       date: { start: (args.changedAt ?? new Date()).toISOString() },
     },
@@ -100,6 +108,12 @@ export async function fetchStatusChangesInRange(
         relProp?.type === "relation" && Array.isArray(relProp.relation) && relProp.relation[0]
           ? relProp.relation[0].id
           : null;
+      const category = readSelect(props["判定種別"]) as StatusChangeCategory | null;
+      const evidenceProp = props["判定根拠"];
+      const evidence =
+        evidenceProp?.type === "rich_text"
+          ? (evidenceProp.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("")
+          : "";
       if (!after) continue;
       logs.push({
         pageId: p.id,
@@ -109,6 +123,8 @@ export async function fetchStatusChangesInRange(
         after,
         mediaTags,
         changedAt,
+        category,
+        evidence,
       });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;

@@ -73,6 +73,8 @@ async function main() {
             before: STATUS.WAITING,
             after: STATUS.D,
             mediaTags: t.mediaTags,
+            category: "タイムアウト",
+            evidence: `${TIMEOUT_DAYS}日以上反応なし（${days}日経過）→ 自動でDへ移行`,
           });
         } catch (logErr: any) {
           console.error(`  status-log write error: ${t.name}: ${logErr?.message ?? logErr}`);

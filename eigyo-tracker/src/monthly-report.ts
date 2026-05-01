@@ -252,9 +252,17 @@ function mediaBreakdownBlocks(
   });
 }
 
-// Pattern β: ステータス更新を「会社 / Before / After」テーブルで表示
+// Pattern β: ステータス更新を「会社 / Before / After / 判定根拠」テーブルで表示
 // Before: コードブロック書体（過去・参照）
 // After:  太字＋絵文字（決定事項・現在）
+// 判定根拠: 種別バッジ + 根拠テキスト（自動検知/手動変更/タイムアウト/新規追加 を区別）
+const CATEGORY_EMOJI: Record<string, string> = {
+  自動検知: "🤖",
+  手動変更: "✋",
+  タイムアウト: "⏰",
+  新規追加: "🆕",
+};
+
 function statusChangeTable(changes: StatusChangeLog[]): any[] {
   if (changes.length === 0) return [];
   const headerRow = {
@@ -264,6 +272,7 @@ function statusChangeTable(changes: StatusChangeLog[]): any[] {
         [{ type: "text", text: { content: "会社" }, annotations: { bold: true } }],
         [{ type: "text", text: { content: "Before" }, annotations: { bold: true } }],
         [{ type: "text", text: { content: "After" }, annotations: { bold: true } }],
+        [{ type: "text", text: { content: "判定根拠" }, annotations: { bold: true } }],
       ],
     },
   };
@@ -287,9 +296,21 @@ function statusChangeTable(changes: StatusChangeLog[]): any[] {
       },
       { type: "text", text: { content: ` ${afterEmoji}` } },
     ];
+    const categoryEmoji = c.category ? (CATEGORY_EMOJI[c.category] ?? "") : "";
+    const categoryLabel = c.category ?? "(不明)";
+    const evidenceCell: any[] = [
+      {
+        type: "text",
+        text: { content: `${categoryEmoji} ${categoryLabel}` },
+        annotations: { bold: true, color: c.category === "自動検知" ? "blue" : c.category === "タイムアウト" ? "orange" : c.category === "新規追加" ? "default" : "gray" },
+      },
+    ];
+    if (c.evidence) {
+      evidenceCell.push({ type: "text", text: { content: ` — ${c.evidence}` } });
+    }
     return {
       type: "table_row",
-      table_row: { cells: [companyCell, beforeCell, afterCell] },
+      table_row: { cells: [companyCell, beforeCell, afterCell, evidenceCell] },
     };
   });
   return [
@@ -297,7 +318,7 @@ function statusChangeTable(changes: StatusChangeLog[]): any[] {
       object: "block",
       type: "table",
       table: {
-        table_width: 3,
+        table_width: 4,
         has_column_header: true,
         has_row_header: false,
         children: [headerRow, ...dataRows],

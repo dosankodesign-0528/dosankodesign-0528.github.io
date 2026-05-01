@@ -118,6 +118,8 @@ async function main() {
                     before: beforeStatus,
                     after: detection.status,
                     mediaTags: existing.mediaTags,
+                    category: "自動検知",
+                    evidence: `${detection.reason}「${detection.matchedKeyword}」`,
                   });
                 } catch (logErr: any) {
                   console.error(`  status-log write error: ${existing.name}: ${logErr?.message ?? logErr}`);
@@ -176,6 +178,8 @@ async function main() {
                   before: null,
                   after: detection.status,
                   mediaTags: [source.tag],
+                  category: "新規追加",
+                  evidence: `新規追加（${detection.reason}「${detection.matchedKeyword}」）`,
                 });
               } catch (logErr: any) {
                 console.error(`  status-log write error: ${classified.companyName}: ${logErr?.message ?? logErr}`);
