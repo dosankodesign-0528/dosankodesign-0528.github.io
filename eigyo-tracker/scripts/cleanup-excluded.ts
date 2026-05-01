@@ -6,7 +6,7 @@ async function main() {
   const companiesDbId = getCompaniesDbId();
   const reportDbId = process.env.NOTION_REPORT_DB_ID;
 
-  console.log("=== 1. デザイン制作会社DBから「N: 対象外」selectオプション削除 ===");
+  console.log("=== 1. 企業リストDBから「N: 対象外」selectオプション削除 ===");
   const db: any = await notion.databases.retrieve({ database_id: companiesDbId });
   const reactionProp = db.properties["反応"];
   if (reactionProp?.type === "select") {

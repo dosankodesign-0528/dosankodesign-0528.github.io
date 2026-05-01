@@ -4,7 +4,7 @@ Gmail から営業情報を集めて Notion に自動同期するツール。
 
 - **15分毎に GitHub Actions** で動く
 - **Gmail一本** から各媒体（Wantedly / Green / 問合せフォーム / 直営業）の情報を拾う
-- **Notion DB「デザイン制作会社」** に新規追加 / コンタクト年・媒体の更新
+- **Notion DB「企業リスト」** に新規追加 / コンタクト年・媒体の更新
 - **AI判定なし**（完全ルールベース）
 - **「反応」(A/B/C/D) は自動上書きしない**（人間判断を尊重）
 
@@ -39,7 +39,7 @@ npm install
 `.env.example` をコピーして `.env` を作り、以下の値を埋める：
 
 - `NOTION_TOKEN` … Notion Integration のシークレット
-- `NOTION_COMPANIES_DB_ID` … 「デザイン制作会社」DB の ID
+- `NOTION_COMPANIES_DB_ID` … 「企業リスト」DB の ID
 - `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET` … Google Cloud Console で作成
 - `GMAIL_REFRESH_TOKEN` … 下の手順③で取得
 

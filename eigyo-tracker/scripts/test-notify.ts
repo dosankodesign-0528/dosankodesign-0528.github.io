@@ -13,7 +13,7 @@ async function main() {
       { name: "テスト株式会社C", mediaTag: "直営業" },
     ],
     linkUrl: "https://www.notion.so/dosankodesign/18919c93bf124d92b8675ef9c32fb7b3",
-    linkLabel: "▶ デザイン制作会社DBへ",
+    linkLabel: "▶ 企業リストDBへ",
   });
 }
 

@@ -8,7 +8,7 @@
 
 | 種類 | タイトル | ID | env 変数 | 役割 |
 |---|---|---|---|---|
-| 📊 DB | [🔒削除厳禁] デザイン制作会社 | `18919c93-bf12-4d92-b867-5ef9c32fb7b3` | `NOTION_COMPANIES_DB_ID` | 営業同期のメインDB |
+| 📊 DB | [🔒削除厳禁] 企業リスト（旧称: デザイン制作会社） | `18919c93-bf12-4d92-b867-5ef9c32fb7b3` | `NOTION_COMPANIES_DB_ID` | 営業同期のメインDB |
 | 📊 DB | [🔒削除厳禁] 営業同期 レポート（週次） | `3519b3c4-ddc0-819f-a278-e7f00497ce37` | `NOTION_REPORT_DB_ID` | 週次レポート蓄積先 |
 | 📊 DB | [🔒削除厳禁] ステータス変更ログ | `d08ccb69-d0e7-4a16-aba7-2423e77f8ea0` | `NOTION_STATUS_CHANGE_LOG_DB_ID` | Before/After 表示の元データ |
 | 📄 ページ | [🔒削除厳禁] 📬 営業同期 通知 | `3529b3c4-ddc0-8138-bd75-eab8bc43efb1` | `NOTION_NOTIFY_PAGE_ID` | @メンション通知の貼付先 |

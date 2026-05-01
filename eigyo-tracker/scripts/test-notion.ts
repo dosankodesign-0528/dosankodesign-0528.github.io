@@ -27,7 +27,7 @@ main().catch((err) => {
   console.error("Error:", err?.message ?? err);
   if (err?.code === "object_not_found") {
     console.error(
-      "\nヒント: Integration が「デザイン制作会社」DBに接続されていない可能性。\n" +
+      "\nヒント: Integration が「企業リスト」DBに接続されていない可能性。\n" +
         "https://www.notion.so/my-integrations → eigyo-tracker → コンテンツへのアクセス で確認してください。"
     );
   }

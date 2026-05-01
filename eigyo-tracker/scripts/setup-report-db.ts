@@ -12,7 +12,7 @@ async function main() {
   } else if (parent.type === "block_id") {
     parentPageId = parent.block_id;
   } else {
-    console.error("デザイン制作会社DBの親が特定できません");
+    console.error("企業リストDBの親が特定できません");
     console.error(`parent: ${JSON.stringify(parent)}`);
     process.exit(1);
   }
