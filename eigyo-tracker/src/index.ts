@@ -53,23 +53,18 @@ async function main() {
 
   // Phase 2: Notion 上での手動ステータス編集を検知
   // ステータス !== lastKnownStatus なら、前回 sync 以降に Notion で人間が編集したと判定
+  // - 初期化（lastKnownStatus 空）の会社はスキップ → init-last-known-status.ts を別途実行する想定
+  // - 全会社の初期化を毎sync でやると timeout するため
   const manualChanges: Array<{ name: string; from: string | null; to: string; url: string | null; mediaTags: string[] }> = [];
+  let uninitialized = 0;
   if (statusLogDbId) {
-    let initialized = 0;
     for (const c of companies) {
       if (!c.status) continue;
       if (!c.lastKnownStatus) {
-        // 初期化（Phase 2 デプロイ後の初回 or 過去データに lastKnownStatus が無い）
-        try {
-          await syncLastKnownStatus(notion, c.pageId, c.status);
-          initialized++;
-        } catch (err: any) {
-          console.error(`  init lastKnownStatus error: ${c.name}: ${err?.message ?? err}`);
-        }
+        uninitialized++;
         continue;
       }
       if (c.status !== c.lastKnownStatus) {
-        // 手動変更検知
         try {
           await addStatusChangeLog(notion, statusLogDbId, {
             companyName: c.name,
@@ -88,17 +83,20 @@ async function main() {
             url: c.url,
             mediaTags: c.mediaTags,
           });
+          const beforeStatus = c.lastKnownStatus;
           c.lastKnownStatus = c.status;
-          console.log(`  📝 手動変更検知: ${c.name}  ${c.lastKnownStatus} → ${c.status}`);
+          console.log(`  📝 手動変更検知: ${c.name}  ${beforeStatus} → ${c.status}`);
         } catch (err: any) {
           console.error(`  manual-change log error: ${c.name}: ${err?.message ?? err}`);
         }
       }
     }
-    if (initialized > 0) {
-      console.log(`[eigyo-tracker] lastKnownStatus 初期化: ${initialized} 社`);
-    }
     console.log(`[eigyo-tracker] 手動編集検知: ${manualChanges.length} 件`);
+    if (uninitialized > 0) {
+      console.warn(
+        `[eigyo-tracker] ⚠️ 前回ステータス未初期化: ${uninitialized} 社（init-last-known-status.ts を実行してください）`
+      );
+    }
   }
 
   const year = String(startedAt.getFullYear());
