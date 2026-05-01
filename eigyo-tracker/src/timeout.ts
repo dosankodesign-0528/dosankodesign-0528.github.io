@@ -1,8 +1,10 @@
 import "dotenv/config";
 import {
+  addStatusChangeLog,
   buildNotionClient,
   fetchAllCompanies,
   getCompaniesDbId,
+  getStatusChangeLogDbId,
   updateCompanyStatus,
 } from "./notion.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
@@ -30,6 +32,7 @@ async function main() {
 
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const statusLogDbId = getStatusChangeLogDbId();
   const companies = await fetchAllCompanies(notion, dbId);
   console.log(`[timeout] 全企業: ${companies.length} 社`);
 
@@ -62,6 +65,19 @@ async function main() {
         url: t.url,
         mediaTag: `${days}日経過`,
       });
+      if (statusLogDbId) {
+        try {
+          await addStatusChangeLog(notion, statusLogDbId, {
+            companyName: t.name,
+            companyPageId: t.pageId,
+            before: STATUS.WAITING,
+            after: STATUS.D,
+            mediaTags: t.mediaTags,
+          });
+        } catch (logErr: any) {
+          console.error(`  status-log write error: ${t.name}: ${logErr?.message ?? logErr}`);
+        }
+      }
     } catch (err: any) {
       console.error(`  error: ${t.name}: ${err?.message ?? err}`);
     }

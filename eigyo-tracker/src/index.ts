@@ -3,10 +3,12 @@ import { loadSources } from "./sources.js";
 import { buildGmailClient, fetchMessages, getMyEmail } from "./gmail.js";
 import {
   addCompany,
+  addStatusChangeLog,
   buildNotionClient,
   fetchAllCompanies,
   findCompany,
   getCompaniesDbId,
+  getStatusChangeLogDbId,
   updateCompany,
   updateCompanyStatus,
   updateLastContact,
@@ -40,6 +42,7 @@ async function main() {
 
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const statusLogDbId = getStatusChangeLogDbId();
   const companies = await fetchAllCompanies(notion, dbId);
   console.log(`[eigyo-tracker] existing companies: ${companies.length}`);
 
@@ -96,16 +99,30 @@ async function main() {
           }
           if (detection && shouldUpdateStatus(existing.status, detection.status)) {
             try {
+              const beforeStatus = existing.status;
               await updateCompanyStatus(notion, existing.pageId, detection.status);
               statusChanges.push({
                 name: existing.name,
-                from: existing.status,
+                from: beforeStatus,
                 to: detection.status,
                 reason: detection.reason,
                 matchedKeyword: detection.matchedKeyword,
               });
               existing.status = detection.status;
-              console.log(`  status: ${existing.name}  ${existing.status ?? "(未設定)"} → ${detection.status}  [${detection.matchedKeyword}]`);
+              console.log(`  status: ${existing.name}  ${beforeStatus ?? "(未設定)"} → ${detection.status}  [${detection.matchedKeyword}]`);
+              if (statusLogDbId) {
+                try {
+                  await addStatusChangeLog(notion, statusLogDbId, {
+                    companyName: existing.name,
+                    companyPageId: existing.pageId,
+                    before: beforeStatus,
+                    after: detection.status,
+                    mediaTags: existing.mediaTags,
+                  });
+                } catch (logErr: any) {
+                  console.error(`  status-log write error: ${existing.name}: ${logErr?.message ?? logErr}`);
+                }
+              }
             } catch (err: any) {
               console.error(`  status update error: ${existing.name}: ${err?.message ?? err}`);
             }
@@ -152,6 +169,18 @@ async function main() {
               reason: detection.reason,
               matchedKeyword: detection.matchedKeyword,
             });
+            if (statusLogDbId) {
+              try {
+                await addStatusChangeLog(notion, statusLogDbId, {
+                  companyName: classified.companyName,
+                  before: null,
+                  after: detection.status,
+                  mediaTags: [source.tag],
+                });
+              } catch (logErr: any) {
+                console.error(`  status-log write error: ${classified.companyName}: ${logErr?.message ?? logErr}`);
+              }
+            }
           }
           addedEntries.push({
             name: classified.companyName,

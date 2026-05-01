@@ -34,6 +34,7 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
+          NOTION_STATUS_CHANGE_LOG_DB_ID: ${{ secrets.NOTION_STATUS_CHANGE_LOG_DB_ID }}
           NOTION_USER_ID: ${{ secrets.NOTION_USER_ID }}
           NOTION_NOTIFY_PAGE_ID: ${{ secrets.NOTION_NOTIFY_PAGE_ID }}
           TIMEOUT_DAYS: ${{ inputs.timeout_days || '14' }}

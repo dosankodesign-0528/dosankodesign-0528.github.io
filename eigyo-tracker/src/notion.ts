@@ -18,6 +18,104 @@ export function getCompaniesDbId(): string {
   return id;
 }
 
+export function getStatusChangeLogDbId(): string | null {
+  return process.env.NOTION_STATUS_CHANGE_LOG_DB_ID ?? null;
+}
+
+export interface StatusChangeLog {
+  pageId: string;
+  companyName: string;
+  companyPageId: string | null;
+  before: string | null;
+  after: string;
+  mediaTags: string[];
+  changedAt: Date;
+}
+
+export async function addStatusChangeLog(
+  notion: Client,
+  dbId: string,
+  args: {
+    companyName: string;
+    companyPageId?: string;
+    before: string | null;
+    after: string;
+    mediaTags: string[];
+    changedAt?: Date;
+  }
+): Promise<void> {
+  const properties: Record<string, any> = {
+    会社名: { title: [{ text: { content: args.companyName } }] },
+    Before: { select: { name: args.before ?? "(新規)" } },
+    After: { select: { name: args.after } },
+    変更日時: {
+      date: { start: (args.changedAt ?? new Date()).toISOString() },
+    },
+  };
+  if (args.mediaTags.length > 0) {
+    properties["媒体"] = {
+      multi_select: args.mediaTags.map((name) => ({ name })),
+    };
+  }
+  if (args.companyPageId) {
+    properties["会社ページ"] = { relation: [{ id: args.companyPageId }] };
+  }
+  await notion.pages.create({
+    parent: { database_id: dbId },
+    properties,
+  });
+}
+
+export async function fetchStatusChangesInRange(
+  notion: Client,
+  dbId: string,
+  start: Date,
+  end: Date
+): Promise<StatusChangeLog[]> {
+  const logs: StatusChangeLog[] = [];
+  let cursor: string | undefined;
+  do {
+    const res: any = await notion.databases.query({
+      database_id: dbId,
+      filter: {
+        property: "変更日時",
+        date: {
+          on_or_after: start.toISOString(),
+          before: end.toISOString(),
+        },
+      },
+      sorts: [{ property: "変更日時", direction: "ascending" }],
+      start_cursor: cursor,
+      page_size: 100,
+    });
+    for (const p of res.results) {
+      const props = p.properties ?? {};
+      const companyName = readTitle(props["会社名"]);
+      const before = readSelect(props["Before"]);
+      const after = readSelect(props["After"]);
+      const mediaTags = readMultiSelect(props["媒体"]);
+      const changedAt = readDate(props["変更日時"]) ?? new Date(p.created_time);
+      const relProp = props["会社ページ"];
+      const companyPageId =
+        relProp?.type === "relation" && Array.isArray(relProp.relation) && relProp.relation[0]
+          ? relProp.relation[0].id
+          : null;
+      if (!after) continue;
+      logs.push({
+        pageId: p.id,
+        companyName,
+        companyPageId,
+        before: before === "(新規)" ? null : before,
+        after,
+        mediaTags,
+        changedAt,
+      });
+    }
+    cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
+  } while (cursor);
+  return logs;
+}
+
 export async function fetchAllCompanies(
   notion: Client,
   dbId: string

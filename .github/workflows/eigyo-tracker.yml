@@ -29,6 +29,9 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
+          NOTION_STATUS_CHANGE_LOG_DB_ID: ${{ secrets.NOTION_STATUS_CHANGE_LOG_DB_ID }}
+          NOTION_USER_ID: ${{ secrets.NOTION_USER_ID }}
+          NOTION_NOTIFY_PAGE_ID: ${{ secrets.NOTION_NOTIFY_PAGE_ID }}
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}

@@ -1,6 +1,12 @@
 import "dotenv/config";
 import { Client } from "@notionhq/client";
-import { buildNotionClient, getCompaniesDbId } from "./notion.js";
+import {
+  buildNotionClient,
+  fetchStatusChangesInRange,
+  getCompaniesDbId,
+  getStatusChangeLogDbId,
+  type StatusChangeLog,
+} from "./notion.js";
 import { notifyMention } from "./notify.js";
 
 interface PageInfo {
@@ -25,6 +31,18 @@ const MEDIA_ICONS: Record<string, string> = {
   SNS: "📱",
   "直メール/フォーム": "🌟",
 };
+
+const STATUS_AFTER_EMOJI: Record<string, string> = {
+  "S:継続中": "🌟",
+  "A：取引あり": "✨",
+  "B：パートナー契約": "🤝",
+  "C：やりとりあり": "💬",
+  "D:ご縁がなかった": "☁️",
+  待機中: "⏳",
+};
+
+const MEDAL_EMOJI = ["🥇", "🥈", "🥉", "🏅"];
+const MEDAL_COLOR = ["orange_background", "blue_background", "green_background", "gray_background"];
 
 function getReportDbId(): string {
   const id = process.env.NOTION_REPORT_DB_ID;
@@ -180,29 +198,118 @@ function callout(content: string, emoji = "💡", color = "yellow_background"): 
   };
 }
 
-function makeBar(ratio: number, length = 10): string {
-  const filled = Math.round(ratio * length);
-  return "█".repeat(Math.max(0, Math.min(length, filled))) + "░".repeat(Math.max(0, length - filled));
+// Pattern E: 媒体別の内訳をメダル順カード型で表示
+function mediaBreakdownBlocks(
+  mediaCounts: Record<string, number>,
+  totalForMedia: number
+): any[] {
+  if (totalForMedia === 0) {
+    return [paragraph("（媒体別のデータはまだありません）", "gray")];
+  }
+  const sorted = MEDIA_TAGS
+    .map((tag) => ({
+      tag,
+      count: mediaCounts[tag] ?? 0,
+      ratio: (mediaCounts[tag] ?? 0) / totalForMedia,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return sorted.map((m, i) => {
+    const medal = MEDAL_EMOJI[i] ?? "🏅";
+    const color = MEDAL_COLOR[i] ?? "gray_background";
+    const icon = MEDIA_ICONS[m.tag] ?? "▫️";
+    const percent = (m.ratio * 100).toFixed(0);
+    return {
+      object: "block",
+      type: "callout",
+      callout: {
+        icon: { type: "emoji", emoji: medal },
+        color,
+        rich_text: [
+          {
+            type: "text",
+            text: { content: `${icon} ${m.tag}  ─  ${m.count} 社（${percent}%）` },
+            annotations: { bold: true },
+          },
+        ],
+      },
+    };
+  });
+}
+
+// Pattern β: ステータス更新を「会社 / Before / After」テーブルで表示
+// Before: コードブロック書体（過去・参照）
+// After:  太字＋絵文字（決定事項・現在）
+function statusChangeTable(changes: StatusChangeLog[]): any[] {
+  if (changes.length === 0) return [];
+  const headerRow = {
+    type: "table_row",
+    table_row: {
+      cells: [
+        [{ type: "text", text: { content: "会社" }, annotations: { bold: true } }],
+        [{ type: "text", text: { content: "Before" }, annotations: { bold: true } }],
+        [{ type: "text", text: { content: "After" }, annotations: { bold: true } }],
+      ],
+    },
+  };
+  const dataRows = changes.map((c) => {
+    const companyCell = c.companyPageId
+      ? [{ type: "mention", mention: { type: "page", page: { id: c.companyPageId } } }]
+      : [{ type: "text", text: { content: c.companyName } }];
+    const beforeCell = [
+      {
+        type: "text",
+        text: { content: c.before ?? "(新規)" },
+        annotations: { code: true },
+      },
+    ];
+    const afterEmoji = STATUS_AFTER_EMOJI[c.after] ?? "✨";
+    const afterCell = [
+      {
+        type: "text",
+        text: { content: c.after },
+        annotations: { bold: true },
+      },
+      { type: "text", text: { content: ` ${afterEmoji}` } },
+    ];
+    return {
+      type: "table_row",
+      table_row: { cells: [companyCell, beforeCell, afterCell] },
+    };
+  });
+  return [
+    {
+      object: "block",
+      type: "table",
+      table: {
+        table_width: 3,
+        has_column_header: true,
+        has_row_header: false,
+        children: [headerRow, ...dataRows],
+      },
+    },
+  ];
 }
 
 function buildBlocks(args: {
   added: PageInfo[];
-  updated: PageInfo[];
+  statusChanges: StatusChangeLog[];
   timedOut: PageInfo[];
   start: Date;
   end: Date;
   mediaCounts: Record<string, number>;
   totalForMedia: number;
+  hasStatusLogDb: boolean;
 }): any[] {
   const blocks: any[] = [];
-  const { added, updated, timedOut, start, end, mediaCounts, totalForMedia } = args;
+  const { added, statusChanges, timedOut, start, end, mediaCounts, totalForMedia, hasStatusLogDb } = args;
 
   const days = process.env.REPORT_DAYS ? Number(process.env.REPORT_DAYS) : 0;
   const periodLabel = days > 0 ? `直近${days}日間で` : `${start.getFullYear()}年${start.getMonth() + 1}月は、`;
   const periodNoun = days > 0 ? `この${days}日間` : "今月";
   const mainSentence = added.length > 0
-    ? `${periodLabel}新しく ${added.length} 社が追加されました。ステータスが更新された会社は ${updated.length} 社です。`
-    : `${periodLabel}新しく追加された会社はありませんでした。ステータスが更新された会社は ${updated.length} 社です。`;
+    ? `${periodLabel}新しく ${added.length} 社が追加されました。ステータスが更新された会社は ${statusChanges.length} 社です。`
+    : `${periodLabel}新しく追加された会社はありませんでした。ステータスが更新された会社は ${statusChanges.length} 社です。`;
   blocks.push(callout(mainSentence, "💡"));
 
   blocks.push(paragraph(`期間: ${formatJapaneseDate(start)} 〜 ${formatJapaneseDate(new Date(end.getTime() - 1))}`, "gray"));
@@ -210,23 +317,12 @@ function buildBlocks(args: {
 
   blocks.push(heading(2, `📈 ${periodNoun}の動き`));
   blocks.push(paragraph(`🆕 新しく追加された会社        ${added.length} 社`));
-  blocks.push(paragraph(`♻️ ステータスが更新された会社  ${updated.length} 社`));
+  blocks.push(paragraph(`♻️ ステータスが更新された会社  ${statusChanges.length} 社`));
   blocks.push(paragraph(`⏰ タイムアウト（${TIMEOUT_DAYS}日反応なし→D）  ${timedOut.length} 社`));
   blocks.push(divider());
 
   blocks.push(heading(2, "🎯 どこから来たか（媒体別の内訳）"));
-  if (totalForMedia === 0) {
-    blocks.push(paragraph("（媒体別のデータはまだありません）", "gray"));
-  } else {
-    for (const tag of MEDIA_TAGS) {
-      const count = mediaCounts[tag] ?? 0;
-      const ratio = count / totalForMedia;
-      const percent = (ratio * 100).toFixed(0);
-      const bar = makeBar(ratio);
-      const icon = MEDIA_ICONS[tag] ?? "▫️";
-      blocks.push(paragraph(`${icon}  ${tag.padEnd(15, "　")}  ${bar}  ${count} 社（${percent}%）`));
-    }
-  }
+  blocks.push(...mediaBreakdownBlocks(mediaCounts, totalForMedia));
   blocks.push(divider());
 
   blocks.push(heading(2, "🆕 新しく追加された会社"));
@@ -249,16 +345,21 @@ function buildBlocks(args: {
   blocks.push(divider());
 
   blocks.push(heading(2, "♻️ ステータスが更新された会社"));
-  if (updated.length === 0) {
+  if (!hasStatusLogDb) {
+    blocks.push(
+      callout(
+        "ステータス変更ログDBが未設定のため、変更履歴は表示できません（NOTION_STATUS_CHANGE_LOG_DB_ID を設定してください）。",
+        "⚠️",
+        "yellow_background"
+      )
+    );
+  } else if (statusChanges.length === 0) {
     blocks.push(paragraph(`（${periodNoun}のステータス更新はありませんでした）`, "gray"));
   } else {
-    for (const tag of MEDIA_TAGS) {
-      const matching = updated.filter((p) => p.mediaTags.includes(tag));
-      if (matching.length === 0) continue;
-      const icon = MEDIA_ICONS[tag] ?? "▫️";
-      blocks.push(heading(3, `${icon} ${tag} (${matching.length} 社)`));
-      for (const p of matching) blocks.push(bullet(p));
-    }
+    blocks.push(
+      paragraph("Before は過去、After は新ステータスです。", "gray")
+    );
+    blocks.push(...statusChangeTable(statusChanges));
   }
   blocks.push(divider());
 
@@ -281,17 +382,24 @@ async function main() {
   const notion = buildNotionClient();
   const companiesDbId = getCompaniesDbId();
   const reportDbId = getReportDbId();
+  const statusLogDbId = getStatusChangeLogDbId();
 
   const pages = await fetchPagesInRange(notion, companiesDbId, start, end);
   console.log(`[monthly-report] 期間内変更ページ: ${pages.length} 件`);
 
-  const currentYear = String(start.getFullYear());
   const added = pages.filter((p) => p.createdAt >= start && p.createdAt < end);
-  const updated = pages.filter(
-    (p) =>
-      !(p.createdAt >= start && p.createdAt < end) &&
-      p.contactYears.includes(currentYear)
-  );
+
+  let statusChanges: StatusChangeLog[] = [];
+  if (statusLogDbId) {
+    try {
+      statusChanges = await fetchStatusChangesInRange(notion, statusLogDbId, start, end);
+      console.log(`[monthly-report] 変更ログ: ${statusChanges.length} 件`);
+    } catch (err: any) {
+      console.error(`[monthly-report] 変更ログ読込エラー: ${err?.message ?? err}`);
+    }
+  } else {
+    console.log("[monthly-report] NOTION_STATUS_CHANGE_LOG_DB_ID 未設定 → ステータス変更ログはスキップ");
+  }
 
   const timeoutMs = TIMEOUT_DAYS * 24 * 60 * 60 * 1000;
   const timedOut = pages.filter((p) => {
@@ -309,11 +417,20 @@ async function main() {
   const totalForMedia = Object.values(mediaCounts).reduce((a, b) => a + b, 0);
 
   console.log(`  新しく追加された会社: ${added.length}`);
-  console.log(`  ステータスが更新された会社: ${updated.length}`);
+  console.log(`  ステータスが更新された会社: ${statusChanges.length}`);
   console.log(`  タイムアウトで D に移行（推定）: ${timedOut.length}`);
   console.log(`  媒体内訳:`, mediaCounts);
 
-  const allBlocks = buildBlocks({ added, updated, timedOut, start, end, mediaCounts, totalForMedia });
+  const allBlocks = buildBlocks({
+    added,
+    statusChanges,
+    timedOut,
+    start,
+    end,
+    mediaCounts,
+    totalForMedia,
+    hasStatusLogDb: !!statusLogDbId,
+  });
   const firstBatch = allBlocks.slice(0, 90);
   const restBatches: any[][] = [];
   for (let i = 90; i < allBlocks.length; i += 90) {
@@ -327,7 +444,7 @@ async function main() {
       開始日: { date: { start: formatDate(start) } },
       終了日: { date: { start: formatDate(new Date(end.getTime() - 1)) } },
       新規追加件数: { number: added.length },
-      更新件数: { number: updated.length },
+      更新件数: { number: statusChanges.length },
       "Wantedly件数": { number: mediaCounts["Wantedly"] ?? 0 },
       "Green件数": { number: mediaCounts["Green"] ?? 0 },
       "直メール/フォーム件数": { number: mediaCounts["直メール/フォーム"] ?? 0 },
@@ -350,7 +467,7 @@ async function main() {
 
   await notifyMention(notion, {
     title: `📊 ${label} を公開しました`,
-    summary: `新しく追加された会社: ${added.length} 社、ステータスが更新された会社: ${updated.length} 社`,
+    summary: `新しく追加された会社: ${added.length} 社、ステータスが更新された会社: ${statusChanges.length} 社`,
     linkUrl: created.url,
     linkLabel: "▶ レポートを開く",
   });
