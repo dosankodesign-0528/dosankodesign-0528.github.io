@@ -395,12 +395,13 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
 /**
  * Awwwards スクレイパー
  *
- * 対象: Sites of the Day（/websites/sites_of_the_day/）+ Developer Award（/websites/developer/）
- * 戦略の選定理由:
+ * 対象: Sites of the Day（/websites/sites_of_the_day/）+ Made with Framer 棚
+ *
+ * 過去の戦略の遍歴:
  *   - Nominees は量が膨大（2024-01以降で約9300件）かつ品質振れ幅あり、除外
  *   - SOTD = Awwwards 編集部が日毎に1件だけ選ぶ受賞作。質が均一で最上位
- *   - Developer Award = コーディング/WebGL/インタラクション評価。現ギャラリーに薄い
- *     "海外の技術尖った作品" を補完できる
+ *   - Developer Award (元: 含めていた) → 2026-05 ユーザー要望で除外。
+ *     量が膨らむ + コーディング寄り評価でデザイン参考に弱い、と判断。
  *
  * 取得方法:
  *   各カードの <li class="col-3 js-collectable"> に data-collectable-model-value という
@@ -411,18 +412,28 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
 /**
  * Awwwards のセクション定義。
  * - Framer は「Made with Framer」専用棚。ここから来た結果は必ず framer シグナル確定。
- *   SOTD / Developer と重複したらこちらが先勝ち（seenSlugs）で framer シグナルを保持。
+ *   SOTD と重複したらこちらが先勝ち（seenSlugs）で framer シグナルを保持。
  * - 順序重要：Framer を先頭に置いて先勝ちさせる。
  */
 const AWWWARDS_SECTIONS: { name: string; path: string; forceSignals?: string[] }[] = [
   { name: "Framer", path: "framer", forceSignals: ["framer"] },
   { name: "SOTD", path: "sites_of_the_day" },
-  { name: "Developer", path: "developer" },
 ];
 
-// 日本サイトの商用中心ソースと被りにくいよう、awwwards は最新1年に絞る。
-// 他ソース (CUTOFF_DATE=2024-01) と別設定にして運用しやすく。
-const AWWWARDS_CUTOFF_DATE = "2025-01";
+/**
+ * Awwwards のカットオフ月を実行時点の「6ヶ月前」で動的に算出。
+ * 例: 2026-05 に実行 → "2025-12" 以降を取得対象。
+ *
+ * 海外アワードは更新頻度が高く、毎月30件以上が積み上がる。運用負荷を下げる目的で
+ * 「直近6ヶ月」だけを取り込み、それより古いものは捨てる方針。
+ * 既存データは scripts/filter-awwwards.ts でも別途バッチ削除する運用。
+ */
+function awwwardsCutoffDate(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 6);
+  return d.toISOString().slice(0, 7);
+}
+const AWWWARDS_CUTOFF_DATE = awwwardsCutoffDate();
 
 interface AwwwardsCardPayload {
   collectableIdentifier?: string;
