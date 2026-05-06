@@ -563,8 +563,45 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
     }
   }
 
-  console.log(`  Awwwards 合計: ${results.length} 件`);
-  return results;
+  console.log(`  Awwwards 合計（キャップ前）: ${results.length} 件`);
+  const capped = capAwwwardsByMonth(results);
+  console.log(`  Awwwards 月キャップ後: ${capped.length} 件（SOTD ${AWWWARDS_SOTD_PER_MONTH}件 + Framer ${AWWWARDS_FRAMER_PER_MONTH}件 / 月）`);
+  return capped;
+}
+
+/**
+ * Awwwards の月キャップ。
+ * 月あたり SOTD 8件 + Framer 4件 = 12件 までに絞る。
+ *
+ * 背景: SOTD/Framer 棚はそれぞれ月20-25件入ってきて、合計で月30-40件になる。
+ * これが日本のメディア（SANKOU/MUUUUU など）と肩を並べて一覧で目立ちすぎ、
+ * 国内のキュレーションが埋もれるというユーザー要望（2026-05）。
+ *
+ * Framer 由来は signals に "framer" を持つ（先勝ちで確定）。それ以外は SOTD 扱い。
+ * results は scrapeAwwwards の中でページ新着順に積まれているので、月内では
+ * 「先に出てきた = 新しい」順に残す。
+ */
+const AWWWARDS_SOTD_PER_MONTH = 8;
+const AWWWARDS_FRAMER_PER_MONTH = 4;
+function capAwwwardsByMonth(sites: ScrapedSite[]): ScrapedSite[] {
+  const sotdCount = new Map<string, number>();
+  const framerCount = new Map<string, number>();
+  const kept: ScrapedSite[] = [];
+  for (const s of sites) {
+    const m = s.date || "";
+    const isFramer = (s.signals || []).includes("framer");
+    if (isFramer) {
+      const c = framerCount.get(m) || 0;
+      if (c >= AWWWARDS_FRAMER_PER_MONTH) continue;
+      framerCount.set(m, c + 1);
+    } else {
+      const c = sotdCount.get(m) || 0;
+      if (c >= AWWWARDS_SOTD_PER_MONTH) continue;
+      sotdCount.set(m, c + 1);
+    }
+    kept.push(s);
+  }
+  return kept;
 }
 
 // ============================================================
