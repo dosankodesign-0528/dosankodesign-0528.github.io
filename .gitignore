@@ -3,3 +3,6 @@ _site/
 
 # Claude Code worktrees (生成物。リポジトリに追跡しない)
 .claude/worktrees/
+
+# macOS が勝手に作るやつ
+.DS_Store
