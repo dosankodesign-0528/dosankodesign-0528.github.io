@@ -19948,6 +19948,20 @@
     "lastCheckedAt": "2026-04-29T14:32:27.174Z"
   },
   {
+    "id": "a2f3ccea43ba",
+    "title": "豊田自動織機技能専修学園",
+    "url": "https://gakuen.toyota-shokki.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/04/image-10.webp",
+    "source": "muuuuu",
+    "category": [
+      "school"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-05-06T03:36:09.286Z"
+  },
+  {
     "id": "f3b9eb998cb6",
     "title": "vivace",
     "url": "https://vivace-inc.co.jp/",
@@ -51828,34 +51842,6 @@
     "lastCheckedAt": "2026-05-02T04:57:59.191Z"
   },
   {
-    "id": "f5588de5f9a6",
-    "title": "Marrow",
-    "url": "https://www.marrow.au/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6926507b4585d932537936.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Culture & Education",
-      "Design Agencies",
-      "Clean",
-      "Colorful",
-      "Flat Design",
-      "Data Visualization",
-      "Content architecture",
-      "Copy design",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-12",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-05-02T03:05:55.832Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-05-02T04:57:59.710Z"
-  },
-  {
     "id": "1f6144772c7a",
     "title": "Nudie Jeans",
     "url": "https://www.nudiejeans.com",
@@ -51883,6 +51869,34 @@
     "firstSeen": "2026-05-02T03:05:55.832Z",
     "isDead": false,
     "lastCheckedAt": "2026-05-02T04:57:59.058Z"
+  },
+  {
+    "id": "f5588de5f9a6",
+    "title": "Marrow",
+    "url": "https://www.marrow.au/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6926507b4585d932537936.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Culture & Education",
+      "Design Agencies",
+      "Clean",
+      "Colorful",
+      "Flat Design",
+      "Data Visualization",
+      "Content architecture",
+      "Copy design",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "signals": [
+      "framer"
+    ],
+    "firstSeen": "2026-05-02T03:05:55.832Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-05-02T04:57:59.710Z"
   },
   {
     "id": "9f044468baaa",
@@ -52380,6 +52394,31 @@
     "firstSeen": "2026-05-02T03:05:55.832Z",
     "isDead": false,
     "lastCheckedAt": "2026-05-02T04:58:00.814Z"
+  },
+  {
+    "id": "5f551d0520a0",
+    "title": "ASTRODITHER",
+    "url": "https://astrodither.robertborghesi.is/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/69973123afddb354875962.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "Animation",
+      "Colorful",
+      "Fullscreen",
+      "Single page",
+      "WebGL",
+      "Experimental",
+      "Three.js",
+      "3D",
+      "Filters and Effects",
+      "Astro"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-06T03:36:09.286Z"
   },
   {
     "id": "719da0240c35",
