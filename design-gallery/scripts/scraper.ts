@@ -19,6 +19,13 @@ import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
 // (YYYY-MM 形式。この月より前の date を持つエントリは最終出力から除外)
 const CUTOFF_DATE = "2024-01";
 
+// UI で見える件数の上限（isDead と Eagle 重複を引いた "実質表示数"）
+// 超過時の削除優先順:
+//   1) source === "awwwards" を古い順
+//   2) それでも超えるなら全ソース横断で古い順
+//   3) starred === true は保護（絶対残す）
+const MAX_VISIBLE_SITES = 2000;
+
 // Eagle ローカル API（起動中なら localhost:41595 で叩ける）
 const EAGLE_API = "http://localhost:41595/api/item/list?limit=10000";
 
@@ -837,8 +844,48 @@ async function main() {
   }
   console.log(`  新規検出: ${newlyDetected} 件`);
 
+  // ============================================================
+  // 2000 件キャップ：UI で見える件数（!isDead && !Eagle重複）が
+  // MAX_VISIBLE_SITES を超えないよう、超過分を古い順に削除する。
+  // - awwwards を最優先で削る（海外アワード）
+  // - 足りなければ全ソース横断で古い順
+  // - starred=true は保護
+  // - Eagle が取得できなかった run はスキップ（誤って削りすぎないため）
+  // ============================================================
+  let finalSites = afterEagle;
+  if (eagleUrls.size === 0) {
+    console.log(`  📐 2000件キャップ: Eagle取得失敗のためスキップ`);
+  } else {
+    // afterEagle は既に Eagle 重複を引いた集合。ここから isDead を更に引いたものが UI 上の母数。
+    const visibleApprox = afterEagle.filter((s) => !s.isDead).length;
+    if (visibleApprox <= MAX_VISIBLE_SITES) {
+      console.log(`  📐 2000件キャップ: 余裕あり（${visibleApprox} / ${MAX_VISIBLE_SITES}）`);
+    } else {
+      const overflow = visibleApprox - MAX_VISIBLE_SITES;
+      // 削除候補: starred と isDead は対象外
+      const candidates = afterEagle
+        .filter((s) => !s.isDead && !s.starred)
+        .sort((a, b) => {
+          // 1) awwwards を先頭に（海外アワードを優先で削る）
+          const aIsAw = a.source === "awwwards" ? 0 : 1;
+          const bIsAw = b.source === "awwwards" ? 0 : 1;
+          if (aIsAw !== bIsAw) return aIsAw - bIsAw;
+          // 2) date 古い順 (YYYY-MM 文字列比較)
+          return (a.date || "").localeCompare(b.date || "");
+        });
+      const dropIds = new Set(candidates.slice(0, overflow).map((s) => s.id));
+      finalSites = afterEagle.filter((s) => !dropIds.has(s.id));
+      const droppedAwwwards = candidates
+        .slice(0, overflow)
+        .filter((s) => s.source === "awwwards").length;
+      console.log(
+        `  📐 2000件キャップ適用: ${visibleApprox} → ${MAX_VISIBLE_SITES}（${overflow} 件削除、うち awwwards ${droppedAwwwards} 件）`
+      );
+    }
+  }
+
   // JSON保存
-  fs.writeFileSync(outputPath, JSON.stringify(afterEagle, null, 2), "utf-8");
+  fs.writeFileSync(outputPath, JSON.stringify(finalSites, null, 2), "utf-8");
   console.log(`\n✅ 保存完了: ${outputPath}`);
 
   // メタ情報保存（クライアントがベースライン時刻として使う）
