@@ -1,5 +1,35 @@
 [
   {
+    "id": "75cbc5d3f7e7",
+    "title": "男を輝かせるBarber | DAN BRISE",
+    "url": "https://www.danbrise-barber.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/danbrisebarber_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:29.343Z"
+  },
+  {
+    "id": "1a155657dde7",
+    "title": "SANU 2nd Home Weekday | 月額5.5万円で使える別荘で自然を日常に",
+    "url": "https://www.sa-nu.com/weekday",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/sanuweekday_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-08T03:33:53.363Z"
+  },
+  {
     "id": "51f432e0209d",
     "title": "こばクリニック",
     "url": "https://koba-clinic.jp/",
@@ -1176,9 +1206,9 @@
     "lastCheckedAt": "2026-04-29T14:31:21.560Z"
   },
   {
-    "id": "8369b9aeb4f8",
+    "id": "00555ba507e0",
     "title": "UPVEGE",
-    "url": "https://upvege.com/",
+    "url": "https://www.upvege.com/",
     "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/upvege_t-400x350.jpg",
     "source": "sankou",
     "category": [
@@ -1880,9 +1910,9 @@
     "lastCheckedAt": "2026-04-29T14:31:24.428Z"
   },
   {
-    "id": "f94e6ab0e255",
+    "id": "dca80ec46cf8",
     "title": "GANYMEDE株式会社",
-    "url": "https://gnmd.co.jp/",
+    "url": "https://gnmd.com/",
     "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/ganymede_t-400x350.jpg",
     "source": "sankou",
     "category": [
@@ -1893,7 +1923,7 @@
     "starred": false,
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:31:26.101Z"
+    "lastCheckedAt": "2026-04-29T14:32:28.816Z"
   },
   {
     "id": "051c7665c178",
@@ -3318,22 +3348,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:49:33.354Z"
-  },
-  {
-    "id": "490398268a96",
-    "title": "星野リゾートLP WOOLRICH 公式オンラインストア",
-    "url": "https://www.woolrich.jp/woolrichwonderfulwinter",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/woolrichwonderfulwinter_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "e8f9537e482f",
@@ -5720,22 +5734,6 @@
     "lastCheckedAt": "2026-04-29T14:31:38.072Z"
   },
   {
-    "id": "8de253618e5e",
-    "title": "丸亀シェイクぴっぴ | ここのうどんは、生きている。丸亀製麺",
-    "url": "https://jp.marugame.com/menu/marugameshakepippi/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/marugameshakepippi_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
-  },
-  {
     "id": "81a9e3d8e744",
     "title": "CurioUs | 好奇心を描くドラマとドキュメンタリー | IHI 空領域キャリア採用",
     "url": "https://www.ihi.co.jp/recruit/career/aerospace/special-contents/curious/",
@@ -6536,9 +6534,9 @@
     "lastCheckedAt": "2026-04-29T14:31:43.984Z"
   },
   {
-    "id": "dff0808a3542",
+    "id": "c6cbdca02607",
     "title": "愛犬との日常をそのまま自然の中へ。月3万円で始める自然の中のシェア別荘 | SANU 2nd Home Co-Owners",
-    "url": "https://dogfriendly.sa-nu.com/",
+    "url": "https://www.sa-nu.com/lp/co-owners-dog",
     "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/sanudogfriendly_t-400x350.jpg",
     "source": "sankou",
     "category": [
@@ -6547,9 +6545,7 @@
     "taste": [],
     "date": "2025-05",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:31:41.222Z"
+    "firstSeen": "2026-05-08T03:33:53.363Z"
   },
   {
     "id": "62469ea87e14",
@@ -6664,9 +6660,9 @@
     "lastCheckedAt": "2026-04-29T14:31:41.033Z"
   },
   {
-    "id": "e339cb9ab65f",
+    "id": "99b4c73b4b52",
     "title": "doda PRESENTS: パ･リーグ球団 仕事図鑑2025",
-    "url": "https://onground.doda.jp/shigotozukan2025",
+    "url": "https://onground-special.doda.jp/shigotozukan2025",
     "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/shigotozukan2025_t-400x350.jpg",
     "source": "sankou",
     "category": [
@@ -6675,9 +6671,7 @@
     "taste": [],
     "date": "2025-05",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
+    "firstSeen": "2026-05-08T03:33:53.363Z"
   },
   {
     "id": "3c3157628bb5",
@@ -6936,9 +6930,9 @@
     "lastCheckedAt": "2026-04-29T14:31:46.012Z"
   },
   {
-    "id": "4be0070868f4",
+    "id": "a5afd9266b4a",
     "title": "Golden Record inc.",
-    "url": "https://www.goldenrecord.jp/",
+    "url": "https://goldenrecord.jp/",
     "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/goldenrecordinc_t-400x350.jpg",
     "source": "sankou",
     "category": [
@@ -7990,22 +7984,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:31:45.581Z"
-  },
-  {
-    "id": "1d2d9ac7efc7",
-    "title": "かわかみゆいか",
-    "url": "https://yuika-portfolio-b.site/index.html",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/yuikaportfolio_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-04-29T14:52:27.981Z"
   },
   {
     "id": "f2d003ab6cac",
@@ -19912,6 +19890,22 @@
     "lastCheckedAt": "2026-04-29T14:32:27.174Z"
   },
   {
+    "id": "f179aef6f214",
+    "title": "果思設計",
+    "url": "https://www.goonsdesign.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/04/image-5.webp",
+    "source": "muuuuu",
+    "category": [
+      "gray"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:34.410Z"
+  },
+  {
     "id": "d38690b0b742",
     "title": "四国洗機工業株式会社",
     "url": "https://www.shikokusenki.com/",
@@ -20624,22 +20618,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:28.838Z"
-  },
-  {
-    "id": "f72b0c01b657",
-    "title": "GANYMEDE株式会社",
-    "url": "https://gnmd.com/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/18.webp",
-    "source": "muuuuu",
-    "category": [
-      "gray"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:28.816Z"
   },
   {
     "id": "9a9a996248ba",
@@ -30305,6 +30283,20 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "a250e9de06a4",
+    "title": "赤庄産業株式会社",
+    "url": "https://akasho-sangyo.com/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260508_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-08T03:33:53.363Z"
+  },
+  {
     "id": "68196d1df650",
     "title": "株式会社Z┃採用サイト",
     "url": "https://z-mobility.co.jp/",
@@ -33101,6 +33093,22 @@
     "lastCheckedAt": "2026-04-29T14:33:26.970Z"
   },
   {
+    "id": "657b875cf8fb",
+    "title": "GANYMEDE株式会社",
+    "url": "https://gnmd.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251029_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:31:26.101Z"
+  },
+  {
     "id": "806bdc940229",
     "title": "Archipelago Architects Studio",
     "url": "https://pelago-studio.com/",
@@ -33787,22 +33795,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:29.525Z"
-  },
-  {
-    "id": "0f0336866dbe",
-    "title": "DAN BRISE",
-    "url": "https://www.danbrise-barber.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250916_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "実店舗・商業施設"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:29.343Z"
   },
   {
     "id": "660be1a3d311",
@@ -34603,22 +34595,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:36.469Z"
-  },
-  {
-    "id": "a38ad47bd2c8",
-    "title": "GOONS",
-    "url": "https://www.goonsdesign.com/",
-    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260216_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "デザイン事務所・制作会社"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:34.410Z"
   },
   {
     "id": "3e813ccb6548",
@@ -39661,6 +39637,20 @@
     "lastCheckedAt": "2026-04-29T14:34:08.641Z"
   },
   {
+    "id": "92907000b891",
+    "title": "Bedouin's Daughter",
+    "url": "https://bedouinsdaughter.com/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260507_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "美容・健康・化粧品"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-08T03:33:53.363Z"
+  },
+  {
     "id": "d80796f654fb",
     "title": "Overlay",
     "url": "https://www.overlay.com/",
@@ -42892,22 +42882,6 @@
     "lastCheckedAt": "2026-04-29T14:34:21.509Z"
   },
   {
-    "id": "9d51b90d2680",
-    "title": "Flow",
-    "url": "https://labs.google/flow/about",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250530_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "情報・WEBサービス"
-    ],
-    "taste": [],
-    "date": "2025-05",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:21.686Z"
-  },
-  {
     "id": "8719a750f6fe",
     "title": "有限会社わらしべ",
     "url": "https://taiyaki-warashibe.com/",
@@ -44570,6 +44544,22 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:34:27.914Z"
+  },
+  {
+    "id": "88e8fa83c61f",
+    "title": "丸亀シェイクぴっぴ｜丸亀製麺",
+    "url": "https://jp.marugame.com/menu/marugameshakepippi/",
+    "thumbnailUrl": "https://sp.webdesignclip.com/wp-content/uploads/20250624_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "飲食・レストラン"
+    ],
+    "taste": [],
+    "date": "2025-06",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": true,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "9c4cbcc1f3bf",
@@ -49452,6 +49442,32 @@
     "firstSeen": "2026-05-05T03:03:16.885Z"
   },
   {
+    "id": "cb1a1d141033",
+    "title": "Evagria",
+    "url": "https://evagria.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69efa87690b92126544964.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Fashion",
+      "Big Background Images",
+      "Clean",
+      "Flat Design",
+      "Fullscreen",
+      "Minimal",
+      "Photography",
+      "About Page",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "signals": [
+      "framer"
+    ],
+    "firstSeen": "2026-05-08T03:33:53.363Z"
+  },
+  {
     "id": "2ba136a255c6",
     "title": "Scottish Malt Whisky Society",
     "url": "https://outturn.smwsa.com/",
@@ -50078,6 +50094,29 @@
       "framer"
     ],
     "firstSeen": "2026-05-07T03:37:16.313Z"
+  },
+  {
+    "id": "891cdbd11edf",
+    "title": "Marvell Tile & Stone",
+    "url": "https://www.marvellco.com.au/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699e9384cebdf213503112.png",
+    "source": "awwwards",
+    "category": [
+      "Architecture",
+      "Business & Corporate",
+      "Big Background Images",
+      "Clean",
+      "Minimal",
+      "Transitions",
+      "React",
+      "Gestures / Interaction",
+      "Next.js",
+      "Luxury"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-08T03:33:53.363Z"
   },
   {
     "id": "57397ebf44a5",
