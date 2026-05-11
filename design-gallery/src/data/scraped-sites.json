@@ -19658,6 +19658,22 @@
     "firstSeen": "2026-05-09T03:34:10.032Z"
   },
   {
+    "id": "f22df75daf33",
+    "title": "横浜銀行 IT・デジタル人財向け採用サイト",
+    "url": "https://redesign.boy.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/10.webp",
+    "source": "muuuuu",
+    "category": [
+      "finance"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:20.335Z"
+  },
+  {
     "id": "a70cc891d324",
     "title": "peace put",
     "url": "https://peaceput.com/",
@@ -26420,22 +26436,6 @@
     "lastCheckedAt": "2026-04-29T14:33:02.300Z"
   },
   {
-    "id": "a0908790e32b",
-    "title": "DreamCube",
-    "url": "https://www.dreamcube.com.au/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2024/10/37.jpg",
-    "source": "muuuuu",
-    "category": [
-      "building"
-    ],
-    "taste": [],
-    "date": "2024-10",
-    "starred": false,
-    "firstSeen": "2026-04-22T14:57:30.657Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:00.652Z"
-  },
-  {
     "id": "f547a1dcb7ff",
     "title": "だれもが文化でつながる国際会議2024",
     "url": "https://www.creativewell-conference.jp/#top",
@@ -26450,6 +26450,22 @@
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:59.956Z"
+  },
+  {
+    "id": "a0908790e32b",
+    "title": "DreamCube",
+    "url": "https://www.dreamcube.com.au/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2024/10/37.jpg",
+    "source": "muuuuu",
+    "category": [
+      "building"
+    ],
+    "taste": [],
+    "date": "2024-10",
+    "starred": false,
+    "firstSeen": "2026-04-22T14:57:30.657Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:00.652Z"
   },
   {
     "id": "7239fc352263",
@@ -30099,6 +30115,20 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "3f4bca5f1f69",
+    "title": "SEKAI NO OWARI オフィシャルサイト",
+    "url": "https://sekainoowari.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260511_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "音楽・ライブ"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-11T03:56:16.009Z"
+  },
+  {
     "id": "a250e9de06a4",
     "title": "赤庄産業株式会社",
     "url": "https://akasho-sangyo.com/",
@@ -30587,22 +30617,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:20.255Z"
-  },
-  {
-    "id": "930a85c04620",
-    "title": "横浜銀行 IT・デジタル人財向け採用サイト",
-    "url": "https://redesign.boy.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260406_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "採用サイト・転職・求人"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:20.335Z"
   },
   {
     "id": "a904f533da51",
@@ -49928,6 +49942,25 @@
     "firstSeen": "2026-05-10T03:43:49.827Z"
   },
   {
+    "id": "23a19524c140",
+    "title": "XOX",
+    "url": "https://xox.makemepulse.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69ca528a45842696920253.png",
+    "source": "awwwards",
+    "category": [
+      "Games & Entertainment",
+      "Web & Interactive",
+      "Animation",
+      "Colorful",
+      "WebGL",
+      "Experimental"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-11T03:56:16.009Z"
+  },
+  {
     "id": "2676994f681b",
     "title": "Simonholm.studio",
     "url": "https://www.simonholm.studio",
@@ -50060,31 +50093,6 @@
       "3D",
       "Gestures / Interaction",
       "Interaction Design"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-10T03:43:49.827Z"
-  },
-  {
-    "id": "61dbd2acd28e",
-    "title": "Fourmula AI",
-    "url": "https://fourmula.ai",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698b1840cd96e726332342.jpg",
-    "source": "awwwards",
-    "category": [
-      "Web & Interactive",
-      "Animation",
-      "Navigation Menu",
-      "Scrolling",
-      "Typography",
-      "Photography",
-      "Transitions",
-      "GSAP",
-      "UI design",
-      "Startups",
-      "Webflow",
-      "Figma"
     ],
     "taste": [],
     "date": "2026-05",
