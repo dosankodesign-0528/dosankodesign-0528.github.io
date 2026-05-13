@@ -9,6 +9,7 @@ import {
   findCompany,
   getCompaniesDbId,
   getStatusChangeLogDbId,
+  setDuplicateFlag,
   syncLastKnownStatus,
   updateCompany,
   updateCompanyStatus,
@@ -20,6 +21,8 @@ import { notifyMention, type NotifyEntry } from "./notify.js";
 import { assertSchemaOrFail } from "./schema-check.js";
 import { resolveSchema, type StatusOptionKey } from "./schema-resolver.js";
 import { selfHealSchema } from "./schema-restorer.js";
+import { findDuplicateGroups, collectDuplicatedPageIds, type DuplicateGroup } from "./duplicates.js";
+import { findNewGroups, saveState } from "./duplicate-state.js";
 import {
   detectStatusFromMessage,
   isManualReviewCandidate,
@@ -270,6 +273,7 @@ async function main() {
             lastContactAt: msg.date,
             lastKnownStatus: initialKey,
             lastKnownStatusKey: initialKey,
+            duplicateFlag: false,
           });
           if (detection) {
             statusChanges.push({
@@ -355,6 +359,48 @@ async function main() {
     });
   }
 
+  // ============ 重複検知 ============
+  // DB 内に「同じ URL ドメイン」「正規化名一致（表記揺れ吸収）」のレコードが2件以上あれば重複疑い。
+  // Notion 側「重複疑い」checkbox を立てる/外す + 新規発生時のみ通知ページにメンション。
+  try {
+    const refreshed = await fetchAllCompanies(notion, dbId, schema);
+    const dupGroups = findDuplicateGroups(refreshed);
+    const dupIds = collectDuplicatedPageIds(dupGroups);
+    let flagOn = 0;
+    let flagOff = 0;
+    for (const c of refreshed) {
+      if (!c.pageId) continue;
+      const shouldBe = dupIds.has(c.pageId);
+      if (shouldBe === c.duplicateFlag) continue;
+      try {
+        await setDuplicateFlag(notion, compSchema, c.pageId, shouldBe);
+        if (shouldBe) flagOn++; else flagOff++;
+      } catch (err: any) {
+        console.error(`  duplicate flag update error: ${c.name}: ${err?.message ?? err}`);
+      }
+    }
+    console.log(`[duplicates] グループ数: ${dupGroups.length} / 旗ON: ${flagOn} / 旗OFF: ${flagOff}`);
+
+    const newGroups = findNewGroups(dupGroups);
+    if (newGroups.length > 0) {
+      const lines = newGroups.slice(0, 10).map(formatDupLine).join("\n\n");
+      const more = newGroups.length > 10 ? `\n…他 ${newGroups.length - 10} 件` : "";
+      try {
+        await notifyMention(notion, {
+          title: `🔁 重複登録 ${newGroups.length} 件を新たに検知`,
+          summary:
+            "同じ会社が複数レコードで登録されている可能性があります。「重複疑い」チェックボックスがONの会社をNotionで確認して、不要なほうを削除してください。\n\n" +
+            lines + more,
+        });
+      } catch (e) {
+        console.error("[duplicates] 通知失敗", e);
+      }
+    }
+    saveState(dupGroups);
+  } catch (err: any) {
+    console.error("[duplicates] 検知処理失敗:", err?.message ?? err);
+  }
+
   const finishedAt = new Date();
   const duration = (finishedAt.getTime() - startedAt.getTime()) / 1000;
   console.log(
@@ -363,6 +409,14 @@ async function main() {
   if (stats.errorDetails.length) {
     console.log(`[eigyo-tracker] error details:\n${stats.errorDetails.join("\n")}`);
   }
+}
+
+function formatDupLine(g: DuplicateGroup): string {
+  const kind = g.kind === "domain" ? `🌐 ドメイン一致 (${g.key})` : `📝 名前一致 (${g.key})`;
+  const items = g.members
+    .map((m) => `  • ${m.name}${m.url ? ` — ${m.url}` : ""}`)
+    .join("\n");
+  return `${kind}\n${items}`;
 }
 
 main().catch((err) => {

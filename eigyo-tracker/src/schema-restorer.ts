@@ -41,6 +41,9 @@ export async function restoreMissing(
         case "rich_text":
           propConfig.rich_text = {};
           break;
+        case "checkbox":
+          propConfig.checkbox = {};
+          break;
         case "relation":
           // relation は target が必要。companies DB 向け固定。
           propConfig.relation = { database_id: companiesDbId, type: "single_property", single_property: {} };

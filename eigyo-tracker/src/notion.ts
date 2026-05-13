@@ -183,6 +183,7 @@ export async function fetchAllCompanies(
       const status = readSelect(props[names.STATUS]);
       const lastContactAt = readDate(props[names.LAST_CONTACT]);
       const lastKnownRaw = readRichText(props[names.LAST_KNOWN]);
+      const dupFlag = readCheckbox(props[names.DUP_FLAG]);
       // lastKnownStatus は内部 key (例 "WAITING") で保存している前提。
       // 旧フォーマットの「現在 name」が残っていれば逆引きで救済。
       let lastKnownStatusKey: StatusOptionKey | null = null;
@@ -204,6 +205,7 @@ export async function fetchAllCompanies(
         lastContactAt,
         lastKnownStatus: lastKnownRaw || null,
         lastKnownStatusKey,
+        duplicateFlag: dupFlag,
       });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
@@ -286,6 +288,21 @@ export async function syncLastKnownStatus(
   });
 }
 
+export async function setDuplicateFlag(
+  notion: Client,
+  compSchema: CompaniesSchema,
+  pageId: string,
+  flag: boolean
+): Promise<void> {
+  const names = compSchema.props;
+  await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      [names.DUP_FLAG]: { checkbox: flag },
+    },
+  });
+}
+
 export async function updateLastContact(
   notion: Client,
   compSchema: CompaniesSchema,
@@ -353,6 +370,11 @@ function readSelect(prop: any): string | null {
 function readRichText(prop: any): string {
   if (!prop || prop.type !== "rich_text") return "";
   return (prop.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("");
+}
+
+function readCheckbox(prop: any): boolean {
+  if (!prop || prop.type !== "checkbox") return false;
+  return !!prop.checkbox;
 }
 
 function readDate(prop: any): Date | null {

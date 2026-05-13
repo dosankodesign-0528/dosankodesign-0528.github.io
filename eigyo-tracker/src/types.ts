@@ -46,6 +46,8 @@ export interface CompanyRecord {
   lastKnownStatus: string | null;
   /** lastKnownStatus を内部 role key に解決したもの */
   lastKnownStatusKey: StatusOptionKey | null;
+  /** Notion 側「重複疑い」checkbox の現在値 */
+  duplicateFlag: boolean;
 }
 
 export interface SyncStats {

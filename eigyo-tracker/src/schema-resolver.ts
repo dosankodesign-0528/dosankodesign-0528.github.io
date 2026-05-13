@@ -18,6 +18,7 @@ export const COMPANIES_ROLES = [
   "STATUS",
   "LAST_CONTACT",
   "LAST_KNOWN",
+  "DUP_FLAG",
 ] as const;
 export type CompaniesRole = (typeof COMPANIES_ROLES)[number];
 
@@ -93,6 +94,7 @@ const COMPANIES_PROP_INITIAL: { [K in CompaniesRole]: PropInitial } = {
   STATUS:       { name: "ステータス", type: "select", options: STATUS_OPTION_INITIAL },
   LAST_CONTACT: { name: "最終接触日", type: "date" },
   LAST_KNOWN:   { name: "前回ステータス（自動）", type: "rich_text" },
+  DUP_FLAG:     { name: "重複疑い", type: "checkbox" },
 };
 
 const STATUS_LOG_PROP_INITIAL: { [K in StatusLogRole]: PropInitial } = {
