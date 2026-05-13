@@ -38,6 +38,12 @@ function withViewTransition(fn: () => void) {
   });
 }
 
+// UI に出す「プール」の上限。
+// 生きてて非表示じゃないサイトを新着順で並べて、先頭からこの件数だけを
+// すべてのフィルター・タブ操作の母集団にする。古い分は scraped-sites.json
+// 側にデータとしては残るが、UI には一切出さない。広げたい時はこの数字だけ変える。
+const VISIBLE_POOL_CAP = 1000;
+
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
@@ -245,13 +251,22 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     return m;
   }, [sites]);
 
+  // 表示母集団（プール）。
+  // 生きてて非表示じゃないサイトの中から新着順で先頭 VISIBLE_POOL_CAP 件だけ残す。
+  // フィルター・タブ操作・件数表示は全部このプール内で動く。
+  // Eagle 重複もこのプールには含めて、Gallery 表示時に除外する方式
+  //（こうしないと Eagle 増減で古いサイトが浮上してきて挙動が読みにくい）。
+  const pool = useMemo<SiteEntry[]>(() => {
+    const alive = sites.filter((s) => !s.isDead && !hiddenIds.has(s.id));
+    // 新着順で並べてキャップする。並びは「日付の降順」。
+    const sorted = [...alive].sort((a, b) => b.date.localeCompare(a.date));
+    return sorted.slice(0, VISIBLE_POOL_CAP);
+  }, [sites, hiddenIds]);
+
   // Eagle以外のフィルタを通したベース（ソート・ラウンドロビンまで済）
+  // 母集団は pool（最大 VISIBLE_POOL_CAP 件）。dead/hidden は pool で既に弾いてある。
   const baseFiltered = useMemo(() => {
-    const filtered = sites.filter((site) => {
-      // リンク切れは常に非表示（断捨離）
-      if (site.isDead) return false;
-      // 「もう見ない」で非表示化されたサイトは全モードから除外
-      if (hiddenIds.has(site.id)) return false;
+    const filtered = pool.filter((site) => {
       if (filter.viewMode === "unchecked" && site.starred) return false;
       if (filter.search) {
         const q = filter.search.toLowerCase();
@@ -312,7 +327,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       idx++;
     }
     return interleaved;
-  }, [sites, filter, hiddenIds]);
+  }, [pool, filter]);
 
   // Eagleに含まれていて「本来なら表示されるはず」だったサイト
   const eagleExcludedSites = useMemo<SiteEntry[]>(() => {
@@ -334,18 +349,17 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     });
   }, [baseFiltered, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
-  // 分母に使う「生きてる」全サイト数。
-  // hideEagleDuplicates=true の時は Eagle 重複を母数から外し、false の時は含める。
-  // hiddenIds で非表示にしたサイトも母数から外す（ユーザー視点では「もう存在しない」扱い）。
+  // 分母に使う「表示中プールの中で見られるサイト数」。
+  // pool 自体が VISIBLE_POOL_CAP で頭打ちなので、これも最大 VISIBLE_POOL_CAP。
+  // hideEagleDuplicates=true の時は pool 内の Eagle 重複を母数から外す。
   const totalCount = useMemo<number>(() => {
-    const alive = sites.filter((s) => !s.isDead && !hiddenIds.has(s.id));
-    if (!hideEagleDuplicates) return alive.length;
-    if (!eagleUrls || eagleUrls.size === 0) return alive.length;
-    return alive.filter((s) => {
+    if (!hideEagleDuplicates) return pool.length;
+    if (!eagleUrls || eagleUrls.size === 0) return pool.length;
+    return pool.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     }).length;
-  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates, hiddenIds]);
+  }, [pool, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // 非表示にしたサイトの実体（モーダル表示用）。新しい順。
   const hiddenSites = useMemo<SiteEntry[]>(() => {
@@ -357,25 +371,24 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
 
   // シグナル（Framer / スタジオ / プロダクション）ごとの件数。
   // FilterModal に渡して「何件ヒットしているか」の目安表示に使う。
-  // 生きてて Eagle にも入ってない母集団で数える。
+  // 表示中プール（最大 VISIBLE_POOL_CAP 件）の中で、必要なら Eagle 重複を除いて数える。
   const signalCounts = useMemo<Partial<Record<SiteSignal, number>>>(() => {
     const counts: Partial<Record<SiteSignal, number>> = {};
-    const aliveNonEagle = sites.filter((s) => {
-      if (s.isDead) return false;
+    const visible = pool.filter((s) => {
       if (hideEagleDuplicates && eagleUrls && eagleUrls.size > 0) {
         const n = normalizedUrlBySite.get(s.id);
         if (n && eagleUrls.has(n)) return false;
       }
       return true;
     });
-    for (const s of aliveNonEagle) {
+    for (const s of visible) {
       const sigs = s.signals ?? [];
       for (const sig of sigs) {
         counts[sig] = (counts[sig] ?? 0) + 1;
       }
     }
     return counts;
-  }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
+  }, [pool, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
   // 「未確認」モードのときはカードがその場で消えるので、View Transitions API で
