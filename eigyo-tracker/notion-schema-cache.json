@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "lastResolvedAt": "2026-05-13T05:30:32.302Z",
+  "schemaVersion": 2,
+  "lastResolvedAt": "2026-05-13T05:44:08.757Z",
   "companies": {
     "dbId": "18919c93bf124d92b8675ef9c32fb7b3",
     "props": {
@@ -22,12 +22,56 @@
       "MEDIA": {
         "id": "%60Ncb",
         "currentName": "営業した媒体",
-        "type": "multi_select"
+        "type": "multi_select",
+        "optionsByRole": {
+          "WANTEDLY": {
+            "id": "ed1bae9d-5e2b-4b5d-bdea-03976c069af9",
+            "currentName": "Wantedly"
+          },
+          "GREEN": {
+            "id": "bcc89b13-3283-4990-a131-2084637e7083",
+            "currentName": "Green"
+          },
+          "SNS": {
+            "id": "a2b4b254-0453-4ada-b3fb-55d9e2c1c042",
+            "currentName": "SNS"
+          },
+          "DIRECT": {
+            "id": "03de9a79-d35d-44e7-97ca-9ad44e91f84f",
+            "currentName": "直メール/フォーム"
+          }
+        }
       },
       "STATUS": {
         "id": "V%5EEB",
         "currentName": "ステータス",
-        "type": "select"
+        "type": "select",
+        "optionsByRole": {
+          "S": {
+            "id": "5b183e99-7c09-4b1e-bfa1-8a5a7403fd22",
+            "currentName": "S:継続中"
+          },
+          "A": {
+            "id": "229644b0-22e7-45a1-8535-58d8198b7269",
+            "currentName": "A：取引あり"
+          },
+          "B": {
+            "id": "db42727a-acf4-4883-a81f-f9b7ff418b9b",
+            "currentName": "B：パートナー契約"
+          },
+          "C": {
+            "id": "e7df0a76-8cba-426b-93fa-d6d1f78db805",
+            "currentName": "C：やりとりあり"
+          },
+          "D": {
+            "id": "784dde33-b283-4614-bd27-e07b45a2be60",
+            "currentName": "D:ご縁がなかった"
+          },
+          "WAITING": {
+            "id": "9c7e8020-72fb-4850-ae67-ed7811b3db50",
+            "currentName": "待機中"
+          }
+        }
       },
       "LAST_CONTACT": {
         "id": "lI%3Ae",
@@ -52,17 +96,91 @@
       "BEFORE": {
         "id": "pp%3EM",
         "currentName": "Before",
-        "type": "select"
+        "type": "select",
+        "optionsByRole": {
+          "S": {
+            "id": "28f2bf65-c84b-42f4-9bb7-ed84ba8c3998",
+            "currentName": "S:継続中"
+          },
+          "A": {
+            "id": "bad5e8f8-2aaa-4c9b-9505-5cb02b9f79e2",
+            "currentName": "A：取引あり"
+          },
+          "B": {
+            "id": "c62e1c2e-2d74-412c-8d70-ef5c8d8cdab3",
+            "currentName": "B：パートナー契約"
+          },
+          "C": {
+            "id": "5c9142e6-95f7-407a-b7e0-d64183b62ed4",
+            "currentName": "C：やりとりあり"
+          },
+          "D": {
+            "id": "5e9ebc19-98cb-438e-8087-5b5fd19c20ae",
+            "currentName": "D:ご縁がなかった"
+          },
+          "WAITING": {
+            "id": "ad0a3c04-f145-46dc-b974-58253d826281",
+            "currentName": "待機中"
+          },
+          "NEW": {
+            "id": "9f2fe4cc-af34-4991-9afe-606fba9bc996",
+            "currentName": "(新規)"
+          }
+        }
       },
       "AFTER": {
         "id": "o%7D%5Ce",
         "currentName": "After",
-        "type": "select"
+        "type": "select",
+        "optionsByRole": {
+          "S": {
+            "id": "cfd71d80-8921-470a-8aa5-7cdc2417e242",
+            "currentName": "S:継続中"
+          },
+          "A": {
+            "id": "92d026b0-9398-4395-ae42-0aa8e36f967c",
+            "currentName": "A：取引あり"
+          },
+          "B": {
+            "id": "6720cadd-c4fb-4756-8717-05bb5e3cf839",
+            "currentName": "B：パートナー契約"
+          },
+          "C": {
+            "id": "465d0495-300a-4645-b469-28fe08443541",
+            "currentName": "C：やりとりあり"
+          },
+          "D": {
+            "id": "14ce8edd-5665-4d28-911e-5c0ae7971d6e",
+            "currentName": "D:ご縁がなかった"
+          },
+          "WAITING": {
+            "id": "8ddb33f2-a7fd-4d9f-8491-1b3db7f940c1",
+            "currentName": "待機中"
+          }
+        }
       },
       "CATEGORY": {
         "id": "%7Bs%5Ed",
         "currentName": "判定種別",
-        "type": "select"
+        "type": "select",
+        "optionsByRole": {
+          "AUTO": {
+            "id": "e263b3e6-4a24-44b3-848c-c233d2de4393",
+            "currentName": "自動検知"
+          },
+          "MANUAL": {
+            "id": "61cbfbf5-b50e-4591-a37d-9ccffe683ec0",
+            "currentName": "手動変更"
+          },
+          "TIMEOUT": {
+            "id": "ed406980-39ae-4a8e-adaf-f2a7561c2ee2",
+            "currentName": "タイムアウト"
+          },
+          "NEW": {
+            "id": "b0dbea5b-c0ab-4f8e-911a-cb9f6fc8db82",
+            "currentName": "新規追加"
+          }
+        }
       },
       "EVIDENCE": {
         "id": "hNMc",
@@ -77,7 +195,25 @@
       "MEDIA": {
         "id": "A%40LL",
         "currentName": "媒体",
-        "type": "multi_select"
+        "type": "multi_select",
+        "optionsByRole": {
+          "WANTEDLY": {
+            "id": "0c68dc27-31ec-4829-80a4-65e0baae5a60",
+            "currentName": "Wantedly"
+          },
+          "GREEN": {
+            "id": "33fc80bf-2af6-46b5-b60d-da09815e0fca",
+            "currentName": "Green"
+          },
+          "SNS": {
+            "id": "c514fb28-4352-4f6b-bd49-2f0c338a754f",
+            "currentName": "SNS"
+          },
+          "DIRECT": {
+            "id": "d286aee8-3456-4d87-9b38-ffe421587c2e",
+            "currentName": "直メール/フォーム"
+          }
+        }
       },
       "COMPANY_REL": {
         "id": "lR_G",
