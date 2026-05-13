@@ -17,6 +17,7 @@ import {
 import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
+import { assertSchemaOrFail } from "./schema-check.js";
 import {
   detectStatusFromMessage,
   isManualReviewCandidate,
@@ -46,6 +47,11 @@ async function main() {
   console.log(`[eigyo-tracker] mailbox: ${myEmail}`);
 
   const notion = buildNotionClient();
+
+  // Notion 側でプロパティ rename / 削除されていないか先にチェック。
+  // ズレてたらここで停止＆通知ページに警告コメント。
+  await assertSchemaOrFail(notion);
+
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
   const companies = await fetchAllCompanies(notion, dbId);

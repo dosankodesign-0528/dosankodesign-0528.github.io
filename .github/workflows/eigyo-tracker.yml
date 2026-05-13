@@ -24,6 +24,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: eigyo-tracker/package-lock.json
       - run: npm ci
+      - name: Schema drift check (Notion 側のプロパティ変更を検知)
+        run: npm run check:schema
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_COMPANIES_DB_ID: ${{ secrets.NOTION_COMPANIES_DB_ID }}
+          NOTION_STATUS_CHANGE_LOG_DB_ID: ${{ secrets.NOTION_STATUS_CHANGE_LOG_DB_ID }}
       - name: Run sync
         run: npm run sync
         env:

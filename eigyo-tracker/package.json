@@ -7,6 +7,7 @@
     "sync": "tsx src/index.ts",
     "timeout": "tsx src/timeout.ts",
     "report": "tsx src/monthly-report.ts",
+    "check:schema": "tsx src/schema-check.ts",
     "auth:gmail": "tsx scripts/gmail-auth.ts"
   },
   "dependencies": {
