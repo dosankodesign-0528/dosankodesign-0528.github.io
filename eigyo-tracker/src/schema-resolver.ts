@@ -388,9 +388,18 @@ export async function resolveSchema(
     cache.statusLog = emptyBindings(statusLogDbId, STATUS_LOG_PROP_INITIAL as any);
   }
 
-  // 既存 cache に options 欠落してたら埋める（v2 への移行救済）
+  // 既存 cache に「役割が増えていれば」空 binding を追加（後方互換）
   for (const [role, init] of Object.entries(COMPANIES_PROP_INITIAL)) {
-    if (init.options && cache.companies.props[role] && !cache.companies.props[role].optionsByRole) {
+    if (!cache.companies.props[role]) {
+      const b: PropBinding = { id: null, currentName: init.name, type: init.type };
+      if (init.options) {
+        b.optionsByRole = Object.fromEntries(
+          Object.entries(init.options).map(([k, v]) => [k, { id: null, currentName: v as string }])
+        );
+      }
+      cache.companies.props[role] = b;
+    } else if (init.options && !cache.companies.props[role].optionsByRole) {
+      // options 欠落してたら埋める（v2 への移行救済）
       cache.companies.props[role].optionsByRole = Object.fromEntries(
         Object.entries(init.options).map(([k, v]) => [k, { id: null, currentName: v as string }])
       );
@@ -398,7 +407,15 @@ export async function resolveSchema(
   }
   if (statusLogDbId) {
     for (const [role, init] of Object.entries(STATUS_LOG_PROP_INITIAL)) {
-      if (init.options && cache.statusLog.props[role] && !cache.statusLog.props[role].optionsByRole) {
+      if (!cache.statusLog.props[role]) {
+        const b: PropBinding = { id: null, currentName: init.name, type: init.type };
+        if (init.options) {
+          b.optionsByRole = Object.fromEntries(
+            Object.entries(init.options).map(([k, v]) => [k, { id: null, currentName: v as string }])
+          );
+        }
+        cache.statusLog.props[role] = b;
+      } else if (init.options && !cache.statusLog.props[role].optionsByRole) {
         cache.statusLog.props[role].optionsByRole = Object.fromEntries(
           Object.entries(init.options).map(([k, v]) => [k, { id: null, currentName: v as string }])
         );
