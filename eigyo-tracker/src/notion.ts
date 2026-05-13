@@ -3,8 +3,8 @@ import type { CompanyRecord } from "./types.js";
 
 const NAME_PROP = "名前";
 const URL_PROP = "企業URL";
-const CONTACT_PROP = "コンタクト";
-const MEDIA_PROP = "媒体";
+const CONTACT_PROP = "連絡日時";
+const MEDIA_PROP = "営業した媒体";
 const LAST_KNOWN_STATUS_PROP = "前回ステータス（自動）";
 
 export function buildNotionClient() {

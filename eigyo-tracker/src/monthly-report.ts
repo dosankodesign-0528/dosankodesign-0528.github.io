@@ -102,11 +102,11 @@ async function fetchPagesInRange(
         : "";
       const urlProp = props["企業URL"];
       const url = urlProp?.type === "url" ? urlProp.url ?? null : null;
-      const mediaProp = props["媒体"];
+      const mediaProp = props["営業した媒体"];
       const mediaTags = mediaProp?.type === "multi_select"
         ? (mediaProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
-      const contactProp = props["コンタクト"];
+      const contactProp = props["連絡日時"];
       const contactYears = contactProp?.type === "multi_select"
         ? (contactProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
