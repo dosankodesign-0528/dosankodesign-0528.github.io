@@ -44,11 +44,34 @@ async function main() {
     errorDetails: [],
   };
 
-  const gmail = buildGmailClient();
-  const myEmail = await getMyEmail(gmail);
-  console.log(`[eigyo-tracker] mailbox: ${myEmail}`);
-
   const notion = buildNotionClient();
+  const gmail = buildGmailClient();
+  let myEmail: string;
+  try {
+    myEmail = await getMyEmail(gmail);
+  } catch (err: any) {
+    const msg = String(err?.message ?? err);
+    const isOAuthExpired =
+      msg.includes("invalid_grant") ||
+      msg.includes("Token has been expired") ||
+      msg.includes("Token has been revoked");
+    if (isOAuthExpired) {
+      console.error("[eigyo-tracker] ⚠️ Gmail OAuth トークン期限切れを検知");
+      try {
+        await notifyMention(notion, {
+          title: "⚠️ 営業同期: Gmail OAuth トークンが期限切れです",
+          summary:
+            "Gmail の認証トークンが切れたため、自動同期が止まっています。\n" +
+            "Claude に「Gmail を再認証して」と頼んでください。\n\n" +
+            "原因の可能性: パスワード変更 / 2 段階認証の設定変更 / Google アカウント側で接続解除。",
+        });
+      } catch (notifyErr) {
+        console.error("[eigyo-tracker] 通知失敗", notifyErr);
+      }
+    }
+    throw err;
+  }
+  console.log(`[eigyo-tracker] mailbox: ${myEmail}`);
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
 
