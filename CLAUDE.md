@@ -33,24 +33,32 @@ URL を一緒に渡すこと**。
 
 ### 🔄 営業トラッカーのスキーマ自動キャッチアップ（実装済み）
 
-**ヒデさんは Notion 上でプロパティ名やオプションを自由にいじってよい。コードは Notion 側の id ベースで動くので、名前変更は次の sync で自動追従する。**
+**ヒデさんは Notion 上でプロパティ・オプションをほぼ自由にいじってよい。型変更だけは要注意。**
 
 仕組み：
 
 1. **id ベースの動的解決**（[eigyo-tracker/src/schema-resolver.ts](eigyo-tracker/src/schema-resolver.ts)）
-   - sync / report / timeout の起動時に Notion DB を retrieve
-   - プロパティ id（Notion 内部 ID、rename しても不変）で「現在の名前」を逆引き
-   - 全機能はこの解決済み名で動く（コード中に固定文字列なし）
-2. **キャッシュの自動 git commit**（[.github/workflows/eigyo-tracker.yml](.github/workflows/eigyo-tracker.yml)）
+   - sync 起動時に Notion DB を retrieve
+   - プロパティ id・オプション id（Notion 内部 ID、rename しても不変）で「現在の名前」を逆引き
+   - status などの内部値は内部 role key（"S" "A" "WAITING" など）で扱う
+2. **自動復元**（[eigyo-tracker/src/schema-restorer.ts](eigyo-tracker/src/schema-restorer.ts)）
+   - プロパティ削除・オプション削除を検知 → Notion API で再作成
+   - 復元成功時は Notion 通知ページに「自動復元しました」とコメント
+3. **キャッシュの自動 git commit**（[.github/workflows/eigyo-tracker.yml](.github/workflows/eigyo-tracker.yml)）
    - [eigyo-tracker/notion-schema-cache.json](eigyo-tracker/notion-schema-cache.json) に「役割 → id, currentName」を保持
    - sync 後に差分があれば github-actions[bot] が main へ自動 commit
-3. **壊れ系だけは止める**（[eigyo-tracker/src/schema-check.ts](eigyo-tracker/src/schema-check.ts)）
-   - プロパティ削除・型変更・必須 select オプション欠落 → Notion 通知ページに⚠️残してジョブ失敗
+4. **型変更だけは停止＋通知**（[eigyo-tracker/src/schema-check.ts](eigyo-tracker/src/schema-check.ts)）
+   - 自動で型を戻すとデータロスするため、検知して停止し Notion 通知ページに⚠️
 
-**ヒデさんがやって OK な操作**：プロパティ rename / 新規プロパティ追加 / select オプション追加。
-**止まる操作**：既存プロパティ削除 / 型変更 / コードが書き込むオプション値の削除（例: 「S:継続中」「自動検知」「Wantedly」など）。
+**ヒデさんがやって OK な操作**：
+- プロパティ rename / 新規プロパティ追加
+- select オプション rename / 追加
+- プロパティ削除（自動で再作成される）
+- select オプション削除（自動で再作成される）
 
-止まったら Claude は通知メッセージから差分内容を読み、必要に応じて該当の `REQUIRED_*_OPTIONS`（schema-check.ts）を直す or プロパティ復元をヒデさんに依頼する。コード中に固定文字列が残ってないか心配する必要はもう無い。
+**止まる操作**：プロパティの型変更（select↔multi_select 等）。
+- 意図的な変更なら → Claude に「コード側のスキーマ定義 (src/schema-resolver.ts の `*_PROP_INITIAL`) を新仕様に合わせて」と依頼
+- ミスなら → Notion で型を元に戻す
 
 ## 🚨 本番反映チェックリスト（毎回必ず）
 
