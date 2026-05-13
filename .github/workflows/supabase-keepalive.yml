@@ -1,7 +1,8 @@
-name: travel-shiori keep-alive
+name: supabase keep-alive
 
 # Supabase 無料プランは 7 日間アクセスがないとプロジェクトが一時停止される。
-# それを防ぐため、週 2 回 /api/keep-alive を叩いて Supabase に軽い SELECT を発生させる。
+# それを防ぐため、Supabase を使う各アプリの /api/keep-alive を週 2 回叩いて
+# 軽い SELECT を発生させる。
 
 on:
   schedule:
@@ -10,24 +11,34 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: travel-shiori-keepalive
+  group: supabase-keepalive
   cancel-in-progress: false
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: travel-shiori
+            url: https://tabinoshiori-swart.vercel.app/api/keep-alive
+          - name: houmon-app
+            url: https://houmon-app-lilac.vercel.app/api/keep-alive
+          - name: nittei-chousei
+            url: https://nittei-chousei-pi.vercel.app/api/keep-alive
     steps:
-      - name: Ping keep-alive endpoint
+      - name: Ping ${{ matrix.target.name }}
         run: |
           set -e
-          URL="https://tabinoshiori-swart.vercel.app/api/keep-alive"
+          URL="${{ matrix.target.url }}"
           echo "Pinging $URL"
           HTTP_CODE=$(curl -sS -o /tmp/body.json -w "%{http_code}" "$URL")
           echo "HTTP $HTTP_CODE"
           cat /tmp/body.json
           echo
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::keep-alive failed with HTTP $HTTP_CODE"
+            echo "::error::keep-alive failed for ${{ matrix.target.name }} with HTTP $HTTP_CODE"
             exit 1
           fi
