@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "lastResolvedAt": "2026-05-13T05:30:32.302Z",
+  "companies": {
+    "dbId": "18919c93bf124d92b8675ef9c32fb7b3",
+    "props": {
+      "NAME": {
+        "id": "title",
+        "currentName": "名前",
+        "type": "title"
+      },
+      "URL": {
+        "id": "UP%3B_",
+        "currentName": "企業URL",
+        "type": "url"
+      },
+      "CONTACT": {
+        "id": "WbtR",
+        "currentName": "連絡日時",
+        "type": "multi_select"
+      },
+      "MEDIA": {
+        "id": "%60Ncb",
+        "currentName": "営業した媒体",
+        "type": "multi_select"
+      },
+      "STATUS": {
+        "id": "V%5EEB",
+        "currentName": "ステータス",
+        "type": "select"
+      },
+      "LAST_CONTACT": {
+        "id": "lI%3Ae",
+        "currentName": "最終接触日",
+        "type": "date"
+      },
+      "LAST_KNOWN": {
+        "id": "m%3E%3Bw",
+        "currentName": "前回ステータス（自動）",
+        "type": "rich_text"
+      }
+    }
+  },
+  "statusLog": {
+    "dbId": "d08ccb69d0e74a16aba72423e77f8ea0",
+    "props": {
+      "TITLE": {
+        "id": "title",
+        "currentName": "会社名",
+        "type": "title"
+      },
+      "BEFORE": {
+        "id": "pp%3EM",
+        "currentName": "Before",
+        "type": "select"
+      },
+      "AFTER": {
+        "id": "o%7D%5Ce",
+        "currentName": "After",
+        "type": "select"
+      },
+      "CATEGORY": {
+        "id": "%7Bs%5Ed",
+        "currentName": "判定種別",
+        "type": "select"
+      },
+      "EVIDENCE": {
+        "id": "hNMc",
+        "currentName": "判定根拠",
+        "type": "rich_text"
+      },
+      "CHANGED_AT": {
+        "id": "C~cq",
+        "currentName": "変更日時",
+        "type": "date"
+      },
+      "MEDIA": {
+        "id": "A%40LL",
+        "currentName": "媒体",
+        "type": "multi_select"
+      },
+      "COMPANY_REL": {
+        "id": "lR_G",
+        "currentName": "会社ページ",
+        "type": "relation"
+      }
+    }
+  }
+}
