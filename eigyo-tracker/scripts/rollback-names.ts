@@ -59,9 +59,9 @@ async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
   const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
-  const N = schema.companies;
+  const N = schema.companies.props;
   console.log("=== 全企業取得 ===");
-  const companies = await fetchAllCompanies(notion, dbId, N);
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`Total: ${companies.length}`);
 
   const map = new Map<string, typeof companies[0]>();

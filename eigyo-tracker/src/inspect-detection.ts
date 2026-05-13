@@ -49,7 +49,7 @@ async function main() {
       if (detection) {
         console.log(`\n🤖 自動検知結果:`);
         console.log(`   signal:  ${detection.signal}`);
-        console.log(`   status:  ${detection.status}`);
+        console.log(`   status:  ${detection.statusKey}`);
         console.log(`   reason:  ${detection.reason}`);
         console.log(`   matched: 「${detection.matchedKeyword}」`);
       } else {

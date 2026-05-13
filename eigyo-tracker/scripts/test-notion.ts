@@ -7,7 +7,7 @@ async function main() {
   const dbId = getCompaniesDbId();
   const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
   console.log(`Fetching companies from DB ${dbId}...`);
-  const companies = await fetchAllCompanies(notion, dbId, schema.companies);
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`✅ Total: ${companies.length} companies fetched`);
   console.log("");
   console.log("First 3 entries:");

@@ -29,16 +29,23 @@ export interface ClassifiedMessage extends RawMessage {
   companyUrl: string;
 }
 
+import type { StatusOptionKey } from "./schema-resolver.js";
+
 export interface CompanyRecord {
   pageId: string;
   name: string;
   url: string | null;
   contactYears: string[];
   mediaTags: string[];
+  /** Notion 上の現在の表示名（例: "S:継続中"）。書き込み・比較は statusKey 経由を推奨 */
   status: string | null;
+  /** ステータスの内部 role key（rename されても不変） */
+  statusKey: StatusOptionKey | null;
   lastContactAt: Date | null;
   /** 前回 sync 完了時に記録したステータス。手動編集検知に使う。 */
   lastKnownStatus: string | null;
+  /** lastKnownStatus を内部 role key に解決したもの */
+  lastKnownStatusKey: StatusOptionKey | null;
 }
 
 export interface SyncStats {

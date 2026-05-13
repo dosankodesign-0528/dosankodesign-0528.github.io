@@ -8,8 +8,8 @@ import {
   updateCompanyStatus,
 } from "./notion.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
-import { STATUS } from "./status.js";
 import { resolveSchema } from "./schema-resolver.js";
+import { selfHealSchema } from "./schema-restorer.js";
 
 const TIMEOUT_DAYS = Number(process.env.TIMEOUT_DAYS ?? "14");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -34,14 +34,15 @@ async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
-  const schema = await resolveSchema(notion, dbId, statusLogDbId);
-  const companyNames = schema.companies;
-  const logNames = schema.statusLog;
-  const companies = await fetchAllCompanies(notion, dbId, companyNames);
+  const initial = await resolveSchema(notion, dbId, statusLogDbId);
+  const schema = await selfHealSchema(notion, initial, dbId, statusLogDbId);
+  const compSchema = schema.companies;
+  const logSchema = schema.statusLog;
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`[timeout] 全企業: ${companies.length} 社`);
 
   const candidates = companies.filter((c) => {
-    if (c.status !== STATUS.WAITING) return false;
+    if (c.statusKey !== "WAITING") return false;
     if (!c.lastContactAt) return false;
     return daysSince(c.lastContactAt) >= TIMEOUT_DAYS;
   });
@@ -60,7 +61,7 @@ async function main() {
   const movedEntries: NotifyEntry[] = [];
   for (const t of targets) {
     try {
-      await updateCompanyStatus(notion, companyNames, t.pageId, STATUS.D);
+      await updateCompanyStatus(notion, compSchema, t.pageId, "D");
       moved++;
       const days = Math.floor(daysSince(t.lastContactAt!));
       console.log(`  ↘ ${t.name}: 待機中 → D:ご縁がなかった（${days}日経過）`);
@@ -71,11 +72,11 @@ async function main() {
       });
       if (statusLogDbId) {
         try {
-          await addStatusChangeLog(notion, statusLogDbId, logNames, {
+          await addStatusChangeLog(notion, statusLogDbId, logSchema, {
             companyName: t.name,
             companyPageId: t.pageId,
-            before: STATUS.WAITING,
-            after: STATUS.D,
+            beforeKey: "WAITING",
+            afterKey: "D",
             mediaTags: t.mediaTags,
             category: "タイムアウト",
             evidence: `${TIMEOUT_DAYS}日以上反応なし（${days}日経過）→ 自動でDへ移行`,

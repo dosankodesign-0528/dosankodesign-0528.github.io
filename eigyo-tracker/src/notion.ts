@@ -1,12 +1,18 @@
 import { Client } from "@notionhq/client";
 import type { CompanyRecord } from "./types.js";
-import type { ResolvedSchema } from "./schema-resolver.js";
+import type {
+  ResolvedSchema,
+  StatusOptionKey,
+  BeforeOptionKey,
+  CategoryOptionKey,
+} from "./schema-resolver.js";
+import { statusKeyByName, STATUS_OPTION_KEYS } from "./schema-resolver.js";
 
-// プロパティ名はランタイムで schema-resolver が解決する。
+// プロパティ名・オプション名はランタイムで schema-resolver が解決する。
 // 起動時に index.ts で resolveSchema() の結果をここに渡す。
-// この設計のおかげで、Notion 側でプロパティ名が変わってもコード修正不要。
-type CompaniesNames = ResolvedSchema["companies"];
-type StatusLogNames = ResolvedSchema["statusLog"];
+// この設計のおかげで、Notion 側で名前が変わってもコード修正不要。
+type CompaniesSchema = ResolvedSchema["companies"];
+type StatusLogSchema = ResolvedSchema["statusLog"];
 
 export function buildNotionClient() {
   const token = process.env.NOTION_TOKEN;
@@ -38,26 +44,39 @@ export interface StatusChangeLog {
   evidence: string;
 }
 
+const CATEGORY_BY_SIGNAL: Record<StatusChangeCategory, CategoryOptionKey> = {
+  自動検知: "AUTO",
+  手動変更: "MANUAL",
+  タイムアウト: "TIMEOUT",
+  新規追加: "NEW",
+};
+
 export async function addStatusChangeLog(
   notion: Client,
   dbId: string,
-  names: StatusLogNames,
+  logSchema: StatusLogSchema,
   args: {
     companyName: string;
     companyPageId?: string;
-    before: string | null;
-    after: string;
+    beforeKey: StatusOptionKey | null; // null → 新規
+    afterKey: StatusOptionKey;
     mediaTags: string[];
     changedAt?: Date;
     category: StatusChangeCategory;
     evidence: string;
   }
 ): Promise<void> {
+  const names = logSchema.props;
+  const beforeName = args.beforeKey
+    ? logSchema.beforeOptions[args.beforeKey]
+    : logSchema.beforeOptions.NEW;
+  const afterName = logSchema.afterOptions[args.afterKey];
+  const categoryName = logSchema.categoryOptions[CATEGORY_BY_SIGNAL[args.category]];
   const properties: Record<string, any> = {
     [names.TITLE]: { title: [{ text: { content: args.companyName } }] },
-    [names.BEFORE]: { select: { name: args.before ?? "(新規)" } },
-    [names.AFTER]: { select: { name: args.after } },
-    [names.CATEGORY]: { select: { name: args.category } },
+    [names.BEFORE]: { select: { name: beforeName } },
+    [names.AFTER]: { select: { name: afterName } },
+    [names.CATEGORY]: { select: { name: categoryName } },
     [names.EVIDENCE]: { rich_text: [{ text: { content: args.evidence } }] },
     [names.CHANGED_AT]: {
       date: { start: (args.changedAt ?? new Date()).toISOString() },
@@ -80,10 +99,11 @@ export async function addStatusChangeLog(
 export async function fetchStatusChangesInRange(
   notion: Client,
   dbId: string,
-  names: StatusLogNames,
+  logSchema: StatusLogSchema,
   start: Date,
   end: Date
 ): Promise<StatusChangeLog[]> {
+  const names = logSchema.props;
   const logs: StatusChangeLog[] = [];
   let cursor: string | undefined;
   do {
@@ -119,11 +139,13 @@ export async function fetchStatusChangesInRange(
           ? (evidenceProp.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("")
           : "";
       if (!after) continue;
+      // 「(新規)」相当 → null。Notion 上で rename されていても判定できるよう BEFORE_NEW で比較。
+      const beforeNewName = logSchema.beforeOptions.NEW;
       logs.push({
         pageId: p.id,
         companyName,
         companyPageId,
-        before: before === "(新規)" ? null : before,
+        before: before === beforeNewName ? null : before,
         after,
         mediaTags,
         changedAt,
@@ -139,8 +161,11 @@ export async function fetchStatusChangesInRange(
 export async function fetchAllCompanies(
   notion: Client,
   dbId: string,
-  names: CompaniesNames
+  schema: ResolvedSchema
 ): Promise<CompanyRecord[]> {
+  const compSchema = schema.companies;
+  const names = compSchema.props;
+  const statusKeyMap = statusKeyByName(schema);
   const records: CompanyRecord[] = [];
   let cursor: string | undefined = undefined;
   do {
@@ -157,7 +182,17 @@ export async function fetchAllCompanies(
       const mediaTags = readMultiSelect(props[names.MEDIA]);
       const status = readSelect(props[names.STATUS]);
       const lastContactAt = readDate(props[names.LAST_CONTACT]);
-      const lastKnownStatus = readRichText(props[names.LAST_KNOWN]);
+      const lastKnownRaw = readRichText(props[names.LAST_KNOWN]);
+      // lastKnownStatus は内部 key (例 "WAITING") で保存している前提。
+      // 旧フォーマットの「現在 name」が残っていれば逆引きで救済。
+      let lastKnownStatusKey: StatusOptionKey | null = null;
+      if (lastKnownRaw) {
+        if ((STATUS_OPTION_KEYS as readonly string[]).includes(lastKnownRaw)) {
+          lastKnownStatusKey = lastKnownRaw as StatusOptionKey;
+        } else {
+          lastKnownStatusKey = statusKeyMap.get(lastKnownRaw) ?? null;
+        }
+      }
       records.push({
         pageId: page.id,
         name,
@@ -165,8 +200,10 @@ export async function fetchAllCompanies(
         contactYears,
         mediaTags,
         status,
+        statusKey: status ? statusKeyMap.get(status) ?? null : null,
         lastContactAt,
-        lastKnownStatus: lastKnownStatus || null,
+        lastKnownStatus: lastKnownRaw || null,
+        lastKnownStatusKey,
       });
     }
     cursor = res.has_more ? res.next_cursor ?? undefined : undefined;
@@ -190,19 +227,21 @@ export function findCompany(
 export async function addCompany(
   notion: Client,
   dbId: string,
-  names: CompaniesNames,
-  args: { name: string; url: string; year: string; mediaTag: string; status?: string; lastContactAt?: Date }
+  compSchema: CompaniesSchema,
+  args: { name: string; url: string; year: string; mediaTag: string; statusKey?: StatusOptionKey; lastContactAt?: Date }
 ) {
+  const names = compSchema.props;
   const properties: Record<string, any> = {
     [names.NAME]: { title: [{ text: { content: args.name } }] },
     [names.URL]: { url: args.url },
     [names.CONTACT]: { multi_select: [{ name: args.year }] },
     [names.MEDIA]: { multi_select: [{ name: args.mediaTag }] },
   };
-  if (args.status) {
-    properties[names.STATUS] = { select: { name: args.status } };
-    // 新規追加時も lastKnownStatus を同期させる（次回 sync で誤って手動変更扱いされない）
-    properties[names.LAST_KNOWN] = { rich_text: [{ text: { content: args.status } }] };
+  if (args.statusKey) {
+    const statusName = compSchema.statusOptions[args.statusKey];
+    properties[names.STATUS] = { select: { name: statusName } };
+    // lastKnownStatus は内部 key で保存（name rename に強い）
+    properties[names.LAST_KNOWN] = { rich_text: [{ text: { content: args.statusKey } }] };
   }
   if (args.lastContactAt) {
     properties[names.LAST_CONTACT] = { date: { start: args.lastContactAt.toISOString().slice(0, 10) } };
@@ -215,42 +254,45 @@ export async function addCompany(
 
 export async function updateCompanyStatus(
   notion: Client,
-  names: CompaniesNames,
+  compSchema: CompaniesSchema,
   pageId: string,
-  status: string
+  statusKey: StatusOptionKey
 ): Promise<void> {
-  // ステータス と 前回ステータス（自動）を同時に更新する。
-  // → 次回 sync で「自動更新なのに手動変更扱い」になるのを防ぐ。
-  // 人間が Notion 上でステータスだけ変更すると lastKnownStatus がズレるので、それで手動編集を検知する。
+  // ステータス（現在の Notion 表示名）と lastKnownStatus（内部キー）を同時に書く。
+  // 次回 sync で statusKey 同士が一致 → 「手動変更ではない」と判定できる。
+  const names = compSchema.props;
+  const statusName = compSchema.statusOptions[statusKey];
   await notion.pages.update({
     page_id: pageId,
     properties: {
-      [names.STATUS]: { select: { name: status } },
-      [names.LAST_KNOWN]: { rich_text: [{ text: { content: status } }] },
+      [names.STATUS]: { select: { name: statusName } },
+      [names.LAST_KNOWN]: { rich_text: [{ text: { content: statusKey } }] },
     },
   });
 }
 
 export async function syncLastKnownStatus(
   notion: Client,
-  names: CompaniesNames,
+  compSchema: CompaniesSchema,
   pageId: string,
-  status: string
+  statusKey: StatusOptionKey
 ): Promise<void> {
+  const names = compSchema.props;
   await notion.pages.update({
     page_id: pageId,
     properties: {
-      [names.LAST_KNOWN]: { rich_text: [{ text: { content: status } }] },
+      [names.LAST_KNOWN]: { rich_text: [{ text: { content: statusKey } }] },
     },
   });
 }
 
 export async function updateLastContact(
   notion: Client,
-  names: CompaniesNames,
+  compSchema: CompaniesSchema,
   pageId: string,
   date: Date
 ): Promise<void> {
+  const names = compSchema.props;
   const iso = date.toISOString().slice(0, 10);
   await notion.pages.update({
     page_id: pageId,
@@ -262,11 +304,12 @@ export async function updateLastContact(
 
 export async function updateCompany(
   notion: Client,
-  names: CompaniesNames,
+  compSchema: CompaniesSchema,
   record: CompanyRecord,
   year: string,
   mediaTag: string
 ) {
+  const names = compSchema.props;
   const newYears = uniq([...record.contactYears, year]);
   const newMedia = uniq([...record.mediaTags, mediaTag]);
   const yearsChanged = newYears.length !== record.contactYears.length;

@@ -33,10 +33,10 @@ async function main() {
   const gmail = buildGmailClient();
   const myEmail = await getMyEmail(gmail);
   const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
-  const N = schema.companies;
+  const N = schema.companies.props;
 
   console.log("=== 全企業取得 ===");
-  const companies = await fetchAllCompanies(notion, dbId, N);
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`Total: ${companies.length}`);
 
   const targets = companies.filter(shouldFix);

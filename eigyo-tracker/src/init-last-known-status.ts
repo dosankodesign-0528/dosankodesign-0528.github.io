@@ -23,12 +23,12 @@ async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
   const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
-  const companyNames = schema.companies;
+  const compSchema = schema.companies;
   console.log(`[init] 会社DB読み込み中...`);
-  const companies = await fetchAllCompanies(notion, dbId, companyNames);
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`[init] 全会社: ${companies.length}`);
 
-  const targets = companies.filter((c) => c.status && !c.lastKnownStatus);
+  const targets = companies.filter((c) => c.statusKey && !c.lastKnownStatusKey);
   console.log(`[init] 初期化対象（前回ステータス空）: ${targets.length} 社`);
   if (targets.length === 0) {
     console.log(`[init] 全社初期化済み。終了。`);
@@ -39,7 +39,7 @@ async function main() {
   let ng = 0;
   for (const c of targets) {
     try {
-      await syncLastKnownStatus(notion, companyNames, c.pageId, c.status!);
+      await syncLastKnownStatus(notion, compSchema, c.pageId, c.statusKey!);
       ok++;
       if (ok % 50 === 0) console.log(`  進捗: ${ok}/${targets.length}`);
     } catch (err: any) {

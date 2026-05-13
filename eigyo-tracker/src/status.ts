@@ -1,19 +1,14 @@
 import type { RawMessage } from "./types.js";
+import type { StatusOptionKey } from "./schema-resolver.js";
 
-export const STATUS = {
-  WAITING: "待機中",
-  C: "C：やりとりあり",
-  B: "B：パートナー契約",
-  A: "A：取引あり",
-  S: "S:継続中",
-  D: "D:ご縁がなかった",
-} as const;
+// status.ts は「内部キー」だけで動く。Notion 上の見た目名 (S:継続中 / 待機中…) は
+// schema-resolver が解決する → 呼び出し側が key → name に変換する。
 
 export type SignalType = "REJECTION" | "INVITE" | "CONTRACT" | "MEETING" | "REPLY";
 
 export interface StatusDetectionResult {
   signal: SignalType;
-  status: string;
+  statusKey: StatusOptionKey;
   reason: string;
   matchedKeyword: string;
 }
@@ -190,65 +185,65 @@ export function detectStatusFromMessage(msg: RawMessage): StatusDetectionResult 
   // Priority 1: REJECTION（最優先）
   const rejKw = matchPatterns(text, REJECTION_PATTERNS);
   if (rejKw) {
-    return { signal: "REJECTION", status: STATUS.D, reason: "拒絶系キーワード", matchedKeyword: rejKw };
+    return { signal: "REJECTION", statusKey: "D", reason: "拒絶系キーワード", matchedKeyword: rejKw };
   }
 
   // Priority 2: INVITE（送信元 + キーワードのAND）
   const inviteKw = matchInvite(msg, text);
   if (inviteKw) {
-    return { signal: "INVITE", status: STATUS.A, reason: "招待メール", matchedKeyword: `${msg.fromDomain}「${inviteKw}」` };
+    return { signal: "INVITE", statusKey: "A", reason: "招待メール", matchedKeyword: `${msg.fromDomain}「${inviteKw}」` };
   }
 
   // Priority 3: CONTRACT（複合判定 — 単独キーワードは NG）
   const contract = matchContract(msg, text);
   if (contract) {
-    return { signal: "CONTRACT", status: STATUS.B, reason: "契約締結シグナル", matchedKeyword: contract.keyword };
+    return { signal: "CONTRACT", statusKey: "B", reason: "契約締結シグナル", matchedKeyword: contract.keyword };
   }
 
   // Priority 4: MEETING（明確な商談アクションのみ）
   const meetingKw = matchPatterns(text, MEETING_PATTERNS);
   if (meetingKw) {
-    return { signal: "MEETING", status: STATUS.C, reason: "商談シグナル", matchedKeyword: meetingKw };
+    return { signal: "MEETING", statusKey: "C", reason: "商談シグナル", matchedKeyword: meetingKw };
   }
 
   // Priority 5: Re: 付き返信（弱い、待機中→C のフォールバック）
   if (isReply && !msg.isOutgoing) {
-    return { signal: "REPLY", status: STATUS.C, reason: "Re:付き返信受信", matchedKeyword: "Re:" };
+    return { signal: "REPLY", statusKey: "C", reason: "Re:付き返信受信", matchedKeyword: "Re:" };
   }
 
   return null;
 }
 
-// 段階順設計
-const ALLOWED_TRANSITIONS: Record<SignalType, ReadonlySet<string | null>> = {
-  REJECTION: new Set([null, STATUS.WAITING]),
-  MEETING: new Set([null, STATUS.WAITING]),
-  CONTRACT: new Set([STATUS.C]),
-  INVITE: new Set([STATUS.B]),
-  REPLY: new Set([null, STATUS.WAITING]),
+// 段階順設計（key で比較）
+const ALLOWED_TRANSITIONS: Record<SignalType, ReadonlySet<StatusOptionKey | null>> = {
+  REJECTION: new Set([null, "WAITING" as const]),
+  MEETING: new Set([null, "WAITING" as const]),
+  CONTRACT: new Set(["C" as const]),
+  INVITE: new Set(["B" as const]),
+  REPLY: new Set([null, "WAITING" as const]),
 };
 
 export function shouldUpdate(
-  currentStatus: string | null,
+  currentKey: StatusOptionKey | null,
   detection: StatusDetectionResult | null
 ): boolean {
   if (!detection) return false;
-  if (currentStatus === detection.status) return false;
-  return ALLOWED_TRANSITIONS[detection.signal].has(currentStatus);
+  if (currentKey === detection.statusKey) return false;
+  return ALLOWED_TRANSITIONS[detection.signal].has(currentKey);
 }
 
-const STATUS_ORDER: string[] = [STATUS.WAITING, STATUS.C, STATUS.B, STATUS.A, STATUS.S];
+const STATUS_ORDER: StatusOptionKey[] = ["WAITING", "C", "B", "A", "S"];
 
 export function isManualReviewCandidate(
-  currentStatus: string | null,
+  currentKey: StatusOptionKey | null,
   detection: StatusDetectionResult | null
 ): boolean {
   if (!detection) return false;
-  if (currentStatus === detection.status) return false;
-  if (ALLOWED_TRANSITIONS[detection.signal].has(currentStatus)) return false;
+  if (currentKey === detection.statusKey) return false;
+  if (ALLOWED_TRANSITIONS[detection.signal].has(currentKey)) return false;
   if (detection.signal === "REJECTION") return true;
-  const currentIdx = currentStatus ? STATUS_ORDER.indexOf(currentStatus) : 0;
-  const targetIdx = STATUS_ORDER.indexOf(detection.status);
+  const currentIdx = currentKey ? STATUS_ORDER.indexOf(currentKey) : 0;
+  const targetIdx = STATUS_ORDER.indexOf(detection.statusKey);
   if (currentIdx === -1 || targetIdx === -1) return false;
   return targetIdx > currentIdx;
 }

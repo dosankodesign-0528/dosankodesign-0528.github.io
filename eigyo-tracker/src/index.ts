@@ -18,7 +18,8 @@ import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
 import { assertSchemaOrFail } from "./schema-check.js";
-import { resolveSchema } from "./schema-resolver.js";
+import { resolveSchema, type StatusOptionKey } from "./schema-resolver.js";
+import { selfHealSchema } from "./schema-restorer.js";
 import {
   detectStatusFromMessage,
   isManualReviewCandidate,
@@ -51,14 +52,15 @@ async function main() {
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
 
-  // Notion 側でプロパティ rename / 追加されてたら id 経由で追従、消されてたら停止。
-  // 同時に notion-schema-cache.json を最新の名前で更新する（差分があれば GH Actions が自動 commit）。
-  const schema = await resolveSchema(notion, dbId, statusLogDbId);
+  // Notion 側で rename / 追加されたら id 経由で追従、削除/オプション欠落は自動復元、
+  // 型変更だけはデータロス回避のため停止＆通知。
+  const initialSchema = await resolveSchema(notion, dbId, statusLogDbId);
+  const schema = await selfHealSchema(notion, initialSchema, dbId, statusLogDbId);
   await assertSchemaOrFail(notion, schema);
-  const companyNames = schema.companies;
-  const logNames = schema.statusLog;
+  const compSchema = schema.companies;
+  const logSchema = schema.statusLog;
 
-  const companies = await fetchAllCompanies(notion, dbId, companyNames);
+  const companies = await fetchAllCompanies(notion, dbId, schema);
   console.log(`[eigyo-tracker] existing companies: ${companies.length}`);
 
   // Phase 2: Notion 上での手動ステータス編集を検知
@@ -69,32 +71,33 @@ async function main() {
   let uninitialized = 0;
   if (statusLogDbId) {
     for (const c of companies) {
-      if (!c.status) continue;
-      if (!c.lastKnownStatus) {
+      if (!c.statusKey) continue;
+      if (!c.lastKnownStatusKey) {
         uninitialized++;
         continue;
       }
-      if (c.status !== c.lastKnownStatus) {
+      if (c.statusKey !== c.lastKnownStatusKey) {
         try {
-          await addStatusChangeLog(notion, statusLogDbId, logNames, {
+          await addStatusChangeLog(notion, statusLogDbId, logSchema, {
             companyName: c.name,
             companyPageId: c.pageId,
-            before: c.lastKnownStatus,
-            after: c.status,
+            beforeKey: c.lastKnownStatusKey,
+            afterKey: c.statusKey,
             mediaTags: c.mediaTags,
             category: "手動変更",
             evidence: "Notion上での手動編集を検知（前回 sync 以降にステータスが変更されていた）",
           });
-          await syncLastKnownStatus(notion, companyNames, c.pageId, c.status);
+          await syncLastKnownStatus(notion, compSchema, c.pageId, c.statusKey);
           manualChanges.push({
             name: c.name,
             from: c.lastKnownStatus,
-            to: c.status,
+            to: c.status ?? "",
             url: c.url,
             mediaTags: c.mediaTags,
           });
           const beforeStatus = c.lastKnownStatus;
           c.lastKnownStatus = c.status;
+          c.lastKnownStatusKey = c.statusKey;
           console.log(`  📝 手動変更検知: ${c.name}  ${beforeStatus} → ${c.status}`);
         } catch (err: any) {
           console.error(`  manual-change log error: ${c.name}: ${err?.message ?? err}`);
@@ -155,32 +158,35 @@ async function main() {
         if (existing) {
           if (!existing.lastContactAt || msg.date > existing.lastContactAt) {
             try {
-              await updateLastContact(notion, companyNames, existing.pageId, msg.date);
+              await updateLastContact(notion, compSchema, existing.pageId, msg.date);
               existing.lastContactAt = msg.date;
             } catch (err: any) {
               console.error(`  lastContact update error: ${existing.name}: ${err?.message ?? err}`);
             }
           }
-          if (detection && shouldUpdateStatus(existing.status, detection)) {
+          if (detection && shouldUpdateStatus(existing.statusKey, detection)) {
             try {
               const beforeStatus = existing.status;
-              await updateCompanyStatus(notion, companyNames, existing.pageId, detection.status);
+              const beforeKey = existing.statusKey;
+              const afterName = compSchema.statusOptions[detection.statusKey];
+              await updateCompanyStatus(notion, compSchema, existing.pageId, detection.statusKey);
               statusChanges.push({
                 name: existing.name,
                 from: beforeStatus,
-                to: detection.status,
+                to: afterName,
                 reason: detection.reason,
                 matchedKeyword: detection.matchedKeyword,
               });
-              existing.status = detection.status;
-              console.log(`  status: ${existing.name}  ${beforeStatus ?? "(未設定)"} → ${detection.status}  [${detection.matchedKeyword}]`);
+              existing.status = afterName;
+              existing.statusKey = detection.statusKey;
+              console.log(`  status: ${existing.name}  ${beforeStatus ?? "(未設定)"} → ${afterName}  [${detection.matchedKeyword}]`);
               if (statusLogDbId) {
                 try {
-                  await addStatusChangeLog(notion, statusLogDbId, logNames, {
+                  await addStatusChangeLog(notion, statusLogDbId, logSchema, {
                     companyName: existing.name,
                     companyPageId: existing.pageId,
-                    before: beforeStatus,
-                    after: detection.status,
+                    beforeKey,
+                    afterKey: detection.statusKey,
                     mediaTags: existing.mediaTags,
                     category: "自動検知",
                     evidence: `${detection.reason}「${detection.matchedKeyword}」`,
@@ -192,18 +198,19 @@ async function main() {
             } catch (err: any) {
               console.error(`  status update error: ${existing.name}: ${err?.message ?? err}`);
             }
-          } else if (detection && isManualReviewCandidate(existing.status, detection)) {
+          } else if (detection && isManualReviewCandidate(existing.statusKey, detection)) {
+            const suggestedName = compSchema.statusOptions[detection.statusKey];
             skipCandidates.push({
               name: existing.name,
               current: existing.status,
-              suggested: detection.status,
+              suggested: suggestedName,
               reason: detection.reason,
               matchedKeyword: detection.matchedKeyword,
               url: existing.url,
             });
-            console.log(`  ⚠️ skip候補: ${existing.name}  ${existing.status ?? "(未設定)"} → ${detection.status}（${detection.reason}「${detection.matchedKeyword}」）`);
+            console.log(`  ⚠️ skip候補: ${existing.name}  ${existing.status ?? "(未設定)"} → ${suggestedName}（${detection.reason}「${detection.matchedKeyword}」）`);
           }
-          const updated = await updateCompany(notion, companyNames, existing, year, source.tag);
+          const updated = await updateCompany(notion, compSchema, existing, year, source.tag);
           if (updated) {
             existing.contactYears = Array.from(
               new Set([...existing.contactYears, year])
@@ -219,13 +226,14 @@ async function main() {
             stats.skipped++;
           }
         } else {
-          const initialStatus = detection?.status ?? "待機中";
-          await addCompany(notion, dbId, companyNames, {
+          const initialKey: StatusOptionKey = detection?.statusKey ?? "WAITING";
+          const initialName = compSchema.statusOptions[initialKey];
+          await addCompany(notion, dbId, compSchema, {
             name: classified.companyName,
             url: classified.companyUrl,
             year,
             mediaTag: source.tag,
-            status: initialStatus,
+            statusKey: initialKey,
             lastContactAt: msg.date,
           });
           companies.push({
@@ -234,24 +242,26 @@ async function main() {
             url: classified.companyUrl,
             contactYears: [year],
             mediaTags: [source.tag],
-            status: initialStatus,
+            status: initialName,
+            statusKey: initialKey,
             lastContactAt: msg.date,
-            lastKnownStatus: initialStatus, // 新規追加時は status と同期
+            lastKnownStatus: initialKey,
+            lastKnownStatusKey: initialKey,
           });
           if (detection) {
             statusChanges.push({
               name: classified.companyName,
               from: null,
-              to: detection.status,
+              to: initialName,
               reason: detection.reason,
               matchedKeyword: detection.matchedKeyword,
             });
             if (statusLogDbId) {
               try {
-                await addStatusChangeLog(notion, statusLogDbId, logNames, {
+                await addStatusChangeLog(notion, statusLogDbId, logSchema, {
                   companyName: classified.companyName,
-                  before: null,
-                  after: detection.status,
+                  beforeKey: null,
+                  afterKey: detection.statusKey,
                   mediaTags: [source.tag],
                   category: "新規追加",
                   evidence: `新規追加（${detection.reason}「${detection.matchedKeyword}」）`,

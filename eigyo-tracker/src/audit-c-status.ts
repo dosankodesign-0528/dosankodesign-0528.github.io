@@ -28,7 +28,7 @@ import {
   getStatusChangeLogDbId,
 } from "./notion.js";
 import { resolveSchema } from "./schema-resolver.js";
-import { detectStatusFromMessage, STATUS } from "./status.js";
+import { detectStatusFromMessage } from "./status.js";
 import type { CompanyRecord, RawMessage } from "./types.js";
 
 const NOTE_PARENT_PAGE_ID = "62b6833ac3c8401b895afb99c8260fb2";
@@ -298,8 +298,8 @@ async function main() {
   console.log(`[audit] mailbox: ${myEmail}`);
 
   const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
-  const all = await fetchAllCompanies(notion, dbId, schema.companies);
-  const targets = all.filter((c) => c.status === STATUS.C);
+  const all = await fetchAllCompanies(notion, dbId, schema);
+  const targets = all.filter((c) => c.statusKey === "C");
   console.log(`[audit] C ステータス会社: ${targets.length} 社`);
 
   const results: AuditResult[] = [];

@@ -82,7 +82,7 @@ async function fetchPagesInRange(
   start: Date,
   end: Date
 ): Promise<PageInfo[]> {
-  const N = schema.companies;
+  const N = schema.companies.props;
   const pages: PageInfo[] = [];
   let cursor: string | undefined;
   do {
@@ -432,6 +432,7 @@ async function main() {
   if (statusLogDbId) {
     try {
       statusChanges = await fetchStatusChangesInRange(notion, statusLogDbId, schema.statusLog, start, end);
+      // schema.statusLog の解決済み名前を使う（既に対応済み）
       console.log(`[monthly-report] 変更ログ: ${statusChanges.length} 件`);
     } catch (err: any) {
       console.error(`[monthly-report] 変更ログ読込エラー: ${err?.message ?? err}`);
