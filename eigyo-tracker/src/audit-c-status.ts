@@ -25,7 +25,9 @@ import {
   buildNotionClient,
   fetchAllCompanies,
   getCompaniesDbId,
+  getStatusChangeLogDbId,
 } from "./notion.js";
+import { resolveSchema } from "./schema-resolver.js";
 import { detectStatusFromMessage, STATUS } from "./status.js";
 import type { CompanyRecord, RawMessage } from "./types.js";
 
@@ -295,7 +297,8 @@ async function main() {
   const myEmail = await getMyEmail(gmail);
   console.log(`[audit] mailbox: ${myEmail}`);
 
-  const all = await fetchAllCompanies(notion, dbId);
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
+  const all = await fetchAllCompanies(notion, dbId, schema.companies);
   const targets = all.filter((c) => c.status === STATUS.C);
   console.log(`[audit] C ステータス会社: ${targets.length} 社`);
 

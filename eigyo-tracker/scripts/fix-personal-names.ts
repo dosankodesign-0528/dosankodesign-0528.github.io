@@ -1,7 +1,8 @@
 import "dotenv/config";
-import { buildNotionClient, fetchAllCompanies, getCompaniesDbId } from "../src/notion.js";
+import { buildNotionClient, fetchAllCompanies, getCompaniesDbId, getStatusChangeLogDbId } from "../src/notion.js";
 import { buildGmailClient, fetchMessages, getMyEmail } from "../src/gmail.js";
 import { extractCompanyName, isPersonalName } from "../src/classify.js";
+import { resolveSchema } from "../src/schema-resolver.js";
 import type { CompanyRecord } from "../src/types.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -31,9 +32,11 @@ async function main() {
   const dbId = getCompaniesDbId();
   const gmail = buildGmailClient();
   const myEmail = await getMyEmail(gmail);
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
+  const N = schema.companies;
 
   console.log("=== 全企業取得 ===");
-  const companies = await fetchAllCompanies(notion, dbId);
+  const companies = await fetchAllCompanies(notion, dbId, N);
   console.log(`Total: ${companies.length}`);
 
   const targets = companies.filter(shouldFix);
@@ -78,7 +81,7 @@ async function main() {
       await notion.pages.update({
         page_id: target.pageId,
         properties: {
-          名前: { title: [{ text: { content: bestName } }] },
+          [N.NAME]: { title: [{ text: { content: bestName } }] },
         },
       });
       fixed++;

@@ -9,6 +9,9 @@ concurrency:
   group: eigyo-tracker
   cancel-in-progress: false
 
+permissions:
+  contents: write  # notion-schema-cache.json の自動 commit に必要
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -24,7 +27,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: eigyo-tracker/package-lock.json
       - run: npm ci
-      - name: Schema drift check (Notion 側のプロパティ変更を検知)
+      - name: Schema drift check (Notion 側の削除/型変更を検知)
+        # resolver で名前変更・新規追加は吸収。残るのは「壊れ系」のみ。
         run: npm run check:schema
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
@@ -42,3 +46,18 @@ jobs:
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           SYNC_LOOKBACK_DAYS: '2'
+      - name: Auto-commit Notion schema cache (rename / 追加を git に反映)
+        if: always()  # sync が落ちても cache 更新だけは反映したい
+        working-directory: .
+        run: |
+          if [[ -n "$(git status --porcelain eigyo-tracker/notion-schema-cache.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add eigyo-tracker/notion-schema-cache.json
+            git commit -m "chore(eigyo-tracker): notion-schema-cache.json 自動更新"
+            # 競合した場合は rebase で吸収（並行 push 対策）
+            git pull --rebase origin main || true
+            git push origin HEAD:main
+          else
+            echo "[auto-commit] schema cache に変更なし"
+          fi

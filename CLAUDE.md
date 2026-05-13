@@ -28,33 +28,29 @@ URL を一緒に渡すこと**。
 | 📊 DB | [🔒削除厳禁] ステータス変更ログ | `d08ccb69-d0e7-4a16-aba7-2423e77f8ea0` | `NOTION_STATUS_CHANGE_LOG_DB_ID` | Before/After 表示の元データ |
 | 📄 ページ | [🔒削除厳禁] 📬 営業同期 通知 | `3529b3c4-ddc0-8138-bd75-eab8bc43efb1` | `NOTION_NOTIFY_PAGE_ID` | @メンション通知の貼付先 |
 
-- スキーマ（プロパティ）の改名・削除も禁止 …… **だったが、ヒデさんは Notion 側を都度いじる運用**。コード側は [eigyo-tracker/src/notion.ts](eigyo-tracker/src/notion.ts) と [eigyo-tracker/src/schema-check.ts](eigyo-tracker/src/schema-check.ts) が固定文字列で参照している。
 - 個別レコード（会社ページ・過去レポート個別ページなど）は削除可能。**DB / 親ページ自体は不可**。
 - ID は `gh secret list` で GitHub Secrets にも登録済み。
 
-### 🔄 営業トラッカーのスキーマ自動キャッチアップ運用
+### 🔄 営業トラッカーのスキーマ自動キャッチアップ（実装済み）
 
-**ヒデさんは Notion 上でプロパティ名やオプションを都度変更する。Claude はそれを毎回伝えられなくても追従できるようにする。**
+**ヒデさんは Notion 上でプロパティ名やオプションを自由にいじってよい。コードは Notion 側の id ベースで動くので、名前変更は次の sync で自動追従する。**
 
-仕組みは三段：
+仕組み：
 
-1. **GH Actions 側のガード**（自動）
-   - `.github/workflows/eigyo-tracker.yml` で sync の前に `npm run check:schema` が走る
-   - ズレ検知時：Notion 通知ページにコメント残して、ジョブを失敗で停止
-   - → 「sync が壊れて気付かないまま放置」を防ぐ
-2. **`src/schema-check.ts` の期待スキーマ宣言**（コード側の真実）
-   - 期待プロパティ名・型・必須 select オプションをここに集約
-   - 修正時は `notion.ts` / `monthly-report.ts` / `schema-check.ts` の 3 箇所をセットで触る
-3. **Claude のキャッチアップ手順**（人間が「キャッチアップして」と言った時、または営業トラッカーを触り始める時）
-   - (a) Notion MCP で 企業リスト DB (`18919c93...`) とステータス変更ログ DB (`d08ccb69...`) を fetch
-   - (b) [src/schema-check.ts](eigyo-tracker/src/schema-check.ts) の `COMPANIES_EXPECTED` / `STATUS_LOG_EXPECTED` と突合
-   - (c) 差分があれば：
-     - プロパティ名のリネーム → 該当の固定文字列を全置換（`notion.ts` の `CONTACT_PROP` / `MEDIA_PROP` 定数、`monthly-report.ts` の `props["..."]`、`schema-check.ts` のキー）
-     - select オプション追加・削除 → `schema-check.ts` の `required_options` を更新
-     - 新規プロパティ追加 → 必要なら参照を増やす（不要なら無視）
-   - (d) `npx tsc --noEmit` で型確認 → main へ commit & push
-   - (e) **報告は「Notion 側で X→Y にリネームされてたのでコード追従させた」と端的に**。経緯の長い説明は不要
-   - 既知の固定参照箇所（grep 用キーワード）: `名前 / 企業URL / 連絡日時 / 営業した媒体 / ステータス / 最終接触日 / 前回ステータス（自動）` (企業リスト DB) / `会社名 / Before / After / 判定種別 / 判定根拠 / 変更日時 / 媒体 / 会社ページ` (ログ DB)
+1. **id ベースの動的解決**（[eigyo-tracker/src/schema-resolver.ts](eigyo-tracker/src/schema-resolver.ts)）
+   - sync / report / timeout の起動時に Notion DB を retrieve
+   - プロパティ id（Notion 内部 ID、rename しても不変）で「現在の名前」を逆引き
+   - 全機能はこの解決済み名で動く（コード中に固定文字列なし）
+2. **キャッシュの自動 git commit**（[.github/workflows/eigyo-tracker.yml](.github/workflows/eigyo-tracker.yml)）
+   - [eigyo-tracker/notion-schema-cache.json](eigyo-tracker/notion-schema-cache.json) に「役割 → id, currentName」を保持
+   - sync 後に差分があれば github-actions[bot] が main へ自動 commit
+3. **壊れ系だけは止める**（[eigyo-tracker/src/schema-check.ts](eigyo-tracker/src/schema-check.ts)）
+   - プロパティ削除・型変更・必須 select オプション欠落 → Notion 通知ページに⚠️残してジョブ失敗
+
+**ヒデさんがやって OK な操作**：プロパティ rename / 新規プロパティ追加 / select オプション追加。
+**止まる操作**：既存プロパティ削除 / 型変更 / コードが書き込むオプション値の削除（例: 「S:継続中」「自動検知」「Wantedly」など）。
+
+止まったら Claude は通知メッセージから差分内容を読み、必要に応じて該当の `REQUIRED_*_OPTIONS`（schema-check.ts）を直す or プロパティ復元をヒデさんに依頼する。コード中に固定文字列が残ってないか心配する必要はもう無い。
 
 ## 🚨 本番反映チェックリスト（毎回必ず）
 

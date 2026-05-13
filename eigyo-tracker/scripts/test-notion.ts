@@ -1,11 +1,13 @@
 import "dotenv/config";
-import { buildNotionClient, fetchAllCompanies, getCompaniesDbId } from "../src/notion.js";
+import { buildNotionClient, fetchAllCompanies, getCompaniesDbId, getStatusChangeLogDbId } from "../src/notion.js";
+import { resolveSchema } from "../src/schema-resolver.js";
 
 async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
   console.log(`Fetching companies from DB ${dbId}...`);
-  const companies = await fetchAllCompanies(notion, dbId);
+  const companies = await fetchAllCompanies(notion, dbId, schema.companies);
   console.log(`✅ Total: ${companies.length} companies fetched`);
   console.log("");
   console.log("First 3 entries:");

@@ -8,6 +8,7 @@ import {
   type StatusChangeLog,
 } from "./notion.js";
 import { notifyMention } from "./notify.js";
+import { resolveSchema, type ResolvedSchema } from "./schema-resolver.js";
 
 interface PageInfo {
   pageId: string;
@@ -77,9 +78,11 @@ function getTargetMonthRange(): { start: Date; end: Date; label: string } {
 async function fetchPagesInRange(
   notion: Client,
   dbId: string,
+  schema: ResolvedSchema,
   start: Date,
   end: Date
 ): Promise<PageInfo[]> {
+  const N = schema.companies;
   const pages: PageInfo[] = [];
   let cursor: string | undefined;
   do {
@@ -96,23 +99,23 @@ async function fetchPagesInRange(
     });
     for (const p of res.results) {
       const props = p.properties ?? {};
-      const titleProp = props["名前"];
+      const titleProp = props[N.NAME];
       const name = titleProp?.type === "title"
         ? (titleProp.title ?? []).map((t: any) => t.plain_text).join("")
         : "";
-      const urlProp = props["企業URL"];
+      const urlProp = props[N.URL];
       const url = urlProp?.type === "url" ? urlProp.url ?? null : null;
-      const mediaProp = props["営業した媒体"];
+      const mediaProp = props[N.MEDIA];
       const mediaTags = mediaProp?.type === "multi_select"
         ? (mediaProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
-      const contactProp = props["連絡日時"];
+      const contactProp = props[N.CONTACT];
       const contactYears = contactProp?.type === "multi_select"
         ? (contactProp.multi_select ?? []).map((m: any) => m.name as string)
         : [];
-      const statusProp = props["ステータス"];
+      const statusProp = props[N.STATUS];
       const status = statusProp?.type === "select" ? statusProp.select?.name ?? null : null;
-      const lastContactProp = props["最終接触日"];
+      const lastContactProp = props[N.LAST_CONTACT];
       const lastContactAt = lastContactProp?.type === "date" && lastContactProp.date?.start
         ? new Date(lastContactProp.date.start)
         : null;
@@ -418,8 +421,9 @@ async function main() {
   const companiesDbId = getCompaniesDbId();
   const reportDbId = getReportDbId();
   const statusLogDbId = getStatusChangeLogDbId();
+  const schema = await resolveSchema(notion, companiesDbId, statusLogDbId);
 
-  const pages = await fetchPagesInRange(notion, companiesDbId, start, end);
+  const pages = await fetchPagesInRange(notion, companiesDbId, schema, start, end);
   console.log(`[monthly-report] 期間内変更ページ: ${pages.length} 件`);
 
   const added = pages.filter((p) => p.createdAt >= start && p.createdAt < end);
@@ -427,7 +431,7 @@ async function main() {
   let statusChanges: StatusChangeLog[] = [];
   if (statusLogDbId) {
     try {
-      statusChanges = await fetchStatusChangesInRange(notion, statusLogDbId, start, end);
+      statusChanges = await fetchStatusChangesInRange(notion, statusLogDbId, schema.statusLog, start, end);
       console.log(`[monthly-report] 変更ログ: ${statusChanges.length} 件`);
     } catch (err: any) {
       console.error(`[monthly-report] 変更ログ読込エラー: ${err?.message ?? err}`);

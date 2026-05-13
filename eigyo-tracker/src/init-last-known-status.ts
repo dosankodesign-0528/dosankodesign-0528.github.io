@@ -12,16 +12,20 @@ import {
   buildNotionClient,
   fetchAllCompanies,
   getCompaniesDbId,
+  getStatusChangeLogDbId,
   syncLastKnownStatus,
 } from "./notion.js";
+import { resolveSchema } from "./schema-resolver.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
+  const companyNames = schema.companies;
   console.log(`[init] 会社DB読み込み中...`);
-  const companies = await fetchAllCompanies(notion, dbId);
+  const companies = await fetchAllCompanies(notion, dbId, companyNames);
   console.log(`[init] 全会社: ${companies.length}`);
 
   const targets = companies.filter((c) => c.status && !c.lastKnownStatus);
@@ -35,7 +39,7 @@ async function main() {
   let ng = 0;
   for (const c of targets) {
     try {
-      await syncLastKnownStatus(notion, c.pageId, c.status!);
+      await syncLastKnownStatus(notion, companyNames, c.pageId, c.status!);
       ok++;
       if (ok % 50 === 0) console.log(`  進捗: ${ok}/${targets.length}`);
     } catch (err: any) {

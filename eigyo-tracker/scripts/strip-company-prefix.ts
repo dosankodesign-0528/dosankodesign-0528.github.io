@@ -1,14 +1,17 @@
 import "dotenv/config";
-import { buildNotionClient, fetchAllCompanies, getCompaniesDbId } from "../src/notion.js";
+import { buildNotionClient, fetchAllCompanies, getCompaniesDbId, getStatusChangeLogDbId } from "../src/notion.js";
 import { cleanCompanyName } from "../src/classify.js";
+import { resolveSchema } from "../src/schema-resolver.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
+  const N = schema.companies;
   console.log("=== 全企業取得 ===");
-  const companies = await fetchAllCompanies(notion, dbId);
+  const companies = await fetchAllCompanies(notion, dbId, N);
   console.log(`Total: ${companies.length}`);
 
   const targets = companies
@@ -32,7 +35,7 @@ async function main() {
       await notion.pages.update({
         page_id: t.pageId,
         properties: {
-          名前: { title: [{ text: { content: t.newName } }] },
+          [N.NAME]: { title: [{ text: { content: t.newName } }] },
         },
       });
       fixed++;

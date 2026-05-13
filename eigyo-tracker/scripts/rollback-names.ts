@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { buildNotionClient, fetchAllCompanies, getCompaniesDbId } from "../src/notion.js";
+import { buildNotionClient, fetchAllCompanies, getCompaniesDbId, getStatusChangeLogDbId } from "../src/notion.js";
+import { resolveSchema } from "../src/schema-resolver.js";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -57,8 +58,10 @@ function extractHost(url: string): string | null {
 async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
+  const schema = await resolveSchema(notion, dbId, getStatusChangeLogDbId());
+  const N = schema.companies;
   console.log("=== 全企業取得 ===");
-  const companies = await fetchAllCompanies(notion, dbId);
+  const companies = await fetchAllCompanies(notion, dbId, N);
   console.log(`Total: ${companies.length}`);
 
   const map = new Map<string, typeof companies[0]>();
@@ -81,7 +84,7 @@ async function main() {
       await notion.pages.update({
         page_id: company.pageId,
         properties: {
-          名前: { title: [{ text: { content: item.original } }] },
+          [N.NAME]: { title: [{ text: { content: item.original } }] },
         },
       });
       restored++;

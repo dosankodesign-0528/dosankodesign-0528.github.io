@@ -1,11 +1,12 @@
 import { Client } from "@notionhq/client";
 import type { CompanyRecord } from "./types.js";
+import type { ResolvedSchema } from "./schema-resolver.js";
 
-const NAME_PROP = "名前";
-const URL_PROP = "企業URL";
-const CONTACT_PROP = "連絡日時";
-const MEDIA_PROP = "営業した媒体";
-const LAST_KNOWN_STATUS_PROP = "前回ステータス（自動）";
+// プロパティ名はランタイムで schema-resolver が解決する。
+// 起動時に index.ts で resolveSchema() の結果をここに渡す。
+// この設計のおかげで、Notion 側でプロパティ名が変わってもコード修正不要。
+type CompaniesNames = ResolvedSchema["companies"];
+type StatusLogNames = ResolvedSchema["statusLog"];
 
 export function buildNotionClient() {
   const token = process.env.NOTION_TOKEN;
@@ -40,6 +41,7 @@ export interface StatusChangeLog {
 export async function addStatusChangeLog(
   notion: Client,
   dbId: string,
+  names: StatusLogNames,
   args: {
     companyName: string;
     companyPageId?: string;
@@ -52,22 +54,22 @@ export async function addStatusChangeLog(
   }
 ): Promise<void> {
   const properties: Record<string, any> = {
-    会社名: { title: [{ text: { content: args.companyName } }] },
-    Before: { select: { name: args.before ?? "(新規)" } },
-    After: { select: { name: args.after } },
-    判定種別: { select: { name: args.category } },
-    判定根拠: { rich_text: [{ text: { content: args.evidence } }] },
-    変更日時: {
+    [names.TITLE]: { title: [{ text: { content: args.companyName } }] },
+    [names.BEFORE]: { select: { name: args.before ?? "(新規)" } },
+    [names.AFTER]: { select: { name: args.after } },
+    [names.CATEGORY]: { select: { name: args.category } },
+    [names.EVIDENCE]: { rich_text: [{ text: { content: args.evidence } }] },
+    [names.CHANGED_AT]: {
       date: { start: (args.changedAt ?? new Date()).toISOString() },
     },
   };
   if (args.mediaTags.length > 0) {
-    properties["媒体"] = {
+    properties[names.MEDIA] = {
       multi_select: args.mediaTags.map((name) => ({ name })),
     };
   }
   if (args.companyPageId) {
-    properties["会社ページ"] = { relation: [{ id: args.companyPageId }] };
+    properties[names.COMPANY_REL] = { relation: [{ id: args.companyPageId }] };
   }
   await notion.pages.create({
     parent: { database_id: dbId },
@@ -78,6 +80,7 @@ export async function addStatusChangeLog(
 export async function fetchStatusChangesInRange(
   notion: Client,
   dbId: string,
+  names: StatusLogNames,
   start: Date,
   end: Date
 ): Promise<StatusChangeLog[]> {
@@ -87,30 +90,30 @@ export async function fetchStatusChangesInRange(
     const res: any = await notion.databases.query({
       database_id: dbId,
       filter: {
-        property: "変更日時",
+        property: names.CHANGED_AT,
         date: {
           on_or_after: start.toISOString(),
           before: end.toISOString(),
         },
       },
-      sorts: [{ property: "変更日時", direction: "ascending" }],
+      sorts: [{ property: names.CHANGED_AT, direction: "ascending" }],
       start_cursor: cursor,
       page_size: 100,
     });
     for (const p of res.results) {
       const props = p.properties ?? {};
-      const companyName = readTitle(props["会社名"]);
-      const before = readSelect(props["Before"]);
-      const after = readSelect(props["After"]);
-      const mediaTags = readMultiSelect(props["媒体"]);
-      const changedAt = readDate(props["変更日時"]) ?? new Date(p.created_time);
-      const relProp = props["会社ページ"];
+      const companyName = readTitle(props[names.TITLE]);
+      const before = readSelect(props[names.BEFORE]);
+      const after = readSelect(props[names.AFTER]);
+      const mediaTags = readMultiSelect(props[names.MEDIA]);
+      const changedAt = readDate(props[names.CHANGED_AT]) ?? new Date(p.created_time);
+      const relProp = props[names.COMPANY_REL];
       const companyPageId =
         relProp?.type === "relation" && Array.isArray(relProp.relation) && relProp.relation[0]
           ? relProp.relation[0].id
           : null;
-      const category = readSelect(props["判定種別"]) as StatusChangeCategory | null;
-      const evidenceProp = props["判定根拠"];
+      const category = readSelect(props[names.CATEGORY]) as StatusChangeCategory | null;
+      const evidenceProp = props[names.EVIDENCE];
       const evidence =
         evidenceProp?.type === "rich_text"
           ? (evidenceProp.rich_text ?? []).map((t: any) => t.plain_text ?? "").join("")
@@ -135,7 +138,8 @@ export async function fetchStatusChangesInRange(
 
 export async function fetchAllCompanies(
   notion: Client,
-  dbId: string
+  dbId: string,
+  names: CompaniesNames
 ): Promise<CompanyRecord[]> {
   const records: CompanyRecord[] = [];
   let cursor: string | undefined = undefined;
@@ -147,13 +151,13 @@ export async function fetchAllCompanies(
     });
     for (const page of res.results) {
       const props = page.properties ?? {};
-      const name = readTitle(props[NAME_PROP]);
-      const url = readUrl(props[URL_PROP]);
-      const contactYears = readMultiSelect(props[CONTACT_PROP]);
-      const mediaTags = readMultiSelect(props[MEDIA_PROP]);
-      const status = readSelect(props["ステータス"]);
-      const lastContactAt = readDate(props["最終接触日"]);
-      const lastKnownStatus = readRichText(props[LAST_KNOWN_STATUS_PROP]);
+      const name = readTitle(props[names.NAME]);
+      const url = readUrl(props[names.URL]);
+      const contactYears = readMultiSelect(props[names.CONTACT]);
+      const mediaTags = readMultiSelect(props[names.MEDIA]);
+      const status = readSelect(props[names.STATUS]);
+      const lastContactAt = readDate(props[names.LAST_CONTACT]);
+      const lastKnownStatus = readRichText(props[names.LAST_KNOWN]);
       records.push({
         pageId: page.id,
         name,
@@ -186,21 +190,22 @@ export function findCompany(
 export async function addCompany(
   notion: Client,
   dbId: string,
+  names: CompaniesNames,
   args: { name: string; url: string; year: string; mediaTag: string; status?: string; lastContactAt?: Date }
 ) {
   const properties: Record<string, any> = {
-    [NAME_PROP]: { title: [{ text: { content: args.name } }] },
-    [URL_PROP]: { url: args.url },
-    [CONTACT_PROP]: { multi_select: [{ name: args.year }] },
-    [MEDIA_PROP]: { multi_select: [{ name: args.mediaTag }] },
+    [names.NAME]: { title: [{ text: { content: args.name } }] },
+    [names.URL]: { url: args.url },
+    [names.CONTACT]: { multi_select: [{ name: args.year }] },
+    [names.MEDIA]: { multi_select: [{ name: args.mediaTag }] },
   };
   if (args.status) {
-    properties["ステータス"] = { select: { name: args.status } };
+    properties[names.STATUS] = { select: { name: args.status } };
     // 新規追加時も lastKnownStatus を同期させる（次回 sync で誤って手動変更扱いされない）
-    properties[LAST_KNOWN_STATUS_PROP] = { rich_text: [{ text: { content: args.status } }] };
+    properties[names.LAST_KNOWN] = { rich_text: [{ text: { content: args.status } }] };
   }
   if (args.lastContactAt) {
-    properties["最終接触日"] = { date: { start: args.lastContactAt.toISOString().slice(0, 10) } };
+    properties[names.LAST_CONTACT] = { date: { start: args.lastContactAt.toISOString().slice(0, 10) } };
   }
   await notion.pages.create({
     parent: { database_id: dbId },
@@ -210,6 +215,7 @@ export async function addCompany(
 
 export async function updateCompanyStatus(
   notion: Client,
+  names: CompaniesNames,
   pageId: string,
   status: string
 ): Promise<void> {
@@ -219,27 +225,29 @@ export async function updateCompanyStatus(
   await notion.pages.update({
     page_id: pageId,
     properties: {
-      ステータス: { select: { name: status } },
-      [LAST_KNOWN_STATUS_PROP]: { rich_text: [{ text: { content: status } }] },
+      [names.STATUS]: { select: { name: status } },
+      [names.LAST_KNOWN]: { rich_text: [{ text: { content: status } }] },
     },
   });
 }
 
 export async function syncLastKnownStatus(
   notion: Client,
+  names: CompaniesNames,
   pageId: string,
   status: string
 ): Promise<void> {
   await notion.pages.update({
     page_id: pageId,
     properties: {
-      [LAST_KNOWN_STATUS_PROP]: { rich_text: [{ text: { content: status } }] },
+      [names.LAST_KNOWN]: { rich_text: [{ text: { content: status } }] },
     },
   });
 }
 
 export async function updateLastContact(
   notion: Client,
+  names: CompaniesNames,
   pageId: string,
   date: Date
 ): Promise<void> {
@@ -247,13 +255,14 @@ export async function updateLastContact(
   await notion.pages.update({
     page_id: pageId,
     properties: {
-      最終接触日: { date: { start: iso } },
+      [names.LAST_CONTACT]: { date: { start: iso } },
     },
   });
 }
 
 export async function updateCompany(
   notion: Client,
+  names: CompaniesNames,
   record: CompanyRecord,
   year: string,
   mediaTag: string
@@ -265,12 +274,12 @@ export async function updateCompany(
   if (!yearsChanged && !mediaChanged) return false;
   const properties: Record<string, any> = {};
   if (yearsChanged) {
-    properties[CONTACT_PROP] = {
+    properties[names.CONTACT] = {
       multi_select: newYears.map((name) => ({ name })),
     };
   }
   if (mediaChanged) {
-    properties[MEDIA_PROP] = {
+    properties[names.MEDIA] = {
       multi_select: newMedia.map((name) => ({ name })),
     };
   }

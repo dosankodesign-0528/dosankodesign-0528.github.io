@@ -9,6 +9,7 @@ import {
 } from "./notion.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
 import { STATUS } from "./status.js";
+import { resolveSchema } from "./schema-resolver.js";
 
 const TIMEOUT_DAYS = Number(process.env.TIMEOUT_DAYS ?? "14");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -33,7 +34,10 @@ async function main() {
   const notion = buildNotionClient();
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
-  const companies = await fetchAllCompanies(notion, dbId);
+  const schema = await resolveSchema(notion, dbId, statusLogDbId);
+  const companyNames = schema.companies;
+  const logNames = schema.statusLog;
+  const companies = await fetchAllCompanies(notion, dbId, companyNames);
   console.log(`[timeout] 全企業: ${companies.length} 社`);
 
   const candidates = companies.filter((c) => {
@@ -56,7 +60,7 @@ async function main() {
   const movedEntries: NotifyEntry[] = [];
   for (const t of targets) {
     try {
-      await updateCompanyStatus(notion, t.pageId, STATUS.D);
+      await updateCompanyStatus(notion, companyNames, t.pageId, STATUS.D);
       moved++;
       const days = Math.floor(daysSince(t.lastContactAt!));
       console.log(`  ↘ ${t.name}: 待機中 → D:ご縁がなかった（${days}日経過）`);
@@ -67,7 +71,7 @@ async function main() {
       });
       if (statusLogDbId) {
         try {
-          await addStatusChangeLog(notion, statusLogDbId, {
+          await addStatusChangeLog(notion, statusLogDbId, logNames, {
             companyName: t.name,
             companyPageId: t.pageId,
             before: STATUS.WAITING,

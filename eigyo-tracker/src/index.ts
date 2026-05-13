@@ -18,6 +18,7 @@ import { classifyMessage, shouldSkipDomain } from "./classify.js";
 import { reportUnclassifiedCandidates } from "./learn.js";
 import { notifyMention, type NotifyEntry } from "./notify.js";
 import { assertSchemaOrFail } from "./schema-check.js";
+import { resolveSchema } from "./schema-resolver.js";
 import {
   detectStatusFromMessage,
   isManualReviewCandidate,
@@ -47,14 +48,17 @@ async function main() {
   console.log(`[eigyo-tracker] mailbox: ${myEmail}`);
 
   const notion = buildNotionClient();
-
-  // Notion 側でプロパティ rename / 削除されていないか先にチェック。
-  // ズレてたらここで停止＆通知ページに警告コメント。
-  await assertSchemaOrFail(notion);
-
   const dbId = getCompaniesDbId();
   const statusLogDbId = getStatusChangeLogDbId();
-  const companies = await fetchAllCompanies(notion, dbId);
+
+  // Notion 側でプロパティ rename / 追加されてたら id 経由で追従、消されてたら停止。
+  // 同時に notion-schema-cache.json を最新の名前で更新する（差分があれば GH Actions が自動 commit）。
+  const schema = await resolveSchema(notion, dbId, statusLogDbId);
+  await assertSchemaOrFail(notion, schema);
+  const companyNames = schema.companies;
+  const logNames = schema.statusLog;
+
+  const companies = await fetchAllCompanies(notion, dbId, companyNames);
   console.log(`[eigyo-tracker] existing companies: ${companies.length}`);
 
   // Phase 2: Notion 上での手動ステータス編集を検知
@@ -72,7 +76,7 @@ async function main() {
       }
       if (c.status !== c.lastKnownStatus) {
         try {
-          await addStatusChangeLog(notion, statusLogDbId, {
+          await addStatusChangeLog(notion, statusLogDbId, logNames, {
             companyName: c.name,
             companyPageId: c.pageId,
             before: c.lastKnownStatus,
@@ -81,7 +85,7 @@ async function main() {
             category: "手動変更",
             evidence: "Notion上での手動編集を検知（前回 sync 以降にステータスが変更されていた）",
           });
-          await syncLastKnownStatus(notion, c.pageId, c.status);
+          await syncLastKnownStatus(notion, companyNames, c.pageId, c.status);
           manualChanges.push({
             name: c.name,
             from: c.lastKnownStatus,
@@ -151,7 +155,7 @@ async function main() {
         if (existing) {
           if (!existing.lastContactAt || msg.date > existing.lastContactAt) {
             try {
-              await updateLastContact(notion, existing.pageId, msg.date);
+              await updateLastContact(notion, companyNames, existing.pageId, msg.date);
               existing.lastContactAt = msg.date;
             } catch (err: any) {
               console.error(`  lastContact update error: ${existing.name}: ${err?.message ?? err}`);
@@ -160,7 +164,7 @@ async function main() {
           if (detection && shouldUpdateStatus(existing.status, detection)) {
             try {
               const beforeStatus = existing.status;
-              await updateCompanyStatus(notion, existing.pageId, detection.status);
+              await updateCompanyStatus(notion, companyNames, existing.pageId, detection.status);
               statusChanges.push({
                 name: existing.name,
                 from: beforeStatus,
@@ -172,7 +176,7 @@ async function main() {
               console.log(`  status: ${existing.name}  ${beforeStatus ?? "(未設定)"} → ${detection.status}  [${detection.matchedKeyword}]`);
               if (statusLogDbId) {
                 try {
-                  await addStatusChangeLog(notion, statusLogDbId, {
+                  await addStatusChangeLog(notion, statusLogDbId, logNames, {
                     companyName: existing.name,
                     companyPageId: existing.pageId,
                     before: beforeStatus,
@@ -199,7 +203,7 @@ async function main() {
             });
             console.log(`  ⚠️ skip候補: ${existing.name}  ${existing.status ?? "(未設定)"} → ${detection.status}（${detection.reason}「${detection.matchedKeyword}」）`);
           }
-          const updated = await updateCompany(notion, existing, year, source.tag);
+          const updated = await updateCompany(notion, companyNames, existing, year, source.tag);
           if (updated) {
             existing.contactYears = Array.from(
               new Set([...existing.contactYears, year])
@@ -216,7 +220,7 @@ async function main() {
           }
         } else {
           const initialStatus = detection?.status ?? "待機中";
-          await addCompany(notion, dbId, {
+          await addCompany(notion, dbId, companyNames, {
             name: classified.companyName,
             url: classified.companyUrl,
             year,
@@ -244,7 +248,7 @@ async function main() {
             });
             if (statusLogDbId) {
               try {
-                await addStatusChangeLog(notion, statusLogDbId, {
+                await addStatusChangeLog(notion, statusLogDbId, logNames, {
                   companyName: classified.companyName,
                   before: null,
                   after: detection.status,
