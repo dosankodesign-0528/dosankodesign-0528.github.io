@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { flushSync } from "react-dom";
 import {
   SiteEntry,
   SourceSite,
@@ -9,6 +10,33 @@ import {
 } from "@/types";
 import { allSites, dateRange } from "@/data/load-sites";
 import { normalizeUrl } from "@/lib/eagle";
+
+// 「確認済み」操作などでカードがフィルター外に消える時のレイアウトシフトを
+// View Transitions API でなめらかに見せるためのラッパー。
+// - 未対応ブラウザ(ユーザー設定 prefers-reduced-motion 含む) では普通に即時更新。
+// - flushSync で startViewTransition のコールバック内に React の DOM 反映を閉じ込め、
+//   ブラウザに「前後の状態」を取らせる。
+function withViewTransition(fn: () => void) {
+  if (typeof document === "undefined") {
+    fn();
+    return;
+  }
+  const startViewTransition = (
+    document as Document & {
+      startViewTransition?: (cb: () => void) => unknown;
+    }
+  ).startViewTransition;
+  const reduceMotion = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  if (!startViewTransition || reduceMotion) {
+    fn();
+    return;
+  }
+  startViewTransition.call(document, () => {
+    flushSync(fn);
+  });
+}
 
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
@@ -350,25 +378,31 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   }, [sites, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // スター切り替え（starredIdsを更新 → sitesはuseMemoで自動反映 → localStorageへ永続化）
+  // 「未確認」モードのときはカードがその場で消えるので、View Transitions API で
+  // 消えるカードはフェード、残るカードは新しい位置へ滑らかに動かす。
   const toggleStar = useCallback((id: string) => {
-    setStarredIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    withViewTransition(() => {
+      setStarredIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
     });
   }, []);
 
   // 複数まとめて starred を一括セット
   const setStarredMany = useCallback((ids: string[], starred: boolean) => {
-    setStarredIds((prev) => {
-      const next = new Set(prev);
-      if (starred) {
-        ids.forEach((id) => next.add(id));
-      } else {
-        ids.forEach((id) => next.delete(id));
-      }
-      return next;
+    withViewTransition(() => {
+      setStarredIds((prev) => {
+        const next = new Set(prev);
+        if (starred) {
+          ids.forEach((id) => next.add(id));
+        } else {
+          ids.forEach((id) => next.delete(id));
+        }
+        return next;
+      });
     });
   }, []);
 

@@ -47,6 +47,10 @@ export const SiteCard = memo(function SiteCard({
         boxShadow: hovered
           ? "var(--card-shadow-hover)"
           : "var(--card-shadow)",
+        // View Transitions API 用の識別名。確認済みチェックでカードが消える時に、
+        // ブラウザがこの名前でカード単位のスナップショットを撮って、
+        // 消えるカードはフェード・残るカードは新しい位置へ滑らかに動かす。
+        viewTransitionName: `card-${site.id}`,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
