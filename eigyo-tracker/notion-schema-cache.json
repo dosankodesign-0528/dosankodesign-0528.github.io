@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastResolvedAt": "2026-05-13T05:44:08.757Z",
+  "lastResolvedAt": "2026-05-13T06:42:06.808Z",
   "companies": {
     "dbId": "18919c93bf124d92b8675ef9c32fb7b3",
     "props": {
@@ -82,6 +82,11 @@
         "id": "m%3E%3Bw",
         "currentName": "前回ステータス（自動）",
         "type": "rich_text"
+      },
+      "DUP_FLAG": {
+        "id": "O%5CBu",
+        "currentName": "重複疑い",
+        "type": "checkbox"
       }
     }
   },
