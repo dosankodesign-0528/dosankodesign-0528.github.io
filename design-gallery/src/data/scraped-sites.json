@@ -1,5 +1,49 @@
 [
   {
+    "id": "9e3537953dcd",
+    "title": "三次元 The Classic",
+    "url": "https://3jigen.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/3jigen_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:31.293Z"
+  },
+  {
+    "id": "f2f568968bbc",
+    "title": "X GROUP | 新ブランド特設サイト",
+    "url": "https://xgroup.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/xgroup_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
+    "id": "81ca0e18af19",
+    "title": "株式会社ポケモン",
+    "url": "https://corporate.pokemon.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/thepokemoncompany_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
     "id": "0e55528ae331",
     "title": "音更電設株式会社",
     "url": "https://www.otoden.co.jp/",
@@ -11302,22 +11346,6 @@
     "lastCheckedAt": "2026-04-29T14:31:59.379Z"
   },
   {
-    "id": "74c867c3781d",
-    "title": "Kloar",
-    "url": "https://kloar.jp/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/kloar_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2024-12",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:31:59.125Z"
-  },
-  {
     "id": "effd6ee27958",
     "title": "RXプロ | RXという選択肢で業務オペレーション･採用活動に変革を。",
     "url": "https://rx-pro.co.jp/",
@@ -19810,6 +19838,22 @@
     "firstSeen": "2026-05-09T03:34:10.032Z"
   },
   {
+    "id": "45a3a5e9e43f",
+    "title": "合同会社レンズ",
+    "url": "https://lens-llc.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/thumb-lens.webp",
+    "source": "muuuuu",
+    "category": [
+      "black"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-27T03:33:22.966Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:19.087Z"
+  },
+  {
     "id": "bd81df2fa7e7",
     "title": "KAISEI SADATOKI",
     "url": "https://kaiseisadatoki-v4.vercel.app/",
@@ -20916,22 +20960,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:30.801Z"
-  },
-  {
-    "id": "e01062b25fcc",
-    "title": "三次元 The Classic",
-    "url": "https://3jigen.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/02/24.webp",
-    "source": "muuuuu",
-    "category": [
-      "building"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:31.293Z"
   },
   {
     "id": "fd12961c1752",
@@ -25782,6 +25810,22 @@
     "lastCheckedAt": "2026-04-29T14:32:55.791Z"
   },
   {
+    "id": "63f03f933a2e",
+    "title": "Kloar",
+    "url": "https://kloar.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2025/01/1.jpg",
+    "source": "muuuuu",
+    "category": [
+      "beauty"
+    ],
+    "taste": [],
+    "date": "2025-01",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:31:59.125Z"
+  },
+  {
     "id": "90b056056a29",
     "title": "焼肉きんぐ公式サイト",
     "url": "https://www.yakiniku-king.jp/",
@@ -30261,6 +30305,48 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "97d466040ce6",
+    "title": "サンワ(SANWA)",
+    "url": "https://tochi-sanwa.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260515_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "建築・住宅・不動産・オフィス"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
+    "id": "9013d9bcd9f1",
+    "title": "GUNDAM Official Website",
+    "url": "https://gundam-official.com/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260514_03-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "エンタメ・芸能"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
+    "id": "2ae7956788e4",
+    "title": "熱海ガス株式会社",
+    "url": "https://www.atamigas.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260514_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
     "id": "7a2bf30fb174",
     "title": "ストラテジーテック・コンサルティングでキャリアを築く",
     "url": "https://stratefriends.com/",
@@ -30433,22 +30519,6 @@
     "firstSeen": "2026-04-28T03:42:17.812Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:19.079Z"
-  },
-  {
-    "id": "616bf60e82dd",
-    "title": "合同会社レンズ",
-    "url": "https://lens-llc.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260427_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-27T03:33:22.966Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:19.087Z"
   },
   {
     "id": "5d32b09db2b8",
@@ -34113,54 +34183,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:30.534Z"
-  },
-  {
-    "id": "13bda3bfc70d",
-    "title": "株式会社maics",
-    "url": "https://www.maics.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250829_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:30.729Z"
-  },
-  {
-    "id": "803cbd62d9b5",
-    "title": "ありあけ 横濱ハーバー採用サイト",
-    "url": "https://recruit.harbour-world.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250828_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "採用サイト・転職・求人"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:31.109Z"
-  },
-  {
-    "id": "0ac7b52cbcb2",
-    "title": "株式会社北舗",
-    "url": "https://www.hoppo-group.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250828_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:33.970Z"
   },
   {
     "id": "80ffb7e15ec8",
@@ -42808,22 +42830,6 @@
     "lastCheckedAt": "2026-04-29T14:34:22.075Z"
   },
   {
-    "id": "02f33ec9c6cc",
-    "title": "Sun*（サンアスタリスク）| 新規事業開発支援",
-    "url": "https://sun-asterisk.com/service/development/lp/bizdev-support/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250606_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ビジネス・会社"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:21.145Z"
-  },
-  {
     "id": "8719a750f6fe",
     "title": "有限会社わらしべ",
     "url": "https://taiyaki-warashibe.com/",
@@ -45798,6 +45804,38 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:34:32.799Z"
+  },
+  {
+    "id": "c724ff7fab7d",
+    "title": "No Company, inc.｜スタイルで、人から選ばれる組織へ。",
+    "url": "https://www.no-company.co.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/05/260515-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "コーポレートサイト",
+      "コンサルティング",
+      "マーケティング"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
+    "id": "c2800d534c0a",
+    "title": "IMAYO Official Website",
+    "url": "https://imayo.co.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/05/260515-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "コーポレートサイト",
+      "ファッション"
+    ],
+    "taste": [],
+    "agency": "Garden Eight",
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
   },
   {
     "id": "c3b6bdeb30e6",
@@ -49009,444 +49047,32 @@
     "firstSeen": "2026-05-14T03:46:39.012Z"
   },
   {
-    "id": "a4b6dbe59d13",
-    "title": "Champion feat. スチャダラパー",
-    "url": "https://www.hanesbrandsinc.jp/pages/sfc.aspx",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/07/240709pc-640x480.jpg",
-    "source": "81web",
+    "id": "be823072243b",
+    "title": "Wabital Inc",
+    "url": "https://wabital.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69f9b4340b844555347937.png",
+    "source": "awwwards",
     "category": [
-      "キャンペーン",
-      "特設サイト",
-      "ファッション"
+      "Business & Corporate",
+      "Other",
+      "Web & Interactive",
+      "Clean",
+      "Flat Design",
+      "Minimal",
+      "Responsive Design",
+      "Video",
+      "Storytelling",
+      "Next.js",
+      "Sanity",
+      "Framer"
     ],
     "taste": [],
-    "agency": "Standfoundation",
-    "date": "2024-07",
+    "date": "2026-05",
     "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "e733e0ec256d",
-    "title": "スタジオモット | studio motto",
-    "url": "https://studio-motto.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/07/240708pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "人材"
+    "signals": [
+      "framer"
     ],
-    "taste": [],
-    "date": "2024-07",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "ba56c20dbacf",
-    "title": "新卒採用サイト｜ノジマホールディングス〈公式〉",
-    "url": "https://www.nojima.jp/recruit/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/06/240618-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "採用サイト",
-      "機械",
-      "電機",
-      "工業",
-      "流通"
-    ],
-    "taste": [],
-    "date": "2024-06",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "dd336a83d7e6",
-    "title": "共同オーナー型セカンドホーム「SANU 2nd Home Co-Owners」｜もっと軽やかに、もっと自由に。自然の中に家を持つ。",
-    "url": "https://owners.sa-nu.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/06/240614-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "暮らし",
-      "建築",
-      "不動産"
-    ],
-    "taste": [],
-    "date": "2024-06",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "70db18027cc3",
-    "title": "CATALOG | SLY（スライ） | バロックジャパンリミテッド（BAROQUE）",
-    "url": "https://sly.jp/catalog/2024ss/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/06/240613pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "ファッション"
-    ],
-    "taste": [],
-    "date": "2024-06",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "d90929932ff7",
-    "title": "Ameba Brand | つくる、つむぐ、つづく、Ameba LIFE",
-    "url": "https://content.ameba.jp/amebalife/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/06/240611pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "Webサービス",
-      "アプリ"
-    ],
-    "taste": [],
-    "date": "2024-06",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "14180c3d6327",
-    "title": "千葉県のデザイン・ホームページ制作｜株式会社Webkid",
-    "url": "https://webkid.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/06/240604pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "アート",
-      "デザイン"
-    ],
-    "taste": [],
-    "date": "2024-06",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "2716ce167b4c",
-    "title": "MEJINAVI2024｜目白大学がまるっとわかるメジナビ",
-    "url": "https://www2.mejiro.ac.jp/univ/mejinavi2024/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/05/240530-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "学校",
-      "教育機関"
-    ],
-    "taste": [],
-    "agency": "TryMore",
-    "date": "2024-05",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "20fb83f5f666",
-    "title": "Panasonic World &#8211; パナソニック",
-    "url": "https://saiyou.jpn.panasonic.com/world/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/05/240521-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "家電",
-      "電子機器",
-      "通信"
-    ],
-    "taste": [],
-    "agency": "EVOWORX",
-    "date": "2024-05",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "facbc4b50dfa",
-    "title": "2024 NEXT CREATION PROGRAM 『こどもファッションプロジェクト』",
-    "url": "https://ncptokyo.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/05/b4c488ed-abbd-43b3-a00f-cfbf16a81c0c-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "ファッション"
-    ],
-    "taste": [],
-    "agency": "Soulmates Interactive",
-    "date": "2024-05",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "10a97819fc80",
-    "title": "ひとりを尊ぶ、ひとつにもなれる。｜MIND of NIHON UNIVERSITY | MIND of NIHON UNIVERSITY",
-    "url": "https://www.nihon-u.ac.jp/mind/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240507-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "キャンペーン",
-      "特設サイト",
-      "学校",
-      "教育機関"
-    ],
-    "taste": [],
-    "date": "2024-05",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "0d2064efa53b",
-    "title": "新卒企業紹介サービス | 就活キャリア",
-    "url": "https://www.shukatsu-career.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240410pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "Webサービス",
-      "アプリ"
-    ],
-    "taste": [],
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "ac22e5769ada",
-    "title": "株式会社ProVison",
-    "url": "https://www.pro-vision.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240408pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "711967e990ad",
-    "title": "長谷川仁 HASEGAWA,Jin",
-    "url": "https://hasegawajin.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240403-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ポートフォリオサイト",
-      "アート",
-      "デザイン"
-    ],
-    "taste": [],
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "37bc9b760aa3",
-    "title": "【公式】THE LIONS 大京の新築・分譲マンション住まいサイト",
-    "url": "https://lions-mansion.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/lions_pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "暮らし",
-      "建築",
-      "不動産"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "4fc18d4add28",
-    "title": "AMUSE RECRUIT 2025｜株式会社 アミューズ 採用サイト｜AMUSE INC. RECRUITMENT",
-    "url": "https://recruit.amuse.co.jp/recruit2025/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/03/240319-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "採用サイト",
-      "TV",
-      "映画",
-      "芸能"
-    ],
-    "taste": [],
-    "agency": "MEFILAS",
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "7d0a6c65120f",
-    "title": "Pizza 4P&#8217;s Japan | Earth to People &#8211; Oneness &#8211;",
-    "url": "https://pizza4ps.com/jp/?lang=japanese",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/03/240314-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "飲料",
-      "食品"
-    ],
-    "taste": [],
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "da600dfd6612",
-    "title": "JIDAI : 面白い商品・マーケティング、そして時代をつくる企業。",
-    "url": "https://jidaiinc.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240301-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "4fe05d464595",
-    "title": "国際共創学部｜大阪経済大学",
-    "url": "https://www.osaka-ue.ac.jp/newfaculty/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240226-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "学校",
-      "教育機関"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "a2e40be71565",
-    "title": "株式会社Haul &#8211; Haul, inc. | 採用ブランディング | 採用マーケティング",
-    "url": "https://haulinc.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240226-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "人材"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "318cdea15aea",
-    "title": "井口 皓太 / Kota Iguchi – Motion Design –",
-    "url": "https://kotaiguchi.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240221-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ポートフォリオサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "0cb474bb08d3",
-    "title": "CAREERING | キャリアリング公式オンラインストア",
-    "url": "https://careering.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240219-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ECサイト",
-      "ファッション"
-    ],
-    "taste": [],
-    "agency": "SIMONE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "48d2fb3809c4",
-    "title": "代官山青果店",
-    "url": "https://daikanyamaseikaten.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240216-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ECサイト",
-      "飲料",
-      "食品"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "c038536ce868",
-    "title": "ドライバーの仕事探しなら『GOジョブ』| GOジョブ",
-    "url": "https://gojob.go.goinc.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240214-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "旅行",
-      "宿泊施設",
-      "交通機関"
-    ],
-    "taste": [],
-    "agency": "necco",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "e0b47b40237a",
-    "title": "新有馬開発株式会社・株式会社ニューアリマ",
-    "url": "https://newarima.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240213-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "スポーツ"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
-  },
-  {
-    "id": "5f2a90f778a4",
-    "title": "TOTETOT RECORDS &#8211; A fictional music label",
-    "url": "https://totetot.tote.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240206-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "音楽"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-05-14T03:46:39.012Z"
+    "firstSeen": "2026-05-15T03:49:29.013Z"
   },
   {
     "id": "e34b22a3ab0a",
@@ -49510,42 +49136,16 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69efa87690b92126544964.jpg",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Fashion",
-      "Big Background Images",
       "Clean",
       "Flat Design",
       "Fullscreen",
       "Minimal",
       "Photography",
+      "Business & Corporate",
       "About Page",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
-    "id": "2ba136a255c6",
-    "title": "Scottish Malt Whisky Society",
-    "url": "https://outturn.smwsa.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ef60e06b0b5129109236.png",
-    "source": "awwwards",
-    "category": [
-      "Typography",
-      "Video",
-      "Copy design",
-      "Interaction Design",
-      "Food & Drink",
+      "Fashion",
       "Framer",
-      "Music & Sound",
-      "Web & Interactive",
-      "Parallax",
-      "Single page"
+      "Big Background Images"
     ],
     "taste": [],
     "date": "2026-05",
@@ -50124,6 +49724,28 @@
     "firstSeen": "2026-05-13T03:46:20.971Z"
   },
   {
+    "id": "5c023ffd3e0c",
+    "title": "fromanother.love",
+    "url": "https://www.fromanother.love/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e5f4cf15e99855199696.png",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Animation",
+      "Clean",
+      "Colorful",
+      "Portfolio",
+      "React",
+      "Interaction Design",
+      "Prismic",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-15T03:49:29.013Z"
+  },
+  {
     "id": "901473c155b2",
     "title": "Floema",
     "url": "https://www.floema.com/en",
@@ -50275,29 +49897,6 @@
       "Gestures / Interaction",
       "Next.js",
       "Luxury"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
-    "id": "57397ebf44a5",
-    "title": "T11",
-    "url": "https://t11.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/69a2425586eab380731307.jpg",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Games & Entertainment",
-      "Music & Sound",
-      "Animation",
-      "Portfolio",
-      "Video",
-      "WebGL",
-      "Transitions",
-      "GSAP",
-      "React"
     ],
     "taste": [],
     "date": "2026-05",
