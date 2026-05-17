@@ -19822,6 +19822,20 @@
     "firstSeen": "2026-05-09T03:34:10.032Z"
   },
   {
+    "id": "bcd625e20464",
+    "title": "Will Style Inc.",
+    "url": "https://willstyle.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/16.webp",
+    "source": "muuuuu",
+    "category": [
+      "white"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-13T03:46:20.971Z"
+  },
+  {
     "id": "77e051b3b1ea",
     "title": "IMAYO Official Website",
     "url": "https://imayo.co.jp/",
@@ -45879,24 +45893,6 @@
     "firstSeen": "2026-05-13T03:46:20.971Z"
   },
   {
-    "id": "715443f0c575",
-    "title": "Will Style Inc.｜神戸のWeb制作会社",
-    "url": "https://willstyle.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/05/260513-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "agency": "Will Style",
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
     "id": "ba6935c751d2",
     "title": "Nakano portfolio",
     "url": "https://nakanoffffff.xyz/index.html",
@@ -50172,6 +50168,26 @@
     "firstSeen": "2026-05-13T03:46:20.971Z"
   },
   {
+    "id": "99a53f941bb6",
+    "title": "Enerblock",
+    "url": "https://enerblock.net/en/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ea79f9d1d88642449231.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "GSAP",
+      "UI design",
+      "Microinteractions",
+      "Footer Design",
+      "Sanity",
+      "Astro"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-17T03:50:51.066Z"
+  },
+  {
     "id": "f73bd89f0803",
     "title": "Juan Mora",
     "url": "https://juanmora.co/",
@@ -50323,30 +50339,6 @@
       "Portfolio",
       "Interaction Design",
       "Webflow"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
-    "id": "9889412dd164",
-    "title": "Studio Namma",
-    "url": "https://studionamma.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d768dd8b896711383791.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Web & Interactive",
-      "Animation",
-      "Navigation Menu",
-      "Portfolio",
-      "Transitions",
-      "GSAP",
-      "Contact Page",
-      "Footer Design",
-      "Webflow",
-      "Javascript"
     ],
     "taste": [],
     "date": "2026-05",
