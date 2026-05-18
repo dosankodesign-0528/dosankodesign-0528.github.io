@@ -1,5 +1,111 @@
 [
   {
+    "id": "2465aac55ee3",
+    "title": "シーベジスタンド | 昼はラーメン、夜は酒場にも。ぜんぶ、海藻。",
+    "url": "https://seavege-stand.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/seavegestand_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:29.442Z"
+  },
+  {
+    "id": "014874fe61c8",
+    "title": "ビックアイデア | 良いより、よくぞ。 ビックカメラグループのオリジナルブランド",
+    "url": "https://www.biccamera.com/bc/c/bicidea/index.jsp",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/bicidea_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:20.805Z"
+  },
+  {
+    "id": "6323dde1d11e",
+    "title": "ラ･カスタ30周年記念サイト | La CASTA 公式サイト",
+    "url": "https://www.lacasta.jp/30th/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/lacasta30th_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
+    "id": "2ce2947e8ed9",
+    "title": "DoKomi – ドイツ最大の日本＆アニメ博覧会",
+    "url": "https://www.dokomi.de/ja",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/dokomi_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-21T02:57:00.462Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:32.662Z"
+  },
+  {
+    "id": "ff75e8faa1a2",
+    "title": "OKI",
+    "url": "https://www.oki.com/global/ja/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/oki_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:30.416Z"
+  },
+  {
+    "id": "8475e2998203",
+    "title": "Yoom | あなた専用のAI社員とチームをつくる、新しい自動化プラットフォーム",
+    "url": "https://lp.yoom.fun/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/yoom_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
+    "id": "fa44f987ebe5",
+    "title": "Webサイトを、成果を生む基盤へ。 | Studio.Business",
+    "url": "https://studio.design/ja/business",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/studiobusiness_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
     "id": "9e3537953dcd",
     "title": "三次元 The Classic",
     "url": "https://3jigen.jp/",
@@ -19822,6 +19928,20 @@
     "firstSeen": "2026-05-09T03:34:10.032Z"
   },
   {
+    "id": "46cac61038eb",
+    "title": "monaka design.",
+    "url": "https://monakadesign.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/image-23.webp",
+    "source": "muuuuu",
+    "category": [
+      "white"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
     "id": "bcd625e20464",
     "title": "Will Style Inc.",
     "url": "https://willstyle.co.jp/",
@@ -20750,38 +20870,6 @@
     "lastCheckedAt": "2026-04-29T14:32:29.904Z"
   },
   {
-    "id": "ea813b4a2948",
-    "title": "シーベジスタンド",
-    "url": "https://seavege-stand.com/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/11-1.webp",
-    "source": "muuuuu",
-    "category": [
-      "restaurant"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:29.442Z"
-  },
-  {
-    "id": "10e549cfaf23",
-    "title": "DoKomi",
-    "url": "https://www.dokomi.de/ja",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/09.webp",
-    "source": "muuuuu",
-    "category": [
-      "entertainment"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-21T02:57:00.462Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:32.662Z"
-  },
-  {
     "id": "43de8b42d61b",
     "title": "博展 採用サイト",
     "url": "https://recruit.hakuten.co.jp/",
@@ -20876,22 +20964,6 @@
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:29.912Z"
-  },
-  {
-    "id": "526dc12561b1",
-    "title": "OKI",
-    "url": "https://www.oki.com/global/ja/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/02/04.webp",
-    "source": "muuuuu",
-    "category": [
-      "company"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:30.416Z"
   },
   {
     "id": "5fb099d5d8cb",
@@ -30317,6 +30389,20 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "2e44e5008b3b",
+    "title": "furfolk（ファーフォーク）",
+    "url": "https://furfolk.dog/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260518_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "動物・ペット"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
     "id": "d07c96486480",
     "title": "株式会社PRMO",
     "url": "https://www.prm.ooo/ja",
@@ -31153,22 +31239,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:20.709Z"
-  },
-  {
-    "id": "e8c16241427b",
-    "title": "ビックアイデア",
-    "url": "https://www.biccamera.com/bc/c/bicidea/index.jsp",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260325_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "家電・PC・モバイル"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:20.805Z"
   },
   {
     "id": "c4cfe43aaabb",
@@ -34193,22 +34263,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:30.366Z"
-  },
-  {
-    "id": "d81615581b77",
-    "title": "Shimadzu Design (島津デザイン) | 島津製作所",
-    "url": "https://www.shimadzu.co.jp/research_and_development/design_strategy/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250830_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:30.534Z"
   },
   {
     "id": "e1b573961d87",
@@ -39649,6 +39703,20 @@
     "lastCheckedAt": "2026-04-29T14:34:08.641Z"
   },
   {
+    "id": "68e59c94d04c",
+    "title": "マクラーレンとのパートナーシップから着想を得たデザイン、glo™ 特別限定モデルが誕生｜Pen Online",
+    "url": "https://www.pen-online.jp/special/glo-mclaren/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260518_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "インテリア・生活用品・雑貨"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
     "id": "91cdb4eebf4a",
     "title": "mothers-day  – NELUKA 熟睡専門店",
     "url": "https://hugmotti.com/pages/mothers-day",
@@ -42852,22 +42920,6 @@
     "lastCheckedAt": "2026-04-29T14:34:21.523Z"
   },
   {
-    "id": "a68f4543a44d",
-    "title": "“ナチュレ 恵 megumi 植物生まれ”｜Plant Label（プラントラベル）｜雪印メグミルク株式会社",
-    "url": "https://www.meg-snow.com/plant_label/megumi/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250610_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料・飲食"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:21.009Z"
-  },
-  {
     "id": "8719a750f6fe",
     "title": "有限会社わらしべ",
     "url": "https://taiyaki-warashibe.com/",
@@ -45842,6 +45894,22 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:34:32.799Z"
+  },
+  {
+    "id": "efff7e59ff28",
+    "title": "採用情報 | 株式会社kubell（旧 Chatwork株式会社）",
+    "url": "https://career.kubell.com/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/05/260518-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "採用サイト",
+      "Webサービス",
+      "アプリ"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
   },
   {
     "id": "c724ff7fab7d",
@@ -50168,6 +50236,55 @@
     "firstSeen": "2026-05-13T03:46:20.971Z"
   },
   {
+    "id": "b0b19db18f3f",
+    "title": "Capitolium",
+    "url": "https://www.collabcapitolium.fr",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e9350bc520b242777543.png",
+    "source": "awwwards",
+    "category": [
+      "Culture & Education",
+      "Fashion",
+      "Sports",
+      "Animation",
+      "Big Background Images",
+      "Fullscreen",
+      "Horizontal Layout",
+      "Photographic",
+      "GSAP",
+      "Nuxt.js",
+      "Typescript"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
+    "id": "82059c5ac285",
+    "title": "KVS Studio",
+    "url": "https://www.kvs.services/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e640f169ce7714408217.png",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Technology",
+      "Web & Interactive",
+      "Animation",
+      "Responsive Design",
+      "WebGL",
+      "Sound-Audio",
+      "Three.js",
+      "3D",
+      "UI design",
+      "Microinteractions",
+      "Vue.js"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-18T04:05:45.827Z"
+  },
+  {
     "id": "99a53f941bb6",
     "title": "Enerblock",
     "url": "https://enerblock.net/en/",
@@ -50301,44 +50418,6 @@
       "Shopify",
       "Interaction Design",
       "UI design"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
-    "id": "23a19524c140",
-    "title": "XOX",
-    "url": "https://xox.makemepulse.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69ca528a45842696920253.png",
-    "source": "awwwards",
-    "category": [
-      "Games & Entertainment",
-      "Web & Interactive",
-      "Animation",
-      "Colorful",
-      "WebGL",
-      "Experimental"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-13T03:46:20.971Z"
-  },
-  {
-    "id": "2676994f681b",
-    "title": "Simonholm.studio",
-    "url": "https://www.simonholm.studio",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/69945c4e1576a352522808.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Promotional",
-      "Clean",
-      "Portfolio",
-      "Interaction Design",
-      "Webflow"
     ],
     "taste": [],
     "date": "2026-05",
