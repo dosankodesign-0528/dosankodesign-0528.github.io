@@ -1,5 +1,107 @@
 [
   {
+    "id": "1c76cb54192a",
+    "title": "株式会社ディンプス採用サイト",
+    "url": "https://recruit.dimps.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/dimpsrecruit_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
+    "id": "5a4c23c8b90f",
+    "title": "株式会社ギフティ 採用サイト",
+    "url": "https://careers.giftee.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/gifteecareers_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:30.238Z"
+  },
+  {
+    "id": "c5164f08aea2",
+    "title": "awahi magazine",
+    "url": "https://awahi-magazine.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/awahimagazine_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-22T14:57:30.657Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:33.769Z"
+  },
+  {
+    "id": "650afa2d1ac3",
+    "title": "TOOLOOS",
+    "url": "https://www.kawaguchigiken.co.jp/lp/tooloos/index.html",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/tooloos_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
+    "id": "e18e282aa317",
+    "title": "【公式】名美興業株式会社",
+    "url": "https://meibi.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/meibi_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
+    "id": "26be2028e572",
+    "title": "ヒラギノフォント | SCREEN",
+    "url": "https://hiragino.screen.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/hiragino_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
+    "id": "3235ffb712ed",
+    "title": "QRO | じぶん色の黒眼鏡を。",
+    "url": "https://www.meganeichiba.jp/qroeyewear/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/qroeyewear_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
     "id": "06bcd9bb3a7b",
     "title": "読めない、GUNZE。 | グンゼ株式会社 130周年特設サイト",
     "url": "https://www.gunze.co.jp/130th/",
@@ -20079,7 +20181,7 @@
     "id": "77e051b3b1ea",
     "title": "IMAYO Official Website",
     "url": "https://imayo.co.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/image-22.webp",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/13c3.webp",
     "source": "muuuuu",
     "category": [
       "watch"
@@ -20109,7 +20211,7 @@
     "id": "bd81df2fa7e7",
     "title": "KAISEI SADATOKI",
     "url": "https://kaiseisadatoki-v4.vercel.app/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/screenshot-scaled.webp",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/182.webp",
     "source": "muuuuu",
     "category": [
       "orange"
@@ -20860,22 +20962,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:28.432Z"
-  },
-  {
-    "id": "325443465631",
-    "title": "株式会社ギフティ 採用サイト",
-    "url": "https://careers.giftee.co.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/03/20.webp",
-    "source": "muuuuu",
-    "category": [
-      "orange"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:30.238Z"
   },
   {
     "id": "24fa51824f96",
@@ -21884,22 +21970,6 @@
     "firstSeen": "2026-04-22T14:57:30.657Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:34.089Z"
-  },
-  {
-    "id": "0ee6a37d83c5",
-    "title": "awahi magazine",
-    "url": "https://awahi-magazine.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2025/11/17.png",
-    "source": "muuuuu",
-    "category": [
-      "entertainment"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-04-22T14:57:30.657Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:33.769Z"
   },
   {
     "id": "e200995b0f42",
@@ -30477,6 +30547,34 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "f1714d8cbd46",
+    "title": "美はつづく。 – つくり続けるひとたち｜武蔵野美術大学",
+    "url": "https://mauinterview.musabi.ac.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260520_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "学校・教育"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
+    "id": "3acde8fff7fc",
+    "title": "nirnor inc. | 株式会社ニアノア",
+    "url": "https://nirnor.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260519_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "デザイン事務所・制作会社"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
+  },
+  {
     "id": "c58e36dc0364",
     "title": "日邦プレシジョン株式会社 採用サイト｜Hearts into Machines",
     "url": "https://recruit.pnp.co.jp/",
@@ -34285,22 +34383,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:30.334Z"
-  },
-  {
-    "id": "29f340b7e04c",
-    "title": "Belle idée pÂtisserie! | ベル・イデ パティスリー",
-    "url": "https://belleidee.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250903_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:30.226Z"
   },
   {
     "id": "85d378eb2860",
@@ -39753,6 +39835,20 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:34:08.641Z"
+  },
+  {
+    "id": "3b9bbda2dfa2",
+    "title": "SHIBUYA FOOD ISLANDS",
+    "url": "https://www.tokyu-dept.co.jp/shibuyafoodislands/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260519_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "実店舗・地域情報"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
   },
   {
     "id": "68e59c94d04c",
@@ -46822,6 +46918,26 @@
     "lastCheckedAt": "2026-04-29T14:34:34.316Z"
   },
   {
+    "id": "618578c809f1",
+    "title": "Belle idée pÂtisserie! | ベル・イデ パティスリー",
+    "url": "https://belleidee.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2025/10/251022-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ブランド",
+      "サービスサイト",
+      "飲料",
+      "食品"
+    ],
+    "taste": [],
+    "agency": "ANDMADE",
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:30.226Z"
+  },
+  {
     "id": "17ebc6d82fbf",
     "title": "株式会社JR西日本交通サービス",
     "url": "https://www.jk-nishiko.jp/",
@@ -47128,6 +47244,24 @@
     "date": "2025-08",
     "starred": false,
     "firstSeen": "2026-05-05T03:03:16.885Z"
+  },
+  {
+    "id": "63b3e759a3c7",
+    "title": "商工クラブ｜清く、正しく、謎めかしく。",
+    "url": "https://showkoclub.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2025/08/250820-2-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ブランド",
+      "サービスサイト",
+      "飲料",
+      "食品"
+    ],
+    "taste": [],
+    "agency": "フルスケール",
+    "date": "2025-08",
+    "starred": false,
+    "firstSeen": "2026-05-20T04:00:42.379Z"
   },
   {
     "id": "5bd72649e1cf",
