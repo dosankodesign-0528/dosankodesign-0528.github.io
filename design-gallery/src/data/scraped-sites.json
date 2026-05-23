@@ -1,5 +1,143 @@
 [
   {
+    "id": "d7f934c1fb84",
+    "title": "4WIDE",
+    "url": "https://4wide.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/4wide_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:27.221Z"
+  },
+  {
+    "id": "cf7ab98ca6e1",
+    "title": "Layrid – 100th Projects",
+    "url": "https://layrid.tomoyaokada.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/layrid_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:29.361Z"
+  },
+  {
+    "id": "977be10293d3",
+    "title": "Relight the Write | 日本習字",
+    "url": "https://rtw.nihon-shuji.or.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/relightthewrite_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
+  },
+  {
+    "id": "ceb8e25d0c6e",
+    "title": "株式会社CRAYON",
+    "url": "https://c-rayon.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/crayon_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:32:28.749Z"
+  },
+  {
+    "id": "272ab93778b8",
+    "title": "株式会社LAMAC",
+    "url": "https://www.lamac.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/lamac_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
+  },
+  {
+    "id": "b5d7697972a3",
+    "title": "株式会社ブレインフォレスト",
+    "url": "https://brain-forest.net/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/brainforest_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-04-29T14:33:20.152Z"
+  },
+  {
+    "id": "5009cc43d316",
+    "title": "みなが咲き、ながさき。",
+    "url": "https://minagasakinagasaki.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/minagasakinagasaki_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
+    "id": "4b00ce3a4362",
+    "title": "株式会社日東物流 採用サイト",
+    "url": "https://www.nittobutsuryu.co.jp/recruit/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/nittobutsuryurecruit_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
+    "id": "814f9151f95f",
+    "title": "株式会社日東物流",
+    "url": "https://www.nittobutsuryu.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/nittobutsuryu_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
     "id": "ae88f73abe1b",
     "title": "mount inc.",
     "url": "https://mount.jp/",
@@ -20244,6 +20382,20 @@
     "firstSeen": "2026-05-09T03:34:10.032Z"
   },
   {
+    "id": "ade7df18c866",
+    "title": "【公式】ツクリオ(Tsuklio)",
+    "url": "https://www.tsuklio.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/05/20345.webp",
+    "source": "muuuuu",
+    "category": [
+      "food"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
     "id": "b4680367373f",
     "title": "王将フードサービス採用サイト",
     "url": "https://recruit.ohsho.co.jp/",
@@ -20686,22 +20838,6 @@
     "lastCheckedAt": "2026-04-29T14:32:27.273Z"
   },
   {
-    "id": "5d3521d3964b",
-    "title": "4WIDE",
-    "url": "https://4wide.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/04/41520.webp",
-    "source": "muuuuu",
-    "category": [
-      "black"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:27.221Z"
-  },
-  {
     "id": "943ed0147a15",
     "title": "SHIN KA",
     "url": "https://shinka-masumi.jp/",
@@ -20716,22 +20852,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:32:30.083Z"
-  },
-  {
-    "id": "355be6afc2d1",
-    "title": "株式会社CRAYON",
-    "url": "https://c-rayon.com/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/04/image-21.webp",
-    "source": "muuuuu",
-    "category": [
-      "colorful"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:32:28.749Z"
   },
   {
     "id": "decf9b0a5166",
@@ -30621,6 +30741,20 @@
     "lastCheckedAt": "2026-04-29T14:33:19.943Z"
   },
   {
+    "id": "d05a9efecc34",
+    "title": "KIKUSUI蔵GARDEN かもすでみたす",
+    "url": "https://kikusui-kamosudemitasu.com/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260522_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "地域情報"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
     "id": "3ed93d22a235",
     "title": "株式会社ダブルブリッジアドバイザリー",
     "url": "https://wbridge-advisory.co.jp/",
@@ -31251,22 +31385,6 @@
     "lastCheckedAt": "2026-04-29T14:33:20.186Z"
   },
   {
-    "id": "42be5949a47e",
-    "title": "株式会社ブレインフォレスト",
-    "url": "https://brain-forest.net/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260408_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:20.152Z"
-  },
-  {
     "id": "cad14f944cc6",
     "title": "カワサキグリーンエナジー株式会社",
     "url": "https://kgen.co.jp/",
@@ -31347,22 +31465,6 @@
     "lastCheckedAt": "2026-04-29T14:33:20.330Z"
   },
   {
-    "id": "559cc610eb6c",
-    "title": "Relight the Write｜日本習字",
-    "url": "https://rtw.nihon-shuji.or.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260401_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "情報・WEBサービス"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
-  },
-  {
     "id": "979defa5b6c1",
     "title": "松尾工務店 | 採用サイト",
     "url": "https://www.matsuo-komuten.co.jp/recruit/",
@@ -31393,22 +31495,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:20.614Z"
-  },
-  {
-    "id": "2c8868a31643",
-    "title": "株式会社LAMAC",
-    "url": "https://www.lamac.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260331_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "バッグ・靴"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:49:33.354Z"
   },
   {
     "id": "1d5781b420a8",
@@ -34291,22 +34377,6 @@
     "lastCheckedAt": "2026-04-29T14:33:29.633Z"
   },
   {
-    "id": "24a3f5d0889b",
-    "title": "Layrid – 100th Projects",
-    "url": "https://layrid.tomoyaokada.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20250908_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ポートフォリオ"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:33:29.361Z"
-  },
-  {
     "id": "70346f96aa6a",
     "title": "鎌倉 三河屋本店",
     "url": "https://mikawaya-kamakura.jp/",
@@ -34433,6 +34503,20 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:33:30.632Z"
+  },
+  {
+    "id": "6fcfe2728a89",
+    "title": "Simon Holm Larsen",
+    "url": "https://www.simonholm.studio/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260522_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "ポートフォリオ"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
   },
   {
     "id": "c9e703a9bd8b",
@@ -39901,6 +39985,20 @@
     "lastCheckedAt": "2026-04-29T14:34:08.641Z"
   },
   {
+    "id": "117705f72ce9",
+    "title": "万年筆 CUSTOM〈カスタムシリーズ〉 | PILOT",
+    "url": "https://www.pilot-custom.jp/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260522_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "インテリア・生活用品・雑貨"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-05-23T03:41:18.303Z"
+  },
+  {
     "id": "45ccf31347ab",
     "title": "だしの旨みとスパイスのカレー | ハウス食品",
     "url": "https://housefoods.jp/products/special/dashispice/",
@@ -43110,22 +43208,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:34:15.516Z"
-  },
-  {
-    "id": "b19c3aefa6a4",
-    "title": "株式会社ベースシー",
-    "url": "https://www.basec.co.jp/recruit-support/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250616_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "採用サイト・転職・求人"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-04-29T14:34:21.150Z"
   },
   {
     "id": "8719a750f6fe",
@@ -49889,16 +49971,16 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69fb23ecec710023818670.jpg",
     "source": "awwwards",
     "category": [
-      "E-Commerce",
       "Fashion",
+      "Framer",
       "Animation",
       "Big Background Images",
       "Clean",
       "Colorful",
       "Fullscreen",
       "Minimal",
-      "Luxury",
-      "Framer"
+      "E-Commerce",
+      "Luxury"
     ],
     "taste": [],
     "date": "2026-05",
