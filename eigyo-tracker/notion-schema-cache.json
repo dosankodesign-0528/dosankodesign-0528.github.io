@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "lastResolvedAt": "2026-05-16T13:58:08.295Z",
+  "lastResolvedAt": "2026-05-26T17:46:55.338Z",
   "companies": {
     "dbId": "18919c93bf124d92b8675ef9c32fb7b3",
     "props": {
@@ -11,7 +11,7 @@
       },
       "URL": {
         "id": "UP%3B_",
-        "currentName": "企業URL",
+        "currentName": "URL",
         "type": "url"
       },
       "CONTACT": {
