@@ -20991,6 +20991,20 @@
     "lastCheckedAt": "2026-06-02T06:45:09.394Z"
   },
   {
+    "id": "47e513477b0b",
+    "title": "G Mining Services Inc.",
+    "url": "https://gmining.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/06/image-1.webp",
+    "source": "muuuuu",
+    "category": [
+      "building"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-04T04:27:14.114Z"
+  },
+  {
     "id": "f274223c2b93",
     "title": "デジタルグリッド株式会社",
     "url": "https://www.digitalgrid.com/",
@@ -31371,6 +31385,20 @@
     "lastCheckedAt": "2026-06-02T06:47:34.226Z"
   },
   {
+    "id": "27131bdf8f2f",
+    "title": "ママフェスまつもと",
+    "url": "https://mamafes.net/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260604_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "地域情報"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-04T04:27:14.114Z"
+  },
+  {
     "id": "0fc38570b99a",
     "title": "結縁 ｜ 海辺の町で暮らすように泊まる",
     "url": "https://yuien.life/",
@@ -35103,6 +35131,20 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:48:51.236Z"
+  },
+  {
+    "id": "15c7dfa33063",
+    "title": "SUNTY",
+    "url": "https://sunty.ae/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260603_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "食品・飲料"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-04T04:27:14.114Z"
   },
   {
     "id": "09771c2c2f30",
@@ -40657,6 +40699,20 @@
     "lastCheckedAt": "2026-06-02T06:50:02.129Z"
   },
   {
+    "id": "c99fcdb8a0b4",
+    "title": "Autonomous",
+    "url": "https://becomeautonomous.com/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260604_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "金融・投資・保険"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-04T04:27:14.114Z"
+  },
+  {
     "id": "75ebcae9b713",
     "title": "やさしいエアコン huu｜Haier",
     "url": "https://www.haier.com/jp/markets/huu/",
@@ -43867,22 +43923,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:50:44.285Z"
-  },
-  {
-    "id": "177f7405c0bb",
-    "title": "創味 焼肉のたれ 初代・二代目｜創味食品",
-    "url": "https://www.somi.co.jp/special/nidaime/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250627_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料・飲食"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-06-02T06:50:45.060Z"
   },
   {
     "id": "8719a750f6fe",
@@ -51029,6 +51069,32 @@
     "lastCheckedAt": "2026-06-02T06:52:33.474Z"
   },
   {
+    "id": "d03f321276c6",
+    "title": "RCK PORTFOLIO®",
+    "url": "https://www.rickallan.work/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0d9cde91673733435586.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Web & Interactive",
+      "Animation",
+      "Experimental",
+      "Gallery",
+      "Sound-Audio",
+      "UI design",
+      "Tailwind",
+      "Typescript",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "signals": [
+      "framer"
+    ],
+    "firstSeen": "2026-06-04T04:27:14.114Z"
+  },
+  {
     "id": "6053d7b45276",
     "title": "Sinas",
     "url": "https://sinas.co",
@@ -51673,6 +51739,30 @@
     "firstSeen": "2026-05-25T04:13:37.151Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:52:36.720Z"
+  },
+  {
+    "id": "e056d5672479",
+    "title": "Steven.com",
+    "url": "https://steven.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69f89334b6d7b201321720.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Animation",
+      "Parallax",
+      "Unusual Navigation",
+      "WebGL",
+      "Experimental",
+      "Storytelling",
+      "Three.js",
+      "3D",
+      "Startups",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-04T04:27:14.114Z"
   },
   {
     "id": "abbb7052f2c1",
