@@ -1,13 +1,20 @@
 name: supabase keep-alive
 
 # Supabase 無料プランは 7 日間アクセスがないとプロジェクトが一時停止される。
-# それを防ぐため、Supabase を使う各アプリの /api/keep-alive を週 2 回叩いて
-# 軽い SELECT を発生させる。
+# 一度停止すると keep-alive を叩いても復活はできず（手動 Restore が必要）、
+# 失敗ループに入ったまま放置 → 長期で完全削除されるリスクがある。
+#
+# 過去の停止(nittei-chousei, 2026-05)を踏まえて以下を強化:
+#   1. 週2回 → 毎日 に変更（数回連続で失敗しても 7 日に届きにくい）
+#   2. Vercel アプリ経由(/api/keep-alive)に加え、Supabase REST を直接叩く
+#      経路を追加（Vercel のデプロイ状態に依存しない冗長化）
+#   3. 各 ping にリトライを入れ、コールドスタート等の単発失敗で
+#      アラートにならないようにする
 
 on:
   schedule:
-    # 毎週 月曜 / 木曜 0:00 UTC = JST 9:00
-    - cron: '0 0 * * 1,4'
+    # 毎日 0:00 UTC = JST 9:00
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -15,7 +22,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  ping:
+  # ── 経路A: Supabase REST を直接叩く（最も信頼できる経路。Vercel に非依存）──
+  ping-db-direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: nittei-chousei
+            url_secret: NITTEI_SUPABASE_URL
+            key_secret: NITTEI_SUPABASE_ANON_KEY
+    steps:
+      - name: Ping Supabase REST (${{ matrix.target.name }})
+        env:
+          SUPA_URL: ${{ secrets[matrix.target.url_secret] }}
+          SUPA_KEY: ${{ secrets[matrix.target.key_secret] }}
+        run: |
+          set -u
+          if [ -z "$SUPA_URL" ] || [ -z "$SUPA_KEY" ]; then
+            echo "::error::missing secrets for ${{ matrix.target.name }}"
+            exit 1
+          fi
+          # 末尾改行・空白を除去（コピペ事故対策）
+          SUPA_URL="$(printf '%s' "$SUPA_URL" | tr -d '[:space:]')"
+          SUPA_KEY="$(printf '%s' "$SUPA_KEY" | tr -d '[:space:]')"
+          ENDPOINT="$SUPA_URL/rest/v1/events?select=id&limit=1"
+          for attempt in 1 2 3 4 5; do
+            echo "Attempt $attempt: GET (REST) for ${{ matrix.target.name }}"
+            HTTP_CODE=$(curl -sS -o /tmp/body.txt -w "%{http_code}" \
+              -H "apikey: $SUPA_KEY" -H "Authorization: Bearer $SUPA_KEY" \
+              --max-time 25 "$ENDPOINT" || echo "000")
+            echo "HTTP $HTTP_CODE"
+            cat /tmp/body.txt; echo
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "OK: ${{ matrix.target.name }} DB is alive"
+              exit 0
+            fi
+            echo "retry in 15s..."; sleep 15
+          done
+          echo "::error::Supabase REST keep-alive FAILED for ${{ matrix.target.name }} (last HTTP $HTTP_CODE). DB may be paused — open the Supabase dashboard and Restore it."
+          exit 1
+
+  # ── 経路B: Vercel アプリの /api/keep-alive（冗長。アプリ側の疎通も同時に確認）──
+  ping-app-endpoint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
@@ -31,14 +81,17 @@ jobs:
     steps:
       - name: Ping ${{ matrix.target.name }}
         run: |
-          set -e
+          set -u
           URL="${{ matrix.target.url }}"
-          echo "Pinging $URL"
-          HTTP_CODE=$(curl -sS -o /tmp/body.json -w "%{http_code}" "$URL")
-          echo "HTTP $HTTP_CODE"
-          cat /tmp/body.json
-          echo
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::keep-alive failed for ${{ matrix.target.name }} with HTTP $HTTP_CODE"
-            exit 1
-          fi
+          for attempt in 1 2 3 4 5; do
+            echo "Attempt $attempt: Pinging $URL"
+            HTTP_CODE=$(curl -sS -o /tmp/body.json -w "%{http_code}" --max-time 25 "$URL" || echo "000")
+            echo "HTTP $HTTP_CODE"
+            cat /tmp/body.json; echo
+            if [ "$HTTP_CODE" = "200" ]; then
+              exit 0
+            fi
+            echo "retry in 15s..."; sleep 15
+          done
+          echo "::error::keep-alive failed for ${{ matrix.target.name }} (last HTTP $HTTP_CODE)"
+          exit 1
