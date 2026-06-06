@@ -11,6 +11,7 @@ import * as path from "path";
 import * as crypto from "crypto";
 import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
 import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
+import { scrapeS5Style } from "./scrape-s5style";
 
 // ============================================================
 // 設定
@@ -37,7 +38,7 @@ interface ScrapedSite {
   title: string;
   url: string;
   thumbnailUrl: string;
-  source: "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip";
+  source: "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip" | "s5style";
   category: string[];
   taste: string[];
   agency?: string;
@@ -728,12 +729,12 @@ async function main() {
   console.log("🚀 デザインギャラリー スクレイパー起動");
   console.log("=".repeat(50));
 
-  // ONLY_SOURCE=sankou/muuuuu/webdesignclip/81web を指定すると、そのソースだけ再取得し、
+  // ONLY_SOURCE=sankou/muuuuu/webdesignclip/81web/awwwards/s5style を指定すると、そのソースだけ再取得し、
   // 他のソースは既存 JSON から引き継いでマージする（時間短縮用）。
   const onlySource = (process.env.ONLY_SOURCE || "").trim().toLowerCase();
-  const validSources = new Set(["", "sankou", "muuuuu", "webdesignclip", "81web", "awwwards"]);
+  const validSources = new Set(["", "sankou", "muuuuu", "webdesignclip", "81web", "awwwards", "s5style"]);
   if (!validSources.has(onlySource)) {
-    console.error(`❌ ONLY_SOURCE の値が不正です: "${onlySource}"。sankou/muuuuu/webdesignclip/81web/awwwards のいずれか、または未指定。`);
+    console.error(`❌ ONLY_SOURCE の値が不正です: "${onlySource}"。sankou/muuuuu/webdesignclip/81web/awwwards/s5style のいずれか、または未指定。`);
     process.exit(1);
   }
   if (onlySource) {
@@ -767,6 +768,13 @@ async function main() {
   // Awwwards は SOTD + Developer Award のみ、最新1年（2025-01以降）に絞る
   const awwwardsResults = shouldRun("awwwards") ? await scrapeAwwwards() : [];
   allResults.push(...awwwardsResults);
+
+  // 2026-06-05 追加: S5-Style (https://www.s5-style.com/)。
+  // 専用 API があり JSON 直取得。要件は他ソースと同じで、URL ベースで
+  // 既存と被ったら deduplicateByUrl で先勝ち (=他ソース優先) になる。
+  const s5Target = parseInt(process.env.MAX_S5STYLE || "500", 10);
+  const s5Results = shouldRun("s5style") ? await scrapeS5Style(s5Target) : [];
+  allResults.push(...s5Results);
 
   // ONLY_SOURCE 指定時は、他のソースの既存エントリを JSON から読み込んで混ぜる。
   // 既に Eagle/2024-01 フィルタ通過済みの状態で入っているので、そのまま追加して OK。
@@ -817,6 +825,7 @@ async function main() {
   console.log(`  Web Design Clip:    ${wdcResults.length} 件`);
   console.log(`  81-web.com:         ${web81Results.length} 件`);
   console.log(`  Awwwards:           ${awwwardsResults.length} 件`);
+  console.log(`  S5-Style:           ${s5Results.length} 件`);
   console.log(`  合計（引き継ぎ含む）: ${finalOrdered.length} 件`);
   console.log(`  重複排除後:         ${deduplicated.length} 件`);
   console.log(`  カットオフ絞込:     ${afterCutoff.length} 件 (${droppedByCutoff} 件カット、awwwards ${AWWWARDS_CUTOFF_DATE}+ / 他 ${CUTOFF_DATE}+)`);
