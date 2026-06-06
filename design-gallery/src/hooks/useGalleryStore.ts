@@ -94,7 +94,17 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
         const saved = JSON.parse(rawFilter);
         if (saved && typeof saved === "object") {
           // initialFilter とマージ（形が変わったとき欠けたフィールドは初期値が入る）
-          setFilter({ ...initialFilter, ...saved });
+          // 2026-06-07: 新規ソース (S5-Style) を追加した時、 既存ユーザーの saved.dateRange[1]
+          // が古い max (2026-05) のままだと 新規 2026-06 のエントリが全部弾かれて
+          // 「フィルタしたら 0 件」になる事故が発生。
+          // saved の dateRange の上端 (max) が データの max より古ければ 自動で延長する。
+          // 下端 (min) は ユーザー指定を尊重して触らない。
+          const savedRange: [string, string] | undefined = Array.isArray(saved.dateRange)
+            && saved.dateRange.length === 2 ? saved.dateRange : undefined;
+          const adjustedRange: [string, string] = savedRange
+            ? [savedRange[0], savedRange[1] < initialFilter.dateRange[1] ? initialFilter.dateRange[1] : savedRange[1]]
+            : initialFilter.dateRange;
+          setFilter({ ...initialFilter, ...saved, dateRange: adjustedRange });
         }
       }
     } catch {
