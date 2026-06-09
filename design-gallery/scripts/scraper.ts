@@ -419,11 +419,18 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
  *   figure-rollover__bt[href] から取得（awwwardsページではなく、実サイトのURL）。
  */
 
+// 実行時点から n ヶ月前の月（YYYY-MM）を返す。
+function monthsAgo(n: number): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - n);
+  return d.toISOString().slice(0, 7);
+}
+
 // 各棚から月あたり何件まで残すか（capByMonth で適用）。
-// 2026-06 ユーザー要望: AI 系サービスを主役に → AI は多め、SOTD は脇役で控えめ。
-// AI カテゴリの実供給は月10-15件程度なので、perMonth=30 は実質「12ヶ月分を全部取る」。
+// 2026-06 ユーザー要望「もっとAI多め」: AI 比率を上げる。
+// AI は供給が月最大10件前後なので perMonth=30 は実質「期間内を全部取る」。
 const AWWWARDS_AI_PER_MONTH = 30;
-const AWWWARDS_SOTD_PER_MONTH = 6;
+const AWWWARDS_SOTD_PER_MONTH = 4; // 脇役。AIを目立たせるため 6→4 に削減。
 
 /**
  * Awwwards のセクション定義。
@@ -434,29 +441,27 @@ const AWWWARDS_SOTD_PER_MONTH = 6;
  *     この一覧は最初から新着順なので「できるだけ最近リリースされたもの」が先頭に来る。
  *   - SOTD（毎日の受賞作）はデザイン参考の幅として脇役で残す（控えめなキャップ）。
  *
+ * monthsBack = その棚を遡る月数（棚ごとに違う）。
+ *   - AI: 30ヶ月（≒2024年以降の「AIブーム期」をまるごと）。多めに取りたいので長め。
+ *   - SOTD: 12ヶ月。脇役なので直近だけ。
  * perMonth = その棚から月あたり何件まで残すか（capByMonth で適用）。
  * 順序重要：AI を先頭に置き、SOTD と URL が被ったら AI 側を先勝ちさせる。
  */
-const AWWWARDS_SECTIONS: { name: string; path: string; perMonth: number }[] = [
-  { name: "AI", path: "ai", perMonth: AWWWARDS_AI_PER_MONTH },
-  { name: "SOTD", path: "sites_of_the_day", perMonth: AWWWARDS_SOTD_PER_MONTH },
+const AWWWARDS_SECTIONS: {
+  name: string;
+  path: string;
+  perMonth: number;
+  monthsBack: number;
+}[] = [
+  { name: "AI", path: "ai", perMonth: AWWWARDS_AI_PER_MONTH, monthsBack: 30 },
+  { name: "SOTD", path: "sites_of_the_day", perMonth: AWWWARDS_SOTD_PER_MONTH, monthsBack: 12 },
 ];
 
-/**
- * Awwwards のカットオフ月を実行時点の「12ヶ月前」で動的に算出。
- * 例: 2026-06 に実行 → "2025-06" 以降を取得対象。
- *
- * 海外アワードは更新頻度が高く、毎月30件以上が積み上がる。
- * 2026-06: 取り込み期間を直近6ヶ月 → 直近12ヶ月 に拡大。
- * 月キャップは AI30件（実質全部）/ SOTD6件。
- * 既存データは scripts/filter-awwwards.ts でも別途バッチ削除する運用。
- */
-function awwwardsCutoffDate(): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 12);
-  return d.toISOString().slice(0, 7);
-}
-const AWWWARDS_CUTOFF_DATE = awwwardsCutoffDate();
+// main() の最終カットオフは「全棚で一番長い monthsBack」に合わせる。
+// （各棚は scrapeAwwwards 内で自分の monthsBack まで遡って収集済みなので、
+//   ここで一番ゆるい値にしておけば、意図して集めた古い AI を取りこぼさない）
+const AWWWARDS_MAX_MONTHS_BACK = Math.max(...AWWWARDS_SECTIONS.map((s) => s.monthsBack));
+const AWWWARDS_CUTOFF_DATE = monthsAgo(AWWWARDS_MAX_MONTHS_BACK);
 
 interface AwwwardsCardPayload {
   collectableIdentifier?: string;
@@ -480,9 +485,11 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
     console.log(`  セクション: ${section.name}`);
     // この棚で集めた分。while を抜けたあと月キャップを掛けて results に合流する。
     const sectionResults: ScrapedSite[] = [];
+    // この棚のカットオフ月（棚ごとに遡る月数が違う）
+    const sectionCutoff = monthsAgo(section.monthsBack);
     let page = 1;
     let stopped = false;
-    const MAX_PAGES = 40; // 安全弁。12ヶ月カットオフでも SOTD ~13, AI ~5 ページで到達
+    const MAX_PAGES = 40; // 安全弁。SOTD(12ヶ月)~13, AI(30ヶ月)~5 ページで到達
 
     while (!stopped && page <= MAX_PAGES) {
       const url = `https://www.awwwards.com/websites/${section.path}/?page=${page}`;
@@ -522,8 +529,8 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
             if (!Number.isNaN(d.getTime())) dateStr = d.toISOString().slice(0, 7);
           }
 
-          // カットオフ判定：このカードが cutoff より新しいか
-          if (dateStr >= AWWWARDS_CUTOFF_DATE) pageAllOld = false;
+          // カットオフ判定：このカードが棚カットオフより新しいか
+          if (dateStr >= sectionCutoff) pageAllOld = false;
           // ページ末尾にも古いカードが混じるので、ここでは集めない判断はしない
           // （最終的に main() の CUTOFF フィルタで落とすが、awwwards 専用の早期停止に使う）
 
@@ -567,7 +574,7 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
 
         // このページのカードが全部カットオフより古かったら以降も古いので打ち切り
         if (pageAllOld) {
-          console.log(`    page=${page} 全て ${AWWWARDS_CUTOFF_DATE} 未満 → セクション終了`);
+          console.log(`    page=${page} 全て ${sectionCutoff} 未満 → セクション終了`);
           stopped = true;
         }
       } catch (e) {
@@ -578,10 +585,11 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
       await sleep(1500); // awwwards へ 1.5s インターバル
     }
 
-    // この棚の取得分に月キャップを掛けて results に合流。
-    const capped = capByMonth(sectionResults, section.perMonth);
+    // 境界ページに混ざる棚カットオフ未満のカードを落としてから月キャップ → results に合流。
+    const within = sectionResults.filter((s) => (s.date || "") >= sectionCutoff);
+    const capped = capByMonth(within, section.perMonth);
     console.log(
-      `  → ${section.name}: ${sectionResults.length}件取得 → 月${section.perMonth}件キャップ後 ${capped.length}件`
+      `  → ${section.name}: ${sectionResults.length}件取得 → ${sectionCutoff}以降${within.length}件 → 月${section.perMonth}件キャップ後 ${capped.length}件`
     );
     results.push(...capped);
   }
