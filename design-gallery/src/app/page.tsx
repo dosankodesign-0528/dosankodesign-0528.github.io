@@ -113,7 +113,6 @@ export default function Home() {
         onSearchChange={(search) => store.updateFilter({ search })}
         columns={store.columns}
         onColumnsChange={store.setColumns}
-        totalCount={store.totalCount}
         filteredCount={store.filteredSites.length}
         filter={store.filter}
         updateFilter={store.updateFilter}

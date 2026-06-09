@@ -38,11 +38,13 @@ function withViewTransition(fn: () => void) {
   });
 }
 
-// UI に出す「プール」の上限。
-// 生きてて非表示じゃないサイトを新着順で並べて、先頭からこの件数だけを
-// すべてのフィルター・タブ操作の母集団にする。古い分は scraped-sites.json
-// 側にデータとしては残るが、UI には一切出さない。広げたい時はこの数字だけ変える。
-const VISIBLE_POOL_CAP = 1000;
+// 2026-06: 以前は「新着順で先頭1000件だけを母集団にする」上限(VISIBLE_POOL_CAP)を
+// 設けていたが、これが原因で
+//   ・件数表示が実数(1304等)と食い違って分かりにくい
+//   ・非表示にしても cap 外の古いサイトが繰り上がって件数が減らない
+// という問題が出た。ユーザー要望で上限を撤廃し、
+// 「生きてて・非表示じゃないサイトは全部が母集団」というシンプルな設計にした。
+// 描画は Gallery 側のスクロール遅延読み込みで間引かれるので件数が増えても重くならない。
 
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
 const FILTER_KEY = "design-gallery:filter";
@@ -262,15 +264,13 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   }, [sites]);
 
   // 表示母集団（プール）。
-  // 生きてて非表示じゃないサイトの中から新着順で先頭 VISIBLE_POOL_CAP 件だけ残す。
+  // 生きてて非表示じゃないサイトを全部、新着順（日付の降順）で並べただけ。
   // フィルター・タブ操作・件数表示は全部このプール内で動く。
   // Eagle 重複もこのプールには含めて、Gallery 表示時に除外する方式
   //（こうしないと Eagle 増減で古いサイトが浮上してきて挙動が読みにくい）。
   const pool = useMemo<SiteEntry[]>(() => {
     const alive = sites.filter((s) => !s.isDead && !hiddenIds.has(s.id));
-    // 新着順で並べてキャップする。並びは「日付の降順」。
-    const sorted = [...alive].sort((a, b) => b.date.localeCompare(a.date));
-    return sorted.slice(0, VISIBLE_POOL_CAP);
+    return [...alive].sort((a, b) => b.date.localeCompare(a.date));
   }, [sites, hiddenIds]);
 
   // Eagle以外のフィルタを通したベース（ソート・ラウンドロビンまで済）

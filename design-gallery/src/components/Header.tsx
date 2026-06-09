@@ -7,7 +7,6 @@ interface HeaderProps {
   onSearchChange: (value: string) => void;
   columns: number;
   onColumnsChange: (cols: number) => void;
-  totalCount: number;
   filteredCount: number;
   filter: FilterState;
   updateFilter: (partial: Partial<FilterState>) => void;
@@ -31,7 +30,6 @@ export function Header({
   onSearchChange,
   columns,
   onColumnsChange,
-  totalCount,
   filteredCount,
   filter,
   updateFilter,
@@ -79,11 +77,14 @@ export function Header({
         />
       </div>
 
-      {/* 件数 */}
-      <span className="text-[12px] text-text-secondary whitespace-nowrap">
-        {filteredCount === totalCount
-          ? `${totalCount} sites`
-          : `${filteredCount} / ${totalCount} sites`}
+      {/* 件数（今見ているモードの件数を1つだけ表示。
+          確認済みにする / 非表示にすると、その数字がそのまま減る） */}
+      <span className="text-[12px] text-text-secondary whitespace-nowrap tabular-nums">
+        {viewModeState === "unchecked"
+          ? `未確認 ${filteredCount}件`
+          : viewModeState === "checked"
+            ? `確認済み ${filteredCount}件`
+            : `すべて ${filteredCount}件`}
       </span>
 
       {/* スペーサー */}
