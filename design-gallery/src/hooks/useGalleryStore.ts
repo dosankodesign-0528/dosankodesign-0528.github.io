@@ -359,17 +359,22 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     });
   }, [baseFiltered, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
-  // 分母に使う「表示中プールの中で見られるサイト数」。
-  // pool 自体が VISIBLE_POOL_CAP で頭打ちなので、これも最大 VISIBLE_POOL_CAP。
-  // hideEagleDuplicates=true の時は pool 内の Eagle 重複を母数から外す。
+  // 「全体の件数」= ギャラリーに存在するサイトの実数。
+  // ⚠️ ここは VISIBLE_POOL_CAP で切らない。pool（先頭1000件）基準にすると、
+  //   非表示にした分が裏の控え（cap外の古いサイト）で即埋め戻されて件数が永久に
+  //   1000のまま動かない＝「非表示にしても全体が減らない」バグになる。
+  //   なので dead と hidden を除いた全サイト（必要なら Eagle 重複も除く）を数える。
+  //   こうすると 1件隠せば必ず 1件減る。
   const totalCount = useMemo<number>(() => {
-    if (!hideEagleDuplicates) return pool.length;
-    if (!eagleUrls || eagleUrls.size === 0) return pool.length;
-    return pool.filter((s) => {
+    const alive = sites.filter((s) => !s.isDead && !hiddenIds.has(s.id));
+    if (!hideEagleDuplicates || !eagleUrls || eagleUrls.size === 0) {
+      return alive.length;
+    }
+    return alive.filter((s) => {
       const n = normalizedUrlBySite.get(s.id);
       return n ? !eagleUrls.has(n) : true;
     }).length;
-  }, [pool, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
+  }, [sites, hiddenIds, eagleUrls, normalizedUrlBySite, hideEagleDuplicates]);
 
   // 非表示にしたサイトの実体（モーダル表示用）。新しい順。
   const hiddenSites = useMemo<SiteEntry[]>(() => {
