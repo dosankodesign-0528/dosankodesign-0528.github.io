@@ -23,9 +23,10 @@ import * as path from "path";
 
 const DATA_PATH = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
 const DRY = process.env.DRY === "1";
-const MONTHS = parseInt(process.env.MONTHS || "6", 10);
-const SOTD_CAP = parseInt(process.env.SOTD_CAP || "8", 10);
-const FRAMER_CAP = parseInt(process.env.FRAMER_CAP || "4", 10);
+// 2026-06: scraper.ts の設定（直近12ヶ月 / SOTD10 / Framer5）に合わせて引き上げ。
+const MONTHS = parseInt(process.env.MONTHS || "12", 10);
+const SOTD_CAP = parseInt(process.env.SOTD_CAP || "10", 10);
+const FRAMER_CAP = parseInt(process.env.FRAMER_CAP || "5", 10);
 
 interface ScrapedSite {
   id: string;

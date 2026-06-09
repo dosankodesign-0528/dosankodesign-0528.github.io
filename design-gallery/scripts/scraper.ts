@@ -21,11 +21,10 @@ import { scrapeS5Style } from "./scrape-s5style";
 const CUTOFF_DATE = "2024-01";
 
 // UI で見える件数の上限（isDead と Eagle 重複を引いた "実質表示数"）
-// 超過時の削除優先順:
-//   1) source === "awwwards" を古い順
-//   2) それでも超えるなら全ソース横断で古い順
-//   3) starred === true は保護（絶対残す）
-const MAX_VISIBLE_SITES = 2000;
+// 超過時は source で区別せず date が古い順に削る（starred は保護）。
+// 2026-06: UI 側の1000件上限を撤廃し全件表示にしたこと＆Awwwards増量に合わせ、
+// データ側の上限も 2000 → 3000 に引き上げて間引きが起きにくいようにした。
+const MAX_VISIBLE_SITES = 3000;
 
 // Eagle ローカル API（起動中なら localhost:41595 で叩ける）
 const EAGLE_API = "http://localhost:41595/api/item/list?limit=10000";
@@ -429,16 +428,17 @@ const AWWWARDS_SECTIONS: { name: string; path: string; forceSignals?: string[] }
 ];
 
 /**
- * Awwwards のカットオフ月を実行時点の「6ヶ月前」で動的に算出。
- * 例: 2026-05 に実行 → "2025-12" 以降を取得対象。
+ * Awwwards のカットオフ月を実行時点の「12ヶ月前」で動的に算出。
+ * 例: 2026-06 に実行 → "2025-06" 以降を取得対象。
  *
- * 海外アワードは更新頻度が高く、毎月30件以上が積み上がる。運用負荷を下げる目的で
- * 「直近6ヶ月」だけを取り込み、それより古いものは捨てる方針。
+ * 海外アワードは更新頻度が高く、毎月30件以上が積み上がる。
+ * 2026-06: ユーザー要望で Awwwards の表示件数を増やすため、取り込み期間を
+ * 直近6ヶ月 → 直近12ヶ月 に拡大（月キャップも SOTD10/Framer5 に引き上げ）。
  * 既存データは scripts/filter-awwwards.ts でも別途バッチ削除する運用。
  */
 function awwwardsCutoffDate(): string {
   const d = new Date();
-  d.setMonth(d.getMonth() - 6);
+  d.setMonth(d.getMonth() - 12);
   return d.toISOString().slice(0, 7);
 }
 const AWWWARDS_CUTOFF_DATE = awwwardsCutoffDate();
@@ -582,8 +582,9 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
  * results は scrapeAwwwards の中でページ新着順に積まれているので、月内では
  * 「先に出てきた = 新しい」順に残す。
  */
-const AWWWARDS_SOTD_PER_MONTH = 8;
-const AWWWARDS_FRAMER_PER_MONTH = 4;
+// 2026-06: ユーザー要望で件数を増やすため 8/4 → 10/5 に引き上げ（月15件まで）。
+const AWWWARDS_SOTD_PER_MONTH = 10;
+const AWWWARDS_FRAMER_PER_MONTH = 5;
 function capAwwwardsByMonth(sites: ScrapedSite[]): ScrapedSite[] {
   const sotdCount = new Map<string, number>();
   const framerCount = new Map<string, number>();
@@ -926,41 +927,32 @@ async function main() {
   console.log(`  新規検出: ${newlyDetected} 件`);
 
   // ============================================================
-  // 2000 件キャップ：UI で見える件数（!isDead && !Eagle重複）が
-  // MAX_VISIBLE_SITES を超えないよう、超過分を古い順に削除する。
-  // - awwwards を最優先で削る（海外アワード）
-  // - 足りなければ全ソース横断で古い順
+  // 全体件数キャップ：UI で見える件数（!isDead && !Eagle重複）が
+  // MAX_VISIBLE_SITES を超えないよう、超過分を「古い順」に削除する。
+  // - 2026-06: 以前は「awwwards を最優先で削る」バイアスがあったが、
+  //   Awwwards を増やしたいというユーザー要望と真っ向から競合するため撤廃。
+  //   ソースで区別せず、純粋に date が古いものから削る（公平な間引き）。
   // - starred=true は保護
   // - Eagle が取得できなかった run はスキップ（誤って削りすぎないため）
   // ============================================================
   let finalSites = afterEagle;
   if (eagleUrls.size === 0) {
-    console.log(`  📐 2000件キャップ: Eagle取得失敗のためスキップ`);
+    console.log(`  📐 件数キャップ: Eagle取得失敗のためスキップ`);
   } else {
     // afterEagle は既に Eagle 重複を引いた集合。ここから isDead を更に引いたものが UI 上の母数。
     const visibleApprox = afterEagle.filter((s) => !s.isDead).length;
     if (visibleApprox <= MAX_VISIBLE_SITES) {
-      console.log(`  📐 2000件キャップ: 余裕あり（${visibleApprox} / ${MAX_VISIBLE_SITES}）`);
+      console.log(`  📐 件数キャップ: 余裕あり（${visibleApprox} / ${MAX_VISIBLE_SITES}）`);
     } else {
       const overflow = visibleApprox - MAX_VISIBLE_SITES;
-      // 削除候補: starred と isDead は対象外
+      // 削除候補: starred と isDead は対象外。date が古い順にだけ削る。
       const candidates = afterEagle
         .filter((s) => !s.isDead && !s.starred)
-        .sort((a, b) => {
-          // 1) awwwards を先頭に（海外アワードを優先で削る）
-          const aIsAw = a.source === "awwwards" ? 0 : 1;
-          const bIsAw = b.source === "awwwards" ? 0 : 1;
-          if (aIsAw !== bIsAw) return aIsAw - bIsAw;
-          // 2) date 古い順 (YYYY-MM 文字列比較)
-          return (a.date || "").localeCompare(b.date || "");
-        });
+        .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       const dropIds = new Set(candidates.slice(0, overflow).map((s) => s.id));
       finalSites = afterEagle.filter((s) => !dropIds.has(s.id));
-      const droppedAwwwards = candidates
-        .slice(0, overflow)
-        .filter((s) => s.source === "awwwards").length;
       console.log(
-        `  📐 2000件キャップ適用: ${visibleApprox} → ${MAX_VISIBLE_SITES}（${overflow} 件削除、うち awwwards ${droppedAwwwards} 件）`
+        `  📐 件数キャップ適用: ${visibleApprox} → ${MAX_VISIBLE_SITES}（${overflow} 件を古い順に削除）`
       );
     }
   }
