@@ -1,4 +1,10 @@
 /**
+ * ⚠️ 2026-06 注意: このスクリプトは AI 棚導入前の設計のまま。
+ * 現在 awwwards は「AI 系サービス（主役）＋ SOTD（脇役）」の2棚構成で、
+ * scraper.ts 側が棚ごとに月キャップを掛けている。このスクリプトは framer/SOTD の
+ * 2分類しか知らず、AI サイトを SOTD 扱いで誤って削ってしまうため、現状そのまま
+ * 実行してはいけない。再取得は `ONLY_SOURCE=awwwards npx tsx scripts/scraper.ts` を使う。
+ *
  * Awwwards データの後処理フィルタ。
  *
  * 用途:

@@ -40765,163 +40765,71 @@
     "firstSeen": "2026-06-06T15:26:28.565Z"
   },
   {
-    "id": "8aea8fd8d437",
-    "title": "MOD",
-    "url": "https://www.mod.construction/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e8b6a6ebfb7632783703.jpg",
+    "id": "ecd5314e0e85",
+    "title": "invoko - AI helper on your Mac",
+    "url": "https://invoko.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a16665a3ff7c582778036.jpg",
     "source": "awwwards",
     "category": [
       "Technology",
-      "Responsive Design",
-      "Vector",
-      "Illustration",
-      "Transitions",
-      "Storytelling",
-      "Real Estate",
-      "UI design",
-      "Startups",
-      "Figma",
-      "Adobe Illustrator",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "bad8bc7e7e3d",
-    "title": "Up Digital",
-    "url": "https://www.helloupdigital.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a18ac40a6053140447931.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "Scrolling",
-      "Typography",
-      "Unusual Navigation",
-      "Filters and Effects",
-      "Interaction Design",
-      "Vercel",
-      "Next.js",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-08T04:21:39.885Z"
-  },
-  {
-    "id": "d06c9443126b",
-    "title": "CreativCurrent",
-    "url": "https://www.creativcurrent.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a185777bfa94530098832.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Design Agencies",
-      "Animation",
-      "Big Background Images",
-      "Colorful",
-      "Portfolio",
-      "Responsive Design",
-      "React",
-      "Filters and Effects",
-      "Startups",
-      "Typescript",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-07T04:20:55.700Z"
-  },
-  {
-    "id": "d03f321276c6",
-    "title": "RCK PORTFOLIO®",
-    "url": "https://www.rickallan.work/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0d9cde91673733435586.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Web & Interactive",
-      "Animation",
-      "Experimental",
-      "Gallery",
-      "Sound-Audio",
-      "UI design",
-      "Tailwind",
-      "Typescript",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "6053d7b45276",
-    "title": "Sinas",
-    "url": "https://sinas.co",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0b02a01c3e2619267234.jpg",
-    "source": "awwwards",
-    "category": [
-      "Technology",
+      "App Style",
       "Clean",
-      "Responsive",
-      "Startups",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "886dec0065ab",
-    "title": "Wibify Agency",
-    "url": "https://wibify.agency/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0a022380acc195998861.jpeg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Figma",
-      "Web & Interactive",
-      "Next.js",
-      "Animation",
-      "Framer",
-      "Portfolio",
-      "SEO",
+      "CSS",
+      "Minimal",
+      "Storytelling",
       "Interaction Design",
       "UI design",
-      "Business & Corporate",
-      "next.js"
+      "Startups",
+      "Tailwind"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "bffa1029a929",
+    "title": "AI Cybercafé",
+    "url": "https://cybercafe.tw/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a130bbf9aa7b451704891.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Events",
+      "Web & Interactive",
+      "Fullscreen",
+      "Single page",
+      "WebSockets",
+      "Data Visualization",
+      "Responsive",
+      "GSAP",
+      "Interaction Design",
+      "Swiper.js"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "2d03eb66119e",
+    "title": "reAPI - One API for All Top AI",
+    "url": "https://reapi.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a02bd171603f166185728.png",
+    "source": "awwwards",
+    "category": [
+      "next.js",
+      "Vercel",
+      "Art & Illustration",
+      "Technology",
+      "Video",
+      "Photography",
+      "Contentful"
     ],
     "taste": [],
     "date": "2026-05",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
     "id": "0adcb0e1ac8e",
@@ -40946,572 +40854,548 @@
     "taste": [],
     "date": "2026-05",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "46a5ca498bfb",
-    "title": "ianaldous.com",
-    "url": "http://www.ianaldous.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0bf81ed1bdf226216888.jpg",
+    "id": "18394c863689",
+    "title": "PageCoder.ai — Privacy-first AI infrastructure",
+    "url": "https://pagecoder.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69fdd7b38c396881067013.png",
     "source": "awwwards",
     "category": [
-      "Architecture",
+      "Storytelling",
+      "PHP",
+      "React",
       "Technology",
       "Web & Interactive",
-      "Portfolio",
-      "Framer"
+      "Clean",
+      "Wordpress",
+      "Minimal"
     ],
     "taste": [],
     "date": "2026-05",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "e682f642debc",
-    "title": "Wild Week - Athens",
-    "url": "https://week.wild.plus/athens-26",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cd01f17ed16959291353.jpg",
+    "id": "29f7ff1ef66b",
+    "title": "Rig AI",
+    "url": "https://rig.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e8cfb4a0c1a114127552.png",
     "source": "awwwards",
     "category": [
-      "Events",
-      "Clean",
-      "WebGL",
-      "Gestures / Interaction",
+      "Vector",
       "Filters and Effects",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "a28c66349956",
-    "title": "KZIADOVA — UI/UX DESIGNER",
-    "url": "https://kziadova.framer.website/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69dd1e1831d69640360658.jpg",
-    "source": "awwwards",
-    "category": [
-      "Photography",
-      "UI design",
-      "Project Page",
-      "Design Agencies",
-      "Figma",
-      "Other",
-      "Framer",
-      "Clean",
-      "Portfolio",
+      "Header Design",
+      "Mobile & Apps",
+      "Microinteractions",
+      "Technology",
+      "Startups",
+      "Animation",
+      "Canvas API",
+      "CSS",
+      "Astro",
       "Typography"
     ],
     "taste": [],
-    "date": "2026-04",
+    "date": "2026-05",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "6000283e4af7",
-    "title": "Kluster Collectif",
-    "url": "https://klustercollectif.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d78f3a4b960409224297.png",
+    "id": "61dbd2acd28e",
+    "title": "Fourmula AI",
+    "url": "https://fourmula.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698b1840cd96e726332342.jpg",
     "source": "awwwards",
     "category": [
+      "Web & Interactive",
+      "Animation",
+      "Navigation Menu",
+      "Scrolling",
       "Typography",
-      "Content architecture",
+      "Photography",
+      "Transitions",
+      "GSAP",
+      "UI design",
+      "Startups",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "aca6228b5e3b",
+    "title": "Ausdata AI",
+    "url": "https://www.ausdata.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e0c70618dfd440508505.png",
+    "source": "awwwards",
+    "category": [
+      "WebGL",
+      "Data Visualization",
+      "Three.js",
+      "Business & Corporate",
+      "Interaction Design",
+      "Technology",
       "Microinteractions",
-      "Culture & Education",
-      "Adobe Illustrator",
-      "Events",
-      "Framer",
-      "Music & Sound",
-      "Graphic design",
+      "Animation",
+      "Startups",
+      "Clean",
+      "Next.js",
       "Minimal"
     ],
     "taste": [],
     "date": "2026-04",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "867e220c36c2",
-    "title": "Defined",
-    "url": "https://definedvc.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d8f3cc47e2f407450981.jpg",
+    "id": "1cdb2f37a698",
+    "title": "GPT Humanizer AI",
+    "url": "https://www.gpthumanizer.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d5d6f65273a475887859.png",
     "source": "awwwards",
     "category": [
-      "Startups",
-      "Framer",
-      "Business & Corporate",
-      "Technology",
-      "Parallax",
-      "Gestures / Interaction",
-      "Filters and Effects"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "770c21ade5ea",
-    "title": "Qvery",
-    "url": "https://qvery.ai/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d5cbd2941be198525815.png",
-    "source": "awwwards",
-    "category": [
-      "Startups",
-      "Framer",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "Minimal",
-      "Illustration"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "a572ab32170c",
-    "title": "Just Phil",
-    "url": "https://www.justphilride.co.uk",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69bac2c36a283408648003.jpg",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Promotional",
-      "Sports",
-      "Clean",
-      "Colorful",
-      "Graphic design",
-      "Typography",
-      "Storytelling",
-      "Header Design",
-      "Figma",
       "Adobe Illustrator",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "4e8a6b130893",
-    "title": "Guillaume Dusseux",
-    "url": "http://guillaumedusseuxgicquel.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69ba8a507eaad811369287.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "App Style",
-      "Navigation Menu",
-      "Portfolio",
-      "Responsive Design",
-      "Retro",
-      "Experimental",
-      "UI design",
-      "Figma",
-      "Adobe Photoshop",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "cfc650af4bee",
-    "title": "\\\\' Brand Consultant",
-    "url": "https://workbyw.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69b91c9f32f0d151613185.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Scrolling",
-      "Typography",
-      "Gallery",
-      "3D",
-      "Interaction Design",
-      "Contentful",
-      "Figma",
-      "Cinema 4D",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "df54887a0b41",
-    "title": "jSite",
-    "url": "https://hizkiajuan.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69b2a16f9cd1b027902658.png",
-    "source": "awwwards",
-    "category": [
-      "Magazine / Newspaper / Blog",
       "Technology",
-      "Web & Interactive",
-      "App Style",
-      "Portfolio",
-      "Responsive Design",
-      "Unusual Navigation",
-      "React",
-      "Gestures / Interaction",
-      "Project Page",
-      "Tailwind",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "190f2daa615a",
-    "title": "Aither",
-    "url": "https://aither.co/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69aef8de249ce475528158.jpeg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Technology",
-      "Animation",
       "Colorful",
-      "Graphic design",
-      "Portfolio",
-      "3D",
-      "UI design",
-      "Figma",
-      "Framer"
+      "SEO",
+      "Startups",
+      "Contentful"
     ],
     "taste": [],
-    "date": "2026-03",
+    "date": "2026-04",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "1a1b216b19eb",
-    "title": "marchuenerwadel.com",
-    "url": "https://www.marchuenerwadel.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698e09ea2d375012411413.png",
+    "id": "5795b516b33d",
+    "title": "VOXR AI - Stop Chasing Leads.",
+    "url": "https://www.voxr.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cecf015fe84092005415.png",
     "source": "awwwards",
     "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Other",
-      "Clean",
-      "Portfolio",
-      "Gallery",
-      "Content architecture",
-      "Photo & Video",
+      "SEO",
+      "3D",
+      "UI design",
       "About Page",
-      "Blender",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "b624afe9e8e2",
-    "title": "Tab Kitchen",
-    "url": "https://tabkitchenbakery.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698f16314b23f538099268.png",
-    "source": "awwwards",
-    "category": [
-      "Food & Drink",
-      "Web & Interactive",
-      "Illustration",
-      "Experimental",
-      "Three.js",
-      "After Effects",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "900250c78dd5",
-    "title": "Single Fin",
-    "url": "https://singlefin.nc/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/69855eaa8618d882927508.png",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Food & Drink",
-      "Illustration",
-      "Interaction Design",
-      "Microinteractions",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "53d8b3ef1661",
-    "title": "Bajgart Office",
-    "url": "https://bajgartoffice.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/6984ee38c59e5457304618.png",
-    "source": "awwwards",
-    "category": [
       "Design Agencies",
-      "Portfolio",
-      "Single page",
-      "Footer Design",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "244af5997b47",
-    "title": "King O'Holi",
-    "url": "https://kingoholi.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/6980f3924fc60210738687.png",
-    "source": "awwwards",
-    "category": [
-      "Music & Sound",
-      "Other",
-      "Web & Interactive",
-      "Minimal",
-      "Portfolio",
-      "Single page",
-      "Responsive",
-      "UI design",
-      "Microinteractions",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "e817b9b60608",
-    "title": "Hemi Network",
-    "url": "https://hemi.xyz/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696667a8d1cec244940325.png",
-    "source": "awwwards",
-    "category": [
-      "Institutions",
+      "Contact Page",
       "Technology",
-      "Animation",
-      "Illustration",
-      "Interaction Design",
-      "UI design",
+      "After Effects",
+      "Web & Interactive",
       "Figma",
-      "Cinema 4D",
-      "Framer"
+      "Animation",
+      "Adobe Photoshop"
     ],
     "taste": [],
-    "date": "2026-01",
+    "date": "2026-04",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "bd1bbc18a414",
-    "title": "Naini Bansal - Portfolio",
-    "url": "https://www.nainibansal.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696dbe183ba87740936052.png",
+    "id": "ee95a7304744",
+    "title": "Brunello Cucinelli - AI E-com",
+    "url": "https://shop.brunellocucinelli.com/en-gb/ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d6567a11676364433931.png",
+    "source": "awwwards",
+    "category": [
+      "E-Commerce",
+      "Fashion",
+      "Clean",
+      "HTML5",
+      "Unusual Navigation",
+      "Interaction Design",
+      "Luxury"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "2ae2a7e8c5b9",
+    "title": "Text to Song AI",
+    "url": "https://texttosong.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69cb72d4edc42186139078.png",
     "source": "awwwards",
     "category": [
       "Art & Illustration",
-      "Web & Interactive",
-      "Portfolio",
-      "Experimental",
-      "Interaction Design",
-      "Typescript",
-      "Adobe Illustrator",
-      "Framer"
+      "Games & Entertainment",
+      "Music & Sound",
+      "Sound-Audio",
+      "Node.js",
+      "React",
+      "Next.js"
     ],
     "taste": [],
-    "date": "2026-01",
+    "date": "2026-04",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "14a97d348a4c",
-    "title": "Mason Wong",
-    "url": "http://www.mason-wong.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6973aa6922d21208721790.png",
+    "id": "012d4eee5489",
+    "title": "Musci - AI Song Generator",
+    "url": "https://musci.io",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69b41dc9507ff937988954.png",
     "source": "awwwards",
     "category": [
-      "Design Agencies",
-      "Web & Interactive",
-      "Big Background Images",
-      "Parallax",
-      "Portfolio",
-      "Typography",
-      "Responsive",
-      "UI design",
-      "Framer"
+      "Art & Illustration",
+      "Games & Entertainment",
+      "Music & Sound",
+      "Sound-Audio",
+      "Next.js"
     ],
     "taste": [],
-    "date": "2026-01",
+    "date": "2026-03",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "5687eb27eb05",
-    "title": "smalltribe Studio Report 2025",
-    "url": "https://smalltribe.studio/report-2025",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696cd09b89649509434888.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Technology",
-      "Web & Interactive",
-      "Clean",
-      "Minimal",
-      "Scrolling",
-      "Single page",
-      "Typography",
-      "Storytelling",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-01",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "db7032d704ad",
-    "title": "Maria Vareva",
-    "url": "https://mariavareva.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6969a75e7609a128208936.png",
+    "id": "1810e3e09cb0",
+    "title": "ChatSpark - Conversational AI",
+    "url": "https://chatspark.io/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69a708846df8e922824036.png",
     "source": "awwwards",
     "category": [
       "Business & Corporate",
       "Technology",
-      "Portfolio",
+      "Animation",
+      "App Style",
+      "Clean",
+      "Minimal",
+      "Responsive Design",
+      "React",
+      "Interaction Design",
+      "Next.js",
+      "Typescript"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "ed1b2fdd7c8c",
+    "title": "kontenta AI",
+    "url": "https://kontenta.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69a46ec371d68028228344.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Animation",
+      "Colorful",
+      "Scrolling",
+      "Transitions",
+      "Responsive",
+      "GSAP",
+      "Three.js",
+      "3D",
+      "Startups",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "3794a91cbc79",
+    "title": "Indicium AI",
+    "url": "https://indicium.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699f0c1bcbb1f389055311.jpg",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Animation",
+      "Flat Design",
+      "Minimal",
+      "WebGL",
+      "Interaction Design",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "c9e3d4ecc15a",
+    "title": "ZeroDrift AI",
+    "url": "https://www.zerodrift.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698e1fcbd360c716415761.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Animation",
+      "App Style",
+      "Minimal",
+      "Data Visualization",
+      "GSAP",
+      "Interaction Design",
+      "UI design",
+      "Startups",
+      "Lottie",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-02",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "37330f21a678",
+    "title": "Image To Image AI",
+    "url": "https://imgtoimg.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6976e0d864aec934809172.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Animation",
+      "Illustration",
+      "Filters and Effects",
+      "Photo & Video",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-02",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "ea05042af341",
+    "title": "Funy AI: Video, Image",
+    "url": "https://funy.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/69731deca010b825350225.png",
+    "source": "awwwards",
+    "category": [
+      "Games & Entertainment",
+      "Mobile & Apps",
+      "Animation",
+      "Photographic",
+      "Video",
+      "Photography",
+      "Photo & Video",
+      "UI design",
+      "Vue.js"
+    ],
+    "taste": [],
+    "date": "2026-02",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "9581b8e5cc17",
+    "title": "The State of AI at Work",
+    "url": "https://asana.com/resources/state-of-ai-work?chapter=introduction",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/697168f62943c052987435.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Technology",
+      "Web & Interactive",
+      "Animation",
+      "Data Visualization",
+      "Interaction Design",
+      "After Effects",
+      "Figma",
+      "Adobe Illustrator"
+    ],
+    "taste": [],
+    "date": "2026-02",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "e10ceff91f6b",
+    "title": "OrbitAI — A Calm AI for Focus",
+    "url": "https://orbitaix.webflow.io",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696a1c8d88f31039625205.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Web & Interactive",
+      "Animation",
+      "Clean",
+      "Storytelling",
+      "GSAP",
+      "Interaction Design",
+      "UI design",
+      "Header Design",
+      "Startups",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "cc0697f684c4",
+    "title": "Hints AI",
+    "url": "https://hints.so",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696904b3bcdaa569303675.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Content architecture",
+      "UI design",
+      "About Page",
       "Startups",
       "Framer"
     ],
     "taste": [],
     "date": "2026-01",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "2d704cad74a1",
-    "title": "Superlocal Design Festival 25",
-    "url": "https://superlocaldesign.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/6904b5b54c831131950427.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Animation",
-      "Colorful",
-      "Flat Design",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-12",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "8829db40423a",
-    "title": "opti",
-    "url": "https://www.opti.ai/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/6943009ad24e9917853326.jpg",
+    "id": "b1e2ac10e30f",
+    "title": "Datology AI",
+    "url": "https://www.datologyai.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/695e94e9aa7eb625312827.png",
     "source": "awwwards",
     "category": [
       "Technology",
+      "Web & Interactive",
       "Animation",
-      "3D",
+      "Clean",
+      "Graphic design",
+      "Responsive",
+      "UI design",
+      "Startups",
+      "After Effects",
       "Figma",
-      "Cinema 4D",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "77ca0eb2fdcb",
+    "title": "Pulsr - Enterprise AI",
+    "url": "https://pulsr.io",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/695be58a0b4ab992106141.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Fullscreen",
+      "Responsive Design",
+      "Startups",
       "Framer"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "0de20d76539a",
+    "title": "Nectar AI",
+    "url": "https://nectar.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/694726a62413d263487854.png",
+    "source": "awwwards",
+    "category": [
+      "Mobile & Apps",
+      "Technology",
+      "Video",
+      "Storytelling",
+      "Node.js"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "b877f32dbad0",
+    "title": "QM AI TOUR",
+    "url": "https://aitour.qm.org.qa/en",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/694ce7de5f8c0212658128.jpeg",
+    "source": "awwwards",
+    "category": [
+      "Architecture",
+      "Art & Illustration",
+      "Mobile & Apps",
+      "360",
+      "Data Visualization",
+      "Social Integration",
+      "Gestures / Interaction",
+      "Figma",
+      "Python",
+      "Adobe Photoshop"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "0281c60f5c0d",
+    "title": "AI Song Creator",
+    "url": "https://aisongcreator.pro/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/69490e8f56a7c156228077.png",
+    "source": "awwwards",
+    "category": [
+      "Web & Interactive",
+      "CSS",
+      "Single page",
+      "Node.js"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "3740e4c7dae2",
+    "title": "Altru AI - Report Builder",
+    "url": "https://altru.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/6940527671788187314057.png",
+    "source": "awwwards",
+    "category": [
+      "Web & Interactive",
+      "Video",
+      "Data Visualization",
+      "React",
+      "Startups",
+      "next.js",
+      "Vercel",
+      "Lottie",
+      "Social responsibility"
     ],
     "taste": [],
     "date": "2025-12",
     "starred": false,
-    "signals": [
-      "framer"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "90e8c3656556",
+    "title": "AI Vector",
+    "url": "https://aivector.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/69410fbcd7d28527152073.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Technology",
+      "Graphic design",
+      "Vector",
+      "11ty"
     ],
-    "firstSeen": "2026-06-06T15:43:15.583Z"
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
     "id": "8f25e6e48411",
@@ -41534,9 +41418,6 @@
     "taste": [],
     "date": "2025-12",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
@@ -41558,315 +41439,392 @@
     "taste": [],
     "date": "2025-12",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "bae75da72502",
-    "title": "UX Design Portfolio",
-    "url": "https://uxdesignerstockholm.se/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/69344d0cc41e7472097261.jpeg",
+    "id": "8b5e985d7bfa",
+    "title": "Undetectable AI",
+    "url": "https://www.undetectableai.pro/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/69382671b6bc8645063050.jpg",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Design Agencies",
-      "Web & Interactive",
-      "Clean",
-      "Flat Design",
-      "Portfolio",
+      "Technology",
+      "Minimal",
       "Responsive Design",
-      "Storytelling",
-      "UI design",
+      "Startups",
+      "Contentful",
       "Figma",
-      "Framer"
+      "Adobe Illustrator"
     ],
     "taste": [],
     "date": "2025-12",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "fbf47b5095f2",
-    "title": "The Mihir Experience",
-    "url": "https://shethmihir98.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/691e0d4bdb6fc374464174.png",
+    "id": "33fe0aa15770",
+    "title": "Stackbyte - 100% AI",
+    "url": "https://stackbyte.dev",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/692a4c2082131477385292.jpg",
     "source": "awwwards",
     "category": [
-      "Web & Interactive",
-      "Animation",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "b98d69c25f98",
-    "title": "New Genre Studio",
-    "url": "https://newgenre.studio",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/6900d08689edd726047249.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Design Agencies",
       "Technology",
-      "Animation",
-      "Minimal",
-      "Photographic",
-      "Portfolio",
-      "Typography",
-      "Microinteractions",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "9d2c1ca0f0be",
-    "title": "Echelon®",
-    "url": "https://echelon.framer.media/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/690f45bc8fd39729799890.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Other",
-      "Minimal",
-      "Parallax",
-      "Portfolio",
-      "Responsive Design",
-      "Photography",
-      "Gallery",
-      "Photo & Video",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "cb03249d8e1c",
-    "title": "Nordlys Design",
-    "url": "https://www.nordlysdesign.it/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6908cb789cdfd296841801.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
       "Web & Interactive",
+      "Animation",
       "Clean",
       "Flat Design",
-      "Minimal",
+      "Experimental",
+      "Responsive",
+      "Filters and Effects",
       "UI design",
+      "Next.js",
+      "Tailwind",
+      "Typescript"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "49a30834c2be",
+    "title": "Vionna AI",
+    "url": "https://vionna.life/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6929aa19d266c663404105.png",
+    "source": "awwwards",
+    "category": [
+      "Games & Entertainment",
+      "Technology",
+      "Animation",
+      "Big Background Images",
+      "CSS",
+      "HTML5",
+      "Minimal",
+      "Navigation Menu",
+      "Responsive Design",
+      "Gallery",
+      "Startups",
+      "Unreal Engine"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "879f783c76f2",
+    "title": "Humanize AI",
+    "url": "https://www.humanizeai.pro/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/691dfa7d6f93a316489865.jpg",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "CSS",
+      "Menu - Horizontal",
+      "Interaction Design",
+      "Startups",
+      "AWS"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "b936217ebefb",
+    "title": "AI Essay Writer",
+    "url": "https://essaypro.com/ai-essay-writer",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/691dfa4ea0570587271386.jpeg",
+    "source": "awwwards",
+    "category": [
+      "Culture & Education",
+      "Single page",
+      "Startups",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "78d24f87ff43",
+    "title": "Microsoft AI",
+    "url": "https://microsoft.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/690274cdd9149267915489.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Clean",
+      "Wordpress",
+      "Colorful",
+      "WebGL",
+      "Gestures / Interaction",
+      "Filters and Effects",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2025-11",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:08:23.132Z"
+  },
+  {
+    "id": "9b206d0e935c",
+    "title": "AI Dubbing",
+    "url": "https://aidubbing.io/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/691ab363a6c9d846173072.png",
+    "source": "awwwards",
+    "category": [
+      "Film & TV",
+      "Music & Sound",
+      "Technology",
+      "Sound-Audio",
+      "Vue.js"
+    ],
+    "taste": [],
+    "date": "2025-11",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "00fa75ed2880",
+    "title": "PXZ AI Tool All In One",
+    "url": "https://pxz.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6914044055164030700648.png",
+    "source": "awwwards",
+    "category": [
+      "Fashion",
+      "Web & Interactive",
+      "Big Background Images",
+      "Video",
+      "After Effects"
+    ],
+    "taste": [],
+    "date": "2025-11",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "98eb56e2c988",
+    "title": "Rays AI Solutions",
+    "url": "https://zaptatech.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6912ec02d07d7272443978.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "jQuery",
+      "Responsive Design",
+      "SEO",
+      "Gestures / Interaction",
+      "Forms and Input",
+      "Real Estate",
+      "UI design",
+      "Header Design",
+      "Figma",
+      "Elementor"
+    ],
+    "taste": [],
+    "date": "2025-11",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "b4e45b217936",
+    "title": "Averi AI",
+    "url": "https://averi.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6908159246b01471926164.png",
+    "source": "awwwards",
+    "category": [
+      "Culture & Education",
+      "Design Agencies",
+      "Graphic design",
+      "Responsive Design",
+      "WebGL",
+      "Interaction Design",
+      "UI design",
+      "Header Design",
+      "Footer Design",
+      "Startups",
+      "Figma",
       "Framer"
     ],
     "taste": [],
     "date": "2025-11",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "237cc259a72a",
-    "title": "Home Technologies",
-    "url": "https://www.hometechco.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f95be548925534990386.png",
-    "source": "awwwards",
-    "category": [
-      "Technology",
-      "Single page",
-      "Video",
-      "Startups",
-      "Figma",
-      "Blender",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "d980ca866ba5",
-    "title": "Addverb.ai",
-    "url": "https://addverb.ai",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68ff4dfc59569012950892.png",
+    "id": "63cb8a6cf535",
+    "title": "1910 AI",
+    "url": "https://www.1910.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/690df503f072e249082608.jpg",
     "source": "awwwards",
     "category": [
       "Business & Corporate",
-      "Design Agencies",
       "Technology",
-      "Minimal",
-      "Responsive Design",
-      "WebGL",
-      "React",
-      "Content architecture",
-      "Interaction Design",
-      "Microinteractions",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "63a15d1cec3d",
-    "title": "Hot Honey",
-    "url": "https://rockyshothoney.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f0ca40e0275753158066.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "E-Commerce",
-      "Animation",
-      "Colorful",
-      "Scrolling",
-      "Illustration",
-      "Experimental",
-      "Storytelling",
-      "UI design",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "cdb03145abed",
-    "title": "Sin Expo 2025",
-    "url": "https://www.expo.sinstudiogallery.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68ee6a1acc56d010647706.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Events",
-      "Animation",
-      "Interaction Design",
-      "Header Design",
-      "Figma",
-      "Adobe Illustrator",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "445f4989018f",
-    "title": "ŽUFFA Studio",
-    "url": "https://www.zuffa.studio",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68ef624c44623838801475.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Fashion",
-      "Other",
       "Clean",
-      "Minimal",
       "Typography",
-      "Menu - Horizontal",
+      "Data Visualization",
+      "Storytelling",
       "GSAP",
-      "Microinteractions",
-      "Contentful",
-      "Figma",
-      "Framer"
+      "3D",
+      "UI design",
+      "Startups",
+      "Webflow",
+      "Javascript"
+    ],
+    "taste": [],
+    "date": "2025-11",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "4d906835313f",
+    "title": "Minitap AI",
+    "url": "https://minitap.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f8f4a2f0d6b002536433.png",
+    "source": "awwwards",
+    "category": [
+      "Mobile & Apps",
+      "Technology",
+      "Web & Interactive",
+      "App Style",
+      "WebGL",
+      "3D",
+      "Interaction Design"
     ],
     "taste": [],
     "date": "2025-10",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "81237840ab3a",
-    "title": "Copenhagen Archive",
-    "url": "https://copenhagenarchive.framer.website/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68c906116b400974603626.png",
+    "id": "04e5da0e3d14",
+    "title": "AI-Powered Design Experience by Glow",
+    "url": "https://ai.glow.team/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f2396006f07679477935.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Animation",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "20e080fb7a10",
+    "title": "MainLabs AI",
+    "url": "https://mainlabs.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f67e76bed03479223251.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "WebGL",
+      "Storytelling",
+      "3D",
+      "Interaction Design",
+      "Startups"
+    ],
+    "taste": [],
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "67b638431ebc",
+    "title": "Epiminds AI",
+    "url": "https://epiminds.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f6361262ad3665193406.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Animation",
+      "WebGL",
+      "Storytelling",
+      "3D",
+      "Interaction Design",
+      "Startups"
+    ],
+    "taste": [],
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "a69e0da0a5a6",
+    "title": "Subduxion - AI Consulting",
+    "url": "https://subduxion.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f3550aa54b6911538664.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "App Style",
+      "Clean",
+      "React",
+      "Filters and Effects",
+      "Footer Design",
+      "Startups",
+      "next.js",
+      "Javascript",
+      "Typescript"
+    ],
+    "taste": [],
+    "date": "2025-10",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "8b8829d660ae",
+    "title": "Signs AI",
+    "url": "https://signs-ai.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f7440d1d102284113716.png",
     "source": "awwwards",
     "category": [
       "Culture & Education",
-      "Food & Drink",
-      "Web & Interactive",
-      "Parallax",
-      "Portfolio",
-      "Menu - Horizontal",
-      "Responsive",
-      "Storytelling",
-      "Microinteractions",
-      "Adobe Photoshop",
-      "Adobe Illustrator",
-      "Framer"
+      "Technology",
+      "Unusual Navigation",
+      "Experimental",
+      "Three.js",
+      "Gestures / Interaction"
     ],
     "taste": [],
-    "date": "2025-09",
+    "date": "2025-10",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "d7e92dbd947a",
-    "title": "Mikatalo",
-    "url": "https://mikatalo.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68c850a01eede730279716.png",
+    "id": "983c3614d451",
+    "title": "AI in Mobility",
+    "url": "https://www.oliverwymanforum.com/mobility/what-business-can-learn-from-mobilitys-early-ai-adoption.html",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68dbe7c12b3a0048354879.jpg",
     "source": "awwwards",
     "category": [
-      "Architecture",
+      "Magazine / Newspaper / Blog",
       "Business & Corporate",
-      "Clean",
-      "Minimal",
-      "Scrolling",
+      "Web & Interactive",
+      "Retro",
       "Single page",
-      "Real Estate",
-      "Framer"
+      "SVG",
+      "Unusual Navigation",
+      "Transitions",
+      "GSAP",
+      "UI design",
+      "Microinteractions",
+      "Lottie"
     ],
     "taste": [],
-    "date": "2025-09",
+    "date": "2025-10",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
     "id": "0eeda3c4eb40",
@@ -41884,450 +41842,172 @@
     "taste": [],
     "date": "2025-09",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
     "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
-    "id": "8dabefb73586",
-    "title": "laksonline",
-    "url": "https://www.awwwards.com/sites/laksonline",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68cd0ca769dd3895209867.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Clean",
-      "Flat Design",
-      "Minimal",
-      "Portfolio",
-      "Typography",
-      "Storytelling",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "72adf7a1268d",
-    "title": "Xinyi Zhao's Portfolio",
-    "url": "https://xinyizhao.net/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68c32f519e41f494940034.png",
-    "source": "awwwards",
-    "category": [
-      "Mobile & Apps",
-      "Other",
-      "Web & Interactive",
-      "Flat Design",
-      "Portfolio",
-      "Menu - Vertical",
-      "Interaction Design",
-      "UI design",
-      "Project Page",
-      "Motion",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "5fd7424e2b13",
-    "title": "Co-Al",
-    "url": "https://www.co-al.xyz/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68a3415a8a2a3919127002.png",
-    "source": "awwwards",
-    "category": [
-      "Architecture",
-      "Animation",
-      "Minimal",
-      "Unusual Navigation",
-      "Experimental",
-      "Gallery",
-      "Three.js",
-      "3D",
-      "Interaction Design",
-      "Startups",
-      "Blender",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "b14eb385de18",
-    "title": "Maggie",
-    "url": "https://maggie-app.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68a942901ce01718641895.jpg",
-    "source": "awwwards",
-    "category": [
-      "Mobile & Apps",
-      "Animation",
-      "Colorful",
-      "Gestures / Interaction",
-      "UI design",
-      "Footer Design",
-      "Startups",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "a022a7ed10df",
-    "title": "Possible Finance",
-    "url": "https://www.possiblefinance.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/689df0d635d17701459493.jpg",
+    "id": "d9a17ce5971a",
+    "title": "Databahn AI",
+    "url": "https://databahn.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68af2ab22f5ee688533868.png",
     "source": "awwwards",
     "category": [
       "Business & Corporate",
-      "Culture & Education",
-      "Mobile & Apps",
-      "Clean",
-      "Data Visualization",
-      "Copy design",
-      "Contentful",
-      "After Effects",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "98e42f21a8d3",
-    "title": "Kus—Studio By Mike Kus",
-    "url": "https://mikekus.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68a77dc80e51d888922064.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Clean",
-      "Flat Design",
-      "Minimal",
-      "UI design",
-      "Footer Design",
-      "404 pages",
-      "Adobe Photoshop",
-      "Adobe Illustrator",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "40d9b84844da",
-    "title": "Astra",
-    "url": "https://astralab.framer.website/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/689c61f22aa5f873796412.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Promotional",
-      "Web & Interactive",
-      "Animation",
-      "Portfolio",
-      "Responsive Design",
-      "Typography",
-      "Photo & Video",
-      "UI design",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "a8f251ebe7b0",
-    "title": "The One Stop Shop.",
-    "url": "https://www.deanira.co/onestopshop",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/68755c4ebc4f0139699319.jpg",
-    "source": "awwwards",
-    "category": [
-      "Responsive Design",
-      "Unusual Navigation",
-      "Experimental",
-      "Storytelling",
-      "Microinteractions",
-      "Startups",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "dd695da7d599",
-    "title": "Helio Cloud",
-    "url": "https://helio.cloud/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/687f67ce5f392657096309.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Web & Interactive",
-      "Animation",
-      "Clean",
-      "Colorful",
-      "Transitions",
-      "Interaction Design",
-      "UI design",
-      "Figma",
-      "Social responsibility",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "b4ac81ff0798",
-    "title": "Meet Vora - Portfolio",
-    "url": "https://meet.framer.media/?utm_source=awwwards",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686f9ada923cf093661262.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
       "Technology",
       "Web & Interactive",
       "Animation",
-      "Portfolio",
-      "Responsive Design",
-      "3D",
-      "UI design",
-      "Project Page",
-      "After Effects",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "0be1bdb4ca05",
-    "title": "CaiYawen Ceramics",
-    "url": "https://www.caiyawen.art/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686fea9528021184844935.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Design Agencies",
-      "Big Background Images",
-      "Clean",
-      "Navigation Menu",
-      "Responsive Design",
-      "About Page",
-      "Contact Page",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "3b65e857cdba",
-    "title": "Independent Brewers of Europe",
-    "url": "https://www.independent-brewers.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686cebd7e86bd909878760.png",
-    "source": "awwwards",
-    "category": [
-      "Food & Drink",
-      "Institutions",
-      "Web & Interactive",
-      "Animation",
-      "Colorful",
-      "Responsive Design",
-      "Scrolling",
+      "WebGL",
       "Illustration",
-      "Storytelling",
-      "React",
-      "Javascript",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "05eadcdb5ea8",
-    "title": "Groteskly Yours Studio",
-    "url": "https://groteskly.xyz",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/06/68406bed63e9b569289842.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Clean",
-      "Portfolio",
-      "Typography",
-      "Web Fonts",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "38dcfa6044ef",
-    "title": "Portal-1 Studio",
-    "url": "https://www.portalone.studio/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/6831ad5f08aad689973711.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Design Agencies",
-      "Web & Interactive",
-      "Clean",
-      "Responsive Design",
-      "Vector",
-      "Storytelling",
-      "UI design",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "8650d22d2704",
-    "title": "toutdroit",
-    "url": "https://www.toutdroitstudio.fr",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/682f0b2c441eb093882051.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Promotional",
-      "Web & Interactive",
-      "Clean",
-      "Minimal",
-      "Portfolio",
-      "Responsive Design",
-      "Responsive",
-      "UI design",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "4b9797bafc1c",
-    "title": "Bloomscroll",
-    "url": "https://bloomscroll.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/682dc5bb51f30547253840.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Web & Interactive",
-      "Animation",
-      "Clean",
-      "Minimal",
-      "Scrolling",
-      "Single page",
       "Transitions",
-      "Luxury",
-      "Framer"
+      "Data Visualization",
+      "3D",
+      "UI design",
+      "Webflow",
+      "Figma"
     ],
     "taste": [],
-    "date": "2025-06",
+    "date": "2025-09",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
-    "id": "a8e31cdc5e0a",
-    "title": "DigitalSync",
-    "url": "https://digitalsync.co/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/682c4b0636958750025133.png",
+    "id": "b494acddacf2",
+    "title": "AXIOM - Concept AI Interface",
+    "url": "https://axiom-protocol.webflow.io",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68aeb708ef480668236578.jpg",
+    "source": "awwwards",
+    "category": [
+      "Music & Sound",
+      "Web & Interactive",
+      "Single page",
+      "Experimental",
+      "Storytelling",
+      "GSAP",
+      "Interaction Design",
+      "UI design",
+      "Microinteractions",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2025-09",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "dd2ed1142c54",
+    "title": "Mindhyve AI",
+    "url": "https://www.mindhyve.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/687f8954b1ce4863496093.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "Scrolling",
+      "WebGL",
+      "3D",
+      "Interaction Design",
+      "Startups"
+    ],
+    "taste": [],
+    "date": "2025-08",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "eca6f4feaa9b",
+    "title": "DV8 AI",
+    "url": "https://dv8.bz/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/687f8de0d3f20695150676.png",
     "source": "awwwards",
     "category": [
       "Business & Corporate",
       "Technology",
       "Web & Interactive",
+      "Animation",
+      "HTML5",
+      "WebGL",
+      "Storytelling",
+      "3D"
+    ],
+    "taste": [],
+    "date": "2025-08",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "bf8573e01560",
+    "title": "Dubbing AI",
+    "url": "https://dubbingai.io/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686f829ac5aa0485416295.png",
+    "source": "awwwards",
+    "category": [
+      "Games & Entertainment",
+      "Music & Sound",
+      "Technology",
       "Colorful",
+      "Bootstrap",
+      "UI design"
+    ],
+    "taste": [],
+    "date": "2025-07",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "d43222b5ae5e",
+    "title": "Scout AI",
+    "url": "https://scoutco.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686be375bd9f4425500105.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Storytelling",
+      "GSAP",
+      "Three.js",
+      "Startups",
+      "Nuxt.js"
+    ],
+    "taste": [],
+    "date": "2025-07",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "5969b20c4de1",
+    "title": "AI Music Generator",
+    "url": "https://www.aisongmaker.io/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/06/68511a58f35d5029843030.png",
+    "source": "awwwards",
+    "category": [
+      "Music & Sound",
+      "Sound-Audio"
+    ],
+    "taste": [],
+    "date": "2025-07",
+    "starred": false,
+    "firstSeen": "2026-06-09T15:29:55.400Z"
+  },
+  {
+    "id": "c99916cdcb63",
+    "title": "Sovereign AI Ecosystems",
+    "url": "https://www.politico.eu/research-and-analysis/sovereign-ai-ecosystems/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/682deba708cf4880487653.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Other",
+      "Technology",
+      "Animation",
+      "Clean",
+      "Graphic design",
       "Responsive Design",
-      "Transitions",
-      "Interaction Design",
-      "UI design",
-      "Contentful",
-      "Framer"
+      "Data Visualization"
     ],
     "taste": [],
     "date": "2025-06",
     "starred": false,
-    "signals": [
-      "framer"
-    ],
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-09T15:29:55.400Z"
   },
   {
     "id": "7deceb0c1d5f",
@@ -42474,72 +42154,6 @@
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "abbb7052f2c1",
-    "title": "Truck’N Roll®",
-    "url": "https://trucknroll.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69c59813ea16d875007210.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Events",
-      "Promotional",
-      "Clean",
-      "Photographic",
-      "Typography",
-      "Craft CMS",
-      "Javascript",
-      "Locomotive Scroll"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "04e2fab068e2",
-    "title": "REF Digital",
-    "url": "https://ref.digital/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69f3ba33019ca282961265.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Animation",
-      "Portfolio",
-      "GSAP",
-      "GLSL",
-      "About Page",
-      "Header Design",
-      "Microinteractions",
-      "Project Page",
-      "Nuxt.js"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "ad91340ac06c",
-    "title": "Hashgraph Ventures",
-    "url": "https://hashgraphvc.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69f47301157ca682331562.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Animation",
-      "Storytelling",
-      "Three.js",
-      "3D",
-      "Nuxt.js",
-      "Sanity"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
     "id": "7a56811a10cd",
     "title": "Vaulk",
     "url": "https://vaulk.com/",
@@ -42647,101 +42261,6 @@
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "e00eb2d9a2fe",
-    "title": "Cartier Watches & Wonders 2026",
-    "url": "https://www.cartier.com/en-fr/watchesandwonders",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ef6833d82c4164300342.jpg",
-    "source": "awwwards",
-    "category": [
-      "Promotional",
-      "Scrolling",
-      "Experimental",
-      "Three.js",
-      "GLSL",
-      "3D",
-      "Gestures / Interaction",
-      "Blender",
-      "Luxury"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "306ddcfe0f6d",
-    "title": "Aimee's Papercraft World",
-    "url": "https://aimees-papercraft-world.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69da42bb4bafe204842501.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Web & Interactive",
-      "Colorful",
-      "Infinite Scroll",
-      "Unusual Navigation",
-      "Storytelling",
-      "Three.js",
-      "React",
-      "3D",
-      "Blender"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "221ffdda417c",
-    "title": "Sidewave",
-    "url": "https://sidewave.it/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69dfaa93df81c440908930.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "HTML5",
-      "Portfolio",
-      "Unusual Navigation",
-      "WebGL",
-      "Storytelling",
-      "3D",
-      "Interaction Design",
-      "Unity"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "926e51ebc34f",
-    "title": "La Revoltosa",
-    "url": "https://larevoltosa.es/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69ea74293b9fa603657155.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Food & Drink",
-      "Web & Interactive",
-      "Animation",
-      "WebGL",
-      "Illustration",
-      "Storytelling",
-      "GSAP",
-      "Three.js",
-      "3D",
-      "Copy design",
-      "Interaction Design"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
     "id": "bbdfbceacc44",
     "title": "Studio375",
     "url": "https://375.studio/en",
@@ -42835,71 +42354,23 @@
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "4127b3e9379e",
-    "title": "Ashley Brooke",
-    "url": "https://ashleybrookecs.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69b429318a7d8187298969.jpg",
+    "id": "e682f642debc",
+    "title": "Wild Week - Athens",
+    "url": "https://week.wild.plus/athens-26",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cd01f17ed16959291353.jpg",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Design Agencies",
-      "Film & TV",
-      "Animation",
-      "Typography",
-      "Storytelling",
-      "GSAP",
-      "About Page",
-      "Microinteractions",
-      "Project Page",
-      "Webflow"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "fb78196ba1a5",
-    "title": "Jasmine Gunarto",
-    "url": "https://jasminegunarto.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69b5621cc3d2b288957859.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Wordpress",
-      "Graphic design",
-      "Portfolio",
-      "Illustration",
-      "Gallery",
-      "GSAP",
-      "UI design",
-      "Vite"
-    ],
-    "taste": [],
-    "date": "2026-04",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "9743fc3dc51d",
-    "title": "Ruinart - Digital fresco",
-    "url": "https://fresque.ruinart.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69a81e0282e52310686463.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Food & Drink",
-      "Animation",
-      "Big Background Images",
+      "Events",
+      "Clean",
       "WebGL",
-      "Illustration",
-      "WebVR"
+      "Gestures / Interaction",
+      "Filters and Effects",
+      "Framer"
     ],
     "taste": [],
     "date": "2026-04",
     "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
+    "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
     "id": "966e6ed47f7b",
@@ -42972,77 +42443,6 @@
     "date": "2026-03",
     "starred": false,
     "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "a19bd9008714",
-    "title": "Corentin Bernadou Portfolio",
-    "url": "https://corentinbernadou.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/6998254974a85831964533.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Web & Interactive",
-      "Animation",
-      "Clean",
-      "Infinite Scroll",
-      "Portfolio",
-      "Typography",
-      "WebGL",
-      "GSAP",
-      "UI design",
-      "Javascript"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "b091ed71f5d5",
-    "title": "Unseen Studio 2025 Wrapped",
-    "url": "https://2025.unseen.co/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698dbbef67cac346384978.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Promotional",
-      "Web & Interactive",
-      "Graphic design",
-      "Parallax",
-      "Scrolling",
-      "Typography",
-      "WebGL",
-      "Interaction Design",
-      "After Effects",
-      "Cinema 4D"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "d42b2f8a271c",
-    "title": "FC Porto Memorial",
-    "url": "https://memorial.fcporto.pt/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/69959dc307519008345011.png",
-    "source": "awwwards",
-    "category": [
-      "Sports",
-      "Web & Interactive",
-      "Animation",
-      "Responsive Design",
-      "Scrolling",
-      "Single page",
-      "Interaction Design",
-      "UI design",
-      "After Effects",
-      "Adobe Photoshop"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
     "id": "b7e29bc9b265",
@@ -43139,98 +42539,6 @@
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "465cfe6b145b",
-    "title": "D2C Life Science",
-    "url": "https://www.d2c-lifescience.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696f6ad2419c2857485128.jpg",
-    "source": "awwwards",
-    "category": [
-      "Animation",
-      "Minimal",
-      "GSAP",
-      "Three.js",
-      "3D",
-      "Startups",
-      "Blender"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "aae54ba006bf",
-    "title": "Voku.Studio™",
-    "url": "https://voku.studio/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/69691655026f8597146371.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Film & TV",
-      "Animation",
-      "Clean",
-      "Navigation Menu",
-      "Video",
-      "Experimental",
-      "Three.js",
-      "3D",
-      "UI design",
-      "11ty"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "1d2d85d7d244",
-    "title": "Vibrant Wellness",
-    "url": "https://vibrant.noomoagency.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6965768d65813624641902.png",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "Unusual Navigation",
-      "WebGL",
-      "Data Visualization",
-      "Storytelling",
-      "GSAP",
-      "Three.js",
-      "3D"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "2ea4c8ebd39d",
-    "title": "Farm Minerals",
-    "url": "https://www.farmminerals.com/promo",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/696a1aa7e7f0a650667490.png",
-    "source": "awwwards",
-    "category": [
-      "E-Commerce",
-      "Technology",
-      "Animation",
-      "Colorful",
-      "WebGL",
-      "Data Visualization",
-      "GSAP",
-      "3D",
-      "Interaction Design",
-      "Startups",
-      "Webflow"
-    ],
-    "taste": [],
-    "date": "2026-02",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
     "id": "75476659f38c",
     "title": "Yucca Packaging",
     "url": "https://yucca.co.za/",
@@ -43254,71 +42562,6 @@
     "date": "2026-01",
     "starred": false,
     "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "7cbbbc59284a",
-    "title": "Weekend Max Mara Holiday Edit",
-    "url": "https://weekend-mm-2025-gift-guide-production.monogrid.io",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/6943c4006314d724745916.jpg",
-    "source": "awwwards",
-    "category": [
-      "E-Commerce",
-      "Fashion",
-      "Web & Interactive",
-      "WebGL",
-      "GSAP",
-      "Interaction Design",
-      "Microinteractions",
-      "Vue.js",
-      "Contentful"
-    ],
-    "taste": [],
-    "date": "2026-01",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "dc159cba8163",
-    "title": "Naked City Films",
-    "url": "https://www.nakedcityfilms.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/69430e63617b6983720441.png",
-    "source": "awwwards",
-    "category": [
-      "Film & TV",
-      "Video",
-      "WebGL",
-      "GSAP",
-      "Interaction Design",
-      "Footer Design"
-    ],
-    "taste": [],
-    "date": "2026-01",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "211d7214ff79",
-    "title": "IRONHILL",
-    "url": "https://ironhill.au/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/12/693bebabc0720678012749.jpg",
-    "source": "awwwards",
-    "category": [
-      "Food & Drink",
-      "Promotional",
-      "Web & Interactive",
-      "CSS",
-      "WebGL",
-      "Illustration",
-      "Storytelling",
-      "Copy design",
-      "Microinteractions",
-      "Footer Design",
-      "Figma"
-    ],
-    "taste": [],
-    "date": "2026-01",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
     "id": "96555378e853",
@@ -43362,6 +42605,25 @@
       "Nuxt.js",
       "Vercel",
       "Social responsibility"
+    ],
+    "taste": [],
+    "date": "2025-12",
+    "starred": false,
+    "firstSeen": "2026-06-06T15:43:15.583Z"
+  },
+  {
+    "id": "2d704cad74a1",
+    "title": "Superlocal Design Festival 25",
+    "url": "https://superlocaldesign.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/6904b5b54c831131950427.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Culture & Education",
+      "Animation",
+      "Colorful",
+      "Flat Design",
+      "Framer"
     ],
     "taste": [],
     "date": "2025-12",
@@ -43413,66 +42675,23 @@
     "firstSeen": "2026-06-06T15:43:15.583Z"
   },
   {
-    "id": "cf5e4fe8183a",
-    "title": "Tesoro",
-    "url": "https://www.tesoroxp.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6915d387f28e0832628259.jpg",
+    "id": "b98d69c25f98",
+    "title": "New Genre Studio",
+    "url": "https://newgenre.studio",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/6900d08689edd726047249.jpg",
     "source": "awwwards",
     "category": [
       "Business & Corporate",
-      "Games & Entertainment",
-      "Colorful",
-      "Scrolling",
-      "Transitions",
-      "GSAP",
-      "Microinteractions",
-      "Footer Design",
-      "Startups",
-      "Matter.js",
-      "Webflow"
-    ],
-    "taste": [],
-    "date": "2025-12",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:43:15.583Z"
-  },
-  {
-    "id": "908392ff7959",
-    "title": "12 Mil",
-    "url": "https://docemilmusic.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/11/6915fdfe50846037978073.png",
-    "source": "awwwards",
-    "category": [
-      "Music & Sound",
-      "Colorful",
-      "Fullscreen",
-      "Video",
-      "Photo & Video",
-      "Prismic",
-      "Motion",
-      "Next.js"
-    ],
-    "taste": [],
-    "date": "2025-12",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "78d24f87ff43",
-    "title": "Microsoft AI",
-    "url": "https://microsoft.ai/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/690274cdd9149267915489.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
+      "Design Agencies",
       "Technology",
-      "Clean",
-      "Wordpress",
-      "Colorful",
-      "WebGL",
-      "Gestures / Interaction",
-      "Filters and Effects",
-      "Figma"
+      "Animation",
+      "Minimal",
+      "Photographic",
+      "Portfolio",
+      "Typography",
+      "Microinteractions",
+      "Figma",
+      "Framer"
     ],
     "taste": [],
     "date": "2025-11",
@@ -43516,96 +42735,6 @@
       "Unusual Navigation",
       "Video",
       "11ty"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "a10417c063ed",
-    "title": "SofaKnows",
-    "url": "https://sofaknows.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68deb9b340df9214060728.png",
-    "source": "awwwards",
-    "category": [
-      "Film & TV",
-      "Web & Interactive",
-      "Animation",
-      "Big Background Images",
-      "Fullscreen",
-      "WebGL",
-      "Experimental",
-      "Gallery",
-      "Interaction Design"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "d7c8c4bc9913",
-    "title": "Edoardo Lunardi",
-    "url": "https://www.edoardolunardi.dev/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68cd6da848e0a768905583.jpg",
-    "source": "awwwards",
-    "category": [
-      "Technology",
-      "Web & Interactive",
-      "Clean",
-      "Minimal",
-      "Portfolio",
-      "Next.js",
-      "Tailwind",
-      "Sanity"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "1f174334512b",
-    "title": "Ledger Brandbook",
-    "url": "http://brand.ledger.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68d2b15bd3f73019406350.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "Clean",
-      "Storytelling",
-      "3D",
-      "Gestures / Interaction",
-      "Content architecture",
-      "Webflow",
-      "Adobe Photoshop",
-      "Adobe Illustrator"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "850ad007059d",
-    "title": "Radaville",
-    "url": "https://radaville.studio/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/10/68f8ac4049c83370061419.png",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Animation",
-      "Scrolling",
-      "Typography",
-      "Gallery",
-      "GSAP",
-      "404 pages",
-      "Prismic",
-      "Next.js"
     ],
     "taste": [],
     "date": "2025-11",
@@ -43681,78 +42810,6 @@
       "3D",
       "Figma",
       "Blender"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "5ecdca6b82aa",
-    "title": "OVA investment",
-    "url": "https://ova-investment.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68caa0834aeea645348268.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Clean",
-      "WebGL",
-      "GSAP",
-      "3D",
-      "Startups",
-      "Contentful",
-      "Netlify"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "e4f4dc3fb3cf",
-    "title": "Won J. You Studios",
-    "url": "https://wonjyou.studio/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68c03c4604f1a840148959.png",
-    "source": "awwwards",
-    "category": [
-      "Culture & Education",
-      "Promotional",
-      "Web & Interactive",
-      "Big Background Images",
-      "Scrolling",
-      "Transitions",
-      "Storytelling",
-      "GSAP",
-      "Filters and Effects",
-      "404 pages",
-      "Figma",
-      "Next.js"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "6156d202988f",
-    "title": "Ponpon Mania",
-    "url": "https://ponpon-mania.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/09/68c7be3b8a3c6127708535.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Games & Entertainment",
-      "Web & Interactive",
-      "Parallax",
-      "Unusual Navigation",
-      "WebGL",
-      "Illustration",
-      "Storytelling",
-      "GSAP",
-      "3D",
-      "Microinteractions",
-      "Nuxt.js"
     ],
     "taste": [],
     "date": "2025-10",
@@ -43843,100 +42900,6 @@
       "Microinteractions",
       "Javascript",
       "Figma"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "255355beea32",
-    "title": "NITEX",
-    "url": "https://nitex.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/6894b00c35f5f682358209.jpg",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Promotional",
-      "Technology",
-      "Unusual Navigation",
-      "Transitions",
-      "GSAP",
-      "Interaction Design",
-      "Nuxt.js",
-      "Sanity"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "13fe509f3e4a",
-    "title": "Der Baukasten",
-    "url": "https://www.der-baukasten.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/6899dd0820bcc589344120.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Technology",
-      "Web & Interactive",
-      "Animation",
-      "Typography",
-      "Unusual Navigation",
-      "GSAP",
-      "Three.js",
-      "GLSL",
-      "3D",
-      "Interaction Design",
-      "Microinteractions"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "e903b4445b14",
-    "title": "Pantheon Media Group",
-    "url": "https://www.pantheonmedia.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/689b38d469b84288212894.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Film & TV",
-      "Big Background Images",
-      "Navigation Menu",
-      "Unusual Navigation",
-      "WebGL",
-      "GSAP",
-      "Interaction Design",
-      "Next.js"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "ebef5d8593a9",
-    "title": "Caeli Energie",
-    "url": "https://www.caeli-energie.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/68750ab93af1b190757225.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Animation",
-      "Wordpress",
-      "Storytelling",
-      "GSAP",
-      "3D",
-      "Forms and Input",
-      "Copy design",
-      "Footer Design",
-      "Startups",
-      "Blender"
     ],
     "taste": [],
     "date": "2025-09",
@@ -44036,46 +42999,6 @@
     "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
-    "id": "65380c002936",
-    "title": "LO2S",
-    "url": "https://lo2s.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/686ce64bb47d1646420537.png",
-    "source": "awwwards",
-    "category": [
-      "Events",
-      "Music & Sound",
-      "Big Background Images",
-      "Portfolio",
-      "React",
-      "Photo & Video",
-      "UI design"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "1617ccf8c393",
-    "title": "Casa Lunara",
-    "url": "https://www.casa-lunara.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/68303a7c83191832878793.png",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Web & Interactive",
-      "Animation",
-      "Experimental",
-      "Sound-Audio",
-      "Footer Design",
-      "404 pages"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
     "id": "d91d494bb2f1",
     "title": "Adaline",
     "url": "https://www.adaline.ai/",
@@ -44131,68 +43054,6 @@
       "3D",
       "next.js",
       "Luxury"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "571293f706c3",
-    "title": "Vooban",
-    "url": "https://vooban.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/06/684c7c9e8ffd4408794549.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Technology",
-      "Animation",
-      "Transitions",
-      "Experimental",
-      "Interaction Design",
-      "Photo & Video",
-      "UI design"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "0e38f1f553d5",
-    "title": "22.09.2000 - HE WAS BORN",
-    "url": "https://www.hardikbhansali.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/06/68503c00a662c932589383.jpg",
-    "source": "awwwards",
-    "category": [
-      "Other",
-      "Promotional",
-      "Web & Interactive",
-      "Retro",
-      "3D",
-      "Gestures / Interaction"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "608c7c0f2ec7",
-    "title": "Tracing Art",
-    "url": "https://www.getty.edu/tracingart/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/06/684b90149fafb824446590.png",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Institutions",
-      "Big Background Images",
-      "Clean",
-      "Colorful",
-      "Scrolling",
-      "Data Visualization",
-      "Content architecture"
     ],
     "taste": [],
     "date": "2025-07",
@@ -44275,88 +43136,6 @@
       "Sound-Audio",
       "3D",
       "Filters and Effects"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "2afa16234d4a",
-    "title": "dhk Architects",
-    "url": "https://www.dhk.co.za/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/682ae4f214aa3552322178.jpg",
-    "source": "awwwards",
-    "category": [
-      "Architecture",
-      "Culture & Education",
-      "Clean",
-      "Flat Design",
-      "Fullscreen",
-      "Minimal",
-      "Gallery",
-      "Real Estate",
-      "Project Page"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "27bcd0656f01",
-    "title": "Montfort",
-    "url": "https://mont-fort.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/68261dd1e1a80906122032.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Web & Interactive",
-      "Scrolling",
-      "Responsive",
-      "3D",
-      "Gestures / Interaction",
-      "UI design"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "1c7a9616be64",
-    "title": "Sunny Bonnell",
-    "url": "https://www.sunnybonnell.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/04/6801a42b77754209139197.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Culture & Education",
-      "Promotional",
-      "Animation",
-      "Clean",
-      "Minimal",
-      "Interaction Design",
-      "About Page"
-    ],
-    "taste": [],
-    "date": "2025-06",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:08:23.132Z"
-  },
-  {
-    "id": "389e05402dd2",
-    "title": "Joy From Africa",
-    "url": "https://jfa-awards.snp.agency/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/05/6821ffa9a7a21517983543.jpg",
-    "source": "awwwards",
-    "category": [
-      "Art & Illustration",
-      "Culture & Education",
-      "Animation",
-      "Colorful",
-      "Illustration",
-      "Contentful"
     ],
     "taste": [],
     "date": "2025-06",

@@ -47,7 +47,7 @@ interface ScrapedSite {
   isDead?: boolean;
   lastCheckedAt?: string;
   // 以下は enrich-tags.ts が埋める領域。スクレイプ時点で確実に分かる場合は
-  // ここで先出ししておく（例: Awwwards の Framer 棚から来たものは framer 確定）
+  // ここで先出ししておく。
   signals?: string[];
   enrichedAt?: string;
 }
@@ -402,13 +402,15 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
 /**
  * Awwwards スクレイパー
  *
- * 対象: Sites of the Day（/websites/sites_of_the_day/）+ Made with Framer 棚
+ * 対象: AI 系サービス（/websites/ai/、主役）+ Sites of the Day（脇役）
  *
  * 過去の戦略の遍歴:
  *   - Nominees は量が膨大（2024-01以降で約9300件）かつ品質振れ幅あり、除外
  *   - SOTD = Awwwards 編集部が日毎に1件だけ選ぶ受賞作。質が均一で最上位
  *   - Developer Award (元: 含めていた) → 2026-05 ユーザー要望で除外。
- *     量が膨らむ + コーディング寄り評価でデザイン参考に弱い、と判断。
+ *   - Made with Framer 棚 (元: 含めていた) → 2026-06 ユーザー要望で除外。
+ *     代わりに AI 系サービス棚を主役に。/websites/ai/ は最初から新着順なので
+ *     「できるだけ最近リリースされたもの」が自然と先頭に来る。
  *
  * 取得方法:
  *   各カードの <li class="col-3 js-collectable"> に data-collectable-model-value という
@@ -416,15 +418,28 @@ async function scrape81Web(pages: number = 3): Promise<ScrapedSite[]> {
  *   タイトル・サムネイル・タグ・掲載日（Unix秒）が一撃で取れる。外部URLは
  *   figure-rollover__bt[href] から取得（awwwardsページではなく、実サイトのURL）。
  */
+
+// 各棚から月あたり何件まで残すか（capByMonth で適用）。
+// 2026-06 ユーザー要望: AI 系サービスを主役に → AI は多め、SOTD は脇役で控えめ。
+// AI カテゴリの実供給は月10-15件程度なので、perMonth=30 は実質「12ヶ月分を全部取る」。
+const AWWWARDS_AI_PER_MONTH = 30;
+const AWWWARDS_SOTD_PER_MONTH = 6;
+
 /**
  * Awwwards のセクション定義。
- * - Framer は「Made with Framer」専用棚。ここから来た結果は必ず framer シグナル確定。
- *   SOTD と重複したらこちらが先勝ち（seenSlugs）で framer シグナルを保持。
- * - 順序重要：Framer を先頭に置いて先勝ちさせる。
+ *
+ * 2026-06 ユーザー要望で方針変更:
+ *   - 旧「Made with Framer」棚は廃止。
+ *   - 代わりに **AI 系サービスのサイト**（/websites/ai/）を主役にする。
+ *     この一覧は最初から新着順なので「できるだけ最近リリースされたもの」が先頭に来る。
+ *   - SOTD（毎日の受賞作）はデザイン参考の幅として脇役で残す（控えめなキャップ）。
+ *
+ * perMonth = その棚から月あたり何件まで残すか（capByMonth で適用）。
+ * 順序重要：AI を先頭に置き、SOTD と URL が被ったら AI 側を先勝ちさせる。
  */
-const AWWWARDS_SECTIONS: { name: string; path: string; forceSignals?: string[] }[] = [
-  { name: "Framer", path: "framer", forceSignals: ["framer"] },
-  { name: "SOTD", path: "sites_of_the_day" },
+const AWWWARDS_SECTIONS: { name: string; path: string; perMonth: number }[] = [
+  { name: "AI", path: "ai", perMonth: AWWWARDS_AI_PER_MONTH },
+  { name: "SOTD", path: "sites_of_the_day", perMonth: AWWWARDS_SOTD_PER_MONTH },
 ];
 
 /**
@@ -432,8 +447,8 @@ const AWWWARDS_SECTIONS: { name: string; path: string; forceSignals?: string[] }
  * 例: 2026-06 に実行 → "2025-06" 以降を取得対象。
  *
  * 海外アワードは更新頻度が高く、毎月30件以上が積み上がる。
- * 2026-06: ユーザー要望で Awwwards の表示件数を増やすため、取り込み期間を
- * 直近6ヶ月 → 直近12ヶ月 に拡大（月キャップも SOTD10/Framer5 に引き上げ）。
+ * 2026-06: 取り込み期間を直近6ヶ月 → 直近12ヶ月 に拡大。
+ * 月キャップは AI30件（実質全部）/ SOTD6件。
  * 既存データは scripts/filter-awwwards.ts でも別途バッチ削除する運用。
  */
 function awwwardsCutoffDate(): string {
@@ -463,9 +478,11 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
 
   for (const section of AWWWARDS_SECTIONS) {
     console.log(`  セクション: ${section.name}`);
+    // この棚で集めた分。while を抜けたあと月キャップを掛けて results に合流する。
+    const sectionResults: ScrapedSite[] = [];
     let page = 1;
     let stopped = false;
-    const MAX_PAGES = 40; // 安全弁。2025-01 カットオフなら SOTD ~13, Developer ~12 ページで到達
+    const MAX_PAGES = 40; // 安全弁。12ヶ月カットオフでも SOTD ~13, AI ~5 ページで到達
 
     while (!stopped && page <= MAX_PAGES) {
       const url = `https://www.awwwards.com/websites/${section.path}/?page=${page}`;
@@ -496,7 +513,7 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
           const title = payload.collectableTitle || payload.title || "";
           const slug = payload.slug || payload.collectableIdentifier || "";
           if (!title || !slug) return;
-          if (seenSlugs.has(slug)) return; // SOTDとDeveloperで被ったら先勝ち
+          if (seenSlugs.has(slug)) return; // 棚をまたいで被ったら先頭棚（AI）が先勝ち
 
           // 掲載月（YYYY-MM）。createdAt は Unix 秒
           let dateStr = new Date().toISOString().slice(0, 7);
@@ -530,7 +547,7 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
           const siteUrl = outboundUrl.startsWith("http") ? outboundUrl : detailUrl;
 
           seenSlugs.add(slug);
-          results.push({
+          sectionResults.push({
             id: generateId(siteUrl, "awwwards"),
             title: title.slice(0, 100),
             url: siteUrl,
@@ -542,13 +559,11 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
             taste: [],
             date: dateStr,
             starred: false,
-            // Framer 棚由来なら framer シグナルを先出し（enrich-tags が後で上書きしない）
-            ...(section.forceSignals ? { signals: [...section.forceSignals] } : {}),
           });
           pageAdded++;
         });
 
-        console.log(`    page=${page} 新規${pageAdded}件（累積 ${results.length} 件）`);
+        console.log(`    page=${page} 新規${pageAdded}件（棚内累積 ${sectionResults.length} 件）`);
 
         // このページのカードが全部カットオフより古かったら以降も古いので打ち切り
         if (pageAllOld) {
@@ -562,45 +577,31 @@ async function scrapeAwwwards(): Promise<ScrapedSite[]> {
       page++;
       await sleep(1500); // awwwards へ 1.5s インターバル
     }
+
+    // この棚の取得分に月キャップを掛けて results に合流。
+    const capped = capByMonth(sectionResults, section.perMonth);
+    console.log(
+      `  → ${section.name}: ${sectionResults.length}件取得 → 月${section.perMonth}件キャップ後 ${capped.length}件`
+    );
+    results.push(...capped);
   }
 
-  console.log(`  Awwwards 合計（キャップ前）: ${results.length} 件`);
-  const capped = capAwwwardsByMonth(results);
-  console.log(`  Awwwards 月キャップ後: ${capped.length} 件（SOTD ${AWWWARDS_SOTD_PER_MONTH}件 + Framer ${AWWWARDS_FRAMER_PER_MONTH}件 / 月）`);
-  return capped;
+  console.log(`  Awwwards 合計（キャップ後）: ${results.length} 件（AI ${AWWWARDS_AI_PER_MONTH}件 + SOTD ${AWWWARDS_SOTD_PER_MONTH}件 / 月）`);
+  return results;
 }
 
 /**
- * Awwwards の月キャップ。
- * 月あたり SOTD 8件 + Framer 4件 = 12件 までに絞る。
- *
- * 背景: SOTD/Framer 棚はそれぞれ月20-25件入ってきて、合計で月30-40件になる。
- * これが日本のメディア（SANKOU/MUUUUU など）と肩を並べて一覧で目立ちすぎ、
- * 国内のキュレーションが埋もれるというユーザー要望（2026-05）。
- *
- * Framer 由来は signals に "framer" を持つ（先勝ちで確定）。それ以外は SOTD 扱い。
- * results は scrapeAwwwards の中でページ新着順に積まれているので、月内では
- * 「先に出てきた = 新しい」順に残す。
+ * 月あたりの件数キャップ。月（YYYY-MM）ごとに先頭 perMonth 件だけ残す。
+ * sites は新着順に積まれている前提なので、月内では「新しい順に perMonth 件」が残る。
  */
-// 2026-06: ユーザー要望で件数を増やすため 8/4 → 10/5 に引き上げ（月15件まで）。
-const AWWWARDS_SOTD_PER_MONTH = 10;
-const AWWWARDS_FRAMER_PER_MONTH = 5;
-function capAwwwardsByMonth(sites: ScrapedSite[]): ScrapedSite[] {
-  const sotdCount = new Map<string, number>();
-  const framerCount = new Map<string, number>();
+function capByMonth(sites: ScrapedSite[], perMonth: number): ScrapedSite[] {
+  const count = new Map<string, number>();
   const kept: ScrapedSite[] = [];
   for (const s of sites) {
     const m = s.date || "";
-    const isFramer = (s.signals || []).includes("framer");
-    if (isFramer) {
-      const c = framerCount.get(m) || 0;
-      if (c >= AWWWARDS_FRAMER_PER_MONTH) continue;
-      framerCount.set(m, c + 1);
-    } else {
-      const c = sotdCount.get(m) || 0;
-      if (c >= AWWWARDS_SOTD_PER_MONTH) continue;
-      sotdCount.set(m, c + 1);
-    }
+    const c = count.get(m) || 0;
+    if (c >= perMonth) continue;
+    count.set(m, c + 1);
     kept.push(s);
   }
   return kept;
