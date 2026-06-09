@@ -783,6 +783,41 @@ async function main() {
   // 重複排除時に既存ソースが勝つ（URL が SANKOU! と Awwwards 両方にある場合、
   // 後から入ってきた新ソースが既存を奪わないようにする）
   const outputPath = path.join(__dirname, "..", "src", "data", "scraped-sites.json");
+
+  // 🛡️ ゼロ件ガード（フルラン時のみ）
+  // あるソースが今回 0 件しか取れなかった場合、既存 JSON のそのソースのエントリを
+  // 引き継ぐ。これをしないと「0件で全消し → 上書き保存」になる。
+  //
+  // 実害があったケース: awwwards は Cloudflare が GitHub Actions のデータセンター IP を
+  // チャレンジで弾くため CI だと丸ごと 0 件になり、毎日 69件→0件 と全消しされていた
+  //（自宅 IP のローカル実行では普通に取れる）。0件は「取得失敗」とみなして既存を守る。
+  if (!onlySource) {
+    const resultsBySource: Record<string, ScrapedSite[]> = {
+      sankou: sankouResults,
+      muuuuu: muuuuuResults,
+      webdesignclip: wdcResults,
+      "81web": web81Results,
+      awwwards: awwwardsResults,
+      s5style: s5Results,
+    };
+    let prevForGuard: ScrapedSite[] = [];
+    try {
+      prevForGuard = JSON.parse(fs.readFileSync(outputPath, "utf-8")) as ScrapedSite[];
+    } catch {
+      // 既存なし（初回）なら守るものがないのでスキップ
+    }
+    for (const [src, got] of Object.entries(resultsBySource)) {
+      if (got.length > 0) continue;
+      const carried = prevForGuard.filter((p) => p.source === src);
+      if (carried.length > 0) {
+        console.log(
+          `  🛡️ ${src}: 今回0件 → 取得失敗とみなし既存 ${carried.length} 件を引き継ぎ（消失防止）`
+        );
+        allResults.push(...carried);
+      }
+    }
+  }
+
   let finalOrdered: ScrapedSite[];
   if (onlySource) {
     let carryover: ScrapedSite[] = [];
