@@ -13,6 +13,7 @@ import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
 import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
 import { scrapeS5Style } from "./scrape-s5style";
 import { tagTourism } from "./tourism";
+import { normalizeUrl } from "../src/lib/eagle";
 
 // ============================================================
 // 設定
@@ -28,7 +29,9 @@ const CUTOFF_DATE = "2024-01";
 const MAX_VISIBLE_SITES = 3000;
 
 // Eagle ローカル API（起動中なら localhost:41595 で叩ける）
-const EAGLE_API = "http://localhost:41595/api/item/list?limit=10000";
+// limit は Eagle の収録数より十分大きく取る（2026-06 時点で 8,857 件と
+// 旧上限 10,000 に迫っていたため 100,000 に引き上げ。足りないと重複除外が漏れる）
+const EAGLE_API = "http://localhost:41595/api/item/list?limit=100000";
 
 // ============================================================
 // 型定義
@@ -746,17 +749,10 @@ async function scrapeWebDesignClip(pagesPerSection: number = 10): Promise<Scrape
 // ============================================================
 // 重複排除
 // ============================================================
-function normalizeUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    // www有無を統一、末尾スラッシュ除去、小文字化
-    const host = u.hostname.replace(/^www\./, "").toLowerCase();
-    const path = u.pathname.replace(/\/$/, "").toLowerCase();
-    return `${host}${path}`;
-  } catch {
-    return url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "").toLowerCase();
-  }
-}
+// 2026-06: 以前はここに独自の弱い normalizeUrl があったが、"/index.html" と "/" の
+// 違いを吸収できず「日建設計総合研究所が muuuuu と 81web に二重掲載」のような
+// メディア間重複が残った。UI 側（src/lib/eagle.ts）の強い正規化（index.html 除去・
+// トラッキングクエリ除去・www 統一）に一本化する。
 
 function deduplicateByUrl(sites: ScrapedSite[]): ScrapedSite[] {
   const seen = new Set<string>();
