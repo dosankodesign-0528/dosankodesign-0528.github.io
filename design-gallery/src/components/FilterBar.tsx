@@ -38,6 +38,9 @@ export function FilterBar({
 }: FilterBarProps) {
   const [showModal, setShowModal] = useState(false);
   const allSourcesActive = filter.sources.length === 0;
+  // 観光フィルタ（カテゴリ "travel"）が ON か。全メディア横断で観光系サイト
+  //（ホテル/旅館/温泉/観光地/観光メディアなど）だけに絞る。
+  const tourismActive = filter.categories.includes("travel");
 
   // Filter ボタンのバッジ（デフォルトでないフィルタが何個かかってるか）
   const nonDefaultCount =
@@ -83,6 +86,25 @@ export function FilterBar({
             </button>
           );
         })}
+
+        {/* 区切り */}
+        <span className="w-px h-4 bg-border mx-0.5" />
+
+        {/* 観光フィルタ: 全メディア横断で観光系サイトだけに絞るワンタップ・ピル */}
+        <button
+          onClick={() =>
+            updateFilter({ categories: tourismActive ? [] : ["travel"] })
+          }
+          className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex items-center gap-1 ${
+            tourismActive
+              ? "bg-[#0EA5A5] text-white"
+              : "text-text-secondary hover:bg-bg-primary"
+          }`}
+          title="観光系サイト（ホテル・旅館・温泉・観光地など）だけに絞る"
+        >
+          <span>🏖</span>
+          観光
+        </button>
 
         {/* 右端: 統合フィルターボタン */}
         <div className="ml-auto flex items-center gap-3 text-[12px] text-text-secondary">
