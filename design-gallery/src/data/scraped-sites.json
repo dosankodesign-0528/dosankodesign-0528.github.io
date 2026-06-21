@@ -89,7 +89,7 @@
     "id": "403828bf333f",
     "title": "tanukie",
     "url": "https://tanukie.jp/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/tanukie_t-400x350.jpg",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/tanukiellc_t-400x350.jpg",
     "source": "sankou",
     "category": [
       "uncategorized"
@@ -20134,6 +20134,20 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
+    "id": "d484ea81ed60",
+    "title": "内藤・大塚法律事務所",
+    "url": "https://naito-otsuka.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/06/20.webp",
+    "source": "muuuuu",
+    "category": [
+      "finance"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-06T15:26:28.565Z"
+  },
+  {
     "id": "2b31f876c70f",
     "title": "シンカ株式会社",
     "url": "https://shinka-inc.com/",
@@ -30212,20 +30226,6 @@
     "source": "webdesignclip",
     "category": [
       "採用サイト・転職・求人"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "4c3cae5ddf12",
-    "title": "内藤・大塚法律事務所",
-    "url": "https://naito-otsuka.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260610_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
     ],
     "taste": [],
     "date": "2026-06",
@@ -49376,12 +49376,12 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d5d6f65273a475887859.png",
     "source": "awwwards",
     "category": [
-      "Adobe Illustrator",
       "Technology",
       "Colorful",
       "SEO",
       "Startups",
-      "Contentful"
+      "Contentful",
+      "Adobe Illustrator"
     ],
     "taste": [],
     "date": "2026-04",
@@ -51360,6 +51360,30 @@
     "firstSeen": "2026-06-13T04:08:32.368Z"
   },
   {
+    "id": "ea72448db5c9",
+    "title": "digitalists",
+    "url": "https://digitalists.at/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a04d91211731785189813.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Design Agencies",
+      "Web & Interactive",
+      "Animation",
+      "Wordpress",
+      "Colorful",
+      "Infinite Scroll",
+      "WebGL",
+      "Three.js",
+      "3D",
+      "Gestures / Interaction"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
     "id": "9b0a56385f8a",
     "title": "RPA COMUNICACIÓN",
     "url": "https://rpacomunicacion.com/",
@@ -51423,30 +51447,6 @@
     "date": "2026-06",
     "starred": false,
     "firstSeen": "2026-06-19T04:49:38.362Z"
-  },
-  {
-    "id": "a267abea7187",
-    "title": "Gucci: Mystery Unfolds",
-    "url": "https://lafamigliamysteryunfolds.gucci.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0343a2ac352376742163.jpg",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Games & Entertainment",
-      "Web & Interactive",
-      "Animation",
-      "App Style",
-      "Storytelling",
-      "GSAP",
-      "Gestures / Interaction",
-      "Interaction Design",
-      "UI design",
-      "GraphQL"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-17T04:30:59.443Z"
   },
   {
     "id": "7a56811a10cd",
@@ -52196,6 +52196,116 @@
     "date": "2025-06",
     "starred": false,
     "firstSeen": "2026-06-09T15:08:23.132Z"
+  },
+  {
+    "id": "e35cb8dd31a8",
+    "title": "The Day Osaka",
+    "url": "https://theday.osaka/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ckr0ew86py7v-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoCコーポレートサイト",
+      "ホテル･旅館",
+      "travel"
+    ],
+    "taste": [
+      "UI フラット",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
+    "id": "63bdb2237c7a",
+    "title": "ESA",
+    "url": "https://esa.or.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vt13jwzc50rm-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoCコーポレートサイト",
+      "SDGs･NPO･自治体"
+    ],
+    "taste": [
+      "動画･映像",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
+    "id": "285c637cee6a",
+    "title": "株式会社DeltaX",
+    "url": "https://delta-x.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ktwhognb2rcx-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoCコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "学校･教育･医療･福祉"
+    ],
+    "taste": [
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
+    "id": "d51b66748d35",
+    "title": "AQUOS R10の特長｜AQUOS：シャープ",
+    "url": "https://jp.sharp/k-tai/products/aquos-r10/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/w0k2tej8ipsq-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "プロダクトサイト",
+      "カメラ･モバイル･家電"
+    ],
+    "taste": [
+      "写真･フォトディレクション",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
+    "id": "48130697f013",
+    "title": "新卒・キャリア採用情報｜株式会社インサイト",
+    "url": "https://www.ppi.jp/recruiting/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/oqz2mvi3jd75-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "広告代理店"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "スクロールエフェクト",
+      "UI フラット",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
+  },
+  {
+    "id": "81d972e698a1",
+    "title": "デジタルミックス株式会社 採用サイト",
+    "url": "https://www.digitalmix.jp/recruit/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ecoi5kdtjmxa-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-21T04:36:37.400Z"
   },
   {
     "id": "0632ddae7839",
