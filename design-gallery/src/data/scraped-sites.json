@@ -1,5 +1,33 @@
 [
   {
+    "id": "27791d45dcd0",
+    "title": "FUNTECH BRAND IDENTITY",
+    "url": "https://ci.funtech.inc/ja",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/funtechbrandidentity_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-15T04:53:14.160Z"
+  },
+  {
+    "id": "888ad50cc179",
+    "title": "HAKUHODO RECRUITMENT",
+    "url": "https://hakusuku.jp/recruit/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/HAKUHODORECRUITMENT_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-07T04:20:55.700Z"
+  },
+  {
     "id": "955d924211f8",
     "title": "イロコト採用サイト",
     "url": "https://irokoto.co.jp/recruit/",
@@ -18853,20 +18881,6 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
-    "id": "888ad50cc179",
-    "title": "HAKUHODO & HAKUHODO DY MEDIA PARTNERS RECRUIT",
-    "url": "https://hakusuku.jp/recruit/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/hakusukurecruit_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-06-07T04:20:55.700Z"
-  },
-  {
     "id": "11f970446b5d",
     "title": "産経デジタル採用サイト",
     "url": "https://www.sankei-digital.co.jp/recruit/",
@@ -30079,6 +30093,20 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
+    "id": "2017047f145f",
+    "title": "大馬屋",
+    "url": "https://onmaya.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260622_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "食品・飲料"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
+  },
+  {
     "id": "6a9bb3d5e293",
     "title": "ダブダブダブ",
     "url": "https://wwwzz.jp/",
@@ -39077,6 +39105,20 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
+    "id": "5540044e8609",
+    "title": "豊田市人材開発フォーラム20周年記念事業｜愛知県豊田市",
+    "url": "https://toyota-human-resources-forum.jp/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260622_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "実店舗・地域情報"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-06T15:26:28.565Z"
+  },
+  {
     "id": "41dc9c9addcc",
     "title": "アニメ「グロウアップショウ」公式サイト",
     "url": "https://growupshow.com/",
@@ -45205,6 +45247,23 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:51:44.136Z"
+  },
+  {
+    "id": "227b5c63ed91",
+    "title": "Kenichi Aikawa &#8211; Photographer",
+    "url": "https://aikawakenichi.com/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/06/260622-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ポートフォリオサイト",
+      "アート",
+      "デザイン"
+    ],
+    "taste": [],
+    "agency": "Garden Eight",
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
   },
   {
     "id": "24ea57c61bd8",
@@ -51360,6 +51419,28 @@
     "firstSeen": "2026-06-13T04:08:32.368Z"
   },
   {
+    "id": "b8a23068c488",
+    "title": "EverSwap",
+    "url": "https://everswap.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a06f02ab8baf677292301.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "WebGL",
+      "Illustration",
+      "Storytelling",
+      "3D",
+      "Startups",
+      "Figma",
+      "Blender"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
+  },
+  {
     "id": "ea72448db5c9",
     "title": "digitalists",
     "url": "https://digitalists.at/",
@@ -51418,30 +51499,6 @@
       "Clean",
       "Fullscreen",
       "Shopify"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-19T04:49:38.362Z"
-  },
-  {
-    "id": "93e2192753f4",
-    "title": "Indigo Laboratory",
-    "url": "https://indigo-laboratory.it/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a02fc708276c784411761.jpg",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Music & Sound",
-      "Animation",
-      "Single page",
-      "Experimental",
-      "Sound-Audio",
-      "Storytelling",
-      "GSAP",
-      "Microinteractions",
-      "Nuxt.js",
-      "Curtains.js"
     ],
     "taste": [],
     "date": "2026-06",
@@ -52198,6 +52255,42 @@
     "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
+    "id": "8d8eee7a2dc7",
+    "title": "すべての活躍は、コンディショニングから。",
+    "url": "https://tential.jp/features/athlete-special",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/1whp2bo7lcrj-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "特設サイト",
+      "スポーツ･アウトドア",
+      "美容･健康･化粧品･コスメ･サロン"
+    ],
+    "taste": [
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
+  },
+  {
+    "id": "f2e3282accd1",
+    "title": "TOKYO H2",
+    "url": "https://tokyoh2.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vutcloai0d6x-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "地方自治体･世界･地域",
+      "SDGs･NPO･自治体"
+    ],
+    "taste": [
+      "映像 ハイパーラプス･タイムラプス",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
+  },
+  {
     "id": "e35cb8dd31a8",
     "title": "The Day Osaka",
     "url": "https://theday.osaka/",
@@ -52458,27 +52551,6 @@
     "date": "2026-06",
     "starred": false,
     "firstSeen": "2026-06-16T04:35:34.382Z"
-  },
-  {
-    "id": "f9d30b5050c3",
-    "title": "FUNTECH BRAND IDENTITY",
-    "url": "https://ci.funtech.inc/ja",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/mfhar50t2v3x-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "デザイン･制作･開発会社",
-      "その他"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "タイポグラフィー･文字",
-      "3Dアニメーション･3Dモデル",
-      "イラスト",
-      "ロゴデザイン"
-    ],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-15T04:53:14.160Z"
   },
   {
     "id": "f9c7e77dae1d",
@@ -53106,6 +53178,22 @@
     "firstSeen": "2026-06-06T15:26:28.565Z"
   },
   {
+    "id": "d18d988ee1d6",
+    "title": "センチュリーメディカル株式会社",
+    "url": "https://www.cmi.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/nyt6l3spe2az-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "その他",
+      "学校･教育･医療･福祉"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
+  },
+  {
     "id": "0b1f4b003546",
     "title": "株式会社ワタリ青果",
     "url": "https://www.watari-seika.jp/",
@@ -53327,6 +53415,26 @@
     "date": "2026-06",
     "starred": false,
     "firstSeen": "2026-06-06T15:26:28.565Z"
+  },
+  {
+    "id": "d6a66e0bc0ba",
+    "title": "株式会社konowa｜広報PRコンサルティング",
+    "url": "https://www.konowa.info/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kf5gw2dzp7hj-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "その他"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "パララックス",
+      "モチーフ 円•曲線",
+      "ロゴデザイン"
+    ],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-06-22T04:37:05.708Z"
   },
   {
     "id": "f9f71c78b113",
@@ -54350,25 +54458,6 @@
       "タイポグラフィー･文字",
       "イラスト",
       "写真･フォトディレクション"
-    ],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "39cee781800d",
-    "title": "豊田市人材開発フォーラムサイト",
-    "url": "https://toyota-human-resources-forum.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vfm2pjnd43us-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "特設サイト",
-      "地方自治体･世界･地域"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "タイポグラフィー･文字",
-      "イラスト"
     ],
     "date": "2026-06",
     "starred": false,
@@ -56433,23 +56522,6 @@
       "タイポグラフィー･文字",
       "写真･フォトディレクション",
       "ロゴデザイン"
-    ],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "ddbfac0f8d60",
-    "title": "OKIZO｜神奈川県藤沢市のBar",
-    "url": "https://barokizo.studio.site/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/cdg5u3wxi814-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "BtoCコーポレートサイト",
-      "商業施設･飲食店･カフェ･レストラン"
-    ],
-    "taste": [
-      "タイポグラフィー･文字"
     ],
     "date": "2026-06",
     "starred": false,
