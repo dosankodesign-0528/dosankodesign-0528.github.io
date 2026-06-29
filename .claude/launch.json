@@ -26,6 +26,13 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "3098"],
       "port": 3098,
       "cwd": "houmon-app"
+    },
+    {
+      "name": "inzone-works",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3097"],
+      "port": 3097,
+      "cwd": "inzone-works"
     }
   ]
 }
