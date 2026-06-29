@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, Noto_Sans_JP } from "next/font/google";
+import { Hanken_Grotesk, Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
+import SmoothScroll from "@/components/SmoothScroll";
 import "./globals.css";
 
 const hanken = Hanken_Grotesk({
@@ -16,6 +17,13 @@ const noto = Noto_Sans_JP({
   display: "swap",
 });
 
+const notoSerif = Noto_Serif_JP({
+  subsets: ["latin"],
+  weight: ["200", "300", "400"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "inZONE with ACTUS｜札幌の家具・インテリアショップ",
   description:
@@ -28,8 +36,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${hanken.variable} ${noto.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="ja"
+      className={`${hanken.variable} ${noto.variable} ${notoSerif.variable}`}
+    >
+      <body>
+        <SmoothScroll />
+        {children}
+      </body>
     </html>
   );
 }

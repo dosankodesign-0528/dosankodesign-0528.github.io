@@ -14,9 +14,10 @@ const config: Config = {
         line: "#9f9f9f", // 枠線グレー
       },
       fontFamily: {
-        // 英字・数字は Hanken Grotesk、和文は Noto Sans JP
+        // 英字・数字は Hanken Grotesk、和文は Noto Sans JP、見出し明朝は Noto Serif JP
         en: ["var(--font-hanken)", "sans-serif"],
         jp: ["var(--font-noto)", "sans-serif"],
+        serif: ["var(--font-serif)", "serif"],
       },
       maxWidth: {
         content: "1170px", // PC のコンテンツ最大幅

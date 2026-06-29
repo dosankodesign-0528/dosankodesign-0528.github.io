@@ -16,7 +16,9 @@ export default function Header() {
           <img
             src="/images/logo.svg"
             alt="inZONE with ACTUS"
-            className="h-9 w-auto md:h-[58px]"
+            width={216}
+            height={81}
+            className="h-9 w-auto shrink-0 object-contain md:h-[58px]"
           />
         </Link>
 
@@ -69,7 +71,13 @@ export default function Header() {
       >
         <div className="flex items-center justify-between px-6 py-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.svg" alt="inZONE with ACTUS" className="h-9 w-auto" />
+          <img
+            src="/images/logo.svg"
+            alt="inZONE with ACTUS"
+            width={216}
+            height={81}
+            className="h-9 w-auto shrink-0 object-contain"
+          />
           <button
             type="button"
             aria-label="メニューを閉じる"

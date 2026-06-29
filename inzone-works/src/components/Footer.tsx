@@ -7,7 +7,13 @@ export default function Footer() {
       <div className="mx-auto flex max-w-content flex-col gap-10 md:flex-row md:items-start md:justify-between">
         <Link href="/" aria-label="inZONE with ACTUS">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.svg" alt="inZONE with ACTUS" className="h-10 w-auto" />
+          <img
+            src="/images/logo.svg"
+            alt="inZONE with ACTUS"
+            width={216}
+            height={81}
+            className="h-10 w-auto shrink-0 object-contain"
+          />
         </Link>
 
         <nav className="flex flex-wrap gap-x-8 gap-y-3">
