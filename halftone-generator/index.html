@@ -98,6 +98,17 @@
     <div class="scroll">
 
       <div class="group">
+        <p class="gt">⛳️ プリセット（添付画像のハーフトーン）</p>
+        <div class="seg" id="presets" style="flex-wrap:wrap">
+          <button data-preset="stepgolf" style="flex:1 1 100%">STEPGOLF風 流線ハーフトーン</button>
+          <button data-preset="corner">コーナー流線</button>
+          <button data-preset="speed">スピードライン</button>
+          <button data-preset="glow">中央フェード</button>
+        </div>
+        <p style="font-size:11px;color:var(--sub);margin:8px 0 0;line-height:1.5">クリックで添付画像風の状態に一発セット → 「SVGを書き出す」でクリーンに出力。出したあとツマミで微調整もOK。</p>
+      </div>
+
+      <div class="group">
         <p class="gt">キャンバス</p>
         <div class="num">
           <div class="ctrl"><div class="lab"><span>幅 px</span></div><input type="number" id="cw" value="1280" min="200" max="4000" step="20"></div>
@@ -509,6 +520,38 @@ $('randomize').addEventListener('click',()=>{
     flow:Math.round(rnd(12,55)),fscale:+rnd(5,18).toFixed(1),angle:Math.round(rnd(0,360)),
     streak:+rnd(2,6.5).toFixed(1),fdens:+rnd(0.3,0.75).toFixed(2),seed:Math.round(rnd(1,999))});
 });
+
+/* ============ image-style presets (添付画像のハーフトーン) ============ */
+const PRESETS={
+  // 左上コーナーから対角に流れて消える、STEPGOLF背景の主役ハーフトーン
+  stepgolf:{params:{...DEFAULTS,cw:1280,ch:800,spacing:13,jitter:0.12,radius:1600,pradius:160,
+    softness:1.25,aspect:2.4,minr:0,maxr:8.5,contrast:1.55,flow:24,fscale:10,angle:28,streak:5.4,fdens:0.74,
+    seed:42,dotcol:'#1aa84f',bgcol:'#f4f6f4',transbg:false,fadeop:false,shape:'circle'},
+    points:[{x:-0.04,y:-0.07}]},
+  // 角に寄せたタイトな流線(装飾向け)
+  corner:{params:{...DEFAULTS,cw:1280,ch:800,spacing:12,jitter:0.1,radius:980,pradius:160,
+    softness:1.4,aspect:1.9,minr:0,maxr:7.2,contrast:1.7,flow:22,fscale:11,angle:34,streak:6.2,fdens:0.66,
+    seed:7,dotcol:'#1aa84f',bgcol:'#f4f6f4',transbg:false,fadeop:false,shape:'circle'},
+    points:[{x:-0.02,y:-0.02}]},
+  // ボールから右へ伸びるスピードライン(モーション)
+  speed:{params:{...DEFAULTS,cw:1280,ch:800,spacing:12,jitter:0.08,radius:1400,pradius:160,
+    softness:1.5,aspect:3,minr:0,maxr:8,contrast:1.6,flow:30,fscale:9,angle:6,streak:7.5,fdens:0.82,
+    seed:11,dotcol:'#1aa84f',bgcol:'#f4f6f4',transbg:false,fadeop:false,shape:'circle'},
+    points:[{x:0.12,y:0.5}]},
+  // 中央集中の球状フェード(ボールの光輪)
+  glow:{params:{...DEFAULTS,cw:1280,ch:800,spacing:13,jitter:0.16,radius:560,pradius:160,
+    softness:1.7,aspect:1,minr:0,maxr:7.5,contrast:1.5,flow:16,fscale:9,angle:0,streak:3,fdens:0.4,
+    seed:23,dotcol:'#1aa84f',bgcol:'#f4f6f4',transbg:false,fadeop:false,shape:'circle'},
+    points:[{x:0.5,y:0.5}]},
+};
+function applyPreset(p){
+  applyState(p.params);
+  points=(p.points||[]).map(o=>({...o}));
+  paths=(p.paths||[]).map(pt=>({anchors:pt.anchors.map(a=>({...a}))}));
+  curPath=null;sel=null;cursor=null;
+  setMode('move');render();
+}
+document.querySelectorAll('#presets [data-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(PRESETS[b.dataset.preset])));
 
 /* init */
 readParams();setMode('move');render();
