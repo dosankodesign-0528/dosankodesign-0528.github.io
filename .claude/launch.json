@@ -33,6 +33,12 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "3097"],
       "port": 3097,
       "cwd": "inzone-works"
+    },
+    {
+      "name": "halftone-gen",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/halftone-generator' && exec python3 -m http.server 8770"],
+      "port": 8770
     }
   ]
 }
