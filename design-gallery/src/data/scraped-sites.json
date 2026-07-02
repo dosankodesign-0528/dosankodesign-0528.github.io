@@ -1,5 +1,33 @@
 [
   {
+    "id": "40d7c3425032",
+    "title": "KUSUMUSUBI | 玖珠の米屋の至福の塩むすび",
+    "url": "https://kusumusubi.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/kusumusubi_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
+    "id": "89261cae3770",
+    "title": "K.INNOVATION inc. | 中華を、次のステージへ。",
+    "url": "https://k-innovation-inc.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/kinnovationinc_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
     "id": "0f6428394434",
     "title": "西開地 平 オフィシャルWEBサイト",
     "url": "https://lea-lea.site/",
@@ -20220,6 +20248,22 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
+    "id": "e62a9fe91f51",
+    "title": "株式会社ShareDan",
+    "url": "https://www.sharedan.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/06/image-29.webp",
+    "source": "muuuuu",
+    "category": [
+      "technology"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-05-22T04:04:49.765Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-06-02T06:47:36.387Z"
+  },
+  {
     "id": "d9a9f85bb212",
     "title": "株式会社22世紀アート",
     "url": "https://22art.jp/",
@@ -30247,6 +30291,48 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
+    "id": "ae728bbf33cc",
+    "title": "タニカのあまざけ",
+    "url": "https://tanica.jp/amazake/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260702_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "食品・飲料"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-06-16T04:35:34.382Z"
+  },
+  {
+    "id": "dc836412e009",
+    "title": "homunculus Inc. | 株式会社ホムンクルス",
+    "url": "https://homunculus.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260701_03-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "デザイン事務所・制作会社"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
+    "id": "17af38dfd797",
+    "title": "株式会社グッドツーガーデン",
+    "url": "https://www.good2garden.com/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260701_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "建築・住宅・不動産・オフィス"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
     "id": "72f314aa5a4f",
     "title": "金澤工務店",
     "url": "https://kanazawa-c.co.jp/",
@@ -30967,22 +31053,6 @@
     "firstSeen": "2026-05-22T04:04:49.765Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:47:37.256Z"
-  },
-  {
-    "id": "9f593584b32c",
-    "title": "株式会社ShareDan",
-    "url": "https://www.sharedan.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260521_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "デザイン事務所・制作会社"
-    ],
-    "taste": [],
-    "date": "2026-05",
-    "starred": false,
-    "firstSeen": "2026-05-22T04:04:49.765Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-06-02T06:47:36.387Z"
   },
   {
     "id": "f4f81619a867",
@@ -33920,52 +33990,18 @@
     "lastCheckedAt": "2026-06-02T06:48:42.087Z"
   },
   {
-    "id": "2150b78dfb7a",
-    "title": "株式会社PLANET JAPAN",
-    "url": "https://planetjapan.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251007_01-498x328.jpg",
+    "id": "2d42c1590a39",
+    "title": "MYZ",
+    "url": "https://myz-studio.com/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260701_01-495x328.jpg",
     "source": "webdesignclip",
     "category": [
-      "企業サイト・事務所・ビジネス"
+      "デザイン事務所・制作会社"
     ],
     "taste": [],
-    "date": "2025-10",
+    "date": "2026-07",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-06-02T06:48:42.394Z"
-  },
-  {
-    "id": "63bf4370fac9",
-    "title": "株式会社第一エージェンシー",
-    "url": "https://www.dia.ne.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251006_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-06-02T06:48:42.511Z"
-  },
-  {
-    "id": "9a04ab9cd4e8",
-    "title": "【オンワード】ICB 30th ANNIVERSARY",
-    "url": "https://crosset.onward.co.jp/feature/icb_30th/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251006_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "アパレル・ファッション"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-06-02T06:48:42.425Z"
+    "firstSeen": "2026-07-02T03:56:18.427Z"
   },
   {
     "id": "68ed3777645f",
@@ -39289,20 +39325,6 @@
     "source": "webdesignclip",
     "category": [
       "コーポレートサイト・事務所"
-    ],
-    "taste": [],
-    "date": "2024-01",
-    "starred": false,
-    "firstSeen": "2026-06-07T04:20:55.700Z"
-  },
-  {
-    "id": "a67b8669c812",
-    "title": "Reich Pharm",
-    "url": "https://reichpharm.com/",
-    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/20240116_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "病院・医療・薬品"
     ],
     "taste": [],
     "date": "2024-01",
@@ -45458,6 +45480,24 @@
     "lastCheckedAt": "2026-06-02T06:51:44.136Z"
   },
   {
+    "id": "2e3543bdb67f",
+    "title": "医療技術評価（HTA）教育プログラム",
+    "url": "https://hta-program.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/07/260702-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ブランド",
+      "サービスサイト",
+      "学校",
+      "教育機関"
+    ],
+    "taste": [],
+    "agency": "MEFILAS",
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
     "id": "70d6ce2802d9",
     "title": "春木レディースクリニック",
     "url": "https://haruki-cl.com/",
@@ -45488,6 +45528,7 @@
       "開発"
     ],
     "taste": [],
+    "agency": "ANDMADE",
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-06-13T04:08:32.368Z"
@@ -45521,6 +45562,7 @@
       "店舗"
     ],
     "taste": [],
+    "agency": "MEFILAS",
     "date": "2026-06",
     "starred": false,
     "firstSeen": "2026-06-29T04:20:41.410Z"
@@ -46089,6 +46131,25 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-06-02T06:51:48.053Z"
+  },
+  {
+    "id": "87e44c9c3f34",
+    "title": "株式会社PLANET JAPAN｜自然素材と漆喰・外壁仕上げ材",
+    "url": "https://planetjapan.co.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/02/260218-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "コーポレートサイト",
+      "暮らし",
+      "建築",
+      "不動産"
+    ],
+    "taste": [],
+    "date": "2026-02",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-06-02T06:48:42.394Z"
   },
   {
     "id": "3fb98f717759",
@@ -49232,259 +49293,6 @@
     "firstSeen": "2026-06-20T04:06:33.578Z"
   },
   {
-    "id": "ac22e5769ada",
-    "title": "株式会社ProVison",
-    "url": "https://www.pro-vision.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240408pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "711967e990ad",
-    "title": "長谷川仁 HASEGAWA,Jin",
-    "url": "https://hasegawajin.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/240403-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ポートフォリオサイト",
-      "アート",
-      "デザイン"
-    ],
-    "taste": [],
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "37bc9b760aa3",
-    "title": "【公式】THE LIONS 大京の新築・分譲マンション住まいサイト",
-    "url": "https://lions-mansion.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/04/lions_pc-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "暮らし",
-      "建築",
-      "不動産"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-04",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "4fc18d4add28",
-    "title": "AMUSE RECRUIT 2025｜株式会社 アミューズ 採用サイト｜AMUSE INC. RECRUITMENT",
-    "url": "https://recruit.amuse.co.jp/recruit2025/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/03/240319-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "採用サイト",
-      "TV",
-      "映画",
-      "芸能"
-    ],
-    "taste": [],
-    "agency": "MEFILAS",
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "7d0a6c65120f",
-    "title": "Pizza 4P&#8217;s Japan | Earth to People &#8211; Oneness &#8211;",
-    "url": "https://pizza4ps.com/jp/?lang=japanese",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/03/240314-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "飲料",
-      "食品"
-    ],
-    "taste": [],
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "da600dfd6612",
-    "title": "JIDAI : 面白い商品・マーケティング、そして時代をつくる企業。",
-    "url": "https://jidaiinc.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240301-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-03",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "4fe05d464595",
-    "title": "国際共創学部｜大阪経済大学",
-    "url": "https://www.osaka-ue.ac.jp/newfaculty/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240226-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "学校",
-      "教育機関"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "a2e40be71565",
-    "title": "株式会社Haul &#8211; Haul, inc. | 採用ブランディング | 採用マーケティング",
-    "url": "https://haulinc.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240226-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "人材"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "318cdea15aea",
-    "title": "井口 皓太 / Kota Iguchi – Motion Design –",
-    "url": "https://kotaiguchi.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240221-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ポートフォリオサイト",
-      "企画",
-      "制作",
-      "開発"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "0cb474bb08d3",
-    "title": "CAREERING | キャリアリング公式オンラインストア",
-    "url": "https://careering.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240219-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ECサイト",
-      "ファッション"
-    ],
-    "taste": [],
-    "agency": "SIMONE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "48d2fb3809c4",
-    "title": "代官山青果店",
-    "url": "https://daikanyamaseikaten.com/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240216-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ECサイト",
-      "飲料",
-      "食品"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "c038536ce868",
-    "title": "ドライバーの仕事探しなら『GOジョブ』| GOジョブ",
-    "url": "https://gojob.go.goinc.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240214-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "ブランド",
-      "サービスサイト",
-      "旅行",
-      "宿泊施設",
-      "交通機関",
-      "travel"
-    ],
-    "taste": [],
-    "agency": "necco",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "e0b47b40237a",
-    "title": "新有馬開発株式会社・株式会社ニューアリマ",
-    "url": "https://newarima.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240213-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "スポーツ"
-    ],
-    "taste": [],
-    "agency": "TRACE",
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "5f2a90f778a4",
-    "title": "TOTETOT RECORDS &#8211; A fictional music label",
-    "url": "https://totetot.tote.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/02/240206-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "音楽"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
-    "id": "35b401ce2c7e",
-    "title": "山崎実業 ｜ 100年を超える歴史あるインテリア雑貨の専門メーカー",
-    "url": "https://www.yamajitsu.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/01/240119-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "インテリア",
-      "雑貨"
-    ],
-    "taste": [],
-    "agency": "DRIPPERS",
-    "date": "2024-01",
-    "starred": false,
-    "firstSeen": "2026-06-20T04:06:33.578Z"
-  },
-  {
     "id": "305aca542f2c",
     "title": "Clico: AI Wherever You Type",
     "url": "https://tryclico.com/",
@@ -49607,18 +49415,18 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a1773c67d1ac035743761.jpg",
     "source": "awwwards",
     "category": [
-      "Design Agencies",
-      "Technology",
-      "Icons",
-      "Navigation Menu",
-      "Portfolio",
       "Illustration",
       "Data Visualization",
       "Interaction Design",
+      "Design Agencies",
       "Startups",
+      "Technology",
       "Figma",
+      "Icons",
       "Next.js",
-      "Framer"
+      "Navigation Menu",
+      "Framer",
+      "Portfolio"
     ],
     "taste": [],
     "date": "2026-06",
@@ -49679,18 +49487,18 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a038c218463e853601797.png",
     "source": "awwwards",
     "category": [
+      "Art & Illustration",
+      "Design Agencies",
+      "Other",
+      "Clean",
+      "Colorful",
       "Flat Design",
       "Minimal",
       "Scrolling",
-      "Art & Illustration",
       "SVG",
-      "Design Agencies",
       "Illustration",
-      "Other",
       "Figma",
-      "Clean",
-      "Framer",
-      "Colorful"
+      "Framer"
     ],
     "taste": [],
     "date": "2026-05",
@@ -52566,6 +52374,78 @@
     "firstSeen": "2026-06-09T15:08:23.132Z"
   },
   {
+    "id": "351104bd847f",
+    "title": "白箱",
+    "url": "https://sirobako.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/alj30mp6h1qv-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "アート･芸術"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "タイポグラフィー･文字",
+      "イラスト",
+      "ロゴデザイン",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
+    "id": "b4f36abaee3a",
+    "title": "東宝ハウス大田東京",
+    "url": "https://www.toho-tokyo.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/miuwhvkfps38-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoCコーポレートサイト",
+      "建築･建設･不動産･家"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
+    "id": "def6823e12e0",
+    "title": "日立ICTビジネスサービス｜採用サイト",
+    "url": "https://www.hitachi-bs.co.jp/newgraduate/index.html",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7j68glbuy0ah-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
+    "id": "dc5095966e0a",
+    "title": "DELFONICS｜公式サイト",
+    "url": "https://www.delfonics.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/c5qb6tmaer8x-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "インテリア･家具･雑貨"
+    ],
+    "taste": [
+      "グリッドデザイン"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
     "id": "c06578d1ab80",
     "title": "RGF Professional Recruitment",
     "url": "https://www.rgf-professional.jp/",
@@ -53147,6 +53027,24 @@
     "firstSeen": "2026-06-20T04:06:33.578Z"
   },
   {
+    "id": "994369479e72",
+    "title": "山崎実業｜100年を超える歴史あるインテリア雑貨の専門メーカー",
+    "url": "https://www.yamajitsu.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/c4xydin970j8-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "ECサイト",
+      "インテリア･家具･雑貨",
+      "生活用品･物販"
+    ],
+    "taste": [
+      "グリッドデザイン"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-06-20T04:06:33.578Z"
+  },
+  {
     "id": "93425b625030",
     "title": "株式会社J-POWER設計コンサルタント",
     "url": "https://www.jpde.co.jp/",
@@ -53203,25 +53101,6 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-06-17T04:30:59.443Z"
-  },
-  {
-    "id": "2244ddeb5d59",
-    "title": "タニカのあまざけ",
-    "url": "https://tanica.jp/amazake/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7hu8ac5bvsqg-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "ランディングページ",
-      "飲料･食品･メーカー"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "パララックス",
-      "モチーフ 円•曲線"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-06-16T04:35:34.382Z"
   },
   {
     "id": "c8cd6af6c696",
@@ -53787,6 +53666,22 @@
     "firstSeen": "2026-06-06T15:26:28.565Z"
   },
   {
+    "id": "d18d988ee1d6",
+    "title": "センチュリーメディカル株式会社",
+    "url": "https://www.cmi.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/nyt6l3spe2az-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "その他",
+      "学校･教育･医療･福祉"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
+  },
+  {
     "id": "0b1f4b003546",
     "title": "株式会社ワタリ青果",
     "url": "https://www.watari-seika.jp/",
@@ -54008,6 +53903,26 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-06-06T15:26:28.565Z"
+  },
+  {
+    "id": "d6a66e0bc0ba",
+    "title": "株式会社konowa｜広報PRコンサルティング",
+    "url": "https://www.konowa.info/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kf5gw2dzp7hj-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "その他"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "パララックス",
+      "モチーフ 円•曲線",
+      "ロゴデザイン"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-02T03:56:18.427Z"
   },
   {
     "id": "f9f71c78b113",
@@ -56783,55 +56698,6 @@
     "taste": [
       "スクロールエフェクト"
     ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "304aba258343",
-    "title": "写真の女",
-    "url": "https://womanofthephoto.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/uog43el7vyz2-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "ランディングページ",
-      "テレビ･映画･アニメ"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "タイポグラフィー･文字",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "1147ff2d15e4",
-    "title": "北海道の魅力をつたえる 飲食店を運営「ふく亭」",
-    "url": "https://www.fukutei.net/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zhuwv1k3a68d-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "BtoCコーポレートサイト",
-      "商業施設･飲食店･カフェ･レストラン"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z"
-  },
-  {
-    "id": "6e6b174b9ae4",
-    "title": "アパマンショップ網走店",
-    "url": "https://takken-abashiri.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/f3ebwxngad6u-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "BtoCコーポレートサイト",
-      "建築･建設･不動産･家"
-    ],
-    "taste": [],
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-06-06T15:26:28.565Z"
