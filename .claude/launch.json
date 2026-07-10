@@ -35,6 +35,12 @@
       "cwd": "inzone-works"
     },
     {
+      "name": "glass-gen",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/glass-generator' && exec python3 -m http.server 8771"],
+      "port": 8771
+    },
+    {
       "name": "halftone-gen",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/halftone-generator' && exec python3 -m http.server 8770"],
