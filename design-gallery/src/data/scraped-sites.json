@@ -21790,6 +21790,20 @@
     "lastCheckedAt": "2026-07-02T06:01:47.680Z"
   },
   {
+    "id": "e7956b92f2c3",
+    "title": "やまうちの鶏",
+    "url": "https://yamauchinotori.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/07/08.webp",
+    "source": "muuuuu",
+    "category": [
+      "food"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-11T03:03:38.661Z"
+  },
+  {
     "id": "009d2b6a0470",
     "title": "Rollbahn 25th Anniversary",
     "url": "https://rollbahn.jp/25th/",
@@ -32513,6 +32527,20 @@
     "lastCheckedAt": "2026-07-02T06:03:45.203Z"
   },
   {
+    "id": "9ea75fd5a063",
+    "title": "ホシザキ株式会社",
+    "url": "https://www.hoshizaki.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260710_02-493x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-11T03:03:38.661Z"
+  },
+  {
     "id": "cef99d59cdb7",
     "title": "かがり吉祥亭",
     "url": "https://kagari-kisshotei.com/",
@@ -36418,20 +36446,18 @@
     "lastCheckedAt": "2026-07-02T06:04:57.724Z"
   },
   {
-    "id": "5b06c4023649",
-    "title": "「NP後払い」 法人向けサイト",
-    "url": "https://www.netprotections.com/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251016_01-498x328.jpg",
+    "id": "d939d271ab95",
+    "title": "Cobloc",
+    "url": "https://www.cobloc.archi/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260710_01-498x328.jpg",
     "source": "webdesignclip",
     "category": [
-      "アプリ・ソフトウェア"
+      "建築・住宅・不動産"
     ],
     "taste": [],
-    "date": "2025-10",
+    "date": "2026-07",
     "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:04:56.485Z"
+    "firstSeen": "2026-07-11T03:03:38.661Z"
   },
   {
     "id": "e19d18c72988",
@@ -42031,20 +42057,18 @@
     "lastCheckedAt": "2026-07-02T06:06:00.241Z"
   },
   {
-    "id": "c7a48b0bed5a",
-    "title": "PaixDsgn",
-    "url": "https://www.paix-design.com/",
-    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/20240123_01-498x328.jpg",
+    "id": "bf47aec2ecc6",
+    "title": "オルファカッター 親子で楽しむ無料工作サイト ツクルト",
+    "url": "https://tsukuruto.olfa.co.jp/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260710_01-500x817.jpg",
     "source": "webdesignclip",
     "category": [
-      "ポートフォリオ"
+      "インテリア・生活用品・雑貨"
     ],
     "taste": [],
-    "date": "2024-01",
+    "date": "2026-07",
     "starred": false,
-    "firstSeen": "2026-06-07T04:20:55.700Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:06:04.121Z"
+    "firstSeen": "2026-07-11T03:03:38.661Z"
   },
   {
     "id": "d8eeccd3bfd9",
@@ -42641,6 +42665,20 @@
     "firstSeen": "2026-05-16T03:36:25.969Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:06:07.271Z"
+  },
+  {
+    "id": "070cf2c00298",
+    "title": "ほろよい ｜ サントリー",
+    "url": "https://www.suntory.co.jp/rtd/horoyoi/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260514_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "食品・飲料・飲食"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-07-11T03:03:38.661Z"
   },
   {
     "id": "b09b82be412b",
@@ -45269,22 +45307,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:06:45.077Z"
-  },
-  {
-    "id": "1fc29d03cd83",
-    "title": "雪見だいふく | お口の恋人 ロッテ",
-    "url": "https://www.lotte.co.jp/products/brand/yukimi/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250805_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料・飲食"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:06:42.374Z"
   },
   {
     "id": "8719a750f6fe",
@@ -55267,6 +55289,28 @@
     "lastCheckedAt": "2026-07-02T06:09:08.136Z"
   },
   {
+    "id": "9616512df8a5",
+    "title": "21 Hrs On The Moon",
+    "url": "https://www.21hrs.space/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0d7b8f419a3938435907.png",
+    "source": "awwwards",
+    "category": [
+      "Culture & Education",
+      "Photographic",
+      "WebGL",
+      "Photography",
+      "Experimental",
+      "Sound-Audio",
+      "Storytelling",
+      "3D",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-11T03:03:38.661Z"
+  },
+  {
     "id": "daa6ee13a531",
     "title": "Julien Calot",
     "url": "https://www.juliencalot.com",
@@ -55310,30 +55354,6 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-07-08T03:14:19.550Z"
-  },
-  {
-    "id": "b3f48e89045b",
-    "title": "Hildén & Kaira",
-    "url": "https://www.hildenkaira.fi/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0b54c6e937b265061297.jpg",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Film & TV",
-      "Social Integration",
-      "GSAP",
-      "UI design",
-      "Header Design",
-      "Microinteractions",
-      "Footer Design",
-      "Contentful",
-      "Webflow",
-      "Social responsibility"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-06T03:56:40.617Z"
   },
   {
     "id": "d5e19497a4bd",
