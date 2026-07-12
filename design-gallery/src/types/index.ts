@@ -37,8 +37,7 @@ export type Category =
   | "technology"
   | "real-estate"
   | "entertainment"
-  | "finance"
-  | "travel";
+  | "finance";
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   corporate: "コーポレート",
@@ -56,7 +55,6 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   "real-estate": "不動産",
   entertainment: "エンターテイメント",
   finance: "金融",
-  travel: "旅行・観光",
 };
 
 /** デザインテイスト */

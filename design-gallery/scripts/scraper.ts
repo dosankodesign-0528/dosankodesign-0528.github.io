@@ -12,7 +12,6 @@ import * as crypto from "crypto";
 import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
 import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
 import { scrapeS5Style } from "./scrape-s5style";
-import { tagTourism } from "./tourism";
 import { normalizeUrl } from "../src/lib/eagle";
 
 // ============================================================
@@ -100,8 +99,7 @@ type SankouSite = ScrapedSite & { sankouPostId?: number };
 // SANKOU! の構造:
 //   article > ul > li > figure > a[target=_blank][href=実サイトURL] > img[alt=タイトル]
 //   + p[class^="list_time"] に "YYYY/MM/DD"、[data-postid] に WP post ID
-// defaultCategory: enrichment 失敗時に残る初期カテゴリ。観光カテゴリ巡回では
-//   その棚名（"ホテル･旅館･温泉" 等）を入れておくと、後段の観光タグ付けが取りこぼさない。
+// defaultCategory: enrichment 失敗時に残る初期カテゴリ。
 function parseSankouCards(
   $: cheerio.CheerioAPI,
   results: SankouSite[],
@@ -148,14 +146,6 @@ function parseSankouCards(
   return added;
 }
 
-// 観光フィルタ用に深掘りする SANKOU! のカテゴリ（slug → 棚名）。
-// /category/<slug>/page/N/ がトップと同じカード構造で外部URL付き。
-const SANKOU_TOURISM_CATEGORIES: { slug: string; label: string }[] = [
-  { slug: "travel-sightseeing-region", label: "旅行･観光･遊び" },
-  { slug: "hotel", label: "ホテル･旅館･温泉" },
-];
-const SANKOU_TOURISM_PAGES = parseInt(process.env.SANKOU_TOURISM_PAGES || "2", 10);
-
 async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
   console.log("\n📝 SANKOU! からスクレイピング開始...");
   const results: SankouSite[] = [];
@@ -174,25 +164,7 @@ async function scrapeSankou(pages: number = 3): Promise<ScrapedSite[]> {
     await sleep(1500);
   }
 
-  // 2) 観光カテゴリを深掘り（「絞り込みで観光」の母数を確保）
-  for (const cat of SANKOU_TOURISM_CATEGORIES) {
-    for (let page = 1; page <= SANKOU_TOURISM_PAGES; page++) {
-      const url = `https://sankoudesign.com/category/${cat.slug}/${page > 1 ? `page/${page}/` : ""}`;
-      try {
-        const html = await fetchPage(url);
-        const $ = cheerio.load(html);
-        const added = parseSankouCards($, results, [cat.label]);
-        console.log(`  観光カテゴリ ${cat.slug} page${page}: +${added} 件`);
-        if (added === 0) break; // ページ切れ
-      } catch (e) {
-        console.error(`  観光カテゴリ ${cat.slug} page${page} エラー:`, (e as Error).message);
-        break;
-      }
-      await sleep(1500);
-    }
-  }
-
-  // id（=URLベース）で重複排除（トップと観光カテゴリで被る分を1つに）
+  // id（=URLベース）で重複排除
   const byId = new Map<string, SankouSite>();
   for (const r of results) if (!byId.has(r.id)) byId.set(r.id, r);
   const deduped = Array.from(byId.values());
@@ -997,12 +969,6 @@ async function main() {
       );
     }
   }
-
-  // 観光タグ付け（全メディア横断）。観光系サイトの category に "travel" を足し、
-  // サイドバーの「旅行・観光」フィルタで絞り込めるようにする。毎回かけ直すので永続。
-  const taggedTourism = tagTourism(finalSites);
-  const tourismTotal = finalSites.filter((s) => (s.category || []).includes("travel")).length;
-  console.log(`  🧭 観光タグ付け: +${taggedTourism} 件（観光合計 ${tourismTotal} 件）`);
 
   // JSON保存
   fs.writeFileSync(outputPath, JSON.stringify(finalSites, null, 2), "utf-8");
