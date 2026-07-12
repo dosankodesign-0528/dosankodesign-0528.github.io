@@ -41,6 +41,12 @@
       "port": 8771
     },
     {
+      "name": "liquid-gen",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/liquid-gradient-generator' && exec python3 -m http.server 8772"],
+      "port": 8772
+    },
+    {
       "name": "halftone-gen",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/halftone-generator' && exec python3 -m http.server 8770"],

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Gradient Generator — Framerコンポーネント書き出し対応</title>
+<style>
+  :root {
+    --bg: #101116;
+    --panel: #191b22;
+    --panel2: #20232d;
+    --line: #2b2f3b;
+    --text: #e8eaf0;
+    --sub: #8a90a0;
+    --accent: #6d8bff;
+    --accent2: #f78ec2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 15px; font-weight: 700; letter-spacing: .02em; }
+  header h1 span { color: var(--sub); font-weight: 400; font-size: 12px; margin-left: 8px; }
+  .spacer { flex: 1; }
+  button {
+    font-family: inherit;
+    border: 1px solid var(--line);
+    background: var(--panel2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: filter .15s, transform .05s;
+  }
+  button:hover { filter: brightness(1.2); }
+  button:active { transform: scale(.97); }
+  button.primary {
+    background: linear-gradient(135deg, #5f7cff, #9a5fff);
+    border-color: transparent;
+    font-weight: 700;
+  }
+  main { flex: 1; display: flex; min-height: 0; }
+  #stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    min-width: 0;
+    background:
+      radial-gradient(1200px 600px at 70% -10%, #1a1d28 0%, transparent 60%),
+      var(--bg);
+  }
+  #cv {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    display: block;
+  }
+  aside {
+    width: 320px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--line);
+    background: var(--panel);
+    overflow-y: auto;
+    padding: 16px 16px 40px;
+  }
+  .sec { margin-bottom: 20px; }
+  .sec h2 {
+    font-size: 11px;
+    color: var(--sub);
+    font-weight: 700;
+    letter-spacing: .12em;
+    margin-bottom: 10px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { padding: 6px 10px; font-size: 11.5px; border-radius: 999px; }
+  .chips button.on { border-color: var(--accent); color: #b9c6ff; }
+  .gacha {
+    width: 100%;
+    padding: 11px;
+    font-size: 13px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff8ec7, #ffb46b);
+    color: #2a1020;
+    border: none;
+  }
+  .colors { display: flex; gap: 8px; }
+  .colwrap { flex: 1; text-align: center; }
+  .colwrap input[type=color] {
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .colwrap label { font-size: 10px; color: var(--sub); display: block; margin-top: 4px; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .row label { font-size: 12px; width: 86px; flex-shrink: 0; }
+  .row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .row .val { font-size: 11px; color: var(--sub); width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+  .row select, .row input[type=number] {
+    flex: 1;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: inherit;
+  }
+  .row input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+  .btnrow { display: flex; gap: 8px; margin-bottom: 8px; }
+  .btnrow button { flex: 1; }
+  .note {
+    font-size: 11px;
+    color: var(--sub);
+    line-height: 1.7;
+    background: var(--panel2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .note b { color: var(--text); }
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(80px);
+    background: #e8eaf0;
+    color: #14151a;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 20px;
+    border-radius: 999px;
+    transition: transform .25s ease;
+    z-index: 50;
+    box-shadow: 0 12px 40px rgba(0,0,0,.4);
+    max-width: 90vw;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Liquid Gradient Generator<span>流れるグラデーション → Framerコンポーネント書き出し</span></h1>
+  <div class="spacer"></div>
+  <button id="btnPng">PNG保存</button>
+  <button id="btnTsx">.tsxダウンロード</button>
+  <button id="btnCopy" class="primary">Framerコードをコピー</button>
+</header>
+<main>
+  <div id="stage"><canvas id="cv"></canvas></div>
+  <aside>
+    <div class="sec">
+      <h2>プリセット</h2>
+      <div class="chips" id="presets"></div>
+    </div>
+    <div class="sec">
+      <button class="gacha" id="btnGacha">🎲 ガチャ（ランダム生成）</button>
+    </div>
+    <div class="sec">
+      <h2>カラー（流れの順番）</h2>
+      <div class="colors" id="colors"></div>
+    </div>
+    <div class="sec">
+      <h2>かたち</h2>
+      <div id="shapeSliders"></div>
+    </div>
+    <div class="sec">
+      <h2>うごき</h2>
+      <div id="motionSliders"></div>
+      <div class="row">
+        <label>一時停止</label>
+        <input type="checkbox" id="chkPause">
+      </div>
+    </div>
+    <div class="sec">
+      <h2>質感</h2>
+      <div id="texSliders"></div>
+    </div>
+    <div class="sec">
+      <h2>シード（模様の種）</h2>
+      <div class="row">
+        <input type="number" id="numSeed" min="0" max="999" step="1">
+        <button id="btnSeed">↻ 変える</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>画面比率・書き出しサイズ</h2>
+      <div class="row">
+        <label>比率</label>
+        <select id="selAspect">
+          <option value="16:9" selected>16:9（横長）</option>
+          <option value="3:2">3:2</option>
+          <option value="4:3">4:3</option>
+          <option value="1:1">1:1（正方形）</option>
+          <option value="3:4">3:4（縦）</option>
+          <option value="9:16">9:16（スマホ縦）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>PNG幅</label>
+        <select id="selSize">
+          <option value="1600">1600px</option>
+          <option value="1920" selected>1920px</option>
+          <option value="2560">2560px</option>
+          <option value="3840">3840px（4K）</option>
+        </select>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>Framerでの使い方</h2>
+      <div class="note">
+        <b>1.</b> 上の「Framerコードをコピー」を押す<br>
+        <b>2.</b> Framer左パネルの <b>Assets → Code → ＋（Code Component）</b> で新規作成<br>
+        <b>3.</b> 開いたエディタの中身を<b>全部消して貼り付け</b> → 保存<br>
+        <b>4.</b> キャンバスにドラッグして好きなサイズに配置<br>
+        <b>5.</b> 右パネルで色・速さ・角度をあとから調整OK🙆
+      </div>
+    </div>
+  </aside>
+</main>
+<div id="toast"></div>
+
+<script>
+// ======================== シェーダー（プレビューと書き出しで共通） ========================
+const VERT = `
+attribute vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+`;
+
+const FRAG = `
+precision highp float;
+uniform vec2 uRes;
+uniform float uTime;
+uniform vec3 uC0;
+uniform vec3 uC1;
+uniform vec3 uC2;
+uniform vec3 uC3;
+uniform vec3 uC4;
+uniform float uScale;
+uniform float uWarp;
+uniform float uSpeed;
+uniform float uAngle;
+uniform float uStretch;
+uniform float uSoft;
+uniform float uSheen;
+uniform float uGrain;
+uniform float uSeed;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  mat2 r = mat2(0.8, -0.6, 0.6, 0.8);
+  for (int i = 0; i < 4; i++) {
+    v += a * noise(p);
+    p = r * p * 2.0 + 11.5;
+    a *= 0.5;
+  }
+  return v;
+}
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
+  float ca = cos(uAngle);
+  float sa = sin(uAngle);
+  vec2 p = mat2(ca, -sa, sa, ca) * uv;
+  float t = uTime * uSpeed;
+
+  vec2 pp = vec2(p.x, p.y * uStretch) * uScale * 1.2 + uSeed * 7.31;
+  vec2 q = vec2(
+    fbm(pp + vec2(0.0, t * 0.30)),
+    fbm(pp + vec2(5.2, 1.3) + vec2(t * 0.24, 0.0))
+  );
+  float w2 = fbm(pp * 1.8 + q * 1.6 - vec2(t * 0.12, t * 0.09));
+
+  float f = p.y * 1.1 + 0.5;
+  f += (q.x - 0.5) * uWarp * 1.1;
+  f += (w2 - 0.5) * uWarp * 0.45;
+  f = clamp(f, 0.0, 1.0);
+
+  vec3 col = uC0;
+  col = mix(col, uC1, smoothstep(0.18 - uSoft, 0.18 + uSoft, f));
+  col = mix(col, uC2, smoothstep(0.42 - uSoft, 0.42 + uSoft, f));
+  col = mix(col, uC3, smoothstep(0.62 - uSoft, 0.62 + uSoft, f));
+  col = mix(col, uC4, smoothstep(0.82 - uSoft, 0.82 + uSoft, f));
+  col = mix(col, uC0, smoothstep(0.96 - uSoft * 0.6, 0.96 + uSoft * 0.6, f));
+
+  float sheen = exp(-pow((f - 0.30) / 0.045, 2.0))
+              + 0.6 * exp(-pow((f - 0.52) / 0.035, 2.0));
+  col += uSheen * sheen * 0.4;
+
+  col += (hash(gl_FragCoord.xy * 0.7 + uSeed) - 0.5) * uGrain;
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+// ======================== 状態 ========================
+const state = {
+  colors: ["#EDF1F7", "#9FE0F7", "#4A7BF0", "#1D2B96", "#F78EC2"],
+  angle: -30, scale: 1.0, stretch: 2.4, warp: 1.0,
+  speed: 0.35, soft: 0.14, sheen: 0.6, grain: 0.05,
+  seed: 42, paused: false,
+};
+
+const PRESETS = [
+  { name: "スカイ&ピンク", colors: ["#EDF1F7", "#9FE0F7", "#4A7BF0", "#1D2B96", "#F78EC2"], angle: -30, scale: 1.0, stretch: 2.4, warp: 1.0, speed: 0.35, soft: 0.14, sheen: 0.6, grain: 0.05, seed: 42 },
+  { name: "ピーチホワイト", colors: ["#F6F0F3", "#F2CBDE", "#E59FC6", "#DA79AE", "#FBF3F7"], angle: -20, scale: 0.8, stretch: 1.6, warp: 0.7, speed: 0.22, soft: 0.3, sheen: 0.12, grain: 0.12, seed: 7 },
+  { name: "サンセット", colors: ["#FFF4E8", "#FFD9A0", "#FF9E6B", "#E85A71", "#7B3B8C"], angle: 15, scale: 0.9, stretch: 2.0, warp: 1.1, speed: 0.3, soft: 0.18, sheen: 0.45, grain: 0.06, seed: 128 },
+  { name: "エメラルド", colors: ["#EDF7F2", "#A9E8CF", "#3FBF9C", "#106B57", "#F2E866"], angle: -45, scale: 1.1, stretch: 2.2, warp: 0.9, speed: 0.35, soft: 0.15, sheen: 0.5, grain: 0.05, seed: 301 },
+  { name: "ミッドナイト", colors: ["#0A1030", "#1D2E6E", "#3D5FD9", "#7FB4F5", "#E86BD0"], angle: -35, scale: 1.0, stretch: 2.6, warp: 1.2, speed: 0.4, soft: 0.12, sheen: 0.7, grain: 0.07, seed: 555 },
+  { name: "モノトーン", colors: ["#F4F4F6", "#D6D8DE", "#9AA0AE", "#3A3F4C", "#FFFFFF"], angle: -25, scale: 1.0, stretch: 2.2, warp: 1.0, speed: 0.3, soft: 0.16, sheen: 0.35, grain: 0.09, seed: 88 },
+];
+
+// ======================== WebGL レンダラー ========================
+function createRenderer(canvas, opts) {
+  const gl = canvas.getContext("webgl", Object.assign({ antialias: true }, opts || {}));
+  if (!gl) return null;
+  function sh(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(s));
+    }
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, "aPos");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = {};
+  ["uRes","uTime","uC0","uC1","uC2","uC3","uC4","uScale","uWarp","uSpeed","uAngle","uStretch","uSoft","uSheen","uGrain","uSeed"]
+    .forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  function hex2rgb(hex) {
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map(c => c + c).join("");
+    const n = parseInt(h.slice(0, 6), 16);
+    return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  }
+  return {
+    draw(s, time, w, h) {
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      gl.viewport(0, 0, w, h);
+      gl.uniform2f(U.uRes, w, h);
+      gl.uniform1f(U.uTime, time);
+      gl.uniform3fv(U.uC0, hex2rgb(s.colors[0]));
+      gl.uniform3fv(U.uC1, hex2rgb(s.colors[1]));
+      gl.uniform3fv(U.uC2, hex2rgb(s.colors[2]));
+      gl.uniform3fv(U.uC3, hex2rgb(s.colors[3]));
+      gl.uniform3fv(U.uC4, hex2rgb(s.colors[4]));
+      gl.uniform1f(U.uScale, s.scale);
+      gl.uniform1f(U.uWarp, s.warp);
+      gl.uniform1f(U.uSpeed, s.speed);
+      gl.uniform1f(U.uAngle, s.angle * Math.PI / 180);
+      gl.uniform1f(U.uStretch, s.stretch);
+      gl.uniform1f(U.uSoft, s.soft);
+      gl.uniform1f(U.uSheen, s.sheen);
+      gl.uniform1f(U.uGrain, s.grain);
+      gl.uniform1f(U.uSeed, s.seed);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+  };
+}
+
+// ======================== プレビュー ========================
+const cv = document.getElementById("cv");
+const stage = document.getElementById("stage");
+const renderer = createRenderer(cv);
+let pausedTime = 0;
+let pauseOffset = 0;
+let lastPauseStart = 0;
+
+function aspectWH() {
+  const [aw, ah] = document.getElementById("selAspect").value.split(":").map(Number);
+  return aw / ah;
+}
+function fitCanvas() {
+  const pad = 48;
+  const availW = stage.clientWidth - pad;
+  const availH = stage.clientHeight - pad;
+  const ar = aspectWH();
+  let w = availW, h = w / ar;
+  if (h > availH) { h = availH; w = h * ar; }
+  cv.style.width = w + "px";
+  cv.style.height = h + "px";
+}
+function now() { return performance.now() / 1000 - pauseOffset; }
+function frame() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
+  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+  const t = state.paused ? pausedTime : now();
+  renderer.draw(state, t, w, h);
+  requestAnimationFrame(frame);
+}
+window.addEventListener("resize", fitCanvas);
+
+// ======================== UI 構築 ========================
+const COLOR_LABELS = ["1 ベース", "2", "3", "4", "5 アクセント"];
+const colorsEl = document.getElementById("colors");
+state.colors.forEach((c, i) => {
+  const w = document.createElement("div");
+  w.className = "colwrap";
+  w.innerHTML = `<input type="color" value="${c}" data-i="${i}"><label>${COLOR_LABELS[i]}</label>`;
+  colorsEl.appendChild(w);
+});
+colorsEl.addEventListener("input", e => {
+  if (e.target.type === "color") state.colors[+e.target.dataset.i] = e.target.value;
+});
+
+const SLIDERS = {
+  shapeSliders: [
+    { key: "angle", label: "角度", min: -180, max: 180, step: 1 },
+    { key: "scale", label: "スケール", min: 0.4, max: 3, step: 0.05 },
+    { key: "stretch", label: "リボン感", min: 1, max: 4, step: 0.1 },
+    { key: "warp", label: "うねり", min: 0, max: 2, step: 0.05 },
+  ],
+  motionSliders: [
+    { key: "speed", label: "流れの速さ", min: 0, max: 1.5, step: 0.05 },
+  ],
+  texSliders: [
+    { key: "soft", label: "なめらかさ", min: 0.02, max: 0.4, step: 0.01 },
+    { key: "sheen", label: "光の筋", min: 0, max: 1, step: 0.05 },
+    { key: "grain", label: "粒子", min: 0, max: 0.3, step: 0.01 },
+  ],
+};
+const sliderEls = {};
+Object.entries(SLIDERS).forEach(([secId, defs]) => {
+  const sec = document.getElementById(secId);
+  defs.forEach(d => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `<label>${d.label}</label>
+      <input type="range" min="${d.min}" max="${d.max}" step="${d.step}" value="${state[d.key]}" data-key="${d.key}">
+      <span class="val">${state[d.key]}</span>`;
+    sec.appendChild(row);
+    const input = row.querySelector("input");
+    const val = row.querySelector(".val");
+    sliderEls[d.key] = { input, val };
+    input.addEventListener("input", () => {
+      state[d.key] = parseFloat(input.value);
+      val.textContent = input.value;
+    });
+  });
+});
+
+function syncUI() {
+  document.querySelectorAll('#colors input[type=color]').forEach((el, i) => el.value = state.colors[i]);
+  Object.entries(sliderEls).forEach(([k, { input, val }]) => {
+    input.value = state[k];
+    val.textContent = state[k];
+  });
+  document.getElementById("numSeed").value = state.seed;
+  document.getElementById("chkPause").checked = state.paused;
+}
+
+// プリセット
+const presetsEl = document.getElementById("presets");
+PRESETS.forEach((p, i) => {
+  const b = document.createElement("button");
+  b.textContent = p.name;
+  b.addEventListener("click", () => {
+    Object.assign(state, JSON.parse(JSON.stringify(p)));
+    delete state.name;
+    syncUI();
+    presetsEl.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+  });
+  if (i === 0) b.classList.add("on");
+  presetsEl.appendChild(b);
+});
+
+// ガチャ
+function hsl2hex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const to = x => Math.round(x * 255).toString(16).padStart(2, "0");
+  return "#" + to(f(0)) + to(f(8)) + to(f(4));
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+document.getElementById("btnGacha").addEventListener("click", () => {
+  const h0 = rnd(0, 360);
+  const acc = (h0 + rnd(120, 220)) % 360;
+  const dark = Math.random() < 0.25;
+  if (dark) {
+    state.colors = [
+      hsl2hex(h0, rnd(35, 60), rnd(8, 16)),
+      hsl2hex(h0 + rnd(-15, 15), rnd(50, 70), rnd(25, 40)),
+      hsl2hex(h0 + rnd(-10, 20), rnd(60, 85), rnd(45, 60)),
+      hsl2hex(h0 + rnd(0, 30), rnd(60, 90), rnd(65, 80)),
+      hsl2hex(acc, rnd(65, 90), rnd(60, 75)),
+    ];
+  } else {
+    state.colors = [
+      hsl2hex(h0, rnd(15, 40), rnd(92, 97)),
+      hsl2hex(h0 + rnd(-20, 20), rnd(55, 80), rnd(72, 84)),
+      hsl2hex(h0 + rnd(-10, 15), rnd(65, 90), rnd(50, 62)),
+      hsl2hex(h0 + rnd(0, 25), rnd(60, 85), rnd(24, 36)),
+      hsl2hex(acc, rnd(65, 90), rnd(62, 78)),
+    ];
+  }
+  state.angle = Math.round(rnd(-60, 60));
+  state.scale = +rnd(0.7, 1.6).toFixed(2);
+  state.stretch = +rnd(1.4, 3.0).toFixed(1);
+  state.warp = +rnd(0.6, 1.4).toFixed(2);
+  state.soft = +rnd(0.08, 0.26).toFixed(2);
+  state.sheen = +rnd(0.15, 0.8).toFixed(2);
+  state.grain = +rnd(0.02, 0.12).toFixed(2);
+  state.seed = Math.floor(rnd(0, 999));
+  syncUI();
+  presetsEl.querySelectorAll("button").forEach(x => x.classList.remove("on"));
+});
+
+// シード・一時停止・比率
+document.getElementById("numSeed").addEventListener("input", e => state.seed = +e.target.value || 0);
+document.getElementById("btnSeed").addEventListener("click", () => {
+  state.seed = Math.floor(Math.random() * 999);
+  syncUI();
+});
+document.getElementById("chkPause").addEventListener("change", e => {
+  if (e.target.checked) {
+    pausedTime = now();
+    lastPauseStart = performance.now() / 1000;
+    state.paused = true;
+  } else {
+    pauseOffset += performance.now() / 1000 - lastPauseStart;
+    state.paused = false;
+  }
+});
+document.getElementById("selAspect").addEventListener("change", fitCanvas);
+
+// ======================== PNG 書き出し ========================
+document.getElementById("btnPng").addEventListener("click", () => {
+  const w = +document.getElementById("selSize").value;
+  const h = Math.round(w / aspectWH());
+  const off = document.createElement("canvas");
+  off.width = w; off.height = h;
+  const r = createRenderer(off, { preserveDrawingBuffer: true });
+  if (!r) { toast("WebGLが使えへんかった…"); return; }
+  r.draw(state, state.paused ? pausedTime : now(), w, h);
+  off.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `liquid-gradient-${w}x${h}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`PNG（${w}×${h}）を保存しました`);
+  }, "image/png");
+});
+
+// ======================== Framer コンポーネント書き出し ========================
+function buildFramerCode(s) {
+  const f2 = n => (+n).toFixed(2);
+  return `import * as React from "react"
+import { addPropertyControls, ControlType, RenderTarget } from "framer"
+
+// Liquid Gradient — 流れるグラデーション背景
+// Liquid Gradient Generator で生成 ( https://liquid-gradient-generator.vercel.app )
+
+const VERT = \`${VERT}\`
+
+const FRAG = \`${FRAG}\`
+
+function parseColor(input: any): [number, number, number] {
+    if (!input) return [0, 0, 0]
+    let str = String(input).trim()
+    const v = str.match(/var\\([^,]+,\\s*(.+)\\)\\s*$/)
+    if (v) str = v[1].trim()
+    if (str.startsWith("#")) {
+        let h = str.slice(1)
+        if (h.length === 3) h = h.split("").map(c => c + c).join("")
+        const n = parseInt(h.slice(0, 6), 16)
+        return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]
+    }
+    const m = str.match(/rgba?\\(([^)]+)\\)/)
+    if (m) {
+        const p = m[1].split(",").map(parseFloat)
+        return [p[0] / 255, p[1] / 255, p[2] / 255]
+    }
+    return [0, 0, 0]
+}
+
+/**
+ * @framerSupportedLayoutWidth any
+ * @framerSupportedLayoutHeight any
+ * @framerIntrinsicWidth 800
+ * @framerIntrinsicHeight 450
+ * @framerDisableUnlink
+ */
+export default function LiquidGradient(props: any) {
+    const {
+        color1 = "${s.colors[0]}",
+        color2 = "${s.colors[1]}",
+        color3 = "${s.colors[2]}",
+        color4 = "${s.colors[3]}",
+        color5 = "${s.colors[4]}",
+        angle = ${Math.round(s.angle)},
+        scale = ${f2(s.scale)},
+        stretch = ${f2(s.stretch)},
+        warp = ${f2(s.warp)},
+        speed = ${f2(s.speed)},
+        softness = ${f2(s.soft)},
+        sheen = ${f2(s.sheen)},
+        grain = ${f2(s.grain)},
+        seed = ${Math.round(s.seed)},
+        paused = false,
+        style,
+    } = props
+    const canvasRef = React.useRef<HTMLCanvasElement>(null)
+
+    React.useEffect(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
+        const gl = canvas.getContext("webgl", { antialias: true })
+        if (!gl) return
+
+        const mkShader = (type: number, src: string) => {
+            const sh = gl.createShader(type)!
+            gl.shaderSource(sh, src)
+            gl.compileShader(sh)
+            return sh
+        }
+        const prog = gl.createProgram()!
+        gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, VERT))
+        gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FRAG))
+        gl.linkProgram(prog)
+        gl.useProgram(prog)
+        const buf = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+        const loc = gl.getAttribLocation(prog, "aPos")
+        gl.enableVertexAttribArray(loc)
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+        const U = (n: string) => gl.getUniformLocation(prog, n)
+
+        gl.uniform3fv(U("uC0"), parseColor(color1))
+        gl.uniform3fv(U("uC1"), parseColor(color2))
+        gl.uniform3fv(U("uC2"), parseColor(color3))
+        gl.uniform3fv(U("uC3"), parseColor(color4))
+        gl.uniform3fv(U("uC4"), parseColor(color5))
+        gl.uniform1f(U("uScale"), scale)
+        gl.uniform1f(U("uWarp"), warp)
+        gl.uniform1f(U("uSpeed"), speed)
+        gl.uniform1f(U("uAngle"), (angle * Math.PI) / 180)
+        gl.uniform1f(U("uStretch"), stretch)
+        gl.uniform1f(U("uSoft"), softness)
+        gl.uniform1f(U("uSheen"), sheen)
+        gl.uniform1f(U("uGrain"), grain)
+        gl.uniform1f(U("uSeed"), seed)
+
+        const draw = (t: number) => {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2)
+            const w = Math.max(1, Math.round(canvas.clientWidth * dpr))
+            const h = Math.max(1, Math.round(canvas.clientHeight * dpr))
+            if (canvas.width !== w || canvas.height !== h) {
+                canvas.width = w
+                canvas.height = h
+            }
+            gl.viewport(0, 0, w, h)
+            gl.uniform2f(U("uRes"), w, h)
+            gl.uniform1f(U("uTime"), t)
+            gl.drawArrays(gl.TRIANGLES, 0, 3)
+        }
+
+        let isStatic = paused
+        try {
+            if (RenderTarget.current() === RenderTarget.canvas) isStatic = true
+        } catch (e) {}
+
+        if (isStatic) {
+            const staticT = seed * 37.7 + 12.0
+            draw(staticT)
+            const ro = new ResizeObserver(() => draw(staticT))
+            ro.observe(canvas)
+            return () => ro.disconnect()
+        }
+
+        let raf = 0
+        const loop = () => {
+            draw(performance.now() / 1000)
+            raf = requestAnimationFrame(loop)
+        }
+        raf = requestAnimationFrame(loop)
+        return () => cancelAnimationFrame(raf)
+    }, [color1, color2, color3, color4, color5, angle, scale, stretch, warp, speed, softness, sheen, grain, seed, paused])
+
+    return (
+        <div style={{ overflow: "hidden", ...style }}>
+            <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} />
+        </div>
+    )
+}
+
+addPropertyControls(LiquidGradient, {
+    color1: { type: ControlType.Color, title: "色1 ベース", defaultValue: "${s.colors[0]}" },
+    color2: { type: ControlType.Color, title: "色2", defaultValue: "${s.colors[1]}" },
+    color3: { type: ControlType.Color, title: "色3", defaultValue: "${s.colors[2]}" },
+    color4: { type: ControlType.Color, title: "色4", defaultValue: "${s.colors[3]}" },
+    color5: { type: ControlType.Color, title: "色5 アクセント", defaultValue: "${s.colors[4]}" },
+    angle: { type: ControlType.Number, title: "角度", min: -180, max: 180, step: 1, defaultValue: ${Math.round(s.angle)} },
+    scale: { type: ControlType.Number, title: "スケール", min: 0.4, max: 3, step: 0.05, defaultValue: ${f2(s.scale)} },
+    stretch: { type: ControlType.Number, title: "リボン感", min: 1, max: 4, step: 0.1, defaultValue: ${f2(s.stretch)} },
+    warp: { type: ControlType.Number, title: "うねり", min: 0, max: 2, step: 0.05, defaultValue: ${f2(s.warp)} },
+    speed: { type: ControlType.Number, title: "速さ", min: 0, max: 1.5, step: 0.05, defaultValue: ${f2(s.speed)} },
+    softness: { type: ControlType.Number, title: "なめらかさ", min: 0.02, max: 0.4, step: 0.01, defaultValue: ${f2(s.soft)} },
+    sheen: { type: ControlType.Number, title: "光の筋", min: 0, max: 1, step: 0.05, defaultValue: ${f2(s.sheen)} },
+    grain: { type: ControlType.Number, title: "粒子", min: 0, max: 0.3, step: 0.01, defaultValue: ${f2(s.grain)} },
+    seed: { type: ControlType.Number, title: "シード", min: 0, max: 999, step: 1, defaultValue: ${Math.round(s.seed)} },
+    paused: { type: ControlType.Boolean, title: "停止", defaultValue: false },
+})
+`;
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._tm);
+  toast._tm = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+document.getElementById("btnCopy").addEventListener("click", async () => {
+  const code = buildFramerCode(state);
+  try {
+    await navigator.clipboard.writeText(code);
+    toast("Framerコンポーネントのコードをコピーしました 🎉 Framerに貼り付けてください");
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = code;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    toast("コードをコピーしました 🎉");
+  }
+});
+
+document.getElementById("btnTsx").addEventListener("click", () => {
+  const blob = new Blob([buildFramerCode(state)], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "LiquidGradient.tsx";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("LiquidGradient.tsx をダウンロードしました");
+});
+
+// 開始
+fitCanvas();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
