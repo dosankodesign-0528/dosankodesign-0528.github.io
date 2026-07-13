@@ -13,6 +13,7 @@ import { scrape81Web as scrape81WebPlaywright } from "./scrape-81web";
 import { scrapeMuuuuu as scrapeMuuuuuPlaywright } from "./scrape-muuuuu";
 import { scrapeS5Style } from "./scrape-s5style";
 import { normalizeUrl } from "../src/lib/eagle";
+import { tagHousing } from "./housing";
 
 // ============================================================
 // 設定
@@ -969,6 +970,13 @@ async function main() {
       );
     }
   }
+
+  // 住宅・建築タグ付け（全メディア横断）。住宅・家具・建築・インテリア・不動産系の
+  // category に "housing" を足し、フィルターバーの「住宅・建築」ピルで絞り込めるように
+  // する。毎回かけ直すので永続。
+  const taggedHousing = tagHousing(finalSites);
+  const housingTotal = finalSites.filter((s) => (s.category || []).includes("housing")).length;
+  console.log(`  🏠 住宅タグ付け: +${taggedHousing} 件（住宅合計 ${housingTotal} 件）`);
 
   // JSON保存
   fs.writeFileSync(outputPath, JSON.stringify(finalSites, null, 2), "utf-8");

@@ -38,6 +38,9 @@ export function FilterBar({
 }: FilterBarProps) {
   const [showModal, setShowModal] = useState(false);
   const allSourcesActive = filter.sources.length === 0;
+  // 住宅フィルタ（カテゴリ "housing"）が ON か。全メディア横断で住宅・家具・建築・
+  // インテリア・不動産系サイトだけに絞る（住宅サイト制作の参考用）。
+  const housingActive = filter.categories.includes("housing");
 
   // Filter ボタンのバッジ（デフォルトでないフィルタが何個かかってるか）
   const nonDefaultCount =
@@ -83,6 +86,25 @@ export function FilterBar({
             </button>
           );
         })}
+
+        {/* 区切り */}
+        <span className="w-px h-4 bg-border mx-0.5" />
+
+        {/* 住宅フィルタ: 全メディア横断で住宅・建築系サイトだけに絞るワンタップ・ピル */}
+        <button
+          onClick={() =>
+            updateFilter({ categories: housingActive ? [] : ["housing"] })
+          }
+          className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all flex items-center gap-1 ${
+            housingActive
+              ? "bg-[#C2703D] text-white"
+              : "text-text-secondary hover:bg-bg-primary"
+          }`}
+          title="住宅・家具・建築・インテリア・不動産系サイトだけに絞る"
+        >
+          <span>🏠</span>
+          住宅・建築
+        </button>
 
         {/* 右端: 統合フィルターボタン */}
         <div className="ml-auto flex items-center gap-3 text-[12px] text-text-secondary">
