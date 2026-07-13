@@ -50,6 +50,9 @@ jobs:
             echo "変更なし。スキップ。"
             exit 0
           fi
-          git add design-gallery/src/data/scraped-sites.json
+          # scrape-meta.json も必ず一緒にコミットする。
+          # これを add し忘れると「最終スクレイプ時刻(scrapedAt)」がクライアントで
+          # 据え置きになり、新着通知モーダルのベースラインが前進しなくなる。
+          git add design-gallery/src/data/scraped-sites.json design-gallery/src/data/scrape-meta.json
           git commit -m "chore(design-gallery): scraped-sites.json 自動更新 ($(date -u +%Y-%m-%d))"
           git push
