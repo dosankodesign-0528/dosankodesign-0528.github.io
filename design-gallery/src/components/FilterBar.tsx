@@ -27,6 +27,7 @@ const sources: SourceSite[] = [
   "webdesignclip",
   "awwwards",
   "s5style",
+  "pickup",
 ];
 
 export function FilterBar({

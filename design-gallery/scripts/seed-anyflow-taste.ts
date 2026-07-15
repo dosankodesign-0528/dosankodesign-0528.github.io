@@ -41,6 +41,9 @@ const SEED_SHELVES = (process.env.SEED_SHELVES || "3d,gradient")
   .map((s) => s.trim())
   .filter(Boolean);
 const SEED_PAGES = parseInt(process.env.SEED_PAGES || "8", 10);
+// SEED_FILTER: 正規表現。指定すると Awwwards カードの title/url/tags のどれかに
+// マッチするものだけ採用（例: AI系だけ欲しい時に "\\bAI\\b|artificial|GPT|agent"）。
+const SEED_FILTER = process.env.SEED_FILTER ? new RegExp(process.env.SEED_FILTER, "i") : null;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 const CUTOFF = "2024-01"; // 他ソースと同じ下限
@@ -135,6 +138,12 @@ async function scrapeAwwwardsShelf(
 
       const outboundUrl =
         $(el).find("a.figure-rollover__bt[target='_blank']").first().attr("href") || "";
+
+      // キーワード絞り込み（title / 外部URL / tags のどれかにマッチしたものだけ）
+      if (SEED_FILTER) {
+        const hay = `${title} ${outboundUrl} ${(payload.tags || []).join(" ")}`;
+        if (!SEED_FILTER.test(hay)) return;
+      }
       let thumb = "";
       const srcset = $(el).find("img.lazy.figure-rollover__file").first().attr("data-srcset") || "";
       const m1x = srcset.match(/(https?:\/\/[^\s]+)\s+1x/);
@@ -287,8 +296,9 @@ async function main() {
     .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
     .slice(0, AWWWARDS_TARGET);
 
-  // 2) S5-Style（残り枠）
-  const s5Quota = SEED_TARGET - awwwardsNew.length;
+  // 2) S5-Style（残り枠）。SEED_AWWWARDS_SHARE=1 のときは Awwwards が目標に
+  // 届かなくても S5 で埋めない（テーマ違いのサイトが混ざるのを防ぐ）。
+  const s5Quota = AWWWARDS_SHARE >= 1 ? 0 : SEED_TARGET - awwwardsNew.length;
   console.log(`\n📝 S5-Style 深掘り（3D/パララックス/スクロールエフェクト、枠 ${s5Quota} 件）...`);
   const s5All = await scrapeS5Stylish(4000);
   const s5New = s5All.filter((s) => isNew(s.url)).slice(0, s5Quota);

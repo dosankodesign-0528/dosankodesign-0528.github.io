@@ -1,5 +1,5 @@
 /** 引用元サイト */
-export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip" | "awwwards" | "s5style";
+export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip" | "awwwards" | "s5style" | "pickup";
 
 export const SOURCE_LABELS: Record<SourceSite, string> = {
   sankou: "SANKOU!",
@@ -8,6 +8,10 @@ export const SOURCE_LABELS: Record<SourceSite, string> = {
   webdesignclip: "Web Design Clip",
   awwwards: "Awwwards",
   s5style: "S5-Style",
+  // テーマ別の手動シード（AI系デジタルサービス等）の置き場。
+  // scraper の日次巡回対象ではないので、フルラン時は常に0件 → ゼロ件ガードで
+  // 既存エントリが引き継がれ、勝手に消えない（OPL消失の教訓）。
+  pickup: "Pickup",
 };
 
 export const SOURCE_COLORS: Record<SourceSite, string> = {
@@ -19,6 +23,8 @@ export const SOURCE_COLORS: Record<SourceSite, string> = {
   // 2026-06-05 追加。既存5色と被らない深めのティール (S5 サイト自体の
   // ロゴ近辺の落ち着いた印象を踏襲)。
   s5style: "#1ABC9C",
+  // One Page Love 廃止で空いたオレンジを再利用。
+  pickup: "#F2762E",
 };
 
 /** カテゴリ（業種） */

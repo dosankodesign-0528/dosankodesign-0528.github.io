@@ -41,7 +41,7 @@ interface ScrapedSite {
   title: string;
   url: string;
   thumbnailUrl: string;
-  source: "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip" | "s5style";
+  source: "sankou" | "81web" | "muuuuu" | "awwwards" | "webdesignclip" | "s5style" | "pickup";
   category: string[];
   taste: string[];
   agency?: string;
@@ -830,6 +830,14 @@ async function main() {
         );
         allResults.push(...carried);
       }
+    }
+
+    // pickup（テーマ別の手動シード）は巡回対象外なので、フルランでは常に引き継ぐ。
+    // これをしないと再スクレイプのたびに全消えする（One Page Love 消失と同じ構図）。
+    const pickupCarried = prevForGuard.filter((p) => p.source === "pickup");
+    if (pickupCarried.length > 0) {
+      console.log(`  📌 pickup: 手動シード ${pickupCarried.length} 件を引き継ぎ`);
+      allResults.push(...pickupCarried);
     }
   }
 
