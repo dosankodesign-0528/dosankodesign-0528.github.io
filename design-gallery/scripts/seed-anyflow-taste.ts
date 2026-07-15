@@ -20,6 +20,8 @@
  * 使い方:
  *   npx tsx scripts/seed-anyflow-taste.ts            # 200件シード
  *   SEED_TARGET=100 npx tsx scripts/seed-anyflow-taste.ts
+ *   SEED_SHELVES="3d,gradient,webgl,animation" SEED_PAGES=16 npx tsx scripts/seed-anyflow-taste.ts
+ *     ↑ 在庫が尽きたら棚を広げ・深くする（2回目以降の補充用。既出URLは自動除外）
  */
 import * as cheerio from "cheerio";
 import * as crypto from "crypto";
@@ -31,6 +33,13 @@ import { tagHousing } from "./housing";
 const SEED_TARGET = parseInt(process.env.SEED_TARGET || "200", 10);
 // 海外(awwwards):日本(s5style) の目標比率 ≈ 7:3
 const AWWWARDS_TARGET = Math.round(SEED_TARGET * 0.7);
+// 巡回する Awwwards の棚と深さ。補充のたびに在庫が減るので、2回目以降は
+// SEED_SHELVES で隣接棚（webgl/animation/three-js/dark）へ広げ、SEED_PAGES で深くする。
+const SEED_SHELVES = (process.env.SEED_SHELVES || "3d,gradient")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const SEED_PAGES = parseInt(process.env.SEED_PAGES || "8", 10);
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 const CUTOFF = "2024-01"; // 他ソースと同じ下限
@@ -261,11 +270,11 @@ async function main() {
   };
 
   // 1) Awwwards 3d + gradient（新規だけ数えて目標の7割まで）
-  console.log("\n📝 Awwwards 3D / Gradient 棚...");
+  console.log(`\n📝 Awwwards 棚: ${SEED_SHELVES.join(" / ")}（各${SEED_PAGES}ページまで）...`);
   const seenSlugs = new Set<string>();
   const awwwardsAll: SeedSite[] = [];
-  for (const shelf of ["3d", "gradient"]) {
-    const got = await scrapeAwwwardsShelf(shelf, 8, seenSlugs);
+  for (const shelf of SEED_SHELVES) {
+    const got = await scrapeAwwwardsShelf(shelf, SEED_PAGES, seenSlugs);
     awwwardsAll.push(...got);
     const newCount = awwwardsAll.filter((s) => isNew(s.url)).length;
     console.log(`  ${shelf} 累計: ${awwwardsAll.length} 件（うち新規 ${newCount}）`);
