@@ -1,5 +1,5 @@
 /** 引用元サイト */
-export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip" | "awwwards" | "s5style" | "onepagelove";
+export type SourceSite = "sankou" | "81web" | "muuuuu" | "webdesignclip" | "awwwards" | "s5style";
 
 export const SOURCE_LABELS: Record<SourceSite, string> = {
   sankou: "SANKOU!",
@@ -8,7 +8,6 @@ export const SOURCE_LABELS: Record<SourceSite, string> = {
   webdesignclip: "Web Design Clip",
   awwwards: "Awwwards",
   s5style: "S5-Style",
-  onepagelove: "One Page Love",
 };
 
 export const SOURCE_COLORS: Record<SourceSite, string> = {
@@ -20,9 +19,6 @@ export const SOURCE_COLORS: Record<SourceSite, string> = {
   // 2026-06-05 追加。既存5色と被らない深めのティール (S5 サイト自体の
   // ロゴ近辺の落ち着いた印象を踏襲)。
   s5style: "#1ABC9C",
-  // 2026-07-13 追加。海外ソース One Page Love。既存6色と被らない
-  // ビビッドなオレンジ（awwwards の黄色とも差がつく暖色）。
-  onepagelove: "#F2762E",
 };
 
 /** カテゴリ（業種） */

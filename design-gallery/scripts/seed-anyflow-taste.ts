@@ -31,8 +31,9 @@ import { normalizeUrl } from "../src/lib/eagle";
 import { tagHousing } from "./housing";
 
 const SEED_TARGET = parseInt(process.env.SEED_TARGET || "200", 10);
-// 海外(awwwards):日本(s5style) の目標比率 ≈ 7:3
-const AWWWARDS_TARGET = Math.round(SEED_TARGET * 0.7);
+// 海外(awwwards):日本(s5style) の目標比率。SEED_AWWWARDS_SHARE=1 で Awwwards のみ。
+const AWWWARDS_SHARE = Math.min(1, Math.max(0, parseFloat(process.env.SEED_AWWWARDS_SHARE || "0.7")));
+const AWWWARDS_TARGET = Math.round(SEED_TARGET * AWWWARDS_SHARE);
 // 巡回する Awwwards の棚と深さ。補充のたびに在庫が減るので、2回目以降は
 // SEED_SHELVES で隣接棚（webgl/animation/three-js/dark）へ広げ、SEED_PAGES で深くする。
 const SEED_SHELVES = (process.env.SEED_SHELVES || "3d,gradient")
