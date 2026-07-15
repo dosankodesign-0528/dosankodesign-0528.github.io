@@ -1,5 +1,62 @@
 [
   {
+    "id": "8cddd3fe434c",
+    "title": "URBANEX LIVING SHIFT賃貸の可能性をひらく、新たな選択。 | 大阪ガス都市開発株式会社",
+    "url": "https://ogud.co.jp/urbanex/shift/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/urbanexlivingshift_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized",
+      "housing"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T02:48:10.932Z"
+  },
+  {
+    "id": "1cf2e76a3bf4",
+    "title": "株式会社ジリオン | ENERGY DRIVEN COMPANY",
+    "url": "https://jillion.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/jillion_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-06-29T04:20:41.410Z"
+  },
+  {
+    "id": "0be5f462d848",
+    "title": "L’Occitane SUSTAINABILITY MONTH | ロクシタン公式通販",
+    "url": "https://jp.loccitane.com/Sustainability",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/loccitanesustainability_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T02:48:10.932Z"
+  },
+  {
+    "id": "eb47b9b97ea8",
+    "title": "PIXEL × PIXEL 2026 vol:2",
+    "url": "https://pixelpixel.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/pixelpixel2026_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T02:48:10.932Z"
+  },
+  {
     "id": "b546a9d5f91f",
     "title": "株式会社ポジティブドリームパーソンズ",
     "url": "https://www.positive.co.jp/",
@@ -9455,22 +9512,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T05:58:58.621Z"
-  },
-  {
-    "id": "4765bc30e679",
-    "title": "LUMINE IKEBUKURO 15th Anniversary",
-    "url": "https://www.lumine.ne.jp/ikebukuro/15th/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/lumineikebukuro15th_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-05",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-07-02T05:59:02.572Z"
   },
   {
     "id": "972c19ecc8e8",
@@ -21761,6 +21802,21 @@
     "lastCheckedAt": "2026-07-02T06:01:47.680Z"
   },
   {
+    "id": "173a558d6815",
+    "title": "FIGARO",
+    "url": "https://www.figaro-vis.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/07/11.webp",
+    "source": "muuuuu",
+    "category": [
+      "interior",
+      "housing"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-06T03:56:40.617Z"
+  },
+  {
     "id": "663fef05354a",
     "title": "株式会社サンベルクス 採用サイト",
     "url": "https://recruit.sunbelx.com/",
@@ -32589,6 +32645,20 @@
     "lastCheckedAt": "2026-07-02T06:03:45.203Z"
   },
   {
+    "id": "2f7b16a1a583",
+    "title": "トヨタカローラ高崎リクルートプロジェクト",
+    "url": "https://corotaka.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260714_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "採用サイト・転職・求人"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-12T03:18:46.073Z"
+  },
+  {
     "id": "4ae2f88d3c08",
     "title": "学費は半分。成長は二軸（デュアル）。東京電機大学 工学部第二部 | 東京電機大学",
     "url": "https://www.dendai.ac.jp/evening/",
@@ -32773,20 +32843,6 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-07-07T03:47:54.524Z"
-  },
-  {
-    "id": "0b4cdbd74936",
-    "title": "FIGARO",
-    "url": "https://www.figaro-vis.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260706_02-493x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "デザイン事務所・制作会社"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-06T03:56:40.617Z"
   },
   {
     "id": "4c904c68a02d",
@@ -42127,6 +42183,20 @@
     "lastCheckedAt": "2026-07-02T06:05:59.215Z"
   },
   {
+    "id": "25f742f3501c",
+    "title": "会社四季報 90周年｜これからも未来を書いていく",
+    "url": "https://str.toyokeizai.net/-/shikiho90th/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260714_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "エンタメ・出版"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T02:48:10.932Z"
+  },
+  {
     "id": "e3f82e073f6a",
     "title": "iDEP",
     "url": "https://idep.jp/",
@@ -48555,23 +48625,6 @@
     "firstSeen": "2026-06-13T04:08:32.368Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:07:48.065Z"
-  },
-  {
-    "id": "c9a26ddbb258",
-    "title": "株式会社ジリオン",
-    "url": "https://jillion.co.jp/",
-    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/06/260629-1-640x480.jpg",
-    "source": "81web",
-    "category": [
-      "コーポレートサイト",
-      "商業施設",
-      "店舗"
-    ],
-    "taste": [],
-    "agency": "MEFILAS",
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-29T04:20:41.410Z"
   },
   {
     "id": "8ad4f087ab52",
@@ -55505,6 +55558,32 @@
     "lastCheckedAt": "2026-07-02T06:09:08.136Z"
   },
   {
+    "id": "ad3e3b0cacdf",
+    "title": "House of Honey",
+    "url": "https://www.houseofhoney.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a1c09bf6c5f3457361940.jpg",
+    "source": "awwwards",
+    "category": [
+      "Architecture",
+      "Culture & Education",
+      "Minimal",
+      "Portfolio",
+      "Typography",
+      "Copy design",
+      "Interaction Design",
+      "Microinteractions",
+      "Motion",
+      "Next.js",
+      "Sanity",
+      "Luxury",
+      "housing"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T02:48:10.932Z"
+  },
+  {
     "id": "1d6bd2c8136a",
     "title": "Longbow",
     "url": "https://db-longbow.webflow.io/",
@@ -55525,28 +55604,6 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-07-13T03:08:33.098Z"
-  },
-  {
-    "id": "9616512df8a5",
-    "title": "21 Hrs On The Moon",
-    "url": "https://www.21hrs.space/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a0d7b8f419a3938435907.png",
-    "source": "awwwards",
-    "category": [
-      "Culture & Education",
-      "Photographic",
-      "WebGL",
-      "Photography",
-      "Experimental",
-      "Sound-Audio",
-      "Storytelling",
-      "3D",
-      "Figma"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-11T03:03:38.661Z"
   },
   {
     "id": "d5e19497a4bd",
@@ -56409,24 +56466,6 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-07-14T02:49:46.123Z"
-  },
-  {
-    "id": "d14c9c02a7f8",
-    "title": "トヨタカローラ高崎リクルートプロジェクト",
-    "url": "https://corotaka.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ta0zux6v4ypn-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "採用･仕事･アルバイトサイト",
-      "車･バイク･自転車"
-    ],
-    "taste": [
-      "イラスト",
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-12T03:18:46.073Z"
   },
   {
     "id": "d08d09662666",
@@ -60997,42 +61036,23 @@
     "lastCheckedAt": "2026-07-02T06:10:13.702Z"
   },
   {
-    "id": "ca6ba3c6fd5d",
-    "title": "株式会社RAWCREW｜大阪｜企画とデザインとブランディング",
-    "url": "https://rawcrew.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/z0uk43vtlobw-2800x2100.webp",
-    "source": "s5style",
+    "id": "b25cb326707f",
+    "title": "Digital Original XR",
+    "url": "https://digitaloriginal.app/xr",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-screenshot-digital-original-1784039159936-desktop.jpg",
+    "source": "onepagelove",
     "category": [
-      "特設サイト"
+      "Inspiration",
+      "Augmented Reality (AR)",
+      "In-Page Demo",
+      "Long Scrolling",
+      "Virtual Reality (VR)",
+      "Whitespace"
     ],
-    "taste": [
-      "イラスト"
-    ],
+    "taste": [],
     "date": "2026-07",
     "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:10:14.554Z"
-  },
-  {
-    "id": "900b6d90653f",
-    "title": "キューコーポレーション株式会社（queue corporation）",
-    "url": "https://queue-cs.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/mcp3xlfsyk45-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "イラスト",
-      "写真･フォトディレクション",
-      "UI フラット"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:10:13.407Z"
+    "firstSeen": "2026-07-15T02:48:10.932Z"
   },
   {
     "id": "b62b809fda92",
@@ -61065,15 +61085,16 @@
     "firstSeen": "2026-07-14T02:49:46.123Z"
   },
   {
-    "id": "b5697d157a1f",
-    "title": "Mat",
-    "url": "https://www.matwidget.com",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-screenshot-mat-1783693708088-desktop.jpg",
+    "id": "9cb6b9f207d9",
+    "title": "Printable Mockups",
+    "url": "https://www.printablemockups.com",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-printablemockups.jpg",
     "source": "onepagelove",
     "category": [
       "Inspiration",
-      "iOS",
-      "Long Scrolling"
+      "Long Scrolling",
+      "Useful",
+      "Web App"
     ],
     "taste": [],
     "date": "2026-07",
@@ -61099,54 +61120,15 @@
     "firstSeen": "2026-07-14T02:49:46.123Z"
   },
   {
-    "id": "06f8f74c3561",
-    "title": "Matthew Chudnovski",
-    "url": "https://yevtam.com",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-mc.jpg",
+    "id": "b5697d157a1f",
+    "title": "Mat",
+    "url": "https://www.matwidget.com",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-screenshot-mat-1783693708088-desktop.jpg",
     "source": "onepagelove",
     "category": [
       "Inspiration",
-      "Audio Integration",
-      "Easter Eggs",
-      "Long Scrolling",
-      "Project Overlay",
-      "Whitespace"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-13T11:56:58.873Z"
-  },
-  {
-    "id": "9cb6b9f207d9",
-    "title": "Printable Mockups",
-    "url": "https://www.printablemockups.com",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-printablemockups.jpg",
-    "source": "onepagelove",
-    "category": [
-      "Inspiration",
-      "Long Scrolling",
-      "Useful",
-      "Web App"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-13T11:56:58.873Z"
-  },
-  {
-    "id": "1cd306b1ed71",
-    "title": "Medium Rare",
-    "url": "https://www.mediumrare.site",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-mediumrare.jpg",
-    "source": "onepagelove",
-    "category": [
-      "Inspiration",
-      "Easter Eggs",
-      "Interactive",
-      "Long Scrolling",
-      "Scheme Switcher",
-      "Whimsical"
+      "iOS",
+      "Long Scrolling"
     ],
     "taste": [],
     "date": "2026-07",
@@ -61216,6 +61198,61 @@
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
   {
+    "id": "1cd306b1ed71",
+    "title": "Medium Rare",
+    "url": "https://www.mediumrare.site",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-mediumrare.jpg",
+    "source": "onepagelove",
+    "category": [
+      "Inspiration",
+      "Easter Eggs",
+      "Interactive",
+      "Long Scrolling",
+      "Scheme Switcher",
+      "Whimsical"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-13T11:56:58.873Z"
+  },
+  {
+    "id": "182a20ad5d44",
+    "title": "Allagi",
+    "url": "https://allagi.music",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-screenshot-allagi-1783149220102-desktop.jpg",
+    "source": "onepagelove",
+    "category": [
+      "Inspiration",
+      "Artist",
+      "Interactive",
+      "Whitespace"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-13T11:56:58.873Z"
+  },
+  {
+    "id": "06f8f74c3561",
+    "title": "Matthew Chudnovski",
+    "url": "https://yevtam.com",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-master-mc.jpg",
+    "source": "onepagelove",
+    "category": [
+      "Inspiration",
+      "Audio Integration",
+      "Easter Eggs",
+      "Long Scrolling",
+      "Project Overlay",
+      "Whitespace"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-13T11:56:58.873Z"
+  },
+  {
     "id": "704d68270825",
     "title": "Secret Garden Stresa",
     "url": "https://secretgardenstresa.com",
@@ -61270,23 +61307,6 @@
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
   {
-    "id": "d02059a0d347",
-    "title": "Shopify Editions – Spring 2026",
-    "url": "https://onepagelove.com/go/shopify-edition-spring-2026",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-shopify-editions-1782742238732-desktop.jpg",
-    "source": "onepagelove",
-    "category": [
-      "Inspiration",
-      "Long Scrolling",
-      "Parallax Scrolling",
-      "Sticky CTA Button"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-07-13T11:56:58.873Z"
-  },
-  {
     "id": "59a8c3282cd1",
     "title": "Cibby",
     "url": "https://cibby.app",
@@ -61304,16 +61324,16 @@
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
   {
-    "id": "945527c9dbf6",
-    "title": "Kevin",
-    "url": "https://kevin.tools",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-professional-grade-1782481149603-desktop.jpg",
+    "id": "d02059a0d347",
+    "title": "Shopify Editions – Spring 2026",
+    "url": "https://onepagelove.com/go/shopify-edition-spring-2026",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-shopify-editions-1782742238732-desktop.jpg",
     "source": "onepagelove",
     "category": [
       "Inspiration",
-      "Artificial Intelligence (AI)",
-      "Dot Grid",
-      "Long Scrolling"
+      "Long Scrolling",
+      "Parallax Scrolling",
+      "Sticky CTA Button"
     ],
     "taste": [],
     "date": "2026-06",
@@ -61339,19 +61359,19 @@
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
   {
-    "id": "182a20ad5d44",
-    "title": "Allagi",
-    "url": "https://allagi.music",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/07/opl-screenshot-allagi-1783149220102-desktop.jpg",
+    "id": "8dca779f99b9",
+    "title": "Neuropelvic Surgery",
+    "url": "https://neuropelvicsurgery.com",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-home-1782316053408-desktop.jpg",
     "source": "onepagelove",
     "category": [
       "Inspiration",
-      "Artist",
-      "Interactive",
-      "Whitespace"
+      "Health & Healthcare",
+      "Long Scrolling",
+      "Medical"
     ],
     "taste": [],
-    "date": "2026-07",
+    "date": "2026-06",
     "starred": false,
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
@@ -61447,6 +61467,23 @@
     "firstSeen": "2026-07-13T11:56:58.873Z"
   },
   {
+    "id": "945527c9dbf6",
+    "title": "Kevin",
+    "url": "https://kevin.tools",
+    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-professional-grade-1782481149603-desktop.jpg",
+    "source": "onepagelove",
+    "category": [
+      "Inspiration",
+      "Artificial Intelligence (AI)",
+      "Dot Grid",
+      "Long Scrolling"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-07-13T11:56:58.873Z"
+  },
+  {
     "id": "752c63c28308",
     "title": "Lovably",
     "url": "https://www.lovably.com",
@@ -61495,44 +61532,6 @@
       "Japan",
       "Long Scrolling",
       "Preloader"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-07-13T11:56:58.873Z"
-  },
-  {
-    "id": "c3583822ca0f",
-    "title": "invoicemon",
-    "url": "https://invoicemon.com",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-invoicemon-free-1781727300997-desktop.jpg",
-    "source": "onepagelove",
-    "category": [
-      "Inspiration",
-      "In-Page Demo",
-      "Interactive",
-      "Invoicing",
-      "Long Scrolling",
-      "Operating System",
-      "Useful",
-      "Web App"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-07-13T11:56:58.873Z"
-  },
-  {
-    "id": "8dca779f99b9",
-    "title": "Neuropelvic Surgery",
-    "url": "https://neuropelvicsurgery.com",
-    "thumbnailUrl": "https://assets.onepagelove.com/cdn-cgi/image/width=1200,height=1200,fit=cover,gravity=top,format=jpg,quality=85/wp-content/uploads/2026/06/opl-screenshot-home-1782316053408-desktop.jpg",
-    "source": "onepagelove",
-    "category": [
-      "Inspiration",
-      "Health & Healthcare",
-      "Long Scrolling",
-      "Medical"
     ],
     "taste": [],
     "date": "2026-06",
