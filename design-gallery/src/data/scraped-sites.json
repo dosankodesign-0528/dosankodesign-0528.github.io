@@ -78084,7 +78084,8 @@
     "source": "pickup",
     "category": [
       "SaaS",
-      "Digital Product"
+      "Digital Product",
+      "housing"
     ],
     "taste": [],
     "date": "2026-07",
@@ -79443,7 +79444,8 @@
     "source": "pickup",
     "category": [
       "Framer",
-      "Interaction"
+      "Interaction",
+      "housing"
     ],
     "taste": [],
     "date": "2026-07",
@@ -81423,7 +81425,8 @@
     "source": "pickup",
     "category": [
       "Framer",
-      "Interaction"
+      "Interaction",
+      "housing"
     ],
     "taste": [],
     "date": "2026-07",
@@ -81793,5 +81796,2527 @@
     "date": "2026-07",
     "starred": false,
     "firstSeen": "2026-07-15T13:32:06.940Z"
+  },
+  {
+    "id": "60dacaed453e",
+    "title": "株式会社Fivot（フィボット）",
+    "url": "https://fivot.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wyoc6ekbv45f-1400x1050.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ce7f074f32f2",
+    "title": "Mate | \"未来の仲間\"と出会える、つながる、新しい転職体験",
+    "url": "https://mate.lavocorp.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kg85fc324107-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "ランディングページ",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ba57dbc37abf",
+    "title": "採用情報 / LayerX",
+    "url": "https://jobs.layerx.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/yl428vtgquhm-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9bb4a489f619",
+    "title": "株式会社IAM",
+    "url": "https://iam-corp.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ip2kn805uehb-1400x1050.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "その他"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "1263924d3730",
+    "title": "kkosugeno space",
+    "url": "https://kaitokosuge.github.io/space/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/yl7zf5xt69um-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "モバイルサイト",
+      "ポートフォリオ･アーティストサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e54900c0a4c1",
+    "title": "折り紙レター - ブラザー",
+    "url": "https://sdgsstory.global.brother/j/special/origami/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vfzk9acix28t-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー",
+      "カメラ･モバイル･家電"
+    ],
+    "taste": [
+      "写真･フォトディレクション",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "60a1d735d17a",
+    "title": "株式会社 STYLEEDGE | Make a STORY.",
+    "url": "https://styleedge.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/k0jghyfmo47v-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "その他"
+    ],
+    "taste": [
+      "写真･フォトディレクション",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "d0c8427aacc5",
+    "title": "株式会社メディアエイド 採用サイト",
+    "url": "https://special-recruit.mediaaid.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/4gfd9w2zlxne-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "パララックス",
+      "UI フラット",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "244a61a8cae4",
+    "title": "株式会社TONMANA",
+    "url": "https://tonmana.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/btrcmn3kepal-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "イラスト",
+      "パララックス",
+      "UI フラット",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "0ebdc5f67e7a",
+    "title": "REINFORCE株式会社",
+    "url": "https://reinforce-co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/0lq3yomug64n-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "BtoBコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "パララックス",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "07d4d7b2cdc8",
+    "title": "株式会社WILLCO（ウィルコ） - WILLCO, Inc.",
+    "url": "https://www.willco-inc.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/izs2uej4alvb-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "写真･フォトディレクション",
+      "パララックス",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9ba0ae743496",
+    "title": "Jeton",
+    "url": "https://www.jeton.com/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zd19cosj8e0x-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "Webアプリ･SaaS･サービスサイト",
+      "金融･証券･保険･流通"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "動画･映像",
+      "スクロールエフェクト",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f60b6e4c699b",
+    "title": "株式会社リチェイン - 東京都のITコンサルティング会社",
+    "url": "https://www.rechain.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/6s84of1bniqk-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "703a6bd901d1",
+    "title": "RAKUDEJI株式会社",
+    "url": "https://rakudeji.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/6sr75e1bwn2q-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "UI フラット",
+      "モチーフ 三角",
+      "モチーフ 斜め"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e64b334ac1f1",
+    "title": "A HAPPY NEW YEAR 2025 - Qlip",
+    "url": "https://2025.qlip.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/3xqi6g52zc8u-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "デザイン･制作･開発会社",
+      "IT･コンピューター･テクノロジー",
+      "その他",
+      "アート･芸術"
+    ],
+    "taste": [
+      "和風",
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト",
+      "ポリゴン･ローポリ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9ad63a7f991f",
+    "title": "58 Inc. (Five-Eight)",
+    "url": "https://58web3.io/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/9ymklhrs6xoj-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "スクロールエフェクト",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e843db9a6042",
+    "title": "Karabina,LLC｜合同会社カラビナ",
+    "url": "https://karabina.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/oz21av6rwy7x-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "デザイン･制作･開発会社",
+      "IT･コンピューター･テクノロジー",
+      "その他",
+      "アート･芸術"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5d39ce2053cb",
+    "title": "Generation Synthesis",
+    "url": "https://www.generesis.xyz/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/de9uiglwohtz-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "デザイン･制作･開発会社",
+      "特設サイト",
+      "ランディングページ",
+      "プロダクトサイト",
+      "テレビ･映画･アニメ"
+    ],
+    "taste": [
+      "ピクセルアート",
+      "グラフィカル･コラージュ",
+      "タイポグラフィー･文字",
+      "イラスト",
+      "和風"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ec7c4d28fc60",
+    "title": "株式会社NTT Digital",
+    "url": "https://nttdigital.io/ja",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vb4xhjpgenfs-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "060231c84074",
+    "title": "株式会社プラットイン　集客LP",
+    "url": "https://www.platin.co.jp/lp01/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7lzxsyv895f6-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "BtoBコーポレートサイト",
+      "デザイン･制作･開発会社",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ffd128d8d10c",
+    "title": "キャリタスUSA コーポレートサイト",
+    "url": "https://www.career-tasu.com/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zbnl58y2rdkq-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6705d9be5d82",
+    "title": "新卒採用情報｜スタッフサービス・ホールディングス",
+    "url": "https://www.staffservice.jp/recruit/new/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/59ilphqyc0er-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "スクロールエフェクト",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b83ffdd2e61c",
+    "title": "rIDEA 好點子數位創意",
+    "url": "https://www.ridea.com.tw/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kz5sjqrgudeb-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "オウンドメディアサイト",
+      "デザイン･制作･開発会社",
+      "IT･コンピューター･テクノロジー",
+      "その他",
+      "アート･芸術"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "パララックス",
+      "UI 手描き･ラフ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "d906e5a02f71",
+    "title": "elite model Japan",
+    "url": "https://www.elite.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/osr9u2ntygd4-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "ポータルサイト",
+      "映像･写真プロダクション",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "写真･フォトディレクション",
+      "スクロールエフェクト",
+      "グリッドデザイン"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "be55a0fcb461",
+    "title": "採用広報の動画コンテンツ制作『リクライブ®』",
+    "url": "https://reclive.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/lvnwfyt6g0ep-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "オウンドメディアサイト",
+      "採用･仕事･アルバイトサイト",
+      "デザイン･制作･開発会社",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "動画･映像",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "d8a6f9bd8074",
+    "title": "特設採用サイト | Timee",
+    "url": "https://corp.timee.co.jp/special-recruit/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ab1625p9k70f-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "dc15a0e9afce",
+    "title": "事業人",
+    "url": "https://jigyojin.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/p2wj7oh9xmyr-1400x1050.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "4cf17516f99b",
+    "title": "世界のはたらくWell-being",
+    "url": "https://www.persol-group.co.jp/sustainability/well-being/worlddata/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/i9cbsak5360q-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "イラスト",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "04aac3724792",
+    "title": "株式会社MAIA",
+    "url": "https://maia.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/c1xw9mp5e03j-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "BtoBコーポレートサイト",
+      "デザイン･制作･開発会社",
+      "広告代理店",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "ロゴデザイン"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "0e81d2cd08a1",
+    "title": "スマホをかざすだけの デジタル名刺 「プレーリーカード」",
+    "url": "https://prairie.cards/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qw5nsb27ixho-1600x1200.webp",
+    "source": "pickup",
+    "category": [
+      "プロダクトサイト",
+      "ECサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "イラスト",
+      "動画･映像",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f53a9f9b6894",
+    "title": "NTT-ME RECRUITING",
+    "url": "https://www.ntt-me.co.jp/recruit/new-grad/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2bwohl5kv7z4-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "イラスト",
+      "写真･フォトディレクション",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "7b456575d714",
+    "title": "kaonavi Town｜3DCGによる未来の街を体験",
+    "url": "https://town.kaonavi.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/0zp9y8t5rsbu-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5519eddf4c70",
+    "title": "採用サイト | ダイナミックマッププラットフォーム株式会社",
+    "url": "https://www.dynamic-maps.co.jp/recruit/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/m7w02vgpj9br-2800x2100.webp",
+    "source": "pickup",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "写真･フォトディレクション",
+      "動画･映像",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6113355de508",
+    "title": "SHIBUYA MABLs｜渋谷マブルス",
+    "url": "https://mabls.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/hlo5z92yn3fj-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "モチーフ 円•曲線",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "91f81ec18930",
+    "title": "TALENT LIFE(タレントライフ) | 多才で多彩な仲間とともに才能を見つけよう",
+    "url": "https://talent-life.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/iv8wm4df065b-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "UI フラット",
+      "イラスト",
+      "スクロールエフェクト",
+      "モチーフ 円•曲線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "a3b616b1d7be",
+    "title": "MITUS - EV充電器シリーズ | 新電元工業株式会社- Shindengen",
+    "url": "https://www.shindengen.co.jp/mitus/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wmo2ty6gq7ch-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "UI フラット",
+      "スクロールエフェクト",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ccab4bd235b5",
+    "title": "GATARI Inc.｜今までにないエンターテイメントから未来のインフラを作る",
+    "url": "https://gatari.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/r957yb80qjad-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "ジオラマ",
+      "動画･映像",
+      "3Dアニメーション･3Dモデル",
+      "イラスト",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "576caf7b723f",
+    "title": "UNMUTE",
+    "url": "https://unmt.dev/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/hiq0owxk4a16-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "1497c178370e",
+    "title": "North to South ー日本中の自然と暮らそう｜SANU 2nd Home",
+    "url": "https://lp.sa-nu.com/northtosouth",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2p7ews58qxh4-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "ホテル･旅館",
+      "建築･建設･不動産･家",
+      "housing"
+    ],
+    "taste": [
+      "パララックス",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9160f33e97bb",
+    "title": "ROOV - 住空間コミュニケーション・プラットフォーム",
+    "url": "https://styleport.co.jp/roov/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/16ng2juytfdb-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "c5cbb1e6aaf2",
+    "title": "kaonavi universe｜カオナビの個性が集う場所",
+    "url": "https://universe.kaonavi.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qlwsd24c7xkp-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "イラスト",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "1349cb70f58e",
+    "title": "動画、売るなら PLAY VIDEO STORES",
+    "url": "https://stores.play.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/u0hfwex91dlc-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "テレビ･映画･アニメ"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "UI フラット",
+      "タイポグラフィー･文字",
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8a4881679560",
+    "title": "HPC SYSTEMS Inc.",
+    "url": "https://global.hpc.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/70uqwv4hs6f1-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "804248b60aa9",
+    "title": "video plant",
+    "url": "https://www.videoplant.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/4lw6o57d18rp-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "パララックス",
+      "モチーフ 円•曲線",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3e773b5f4979",
+    "title": "RCIエージェンシー | コンサルティング・システム開発／プラットフォーム",
+    "url": "https://rci-a.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/drc8u3ew4lq7-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "UI ニューモーフィズム",
+      "スクロールエフェクト",
+      "モチーフ 円•曲線",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "effd3566d20d",
+    "title": "Waboku: YOKAI'S RECORD | PSY-CLONE",
+    "url": "https://www.psy-clone.jp/entrance/waboku",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/01e24hjlvxg8-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "アート･芸術",
+      "NFTプロジェクト"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8809ef49b8d2",
+    "title": "Crezit Holdings株式会社 - 信用を最適化して、人の可能性を解き放つ。",
+    "url": "https://crezit-holdings.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/st8zjlkpnhw6-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9d0cf04e18d5",
+    "title": "D-EXPERIENCE DESIGN SYSTEM モビリティから、社会をデザインする｜DENSO - 株式会社デンソー",
+    "url": "https://ux.system.denso.info/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/5x73m1eqdaf9-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6e671e76a7ef",
+    "title": "GeeXPlus｜海外クリエイターを抱えるマネジメント事務所兼グローバルメディア企業",
+    "url": "https://www.geexplus.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/9aw36vx05jpg-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "イラスト",
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "0489e3737234",
+    "title": "Pilot.Auto",
+    "url": "https://pilot.auto/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2ib7ah1c8jkq-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "553dbf88fc79",
+    "title": "Web.Auto",
+    "url": "https://web.auto/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vle350isxwdk-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "プロダクトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "226f8d837c0a",
+    "title": "ASOBISYSTEM Co., Ltd. | アソビシステム株式会社",
+    "url": "https://asobisystem.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/n58violtb7p6-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "モチーフ 斜め",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ecedfae2db45",
+    "title": "GOOD NEWS | 那須町に持続可能なまちが誕生！",
+    "url": "https://gooooodnews.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qne376cg9wfy-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "地方自治体･世界･地域"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3600eaab65c9",
+    "title": "HELLO MOBILITY - 電気で動くシェアモビリティ",
+    "url": "https://www.hellomobility.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zgn08i36uvrp-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "車･バイク･自転車"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e3bc809d5f64",
+    "title": "KUBOTA FUTURE CUBE | 株式会社クボタ",
+    "url": "https://www.kubota.co.jp/futurecube/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/k3augibns47p-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "特設サイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3e3475a388ae",
+    "title": "PARKS MANAGEMENT パークスマネージメント",
+    "url": "https://parks-tokyo.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/h81zvkrgjlep-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "2a87612e82dc",
+    "title": "AI model",
+    "url": "https://www.ai-model.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/z1duyn3ces84-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "HR･タレントマネジメント"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ab3a4ed6abc3",
+    "title": "インフルエンサーのお仕事管理とマイページ作成ツール | QUANT(クアント)",
+    "url": "https://pf.quant.page/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qvidm3y9ecz0-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "bdb8e3467ab7",
+    "title": "hacomono｜ウェルネス領域の店舗を変える会員管理・予約・決済システム。",
+    "url": "https://www.hacomono.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/02w8s91kzfby-2830x2100.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "UI フラット",
+      "アイコン･ピクトグラム",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "9a9b54452fba",
+    "title": "未来を支えるセキュアな国産ドローン「蒼天-SOTEN」",
+    "url": "https://www.acsl.co.jp/drone-soten/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/lqde5t43oy8v-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "プロダクトサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5482fe933c0e",
+    "title": "健腸ナビ",
+    "url": "https://kenchonavi.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/m8a6eq5zbsik-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "学校･教育･医療･福祉"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "イラスト",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "1fc4e987ac53",
+    "title": "MSI－マッチメーカー",
+    "url": "https://matchmaker.msi.com/ja",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/dl25awft9vkc-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "モチーフ 幾何学",
+      "ゲーミフィケーション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "c0bdf488d5b9",
+    "title": "cocktail graphy (カクテルグラフィー) | オルビスパーソナライズスキンケア",
+    "url": "https://www.orbis.co.jp/cocktailgraphy/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/z59e47hcbdvm-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "プロダクトサイト",
+      "IT･コンピューター･テクノロジー",
+      "生活用品･物販"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8bfb22490312",
+    "title": "【 10周年 】Chatworkは10周年を迎えました",
+    "url": "https://lp.chatwork.com/10chatwork/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/5ekr3q7g90pv-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "特設サイト"
+    ],
+    "taste": [
+      "UI フラット",
+      "タイポグラフィー･文字",
+      "モチーフ 幾何学",
+      "モチーフ 斜め",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "c7b70aa03f03",
+    "title": "ジーエステート | いい家×いい笑顔『IEGAO』でマイホームで暮らすよろこびを",
+    "url": "https://g-estate.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ehdk03lms4in-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoCコーポレートサイト",
+      "IT･コンピューター･テクノロジー",
+      "建築･建設･不動産･家",
+      "housing"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3763d82e80b0",
+    "title": "どこでも待合室 | 待合室の3密回避アプリ",
+    "url": "https://dokodemo.app/ja/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/k23biaqhtuvf-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "UI フラット",
+      "アイコン･ピクトグラム",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6317a233daf4",
+    "title": "VC Swipe - The future of fundraising",
+    "url": "https://www.vcswipe.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/z6tq14j7husd-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6c7fcdb65196",
+    "title": "CASE STUDY 音楽ユニット『ツユ』×映像制作チーム『Hurray!』",
+    "url": "https://www.mouse-jp.co.jp/creator/ss/daiv/case_study/tuyu.html",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/0rnxw59z38l6-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "オウンドメディアサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "UI フラット",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "4598265e43a4",
+    "title": "Eight 8/8/8th Anniversary",
+    "url": "https://materials.8card.net/product/888/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/u4rfcswx3vot-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "特設サイト"
+    ],
+    "taste": [
+      "UI スキュアモーフィック",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "73d76ea130c4",
+    "title": "buddies(バディーズ) │ ワークアウトで仲間とつながるオンラインフィットネス。",
+    "url": "https://www.buddiesapp.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/leanu4ft0y3q-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "スポーツ･アウトドア"
+    ],
+    "taste": [
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "bc7499aaf8f8",
+    "title": "Re-Frame",
+    "url": "https://re-frame.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kascgtim3q0o-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "その他"
+    ],
+    "taste": [
+      "イラスト",
+      "パララックス",
+      "モチーフ 斜め"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "2e2cc50b6161",
+    "title": "InTrip 禅・メディテーションアプリ",
+    "url": "https://in-trip.net/top/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/cgpqa32k8m1i-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "UI フラット",
+      "UI 手描き･ラフ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "4dc110cf2a69",
+    "title": "メルカリ | メゾンメルカリ",
+    "url": "https://maison.mercari.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/v4nozfxmhik5-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "ジオラマ",
+      "スクロールエフェクト",
+      "UI フラット",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "54ac6c156b92",
+    "title": "Hubble | 契約書の管理・共有をスマートにするソフトウェア",
+    "url": "https://hubble-docs.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/318n4ycpfksu-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム",
+      "モチーフ 線",
+      "スクロールエフェクト",
+      "UI フラット",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "83762b0c41b5",
+    "title": "Pioneer – Corn. Revolutionized.",
+    "url": "https://go.pioneer.com/cornrevolution#",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/dz8lhq3g7x2n-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー",
+      "飲料･食品･メーカー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "タイポグラフィー･文字",
+      "パララックス",
+      "モチーフ 斜め"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b9026ebb1c7e",
+    "title": "emol work (エモルワーク)",
+    "url": "https://emol.work/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/8m7ydcfrok9e-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "UI 手描き･ラフ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e713864f14a4",
+    "title": "Zenly",
+    "url": "https://zen.ly/ja",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/1rfdpsg8hkmu-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "グラフィカル･コラージュ",
+      "スクロールエフェクト",
+      "モチーフ 斜め"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8fa1216c1636",
+    "title": "PLATFORM(プラットフォーム) | モバイルオーダー運用ソリューション",
+    "url": "https://pltfrm.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/umoh07621vc4-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ad91fd253d6e",
+    "title": "HELLO CYCLING　-どこでも借りられて好きな場所で返せる自転車シェア",
+    "url": "https://www.hellocycling.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/dbt4oz9qhknu-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "車･バイク･自転車"
+    ],
+    "taste": [
+      "イラスト",
+      "UI フラット",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "06bd7add3d2f",
+    "title": "Get – High-tech bone conduction wearable",
+    "url": "https://www.getwearable.net/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/x6hyvomp89zs-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "UI フラット",
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b23f8ad547f6",
+    "title": "Blue Canyon Technologies",
+    "url": "https://bluecanyontech.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/foskqa3vbr61-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー",
+      "その他"
+    ],
+    "taste": [
+      "モチーフ 線",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "46928f23c026",
+    "title": "HELLO SCOOTER - どこでも借りられて好きな場所で返せるシェアバイク",
+    "url": "https://www.helloscooter.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/uhsm9g410oq7-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "車･バイク･自転車"
+    ],
+    "taste": [
+      "UI フラット",
+      "モチーフ 斜め",
+      "スクロールエフェクト",
+      "イラスト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "47d2e6d4054b",
+    "title": "esports PLAYER/eスポーツ プレイヤー Ceros｜G-Tune ゲーマーのためのゲーミングPC",
+    "url": "https://www.g-tune.jp/ss/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vglhsbc8n94w-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "オウンドメディアサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "動画･映像",
+      "グリッドデザイン",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "a269656208b5",
+    "title": "Future Blue Sky",
+    "url": "http://www.aero.jaxa.jp/eng/futurebluesky/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/fk6g314mc90j-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "UI フラット",
+      "スクロールエフェクト",
+      "イラスト",
+      "アイコン･ピクトグラム"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "cd3ba59b4784",
+    "title": "X – The Moonshot Factory",
+    "url": "https://x.company/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wo7hrlev5d9f-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グリッドデザイン",
+      "UI フラット",
+      "パララックス",
+      "タイポグラフィー･文字",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "959e2af0974d",
+    "title": "「DAIV」すべてのクリエイターに送る究極のPC",
+    "url": "https://www.mouse-jp.co.jp/creator/ss/daiv/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/05ecgv8ahwjl-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5f3323120bc1",
+    "title": "Mogney | A new generation of payments",
+    "url": "https://mogney.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/micvxd2rt09j-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "アイコン･ピクトグラム",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "bb23098ff792",
+    "title": "Fichvita Ambient interface,beside you.",
+    "url": "https://fichvita.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/85redspwb4u3-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "アイコン･ピクトグラム",
+      "イラスト",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "4739af3a1772",
+    "title": "株式会社 DK-Power | マイクロ水力発電について",
+    "url": "http://www.dk-power.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/cuowyxij8rpg-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "SDGs･NPO･自治体",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム",
+      "イラスト",
+      "スクロールエフェクト",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6427c38ffa3f",
+    "title": "マウスコンピューターのある生活",
+    "url": "https://www.mouse-jp.co.jp/abest/commentary/mouseseikatsu/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/db5k3se8wj0u-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "モチーフ 線",
+      "モチーフ 幾何学",
+      "スクロールエフェクト",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "c29b4a879bfb",
+    "title": "BearTail Inc.（株式会社ベアテイル）｜「無駄な時間を減らして豊かな時間を創る」 Time Hack Company",
+    "url": "https://beartail.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/39plg5cvm7x0-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "UI フラット",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6ebdde4defed",
+    "title": "Coding is fun!",
+    "url": "https://kodingergoy.arkivert.no/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/iuq5c14h3tmr-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "IT･コンピューター･テクノロジー",
+      "ゲーム•Eスポーツ"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "アイコン･ピクトグラム",
+      "イラスト",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8080518d3316",
+    "title": "株式会社レトリバ | Retrieva",
+    "url": "https://retrieva.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qyvnd3j7m91r-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "BtoBコーポレートサイト",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "写真･フォトディレクション",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "dbc27a3310a3",
+    "title": "One World One Face",
+    "url": "https://oneworldoneface.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/r9y5dx1gzip0-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "地方自治体･世界･地域"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b365485c9d34",
+    "title": "Yung Series Sneakers | adidas US",
+    "url": "https://www.adidas.com/us/yung",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/u8i7tc15ylhs-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー",
+      "スポーツ･アウトドア"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "ピクセルアート"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8c0329adc29f",
+    "title": "Welcome | Magic Leap",
+    "url": "https://www.magicleap.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/1wvs94r5zdg7-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3f0964a29ef1",
+    "title": "Webflow Ecommerce: Visually design, build, and grow online stores",
+    "url": "https://webflow.com/ecommerce",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/j76buriog5a0-2048x1536.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "スクロールエフェクト",
+      "パララックス",
+      "UI フラット",
+      "モチーフ 斜め"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6689f58e035e",
+    "title": "PracticalVR",
+    "url": "http://experience.practicalvr.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/mfc3xrovk7gb-1280x958.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "パララックス",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b51cfd18b3a6",
+    "title": "ELI | ウェアラブル英会話教師",
+    "url": "http://eli-talk.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/927inepaj0s3-1280x958.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "1af0e2f0171c",
+    "title": "monami｜ロボットをフレンドリーにするソフトウェア",
+    "url": "http://www.dnp.co.jp/AI/products/monami/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/g359zbvopd0m-1280x958.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "UI フラット",
+      "モチーフ 斜め",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "af8883527c8c",
+    "title": "Plume, more WiFi",
+    "url": "https://www.plumewifi.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wdpg1tm0ok6b-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "6166b05854f0",
+    "title": "вЂUI Presentation KitвЂ™ by Ruslan Latypov | Readymag",
+    "url": "http://lstore.graphics/uipk/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/x3h6iqzotrl7-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e4e8137eabc0",
+    "title": "BIRD by MUV interactive",
+    "url": "https://www.muvinteractive.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/9kp5isvu0zj4-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "UI フラット",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "328f76d0df39",
+    "title": "Technics 50th Anniversary",
+    "url": "http://www.technics.com/global/50th-anniversary/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2pc3bdfglux6-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "タイポグラフィー･文字"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "a6e66fa43ef0",
+    "title": "Do you know YouTube from A to Z?",
+    "url": "https://youtube10.withgoogle.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/j2byv6gd79kr-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "ポリゴン･ローポリ",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f4f01c69de87",
+    "title": "The Divergent Series | Insurgent | NOW PLAYING",
+    "url": "http://www.thedivergentseries.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vmyq0rc4ekzh-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "モチーフ 幾何学"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "556dd6db3410",
+    "title": "Oculus - Oculus VR",
+    "url": "https://www.oculus.com/en-us/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/givxu9nrhmkw-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "パララックス",
+      "写真･フォトディレクション"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "43f9d86bf532",
+    "title": "WAY TO GO",
+    "url": "http://a-way-to-go.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/12mv8jzfakrq-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "イラスト",
+      "グラフィカル･コラージュ",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e367fdbf4edd",
+    "title": "Build a Website - Squarespace",
+    "url": "http://squarespace.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/s5ut39fzk0lr-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "パララックス"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "233e9dc362a3",
+    "title": "NURO光 for マンション　みんなの応募状況",
+    "url": "https://nuro.jp/mansion/status/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/gswkvi7f6tl9-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー",
+      "housing"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "ea0e3a4b62c6",
+    "title": "Big Web Quiz for Chromecast",
+    "url": "http://chrome.com/bigwebquiz",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/403nu7wovc8p-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f8eeaed2d830",
+    "title": "SANTA CLOSE TO YOU | SHIFTBRAIN × LIG",
+    "url": "http://sblig.christmas/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/us6ciq0n4rlb-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト",
+      "その他"
+    ],
+    "taste": [
+      "イラスト",
+      "スクロールエフェクト",
+      "モチーフ 線"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "a989f6c4d431",
+    "title": "KUROKO™ PPTパワポ資料作成サービス ｜匠の技を提供する黒子シリーズ",
+    "url": "http://ppt.kuroko.me/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/pdwbf57lg1y9-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "Webアプリ･SaaS･サービスサイト"
+    ],
+    "taste": [
+      "パララックス",
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e8375e2f24fe",
+    "title": "Мобильный интернет от Билайн",
+    "url": "http://www.freeger.com/projects/beeline4g/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ug8ys1kt6pn7-1280x960.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "アイコン･ピクトグラム",
+      "タイポグラフィー･文字",
+      "パララックス",
+      "UI フラット"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "8ab29cc126b6",
+    "title": "Cube Slam",
+    "url": "https://www.cubeslam.com/llffru",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/p8dgzqohximt-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "ゲーム•Eスポーツ",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "ポリゴン･ローポリ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "b9588cf8e553",
+    "title": "Apple - Thirty Years of Mac",
+    "url": "http://www.apple.com/30-years/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/csixvfe40w3a-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム",
+      "スクロールエフェクト",
+      "タイポグラフィー･文字"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "59c24240ef49",
+    "title": "Mooncamp - unearthly Basecamp client for iPhone",
+    "url": "http://www.mooncampapp.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zigfb4lydout-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "タイポグラフィー･文字",
+      "スクロールエフェクト"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "96aa5321aeae",
+    "title": "NURO DEVILMAN",
+    "url": "http://devilman.mount.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/x7jboti1n03f-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "07c7ec383c52",
+    "title": "Orange history",
+    "url": "http://orange.com/sirius/histoire/en/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/yuk92tlawe1f-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5d81bcdf8a40",
+    "title": "Numbrs - One app. Every bank.",
+    "url": "https://www.numbrs.com/uk",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/hy5q9g3uew10-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "プロダクトサイト",
+      "カメラ･モバイル･家電",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5ca9202f5f15",
+    "title": "Chrome World Wide Maze",
+    "url": "http://chrome.com/maze/227550",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/btxd6w2ju8qm-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "モバイルサイト",
+      "ゲーム•Eスポーツ",
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル",
+      "ポリゴン･ローポリ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f64fa309beaa",
+    "title": "PRIVIO - 「ふつう」が、変わるぞ。",
+    "url": "http://www.brother.co.jp/product/printer/sp/slideshow/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/tn3am2l7ijpf-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "655a27ae816d",
+    "title": "Intel® Me The Musical",
+    "url": "http://www.intel.com/musical/r/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/pj1z6osea0yi-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "02841d687dcf",
+    "title": "Web Lab",
+    "url": "http://www.chromeweblab.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/jz6bvxifhyn5-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "93ed31b372c3",
+    "title": "Sony make.believe",
+    "url": "http://experience.sony.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/4cm31s85tjgz-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "d1e2461a6fe9",
+    "title": "Home | Project Re: Brief by Google",
+    "url": "http://www.projectrebrief.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/l613dgi90o2h-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー",
+      "housing"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "5205b1f0e536",
+    "title": "Intel&#174; Ultrabook&#153; POP-UP THEATER",
+    "url": "http://popuptheater.intel.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/4radzupi96lk-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "3b02599bd2b8",
+    "title": "GALAXY X'MAS HUGS",
+    "url": "http://xmas-hugs.net/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/03lnptgxq5bj-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "a3135f1a609f",
+    "title": "Bamboo Pop",
+    "url": "http://bamboo.wacom.jp/bamboopop/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/23n6ty48avds-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "c35578d78196",
+    "title": "All around Z. New VAIO Z Series Zの先は、未来だ。| Zシリーズ| 製品情報| 個人向け| VAIOパーソナルコンピューター| ソニー",
+    "url": "http://www.sony.jp/vaio/360z/main.html?sound=on",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/670doav2pkg5-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "f4d4b7585723",
+    "title": "ウイルスバスター2012 クラウド｜クラウド少女",
+    "url": "http://syojo.try-cloud.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/avgqctufen5l-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "動画･映像"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "40b38affa81e",
+    "title": "インテル | Intel Tweet City",
+    "url": "http://www.intel.com/jp/tomorrow/city/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ui6nxwgheb0l-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "ジオラマ",
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "7319afb78deb",
+    "title": "Intel® The Museum of Me",
+    "url": "http://www.intel.com/museumofme/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/qfeutj5rvwco-1024x768.webp",
+    "source": "pickup",
+    "category": [
+      "IT･コンピューター･テクノロジー"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:12:09.275Z"
+  },
+  {
+    "id": "e2030e11fbe9",
+    "title": "Treasures of Japan",
+    "url": "https://treasuresofjapan.weekendmaxmara.com/en",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/07/66a7a6b6a9ab7048894880.png",
+    "source": "awwwards",
+    "category": [
+      "Fashion",
+      "Games & Entertainment",
+      "Web & Interactive",
+      "Colorful",
+      "Minimal",
+      "Responsive",
+      "3D",
+      "Gestures / Interaction",
+      "Filters and Effects"
+    ],
+    "taste": [],
+    "date": "2024-10",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:19:30.914Z"
+  },
+  {
+    "id": "51697ffe4d9a",
+    "title": "Japan Past & Present",
+    "url": "https://www.japanpastandpresent.org",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/08/66c317d788c83898627813.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Culture & Education",
+      "Clean",
+      "Responsive Design",
+      "Typography",
+      "Storytelling",
+      "UI design",
+      "Contentful"
+    ],
+    "taste": [],
+    "date": "2024-08",
+    "starred": false,
+    "firstSeen": "2026-07-15T14:19:30.914Z"
   }
 ]
