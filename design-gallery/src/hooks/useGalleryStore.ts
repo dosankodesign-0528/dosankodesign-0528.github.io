@@ -11,6 +11,11 @@ import {
 import { allSites, dateRange } from "@/data/load-sites";
 import { normalizeUrl } from "@/lib/eagle";
 
+// id → 正規化URL の静的対応表（データは実行中に変わらないのでモジュールスコープで一度だけ）。
+// ✓の保存キー（正規化URL）への変換と、Eagle重複判定の両方で使う。
+const urlById = new Map<string, string>();
+for (const s of allSites) urlById.set(s.id, normalizeUrl(s.url));
+
 // 「確認済み」操作などでカードがフィルター外に消える時のレイアウトシフトを
 // View Transitions API でなめらかに見せるためのラッパー。
 // - 未対応ブラウザ(ユーザー設定 prefers-reduced-motion 含む) では普通に即時更新。
@@ -47,6 +52,12 @@ function withViewTransition(fn: () => void) {
 // 描画は Gallery 側のスクロール遅延読み込みで間引かれるので件数が増えても重くならない。
 
 const STARRED_IDS_KEY = "design-gallery:starred-ids";
+// 2026-07-18 移行: ✓の真実の源を「正規化URL集合」に変更した新キー。
+// 旧キー(STARRED_IDS_KEY)は id=md5(source:url) だったため、同じサイトが
+// ソースを変えて再登場（例: sankou→pickup で復活）すると別IDになり✓が
+// 外れていた。URLキーならソースが変わっても✓が引き継がれる。
+// 旧キーはバックアップとして消さずに残す。
+const STARRED_URLS_KEY = "design-gallery:starred-urls";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
 const HIDE_EAGLE_KEY = "design-gallery:hide-eagle-dupes";
@@ -149,15 +160,25 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   }, [hideEagleDuplicates, persistLoaded]);
 
   // 確認済み(star)状態の永続化
-  // - 真実の源は localStorage の ID 集合。scraped-sites.json 側の starred は常に false なので、
-  //   ここでユーザー操作の結果だけを保持すれば良い。
-  // - ブラウザを閉じても再訪時に復元される。
+  // - 真実の源は localStorage の「正規化URL集合」（2026-07-18 に ID集合から移行）。
+  //   scraped-sites.json 側の starred は常に false なので、ユーザー操作の結果だけを保持する。
+  // - 変数名は歴史的経緯で starredIds のままだが、中身は正規化URL。
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [starredLoaded, setStarredLoaded] = useState(false);
 
-  // マウント時に localStorage から starred ID を読み込む
+  // マウント時に localStorage から読み込む（旧ID形式が残っていればURL形式へ移行）
   useEffect(() => {
     try {
+      // 新形式（正規化URL集合）があればそれが真実の源
+      const rawUrls = window.localStorage.getItem(STARRED_URLS_KEY);
+      if (rawUrls) {
+        const arr = JSON.parse(rawUrls);
+        if (Array.isArray(arr))
+          setStarredIds(new Set(arr.filter((x) => typeof x === "string")));
+        setStarredLoaded(true);
+        return;
+      }
+
       // 一度だけのマイグレーション: スクレイプ範囲を絞り直したので既存starredを破棄
       const migrated = window.localStorage.getItem(STARRED_MIGRATION_KEY);
       if (migrated !== "done") {
@@ -167,11 +188,39 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
         return;
       }
 
+      // --- 旧ID形式 → URL形式への移行 ---
       const raw = window.localStorage.getItem(STARRED_IDS_KEY);
-      if (raw) {
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) setStarredIds(new Set(arr.filter((x) => typeof x === "string")));
+      const ids: string[] = raw
+        ? (JSON.parse(raw) as unknown[]).filter((x): x is string => typeof x === "string")
+        : [];
+      const urls = new Set<string>();
+      const orphans: string[] = [];
+      for (const id of ids) {
+        const u = urlById.get(id);
+        if (u) urls.add(u);
+        else orphans.push(id);
       }
+      setStarredIds(urls);
+      setStarredLoaded(true); // これで永続化effectが新キーへ保存する
+
+      // 現データに存在しないID（過去のスクレイプ整理で消えた項目・ソース変更で別ID化した項目）は、
+      // ビルド時に Git 履歴から生成した対応表で可能な限りURLへ解決して救済する。
+      if (orphans.length > 0) {
+        fetch("/starred-id-url-map.json")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((map: Record<string, string> | null) => {
+            if (!map) return;
+            const extra = orphans
+              .map((id) => map[id])
+              .filter((u): u is string => typeof u === "string");
+            if (extra.length === 0) return;
+            setStarredIds((prev) => new Set([...prev, ...extra]));
+          })
+          .catch(() => {
+            // 対応表が無い/取れない場合は現データ分だけで移行完了とする
+          });
+      }
+      return;
     } catch {
       // parse失敗時は空のままで継続
     }
@@ -233,35 +282,31 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
     setHiddenIds(new Set());
   }, []);
 
-  // starredIds が変化したら localStorage に書き出す
+  // starredIds が変化したら localStorage（新キー・URL集合）に書き出す
   // (初回ロード前のsaveは避けたいので starredLoaded を条件に)
   useEffect(() => {
     if (!starredLoaded) return;
     try {
       window.localStorage.setItem(
-        STARRED_IDS_KEY,
+        STARRED_URLS_KEY,
         JSON.stringify([...starredIds])
       );
     } catch {}
   }, [starredIds, starredLoaded]);
 
-  // allSites に starredIds を重ねた実体
+  // allSites に ✓（正規化URL集合）を重ねた実体
   const sites = useMemo<SiteEntry[]>(() => {
     if (starredIds.size === 0) return allSites;
     return allSites.map((s) =>
-      starredIds.has(s.id) ? { ...s, starred: true } : s
+      starredIds.has(urlById.get(s.id) ?? "") ? { ...s, starred: true } : s
     );
   }, [starredIds]);
 
   // Eagle重複は常に非表示。以前はトグルだったが、ユーザー要望で「そもそも隠す」方針に変更。
   // 透明性のため、非表示になっている件数は EagleExcludedBar / EagleExcludedModal で見られる。
 
-  // サイトごとの正規化URLを一度だけ計算
-  const normalizedUrlBySite = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const s of sites) m.set(s.id, normalizeUrl(s.url));
-    return m;
-  }, [sites]);
+  // サイトごとの正規化URL（モジュールスコープの静的対応表をそのまま使う）
+  const normalizedUrlBySite = urlById;
 
   // 表示母集団（プール）。
   // 生きてて非表示じゃないサイトを全部、新着順（日付の降順）で並べただけ。
@@ -409,11 +454,13 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   // 「未確認」モードのときはカードがその場で消えるので、View Transitions API で
   // 消えるカードはフェード、残るカードは新しい位置へ滑らかに動かす。
   const toggleStar = useCallback((id: string) => {
+    const key = urlById.get(id);
+    if (!key) return;
     withViewTransition(() => {
       setStarredIds((prev) => {
         const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
         return next;
       });
     });
@@ -421,13 +468,16 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
 
   // 複数まとめて starred を一括セット
   const setStarredMany = useCallback((ids: string[], starred: boolean) => {
+    const keys = ids
+      .map((id) => urlById.get(id))
+      .filter((u): u is string => typeof u === "string");
     withViewTransition(() => {
       setStarredIds((prev) => {
         const next = new Set(prev);
         if (starred) {
-          ids.forEach((id) => next.add(id));
+          keys.forEach((k) => next.add(k));
         } else {
-          ids.forEach((id) => next.delete(id));
+          keys.forEach((k) => next.delete(k));
         }
         return next;
       });
