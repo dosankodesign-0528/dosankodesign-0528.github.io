@@ -58,6 +58,9 @@ const STARRED_IDS_KEY = "design-gallery:starred-ids";
 // 外れていた。URLキーならソースが変わっても✓が引き継がれる。
 // 旧キーはバックアップとして消さずに残す。
 const STARRED_URLS_KEY = "design-gallery:starred-urls";
+// 2026-07-18: normalizeUrl の仕様強化（言語セグメント /ja 等・モバイル sp./m. の統合）に
+// 合わせて、保存済み✓キーを新ルールで再正規化する一度きりのマイグレーションゲート。
+const STARRED_RENORM_KEY = "design-gallery:starred-renorm:2026-07-18";
 const FILTER_KEY = "design-gallery:filter";
 const COLUMNS_KEY = "design-gallery:columns";
 const HIDE_EAGLE_KEY = "design-gallery:hide-eagle-dupes";
@@ -173,11 +176,21 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       const rawUrls = window.localStorage.getItem(STARRED_URLS_KEY);
       if (rawUrls) {
         const arr = JSON.parse(rawUrls);
-        if (Array.isArray(arr))
-          setStarredIds(new Set(arr.filter((x) => typeof x === "string")));
+        let urls = Array.isArray(arr)
+          ? arr.filter((x): x is string => typeof x === "string")
+          : [];
+        // normalizeUrl の仕様が強化された場合、保存済みキーを新ルールで再正規化する
+        //（例: "anri.vc/ja" → "anri.vc"）。一度やれば以降はゲートでスキップ。
+        if (window.localStorage.getItem(STARRED_RENORM_KEY) !== "done") {
+          urls = urls.map((u) => normalizeUrl(`https://${u}`) || u);
+          window.localStorage.setItem(STARRED_RENORM_KEY, "done");
+        }
+        setStarredIds(new Set(urls));
         setStarredLoaded(true);
         return;
       }
+      // 旧ID形式から移行する場合は再正規化不要（変換時に新ルールで正規化されるため）
+      window.localStorage.setItem(STARRED_RENORM_KEY, "done");
 
       // 一度だけのマイグレーション: スクレイプ範囲を絞り直したので既存starredを破棄
       const migrated = window.localStorage.getItem(STARRED_MIGRATION_KEY);
@@ -212,7 +225,9 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
             if (!map) return;
             const extra = orphans
               .map((id) => map[id])
-              .filter((u): u is string => typeof u === "string");
+              .filter((u): u is string => typeof u === "string")
+              // 対応表の値が古い正規化ルールで作られていても、新ルールに揃える
+              .map((u) => normalizeUrl(`https://${u}`) || u);
             if (extra.length === 0) return;
             setStarredIds((prev) => new Set([...prev, ...extra]));
           })

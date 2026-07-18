@@ -58,6 +58,10 @@ const TRACKING_PARAMS = new Set([
   "mc_cid", "mc_eid",
   // ロード状態系（ページ機能と無関係）
   "reloaded",
+  // 言語切替クエリ（?lang=ja と素のURLは同一サイト扱い。パスの /ja 統合と同方針）
+  "lang", "locale", "hl",
+  // CDN/ボット対策のリトライ用ゴミ（?ckattempt=1 で別エントリ化する重複が実在した）
+  "ckattempt",
 ]);
 
 export function normalizeUrl(raw: string): string {
@@ -65,13 +69,19 @@ export function normalizeUrl(raw: string): string {
   if (!trimmed) return "";
   try {
     const u = new URL(trimmed);
-    const host = u.host.toLowerCase().replace(/^www\./, "");
+    // ホストの正規化: www に加えてモバイル用サブドメイン(sp/m)も剥がす。
+    // 2026-07-18: sp.example.com と example.com が別エントリになる重複が実在したため。
+    const host = u.host.toLowerCase().replace(/^(www|sp|m)\./, "");
 
     // pathname の正規化:
     //   - 末尾スラッシュ除去
     //   - 暗黙インデックスファイル除去（"/index.html" → ""）
+    //   - 先頭の言語セグメント除去（"/ja/…" と "/…" は同一サイト扱い。
+    //     2026-07-18: anri.vc/ja vs anri.vc のような言語版重複が実在したため）
     let pathname = u.pathname.replace(/\/+$/, "");
     pathname = pathname.replace(/\/(index|default)\.(html?|php|asp|aspx|jsp)$/i, "");
+    pathname = pathname.replace(/^\/(ja|jp|en|ja-jp|en-us|ja_jp|en_us|zh|zh-cn|ko)(?=\/|$)/i, "");
+    pathname = pathname.replace(/\/+$/, "");
 
     // クエリの正規化:
     //   - トラッキング系を除去
