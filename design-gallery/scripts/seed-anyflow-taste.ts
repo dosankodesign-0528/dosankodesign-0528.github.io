@@ -46,7 +46,9 @@ const SEED_PAGES = parseInt(process.env.SEED_PAGES || "8", 10);
 const SEED_FILTER = process.env.SEED_FILTER ? new RegExp(process.env.SEED_FILTER, "i") : null;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
-const CUTOFF = "2024-01"; // 他ソースと同じ下限
+// 採用する掲載月の下限。既定は他ソースと同じ 2024-01。
+// SEED_CUTOFF=2026-01 のように指定すると「最近のものだけ総ざらい」ができる。
+const CUTOFF = process.env.SEED_CUTOFF || "2024-01";
 
 interface SeedSite {
   id: string;
