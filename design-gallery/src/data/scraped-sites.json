@@ -75260,5 +75260,289 @@
     "date": "2020-09",
     "starred": false,
     "firstSeen": "2026-07-19T10:23:52.143Z"
+  },
+  {
+    "id": "0335d514cf9e",
+    "title": "Shaky Picks",
+    "url": "https://myshaky.com/picks",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/9/18989/1783324693/1364_span4/6a4b47ca713e6shaky-pick1076-672.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Animation",
+      "Experimental",
+      "Fun & Playable"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "631902827c10",
+    "title": "Why Zero",
+    "url": "https://why.zero.university/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/4/19014/1784101672/1364_span4/6a573acddf5fafwa.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Educational",
+      "Experimental",
+      "Promotional"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "875197b2a35e",
+    "title": "[PORTFOLIO]",
+    "url": "https://to-portfolio.com/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/3/18993/1783412891/1364_span4/6a4cb2d38f370basic-visuals.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Architecture & Design",
+      "Experimental",
+      "Personal/Portfolio"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "bc34a3b58822",
+    "title": "Pedro Belleza's personal website",
+    "url": "https://www.pedrobelleza.com/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/8/18998/1783471070/1364_span4/6a4d999d8aaa8pedro-bellezas-website-fwa.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Experimental",
+      "Personal/Portfolio",
+      "Various & Other"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "69d43c2b6572",
+    "title": "Milledollars",
+    "url": "https://milledollars.fr/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/5/19005/1783692803/1364_span4/6a50fdae49ec5fwaprojectthumbnailmd.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Design/Production Studios",
+      "Film/Movies"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "81433d7a85a6",
+    "title": "Reanimated: moshi-moshi",
+    "url": "https://moshi-moshi.alexandrajugovic.com/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/2/18972/1782816524/1364_span4/6a439e516c7a0t.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "AI"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "699df2d4aeeb",
+    "title": "evian Gallery of Youth",
+    "url": "https://celebrating200.evian.com",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/0/19000/1783606081/1364_span4/6a4f9eda8b51e01.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Art, Illustration & Exhibition",
+      "Design/Production Studios",
+      "Food & Drink"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "74c55d6b17dc",
+    "title": "Weekend Max Mara - Pasticcino Bag World Tour: Italian Roots",
+    "url": "https://weekend-mm-2026-pasticcino-bag-master.monogrid.io/en/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/9/18999/1783585076/1364_span4/6a4f564025c1bfwathumbnail.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Fashion",
+      "Fun & Playable",
+      "Music & Sound"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "228e2f702c0b",
+    "title": "OPERATOR",
+    "url": "https://www.fun-and-awe.io/operator",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/6/18996/1783435422/1364_span4/6a4d0e6399292cover.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Design/Production Studios",
+      "Fun & Playable",
+      "Music & Sound"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "db9161dda4ca",
+    "title": "Motiondeep Microsite",
+    "url": "http://www.motiondeep.com",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/0/18990/1783330167/1364_span4/6a4b750166fb7mdshotsthumb.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Animation",
+      "Experimental",
+      "Personal/Portfolio"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "b4a8a47485f7",
+    "title": "The Tie-break",
+    "url": "http://miumiu.com/geored?urlNew=/the-tie-break.html",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/3/18983/1782988838/1364_span4/6a463c0ec1597fwa1076x672.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Fashion",
+      "Fun & Playable",
+      "Game"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "57afab391b32",
+    "title": "NOTHIN'",
+    "url": "http://www.noth.in",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/4/18984/1782995954/1364_span4/6a4656e2ce917ecran-nothin-fwa-cover.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Experimental",
+      "Personal/Portfolio",
+      "AI"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "0074a0ba6999",
+    "title": "Mosby's Files",
+    "url": "https://www.mosbyfiles.com/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/4/18974/1782825961/1364_span4/6a43be9e7e992fwacover.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Animation",
+      "Architecture & Design",
+      "Experimental"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "c218dc116d46",
+    "title": "Race Condition",
+    "url": "https://www.northkingdom.com/case/racecondition",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/9/18979/1782902994/1364_span4/6a44efac39bc6fwacover.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Architecture & Design",
+      "Experimental",
+      "AI"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "9148a6ad6a6d",
+    "title": "MIU MIU - A House that we shaped",
+    "url": "https://immersivebags.miumiu.com/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/0/18980/1782910503/1364_span4/6a450cafc6a72fwa1076x672.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Experimental",
+      "Fashion",
+      "Fun & Playable"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
+  },
+  {
+    "id": "df44eaa634eb",
+    "title": "Cipher",
+    "url": "https://cipher.tv/",
+    "thumbnailUrl": "https://thefwa.com/dyn/resources/Case_Model_Case/thumbnail/9/18969/1782735543/1364_span4/6a426221205defwaprojectthumbnailcipher.png",
+    "source": "pickup",
+    "category": [
+      "FWA",
+      "FOTD",
+      "Design/Production Studios",
+      "Experimental"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-19T10:36:28.897Z"
   }
 ]
