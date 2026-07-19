@@ -94,6 +94,8 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   const { eagleUrls } = options;
   const [filter, setFilter] = useState<FilterState>(initialFilter);
   const [columns, setColumns] = useState(4);
+  // ランダム並びのシード。「ランダム」を選び直すたびに更新され、並びが変わる。
+  const [randomSeed, setRandomSeed] = useState(1);
   // Eagle 重複を隠すかどうか（ユーザー要望で再導入）。
   // デフォルト true = 従来通り非表示。false にすると全部出てくる。
   const [hideEagleDuplicates, setHideEagleDuplicates] = useState(true);
@@ -120,7 +122,12 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
           const adjustedRange: [string, string] = savedRange
             ? [savedRange[0], savedRange[1] < initialFilter.dateRange[1] ? initialFilter.dateRange[1] : savedRange[1]]
             : initialFilter.dateRange;
-          setFilter({ ...initialFilter, ...saved, dateRange: adjustedRange });
+          // pickup ピル廃止(2026-07-19)後に保存済みフィルタへ "pickup" が残っていると
+          // 解除手段が無くなるので、読み込み時に落とす
+          const sources = Array.isArray(saved.sources)
+            ? saved.sources.filter((s: string) => s !== "pickup")
+            : initialFilter.sources;
+          setFilter({ ...initialFilter, ...saved, sources, dateRange: adjustedRange });
         }
       }
     } catch {
@@ -375,6 +382,21 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       return true;
     });
 
+    // ランダム並び: シード付きハッシュで安定シャッフル（同じシードなら同じ並び。
+    // 「ランダム」を選び直すとシードが変わって並び直す）。メディアの偏りも
+    // シャッフルで自然に混ざるので、ラウンドロビンはかけずそのまま返す。
+    if (filter.sortOrder === "random") {
+      const rank = (id: string) => {
+        let h = randomSeed >>> 0;
+        const s = `${randomSeed}:${id}`;
+        for (let i = 0; i < s.length; i++) {
+          h = Math.imul(h ^ s.charCodeAt(i), 2654435761);
+        }
+        return h >>> 0;
+      };
+      return [...filtered].sort((a, b) => rank(a.id) - rank(b.id));
+    }
+
     filtered.sort((a, b) => {
       if (filter.sortOrder === "newest") return b.date.localeCompare(a.date);
       return a.date.localeCompare(b.date);
@@ -397,7 +419,7 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
       idx++;
     }
     return interleaved;
-  }, [pool, filter]);
+  }, [pool, filter, randomSeed]);
 
   // Eagleに含まれていて「本来なら表示されるはず」だったサイト
   const eagleExcludedSites = useMemo<SiteEntry[]>(() => {
@@ -579,6 +601,10 @@ export function useGalleryStore(options: UseGalleryStoreOptions = {}) {
   // フィルター更新ヘルパー
   const updateFilter = useCallback(
     (partial: Partial<FilterState>) => {
+      // ランダム並びを選ぶたびにシャッフルし直す（同じ並びの再表示ではなく毎回変える）
+      if (partial.sortOrder === "random") {
+        setRandomSeed(Date.now());
+      }
       setFilter((prev) => ({ ...prev, ...partial }));
     },
     []

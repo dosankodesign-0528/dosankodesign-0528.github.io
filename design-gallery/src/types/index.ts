@@ -117,7 +117,7 @@ export interface SiteEntry {
 }
 
 /** ソート順 */
-export type SortOrder = "newest" | "oldest";
+export type SortOrder = "newest" | "oldest" | "random";
 
 /** 表示モード（リマインダー的） */
 export type ViewMode = "unchecked" | "all";

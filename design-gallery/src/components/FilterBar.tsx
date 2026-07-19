@@ -27,7 +27,8 @@ const sources: SourceSite[] = [
   "webdesignclip",
   "awwwards",
   "s5style",
-  "pickup",
+  // "pickup" はソースとしては存在するが、ピル（絞り込みボタン）は 2026-07-19 に
+  // ヒデさん指示で非表示化。エントリ自体は「すべて」フィードに流れ続ける。
 ];
 
 export function FilterBar({

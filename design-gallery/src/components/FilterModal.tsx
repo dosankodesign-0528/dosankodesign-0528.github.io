@@ -185,7 +185,7 @@ export function FilterModal({
               並び順
             </h3>
             <div className="flex gap-2">
-              {(["newest", "oldest"] as SortOrder[]).map((order) => {
+              {(["newest", "oldest", "random"] as SortOrder[]).map((order) => {
                 const active = filter.sortOrder === order;
                 return (
                   <button
@@ -197,7 +197,11 @@ export function FilterModal({
                         : "text-text-secondary border-border hover:border-text-primary/50"
                     }`}
                   >
-                    {order === "newest" ? "↓ 新しい順" : "↑ 古い順"}
+                    {order === "newest"
+                      ? "↓ 新しい順"
+                      : order === "oldest"
+                        ? "↑ 古い順"
+                        : "🔀 ランダム"}
                   </button>
                 );
               })}
