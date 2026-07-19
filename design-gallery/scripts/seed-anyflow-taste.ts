@@ -28,7 +28,6 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { normalizeUrl } from "../src/lib/eagle";
-import { tagHousing } from "./housing";
 
 const SEED_TARGET = parseInt(process.env.SEED_TARGET || "200", 10);
 // 海外(awwwards):日本(s5style) の目標比率。SEED_AWWWARDS_SHARE=1 で Awwwards のみ。
@@ -316,7 +315,6 @@ async function main() {
     existing.push({ ...s, firstSeen: now });
     added++;
   }
-  const taggedHousing = tagHousing(existing);
   fs.writeFileSync(dataPath, JSON.stringify(existing, null, 2), "utf-8");
   fs.writeFileSync(
     metaPath,
@@ -325,7 +323,7 @@ async function main() {
   );
 
   console.log(`\n✅ シード完了: +${added} 件（awwwards ${awwwardsNew.length} / s5style ${s5New.length}）`);
-  console.log(`  住宅タグ再付与: ${taggedHousing} 件 / 総 ${existing.length} 件`);
+  console.log(`  総 ${existing.length} 件`);
 }
 
 main().catch((e) => {
