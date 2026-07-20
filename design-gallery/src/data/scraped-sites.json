@@ -21774,6 +21774,22 @@
     "lastCheckedAt": "2026-07-02T06:01:47.680Z"
   },
   {
+    "id": "772e4a99b086",
+    "title": "株式会社シムディレクト",
+    "url": "https://www.symdirect.co.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/07/13-768x576.webp",
+    "source": "muuuuu",
+    "category": [
+      "technology"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-06-30T04:03:48.661Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-07-02T06:03:45.869Z"
+  },
+  {
     "id": "b83422f5ae58",
     "title": "GIZMODO JAPAN",
     "url": "https://www.gizmodo.jp/",
@@ -32986,22 +33002,6 @@
     "firstSeen": "2026-07-02T03:56:18.427Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:03:46.439Z"
-  },
-  {
-    "id": "e586400af55f",
-    "title": "株式会社シムディレクト",
-    "url": "https://www.symdirect.co.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260630_03-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "企業サイト・事務所・ビジネス"
-    ],
-    "taste": [],
-    "date": "2026-06",
-    "starred": false,
-    "firstSeen": "2026-06-30T04:03:48.661Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-07-02T06:03:45.869Z"
   },
   {
     "id": "0bcda1644525",
@@ -52922,14 +52922,14 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69fdd7b38c396881067013.png",
     "source": "awwwards",
     "category": [
-      "Storytelling",
-      "PHP",
-      "React",
       "Technology",
       "Web & Interactive",
       "Clean",
       "Wordpress",
-      "Minimal"
+      "Minimal",
+      "Storytelling",
+      "PHP",
+      "React"
     ],
     "taste": [],
     "date": "2026-05",
@@ -55087,6 +55087,29 @@
     "lastCheckedAt": "2026-07-02T06:09:08.136Z"
   },
   {
+    "id": "3a22dc50393e",
+    "title": "Glitch&Grit",
+    "url": "https://glitchandgrit.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a29dd5a77e7a067789159.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Film & TV",
+      "Portfolio",
+      "Typography",
+      "Video",
+      "Transitions",
+      "Photo & Video",
+      "Footer Design",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-20T03:33:29.704Z"
+  },
+  {
     "id": "06964c92a313",
     "title": "IZANAMI",
     "url": "https://izanami-official.com/",
@@ -55965,6 +55988,21 @@
     "firstSeen": "2026-06-09T15:08:23.132Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:09:15.633Z"
+  },
+  {
+    "id": "c56a3920c9f3",
+    "title": "日本酸素エンジニアリング 採用サイト",
+    "url": "https://nse.jp.nipponsanso.com/recruit-site/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/nvl5dy3q74fj-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "建築･建設･不動産･家"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-07-20T03:33:29.704Z"
   },
   {
     "id": "a185f17d2407",
@@ -67930,25 +67968,6 @@
     "firstSeen": "2026-07-17T07:35:42.225Z"
   },
   {
-    "id": "7990aa93713c",
-    "title": "ラグ専門店 G.E.M",
-    "url": "https://gallery-excellence.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/lghi84fad2q1-1600x1200.webp",
-    "source": "pickup",
-    "category": [
-      "BtoCコーポレートサイト",
-      "BtoBコーポレートサイト",
-      "インテリア･家具･雑貨"
-    ],
-    "taste": [
-      "パララックス",
-      "グリッドデザイン"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T07:35:42.225Z"
-  },
-  {
     "id": "ba307c9d3d8e",
     "title": "ファーストヴィレッジ株式会社",
     "url": "https://firstvillage.co.jp/",
@@ -70914,24 +70933,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "857bcdb7edfb",
-    "title": "Top | ESTYLE,Inc.",
-    "url": "https://estyle-inc.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/epm7z8k2viu9-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "スクロールエフェクト",
-      "モチーフ 線"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "5ec4c30dd85f",
     "title": "MEMBER'S EXHIBITION | 書家／墨象作家 宮村弦",
     "url": "https://studio.gen-m.jp/exh/",
@@ -70994,27 +70995,6 @@
     ],
     "taste": [
       "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "99a15b823400",
-    "title": "témamori（てまもり）公式サイト",
-    "url": "https://temamori.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ixcpe45dkwgn-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "UI フラット",
-      "イラスト",
-      "スクロールエフェクト",
-      "パララックス",
-      "モチーフ 円•曲線"
     ],
     "date": "2026-07",
     "starred": false,
@@ -71112,23 +71092,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "5b7f09984be3",
-    "title": "THE SHIFT",
-    "url": "https://theshift.tokyo/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/80mby94ag52j-2048x1535.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "484ff21fa3b0",
     "title": "monopo london | Design-driven creative agency. Based in London, born in  Tokyo.",
     "url": "https://monopo.london/",
@@ -71175,24 +71138,6 @@
     "taste": [
       "3Dアニメーション･3Dモデル",
       "UI フラット"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "d7596ae839a3",
-    "title": "ONE CAREER Inc.｜株式会社ワンキャリア",
-    "url": "https://onecareer.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ry3aw250uemi-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "UI ニューモーフィズム",
-      "モチーフ 幾何学"
     ],
     "date": "2026-07",
     "starred": false,
@@ -71421,42 +71366,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "83145afc6b73",
-    "title": "GATE ｜USEN-NEXT GROUP",
-    "url": "https://recruit.usen-next.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/34p2hjte7rqz-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "採用･仕事･アルバイトサイト"
-    ],
-    "taste": [
-      "モチーフ 線",
-      "3Dアニメーション･3Dモデル",
-      "UI フラット",
-      "モチーフ 幾何学"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "b43940c1a09e",
-    "title": "showdot Group",
-    "url": "https://showdot.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/04oansc1fz6q-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "その他"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "65cc8410d57b",
     "title": "株式会社エムハンド｜RECRUITING SITE.",
     "url": "https://www.m-hand.co.jp/recruit/",
@@ -71470,40 +71379,6 @@
       "グラフィカル･コラージュ",
       "タイポグラフィー･文字",
       "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "69d99ee7ee28",
-    "title": "UI/UXデザイン会社 | root Inc.（株式会社root）",
-    "url": "https://ic-root.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/0tz357usv8bl-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "d6129a369af0",
-    "title": "「サンテFX × サカナクション」特設サイト｜そうだ、その目だ。",
-    "url": "https://www.santen.co.jp/ja/healthcare/eye/products/otc/sante_fx/sakanaction/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/op4gxmfjc65a-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "パララックス",
-      "写真･フォトディレクション"
     ],
     "date": "2026-07",
     "starred": false,
@@ -71529,42 +71404,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "73112e711170",
-    "title": "最先端IoT技術で手術室のデジタル化を実現 | 株式会社OPExPARK",
-    "url": "https://www.opexpark.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/acwjr83xh9bz-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "パララックス",
-      "モチーフ 線"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "497e86a94683",
-    "title": "TPN | トータルプロパティネットワーク株式会社",
-    "url": "https://total-pr.net/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/jh4efw5qd068-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "パララックス",
-      "ポリゴン･ローポリ"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "d4e622bd403a",
     "title": "TYRANT Inc.",
     "url": "http://tyrant.jp/",
@@ -71575,115 +71414,6 @@
     ],
     "taste": [
       "グラフィカル･コラージュ"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "4904a4fe3726",
-    "title": "日産 工場見学総合サイト",
-    "url": "https://www.nissan-global.com/JP/PLANT/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2ftyxdcolw7s-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoCコーポレートサイト",
-      "車･バイク･自転車"
-    ],
-    "taste": [
-      "モチーフ 線",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "1b118b7cb370",
-    "title": "WHERE, INC. | 地域に、社会に、地づくりの力を。",
-    "url": "https://where.inc/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/obq2rvs80c1j-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト",
-      "モチーフ 線"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "78bb4b7df34c",
-    "title": "採用情報｜公文教育研究会",
-    "url": "https://www.kumon.ne.jp/job/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/2jpthcdlkwvq-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "採用･仕事･アルバイトサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "タイポグラフィー･文字",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "ee3cee14d295",
-    "title": "壌（JYOU） -",
-    "url": "https://jyou.media/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/srugve4tf01x-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "キュレーションメディアサイト"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト",
-      "タイポグラフィー･文字",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "7e93c6b10c6b",
-    "title": "Yamauchi No.10 Family Office",
-    "url": "https://y-n10.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/1urbowktaxnj-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "ピクセルアート",
-      "ポリゴン･ローポリ",
-      "モチーフ 斜め"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "cfd55bb27fa5",
-    "title": "KATAOKA DESIGN STUDIO",
-    "url": "https://www.kataokadesign.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/r9xhdsp5onz8-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "ポートフォリオ･アーティストサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション"
     ],
     "date": "2026-07",
     "starred": false,
@@ -71704,23 +71434,6 @@
       "スクロールエフェクト",
       "モチーフ 円•曲線",
       "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "d9f5bd589b82",
-    "title": "PERSOL Work-Style AWARD 2021 はたらいて、笑おう。 | PERSOL（パーソル）グループ",
-    "url": "https://www.persol-group.co.jp/special/workstyle-award/index.html",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/btfo1yl3qzi4-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "その他"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "パララックス"
     ],
     "date": "2026-07",
     "starred": false,
@@ -71873,78 +71586,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "3246d457d522",
-    "title": "みんなの夢が地球をまわす | 三菱ケミカル株式会社 採用サイト",
-    "url": "https://www.m-chemical.co.jp/saiyo/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/g59ytjnwf0bx-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "特設サイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "イラスト",
-      "スクロールエフェクト",
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "3d5bdaf55555",
-    "title": "Kenta Toshikura",
-    "url": "https://kentatoshikura.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/chirp8nowqku-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "ポートフォリオ･アーティストサイト"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "fcbb1cc588ee",
-    "title": "Propeller & Co.",
-    "url": "https://propellertokyo.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7p0c96loqezn-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "53b24410a2d6",
-    "title": "燕三条製包丁の藤次郎株式会社｜TOJIRO JAPAN",
-    "url": "https://tojiro.net/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wnfmh7eiqyg2-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "e268d7ec35cb",
     "title": "ADDReC アドレック | 新しいスタイルのデザインファーム",
     "url": "https://addrec.co.jp/",
@@ -71981,23 +71622,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "67c0f76d8400",
-    "title": "toridori：「個の時代」の、担い手に。",
-    "url": "https://toridori.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/4wfmhronzg8e-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "UI 手描き･ラフ",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "f99d89db9965",
     "title": "hito/toki｜若林佛具製作所",
     "url": "https://www.wakabayashi.co.jp/project/hitotoki/",
@@ -72009,23 +71633,6 @@
     "taste": [
       "3Dアニメーション･3Dモデル",
       "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "8c0c20e36b0e",
-    "title": "株式会社ハリズリー｜HARIZURY CO., LTD.",
-    "url": "https://harizury.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/3z7uhfntms1b-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "動画･映像"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72044,57 +71651,6 @@
     "taste": [
       "スクロールエフェクト",
       "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "0a6a685180b2",
-    "title": "有限会社 東根東北電化｜HIGASHINE TOHOKU DENKA Inc.",
-    "url": "https://higashinetd.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/pj4sqchwb3g5-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "c86dda0e9f91",
-    "title": "VISUALIZE 60 | 日本デザインセンター |  DESIGNは、VISUALIZE（ヴィジュアライズ）ヘ。",
-    "url": "https://visualize60.ndc.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/irdsko8ncb64-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "イラスト",
-      "モチーフ 線",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "88af71fb4e20",
-    "title": "KUROAD - 誰もが⾃由に乗れるe-BIKE",
-    "url": "https://kuroad.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/p6yeoxwm1b5d-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "車･バイク･自転車"
-    ],
-    "taste": [
-      "スクロールエフェクト"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72134,23 +71690,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "99038ebbb5d2",
-    "title": "佐藤健 オフィシャル ウェブサイト｜Takeru Satoh Official Website",
-    "url": "https://www.satohtakeru.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7v4pyzjsgdfq-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "その他"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "モチーフ 斜め"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "5ef5f306fd16",
     "title": "名和晃平 モノローグ アートは感性を変えられる。 | ART & GALLERY | GYRE",
     "url": "https://gyre-omotesando.com/artandgallery/kohei-nawa-monologue/",
@@ -72162,24 +71701,6 @@
     "taste": [
       "パララックス",
       "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "366c04961b58",
-    "title": "Chatwork Recruiting Site",
-    "url": "https://recruit.chatwork.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7ilw5uajzf4n-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "採用･仕事･アルバイトサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション",
-      "映像 ストップモーション"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72203,24 +71724,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "d3736c857a0f",
-    "title": "The Basic Gastable　|　ザ ベーシック ガステーブルコンロ  リンナイ公式通販",
-    "url": "https://www.rinnai-basic.jp/gastable/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/hp50rtzxge9f-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "カメラ･モバイル･家電"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "1afc7cbc211f",
     "title": "加納コーポレーション",
     "url": "https://kano-corp.tokyo/",
@@ -72235,41 +71738,6 @@
       "スクロールエフェクト",
       "タイポグラフィー･文字",
       "モチーフ 斜め"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "7d2bf11ab433",
-    "title": "ロッキング・オン・グループ (rockin’on group)",
-    "url": "https://www.rockinon.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/bsu7zlkjac6e-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "85034672ffb6",
-    "title": "IDENTITY | DX・新規事業、SNSマーケティングの戦略設計から運用まで支援",
-    "url": "https://identity.city/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/u6tfnvd3y4gs-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "UI フラット",
-      "スクロールエフェクト"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72309,42 +71777,6 @@
       "UI スキュアモーフィック",
       "スクロールエフェクト",
       "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "718d8cd636a3",
-    "title": "株式会社Project8",
-    "url": "https://www.project8.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/tyzjkfda5nx4-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト",
-      "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "feb2f3555efb",
-    "title": "熊本県にある霊園 菩提樹苑（ぼだいじゅえん）",
-    "url": "http://www.bodaijuen.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ed4cv1f7sirx-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "その他"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション",
-      "和風"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72399,25 +71831,6 @@
     ],
     "taste": [
       "3Dアニメーション･3Dモデル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "98fc9bebeee9",
-    "title": "フォーサイト総合法律事務所",
-    "url": "https://www.foresight-law.gr.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ew4alndq3mvb-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション",
-      "モチーフ 線",
-      "UI 手描き･ラフ"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72548,23 +71961,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "12d428d3d444",
-    "title": "SIMONE | The Leading-edge Consulting Farm",
-    "url": "https://www.ilovesimone.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/8r2clhtdvou1-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "グリッドデザイン",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "39738fd55c6e",
     "title": "Aww Inc. A Virtual Human Company",
     "url": "https://aww.tokyo/",
@@ -72577,44 +71973,6 @@
       "タイポグラフィー･文字",
       "写真･フォトディレクション",
       "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "4363087467fc",
-    "title": "株式会社LULLリクルートサイト - 「代わりのきかないアナタにする。」",
-    "url": "https://recruit.lull-inc.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/h7awqi8ecmj5-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト",
-      "採用･仕事･アルバイトサイト"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "タイポグラフィー･文字",
-      "UI フラット",
-      "UI 手描き･ラフ"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "41f83d2d375e",
-    "title": "株式会社ELEVENCE | PRODUCT DESIGNER",
-    "url": "https://elevence.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/x348y1l70juq-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "ポートフォリオ･アーティストサイト"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "パララックス",
-      "モチーフ 線"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72655,43 +72013,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "c6428be3b5f5",
-    "title": "三井住友銀行 Recruiting 2021",
-    "url": "https://www.smbc-freshers.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/edwqnrak09v8-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "採用･仕事･アルバイトサイト",
-      "金融･証券･保険･流通"
-    ],
-    "taste": [
-      "モチーフ 線",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "0e5d1149c757",
-    "title": "co - 東京で活動するフリーランスのコーディングユニット",
-    "url": "https://co-d.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/st452qpzvy9w-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "イラスト",
-      "パララックス",
-      "UI フラット",
-      "モチーフ 幾何学"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "686d797eeefd",
     "title": "CCI | シーシーアイ株式会社",
     "url": "https://cci-corporation.com/",
@@ -72703,24 +72024,6 @@
     "taste": [
       "UI フラット",
       "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "6dde10511f1b",
-    "title": "Micro Bubble Bath Unit by Rinnai ｜ 公式サイト",
-    "url": "https://rinnai.jp/microbubble/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/n31iz76dqwfu-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "写真･フォトディレクション"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72744,42 +72047,6 @@
     "firstSeen": "2026-07-17T13:44:55.865Z"
   },
   {
-    "id": "965210767086",
-    "title": "enzo 燕三条から生まれる縁を造る最適なキッチンウェア",
-    "url": "https://enzo-tsubamesanjo.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/90wlukdpq4om-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "プロダクトサイト",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "写真･フォトディレクション",
-      "動画･映像"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "97af0809e673",
-    "title": "PLAY! Honda e｜Honda公式サイト",
-    "url": "https://www.honda.co.jp/play-hondae/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ztfv7aqmwodl-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "特設サイト",
-      "車･バイク･自転車"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "ポリゴン･ローポリ"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
     "id": "9b2d46ead866",
     "title": "Kaleidoz - Value Through Design",
     "url": "https://kaleidozdesign.com/",
@@ -72790,41 +72057,6 @@
     ],
     "taste": [
       "3Dアニメーション･3Dモデル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "aef7d0a8f9c6",
-    "title": "僕らの提案するベーカリー開業パック【パン屋・開業】",
-    "url": "https://japanbakery.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/51li2xtdsqnm-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "BtoBコーポレートサイト"
-    ],
-    "taste": [
-      "イラスト",
-      "グラフィカル･コラージュ",
-      "スクロールエフェクト",
-      "モチーフ 幾何学"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "2966f0fe4054",
-    "title": "株式会社パイロッツ - Pilot&#039;s",
-    "url": "https://www.pilots.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ka1g4lyesdxm-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "その他"
-    ],
-    "taste": [
-      "動画･映像"
     ],
     "date": "2026-07",
     "starred": false,
@@ -72882,25 +72114,6 @@
       "スクロールエフェクト",
       "写真･フォトディレクション",
       "グリッドデザイン"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-17T13:44:55.865Z"
-  },
-  {
-    "id": "bc7499aaf8f8",
-    "title": "Re-Frame",
-    "url": "https://re-frame.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kascgtim3q0o-2048x1536.webp",
-    "source": "pickup",
-    "category": [
-      "Webアプリ･SaaS･サービスサイト",
-      "その他"
-    ],
-    "taste": [
-      "イラスト",
-      "パララックス",
-      "モチーフ 斜め"
     ],
     "date": "2026-07",
     "starred": false,
@@ -75037,231 +74250,6 @@
     "firstSeen": "2026-07-19T10:23:52.143Z"
   },
   {
-    "id": "b125d912f934",
-    "title": "Ozone page",
-    "url": "https://www.ozone.pro/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/11/ozone.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-11",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "999878226205",
-    "title": "Shape page",
-    "url": "https://shape.xyz/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/09/shape-1.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-09",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "bbc6808d6f6e",
-    "title": "AngelList Relay page",
-    "url": "https://www.angellist.com/venture/relay",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/08/angellist-relay.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-08",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "5a645fb462d6",
-    "title": "Imagifly page",
-    "url": "https://imagifly.co/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/06/imagifly.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-06",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "78daed5c05cd",
-    "title": "Diagram page",
-    "url": "https://diagram.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/05/diagram.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-05",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "3e35b1e2ef62",
-    "title": "Feedly page",
-    "url": "https://feedly.com/i/welcome",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2020/04/feedly-1.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2020-04",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "5108c44e0ae4",
-    "title": "STUDIO AI page",
-    "url": "https://studio.ai/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/05/studioai.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-05",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "f150005cac4a",
-    "title": "Spline AI page",
-    "url": "https://spline.design/ai",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/04/spline-ai.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-04",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "88c3c81e113b",
-    "title": "Relume Ipsum page",
-    "url": "https://www.relumeipsum.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/03/relumeipsum.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-03",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "53b56922637c",
-    "title": "Trullion page",
-    "url": "https://trullion.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2023/02/trullion.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2023-02",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "e341d2fc4481",
-    "title": "Prevalent AI page",
-    "url": "https://prevalent.ai/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2022/11/prevalent-ai.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2022-11",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "205015fec4da",
-    "title": "Scale page",
-    "url": "https://scale.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2021/06/scale-2.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2021-06",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "59fc72435af1",
-    "title": "Anima page",
-    "url": "https://www.animaapp.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2020/10/anima.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2020-10",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "063bc9d42fed",
-    "title": "Kickresume page",
-    "url": "https://www.kickresume.com/en/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2020/10/kickresume.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2020-10",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
-    "id": "63d6fdc1a65a",
-    "title": "Programmai page",
-    "url": "https://programmai.com/",
-    "thumbnailUrl": "https://saaslandingpage.com/wp-content/uploads/2020/09/programmai.png",
-    "source": "pickup",
-    "category": [
-      "AI",
-      "SaaS"
-    ],
-    "taste": [],
-    "date": "2020-09",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:23:52.143Z"
-  },
-  {
     "id": "0335d514cf9e",
     "title": "Shaky Picks",
     "url": "https://myshaky.com/picks",
@@ -75614,23 +74602,6 @@
     "firstSeen": "2026-07-19T13:35:44.629Z"
   },
   {
-    "id": "98c14a83e8db",
-    "title": "TIER IV",
-    "url": "https://tier4.jp/",
-    "thumbnailUrl": "/screenshots/98c14a83e8db.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
     "id": "7c66e3502cb9",
     "title": "Kotoba Technologies",
     "url": "https://www.kotoba.tech/",
@@ -75652,40 +74623,6 @@
     "title": "SB Intuitions",
     "url": "https://www.sbintuitions.co.jp/",
     "thumbnailUrl": "/screenshots/d3fbeb1c9cda.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
-    "id": "5c4ee88cdb53",
-    "title": "LayerX",
-    "url": "https://layerx.co.jp/",
-    "thumbnailUrl": "/screenshots/5c4ee88cdb53.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
-    "id": "fa087d888ef9",
-    "title": "10X",
-    "url": "https://10x.co.jp/",
-    "thumbnailUrl": "/screenshots/fa087d888ef9.jpg",
     "source": "pickup",
     "category": [
       "ミニマル洗練",
@@ -75886,23 +74823,6 @@
     "firstSeen": "2026-07-19T13:35:44.629Z"
   },
   {
-    "id": "7bdd0de24935",
-    "title": "WOTA",
-    "url": "https://wota.co.jp/",
-    "thumbnailUrl": "/screenshots/7bdd0de24935.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
     "id": "c0862c4b79a7",
     "title": "Synspective",
     "url": "https://synspective.com/jp/",
@@ -75937,44 +74857,10 @@
     "firstSeen": "2026-07-19T13:35:44.629Z"
   },
   {
-    "id": "63ded75c7ed0",
-    "title": "Shhh",
-    "url": "https://shhh.jp/",
-    "thumbnailUrl": "/screenshots/63ded75c7ed0.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
     "id": "7e3c488800a8",
     "title": "THE GUILD",
     "url": "https://theguild.jp/",
     "thumbnailUrl": "/screenshots/7e3c488800a8.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
-    "id": "7a3af053d270",
-    "title": "Takram",
-    "url": "https://www.takram.com/",
-    "thumbnailUrl": "/screenshots/7a3af053d270.jpg",
     "source": "pickup",
     "category": [
       "ミニマル洗練",
@@ -76094,23 +74980,6 @@
     "title": "ALL STAR SAAS FUND",
     "url": "https://allstarsaas.com/",
     "thumbnailUrl": "/screenshots/a54f454dd143.jpg",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "日本"
-    ],
-    "taste": [
-      "ミニマル"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T13:35:44.629Z"
-  },
-  {
-    "id": "61401f83a22b",
-    "title": "PARTY",
-    "url": "https://prty.jp/",
-    "thumbnailUrl": "/screenshots/61401f83a22b.jpg",
     "source": "pickup",
     "category": [
       "ミニマル洗練",
@@ -76319,124 +75188,6 @@
     "firstSeen": "2026-07-19T14:28:25.474Z"
   },
   {
-    "id": "486c5ff88c33",
-    "title": "テレコムスタッフ",
-    "url": "https://www.telecomstaff.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/32rz7i4c8kfm-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "動画･映像",
-      "スクロールエフェクト",
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "c03b59bfa562",
-    "title": "モリヤマレコード｜Film Production Company",
-    "url": "https://mori-record.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/85qr7lga2ymn-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "パララックス",
-      "グリッドデザイン"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "baaae82deb8f",
-    "title": "株式会社フォームアンドクラフト",
-    "url": "https://www.formandcraft.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/rhvtfbd7klpo-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "写真･フォトディレクション",
-      "動画･映像",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "a0bde88065c0",
-    "title": "FEDL｜東京の建築設計事務所",
-    "url": "https://fedl.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/vg63ycxpd0rz-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "UI フラット",
-      "グリッドデザイン",
-      "スクロールエフェクト",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "c49cca43c976",
-    "title": "デジタルハリウッド大学",
-    "url": "https://www.dhw.ac.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/i06yfset1xhl-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "UI フラット",
-      "スクロールエフェクト",
-      "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "6052fd0d6e99",
-    "title": "DAIEI ｜ダイエー株式会社 石川県小松市の板金カンパニー",
-    "url": "https://daieikomatsu.co.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/hpcbxvtl9n83-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "UI フラット",
-      "タイポグラフィー･文字",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
     "id": "77856603e4c9",
     "title": "FISH LETTER | MIKIMOTO - ミキモト",
     "url": "https://fishletter.mikimoto.com/",
@@ -76494,62 +75245,6 @@
     "firstSeen": "2026-07-19T14:28:25.474Z"
   },
   {
-    "id": "3e3475a388ae",
-    "title": "PARKS MANAGEMENT パークスマネージメント",
-    "url": "https://parks-tokyo.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/h81zvkrgjlep-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "51f21fc8f375",
-    "title": "HARKEN",
-    "url": "https://harkenic.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/plh2zi6s4y8w-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "UI フラット",
-      "グリッドデザイン",
-      "スクロールエフェクト",
-      "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "918af43eb5a2",
-    "title": "BATOU公式オンラインストア ｜ 大人のためのファンクショナルウェア",
-    "url": "https://batou.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/a7ywclod0kxn-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "タイポグラフィー･文字",
-      "パララックス"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
     "id": "252e6314f92a",
     "title": "WHITEOUTWORKS｜商業建築デザイン・プロジェクトマネジメント",
     "url": "https://www.whiteoutworks.com/",
@@ -76562,24 +75257,6 @@
     "taste": [
       "スクロールエフェクト",
       "タイポグラフィー･文字"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "605c2be5ca19",
-    "title": "【公式】デサントオルテラインサイト｜DESCENTE ALLTERRAIN",
-    "url": "https://allterrain.descente.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ieryc73gk2as-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "グリッドデザイン",
-      "スクロールエフェクト"
     ],
     "date": "2026-07",
     "starred": false,
@@ -76617,25 +75294,6 @@
     "taste": [
       "タイポグラフィー･文字",
       "パララックス",
-      "写真･フォトディレクション"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "40a029aa7c07",
-    "title": "BRANCHÉ CHOCOLAT | ブランシェ・ショコラ",
-    "url": "https://branche-chocolat.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/lfp5skyir9ab-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "タイポグラフィー･文字",
       "写真･フォトディレクション"
     ],
     "date": "2026-07",
@@ -76759,25 +75417,6 @@
       "グリッドデザイン",
       "写真･フォトディレクション",
       "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "4e828fc17cbb",
-    "title": "DDD HOTEL",
-    "url": "https://dddhotel.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/091p6hqoufbx-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "写真･フォトディレクション",
-      "パララックス",
-      "タイポグラフィー･文字"
     ],
     "date": "2026-07",
     "starred": false,
@@ -76926,25 +75565,6 @@
     "title": "makespacegroup",
     "url": "https://makespacegroup.com/",
     "thumbnailUrl": "https://api.s5-style.com/media/post-images/foypqs219z8b-1000x750.webp",
-    "source": "pickup",
-    "category": [
-      "ミニマル洗練",
-      "タイポ×モーション"
-    ],
-    "taste": [
-      "グリッドデザイン",
-      "UI フラット",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-19T14:28:25.474Z"
-  },
-  {
-    "id": "8b88d156df3d",
-    "title": "暮らしとデザイン by おおつかわたる",
-    "url": "https://otsukawataru.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/xwz3nridyjt6-1000x750.webp",
     "source": "pickup",
     "category": [
       "ミニマル洗練",
