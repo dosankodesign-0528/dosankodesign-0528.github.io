@@ -119,15 +119,18 @@ export const SiteCard = memo(function SiteCard({
           </svg>
         </a>
 
-        {/* 引用元バッジ（右下） */}
-        <div
-          className={`absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wide transition-opacity duration-200 ${
-            hovered ? "opacity-100" : "opacity-80"
-          }`}
-          style={{ backgroundColor: SOURCE_COLORS[site.source] }}
-        >
-          {SOURCE_LABELS[site.source]}
-        </div>
+        {/* 引用元バッジ（右下）。pickup（手動シード枠）は 2026-07-21 ヒデさん指示で
+            バッジ非表示（内部的なソース名で、出典メディアではないため） */}
+        {site.source !== "pickup" && (
+          <div
+            className={`absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] font-bold text-white tracking-wide transition-opacity duration-200 ${
+              hovered ? "opacity-100" : "opacity-80"
+            }`}
+            style={{ backgroundColor: SOURCE_COLORS[site.source] }}
+          >
+            {SOURCE_LABELS[site.source]}
+          </div>
+        )}
       </div>
 
       {/* カード情報 */}
