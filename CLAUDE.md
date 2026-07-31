@@ -102,7 +102,7 @@ URL を一緒に渡すこと**。
 | プロジェクト | 本番 URL | Git | Vercel Project | 自動 deploy |
 |---|---|---|---|---|
 | **houmon-app** | **https://houmon-app-lilac.vercel.app** | submodule (main) | houmon-app | ✅ main push で自動 |
-| **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | 手動（`vercel --prod`） |
+| **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | ✅ main push で自動（Root Directory: `design-gallery`、2026-07-31設定） |
 | **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
@@ -118,7 +118,9 @@ URL を一緒に渡すこと**。
 - **アプリは全部 Vercel 一本**（2026-04-23 統一）。以前は GH Pages にも複製 deploy されてたが、houmon-app の mock モード問題や design-gallery の swc バグなどトラブルの温床だった。現在は各 `hideyuki-yamanaka.github.io/<app>/` にアクセスすると Vercel へリダイレクトされるだけ。
 - **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
 - ポータルの `product.meta.json` の `path` が絶対 URL（`https://...`）なら Vercel、未指定 or 相対パスなら GH Pages。今は全アプリが絶対URL指定済み。
-- **design-gallery / 空き時間みつける君 / Retro Games は親リポの subdir に直置き**（submodule ではない）のでデプロイは手動。houmon-app と違って GitHub Auto Deploy は設定されていない（subdir の変更検知が厄介なため）。更新時は該当ディレクトリで `npx vercel --prod --yes` を叩く。
+- **空き時間みつける君 / Retro Games は親リポの subdir に直置き**（submodule ではない）でデプロイは手動。更新時は該当ディレクトリで `npx vercel --prod --yes` を叩く。
+- **design-gallery は 2026-07-31 から Git 自動デプロイ**（Vercel の Root Directory を `design-gallery` に設定済み）。main に push するだけで本番反映される。毎朝のスクレイパー commit も自動で本番に乗る。
+  - ⚠️ design-gallery ディレクトリ内から `npx vercel --prod` を叩くと Root Directory が二重になって失敗する。手動で再デプロイしたい時は `npx vercel redeploy design-gallery-puce.vercel.app` を使う。
 
 ## 🧭 houmon-app のデプロイ手順（auto 連携あり）
 
@@ -146,7 +148,11 @@ URL を一緒に渡すこと**。
    - これを「値が消えてる」と勘違いして再登録すると、本当に sensitive で書き直して読めなくなるループに入りがち
    - 対策: 読めるようにしたい時は `vercel env add NAME production --value "..." --no-sensitive --yes` で `--no-sensitive` を必ず付ける
    - pull で空に見えても、実際の本番アプリが動いてるなら値は入ってる可能性が高い。慌てて削除しない
-5. **Supabase 無料プランの自動停止**（2026-05-13）
+5. **design-gallery の Root Directory 未設定で自動デプロイが9日間全滅**（2026-07-31発覚）
+   - GitHub 連携はされてたのに Vercel の Root Directory が未設定 → モノレポのルート（Next.js アプリなし）でビルドして毎回 Error
+   - スクレイパーは毎日 GitHub に commit してたが本番は 7/19 の手動デプロイのまま凍結 →「メディアからの更新が止まって見える」
+   - 対策: Root Directory を `design-gallery` に設定（API で PATCH 済み）。「更新が止まった」と感じたら、まず `npx vercel ls` で **Error が並んでないか** を見る
+6. **Supabase 無料プランの自動停止**（2026-05-13）
    - 7 日間無アクセスで Supabase プロジェクトが一時停止 → さらに長期で削除される
    - 旅のしおりがこれで一時停止していた
    - 対策: 各アプリに `/api/keep-alive` ルート + `.github/workflows/supabase-keepalive.yml` で週2回叩いて予防中
