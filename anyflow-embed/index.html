@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anyflow Embed — API連携でAIと事業を強くする</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: #f3f3f3;
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ---- 1440x921 の固定ステージを画面幅に合わせてスケール ---- */
+  .stage-wrap { width: 100%; overflow: hidden; }
+  .stage {
+    position: relative;
+    width: 1440px;
+    height: 921px;
+    transform-origin: top left;
+  }
+
+  /* ---- Header ---- */
+  .header {
+    position: absolute;
+    left: 38px;
+    top: 26px;
+    width: 1340px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header .logo img { width: 255px; height: 47px; display: block; }
+  .nav { display: flex; align-items: center; gap: 32px; }
+  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .nav-links a {
+    font-weight: 300;
+    font-size: 16px;
+    color: #101828;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity .25s;
+  }
+  .nav-links a:hover { opacity: .55; }
+  .cta {
+    background: #090909;
+    color: #fff;
+    font-weight: 300;
+    font-size: 14px;
+    width: 140px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .25s;
+  }
+  .cta:hover { opacity: .78; }
+
+  /* ---- Copy ---- */
+  .headline {
+    position: absolute;
+    left: 73px;
+    top: 357px;
+    font-weight: 100;
+    font-size: 40px;
+    line-height: normal;
+    color: #101828;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+    animation: reveal 1.2s ease .3s forwards;
+  }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+
+  /* ---- Orbit ---- */
+  .orbit {
+    position: absolute;
+    left: 441px;
+    top: 80px;
+    width: 979.829px;
+    height: 674.281px;
+    opacity: 0;
+    animation: fadein 1.6s ease .15s forwards;
+  }
+  @keyframes fadein { to { opacity: 1; } }
+  .orbit svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+  /* ---- Logos ---- */
+  .logos {
+    position: absolute;
+    left: 0;
+    top: 796px;
+    width: 1440px;
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+    animation: fadein 1.4s ease .6s forwards;
+  }
+  .logos img { height: 42px; width: auto; display: block; }
+
+  /* ---- 調整パネル ---- */
+  .panel {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 300px;
+    max-height: calc(100vh - 32px);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid #e2e2e2;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.10);
+    font-size: 12px;
+    color: #101828;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 400;
+  }
+  .panel-head .chev { transition: transform .25s; font-size: 10px; color: #888; }
+  .panel.closed .chev { transform: rotate(180deg); }
+  .panel-body {
+    overflow-y: auto;
+    padding: 0 14px 14px;
+  }
+  .panel.closed .panel-body { display: none; }
+  .grp { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ececec; }
+  .grp-title { font-weight: 400; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .row label { flex: 0 0 92px; color: #555; font-weight: 300; }
+  .row input[type=range] { flex: 1; accent-color: #090909; min-width: 0; }
+  .row .val { flex: 0 0 44px; text-align: right; font-variant-numeric: tabular-nums; color: #333; }
+  .btns { display: flex; gap: 8px; margin-top: 12px; }
+  .btns button {
+    flex: 1;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 7px 0;
+    border-radius: 6px;
+    border: 1px solid #d8d8d8;
+    background: #fff;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btns button:hover { background: #f2f2f2; }
+  .btns button.primary { background: #090909; color: #fff; border-color: #090909; }
+  .btns button.primary:hover { background: #333; }
+  .seg { display: flex; border: 1px solid #d8d8d8; border-radius: 6px; overflow: hidden; flex: 1; }
+  .seg button {
+    flex: 1; border: none; background: #fff; font-family: inherit;
+    font-size: 11px; padding: 5px 0; cursor: pointer; color: #555;
+  }
+  .seg button.on { background: #090909; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-wrap">
+  <div class="stage" id="stage">
+
+    <header class="header">
+      <div class="logo"><img src="assets/header-logo.svg" alt="Anyflow Embed"></div>
+      <nav class="nav">
+        <div class="nav-links">
+          <a href="#">ビジョン</a>
+          <a href="#">提供できること</a>
+          <a href="#">使用イメージ</a>
+          <a href="#">導入事例</a>
+        </div>
+        <button class="cta">お問い合わせ</button>
+      </nav>
+    </header>
+
+    <h1 class="headline">API連携で<br>AIと事業を強くする</h1>
+
+    <div class="orbit">
+      <svg id="orbitSvg" viewBox="0 0 979.829 674.28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="489.915" cy="328.089" rx="466.128" ry="156.29" transform="rotate(-23.3266 489.915 328.089)" stroke="#4E4E4E"/>
+        <ellipse cx="508.688" cy="375.14" rx="425" ry="142.5" transform="rotate(-23.3266 508.688 375.14)" stroke="#4E4E4E"/>
+        <ellipse cx="517.052" cy="370.334" rx="183.306" ry="49.8228" transform="rotate(-23.3266 517.052 370.334)" stroke="#4E4E4E"/>
+        <!-- 周回するドット (JSで動かす) -->
+        <circle id="dot0" r="6" fill="#0E4497"/>
+        <circle id="dot1" r="6" fill="#0EBBFF"/>
+        <circle id="dot2" r="6" fill="#FF5D97"/>
+        <circle id="dot3" r="6" fill="#4E4E4E"/>
+        <circle id="dot4" r="6" fill="#FF5D97"/>
+        <circle id="dot5" r="6" fill="#0EBBFF"/>
+      </svg>
+    </div>
+
+    <div class="logos">
+      <img src="assets/logos-strip.png" alt="導入企業ロゴ">
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= アニメ調整パネル ================= -->
+<div class="panel" id="panel">
+  <div class="panel-head" id="panelHead">
+    <span>⚙️ アニメーション調整</span>
+    <span class="chev">▲</span>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+</div>
+
+<script>
+/* ================= 軌道データ (Figmaから抽出) ================= */
+const ROT = -23.3266 * Math.PI / 180;
+const ELLIPSES = {
+  outer: { cx: 489.915, cy: 328.089, rx: 466.128, ry: 156.29 },
+  mid:   { cx: 508.688, cy: 375.14,  rx: 425,     ry: 142.5 },
+  inner: { cx: 517.052, cy: 370.334, rx: 183.306, ry: 49.8228 },
+};
+/* 各ドット: 所属楕円とカンプ上の初期角度 */
+const DOTS = [
+  { name: 'ネイビー',  color: '#0E4497', ellipse: 'outer', angle: 261.0 },
+  { name: '水色 A',    color: '#0EBBFF', ellipse: 'mid',   angle: 117.8 },
+  { name: 'ピンク A',  color: '#FF5D97', ellipse: 'mid',   angle: 192.0 },
+  { name: 'グレー',    color: '#4E4E4E', ellipse: 'outer', angle: 67.3 },
+  { name: 'ピンク B',  color: '#FF5D97', ellipse: 'mid',   angle: 33.8 },
+  { name: '水色 B',    color: '#0EBBFF', ellipse: 'mid',   angle: 329.4 },
+];
+
+/* ================= 調整パラメーター ================= */
+const DEFAULTS = {
+  running: true,
+  duration: 24,      // 1周の基準秒数
+  globalSpeed: 1,    // 全体スピード倍率
+  direction: 1,      // 1=時計回り / -1=反時計回り
+  ramp: 1.5,         // 動き出しのなめらか加速(秒)
+  dots: DOTS.map(() => ({ speed: 1, delay: 0, offset: 0 })),
+};
+const STORAGE_KEY = 'anyflow-embed-anim-v1';
+
+let params = load();
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s && Array.isArray(s.dots) && s.dots.length === DOTS.length) {
+      return { ...structuredClone(DEFAULTS), ...s };
+    }
+  } catch (e) {}
+  return structuredClone(DEFAULTS);
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
+
+/* ================= アニメーション ================= */
+const dotEls = DOTS.map((_, i) => document.getElementById('dot' + i));
+
+function posOn(e, deg) {
+  const t = deg * Math.PI / 180;
+  const lx = e.rx * Math.cos(t), ly = e.ry * Math.sin(t);
+  return {
+    x: e.cx + lx * Math.cos(ROT) - ly * Math.sin(ROT),
+    y: e.cy + lx * Math.sin(ROT) + ly * Math.cos(ROT),
+  };
+}
+
+/* 遅延後になめらかに加速するための実効経過時間 */
+function effectiveTime(t, delay, ramp) {
+  const pt = t - delay;
+  if (pt <= 0) return 0;
+  if (ramp <= 0 || pt >= ramp) return pt - ramp / 2;
+  return (pt * pt) / (2 * ramp);
+}
+
+let elapsed = 0;      // 再生中のみ進む累積時間
+let lastTs = null;
+
+function renderFrame() {
+  const baseDegPerSec = 360 / params.duration * params.globalSpeed * params.direction;
+  DOTS.forEach((d, i) => {
+    const p = params.dots[i];
+    const t = effectiveTime(elapsed, p.delay, params.ramp);
+    const deg = d.angle + p.offset + baseDegPerSec * p.speed * t;
+    const pos = posOn(ELLIPSES[d.ellipse], deg);
+    dotEls[i].setAttribute('cx', pos.x);
+    dotEls[i].setAttribute('cy', pos.y);
+  });
+}
+
+function frame(ts) {
+  if (lastTs !== null && params.running) {
+    elapsed += Math.min(0.1, (ts - lastTs) / 1000);
+  }
+  lastTs = ts;
+  renderFrame();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+renderFrame();
+
+/* デバッグ用フック（rAFが動かない環境で手動で時間を進める） */
+window.__anim = {
+  step(dt) { elapsed += dt; renderFrame(); },
+  setElapsed(v) { elapsed = v; renderFrame(); },
+  getState() { return { elapsed, params }; },
+};
+
+/* ================= ステージのスケーリング ================= */
+const stage = document.getElementById('stage');
+function fit() {
+  const s = Math.min(1, window.innerWidth / 1440);
+  stage.style.transform = `scale(${s})`;
+  stage.parentElement.style.height = (921 * s) + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+
+/* ================= 調整パネル UI ================= */
+const body = document.getElementById('panelBody');
+
+function slider(label, min, max, step, get, set, fmt) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = min; input.max = max; input.step = step;
+  input.value = get();
+  const val = document.createElement('span');
+  val.className = 'val';
+  const f = fmt || (v => v);
+  val.textContent = f(get());
+  input.addEventListener('input', () => {
+    set(parseFloat(input.value));
+    val.textContent = f(parseFloat(input.value));
+    save();
+  });
+  row.append(lab, input, val);
+  row._sync = () => { input.value = get(); val.textContent = f(get()); };
+  body.appendChild(row);
+  return row;
+}
+
+const rows = [];
+
+function buildPanel() {
+  body.innerHTML = '';
+  rows.length = 0;
+
+  /* 全体 */
+  const g = document.createElement('div');
+  g.className = 'grp'; g.style.borderTop = 'none'; g.style.marginTop = '4px';
+  g.innerHTML = '<div class="grp-title">全体</div>';
+  body.appendChild(g);
+  rows.push(slider('1周の秒数', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + 's'));
+  rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
+  rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's'));
+
+  const dirRow = document.createElement('div');
+  dirRow.className = 'row';
+  dirRow.innerHTML = '<label>回転方向</label>';
+  const seg = document.createElement('div');
+  seg.className = 'seg';
+  const b1 = document.createElement('button'); b1.textContent = '時計回り';
+  const b2 = document.createElement('button'); b2.textContent = '反時計回り';
+  function syncDir() {
+    b1.classList.toggle('on', params.direction === 1);
+    b2.classList.toggle('on', params.direction === -1);
+  }
+  b1.onclick = () => { params.direction = 1; syncDir(); save(); };
+  b2.onclick = () => { params.direction = -1; syncDir(); save(); };
+  syncDir();
+  seg.append(b1, b2);
+  dirRow.appendChild(seg);
+  body.appendChild(dirRow);
+
+  /* 各ドット */
+  DOTS.forEach((d, i) => {
+    const grp = document.createElement('div');
+    grp.className = 'grp';
+    grp.innerHTML = `<div class="grp-title"><span class="chip" style="background:${d.color}"></span>${d.name}<span style="color:#999;font-weight:300">（${d.ellipse === 'outer' ? '外側' : '中間'}）</span></div>`;
+    body.appendChild(grp);
+    rows.push(slider('スピード倍率', 0, 3, 0.05, () => params.dots[i].speed, v => params.dots[i].speed = v, v => '×' + v.toFixed(2)));
+    rows.push(slider('遅延', 0, 10, 0.1, () => params.dots[i].delay, v => params.dots[i].delay = v, v => v.toFixed(1) + 's'));
+    rows.push(slider('開始位置', -180, 180, 1, () => params.dots[i].offset, v => params.dots[i].offset = v, v => v + '°'));
+  });
+
+  /* ボタン */
+  const btns = document.createElement('div');
+  btns.className = 'btns';
+  const playBtn = document.createElement('button');
+  playBtn.className = 'primary';
+  function syncPlay() { playBtn.textContent = params.running ? '⏸ 一時停止' : '▶ 再生'; }
+  playBtn.onclick = () => { params.running = !params.running; syncPlay(); save(); };
+  syncPlay();
+  const restartBtn = document.createElement('button');
+  restartBtn.textContent = '↺ 最初から';
+  restartBtn.onclick = () => { elapsed = 0; };
+  const resetBtn = document.createElement('button');
+  resetBtn.textContent = '初期値に戻す';
+  resetBtn.onclick = () => {
+    params = structuredClone(DEFAULTS);
+    elapsed = 0;
+    save();
+    buildPanel();
+  };
+  btns.append(playBtn, restartBtn, resetBtn);
+  body.appendChild(btns);
+}
+buildPanel();
+
+/* パネル開閉 */
+const panel = document.getElementById('panel');
+document.getElementById('panelHead').addEventListener('click', () => {
+  panel.classList.toggle('closed');
+});
+</script>
+</body>
+</html>
