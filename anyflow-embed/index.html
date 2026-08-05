@@ -96,18 +96,33 @@
   @keyframes fadein { to { opacity: 1; } }
   .orbit svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
-  /* ---- Logos ---- */
+  /* ---- Logos (ティッカー風カルーセル) ---- */
   .logos {
     position: absolute;
     left: 0;
     top: 796px;
     width: 1440px;
-    display: flex;
-    justify-content: center;
+    overflow: hidden;
     opacity: 0;
     animation: fadein 1.4s ease .6s forwards;
   }
-  .logos img { height: 42px; width: auto; display: block; }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 30s linear infinite;
+    will-change: transform;
+  }
+  .marquee-track img {
+    height: 42px;
+    width: auto;
+    display: block;
+    padding-right: 80px;
+    box-sizing: content-box;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
 
   /* ---- 調整パネル ---- */
   .panel {
@@ -210,7 +225,10 @@
     </div>
 
     <div class="logos">
-      <img src="assets/logos-strip.png" alt="導入企業ロゴ">
+      <div class="marquee-track" id="marqueeTrack">
+        <img src="assets/logos-strip.png" alt="導入企業ロゴ">
+        <img src="assets/logos-strip.png" alt="" aria-hidden="true">
+      </div>
     </div>
 
   </div>
@@ -250,16 +268,28 @@ const DEFAULTS = {
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
   ramp: 1.5,         // 動き出しのなめらか加速(秒)
-  dots: DOTS.map(() => ({ speed: 1, delay: 0, offset: 0 })),
+  pulse: {
+    amp: 0.5,        // 緩急の強さ (0=一定速度, 1=一瞬止まるくらい)
+    period: 8,       // 緩急の周期(秒)
+  },
+  marquee: {
+    duration: 30,    // ロゴが1周する秒数
+    direction: 1,    // 1=左へ / -1=右へ
+  },
+  dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v1';
+const STORAGE_KEY = 'anyflow-embed-anim-v2';
 
 let params = load();
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (s && Array.isArray(s.dots) && s.dots.length === DOTS.length) {
-      return { ...structuredClone(DEFAULTS), ...s };
+      const merged = { ...structuredClone(DEFAULTS), ...s };
+      merged.pulse = { ...DEFAULTS.pulse, ...(s.pulse || {}) };
+      merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
+      merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
+      return merged;
     }
   } catch (e) {}
   return structuredClone(DEFAULTS);
@@ -286,6 +316,15 @@ function effectiveTime(t, delay, ramp) {
   return (pt * pt) / (2 * ramp);
 }
 
+/* 緩急: 速度 v(t) = 1 + amp*sin(2πt/period + φ) を積分した実効時間。
+   ampが0なら等速、1に近づくほど「グッと速く→ふわっと遅く」が強くなる */
+function warpTime(t, amp, period, phaseDeg) {
+  if (amp <= 0 || period <= 0) return t;
+  const w = 2 * Math.PI / period;
+  const ph = phaseDeg * Math.PI / 180;
+  return t - (amp / w) * (Math.cos(w * t + ph) - Math.cos(ph));
+}
+
 let elapsed = 0;      // 再生中のみ進む累積時間
 let lastTs = null;
 
@@ -294,11 +333,20 @@ function renderFrame() {
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
     const t = effectiveTime(elapsed, p.delay, params.ramp);
-    const deg = d.angle + p.offset + baseDegPerSec * p.speed * t;
+    const wt = warpTime(t, params.pulse.amp, params.pulse.period, p.pulsePhase);
+    const deg = d.angle + p.offset + baseDegPerSec * p.speed * wt;
     const pos = posOn(ELLIPSES[d.ellipse], deg);
     dotEls[i].setAttribute('cx', pos.x);
     dotEls[i].setAttribute('cy', pos.y);
   });
+}
+
+/* ロゴカルーセルへパラメーターを反映 */
+const marqueeTrack = document.getElementById('marqueeTrack');
+function applyMarquee() {
+  marqueeTrack.style.animationDuration = params.marquee.duration + 's';
+  marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
+  marqueeTrack.style.animationPlayState = params.running ? 'running' : 'paused';
 }
 
 function frame(ts) {
@@ -371,6 +419,14 @@ function buildPanel() {
   rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
   rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's'));
 
+  /* 緩急 (速くなったり遅くなったり) */
+  const gp = document.createElement('div');
+  gp.className = 'grp';
+  gp.innerHTML = '<div class="grp-title">緩急<span style="color:#999;font-weight:300">（速い⇄遅いのゆらぎ）</span></div>';
+  body.appendChild(gp);
+  rows.push(slider('強さ', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + 's'));
+
   const dirRow = document.createElement('div');
   dirRow.className = 'row';
   dirRow.innerHTML = '<label>回転方向</label>';
@@ -398,7 +454,33 @@ function buildPanel() {
     rows.push(slider('スピード倍率', 0, 3, 0.05, () => params.dots[i].speed, v => params.dots[i].speed = v, v => '×' + v.toFixed(2)));
     rows.push(slider('遅延', 0, 10, 0.1, () => params.dots[i].delay, v => params.dots[i].delay = v, v => v.toFixed(1) + 's'));
     rows.push(slider('開始位置', -180, 180, 1, () => params.dots[i].offset, v => params.dots[i].offset = v, v => v + '°'));
+    rows.push(slider('緩急ずらし', 0, 360, 5, () => params.dots[i].pulsePhase, v => params.dots[i].pulsePhase = v, v => v + '°'));
   });
+
+  /* ロゴカルーセル */
+  const gm = document.createElement('div');
+  gm.className = 'grp';
+  gm.innerHTML = '<div class="grp-title">ロゴカルーセル</div>';
+  body.appendChild(gm);
+  rows.push(slider('1周の秒数', 5, 120, 1, () => params.marquee.duration, v => { params.marquee.duration = v; applyMarquee(); }, v => v + 's'));
+
+  const mDirRow = document.createElement('div');
+  mDirRow.className = 'row';
+  mDirRow.innerHTML = '<label>流れる方向</label>';
+  const mSeg = document.createElement('div');
+  mSeg.className = 'seg';
+  const m1 = document.createElement('button'); m1.textContent = '← 左へ';
+  const m2 = document.createElement('button'); m2.textContent = '右へ →';
+  function syncMDir() {
+    m1.classList.toggle('on', params.marquee.direction === 1);
+    m2.classList.toggle('on', params.marquee.direction === -1);
+  }
+  m1.onclick = () => { params.marquee.direction = 1; syncMDir(); applyMarquee(); save(); };
+  m2.onclick = () => { params.marquee.direction = -1; syncMDir(); applyMarquee(); save(); };
+  syncMDir();
+  mSeg.append(m1, m2);
+  mDirRow.appendChild(mSeg);
+  body.appendChild(mDirRow);
 
   /* ボタン */
   const btns = document.createElement('div');
@@ -406,7 +488,7 @@ function buildPanel() {
   const playBtn = document.createElement('button');
   playBtn.className = 'primary';
   function syncPlay() { playBtn.textContent = params.running ? '⏸ 一時停止' : '▶ 再生'; }
-  playBtn.onclick = () => { params.running = !params.running; syncPlay(); save(); };
+  playBtn.onclick = () => { params.running = !params.running; syncPlay(); applyMarquee(); save(); };
   syncPlay();
   const restartBtn = document.createElement('button');
   restartBtn.textContent = '↺ 最初から';
@@ -418,11 +500,13 @@ function buildPanel() {
     elapsed = 0;
     save();
     buildPanel();
+    applyMarquee();
   };
   btns.append(playBtn, restartBtn, resetBtn);
   body.appendChild(btns);
 }
 buildPanel();
+applyMarquee();
 
 /* パネル開閉 */
 const panel = document.getElementById('panel');
