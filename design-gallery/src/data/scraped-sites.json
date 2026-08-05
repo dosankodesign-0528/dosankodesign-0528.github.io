@@ -33282,6 +33282,20 @@
     "lastCheckedAt": "2026-08-02T05:30:49.651Z"
   },
   {
+    "id": "e71d94d4f2ef",
+    "title": "BUNKITSU TOKYO（ブンキツ トーキョー） 心が躍る、自由で、楽しい本屋",
+    "url": "https://tokyo.bunkitsu.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260804_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "新聞・出版・書籍"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-05T02:51:18.906Z"
+  },
+  {
     "id": "c3617b1c69e7",
     "title": "AFURI BREWING / 阿夫利ブルーイング",
     "url": "https://afuribrewing.com/",
@@ -37055,22 +37069,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-04-29T14:49:33.354Z"
-  },
-  {
-    "id": "3b317a52c9b8",
-    "title": "たんぽぽ幼稚園",
-    "url": "https://tanpopo.day/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251106_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ベビー・キッズ"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:31:49.097Z"
   },
   {
     "id": "cb039fd1986a",
@@ -42637,6 +42635,20 @@
     "lastCheckedAt": "2026-08-02T05:32:56.332Z"
   },
   {
+    "id": "b03d29c98e03",
+    "title": "Eternal Blue Store",
+    "url": "https://eternalblue.co.nz/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260804_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "美容・健康・化粧品"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-05T02:51:18.906Z"
+  },
+  {
     "id": "b711d4e2ee83",
     "title": "ゆとりび家計簿",
     "url": "https://yutoribi.com/",
@@ -45872,22 +45884,6 @@
     "lastCheckedAt": "2026-08-02T05:33:34.158Z"
   },
   {
-    "id": "9df0f696dc3c",
-    "title": "キリンウイスキー 富士山麓",
-    "url": "http://www.fujisanroku.jp/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250828_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "食品・飲料・飲食"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:33:35.560Z"
-  },
-  {
     "id": "8719a750f6fe",
     "title": "有限会社わらしべ",
     "url": "https://taiyaki-warashibe.com/",
@@ -48891,6 +48887,25 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:34:28.755Z"
+  },
+  {
+    "id": "35947ff4c8d2",
+    "title": "べすとほうむEP",
+    "url": "https://besthome-ep.com/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/08/260805-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "コーポレートサイト",
+      "暮らし",
+      "建築",
+      "不動産"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-06-29T04:20:41.410Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:36:26.048Z"
   },
   {
     "id": "dcfcf666b461",
@@ -53699,13 +53714,13 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a394a1c5c4ae734325834.png",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Animation",
       "Clean",
       "WebGL",
       "Three.js",
       "Interaction Design",
-      "Javascript"
+      "Javascript",
+      "Business & Corporate",
+      "Animation"
     ],
     "taste": [],
     "date": "2026-07",
@@ -57071,6 +57086,63 @@
     "lastCheckedAt": "2026-08-02T05:36:20.510Z"
   },
   {
+    "id": "482990724ab2",
+    "title": "越前信用金庫　採用サイト",
+    "url": "https://www.shinkin.co.jp/echishin/recruit/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/tg1e36lz9riu-1600x1200.webp",
+    "source": "s5style",
+    "category": [
+      "採用･仕事･アルバイトサイト",
+      "金融･証券･保険･流通"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム",
+      "グラフィカル･コラージュ",
+      "タイポグラフィー･文字",
+      "イラスト"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-05T02:51:18.906Z"
+  },
+  {
+    "id": "8c2fa61ee80e",
+    "title": "越前信用金庫",
+    "url": "https://www.shinkin.co.jp/echishin/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ns7e1coqb59g-1600x1200.webp",
+    "source": "s5style",
+    "category": [
+      "BtoCコーポレートサイト",
+      "金融･証券･保険･流通"
+    ],
+    "taste": [
+      "アイコン･ピクトグラム"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-05T02:51:18.906Z"
+  },
+  {
+    "id": "81bd56d7383d",
+    "title": "IMT - コーポレートサイト",
+    "url": "https://e-imt.co.jp/corporate/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ck7mvtj1dr0a-1600x1200.webp",
+    "source": "s5style",
+    "category": [
+      "BtoBコーポレートサイト",
+      "軽工•重工•製造"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "スクロールエフェクト",
+      "グリッドデザイン",
+      "モチーフ 線"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-05T02:51:18.906Z"
+  },
+  {
     "id": "b16779a69201",
     "title": "ニシザキ工芸 塗装部",
     "url": "https://tosou.nishizaki.co.jp/",
@@ -57656,26 +57728,6 @@
     "firstSeen": "2026-06-29T04:20:41.410Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:26.123Z"
-  },
-  {
-    "id": "71fa663b0f9b",
-    "title": "べすとほうむEP",
-    "url": "https://besthome-ep.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/let1dzrhsk70-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "BtoCコーポレートサイト",
-      "建築･建設･不動産･家"
-    ],
-    "taste": [
-      "写真･フォトディレクション",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-29T04:20:41.410Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:26.048Z"
   },
   {
     "id": "08b66224fa62",
