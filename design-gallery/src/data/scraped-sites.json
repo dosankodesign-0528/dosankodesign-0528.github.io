@@ -1,5 +1,49 @@
 [
   {
+    "id": "6b497aa553b5",
+    "title": "ビデオカメラマン田中哲哉",
+    "url": "https://tetsuya-tanaka.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/tetsuyatanaka_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
+    "id": "2402631d93d4",
+    "title": "少年少女創造性育成事業 | 公益財団法人 市村清新技術財団",
+    "url": "https://www.sgkz.or.jp/develop/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/sgkzdevelop_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-07-08T03:14:19.550Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:30:53.565Z"
+  },
+  {
+    "id": "4132b9cdfa2e",
+    "title": "ユニフォームネット",
+    "url": "https://www.uniform-net.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/uniformnet_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
     "id": "59bd258aa97d",
     "title": "夏こそ、坂田の黄金しょうが | 坂田信夫商店",
     "url": "https://ginger.sakatashop.jp/",
@@ -22413,6 +22457,20 @@
     "lastCheckedAt": "2026-08-02T05:28:51.511Z"
   },
   {
+    "id": "900b67aa9cb1",
+    "title": "ギフティグループ株式会社",
+    "url": "https://giftee-group.com/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/08/0285-768x576.webp",
+    "source": "muuuuu",
+    "category": [
+      "technology"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
     "id": "d0916b99a6ce",
     "title": "Spark Journal by KDDI",
     "url": "https://spark-journal.kddi.com/",
@@ -33324,6 +33382,20 @@
     "lastCheckedAt": "2026-08-02T05:30:49.651Z"
   },
   {
+    "id": "88ed5819d0a8",
+    "title": "TBWA\\HAKUHODO",
+    "url": "https://www.tbwahakuhodo.co.jp/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260806_03-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
     "id": "949449cbe2be",
     "title": "株式会社ジーピーコーポレーション",
     "url": "https://gpcorp.jp/",
@@ -33548,22 +33620,6 @@
     "firstSeen": "2026-07-24T02:58:23.178Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:30:53.422Z"
-  },
-  {
-    "id": "5c5c32a6ea0c",
-    "title": "少年少女創造性育成事業 | 公益財団法人 市村清新技術財団",
-    "url": "https://www.sgkz.or.jp/develop/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260722_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ベビー・キッズ"
-    ],
-    "taste": [],
-    "date": "2026-07",
-    "starred": false,
-    "firstSeen": "2026-07-08T03:14:19.550Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:30:53.565Z"
   },
   {
     "id": "261cd36861dd",
@@ -37089,22 +37145,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:31:46.090Z"
-  },
-  {
-    "id": "b24dbe1838cc",
-    "title": "Champion  “SWEATS FOR ALL”｜Chara × HIMIが歌う『Stand by Me』",
-    "url": "https://championstore.jp/sweats_for_all",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251110_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "アパレル・ファッション"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-08-02T05:31:43.846Z"
   },
   {
     "id": "f9fad64186b2",
@@ -42685,6 +42725,20 @@
     "lastCheckedAt": "2026-08-02T05:32:56.332Z"
   },
   {
+    "id": "8bc3eb55a073",
+    "title": "PSYREN -サイレン-",
+    "url": "https://psyren-anime.com/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260806_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "エンタメ・出版"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
     "id": "396ba7e71018",
     "title": "JETSTREAM Lite touch ink ｜ 三菱鉛筆株式会社",
     "url": "https://www.mpuni.co.jp/special/lite24S/",
@@ -45930,22 +45984,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:33:33.915Z"
-  },
-  {
-    "id": "f51673b09d8f",
-    "title": "SEASON RECOMMENDED 2025 Autumn | FABRIC TOKYO",
-    "url": "https://fabric-tokyo.com/autumn-winter/2025autumn/playful-jacket",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250901_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "ファッション・アクセサリー"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:33:34.158Z"
   },
   {
     "id": "8719a750f6fe",
@@ -53792,16 +53830,16 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a42335fb5b52648269891.jpg",
     "source": "awwwards",
     "category": [
-      "Mobile & Apps",
-      "Music & Sound",
-      "Web & Interactive",
-      "Animation",
-      "App Style",
       "Video",
       "React",
       "Photo & Video",
+      "Mobile & Apps",
       "Vercel",
-      "Next.js"
+      "Music & Sound",
+      "Next.js",
+      "Web & Interactive",
+      "Animation",
+      "App Style"
     ],
     "taste": [],
     "date": "2026-07",
@@ -53817,14 +53855,14 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a3e98331ce4d715437463.png",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Technology",
       "Animation",
       "Colorful",
       "3D",
       "Craft CMS",
       "After Effects",
-      "Figma"
+      "Figma",
+      "Business & Corporate",
+      "Technology"
     ],
     "taste": [],
     "date": "2026-07",
@@ -54087,17 +54125,17 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a130bbf9aa7b451704891.jpg",
     "source": "awwwards",
     "category": [
+      "Art & Illustration",
+      "Events",
+      "Web & Interactive",
+      "Fullscreen",
+      "Single page",
       "WebSockets",
       "Data Visualization",
       "Responsive",
-      "Art & Illustration",
       "GSAP",
-      "Events",
       "Interaction Design",
-      "Web & Interactive",
-      "Swiper.js",
-      "Fullscreen",
-      "Single page"
+      "Swiper.js"
     ],
     "taste": [],
     "date": "2026-06",
@@ -56316,6 +56354,29 @@
     "lastCheckedAt": "2026-08-02T05:36:13.108Z"
   },
   {
+    "id": "50086069ad40",
+    "title": "No Art",
+    "url": "https://www.noartmusic.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a34ee26568f3604651374.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Events",
+      "Animation",
+      "Sound-Audio",
+      "GSAP",
+      "Shopify",
+      "3D",
+      "UI design",
+      "Microinteractions",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-07T02:56:20.849Z"
+  },
+  {
     "id": "64bc62f49d01",
     "title": "Alethia",
     "url": "https://www.alethia.earth/",
@@ -56357,31 +56418,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-08-04T02:52:36.906Z"
-  },
-  {
-    "id": "7ec0654b5c6d",
-    "title": "Hearst Exhibit 2026",
-    "url": "https://www.hollywoodexhibit2026.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a3fa7b106d43952313398.jpg",
-    "source": "awwwards",
-    "category": [
-      "Magazine / Newspaper / Blog",
-      "Web & Interactive",
-      "Clean",
-      "Photographic",
-      "Scrolling",
-      "Typography",
-      "WebGL",
-      "Photography",
-      "Gallery",
-      "GSAP",
-      "Microinteractions",
-      "Vercel"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-03T03:08:03.424Z"
   },
   {
     "id": "f6a7e3b274cc",
