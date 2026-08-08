@@ -67,10 +67,9 @@
   /* ---- Copy ---- */
   .headline {
     position: absolute;
-    left: 73px;
-    top: 357px;
+    left: 109px;
+    top: 210px;
     font-weight: 100;
-    font-size: 40px;
     line-height: normal;
     color: #101828;
     white-space: nowrap;
@@ -79,22 +78,44 @@
     filter: blur(6px);
     animation: reveal 1.2s ease .3s forwards;
   }
+  .headline .hl-s { font-size: 50px; }
+  .headline .hl-l { font-size: 80px; }
   @keyframes reveal {
     to { opacity: 1; transform: translateY(0); filter: blur(0); }
   }
 
-  /* ---- Orbit ---- */
+  /* ---- Orbit + Sphere ---- */
   .orbit {
     position: absolute;
-    left: 441px;
-    top: 80px;
-    width: 979.829px;
-    height: 674.281px;
+    left: 496px;
+    top: 179px;
+    width: 915.483px;
+    height: 630px;
     opacity: 0;
     animation: fadein 1.6s ease .15s forwards;
   }
   @keyframes fadein { to { opacity: 1; } }
-  .orbit svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .orbit svg {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .orbit .layer-back  { z-index: 1; }
+  .orbit .layer-front { z-index: 3; }
+  #sphere {
+    position: absolute;
+    left: 306.06px;
+    top: 112.32px;
+    width: 260px;
+    height: 260px;
+    z-index: 2;
+  }
+  #sphere.fallback {
+    background: url('assets/sphere.png') center / 230px 230px no-repeat;
+  }
 
   /* ---- Logos (ティッカー風カルーセル) ---- */
   .logos {
@@ -207,20 +228,54 @@
       </nav>
     </header>
 
-    <h1 class="headline">API連携で<br>AIと事業を強くする</h1>
+    <h1 class="headline">
+      <span class="hl-s">API連携で</span><br>
+      <span class="hl-l">AIと事業を</span><br>
+      <span class="hl-l">強くする</span>
+    </h1>
 
     <div class="orbit">
-      <svg id="orbitSvg" viewBox="0 0 979.829 674.28" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="489.915" cy="328.089" rx="466.128" ry="156.29" transform="rotate(-23.3266 489.915 328.089)" stroke="#4E4E4E"/>
-        <ellipse cx="508.688" cy="375.14" rx="425" ry="142.5" transform="rotate(-23.3266 508.688 375.14)" stroke="#4E4E4E"/>
-        <ellipse cx="517.052" cy="370.334" rx="183.306" ry="49.8228" transform="rotate(-23.3266 517.052 370.334)" stroke="#4E4E4E"/>
-        <!-- 周回するドット (JSで動かす) -->
-        <circle id="dot0" r="6" fill="#0E4497"/>
-        <circle id="dot1" r="6" fill="#0EBBFF"/>
-        <circle id="dot2" r="6" fill="#FF5D97"/>
-        <circle id="dot3" r="6" fill="#4E4E4E"/>
-        <circle id="dot4" r="6" fill="#FF5D97"/>
-        <circle id="dot5" r="6" fill="#0EBBFF"/>
+      <!-- 奥レイヤー: 軌道線の全周 + 奥側を通るドット (球体の裏に隠れる) -->
+      <svg class="layer-back" viewBox="0 0 915.483 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gInnerB" x1="475.283" y1="217.363" x2="475.283" y2="483.647" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00ABEB"/><stop offset="0.490385" stop-color="white"/><stop offset="1" stop-color="#FF5D97"/>
+          </linearGradient>
+          <linearGradient id="gOuterB" x1="457.741" y1="160.517" x2="457.741" y2="452.569" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerB)" stroke-width="3"/>
+        <ellipse cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterB)" stroke-width="3"/>
+        <g id="dotsBack"></g>
+      </svg>
+
+      <!-- 球体 (WebGL) -->
+      <canvas id="sphere" width="520" height="520"></canvas>
+
+      <!-- 手前レイヤー: 軌道線の手前半分 + 手前側を通るドット (球体の上を横切る) -->
+      <svg class="layer-front" viewBox="0 0 915.483 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gInnerF" x1="475.283" y1="217.363" x2="475.283" y2="483.647" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00ABEB"/><stop offset="0.490385" stop-color="white"/><stop offset="1" stop-color="#FF5D97"/>
+          </linearGradient>
+          <linearGradient id="gOuterF" x1="457.741" y1="160.517" x2="457.741" y2="452.569" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
+          </linearGradient>
+          <clipPath id="clipInnerF">
+            <rect x="-420" y="0" width="840" height="160" transform="translate(475.283 350.505) rotate(-23.3266)"/>
+          </clipPath>
+          <clipPath id="clipOuterF">
+            <rect x="-458" y="0" width="916" height="172" transform="translate(457.741 306.543) rotate(-23.3266)"/>
+          </clipPath>
+        </defs>
+        <g clip-path="url(#clipInnerF)">
+          <ellipse cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerF)" stroke-width="3"/>
+        </g>
+        <g clip-path="url(#clipOuterF)">
+          <ellipse cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterF)" stroke-width="3"/>
+        </g>
+        <g id="dotsFront"></g>
       </svg>
     </div>
 
@@ -244,27 +299,27 @@
 </div>
 
 <script>
-/* ================= 軌道データ (Figmaから抽出) ================= */
+/* ================= 軌道データ (Figma カンプから抽出) ================= */
 const ROT = -23.3266 * Math.PI / 180;
 const ELLIPSES = {
-  outer: { cx: 489.915, cy: 328.089, rx: 466.128, ry: 156.29 },
-  mid:   { cx: 508.688, cy: 375.14,  rx: 425,     ry: 142.5 },
-  inner: { cx: 517.052, cy: 370.334, rx: 183.306, ry: 49.8228 },
+  outer: { cx: 457.741, cy: 306.543, rx: 435.517, ry: 146.026 },
+  inner: { cx: 475.283, cy: 350.505, rx: 397.09,  ry: 133.142 },
 };
-/* 各ドット: 所属楕円とカンプ上の初期角度 */
+/* 各ドット: 所属楕円とカンプ上の初期角度 (楕円式から逆算) */
 const DOTS = [
   { name: 'ネイビー',  color: '#0E4497', ellipse: 'outer', angle: 261.0 },
-  { name: '水色 A',    color: '#0EBBFF', ellipse: 'mid',   angle: 117.8 },
-  { name: 'ピンク A',  color: '#FF5D97', ellipse: 'mid',   angle: 192.0 },
+  { name: '水色 A',    color: '#0EBBFF', ellipse: 'inner', angle: 117.8 },
+  { name: 'ピンク A',  color: '#FF5D97', ellipse: 'inner', angle: 192.0 },
   { name: 'グレー',    color: '#4E4E4E', ellipse: 'outer', angle: 67.3 },
-  { name: 'ピンク B',  color: '#FF5D97', ellipse: 'mid',   angle: 33.8 },
-  { name: '水色 B',    color: '#0EBBFF', ellipse: 'mid',   angle: 329.4 },
+  { name: 'ピンク B',  color: '#FF5D97', ellipse: 'inner', angle: 33.8 },
+  { name: '水色 B',    color: '#0EBBFF', ellipse: 'inner', angle: 329.4 },
 ];
+const DOT_R = 5.606;
 
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  duration: 24,      // 1周の基準秒数
+  duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
   ramp: 1.5,         // 動き出しのなめらか加速(秒)
@@ -272,13 +327,18 @@ const DEFAULTS = {
     amp: 0.5,        // 緩急の強さ (0=一定速度, 1=一瞬止まるくらい)
     period: 8,       // 緩急の周期(秒)
   },
+  sphere: {
+    duration: 32,    // 球体1回転の秒数
+    tumble: 0.37,    // 多面ゆらぎ (2軸目の回転比率)
+    noise: 0.5,      // 質感の粒の強さ
+  },
   marquee: {
     duration: 30,    // ロゴが1周する秒数
     direction: 1,    // 1=左へ / -1=右へ
   },
   dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v2';
+const STORAGE_KEY = 'anyflow-embed-anim-v3';
 
 let params = load();
 function load() {
@@ -287,6 +347,7 @@ function load() {
     if (s && Array.isArray(s.dots) && s.dots.length === DOTS.length) {
       const merged = { ...structuredClone(DEFAULTS), ...s };
       merged.pulse = { ...DEFAULTS.pulse, ...(s.pulse || {}) };
+      merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
       return merged;
@@ -296,8 +357,22 @@ function load() {
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
 
-/* ================= アニメーション ================= */
-const dotEls = DOTS.map((_, i) => document.getElementById('dot' + i));
+/* ================= ドット要素 (奥/手前レイヤーに1個ずつ) ================= */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const dotsBackG = document.getElementById('dotsBack');
+const dotsFrontG = document.getElementById('dotsFront');
+const dotEls = DOTS.map(d => {
+  const mk = () => {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('r', DOT_R);
+    c.setAttribute('fill', d.color);
+    return c;
+  };
+  const back = mk(), front = mk();
+  dotsBackG.appendChild(back);
+  dotsFrontG.appendChild(front);
+  return { back, front };
+});
 
 function posOn(e, deg) {
   const t = deg * Math.PI / 180;
@@ -305,6 +380,7 @@ function posOn(e, deg) {
   return {
     x: e.cx + lx * Math.cos(ROT) - ly * Math.sin(ROT),
     y: e.cy + lx * Math.sin(ROT) + ly * Math.cos(ROT),
+    front: Math.sin(t) > 0,   // 楕円ローカルで下半分 = 手前側
   };
 }
 
@@ -316,8 +392,7 @@ function effectiveTime(t, delay, ramp) {
   return (pt * pt) / (2 * ramp);
 }
 
-/* 緩急: 速度 v(t) = 1 + amp*sin(2πt/period + φ) を積分した実効時間。
-   ampが0なら等速、1に近づくほど「グッと速く→ふわっと遅く」が強くなる */
+/* 緩急: 速度 v(t) = 1 + amp*sin(2πt/period + φ) を積分した実効時間 */
 function warpTime(t, amp, period, phaseDeg) {
   if (amp <= 0 || period <= 0) return t;
   const w = 2 * Math.PI / period;
@@ -336,10 +411,168 @@ function renderFrame() {
     const wt = warpTime(t, params.pulse.amp, params.pulse.period, p.pulsePhase);
     const deg = d.angle + p.offset + baseDegPerSec * p.speed * wt;
     const pos = posOn(ELLIPSES[d.ellipse], deg);
-    dotEls[i].setAttribute('cx', pos.x);
-    dotEls[i].setAttribute('cy', pos.y);
+    const els = dotEls[i];
+    [els.back, els.front].forEach(el => {
+      el.setAttribute('cx', pos.x);
+      el.setAttribute('cy', pos.y);
+    });
+    els.front.style.display = pos.front ? '' : 'none';
+    els.back.style.display = pos.front ? 'none' : '';
   });
+  renderSphere();
 }
+
+/* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
+const sphereCanvas = document.getElementById('sphere');
+let sphereGL = null;
+
+function initSphere() {
+  const gl = sphereCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
+  if (!gl) { sphereCanvas.classList.add('fallback'); return; }
+
+  const vs = `attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
+  const fs = `
+precision highp float;
+uniform vec2 uRes;
+uniform float uAngle;   /* 主回転 (rad) */
+uniform float uAngle2;  /* 2軸目の回転 (rad) */
+uniform float uDrift;   /* 質感のゆっくりした流れ */
+uniform float uNoise;   /* 質感の粒の強さ */
+
+mat3 rotAxis(vec3 a, float t){
+  float c = cos(t), s = sin(t);
+  vec3 u = normalize(a);
+  return mat3(
+    c+u.x*u.x*(1.-c),      u.x*u.y*(1.-c)-u.z*s,  u.x*u.z*(1.-c)+u.y*s,
+    u.y*u.x*(1.-c)+u.z*s,  c+u.y*u.y*(1.-c),      u.y*u.z*(1.-c)-u.x*s,
+    u.z*u.x*(1.-c)-u.y*s,  u.z*u.y*(1.-c)+u.x*s,  c+u.z*u.z*(1.-c)
+  );
+}
+float hash(vec3 p){
+  p = fract(p * vec3(127.1, 311.7, 74.7));
+  p += dot(p, p.yzx + 19.19);
+  return fract((p.x + p.y) * p.z);
+}
+float vnoise(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(hash(i), hash(i+vec3(1,0,0)), u.x),
+        mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), u.x), u.y),
+    mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), u.x),
+        mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), u.x), u.y), u.z);
+}
+float fbm(vec3 p){
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 3; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; }
+  return v;
+}
+void main(){
+  vec2 p = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;
+  float R = 0.884615; /* 230px / 260px */
+  float len = length(p);
+  float px = 2.0 / uRes.y;
+  float alpha = 1.0 - smoothstep(R - 1.5 * px, R + 1.5 * px, len);
+  if (alpha <= 0.0) { gl_FragColor = vec4(0.0); return; }
+  float z = sqrt(max(R * R - dot(p, p), 1e-5));
+  vec3 n = normalize(vec3(p, z));
+
+  /* 回転軸: 軌道の傾き(-23°)とはずらした斜め軸 + ゆっくり別軸 → 多面的 */
+  vec3 ax1 = normalize(vec3(0.53, 0.85, 0.35));
+  vec3 ax2 = normalize(vec3(-0.62, 0.22, 0.76));
+  vec3 d = rotAxis(ax2, uAngle2) * rotAxis(ax1, uAngle) * n;
+
+  float f = fbm(d * 2.4 + vec3(0.0, 0.0, uDrift));
+  float g = fbm(d * 5.0 - vec3(uDrift * 0.7));
+
+  vec3 col      = vec3(0.99, 0.99, 1.0);
+  vec3 pink     = vec3(1.0, 0.42, 0.63);
+  vec3 deepPink = vec3(0.96, 0.22, 0.55);
+  vec3 cyan     = vec3(0.30, 0.80, 0.97);
+  vec3 blue     = vec3(0.42, 0.58, 0.95);
+
+  /* abs() で球の表裏両方に色帯を出す → どの回転位相でもピンクと水色が残る */
+  float wP = pow(abs(dot(d, normalize(vec3(0.9, 0.1, 0.28)))), 2.2);
+  float wC = pow(abs(dot(d, normalize(vec3(-0.62, -0.5, 0.35)))), 2.2);
+  float wB = pow(abs(dot(d, normalize(vec3(0.2, -0.88, 0.25)))), 2.6);
+  wP *= 0.7 + uNoise * (f - 0.5) * 1.6;
+  wC *= 0.7 + uNoise * (g - 0.5) * 1.6;
+  wB *= 0.7 + uNoise * (f - 0.5) * 1.6;
+
+  col = mix(col, pink, clamp(wP, 0.0, 1.0) * 0.9);
+  col = mix(col, deepPink, clamp(wP - 0.55, 0.0, 1.0) * 0.6);
+  col = mix(col, cyan, clamp(wC, 0.0, 1.0) * 0.9);
+  col = mix(col, blue, clamp(wB, 0.0, 1.0) * 0.75);
+
+  /* 光の当たり方はカンプ通り固定 (左上ハイライト) */
+  float hi = pow(max(dot(n, normalize(vec3(-0.48, 0.62, 0.62))), 0.0), 1.7);
+  col = mix(col, vec3(1.0), hi * 0.62);
+  float rim = pow(1.0 - n.z, 1.8);
+  col *= 1.0 - rim * 0.05;
+
+  /* カンプの細かい横縞質感 */
+  float scan = (hash(vec3(floor(gl_FragCoord.y), 7.7, 3.1)) - 0.5) * 0.035 * uNoise;
+  col += scan;
+
+  gl_FragColor = vec4(col * alpha, alpha);
+}`;
+
+  function compile(type, src) {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(sh));
+      return null;
+    }
+    return sh;
+  }
+  const v = compile(gl.VERTEX_SHADER, vs);
+  const f = compile(gl.FRAGMENT_SHADER, fs);
+  if (!v || !f) { sphereCanvas.classList.add('fallback'); return; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, v);
+  gl.attachShader(prog, f);
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  sphereCanvas.width = 260 * dpr;
+  sphereCanvas.height = 260 * dpr;
+  gl.viewport(0, 0, sphereCanvas.width, sphereCanvas.height);
+
+  sphereGL = {
+    gl,
+    uRes: gl.getUniformLocation(prog, 'uRes'),
+    uAngle: gl.getUniformLocation(prog, 'uAngle'),
+    uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
+    uDrift: gl.getUniformLocation(prog, 'uDrift'),
+    uNoise: gl.getUniformLocation(prog, 'uNoise'),
+  };
+  gl.uniform2f(sphereGL.uRes, sphereCanvas.width, sphereCanvas.height);
+}
+
+function renderSphere() {
+  if (!sphereGL) return;
+  const { gl } = sphereGL;
+  const sp = params.sphere;
+  const ang = 2 * Math.PI * elapsed / sp.duration;
+  gl.uniform1f(sphereGL.uAngle, ang);
+  gl.uniform1f(sphereGL.uAngle2, ang * sp.tumble);
+  gl.uniform1f(sphereGL.uDrift, elapsed * 0.02);
+  gl.uniform1f(sphereGL.uNoise, sp.noise);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+initSphere();
 
 /* ロゴカルーセルへパラメーターを反映 */
 const marqueeTrack = document.getElementById('marqueeTrack');
@@ -419,6 +652,15 @@ function buildPanel() {
   rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
   rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's'));
 
+  /* 球体 */
+  const gs = document.createElement('div');
+  gs.className = 'grp';
+  gs.innerHTML = '<div class="grp-title">球体<span style="color:#999;font-weight:300">（3D回転）</span></div>';
+  body.appendChild(gs);
+  rows.push(slider('1回転の秒数', 8, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + 's'));
+  rows.push(slider('多面ゆらぎ', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('質感の粒', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%'));
+
   /* 緩急 (速くなったり遅くなったり) */
   const gp = document.createElement('div');
   gp.className = 'grp';
@@ -449,7 +691,7 @@ function buildPanel() {
   DOTS.forEach((d, i) => {
     const grp = document.createElement('div');
     grp.className = 'grp';
-    grp.innerHTML = `<div class="grp-title"><span class="chip" style="background:${d.color}"></span>${d.name}<span style="color:#999;font-weight:300">（${d.ellipse === 'outer' ? '外側' : '中間'}）</span></div>`;
+    grp.innerHTML = `<div class="grp-title"><span class="chip" style="background:${d.color}"></span>${d.name}<span style="color:#999;font-weight:300">（${d.ellipse === 'outer' ? '外側' : '内側'}）</span></div>`;
     body.appendChild(grp);
     rows.push(slider('スピード倍率', 0, 3, 0.05, () => params.dots[i].speed, v => params.dots[i].speed = v, v => '×' + v.toFixed(2)));
     rows.push(slider('遅延', 0, 10, 0.1, () => params.dots[i].delay, v => params.dots[i].delay = v, v => v.toFixed(1) + 's'));
