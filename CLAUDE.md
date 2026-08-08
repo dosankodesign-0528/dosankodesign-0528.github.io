@@ -105,6 +105,7 @@ URL を一緒に渡すこと**。
 | **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | ✅ main push で自動（Root Directory: `design-gallery`、2026-07-31設定） |
 | **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
+| **anyflow-embed** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
 
