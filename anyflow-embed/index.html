@@ -145,6 +145,44 @@
     to   { transform: translateX(-50%); }
   }
 
+  /* ---- パターン/惑星スイッチャー ---- */
+  .switcher {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid #e2e2e2;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.10);
+    font-size: 12px;
+    color: #101828;
+    z-index: 50;
+    padding: 12px 14px;
+    max-width: 460px;
+  }
+  .sw-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .sw-row + .sw-row { margin-top: 8px; }
+  .sw-label { flex: 0 0 44px; color: #555; font-weight: 300; }
+  .sw-pill {
+    font-family: inherit;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid #d8d8d8;
+    background: #fff;
+    cursor: pointer;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background .2s, border-color .2s;
+  }
+  .sw-pill:hover { border-color: #999; }
+  .sw-pill.on { background: #090909; color: #fff; border-color: #090909; }
+  .sw-swatch { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); }
+  .sw-desc { margin-top: 8px; color: #777; font-weight: 300; font-size: 11px; }
+
   /* ---- 調整パネル ---- */
   .panel {
     position: fixed;
@@ -289,6 +327,13 @@
   </div>
 </div>
 
+<!-- ================= パターン/惑星スイッチャー ================= -->
+<div class="switcher" id="switcher">
+  <div class="sw-row" id="swPatterns"><span class="sw-label">アニメ</span></div>
+  <div class="sw-row" id="swDesigns"><span class="sw-label">惑星</span></div>
+  <div class="sw-desc" id="swDesc"></div>
+</div>
+
 <!-- ================= アニメ調整パネル ================= -->
 <div class="panel" id="panel">
   <div class="panel-head" id="panelHead">
@@ -316,9 +361,69 @@ const DOTS = [
 ];
 const DOT_R = 5.606;
 
+/* ================= アニメパターン (5案) ================= */
+const PATTERNS = [
+  { name: '① スタンダード', desc: '緩急のゆらぎでゆったり進む（現行）。自転は多面ゆらぎ。' },
+  { name: '② コメット', desc: '彗星みたいに、惑星のそばでグッと加速して離れるとゆったり。自転は少し速め。' },
+  { name: '③ ドリフト', desc: '各ドットが気まぐれに漂う。止まりかけたり、すっと進んだり。自転は大きくうねる。' },
+  { name: '④ すれ違い', desc: '内側と外側の軌道が逆回転して、ドット同士がすれ違う。自転はどっしりゆっくり。' },
+  { name: '⑤ リズム', desc: 'コツン、コツンと一定のリズムで進む（データが流れるイメージ）。自転も同じリズムで刻む。' },
+];
+
+/* ================= 惑星デザイン (Figmaカンプ4種) ================= */
+const norm = v => { const l = Math.hypot(...v); return v.map(x => x / l); };
+const DESIGNS = {
+  A: {
+    name: 'A やわらかパステル',
+    swatch: 'radial-gradient(circle at 30% 30%, #ffffff 15%, #ffb3d1 55%, #64d2f5 100%)',
+    base: [0.99, 0.99, 1.0], hi: 0.62, grain: 0.02, scan: 0.035,
+    layers: [
+      { col: [1.0, 0.42, 0.63],  dir: norm([0.9, 0.1, 0.28]),    w: 0.9,  pow: 2.2 },
+      { col: [0.96, 0.22, 0.55], dir: norm([0.9, 0.1, 0.28]),    w: 0.5,  pow: 6.0 },
+      { col: [0.30, 0.80, 0.97], dir: norm([-0.62, -0.5, 0.35]), w: 0.9,  pow: 2.2 },
+      { col: [0.42, 0.58, 0.95], dir: norm([0.2, -0.88, 0.25]),  w: 0.75, pow: 2.6 },
+    ],
+  },
+  B: {
+    name: 'B ビビッドブルー',
+    swatch: 'linear-gradient(140deg, #ff5d97 5%, #ffffff 30%, #1e9bff 65%, #0b6bff 100%)',
+    base: [0.10, 0.56, 0.97], hi: 0.4, grain: 0.11, scan: 0.015,
+    layers: [
+      { col: [1.0, 1.0, 1.0],    dir: norm([0.5, 0.72, 0.3]),   w: 2.2, pow: 1.6 },
+      { col: [1.0, 0.28, 0.6],   dir: norm([-0.62, 0.55, 0.3]), w: 1.8, pow: 2.2 },
+      { col: [0.03, 0.32, 0.9],  dir: norm([0.15, -0.9, 0.3]),  w: 0.75, pow: 2.0 },
+      { col: [0.4, 0.8, 1.0],    dir: norm([0.75, -0.2, 0.4]),  w: 0.45, pow: 2.2 },
+    ],
+  },
+  C: {
+    name: 'C ピンク×ブルー',
+    swatch: 'linear-gradient(160deg, #ff5d97 22%, #ffffff 50%, #26a9ff 78%)',
+    base: [1.0, 1.0, 1.0], hi: 0.45, grain: 0.10, scan: 0.015,
+    layers: [
+      { col: [1.0, 0.25, 0.58],  dir: norm([-0.55, 0.6, 0.35]),  w: 1.6, pow: 1.8 },
+      { col: [0.97, 0.14, 0.48], dir: norm([-0.68, 0.52, 0.3]),  w: 0.7, pow: 4.0 },
+      { col: [0.10, 0.60, 0.98], dir: norm([-0.1, -0.85, 0.35]), w: 1.6, pow: 1.8 },
+      { col: [0.55, 0.82, 1.0],  dir: norm([0.6, -0.4, 0.4]),    w: 0.45, pow: 2.4 },
+    ],
+  },
+  D: {
+    name: 'D ライトグレイン',
+    swatch: 'linear-gradient(200deg, #9fdcff 12%, #ffffff 45%, #ff9ac4 88%)',
+    base: [0.97, 0.985, 1.0], hi: 0.45, grain: 0.14, scan: 0.015,
+    layers: [
+      { col: [0.30, 0.68, 1.0],  dir: norm([0.6, 0.6, 0.35]),    w: 1.5,  pow: 1.9 },
+      { col: [0.25, 0.5, 0.97],  dir: norm([0.8, 0.15, 0.35]),   w: 0.7,  pow: 3.0 },
+      { col: [1.0, 0.45, 0.70],  dir: norm([-0.15, -0.82, 0.35]),w: 1.4,  pow: 2.1 },
+      { col: [0.96, 0.3, 0.62],  dir: norm([0.25, -0.85, 0.3]),  w: 0.6,  pow: 3.5 },
+    ],
+  },
+};
+
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
+  pattern: 1,        // アニメパターン 1〜5
+  design: 'A',       // 惑星デザイン A〜D
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
@@ -403,13 +508,50 @@ function warpTime(t, amp, period, phaseDeg) {
 let elapsed = 0;      // 再生中のみ進む累積時間
 let lastTs = null;
 
+/* ステップ&グライド: ph(周期単位) → コツンと進む累積量 */
+function stepGlide(ph) {
+  const k = Math.floor(ph), f = ph - k;
+  const g = Math.min(1, f / 0.4);           // 周期の前半40%で移動、残りは静止
+  const ease = g * g * (3 - 2 * g);
+  return k + ease;
+}
+
+/* パターン別: ドットの現在角度(deg)を返す */
+function patternDeg(d, i, p) {
+  const base = 360 / params.duration * params.globalSpeed * params.direction;
+  const et = effectiveTime(elapsed, p.delay, params.ramp);
+  switch (params.pattern) {
+    case 2: { /* コメット: 軌道上の位置で加減速 (惑星の裏側あたりで最速) */
+      const lin = d.angle + p.offset + base * p.speed * et;
+      return lin + 45 * Math.sin((lin - 270) * Math.PI / 180);
+    }
+    case 3: { /* ドリフト: 周期の違うサイン波を重ねた気まぐれな漂い */
+      const a = 0.4 + params.pulse.amp;
+      const n = (2.2 * Math.sin(0.23 * et + i * 2.7)
+               + 1.3 * Math.sin(0.53 * et + i * 1.9)
+               + 0.7 * Math.sin(1.13 * et + i * 5.1)) * a * 0.45;
+      return d.angle + p.offset + base * p.speed * (et + n);
+    }
+    case 4: { /* すれ違い: 内側の軌道だけ逆回転 */
+      const dir = d.ellipse === 'inner' ? -1 : 1;
+      return d.angle + p.offset + base * p.speed * dir * et * (0.85 + 0.06 * i);
+    }
+    case 5: { /* リズム: 45°ずつコツンと進む (ドットごとに少し時間差) */
+      const period = params.duration / 8 / params.globalSpeed;
+      const ph = et / period + i * 0.37;
+      return d.angle + p.offset + params.direction * 45 * stepGlide(ph);
+    }
+    default: { /* スタンダード: 緩急ゆらぎ */
+      const wt = warpTime(et, params.pulse.amp, params.pulse.period, p.pulsePhase);
+      return d.angle + p.offset + base * p.speed * wt;
+    }
+  }
+}
+
 function renderFrame() {
-  const baseDegPerSec = 360 / params.duration * params.globalSpeed * params.direction;
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
-    const t = effectiveTime(elapsed, p.delay, params.ramp);
-    const wt = warpTime(t, params.pulse.amp, params.pulse.period, p.pulsePhase);
-    const deg = d.angle + p.offset + baseDegPerSec * p.speed * wt;
+    const deg = patternDeg(d, i, p);
     const pos = posOn(ELLIPSES[d.ellipse], deg);
     const els = dotEls[i];
     [els.back, els.front].forEach(el => {
@@ -438,6 +580,14 @@ uniform float uAngle;   /* 主回転 (rad) */
 uniform float uAngle2;  /* 2軸目の回転 (rad) */
 uniform float uDrift;   /* 質感のゆっくりした流れ */
 uniform float uNoise;   /* 質感の粒の強さ */
+uniform vec3 uBase;     /* ベース色 */
+uniform vec3 uCol[4];   /* 色レイヤー */
+uniform vec3 uDir[4];   /* 各レイヤーの方向 (正規化済み) */
+uniform vec4 uW;        /* 各レイヤーの強さ */
+uniform vec4 uPow;      /* 各レイヤーの集中度 */
+uniform float uGrain;   /* 粒子ノイズ量 */
+uniform float uScan;    /* 横縞ノイズ量 */
+uniform float uHi;      /* ハイライトの強さ */
 
 mat3 rotAxis(vec3 a, float t){
   float c = cos(t), s = sin(t);
@@ -485,34 +635,27 @@ void main(){
   float f = fbm(d * 2.4 + vec3(0.0, 0.0, uDrift));
   float g = fbm(d * 5.0 - vec3(uDrift * 0.7));
 
-  vec3 col      = vec3(0.99, 0.99, 1.0);
-  vec3 pink     = vec3(1.0, 0.42, 0.63);
-  vec3 deepPink = vec3(0.96, 0.22, 0.55);
-  vec3 cyan     = vec3(0.30, 0.80, 0.97);
-  vec3 blue     = vec3(0.42, 0.58, 0.95);
-
-  /* abs() で球の表裏両方に色帯を出す → どの回転位相でもピンクと水色が残る */
-  float wP = pow(abs(dot(d, normalize(vec3(0.9, 0.1, 0.28)))), 2.2);
-  float wC = pow(abs(dot(d, normalize(vec3(-0.62, -0.5, 0.35)))), 2.2);
-  float wB = pow(abs(dot(d, normalize(vec3(0.2, -0.88, 0.25)))), 2.6);
-  wP *= 0.7 + uNoise * (f - 0.5) * 1.6;
-  wC *= 0.7 + uNoise * (g - 0.5) * 1.6;
-  wB *= 0.7 + uNoise * (f - 0.5) * 1.6;
-
-  col = mix(col, pink, clamp(wP, 0.0, 1.0) * 0.9);
-  col = mix(col, deepPink, clamp(wP - 0.55, 0.0, 1.0) * 0.6);
-  col = mix(col, cyan, clamp(wC, 0.0, 1.0) * 0.9);
-  col = mix(col, blue, clamp(wB, 0.0, 1.0) * 0.75);
+  /* abs() で球の表裏両方に色帯を出す → どの回転位相でもブランド色が残る */
+  vec3 col = uBase;
+  for (int i = 0; i < 4; i++) {
+    float pw = i == 0 ? uPow.x : i == 1 ? uPow.y : i == 2 ? uPow.z : uPow.w;
+    float st = i == 0 ? uW.x : i == 1 ? uW.y : i == 2 ? uW.z : uW.w;
+    float fn = i == 2 ? g : f;
+    float w = pow(abs(dot(d, uDir[i])), pw) * (0.7 + uNoise * (fn - 0.5) * 1.6);
+    col = mix(col, uCol[i], clamp(w * st, 0.0, 1.0));
+  }
 
   /* 光の当たり方はカンプ通り固定 (左上ハイライト) */
   float hi = pow(max(dot(n, normalize(vec3(-0.48, 0.62, 0.62))), 0.0), 1.7);
-  col = mix(col, vec3(1.0), hi * 0.62);
+  col = mix(col, vec3(1.0), hi * uHi);
   float rim = pow(1.0 - n.z, 1.8);
   col *= 1.0 - rim * 0.05;
 
-  /* カンプの細かい横縞質感 */
-  float scan = (hash(vec3(floor(gl_FragCoord.y), 7.7, 3.1)) - 0.5) * 0.035 * uNoise;
-  col += scan;
+  /* 質感ノイズ: 粒子 + 細かい横縞 (「質感の粒」スライダーで増減) */
+  float amt = 0.3 + uNoise * 1.4;
+  float sp = (hash(vec3(floor(gl_FragCoord.x * 0.9), floor(gl_FragCoord.y * 0.9), 5.3)) - 0.5) * uGrain;
+  float scan = (hash(vec3(floor(gl_FragCoord.y), 7.7, 3.1)) - 0.5) * uScan;
+  col += (sp + scan) * amt;
 
   gl_FragColor = vec4(col * alpha, alpha);
 }`;
@@ -555,19 +698,51 @@ void main(){
     uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
     uDrift: gl.getUniformLocation(prog, 'uDrift'),
     uNoise: gl.getUniformLocation(prog, 'uNoise'),
+    uBase: gl.getUniformLocation(prog, 'uBase'),
+    uCol: gl.getUniformLocation(prog, 'uCol'),
+    uDir: gl.getUniformLocation(prog, 'uDir'),
+    uW: gl.getUniformLocation(prog, 'uW'),
+    uPow: gl.getUniformLocation(prog, 'uPow'),
+    uGrain: gl.getUniformLocation(prog, 'uGrain'),
+    uScan: gl.getUniformLocation(prog, 'uScan'),
+    uHi: gl.getUniformLocation(prog, 'uHi'),
   };
   gl.uniform2f(sphereGL.uRes, sphereCanvas.width, sphereCanvas.height);
+}
+
+/* パターン別: 球体の回転角 (主回転, 2軸目) */
+function sphereAngles() {
+  const sp = params.sphere;
+  switch (params.pattern) {
+    case 2: { const a = 2 * Math.PI * elapsed / (sp.duration * 0.75); return [a, a * sp.tumble]; }
+    case 3: { const a = 2 * Math.PI * elapsed / (sp.duration * 1.3); return [a, a * Math.max(0.8, sp.tumble)]; }
+    case 4: { const a = 2 * Math.PI * elapsed / (sp.duration * 1.5); return [a, a * sp.tumble * 0.4]; }
+    case 5: { /* ドットと同じリズムで刻む */
+      const period = params.duration / 8 / params.globalSpeed;
+      const a = 2 * Math.PI / 8 * stepGlide(elapsed / period) * (sp.duration ? 32 / sp.duration : 1);
+      return [a, a * sp.tumble];
+    }
+    default: { const a = 2 * Math.PI * elapsed / sp.duration; return [a, a * sp.tumble]; }
+  }
 }
 
 function renderSphere() {
   if (!sphereGL) return;
   const { gl } = sphereGL;
-  const sp = params.sphere;
-  const ang = 2 * Math.PI * elapsed / sp.duration;
+  const ds = DESIGNS[params.design] || DESIGNS.A;
+  const [ang, ang2] = sphereAngles();
   gl.uniform1f(sphereGL.uAngle, ang);
-  gl.uniform1f(sphereGL.uAngle2, ang * sp.tumble);
+  gl.uniform1f(sphereGL.uAngle2, ang2);
   gl.uniform1f(sphereGL.uDrift, elapsed * 0.02);
-  gl.uniform1f(sphereGL.uNoise, sp.noise);
+  gl.uniform1f(sphereGL.uNoise, params.sphere.noise);
+  gl.uniform3fv(sphereGL.uBase, ds.base);
+  gl.uniform3fv(sphereGL.uCol, ds.layers.flatMap(l => l.col));
+  gl.uniform3fv(sphereGL.uDir, ds.layers.flatMap(l => l.dir));
+  gl.uniform4fv(sphereGL.uW, ds.layers.map(l => l.w));
+  gl.uniform4fv(sphereGL.uPow, ds.layers.map(l => l.pow));
+  gl.uniform1f(sphereGL.uGrain, ds.grain);
+  gl.uniform1f(sphereGL.uScan, ds.scan);
+  gl.uniform1f(sphereGL.uHi, ds.hi);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -597,6 +772,8 @@ renderFrame();
 window.__anim = {
   step(dt) { elapsed += dt; renderFrame(); },
   setElapsed(v) { elapsed = v; renderFrame(); },
+  setPattern(n) { params.pattern = n; renderFrame(); },
+  setDesign(k) { params.design = k; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
 
@@ -742,6 +919,7 @@ function buildPanel() {
     elapsed = 0;
     save();
     buildPanel();
+    buildSwitcher();
     applyMarquee();
   };
   btns.append(playBtn, restartBtn, resetBtn);
@@ -749,6 +927,52 @@ function buildPanel() {
 }
 buildPanel();
 applyMarquee();
+
+/* ================= パターン/惑星スイッチャー ================= */
+function buildSwitcher() {
+  const pRow = document.getElementById('swPatterns');
+  const dRow = document.getElementById('swDesigns');
+  const desc = document.getElementById('swDesc');
+  pRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+  dRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+
+  function syncDesc() {
+    desc.textContent = PATTERNS[params.pattern - 1].desc;
+  }
+  PATTERNS.forEach((pt, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw-pill';
+    b.textContent = pt.name;
+    const sync = () => b.classList.toggle('on', params.pattern === i + 1);
+    b.onclick = () => {
+      params.pattern = i + 1;
+      pRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.pattern === j + 1));
+      syncDesc();
+      save();
+    };
+    sync();
+    pRow.appendChild(b);
+  });
+  Object.entries(DESIGNS).forEach(([key, ds]) => {
+    const b = document.createElement('button');
+    b.className = 'sw-pill';
+    const sw = document.createElement('span');
+    sw.className = 'sw-swatch';
+    sw.style.background = ds.swatch;
+    b.append(sw, document.createTextNode(ds.name));
+    const sync = () => b.classList.toggle('on', params.design === key);
+    b.onclick = () => {
+      params.design = key;
+      dRow.querySelectorAll('.sw-pill').forEach(el => el.classList.remove('on'));
+      b.classList.add('on');
+      save();
+    };
+    sync();
+    dRow.appendChild(b);
+  });
+  syncDesc();
+}
+buildSwitcher();
 
 /* パネル開閉 */
 const panel = document.getElementById('panel');
