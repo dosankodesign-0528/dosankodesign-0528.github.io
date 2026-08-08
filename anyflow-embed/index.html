@@ -114,7 +114,9 @@
     z-index: 2;
   }
   #sphere.fallback {
-    background: url('assets/sphere.png') center / 230px 230px no-repeat;
+    background-size: 230px 230px;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   /* ---- Logos (ティッカー風カルーセル) ---- */
@@ -370,52 +372,58 @@ const PATTERNS = [
   { name: '⑤ リズム', desc: 'コツン、コツンと一定のリズムで進む（データが流れるイメージ）。自転も同じリズムで刻む。' },
 ];
 
-/* ================= 惑星デザイン (Figmaカンプ4種) ================= */
-const norm = v => { const l = Math.hypot(...v); return v.map(x => x / l); };
+/* ================= 惑星デザイン (Figmaカンプ4種) =================
+   カンプ画像(4倍解像度)をそのまま球面テクスチャとして貼り、
+   デザインごとに専用シェーダー(finish)で質感を仕上げる。
+   裏側はカンプに存在しないため鏡映で生成 (uv を d.xy から取ると表裏対称になる)。 */
 const DESIGNS = {
   A: {
     name: 'A やわらかパステル',
     swatch: 'radial-gradient(circle at 30% 30%, #ffffff 15%, #ffb3d1 55%, #64d2f5 100%)',
-    base: [0.99, 0.99, 1.0], hi: 0.62, grain: 0.02, scan: 0.035,
-    layers: [
-      { col: [1.0, 0.42, 0.63],  dir: norm([0.9, 0.1, 0.28]),    w: 0.9,  pow: 2.2 },
-      { col: [0.96, 0.22, 0.55], dir: norm([0.9, 0.1, 0.28]),    w: 0.5,  pow: 6.0 },
-      { col: [0.30, 0.80, 0.97], dir: norm([-0.62, -0.5, 0.35]), w: 0.9,  pow: 2.2 },
-      { col: [0.42, 0.58, 0.95], dir: norm([0.2, -0.88, 0.25]),  w: 0.75, pow: 2.6 },
-    ],
+    src: 'assets/planet-a.png',
+    grainScale: '220.0',
+    /* なめらかグラデ優先: 立体感は控えめ、粒はごく薄く */
+    finish: `
+      float hi = pow(max(dot(n, normalize(vec3(-0.48, 0.62, 0.62))), 0.0), 2.0);
+      col = mix(col, vec3(1.0), hi * 0.15);
+      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.06;
+      col += grain * 0.05 * uNoise;`,
   },
   B: {
     name: 'B ビビッドブルー',
     swatch: 'linear-gradient(140deg, #ff5d97 5%, #ffffff 30%, #1e9bff 65%, #0b6bff 100%)',
-    base: [0.10, 0.56, 0.97], hi: 0.4, grain: 0.11, scan: 0.015,
-    layers: [
-      { col: [1.0, 1.0, 1.0],    dir: norm([0.5, 0.72, 0.3]),   w: 2.2, pow: 1.6 },
-      { col: [1.0, 0.28, 0.6],   dir: norm([-0.62, 0.55, 0.3]), w: 1.8, pow: 2.2 },
-      { col: [0.03, 0.32, 0.9],  dir: norm([0.15, -0.9, 0.3]),  w: 0.75, pow: 2.0 },
-      { col: [0.4, 0.8, 1.0],    dir: norm([0.75, -0.2, 0.4]),  w: 0.45, pow: 2.2 },
-    ],
+    src: 'assets/planet-b.png',
+    grainScale: '120.0',
+    /* ビビッド優先: 粒は乗算で粗く、白飛びさせない */
+    finish: `
+      col *= 1.0 + grain * 0.5 * uNoise;
+      float hi = pow(max(dot(n, normalize(vec3(-0.4, 0.65, 0.65))), 0.0), 2.5);
+      col = mix(col, vec3(1.0), hi * 0.08);
+      col *= 1.0 - pow(1.0 - n.z, 2.2) * 0.10;`,
   },
   C: {
     name: 'C ピンク×ブルー',
     swatch: 'linear-gradient(160deg, #ff5d97 22%, #ffffff 50%, #26a9ff 78%)',
-    base: [1.0, 1.0, 1.0], hi: 0.45, grain: 0.10, scan: 0.015,
-    layers: [
-      { col: [1.0, 0.25, 0.58],  dir: norm([-0.55, 0.6, 0.35]),  w: 1.6, pow: 1.8 },
-      { col: [0.97, 0.14, 0.48], dir: norm([-0.68, 0.52, 0.3]),  w: 0.7, pow: 4.0 },
-      { col: [0.10, 0.60, 0.98], dir: norm([-0.1, -0.85, 0.35]), w: 1.6, pow: 1.8 },
-      { col: [0.55, 0.82, 1.0],  dir: norm([0.6, -0.4, 0.4]),    w: 0.45, pow: 2.4 },
-    ],
+    src: 'assets/planet-c.png',
+    grainScale: '150.0',
+    /* 2色の境界を活かす: 中くらいの粒を加算で */
+    finish: `
+      col += grain * 0.16 * uNoise;
+      float hi = pow(max(dot(n, normalize(vec3(-0.45, 0.6, 0.66))), 0.0), 2.2);
+      col = mix(col, vec3(1.0), hi * 0.12);
+      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.08;`,
   },
   D: {
     name: 'D ライトグレイン',
     swatch: 'linear-gradient(200deg, #9fdcff 12%, #ffffff 45%, #ff9ac4 88%)',
-    base: [0.97, 0.985, 1.0], hi: 0.45, grain: 0.14, scan: 0.015,
-    layers: [
-      { col: [0.30, 0.68, 1.0],  dir: norm([0.6, 0.6, 0.35]),    w: 1.5,  pow: 1.9 },
-      { col: [0.25, 0.5, 0.97],  dir: norm([0.8, 0.15, 0.35]),   w: 0.7,  pow: 3.0 },
-      { col: [1.0, 0.45, 0.70],  dir: norm([-0.15, -0.82, 0.35]),w: 1.4,  pow: 2.1 },
-      { col: [0.96, 0.3, 0.62],  dir: norm([0.25, -0.85, 0.3]),  w: 0.6,  pow: 3.5 },
-    ],
+    src: 'assets/planet-d.png',
+    grainScale: '260.0',
+    /* 高密度の微粒が主役: 細かい粒を強めに */
+    finish: `
+      col += grain * 0.20 * uNoise;
+      float hi = pow(max(dot(n, normalize(vec3(-0.45, 0.6, 0.66))), 0.0), 2.2);
+      col = mix(col, vec3(1.0), hi * 0.12);
+      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.07;`,
   },
 };
 
@@ -570,24 +578,18 @@ let sphereGL = null;
 
 function initSphere() {
   const gl = sphereCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
-  if (!gl) { sphereCanvas.classList.add('fallback'); return; }
+  if (!gl) { sphereFallback(); return; }
 
   const vs = `attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
-  const fs = `
+
+  /* 共通部にデザイン専用の仕上げ(finish)と粒の細かさを差し込み、惑星ごとに別シェーダーを作る */
+  const fsTemplate = (grainScale, finish) => `
 precision highp float;
 uniform vec2 uRes;
-uniform float uAngle;   /* 主回転 (rad) */
-uniform float uAngle2;  /* 2軸目の回転 (rad) */
-uniform float uDrift;   /* 質感のゆっくりした流れ */
-uniform float uNoise;   /* 質感の粒の強さ */
-uniform vec3 uBase;     /* ベース色 */
-uniform vec3 uCol[4];   /* 色レイヤー */
-uniform vec3 uDir[4];   /* 各レイヤーの方向 (正規化済み) */
-uniform vec4 uW;        /* 各レイヤーの強さ */
-uniform vec4 uPow;      /* 各レイヤーの集中度 */
-uniform float uGrain;   /* 粒子ノイズ量 */
-uniform float uScan;    /* 横縞ノイズ量 */
-uniform float uHi;      /* ハイライトの強さ */
+uniform float uAngle;    /* 主回転 (rad) */
+uniform float uAngle2;   /* 2軸目の回転 (rad) */
+uniform float uNoise;    /* 追い粒の強さ (カンプ由来の質感に上乗せ) */
+uniform sampler2D uTex;  /* カンプの惑星画像 (4倍解像度) */
 
 mat3 rotAxis(vec3 a, float t){
   float c = cos(t), s = sin(t);
@@ -602,20 +604,6 @@ float hash(vec3 p){
   p = fract(p * vec3(127.1, 311.7, 74.7));
   p += dot(p, p.yzx + 19.19);
   return fract((p.x + p.y) * p.z);
-}
-float vnoise(vec3 p){
-  vec3 i = floor(p), f = fract(p);
-  vec3 u = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(mix(hash(i), hash(i+vec3(1,0,0)), u.x),
-        mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), u.x), u.y),
-    mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), u.x),
-        mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), u.x), u.y), u.z);
-}
-float fbm(vec3 p){
-  float v = 0.0, a = 0.5;
-  for (int i = 0; i < 3; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; }
-  return v;
 }
 void main(){
   vec2 p = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;
@@ -632,30 +620,16 @@ void main(){
   vec3 ax2 = normalize(vec3(-0.62, 0.22, 0.76));
   vec3 d = rotAxis(ax2, uAngle2) * rotAxis(ax1, uAngle) * n;
 
-  float f = fbm(d * 2.4 + vec3(0.0, 0.0, uDrift));
-  float g = fbm(d * 5.0 - vec3(uDrift * 0.7));
+  /* カンプ画像を球面に貼る: 回転後の向き d から画像の色を拾う。
+     無回転ならカンプがピクセルそのまま出る。裏側(d.z<0)はカンプに無いので鏡映で生成 */
+  vec2 uv = vec2(0.5 + d.x * 0.47, 0.5 - d.y * 0.47);
+  vec3 col = texture2D(uTex, uv).rgb;
 
-  /* abs() で球の表裏両方に色帯を出す → どの回転位相でもブランド色が残る */
-  vec3 col = uBase;
-  for (int i = 0; i < 4; i++) {
-    float pw = i == 0 ? uPow.x : i == 1 ? uPow.y : i == 2 ? uPow.z : uPow.w;
-    float st = i == 0 ? uW.x : i == 1 ? uW.y : i == 2 ? uW.z : uW.w;
-    float fn = i == 2 ? g : f;
-    float w = pow(abs(dot(d, uDir[i])), pw) * (0.7 + uNoise * (fn - 0.5) * 1.6);
-    col = mix(col, uCol[i], clamp(w * st, 0.0, 1.0));
-  }
+  /* 球の表面に張り付いた粒 (球と一緒に回る) */
+  float grain = hash(floor(d * ${grainScale}) + 0.5) - 0.5;
 
-  /* 光の当たり方はカンプ通り固定 (左上ハイライト) */
-  float hi = pow(max(dot(n, normalize(vec3(-0.48, 0.62, 0.62))), 0.0), 1.7);
-  col = mix(col, vec3(1.0), hi * uHi);
-  float rim = pow(1.0 - n.z, 1.8);
-  col *= 1.0 - rim * 0.05;
-
-  /* 質感ノイズ: 粒子 + 細かい横縞 (「質感の粒」スライダーで増減) */
-  float amt = 0.3 + uNoise * 1.4;
-  float sp = (hash(vec3(floor(gl_FragCoord.x * 0.9), floor(gl_FragCoord.y * 0.9), 5.3)) - 0.5) * uGrain;
-  float scan = (hash(vec3(floor(gl_FragCoord.y), 7.7, 3.1)) - 0.5) * uScan;
-  col += (sp + scan) * amt;
+  /* ---- デザイン専用の仕上げ ---- */
+  ${finish}
 
   gl_FragColor = vec4(col * alpha, alpha);
 }`;
@@ -671,43 +645,61 @@ void main(){
     return sh;
   }
   const v = compile(gl.VERTEX_SHADER, vs);
-  const f = compile(gl.FRAGMENT_SHADER, fs);
-  if (!v || !f) { sphereCanvas.classList.add('fallback'); return; }
-  const prog = gl.createProgram();
-  gl.attachShader(prog, v);
-  gl.attachShader(prog, f);
-  gl.linkProgram(prog);
-  gl.useProgram(prog);
+  if (!v) { sphereFallback(); return; }
 
   const buf = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  const loc = gl.getAttribLocation(prog, 'aPos');
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   sphereCanvas.width = 260 * dpr;
   sphereCanvas.height = 260 * dpr;
   gl.viewport(0, 0, sphereCanvas.width, sphereCanvas.height);
 
-  sphereGL = {
-    gl,
-    uRes: gl.getUniformLocation(prog, 'uRes'),
-    uAngle: gl.getUniformLocation(prog, 'uAngle'),
-    uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
-    uDrift: gl.getUniformLocation(prog, 'uDrift'),
-    uNoise: gl.getUniformLocation(prog, 'uNoise'),
-    uBase: gl.getUniformLocation(prog, 'uBase'),
-    uCol: gl.getUniformLocation(prog, 'uCol'),
-    uDir: gl.getUniformLocation(prog, 'uDir'),
-    uW: gl.getUniformLocation(prog, 'uW'),
-    uPow: gl.getUniformLocation(prog, 'uPow'),
-    uGrain: gl.getUniformLocation(prog, 'uGrain'),
-    uScan: gl.getUniformLocation(prog, 'uScan'),
-    uHi: gl.getUniformLocation(prog, 'uHi'),
-  };
-  gl.uniform2f(sphereGL.uRes, sphereCanvas.width, sphereCanvas.height);
+  const progs = {};
+  for (const [key, ds] of Object.entries(DESIGNS)) {
+    const f = compile(gl.FRAGMENT_SHADER, fsTemplate(ds.grainScale, ds.finish));
+    if (!f) { sphereFallback(); return; }
+    const prog = gl.createProgram();
+    gl.attachShader(prog, v);
+    gl.attachShader(prog, f);
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+    const loc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(gl.getUniformLocation(prog, 'uRes'), sphereCanvas.width, sphereCanvas.height);
+    gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
+    progs[key] = {
+      prog,
+      uAngle: gl.getUniformLocation(prog, 'uAngle'),
+      uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
+      uNoise: gl.getUniformLocation(prog, 'uNoise'),
+    };
+    /* カンプ画像をテクスチャとして読み込み (読み込み完了したら描画) */
+    const tex = gl.createTexture();
+    const img = new Image();
+    img.onload = () => {
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      progs[key].tex = tex;
+      renderSphere();
+    };
+    img.src = ds.src;
+  }
+  sphereGL = { gl, progs };
+}
+
+/* WebGLが使えない環境: カンプ画像をそのまま表示 */
+function sphereFallback() {
+  sphereGL = null;
+  sphereCanvas.classList.add('fallback');
+  const ds = DESIGNS[params.design] || DESIGNS.A;
+  sphereCanvas.style.backgroundImage = `url('${ds.src}')`;
 }
 
 /* パターン別: 球体の回転角 (主回転, 2軸目) */
@@ -727,22 +719,23 @@ function sphereAngles() {
 }
 
 function renderSphere() {
-  if (!sphereGL) return;
-  const { gl } = sphereGL;
-  const ds = DESIGNS[params.design] || DESIGNS.A;
+  if (!sphereGL) {
+    if (sphereCanvas.classList.contains('fallback')) {
+      const ds = DESIGNS[params.design] || DESIGNS.A;
+      sphereCanvas.style.backgroundImage = `url('${ds.src}')`;
+    }
+    return;
+  }
+  const { gl, progs } = sphereGL;
+  const pr = progs[params.design] || progs.A;
+  if (!pr || !pr.tex) return;
   const [ang, ang2] = sphereAngles();
-  gl.uniform1f(sphereGL.uAngle, ang);
-  gl.uniform1f(sphereGL.uAngle2, ang2);
-  gl.uniform1f(sphereGL.uDrift, elapsed * 0.02);
-  gl.uniform1f(sphereGL.uNoise, params.sphere.noise);
-  gl.uniform3fv(sphereGL.uBase, ds.base);
-  gl.uniform3fv(sphereGL.uCol, ds.layers.flatMap(l => l.col));
-  gl.uniform3fv(sphereGL.uDir, ds.layers.flatMap(l => l.dir));
-  gl.uniform4fv(sphereGL.uW, ds.layers.map(l => l.w));
-  gl.uniform4fv(sphereGL.uPow, ds.layers.map(l => l.pow));
-  gl.uniform1f(sphereGL.uGrain, ds.grain);
-  gl.uniform1f(sphereGL.uScan, ds.scan);
-  gl.uniform1f(sphereGL.uHi, ds.hi);
+  gl.useProgram(pr.prog);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, pr.tex);
+  gl.uniform1f(pr.uAngle, ang);
+  gl.uniform1f(pr.uAngle2, ang2);
+  gl.uniform1f(pr.uNoise, params.sphere.noise);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
