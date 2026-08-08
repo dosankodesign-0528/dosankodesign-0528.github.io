@@ -288,8 +288,8 @@
             <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
         </defs>
-        <ellipse cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerB)" stroke-width="3"/>
-        <ellipse cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterB)" stroke-width="3"/>
+        <ellipse id="ellInnerB" cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerB)" stroke-width="3"/>
+        <ellipse id="ellOuterB" cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterB)" stroke-width="3"/>
         <g id="dotsBack"></g>
       </svg>
 
@@ -306,17 +306,17 @@
             <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
           <clipPath id="clipInnerF">
-            <rect x="-420" y="0" width="840" height="160" transform="translate(475.283 350.505) rotate(-23.3266)"/>
+            <rect id="clipInnerRect" x="-420" y="0" width="840" height="160" transform="translate(475.283 350.505) rotate(-23.3266)"/>
           </clipPath>
           <clipPath id="clipOuterF">
-            <rect x="-458" y="0" width="916" height="172" transform="translate(457.741 306.543) rotate(-23.3266)"/>
+            <rect id="clipOuterRect" x="-458" y="0" width="916" height="172" transform="translate(457.741 306.543) rotate(-23.3266)"/>
           </clipPath>
         </defs>
         <g clip-path="url(#clipInnerF)">
-          <ellipse cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerF)" stroke-width="3"/>
+          <ellipse id="ellInnerF" cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerF)" stroke-width="3"/>
         </g>
         <g clip-path="url(#clipOuterF)">
-          <ellipse cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterF)" stroke-width="3"/>
+          <ellipse id="ellOuterF" cx="457.741" cy="306.543" rx="435.517" ry="146.026" transform="rotate(-23.3266 457.741 306.543)" stroke="url(#gOuterF)" stroke-width="3"/>
         </g>
         <g id="dotsFront"></g>
       </svg>
@@ -351,7 +351,7 @@
 
 <script>
 /* ================= 軌道データ (Figma カンプから抽出) ================= */
-const ROT = -23.3266 * Math.PI / 180;
+const ROTDEG = -23.3266;
 const ELLIPSES = {
   outer: { cx: 457.741, cy: 306.543, rx: 435.517, ry: 146.026 },
   inner: { cx: 475.283, cy: 350.505, rx: 397.09,  ry: 133.142 },
@@ -388,6 +388,7 @@ const SWAYS = [
   { name: '⑧漂流', desc: '全体が8の字を描いてゆっくり漂う。' },
   { name: '⑨呼吸', desc: '全体がわずかに膨らんだり縮んだりする。' },
   { name: '⑩波乗り', desc: '傾きと上下ゆれのミックスで、波に乗るように揺れる。' },
+  { name: '⑪クロス', desc: '2本の軌道が逆方向に傾いて、たまに交差する。（軌道ごとの「ゆれ」設定でも自作できます）' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -446,21 +447,99 @@ const DESIGNS = {
   E: {
     name: 'E ハーフトーンブルー',
     swatch: 'radial-gradient(circle at 68% 30%, #ffffff 8%, #5fd2ff 40%, #0e9bff 72%, #ff4fd8 100%)',
-    src: 'assets/planet-e.png',
-    grainScale: '160.0',
-    /* 網点(ハーフトーン)専用: ベイヤーディザ + 軽いポスタライズでドット感をパキッと維持 */
-    helpers: `
+    src: 'assets/planet-e.png',   /* WebGL非対応時のフォールバック表示にのみ使用 */
+    /* 完全生成のディザリング専用シェーダー:
+       画像貼り付けだと網点が回転でにじみ継ぎ目も出るため、
+       色のグラデを計算で作り、ベイヤーディザで1pxドットに割ってピクセル調に仕上げる */
+    fragment: `
+precision highp float;
+uniform vec2 uRes;
+uniform float uAngle;
+uniform float uAngle2;
+uniform float uNoise;
+
+mat3 rotAxis(vec3 a, float t){
+  float c = cos(t), s = sin(t);
+  vec3 u = normalize(a);
+  return mat3(
+    c+u.x*u.x*(1.-c),      u.x*u.y*(1.-c)-u.z*s,  u.x*u.z*(1.-c)+u.y*s,
+    u.y*u.x*(1.-c)+u.z*s,  c+u.y*u.y*(1.-c),      u.y*u.z*(1.-c)-u.x*s,
+    u.z*u.x*(1.-c)-u.y*s,  u.z*u.y*(1.-c)+u.x*s,  c+u.z*u.z*(1.-c)
+  );
+}
+float hash(vec3 p){
+  p = fract(p * vec3(127.1, 311.7, 74.7));
+  p += dot(p, p.yzx + 19.19);
+  return fract((p.x + p.y) * p.z);
+}
+float vnoise(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(hash(i), hash(i+vec3(1,0,0)), u.x),
+        mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), u.x), u.y),
+    mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), u.x),
+        mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), u.x), u.y), u.z);
+}
+float fbm(vec3 p){
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 3; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; }
+  return v;
+}
 float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
-float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }`,
-    finish: `
-      float dith = bayer4(gl_FragCoord.xy * 0.5);
-      col = clamp(col + (dith - 0.6) * 0.08 * (0.5 + uNoise), 0.0, 1.0);
-      float levels = 12.0;
-      col = floor(col * levels + 0.5) / levels;
-      float hi = pow(max(dot(n, normalize(vec3(-0.45, 0.6, 0.66))), 0.0), 2.2);
-      col = mix(col, vec3(1.0), hi * 0.10);
-      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.08;
-      col += grain * 0.05 * uNoise;`,
+float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+
+/* 深い青 → ブルー → シアン → 白 のカラーランプ */
+vec3 ramp(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 deep = vec3(0.04, 0.36, 0.86);
+  vec3 blue = vec3(0.05, 0.62, 0.98);
+  vec3 cyan = vec3(0.56, 0.88, 1.0);
+  vec3 white = vec3(1.0);
+  if (x < 0.34) return mix(deep, blue, x / 0.34);
+  if (x < 0.67) return mix(blue, cyan, (x - 0.34) / 0.33);
+  return mix(cyan, white, (x - 0.67) / 0.33);
+}
+
+void main(){
+  float CELL = 2.0; /* ドット1粒の物理px (dpr2でCSS1px相当) */
+  vec2 fcTrue = gl_FragCoord.xy;
+  vec2 cellId = floor(fcTrue / CELL);
+  vec2 fc = (cellId + 0.5) * CELL;   /* セル中央で色を決める → 粒が均一なピクセルに */
+  vec2 pTrue = (fcTrue * 2.0 - uRes) / uRes.y;
+  vec2 p = (fc * 2.0 - uRes) / uRes.y;
+  float R = 0.884615;
+  float px = 2.0 / uRes.y;
+  float alpha = 1.0 - smoothstep(R - 1.5 * px, R + 1.5 * px, length(pTrue));
+  if (alpha <= 0.0) { gl_FragColor = vec4(0.0); return; }
+  float z = sqrt(max(R * R - dot(p, p), 1e-5));
+  vec3 n = normalize(vec3(p, z));
+  vec3 ax1 = normalize(vec3(0.53, 0.85, 0.35));
+  vec3 ax2 = normalize(vec3(-0.62, 0.22, 0.76));
+  vec3 d = rotAxis(ax2, uAngle2) * rotAxis(ax1, uAngle) * n;
+
+  /* 明るさ: 右上ハイライトは画面固定(カンプ準拠)、表面の流れは球と一緒に回る */
+  vec3 L = normalize(vec3(0.55, 0.52, 0.62));
+  float lam = dot(n, L) * 0.5 + 0.5;
+  float flow = (fbm(d * 2.2) - 0.5) * 0.4;
+  /* 中央はシアン〜ブルー主体、白は右上のハイライト付近だけ (カンプ準拠) */
+  float lum = clamp(lam * 0.95 - 0.15 + pow(lam, 6.0) * 0.55 + flow, 0.0, 1.0);
+
+  /* ベイヤーディザ: 階調を段に割って、隣のセルと交互に混ぜる → 網点 */
+  float dith = bayer8(cellId);
+  float spread = 0.8 + uNoise * 1.2;
+  float levels = 6.0;
+  float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, 0.0, 1.0);
+  vec3 col = ramp(q);
+
+  /* 左下のマゼンタリム (これもディザで混ぜる) */
+  float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
+  float mg = clamp(floor((rim * 1.5 + flow * 0.25) * 3.0 + (dith - 0.5) * 1.3 + 0.5) / 3.0, 0.0, 1.0);
+  col = mix(col, vec3(1.0, 0.27, 0.78), mg * 0.92);
+
+  gl_FragColor = vec4(col * alpha, alpha);
+}`,
   },
 };
 
@@ -483,6 +562,12 @@ const DEFAULTS = {
     tumble: 0.37,    // 多面ゆらぎ (2軸目の回転比率)
     noise: 0.5,      // 質感の粒の強さ
   },
+  planet: { dx: 0, dy: 0, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
+  orbits: {
+    /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
+    outer: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
+    inner: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
+  },
   marquee: {
     duration: 30,    // ロゴが1周する秒数
     direction: 1,    // 1=左へ / -1=右へ
@@ -499,6 +584,11 @@ function load() {
       const merged = { ...structuredClone(DEFAULTS), ...s };
       merged.pulse = { ...DEFAULTS.pulse, ...(s.pulse || {}) };
       merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
+      merged.planet = { ...DEFAULTS.planet, ...(s.planet || {}) };
+      merged.orbits = {
+        outer: { ...DEFAULTS.orbits.outer, ...((s.orbits && s.orbits.outer) || {}) },
+        inner: { ...DEFAULTS.orbits.inner, ...((s.orbits && s.orbits.inner) || {}) },
+      };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
       return merged;
@@ -525,14 +615,67 @@ const dotEls = DOTS.map(d => {
   return { back, front };
 });
 
-function posOn(e, deg) {
-  const t = deg * Math.PI / 180;
-  const lx = e.rx * Math.cos(t), ly = e.ry * Math.sin(t);
+/* 現在の軌道ジオメトリ = カンプ基準値 × パネル設定 (サイズ/角度/位置) + ゆれ */
+function orbitGeom(key) {
+  const b = ELLIPSES[key];
+  const p = params.orbits[key];
+  let wobble = 0;
+  if (p.wobbleAmp > 0 && p.wobblePeriod > 0) {
+    wobble = p.wobbleAmp * Math.sin(2 * Math.PI * elapsed / p.wobblePeriod + p.wobblePhase * Math.PI / 180);
+  }
+  if (params.sway === 11) { /* クロスプリセット: 2本が逆方向に傾く */
+    wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10);
+  }
   return {
-    x: e.cx + lx * Math.cos(ROT) - ly * Math.sin(ROT),
-    y: e.cy + lx * Math.sin(ROT) + ly * Math.cos(ROT),
+    cx: b.cx + p.dx, cy: b.cy + p.dy,
+    rx: b.rx * p.scale, ry: b.ry * p.scale,
+    rot: ROTDEG + p.angle + wobble,
+  };
+}
+
+function posOn(g, deg) {
+  const t = deg * Math.PI / 180;
+  const rot = g.rot * Math.PI / 180;
+  const lx = g.rx * Math.cos(t), ly = g.ry * Math.sin(t);
+  return {
+    x: g.cx + lx * Math.cos(rot) - ly * Math.sin(rot),
+    y: g.cy + lx * Math.sin(rot) + ly * Math.cos(rot),
     front: Math.sin(t) > 0,   // 楕円ローカルで下半分 = 手前側
   };
+}
+
+/* 軌道SVG(奥/手前の楕円・クリップ・グラデ)へジオメトリを反映 */
+const orbitSvgEls = {
+  outer: {
+    ells: [document.getElementById('ellOuterB'), document.getElementById('ellOuterF')],
+    clip: document.getElementById('clipOuterRect'),
+    grads: [document.getElementById('gOuterB'), document.getElementById('gOuterF')],
+  },
+  inner: {
+    ells: [document.getElementById('ellInnerB'), document.getElementById('ellInnerF')],
+    clip: document.getElementById('clipInnerRect'),
+    grads: [document.getElementById('gInnerB'), document.getElementById('gInnerF')],
+  },
+};
+
+function updateOrbitSvg(geoms) {
+  for (const key of ['outer', 'inner']) {
+    const g = geoms[key], els = orbitSvgEls[key];
+    const tr = `rotate(${g.rot} ${g.cx} ${g.cy})`;
+    for (const el of els.ells) {
+      el.setAttribute('cx', g.cx); el.setAttribute('cy', g.cy);
+      el.setAttribute('rx', g.rx); el.setAttribute('ry', g.ry);
+      el.setAttribute('transform', tr);
+    }
+    els.clip.setAttribute('x', -(g.rx + 24));
+    els.clip.setAttribute('width', (g.rx + 24) * 2);
+    els.clip.setAttribute('height', g.ry + 26);
+    els.clip.setAttribute('transform', `translate(${g.cx} ${g.cy}) rotate(${g.rot})`);
+    for (const gr of els.grads) {
+      gr.setAttribute('x1', g.cx); gr.setAttribute('x2', g.cx);
+      gr.setAttribute('y1', g.cy - g.ry); gr.setAttribute('y2', g.cy + g.ry);
+    }
+  }
 }
 
 /* 遅延後になめらかに加速するための実効経過時間 */
@@ -595,10 +738,12 @@ function patternDeg(d, i, p) {
 }
 
 function renderFrame() {
+  const geoms = { outer: orbitGeom('outer'), inner: orbitGeom('inner') };
+  updateOrbitSvg(geoms);
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
     const deg = patternDeg(d, i, p);
-    const pos = posOn(ELLIPSES[d.ellipse], deg);
+    const pos = posOn(geoms[d.ellipse], deg);
     const els = dotEls[i];
     [els.back, els.front].forEach(el => {
       el.setAttribute('cx', pos.x);
@@ -644,7 +789,11 @@ function applySway() {
   }
   swayEls.orbit.style.transform = orbit;
   swayEls.svgs.forEach(s => s.style.transform = svg);
-  swayEls.sphere.style.transform = sph;
+  /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
+  const pl = params.planet;
+  const plT = (pl.dx || pl.dy || pl.scale !== 1)
+    ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale})` : '';
+  swayEls.sphere.style.transform = (sph + plT).trim();
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -734,7 +883,9 @@ void main(){
 
   const progs = {};
   for (const [key, ds] of Object.entries(DESIGNS)) {
-    const f = compile(gl.FRAGMENT_SHADER, fsTemplate(ds.grainScale, ds.finish, ds.helpers));
+    /* fragment があるデザインは完全カスタムシェーダー (テクスチャ不使用) */
+    const fsSrc = ds.fragment || fsTemplate(ds.grainScale, ds.finish, ds.helpers);
+    const f = compile(gl.FRAGMENT_SHADER, fsSrc);
     if (!f) { sphereFallback(); return; }
     const prog = gl.createProgram();
     gl.attachShader(prog, v);
@@ -745,27 +896,30 @@ void main(){
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(gl.getUniformLocation(prog, 'uRes'), sphereCanvas.width, sphereCanvas.height);
-    gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
     progs[key] = {
       prog,
+      needsTex: !ds.fragment,
       uAngle: gl.getUniformLocation(prog, 'uAngle'),
       uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
       uNoise: gl.getUniformLocation(prog, 'uNoise'),
     };
-    /* カンプ画像をテクスチャとして読み込み (読み込み完了したら描画) */
-    const tex = gl.createTexture();
-    const img = new Image();
-    img.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      progs[key].tex = tex;
-      renderSphere();
-    };
-    img.src = ds.src;
+    if (!ds.fragment) {
+      gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
+      /* カンプ画像をテクスチャとして読み込み (読み込み完了したら描画) */
+      const tex = gl.createTexture();
+      const img = new Image();
+      img.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        progs[key].tex = tex;
+        renderSphere();
+      };
+      img.src = ds.src;
+    }
   }
   sphereGL = { gl, progs };
 }
@@ -804,11 +958,13 @@ function renderSphere() {
   }
   const { gl, progs } = sphereGL;
   const pr = progs[params.design] || progs.A;
-  if (!pr || !pr.tex) return;
+  if (!pr || (pr.needsTex && !pr.tex)) return;
   const [ang, ang2] = sphereAngles();
   gl.useProgram(pr.prog);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, pr.tex);
+  if (pr.tex) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, pr.tex);
+  }
   gl.uniform1f(pr.uAngle, ang);
   gl.uniform1f(pr.uAngle2, ang2);
   gl.uniform1f(pr.uNoise, params.sphere.noise);
@@ -907,6 +1063,31 @@ function buildPanel() {
   rows.push(slider('1回転の秒数', 8, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + 's'));
   rows.push(slider('多面ゆらぎ', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('質感の粒', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%'));
+
+  /* 惑星の位置・サイズ */
+  const gpl = document.createElement('div');
+  gpl.className = 'grp';
+  gpl.innerHTML = '<div class="grp-title">惑星の位置・サイズ</div>';
+  body.appendChild(gpl);
+  rows.push(slider('X位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px'));
+  rows.push(slider('Y位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px'));
+  rows.push(slider('大きさ', 0.4, 1.8, 0.01, () => params.planet.scale, v => params.planet.scale = v, v => '×' + v.toFixed(2)));
+
+  /* 軌道 個別 (サイズ/角度/位置 + ゆれ) */
+  [['outer', '軌道 外側', '#FF5D97'], ['inner', '軌道 内側', '#00ABEB']].forEach(([key, label, color]) => {
+    const g2 = document.createElement('div');
+    g2.className = 'grp';
+    g2.innerHTML = `<div class="grp-title"><span class="chip" style="background:${color}"></span>${label}</div>`;
+    body.appendChild(g2);
+    const o = () => params.orbits[key];
+    rows.push(slider('サイズ', 0.5, 1.5, 0.01, () => o().scale, v => o().scale = v, v => '×' + v.toFixed(2)));
+    rows.push(slider('角度', -45, 45, 0.5, () => o().angle, v => o().angle = v, v => v + '°'));
+    rows.push(slider('X位置', -200, 200, 1, () => o().dx, v => o().dx = v, v => v + 'px'));
+    rows.push(slider('Y位置', -200, 200, 1, () => o().dy, v => o().dy = v, v => v + 'px'));
+    rows.push(slider('ゆれ幅', 0, 20, 0.5, () => o().wobbleAmp, v => o().wobbleAmp = v, v => v + '°'));
+    rows.push(slider('ゆれ周期', 2, 30, 0.5, () => o().wobblePeriod, v => o().wobblePeriod = v, v => v.toFixed(1) + 's'));
+    rows.push(slider('ゆれ位相', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°'));
+  });
 
   /* 緩急 (速くなったり遅くなったり) */
   const gp = document.createElement('div');
