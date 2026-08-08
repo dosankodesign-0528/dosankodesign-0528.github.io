@@ -361,6 +361,7 @@
   <div class="sw-row" id="swPatterns"><span class="sw-label">アニメ</span></div>
   <div class="sw-row" id="swSways"><span class="sw-label">ゆらぎ</span></div>
   <div class="sw-row" id="swDesigns"><span class="sw-label">惑星</span></div>
+  <div class="sw-row" id="swLights"><span class="sw-label">ライト</span></div>
   <div class="sw-row" id="swDithers" style="display:none"><span class="sw-label">ディザ</span></div>
   <div class="sw-desc" id="swDesc"></div>
 </div>
@@ -426,6 +427,12 @@ const DITHERS = [
   { name: '⑥グロウ波', desc: '白→シアン→青→紫のグラデの波が通って、ドットが順にパラパラめくれていく。' },
   { name: '⑦グロウ漂い', desc: '光の玉がゆっくり漂い、明るいところだけドットが密に点く。' },
   { name: '⑧グロウ鼓動', desc: '中心から波紋が広がって、リング状にドットがパラパラ切り替わる。' },
+];
+
+/* ================= ライティング (全惑星共通 2案) ================= */
+const LIGHTS = [
+  { name: '①なし', desc: 'カンプのテクスチャそのまま（現行）。' },
+  { name: '②右上光源', desc: '右上からライトが当たっているように陰影をつける。白は光の反射として表現（真っ白にはしない）。' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -495,7 +502,8 @@ uniform float uAngle;
 uniform float uAngle2;
 uniform float uNoise;
 uniform float uTime;    /* ディザ演出用の時間 (一時停止と連動) */
-uniform float uDither;  /* ディザ演出モード 1〜5 */
+uniform float uDither;  /* ディザ演出モード 1〜8 */
+uniform float uLight;   /* 1=なし / 2=右上光源 */
 
 mat3 rotAxis(vec3 a, float t){
   float c = cos(t), s = sin(t);
@@ -632,6 +640,16 @@ void main(){
     col = mix(col, vec3(1.0, 0.27, 0.78), mg * 0.92);
   }
 
+  /* ---- 右上光源モード: 白を「光の反射」として陰影をつける ---- */
+  if (uLight > 1.5) {
+    vec3 Ldir = normalize(vec3(0.62, 0.62, 0.48));
+    float diffL = clamp(dot(n, Ldir), 0.0, 1.0);
+    float lightAmt = 0.45 + 0.55 * diffL;
+    vec3 shadowCol = col * vec3(0.55, 0.60, 0.85); /* 影はグレーでなく青みに沈める */
+    col = mix(shadowCol, col, lightAmt);
+    col += vec3(0.95, 0.96, 1.0) * pow(diffL, 8.0) * 0.25;
+  }
+
   gl_FragColor = vec4(col * alpha, alpha);
 }`,
   },
@@ -643,7 +661,8 @@ const DEFAULTS = {
   pattern: 1,        // アニメパターン 1〜5
   sway: 1,           // ゆらぎ 1〜11
   design: 'A',       // 惑星デザイン A〜E
-  dither: 1,         // ディザ演出 1〜5 (惑星E専用)
+  dither: 1,         // ディザ演出 1〜8 (惑星E専用)
+  light: 1,          // ライティング 1=なし / 2=右上光源
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
@@ -908,6 +927,7 @@ uniform vec2 uRes;
 uniform float uAngle;    /* 主回転 (rad) */
 uniform float uAngle2;   /* 2軸目の回転 (rad) */
 uniform float uNoise;    /* 追い粒の強さ (カンプ由来の質感に上乗せ) */
+uniform float uLight;    /* 1=なし / 2=右上光源 */
 uniform sampler2D uTex;  /* カンプの惑星画像 (4倍解像度) */
 
 mat3 rotAxis(vec3 a, float t){
@@ -950,6 +970,16 @@ void main(){
 
   /* ---- デザイン専用の仕上げ ---- */
   ${finish}
+
+  /* ---- 右上光源モード: 白を「光の反射」として陰影をつける ---- */
+  if (uLight > 1.5) {
+    vec3 Ldir = normalize(vec3(0.62, 0.62, 0.48));
+    float diff = clamp(dot(n, Ldir), 0.0, 1.0);
+    float lightAmt = 0.45 + 0.55 * diff;
+    vec3 shadowCol = col * vec3(0.55, 0.60, 0.85); /* 影はグレーでなく青みに沈める */
+    col = mix(shadowCol, col, lightAmt);
+    col += vec3(0.95, 0.96, 1.0) * pow(diff, 8.0) * 0.25;
+  }
 
   gl_FragColor = vec4(col * alpha, alpha);
 }`;
@@ -999,6 +1029,7 @@ void main(){
       uNoise: gl.getUniformLocation(prog, 'uNoise'),
       uTime: gl.getUniformLocation(prog, 'uTime'),
       uDither: gl.getUniformLocation(prog, 'uDither'),
+      uLight: gl.getUniformLocation(prog, 'uLight'),
     };
     if (!ds.fragment) {
       gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
@@ -1067,6 +1098,7 @@ function renderSphere() {
   gl.uniform1f(pr.uNoise, params.sphere.noise);
   if (pr.uTime) gl.uniform1f(pr.uTime, elapsed);
   if (pr.uDither) gl.uniform1f(pr.uDither, params.dither || 1);
+  if (pr.uLight) gl.uniform1f(pr.uLight, params.light || 1);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1100,6 +1132,7 @@ window.__anim = {
   setSway(n) { params.sway = n; renderFrame(); },
   setDesign(k) { params.design = k; renderFrame(); },
   setDither(n) { params.dither = n; renderFrame(); },
+  setLight(n) { params.light = n; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
 
@@ -1274,11 +1307,13 @@ function buildSwitcher() {
   const pRow = document.getElementById('swPatterns');
   const sRow = document.getElementById('swSways');
   const dRow = document.getElementById('swDesigns');
+  const liRow = document.getElementById('swLights');
   const diRow = document.getElementById('swDithers');
   const desc = document.getElementById('swDesc');
   pRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   sRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   dRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+  liRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   diRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
 
   function syncDitherRow() {
@@ -1288,6 +1323,9 @@ function buildSwitcher() {
     let html =
       'アニメ: ' + PATTERNS[params.pattern - 1].desc +
       '<br>ゆらぎ: ' + SWAYS[params.sway - 1].desc;
+    if (params.light === 2) {
+      html += '<br>ライト: ' + LIGHTS[1].desc;
+    }
     if (params.design === 'E') {
       html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
     }
@@ -1339,6 +1377,20 @@ function buildSwitcher() {
     };
     sync();
     dRow.appendChild(b);
+  });
+  LIGHTS.forEach((lt, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw-pill';
+    b.textContent = lt.name;
+    const sync = () => b.classList.toggle('on', params.light === i + 1);
+    b.onclick = () => {
+      params.light = i + 1;
+      liRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.light === j + 1));
+      syncDesc();
+      save();
+    };
+    sync();
+    liRow.appendChild(b);
   });
   DITHERS.forEach((dt, i) => {
     const b = document.createElement('button');
