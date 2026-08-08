@@ -418,11 +418,11 @@ const SWAYS = [
 
 /* ================= ディザ演出 (惑星E専用 5案) ================= */
 const DITHERS = [
-  { name: '①固定', desc: '網点は動かない。' },
-  { name: '②パラパラ', desc: 'ドットが時々チカッと隣の色に入れ替わる。' },
-  { name: '③流れ', desc: '網点そのものが斜めにゆっくり流れていく。' },
-  { name: '④さざ波', desc: '明るさの波が球面を通り、通り道のドットがパラパラめくれる。' },
-  { name: '⑤ざわめき', desc: '全体が細かくざわざわと揺らぎ続ける（砂嵐の弱いやつ）。' },
+  { name: '①固定', desc: '色は動かない。' },
+  { name: '②うつろい', desc: '場所ごとに白⇄青⇄紫をゆっくり行き来して、境目のピクセルがパラパラ入れ替わる。' },
+  { name: '③流れ', desc: '白→青→紫の色の帯が斜めに流れていき、ピクセルが順にめくれていく。' },
+  { name: '④さざ波', desc: '細かい色の波が球面を通って、通り道のドットがパラパラ変わる。' },
+  { name: '⑤ざわめき', desc: 'ドット単位で色がチラチラと揺れ続ける（砂嵐の弱いやつ）。' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -526,13 +526,18 @@ float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); 
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
 
-/* 深い青 → ブルー → シアン → 白 のカラーランプ */
+/* マゼンタ → 紫 → 深い青 → ブルー → シアン → 白 のカラーランプ
+   (0未満に押し下げられると紫〜マゼンタ帯に入る) */
 vec3 ramp(float x){
-  x = clamp(x, 0.0, 1.0);
+  x = clamp(x, -0.6, 1.0);
+  vec3 magenta = vec3(1.0, 0.27, 0.78);
+  vec3 purple = vec3(0.58, 0.26, 0.94);
   vec3 deep = vec3(0.04, 0.36, 0.86);
   vec3 blue = vec3(0.05, 0.62, 0.98);
   vec3 cyan = vec3(0.56, 0.88, 1.0);
   vec3 white = vec3(1.0);
+  if (x < -0.3) return mix(magenta, purple, (x + 0.6) / 0.3);
+  if (x < 0.0) return mix(purple, deep, (x + 0.3) / 0.3);
   if (x < 0.34) return mix(deep, blue, x / 0.34);
   if (x < 0.67) return mix(blue, cyan, (x - 0.34) / 0.33);
   return mix(cyan, white, (x - 0.67) / 0.33);
@@ -562,30 +567,30 @@ void main(){
   /* 中央はシアン〜ブルー主体、白は右上のハイライト付近だけ (カンプ準拠) */
   float lum = clamp(lam * 0.95 - 0.15 + pow(lam, 6.0) * 0.55 + flow, 0.0, 1.0);
 
-  /* ---- ディザ演出 ---- */
-  vec2 dCell = cellId;
-  if (uDither > 2.5 && uDither < 3.5) {
-    /* ③流れ: 網点パターン自体が斜め下へスクロール */
-    dCell = cellId + vec2(floor(uTime * 3.0), floor(uTime * 6.0));
-  }
-  float dith = bayer8(dCell);
+  /* ---- ディザ演出: 表面の模様ではなく「色そのもの」を動かす ----
+     lum を波で押し上げ/押し下げると 白⇄シアン⇄青⇄紫⇄マゼンタ の帯を行き来し、
+     ベイヤーディザで量子化しているため境目のピクセルがパラパラと入れ替わる */
   if (uDither > 1.5 && uDither < 2.5) {
-    /* ②パラパラ: まばらなセルがチカッと反転 */
-    float h = hash(vec3(cellId, floor(uTime * 3.0) * 0.173));
-    if (h > 0.92) dith = fract(dith + 0.5);
-  } else if (uDither > 4.5) {
-    /* ⑤ざわめき: しきい値が細かく揺らぎ続ける */
-    dith = fract(dith + (hash(vec3(cellId, floor(uTime * 6.0) * 0.031)) - 0.5) * 0.6);
+    /* ②うつろい: 場所ごとに位相の違うゆっくりした色サイクル (白⇄青⇄紫) */
+    lum += sin(uTime * 0.45 + fbm(d * 1.6) * 6.2832) * 0.30;
+  } else if (uDither > 2.5 && uDither < 3.5) {
+    /* ③流れ: 白→青→紫の色の帯が斜めに流れていく */
+    lum += sin(dot(p, normalize(vec2(0.8, -0.6))) * 3.2 - uTime * 1.1) * 0.32;
+  } else if (uDither > 3.5 && uDither < 4.5) {
+    /* ④さざ波: 細かい色の波が通過して境目のドットがめくれる */
+    lum += sin((p.x + p.y) * 8.0 - uTime * 2.4) * 0.16;
   }
-  if (uDither > 3.5 && uDither < 4.5) {
-    /* ④さざ波: 明るさの波が通過して境目のドットがめくれる */
-    lum += sin((p.x + p.y) * 9.0 - uTime * 2.2) * 0.06;
+  float dith = bayer8(cellId);
+  if (uDither > 4.5) {
+    /* ⑤ざわめき: ドット単位で色としきい値がチラつき続ける */
+    dith = fract(dith + (hash(vec3(cellId, floor(uTime * 6.0) * 0.031)) - 0.5) * 0.7);
+    lum += (hash(vec3(cellId, floor(uTime * 4.0) * 0.117)) - 0.5) * 0.10;
   }
 
   /* ベイヤーディザ: 階調を段に割って、隣のセルと交互に混ぜる → 網点 */
   float spread = 0.8 + uNoise * 1.2;
   float levels = 6.0;
-  float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, 0.0, 1.0);
+  float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, -0.6, 1.0);
   vec3 col = ramp(q);
 
   /* 左下のマゼンタリム (これもディザで混ぜる) */
