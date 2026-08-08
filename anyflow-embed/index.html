@@ -223,7 +223,31 @@
     padding: 0 14px 14px;
   }
   .panel.closed .panel-body { display: none; }
+  /* 大カテゴリ (アコーディオン) */
+  .cat {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    margin-top: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .cat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    font-weight: 500;
+    background: #fafafa;
+    cursor: pointer;
+    user-select: none;
+  }
+  .cat-head:hover { background: #f2f2f2; }
+  .cat-chev { font-size: 10px; color: #888; transition: transform .2s; }
+  .cat.closed .cat-chev { transform: rotate(-90deg); }
+  .cat-body { padding: 0 12px 12px; }
+  .cat.closed .cat-body { display: none; }
   .grp { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ececec; }
+  .cat-body .grp:first-child { border-top: none; margin-top: 6px; }
   .grp-title { font-weight: 400; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
@@ -337,6 +361,7 @@
   <div class="sw-row" id="swPatterns"><span class="sw-label">アニメ</span></div>
   <div class="sw-row" id="swSways"><span class="sw-label">ゆらぎ</span></div>
   <div class="sw-row" id="swDesigns"><span class="sw-label">惑星</span></div>
+  <div class="sw-row" id="swDithers" style="display:none"><span class="sw-label">ディザ</span></div>
   <div class="sw-desc" id="swDesc"></div>
 </div>
 
@@ -389,6 +414,15 @@ const SWAYS = [
   { name: '⑨呼吸', desc: '全体がわずかに膨らんだり縮んだりする。' },
   { name: '⑩波乗り', desc: '傾きと上下ゆれのミックスで、波に乗るように揺れる。' },
   { name: '⑪クロス', desc: '2本の軌道が逆方向に傾いて、たまに交差する。（軌道ごとの「ゆれ」設定でも自作できます）' },
+];
+
+/* ================= ディザ演出 (惑星E専用 5案) ================= */
+const DITHERS = [
+  { name: '①固定', desc: '網点は動かない。' },
+  { name: '②パラパラ', desc: 'ドットが時々チカッと隣の色に入れ替わる。' },
+  { name: '③流れ', desc: '網点そのものが斜めにゆっくり流れていく。' },
+  { name: '④さざ波', desc: '明るさの波が球面を通り、通り道のドットがパラパラめくれる。' },
+  { name: '⑤ざわめき', desc: '全体が細かくざわざわと揺らぎ続ける（砂嵐の弱いやつ）。' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -457,6 +491,8 @@ uniform vec2 uRes;
 uniform float uAngle;
 uniform float uAngle2;
 uniform float uNoise;
+uniform float uTime;    /* ディザ演出用の時間 (一時停止と連動) */
+uniform float uDither;  /* ディザ演出モード 1〜5 */
 
 mat3 rotAxis(vec3 a, float t){
   float c = cos(t), s = sin(t);
@@ -526,8 +562,27 @@ void main(){
   /* 中央はシアン〜ブルー主体、白は右上のハイライト付近だけ (カンプ準拠) */
   float lum = clamp(lam * 0.95 - 0.15 + pow(lam, 6.0) * 0.55 + flow, 0.0, 1.0);
 
+  /* ---- ディザ演出 ---- */
+  vec2 dCell = cellId;
+  if (uDither > 2.5 && uDither < 3.5) {
+    /* ③流れ: 網点パターン自体が斜め下へスクロール */
+    dCell = cellId + vec2(floor(uTime * 3.0), floor(uTime * 6.0));
+  }
+  float dith = bayer8(dCell);
+  if (uDither > 1.5 && uDither < 2.5) {
+    /* ②パラパラ: まばらなセルがチカッと反転 */
+    float h = hash(vec3(cellId, floor(uTime * 3.0) * 0.173));
+    if (h > 0.92) dith = fract(dith + 0.5);
+  } else if (uDither > 4.5) {
+    /* ⑤ざわめき: しきい値が細かく揺らぎ続ける */
+    dith = fract(dith + (hash(vec3(cellId, floor(uTime * 6.0) * 0.031)) - 0.5) * 0.6);
+  }
+  if (uDither > 3.5 && uDither < 4.5) {
+    /* ④さざ波: 明るさの波が通過して境目のドットがめくれる */
+    lum += sin((p.x + p.y) * 9.0 - uTime * 2.2) * 0.06;
+  }
+
   /* ベイヤーディザ: 階調を段に割って、隣のセルと交互に混ぜる → 網点 */
-  float dith = bayer8(cellId);
   float spread = 0.8 + uNoise * 1.2;
   float levels = 6.0;
   float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, 0.0, 1.0);
@@ -547,8 +602,9 @@ void main(){
 const DEFAULTS = {
   running: true,
   pattern: 1,        // アニメパターン 1〜5
-  sway: 1,           // ゆらぎ 1〜10
+  sway: 1,           // ゆらぎ 1〜11
   design: 'A',       // 惑星デザイン A〜E
+  dither: 1,         // ディザ演出 1〜5 (惑星E専用)
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
@@ -902,6 +958,8 @@ void main(){
       uAngle: gl.getUniformLocation(prog, 'uAngle'),
       uAngle2: gl.getUniformLocation(prog, 'uAngle2'),
       uNoise: gl.getUniformLocation(prog, 'uNoise'),
+      uTime: gl.getUniformLocation(prog, 'uTime'),
+      uDither: gl.getUniformLocation(prog, 'uDither'),
     };
     if (!ds.fragment) {
       gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
@@ -968,6 +1026,8 @@ function renderSphere() {
   gl.uniform1f(pr.uAngle, ang);
   gl.uniform1f(pr.uAngle2, ang2);
   gl.uniform1f(pr.uNoise, params.sphere.noise);
+  if (pr.uTime) gl.uniform1f(pr.uTime, elapsed);
+  if (pr.uDither) gl.uniform1f(pr.uDither, params.dither || 1);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1000,6 +1060,7 @@ window.__anim = {
   setPattern(n) { params.pattern = n; renderFrame(); },
   setSway(n) { params.sway = n; renderFrame(); },
   setDesign(k) { params.design = k; renderFrame(); },
+  setDither(n) { params.dither = n; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
 
@@ -1036,49 +1097,76 @@ function slider(label, min, max, step, get, set, fmt) {
   });
   row.append(lab, input, val);
   row._sync = () => { input.value = get(); val.textContent = f(get()); };
-  body.appendChild(row);
+  mount.appendChild(row);
   return row;
 }
 
 const rows = [];
+let mount = null;   // slider() などの追加先 (現在の小カテゴリの親)
+
+/* 大カテゴリ (開閉できる箱) */
+function category(title, open) {
+  const cat = document.createElement('div');
+  cat.className = 'cat' + (open ? '' : ' closed');
+  const head = document.createElement('div');
+  head.className = 'cat-head';
+  head.innerHTML = `<span>${title}</span><span class="cat-chev">▾</span>`;
+  const content = document.createElement('div');
+  content.className = 'cat-body';
+  head.onclick = () => cat.classList.toggle('closed');
+  cat.append(head, content);
+  body.appendChild(cat);
+  return content;
+}
+
+/* 小カテゴリ (見出し行) — 以降の slider は同じカテゴリに追加される */
+function sub(target, html) {
+  const g = document.createElement('div');
+  g.className = 'grp';
+  g.innerHTML = `<div class="grp-title">${html}</div>`;
+  target.appendChild(g);
+  mount = target;
+}
+
+/* 方向切替の2択ボタン行 */
+function segRow(label, opts, getDir, setDir) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = `<label>${label}</label>`;
+  const seg = document.createElement('div');
+  seg.className = 'seg';
+  const bs = opts.map(([text, value]) => {
+    const b = document.createElement('button');
+    b.textContent = text;
+    b.onclick = () => { setDir(value); sync(); };
+    seg.appendChild(b);
+    return [b, value];
+  });
+  function sync() { bs.forEach(([b, value]) => b.classList.toggle('on', getDir() === value)); }
+  sync();
+  row.appendChild(seg);
+  mount.appendChild(row);
+}
 
 function buildPanel() {
   body.innerHTML = '';
   rows.length = 0;
 
-  /* 全体 */
-  const g = document.createElement('div');
-  g.className = 'grp'; g.style.borderTop = 'none'; g.style.marginTop = '4px';
-  g.innerHTML = '<div class="grp-title">全体</div>';
-  body.appendChild(g);
-  rows.push(slider('1周の秒数', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + 's'));
-  rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
-  rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's'));
-
-  /* 球体 */
-  const gs = document.createElement('div');
-  gs.className = 'grp';
-  gs.innerHTML = '<div class="grp-title">球体<span style="color:#999;font-weight:300">（3D回転）</span></div>';
-  body.appendChild(gs);
+  /* ========== 🪐 惑星（球体） ========== */
+  const catPlanet = category('🪐 惑星（球体）', true);
+  sub(catPlanet, '自転');
   rows.push(slider('1回転の秒数', 8, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + 's'));
   rows.push(slider('多面ゆらぎ', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('質感の粒', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%'));
-
-  /* 惑星の位置・サイズ */
-  const gpl = document.createElement('div');
-  gpl.className = 'grp';
-  gpl.innerHTML = '<div class="grp-title">惑星の位置・サイズ</div>';
-  body.appendChild(gpl);
+  sub(catPlanet, '位置・サイズ');
   rows.push(slider('X位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px'));
   rows.push(slider('Y位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px'));
   rows.push(slider('大きさ', 0.4, 1.8, 0.01, () => params.planet.scale, v => params.planet.scale = v, v => '×' + v.toFixed(2)));
 
-  /* 軌道 個別 (サイズ/角度/位置 + ゆれ) */
-  [['outer', '軌道 外側', '#FF5D97'], ['inner', '軌道 内側', '#00ABEB']].forEach(([key, label, color]) => {
-    const g2 = document.createElement('div');
-    g2.className = 'grp';
-    g2.innerHTML = `<div class="grp-title"><span class="chip" style="background:${color}"></span>${label}</div>`;
-    body.appendChild(g2);
+  /* ========== 🛰 軌道（2本を個別に） ========== */
+  const catOrbit = category('🛰 軌道（外側・内側を個別に）', false);
+  [['outer', '外側の軌道', '#FF5D97'], ['inner', '内側の軌道', '#00ABEB']].forEach(([key, label, color]) => {
+    sub(catOrbit, `<span class="chip" style="background:${color}"></span>${label}`);
     const o = () => params.orbits[key];
     rows.push(slider('サイズ', 0.5, 1.5, 0.01, () => o().scale, v => o().scale = v, v => '×' + v.toFixed(2)));
     rows.push(slider('角度', -45, 45, 0.5, () => o().angle, v => o().angle = v, v => v + '°'));
@@ -1089,68 +1177,31 @@ function buildPanel() {
     rows.push(slider('ゆれ位相', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°'));
   });
 
-  /* 緩急 (速くなったり遅くなったり) */
-  const gp = document.createElement('div');
-  gp.className = 'grp';
-  gp.innerHTML = '<div class="grp-title">緩急<span style="color:#999;font-weight:300">（速い⇄遅いのゆらぎ）</span></div>';
-  body.appendChild(gp);
+  /* ========== ⚪ ドット（周回） ========== */
+  const catDots = category('⚪ ドット（周回）', false);
+  sub(catDots, '全体');
+  rows.push(slider('1周の秒数', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + 's'));
+  rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
+  rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's'));
+  segRow('回転方向', [['時計回り', 1], ['反時計回り', -1]],
+    () => params.direction, v => { params.direction = v; save(); });
+  sub(catDots, '緩急<span style="color:#999;font-weight:300">（速い⇄遅いのゆらぎ）</span>');
   rows.push(slider('強さ', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + 's'));
-
-  const dirRow = document.createElement('div');
-  dirRow.className = 'row';
-  dirRow.innerHTML = '<label>回転方向</label>';
-  const seg = document.createElement('div');
-  seg.className = 'seg';
-  const b1 = document.createElement('button'); b1.textContent = '時計回り';
-  const b2 = document.createElement('button'); b2.textContent = '反時計回り';
-  function syncDir() {
-    b1.classList.toggle('on', params.direction === 1);
-    b2.classList.toggle('on', params.direction === -1);
-  }
-  b1.onclick = () => { params.direction = 1; syncDir(); save(); };
-  b2.onclick = () => { params.direction = -1; syncDir(); save(); };
-  syncDir();
-  seg.append(b1, b2);
-  dirRow.appendChild(seg);
-  body.appendChild(dirRow);
-
-  /* 各ドット */
   DOTS.forEach((d, i) => {
-    const grp = document.createElement('div');
-    grp.className = 'grp';
-    grp.innerHTML = `<div class="grp-title"><span class="chip" style="background:${d.color}"></span>${d.name}<span style="color:#999;font-weight:300">（${d.ellipse === 'outer' ? '外側' : '内側'}）</span></div>`;
-    body.appendChild(grp);
+    sub(catDots, `<span class="chip" style="background:${d.color}"></span>${d.name}<span style="color:#999;font-weight:300">（${d.ellipse === 'outer' ? '外側' : '内側'}）</span>`);
     rows.push(slider('スピード倍率', 0, 3, 0.05, () => params.dots[i].speed, v => params.dots[i].speed = v, v => '×' + v.toFixed(2)));
     rows.push(slider('遅延', 0, 10, 0.1, () => params.dots[i].delay, v => params.dots[i].delay = v, v => v.toFixed(1) + 's'));
     rows.push(slider('開始位置', -180, 180, 1, () => params.dots[i].offset, v => params.dots[i].offset = v, v => v + '°'));
     rows.push(slider('緩急ずらし', 0, 360, 5, () => params.dots[i].pulsePhase, v => params.dots[i].pulsePhase = v, v => v + '°'));
   });
 
-  /* ロゴカルーセル */
-  const gm = document.createElement('div');
-  gm.className = 'grp';
-  gm.innerHTML = '<div class="grp-title">ロゴカルーセル</div>';
-  body.appendChild(gm);
+  /* ========== 🎞 ロゴカルーセル ========== */
+  const catLogo = category('🎞 ロゴカルーセル', false);
+  sub(catLogo, '流れ方');
   rows.push(slider('1周の秒数', 5, 120, 1, () => params.marquee.duration, v => { params.marquee.duration = v; applyMarquee(); }, v => v + 's'));
-
-  const mDirRow = document.createElement('div');
-  mDirRow.className = 'row';
-  mDirRow.innerHTML = '<label>流れる方向</label>';
-  const mSeg = document.createElement('div');
-  mSeg.className = 'seg';
-  const m1 = document.createElement('button'); m1.textContent = '← 左へ';
-  const m2 = document.createElement('button'); m2.textContent = '右へ →';
-  function syncMDir() {
-    m1.classList.toggle('on', params.marquee.direction === 1);
-    m2.classList.toggle('on', params.marquee.direction === -1);
-  }
-  m1.onclick = () => { params.marquee.direction = 1; syncMDir(); applyMarquee(); save(); };
-  m2.onclick = () => { params.marquee.direction = -1; syncMDir(); applyMarquee(); save(); };
-  syncMDir();
-  mSeg.append(m1, m2);
-  mDirRow.appendChild(mSeg);
-  body.appendChild(mDirRow);
+  segRow('流れる方向', [['← 左へ', 1], ['右へ →', -1]],
+    () => params.marquee.direction, v => { params.marquee.direction = v; applyMarquee(); save(); });
 
   /* ボタン */
   const btns = document.createElement('div');
@@ -1184,15 +1235,24 @@ function buildSwitcher() {
   const pRow = document.getElementById('swPatterns');
   const sRow = document.getElementById('swSways');
   const dRow = document.getElementById('swDesigns');
+  const diRow = document.getElementById('swDithers');
   const desc = document.getElementById('swDesc');
   pRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   sRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   dRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+  diRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
 
+  function syncDitherRow() {
+    diRow.style.display = params.design === 'E' ? '' : 'none';
+  }
   function syncDesc() {
-    desc.innerHTML =
+    let html =
       'アニメ: ' + PATTERNS[params.pattern - 1].desc +
       '<br>ゆらぎ: ' + SWAYS[params.sway - 1].desc;
+    if (params.design === 'E') {
+      html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
+    }
+    desc.innerHTML = html;
   }
   PATTERNS.forEach((pt, i) => {
     const b = document.createElement('button');
@@ -1234,11 +1294,28 @@ function buildSwitcher() {
       params.design = key;
       dRow.querySelectorAll('.sw-pill').forEach(el => el.classList.remove('on'));
       b.classList.add('on');
+      syncDitherRow();
+      syncDesc();
       save();
     };
     sync();
     dRow.appendChild(b);
   });
+  DITHERS.forEach((dt, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw-pill';
+    b.textContent = dt.name;
+    const sync = () => b.classList.toggle('on', params.dither === i + 1);
+    b.onclick = () => {
+      params.dither = i + 1;
+      diRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.dither === j + 1));
+      syncDesc();
+      save();
+    };
+    sync();
+    diRow.appendChild(b);
+  });
+  syncDitherRow();
   syncDesc();
 }
 buildSwitcher();
