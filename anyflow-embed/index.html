@@ -423,7 +423,9 @@ const DITHERS = [
   { name: '③流れ', desc: '白→青→紫の色の帯が斜めに流れていき、ピクセルが順にめくれていく。' },
   { name: '④さざ波', desc: '細かい色の波が球面を通って、通り道のドットがパラパラ変わる。' },
   { name: '⑤ざわめき', desc: 'ドット単位で色がチラチラと揺れ続ける（砂嵐の弱いやつ）。' },
-  { name: '⑥グロウ', desc: '濃紺の下地を光の玉がゆっくり漂い、明るさに合わせて白いドットがハーフトーン状にパラパラ点いたり消えたりする。' },
+  { name: '⑥グロウ波', desc: '白→シアン→青→紫のグラデの波が通って、ドットが順にパラパラめくれていく。' },
+  { name: '⑦グロウ漂い', desc: '光の玉がゆっくり漂い、明るいところだけドットが密に点く。' },
+  { name: '⑧グロウ鼓動', desc: '中心から波紋が広がって、リング状にドットがパラパラ切り替わる。' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -595,26 +597,34 @@ void main(){
   vec3 col = ramp(q);
 
   if (uDither > 5.5) {
-    /* ⑥グロウ: 濃紺の下地を光の玉が漂い、白い四角ドットがハーフトーンでパラパラ点滅 */
+    /* グロウ系 (⑥波 ⑦漂い ⑧鼓動): ドットマトリクス表現。
+       色は今までのランプ (白⇄シアン⇄青⇄紫⇄マゼンタ) をそのまま使い、
+       明るさの場 field がしきい値をまたぐたびにドットがパラパラめくれる */
     vec3 L2 = normalize(vec3(0.5, 0.5, 0.7));
     float lam2 = dot(n, L2) * 0.5 + 0.5;
-    /* 漂う光の玉 2つ (画面上をゆっくり周回) */
-    vec3 c1 = normalize(vec3(cos(uTime * 0.20), sin(uTime * 0.13), 0.62));
-    vec3 c2 = normalize(vec3(-cos(uTime * 0.15), sin(uTime * 0.23 + 2.1), 0.55));
-    float g1 = exp(-dot(n - c1, n - c1) * 1.8);
-    float g2 = exp(-dot(n - c2, n - c2) * 2.2);
-    float lumG = 0.22 + lam2 * 0.30 + g1 * 0.90 + g2 * 0.70 + flow * 0.25;
-    /* 下地: 濃紺 → 紫 のグラデ */
-    vec3 baseCol = mix(vec3(0.10, 0.06, 0.34), vec3(0.32, 0.22, 0.70), clamp(lumG, 0.0, 1.0));
-    /* ハーフトーンの白ドット: 5px ピッチのセルに小さな四角、明るさがしきい値を越えたら点灯 */
+    float field = 0.15 + lam2 * 0.5 + flow * 0.25;
+    if (uDither < 6.5) {
+      /* ⑥波: グラデの波が斜めに通っていく */
+      field += sin(dot(p, normalize(vec2(0.8, -0.6))) * 3.0 - uTime * 1.3) * 0.38;
+    } else if (uDither < 7.5) {
+      /* ⑦漂い: 光の玉が2つゆっくり漂う */
+      vec3 c1 = normalize(vec3(cos(uTime * 0.20), sin(uTime * 0.13), 0.62));
+      vec3 c2 = normalize(vec3(-cos(uTime * 0.15), sin(uTime * 0.23 + 2.1), 0.55));
+      field += exp(-dot(n - c1, n - c1) * 1.8) * 0.85 + exp(-dot(n - c2, n - c2) * 2.2) * 0.6;
+    } else {
+      /* ⑧鼓動: 中心から波紋が広がる */
+      field += sin(length(p) * 7.0 - uTime * 1.8) * 0.30 + 0.08;
+    }
+    float fq = clamp(field, -0.55, 1.0);
+    vec3 bright = ramp(fq);                              /* ドットの色 (ブランド色) */
+    vec3 baseCol = bright * 0.30 + vec3(0.02, 0.03, 0.12); /* 同系色を沈めた下地 */
     float PITCH = 5.0;
     vec2 cid = floor(fcTrue / PITCH);
     vec2 ic = fract(fcTrue / PITCH);
-    float thr = bayer4(cid) * 0.95 + 0.05;
-    float on = step(thr, (lumG - 0.12) * 1.05);
+    float thr = bayer4(cid) * 0.9 + 0.05;
+    float on = step(thr, field);
     float dotMask = step(0.10, ic.x) * step(ic.x, 0.62) * step(0.10, ic.y) * step(ic.y, 0.62);
-    vec3 dotCol = mix(vec3(0.68, 0.64, 0.92), vec3(0.98, 0.97, 1.0), clamp(lumG - 0.35, 0.0, 1.0));
-    col = baseCol + dotCol * on * dotMask;
+    col = baseCol + bright * on * dotMask * 0.92;
   } else {
     /* 左下のマゼンタリム (これもディザで混ぜる) */
     float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
