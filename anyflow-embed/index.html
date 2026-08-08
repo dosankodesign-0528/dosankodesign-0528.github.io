@@ -95,6 +95,7 @@
     animation: fadein 1.6s ease .15s forwards;
   }
   @keyframes fadein { to { opacity: 1; } }
+  .orbit { transform-origin: 50% 50%; }
   .orbit svg {
     display: block;
     position: absolute;
@@ -102,7 +103,9 @@
     width: 100%;
     height: 100%;
     overflow: visible;
+    transform-origin: 50% 50%;
   }
+  #sphere { transform-origin: 50% 50%; }
   .orbit .layer-back  { z-index: 1; }
   .orbit .layer-front { z-index: 3; }
   #sphere {
@@ -332,6 +335,7 @@
 <!-- ================= パターン/惑星スイッチャー ================= -->
 <div class="switcher" id="switcher">
   <div class="sw-row" id="swPatterns"><span class="sw-label">アニメ</span></div>
+  <div class="sw-row" id="swSways"><span class="sw-label">ゆらぎ</span></div>
   <div class="sw-row" id="swDesigns"><span class="sw-label">惑星</span></div>
   <div class="sw-desc" id="swDesc"></div>
 </div>
@@ -372,7 +376,21 @@ const PATTERNS = [
   { name: '⑤ リズム', desc: 'コツン、コツンと一定のリズムで進む（データが流れるイメージ）。自転も同じリズムで刻む。' },
 ];
 
-/* ================= 惑星デザイン (Figmaカンプ4種) =================
+/* ================= ゆらぎ (グラフィック全体の動き 10案) ================= */
+const SWAYS = [
+  { name: '①固定', desc: 'ゆらぎなし。カンプの構図のまま。' },
+  { name: '②ふわふわ', desc: '全体がゆっくり上下に浮き沈みする。' },
+  { name: '③シーソー', desc: '全体が±3°ほどでゆっくり傾く。' },
+  { name: '④うねり', desc: '2つの波が重なって傾きが複雑にうねる（歳差運動風）。' },
+  { name: '⑤ジェリー', desc: '軌道の輪だけがぷにぷに伸び縮みする（惑星は固定）。' },
+  { name: '⑥惑星ゆらり', desc: '惑星だけがゆっくり漂う（軌道は固定）。' },
+  { name: '⑦逆位相', desc: '軌道が傾くと惑星は逆へ動き、軌道と惑星の角度が変わって見える。' },
+  { name: '⑧漂流', desc: '全体が8の字を描いてゆっくり漂う。' },
+  { name: '⑨呼吸', desc: '全体がわずかに膨らんだり縮んだりする。' },
+  { name: '⑩波乗り', desc: '傾きと上下ゆれのミックスで、波に乗るように揺れる。' },
+];
+
+/* ================= 惑星デザイン (Figmaカンプ5種) =================
    カンプ画像(4倍解像度)をそのまま球面テクスチャとして貼り、
    デザインごとに専用シェーダー(finish)で質感を仕上げる。
    裏側はカンプに存在しないため鏡映で生成 (uv を d.xy から取ると表裏対称になる)。 */
@@ -425,13 +443,33 @@ const DESIGNS = {
       col = mix(col, vec3(1.0), hi * 0.12);
       col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.07;`,
   },
+  E: {
+    name: 'E ハーフトーンブルー',
+    swatch: 'radial-gradient(circle at 68% 30%, #ffffff 8%, #5fd2ff 40%, #0e9bff 72%, #ff4fd8 100%)',
+    src: 'assets/planet-e.png',
+    grainScale: '160.0',
+    /* 網点(ハーフトーン)専用: ベイヤーディザ + 軽いポスタライズでドット感をパキッと維持 */
+    helpers: `
+float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }`,
+    finish: `
+      float dith = bayer4(gl_FragCoord.xy * 0.5);
+      col = clamp(col + (dith - 0.6) * 0.08 * (0.5 + uNoise), 0.0, 1.0);
+      float levels = 12.0;
+      col = floor(col * levels + 0.5) / levels;
+      float hi = pow(max(dot(n, normalize(vec3(-0.45, 0.6, 0.66))), 0.0), 2.2);
+      col = mix(col, vec3(1.0), hi * 0.10);
+      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.08;
+      col += grain * 0.05 * uNoise;`,
+  },
 };
 
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
   pattern: 1,        // アニメパターン 1〜5
-  design: 'A',       // 惑星デザイン A〜D
+  sway: 1,           // ゆらぎ 1〜10
+  design: 'A',       // 惑星デザイン A〜E
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
   direction: 1,      // 1=時計回り / -1=反時計回り
@@ -569,7 +607,44 @@ function renderFrame() {
     els.front.style.display = pos.front ? '' : 'none';
     els.back.style.display = pos.front ? 'none' : '';
   });
+  applySway();
   renderSphere();
+}
+
+/* ゆらぎ: グラフィック全体(軌道・惑星)へのゆるい動き */
+const swayEls = {
+  orbit: document.querySelector('.orbit'),
+  svgs: [...document.querySelectorAll('.orbit svg')],
+  sphere: document.getElementById('sphere'),
+};
+
+function applySway() {
+  const t = elapsed;
+  let orbit = '', svg = '', sph = '';
+  switch (params.sway) {
+    case 2: /* ふわふわ */
+      orbit = `translateY(${(Math.sin(t * 0.5) * 10).toFixed(2)}px)`; break;
+    case 3: /* シーソー */
+      orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`; break;
+    case 4: /* うねり (歳差運動風) */
+      orbit = `rotate(${(Math.sin(t * 0.35) * 4 + Math.sin(t * 0.13 + 1.7) * 2.5).toFixed(3)}deg)`; break;
+    case 5: /* ジェリー (軌道の輪だけ伸縮) */
+      svg = `scale(${(1 + Math.sin(t * 0.6) * 0.02).toFixed(4)}, ${(1 - Math.sin(t * 0.6) * 0.03).toFixed(4)})`; break;
+    case 6: /* 惑星ゆらり (軌道は固定) */
+      sph = `translate(${(Math.sin(t * 0.45) * 6).toFixed(2)}px, ${(Math.sin(t * 0.6 + 1.2) * 8).toFixed(2)}px)`; break;
+    case 7: /* 逆位相 (軌道と惑星の角度が変わる) */
+      svg = `rotate(${(Math.sin(t * 0.4) * 2.5).toFixed(3)}deg)`;
+      sph = `translateY(${(-Math.sin(t * 0.4) * 9).toFixed(2)}px)`; break;
+    case 8: /* 漂流 (8の字) */
+      orbit = `translate(${(Math.sin(t * 0.3) * 9).toFixed(2)}px, ${(Math.sin(t * 0.6) * 5).toFixed(2)}px)`; break;
+    case 9: /* 呼吸 */
+      orbit = `scale(${(1 + Math.sin(t * 0.5) * 0.01).toFixed(4)})`; break;
+    case 10: /* 波乗り */
+      orbit = `rotate(${(Math.sin(t * 0.4) * 2.5).toFixed(3)}deg) translateY(${(Math.sin(t * 0.55 + 0.8) * 7).toFixed(2)}px)`; break;
+  }
+  swayEls.orbit.style.transform = orbit;
+  swayEls.svgs.forEach(s => s.style.transform = svg);
+  swayEls.sphere.style.transform = sph;
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -582,8 +657,8 @@ function initSphere() {
 
   const vs = `attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
 
-  /* 共通部にデザイン専用の仕上げ(finish)と粒の細かさを差し込み、惑星ごとに別シェーダーを作る */
-  const fsTemplate = (grainScale, finish) => `
+  /* 共通部にデザイン専用の仕上げ(finish)・補助関数(helpers)・粒の細かさを差し込み、惑星ごとに別シェーダーを作る */
+  const fsTemplate = (grainScale, finish, helpers) => `
 precision highp float;
 uniform vec2 uRes;
 uniform float uAngle;    /* 主回転 (rad) */
@@ -605,6 +680,7 @@ float hash(vec3 p){
   p += dot(p, p.yzx + 19.19);
   return fract((p.x + p.y) * p.z);
 }
+${helpers || ''}
 void main(){
   vec2 p = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;
   float R = 0.884615; /* 230px / 260px */
@@ -658,7 +734,7 @@ void main(){
 
   const progs = {};
   for (const [key, ds] of Object.entries(DESIGNS)) {
-    const f = compile(gl.FRAGMENT_SHADER, fsTemplate(ds.grainScale, ds.finish));
+    const f = compile(gl.FRAGMENT_SHADER, fsTemplate(ds.grainScale, ds.finish, ds.helpers));
     if (!f) { sphereFallback(); return; }
     const prog = gl.createProgram();
     gl.attachShader(prog, v);
@@ -766,6 +842,7 @@ window.__anim = {
   step(dt) { elapsed += dt; renderFrame(); },
   setElapsed(v) { elapsed = v; renderFrame(); },
   setPattern(n) { params.pattern = n; renderFrame(); },
+  setSway(n) { params.sway = n; renderFrame(); },
   setDesign(k) { params.design = k; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
@@ -924,13 +1001,17 @@ applyMarquee();
 /* ================= パターン/惑星スイッチャー ================= */
 function buildSwitcher() {
   const pRow = document.getElementById('swPatterns');
+  const sRow = document.getElementById('swSways');
   const dRow = document.getElementById('swDesigns');
   const desc = document.getElementById('swDesc');
   pRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+  sRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
   dRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
 
   function syncDesc() {
-    desc.textContent = PATTERNS[params.pattern - 1].desc;
+    desc.innerHTML =
+      'アニメ: ' + PATTERNS[params.pattern - 1].desc +
+      '<br>ゆらぎ: ' + SWAYS[params.sway - 1].desc;
   }
   PATTERNS.forEach((pt, i) => {
     const b = document.createElement('button');
@@ -945,6 +1026,20 @@ function buildSwitcher() {
     };
     sync();
     pRow.appendChild(b);
+  });
+  SWAYS.forEach((sw, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw-pill';
+    b.textContent = sw.name;
+    const sync = () => b.classList.toggle('on', params.sway === i + 1);
+    b.onclick = () => {
+      params.sway = i + 1;
+      sRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.sway === j + 1));
+      syncDesc();
+      save();
+    };
+    sync();
+    sRow.appendChild(b);
   });
   Object.entries(DESIGNS).forEach(([key, ds]) => {
     const b = document.createElement('button');
