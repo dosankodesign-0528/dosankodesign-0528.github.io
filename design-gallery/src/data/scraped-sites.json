@@ -1,5 +1,47 @@
 [
   {
+    "id": "b389762cbbfd",
+    "title": "獣医師が見守るペットホテル｢LUMA｣",
+    "url": "https://luma-pet.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/luma_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "1293d6edf731",
+    "title": "武蔵新田こころクリニック",
+    "url": "https://musashinitta-cocoro.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/musashinittacocoro_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "05feabc4637c",
+    "title": "Zoff Recruitment Site | INTERMESTIC INC.",
+    "url": "https://recruit.zoff.com/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/zoffrecruit_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
     "id": "6b497aa553b5",
     "title": "ビデオカメラマン田中哲哉",
     "url": "https://tetsuya-tanaka.com/",
@@ -22457,6 +22499,20 @@
     "lastCheckedAt": "2026-08-02T05:28:51.511Z"
   },
   {
+    "id": "750323188464",
+    "title": "Alethia",
+    "url": "https://www.alethia.earth/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/08/09-768x576.webp",
+    "source": "muuuuu",
+    "category": [
+      "eco"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-06T02:52:56.956Z"
+  },
+  {
     "id": "9c5ed0166224",
     "title": "ニシザキ工芸株式会社 塗装部",
     "url": "https://tosou.nishizaki.co.jp/",
@@ -42511,6 +42567,20 @@
     "lastCheckedAt": "2026-08-02T05:32:51.116Z"
   },
   {
+    "id": "7bbab7b39004",
+    "title": "큰그림컴퍼니",
+    "url": "https://www.bpco.kr/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/20240304_01-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "コーポレートサイト・事務所"
+    ],
+    "taste": [],
+    "date": "2024-03",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
     "id": "7ab5097efa61",
     "title": "MOS×中村輪夢 チャレンジパートナー",
     "url": "https://www.mos.jp/oc/tobikiri_challenge2026/",
@@ -48775,6 +48845,25 @@
     "lastCheckedAt": "2026-08-02T05:34:28.755Z"
   },
   {
+    "id": "f28e99f61285",
+    "title": "山種美術館（Yamatane Museum of Art）",
+    "url": "https://www.yamatane-museum.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/08/260810-1-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ブランド",
+      "サービスサイト",
+      "アート",
+      "デザイン"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-06-29T04:20:41.410Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:36:26.123Z"
+  },
+  {
     "id": "73e855cdcdc9",
     "title": "社会の「当たり前」を支える安定企業｜MOS株式会社 採用サイト【未経験歓迎】",
     "url": "https://recruit.mosc.co.jp/",
@@ -53465,6 +53554,656 @@
     "lastCheckedAt": "2026-08-02T05:35:46.195Z"
   },
   {
+    "id": "bfece28e338a",
+    "title": "Flow AI",
+    "url": "https://www.flowaivideo.org",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a61b5aadc64d520435995.png",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Video",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "7ca1cf643ceb",
+    "title": "Grassfeld - AI-Budgeting App",
+    "url": "https://www.grassfeld.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a65f0b824af5021149092.png",
+    "source": "awwwards",
+    "category": [
+      "Mobile & Apps",
+      "Technology",
+      "Animation",
+      "Colorful",
+      "Fullscreen",
+      "Graphic design",
+      "Responsive Design",
+      "UI design",
+      "Lottie",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "3a0438025116",
+    "title": "Senthora — AI Language Tutor",
+    "url": "https://senthora.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a5a530a447fa719174555.png",
+    "source": "awwwards",
+    "category": [
+      "Mobile & Apps",
+      "Technology",
+      "Web & Interactive",
+      "Animation",
+      "App Style",
+      "CSS",
+      "Graphic design",
+      "HTML5",
+      "Three.js",
+      "3D"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "9552d2a86a6e",
+    "title": "Unitree Go2 — AI Robots",
+    "url": "https://ai-robots.apps.mdxpreview.xyz/unitree-go2",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a4ead2b97492369700911.png",
+    "source": "awwwards",
+    "category": [
+      "E-Commerce",
+      "Technology",
+      "Animation",
+      "GSAP",
+      "Three.js",
+      "3D",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "d38fe9c3b817",
+    "title": "THE TRIADIC BALLET AI",
+    "url": "https://www.thetriadicballetai.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a48decd9b68c655448713.jpg",
+    "source": "awwwards",
+    "category": [
+      "Transitions",
+      "Experimental",
+      "GSAP",
+      "Art & Illustration",
+      "Webflow",
+      "Web & Interactive",
+      "Animation",
+      "Minimal",
+      "Typography"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "98466ae292a9",
+    "title": "Voxelo AI",
+    "url": "https://www.voxelo.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a54fb5de8bc1283639698.png",
+    "source": "awwwards",
+    "category": [
+      "E-Commerce",
+      "Web & Interactive",
+      "Animation",
+      "WebGL",
+      "Storytelling",
+      "3D",
+      "Startups"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "eeb080fe295b",
+    "title": "Seedance 2.5 AI Video Generator",
+    "url": "https://seedance25ai.im/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a55f5d9f1d85000398703.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Design Agencies",
+      "Technology",
+      "Graphic design",
+      "Video",
+      "Sound-Audio",
+      "Copy design",
+      "Photo & Video",
+      "Go",
+      "Typescript",
+      "AWS"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "6af8ec7e08d5",
+    "title": "VibeMe AI",
+    "url": "https://www.vibemeai.net/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a42335fb5b52648269891.jpg",
+    "source": "awwwards",
+    "category": [
+      "Video",
+      "React",
+      "Photo & Video",
+      "Mobile & Apps",
+      "Vercel",
+      "Music & Sound",
+      "Next.js",
+      "Web & Interactive",
+      "Animation",
+      "App Style"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "8ebaf4187a7a",
+    "title": "Patch Ai",
+    "url": "https://thepatchsystem.com/ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a3e98331ce4d715437463.png",
+    "source": "awwwards",
+    "category": [
+      "Animation",
+      "Colorful",
+      "3D",
+      "Craft CMS",
+      "After Effects",
+      "Figma",
+      "Business & Corporate",
+      "Technology"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "72ed635446b1",
+    "title": "Dmytro Lobodiuk, AI Advisory",
+    "url": "https://lobod.rocks",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a394a1c5c4ae734325834.png",
+    "source": "awwwards",
+    "category": [
+      "Clean",
+      "WebGL",
+      "Three.js",
+      "Interaction Design",
+      "Javascript",
+      "Business & Corporate",
+      "Animation"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "ee95a7304744",
+    "title": "Brunello Cucinelli - AI E-com",
+    "url": "https://shop.brunellocucinelli.com/en-gb/ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d6567a11676364433931.png",
+    "source": "awwwards",
+    "category": [
+      "E-Commerce",
+      "Fashion",
+      "Clean",
+      "HTML5",
+      "Unusual Navigation",
+      "Interaction Design",
+      "Luxury"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "89da26082221",
+    "title": "Ai in Design Report 2026",
+    "url": "https://stateofaidesign.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a344660a8383030825204.png",
+    "source": "awwwards",
+    "category": [
+      "Magazine / Newspaper / Blog",
+      "Business & Corporate",
+      "Design Agencies",
+      "Animation",
+      "Colorful",
+      "Responsive Design",
+      "Data Visualization",
+      "Storytelling",
+      "UI design",
+      "Figma",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-07",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "305aca542f2c",
+    "title": "Clico: AI Wherever You Type",
+    "url": "https://tryclico.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a2fc089a0008844773210.png",
+    "source": "awwwards",
+    "category": [
+      "Flat Design",
+      "SEO",
+      "Storytelling",
+      "GSAP",
+      "UI design",
+      "Startups",
+      "Art & Illustration",
+      "Tailwind",
+      "Web & Interactive"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "0fef718c6a77",
+    "title": "COSMOQ — Automation & AI Agent Template",
+    "url": "https://cosmoq.framer.website/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a2410ef002b8658869774.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Figma",
+      "Web & Interactive",
+      "Framer",
+      "Animation",
+      "Colorful",
+      "Responsive Design",
+      "UI design",
+      "Footer Design",
+      "Startups"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "55598e6e05f2",
+    "title": "Creative Marketing AI",
+    "url": "https://creativemarketing.peachweb.io/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a2696803b569174714797.jpg",
+    "source": "awwwards",
+    "category": [
+      "WebGL",
+      "Storytelling",
+      "3D",
+      "Business & Corporate",
+      "Technology",
+      "Web & Interactive",
+      "Portfolio",
+      "Single page"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "22dcd48bee68",
+    "title": "An AI Portfolio in the cosmos",
+    "url": "https://www.ashwingupta.dev/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a1aa6e70d512712791221.png",
+    "source": "awwwards",
+    "category": [
+      "Storytelling",
+      "React",
+      "3D",
+      "Art & Illustration",
+      "Filters and Effects",
+      "Technology",
+      "Interaction Design",
+      "Web & Interactive",
+      "Typescript",
+      "Portfolio",
+      "Astro",
+      "Single page"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "ed284b21d69c",
+    "title": "Ponder AI",
+    "url": "https://ponder.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a175c58b4c68330009978.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Promotional",
+      "Animation",
+      "Minimal",
+      "WebGL",
+      "GSAP",
+      "Photo & Video",
+      "UI design",
+      "Microinteractions",
+      "Startups",
+      "Contentful",
+      "Webflow"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "e1d2cc51de29",
+    "title": "Armory AI Agency",
+    "url": "https://armory.framer.ai/?via=eyitayo64",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a1773c67d1ac035743761.jpg",
+    "source": "awwwards",
+    "category": [
+      "Illustration",
+      "Data Visualization",
+      "Interaction Design",
+      "Design Agencies",
+      "Startups",
+      "Technology",
+      "Figma",
+      "Icons",
+      "Next.js",
+      "Navigation Menu",
+      "Framer",
+      "Portfolio"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "ecd5314e0e85",
+    "title": "invoko - AI helper on your Mac",
+    "url": "https://invoko.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a16665a3ff7c582778036.jpg",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "App Style",
+      "Clean",
+      "CSS",
+      "Minimal",
+      "Storytelling",
+      "Interaction Design",
+      "UI design",
+      "Startups",
+      "Tailwind"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "bffa1029a929",
+    "title": "AI Cybercafé",
+    "url": "https://cybercafe.tw/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a130bbf9aa7b451704891.jpg",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Events",
+      "Web & Interactive",
+      "Fullscreen",
+      "Single page",
+      "WebSockets",
+      "Data Visualization",
+      "Responsive",
+      "GSAP",
+      "Interaction Design",
+      "Swiper.js"
+    ],
+    "taste": [],
+    "date": "2026-06",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "4c61d699dfdb",
+    "title": "Daily Rituals — 0% AI",
+    "url": "https://remote-rituals.framer.website/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a038c218463e853601797.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Design Agencies",
+      "Other",
+      "Clean",
+      "Colorful",
+      "Flat Design",
+      "Minimal",
+      "Scrolling",
+      "SVG",
+      "Illustration",
+      "Figma",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "2d03eb66119e",
+    "title": "reAPI - One API for All Top AI",
+    "url": "https://reapi.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a02bd171603f166185728.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Technology",
+      "Video",
+      "Photography",
+      "Contentful",
+      "next.js",
+      "Vercel"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "0adcb0e1ac8e",
+    "title": "Cleo AI",
+    "url": "https://web.meetcleo.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699f3d8d19ca4213925297.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Web & Interactive",
+      "Clean",
+      "Responsive Design",
+      "Transitions",
+      "Data Visualization",
+      "Storytelling",
+      "React",
+      "Interaction Design",
+      "Next.js",
+      "Framer"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "18394c863689",
+    "title": "PageCoder.ai — Privacy-first AI infrastructure",
+    "url": "https://pagecoder.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/69fdd7b38c396881067013.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Web & Interactive",
+      "Clean",
+      "Wordpress",
+      "Minimal",
+      "Storytelling",
+      "PHP",
+      "React"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "61dbd2acd28e",
+    "title": "Fourmula AI",
+    "url": "https://fourmula.ai",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/698b1840cd96e726332342.jpg",
+    "source": "awwwards",
+    "category": [
+      "Web & Interactive",
+      "Animation",
+      "Navigation Menu",
+      "Scrolling",
+      "Typography",
+      "Photography",
+      "Transitions",
+      "GSAP",
+      "UI design",
+      "Startups",
+      "Webflow",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-05",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "aca6228b5e3b",
+    "title": "Ausdata AI",
+    "url": "https://www.ausdata.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69e0c70618dfd440508505.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Technology",
+      "Animation",
+      "Clean",
+      "Minimal",
+      "WebGL",
+      "Data Visualization",
+      "Three.js",
+      "Interaction Design",
+      "Microinteractions",
+      "Startups",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "1cdb2f37a698",
+    "title": "GPT Humanizer AI",
+    "url": "https://www.gpthumanizer.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69d5d6f65273a475887859.png",
+    "source": "awwwards",
+    "category": [
+      "Technology",
+      "Colorful",
+      "SEO",
+      "Startups",
+      "Contentful",
+      "Adobe Illustrator"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "5795b516b33d",
+    "title": "VOXR AI - Stop Chasing Leads.",
+    "url": "https://www.voxr.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/04/69cecf015fe84092005415.png",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Technology",
+      "Web & Interactive",
+      "Animation",
+      "SEO",
+      "3D",
+      "UI design",
+      "About Page",
+      "Contact Page",
+      "After Effects",
+      "Figma",
+      "Adobe Photoshop"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "2ae2a7e8c5b9",
+    "title": "Text to Song AI",
+    "url": "https://texttosong.ai/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69cb72d4edc42186139078.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "Games & Entertainment",
+      "Music & Sound",
+      "Sound-Audio",
+      "Node.js",
+      "React",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-04",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
     "id": "012d4eee5489",
     "title": "Musci - AI Song Generator",
     "url": "https://musci.io",
@@ -55451,6 +56190,27 @@
     "lastCheckedAt": "2026-08-02T05:36:13.108Z"
   },
   {
+    "id": "85136c7903d6",
+    "title": "Produx Design",
+    "url": "https://www.produx.design",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/05/6a1a71acbf077725504416.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Animation",
+      "GSAP",
+      "Three.js",
+      "3D",
+      "Filters and Effects",
+      "404 pages",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
     "id": "41220ebd5597",
     "title": "Vero New-York",
     "url": "https://verostudio.com/",
@@ -55518,28 +56278,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-08-07T02:56:20.849Z"
-  },
-  {
-    "id": "64bc62f49d01",
-    "title": "Alethia",
-    "url": "https://www.alethia.earth/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a31b669d3af7918980732.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Other",
-      "Animation",
-      "Scrolling",
-      "Storytelling",
-      "Interaction Design",
-      "UI design",
-      "Figma",
-      "Framer"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-06T02:52:56.956Z"
   },
   {
     "id": "f6a7e3b274cc",
@@ -55861,76 +56599,56 @@
     "lastCheckedAt": "2026-08-02T05:36:14.918Z"
   },
   {
-    "id": "7db7408336e8",
-    "title": "Adovasio",
-    "url": "https://adovasio.it/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6973d84f0e58b577133356.jpg",
+    "id": "966e6ed47f7b",
+    "title": "San Rita",
+    "url": "https://sanrita.ca/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/02/699dbd299d44f400704436.jpg",
     "source": "awwwards",
     "category": [
-      "Promotional",
-      "Clean",
-      "Minimal",
-      "Photographic",
+      "Design Agencies",
+      "Web & Interactive",
+      "Animation",
       "Portfolio",
-      "Photography",
-      "Gallery",
-      "GSAP",
-      "Filters and Effects",
-      "Figma",
-      "DatoCMS",
-      "Luxury"
-    ],
-    "taste": [],
-    "date": "2026-03",
-    "starred": false,
-    "firstSeen": "2026-08-09T02:07:16.152Z"
-  },
-  {
-    "id": "1692c246a091",
-    "title": "Gavin Schneider Productions",
-    "url": "https://www.gsproductions.co.za/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/697898787870b765501229.png",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Film & TV",
-      "Minimal",
-      "Portfolio",
-      "Photography",
-      "Photo & Video",
+      "Unusual Navigation",
+      "WebGL",
+      "Experimental",
+      "Storytelling",
+      "3D",
+      "UI design",
       "Next.js",
-      "Sanity",
-      "AWS"
+      "DatoCMS"
     ],
     "taste": [],
     "date": "2026-03",
     "starred": false,
-    "firstSeen": "2026-08-09T02:07:16.152Z"
+    "firstSeen": "2026-08-10T02:07:17.350Z"
   },
   {
-    "id": "d5e5240b7679",
-    "title": "Jason Bergh",
-    "url": "https://www.jasonbergh.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/01/6978ca836413e253177401.png",
+    "id": "f3b653af6c8b",
+    "title": "Utopia Tokyo",
+    "url": "https://www.utopiatokyo.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/03/69a5b7c4816c8910320189.png",
     "source": "awwwards",
     "category": [
-      "Film & TV",
-      "Music & Sound",
-      "jQuery",
-      "Portfolio",
-      "Video",
-      "Gallery",
+      "Games & Entertainment",
+      "Web & Interactive",
+      "Single page",
+      "Experimental",
       "GSAP",
-      "About Page",
-      "Contact Page",
-      "404 pages",
-      "Webflow",
-      "Luxury"
+      "3D",
+      "Filters and Effects",
+      "UI design",
+      "Microinteractions",
+      "Footer Design",
+      "BARBA.js",
+      "Webflow"
     ],
     "taste": [],
     "date": "2026-03",
     "starred": false,
-    "firstSeen": "2026-08-09T02:07:16.152Z"
+    "firstSeen": "2026-06-06T15:26:28.565Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:36:17.102Z"
   },
   {
     "id": "b7e29bc9b265",
@@ -56236,6 +56954,96 @@
     "firstSeen": "2026-06-09T15:08:23.132Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:17.581Z"
+  },
+  {
+    "id": "0e25334130ab",
+    "title": "Chipsa",
+    "url": "https://chipsa.design/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68ac413caf722465835494.jpg",
+    "source": "awwwards",
+    "category": [
+      "Design Agencies",
+      "Web & Interactive",
+      "Scrolling",
+      "Three.js",
+      "React",
+      "3D",
+      "next.js",
+      "Next.js"
+    ],
+    "taste": [],
+    "date": "2025-09",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "f8467ec87a3e",
+    "title": "Gary and the endless forest",
+    "url": "https://play.garance.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/68ad5a7267dbc584274541.jpg",
+    "source": "awwwards",
+    "category": [
+      "Culture & Education",
+      "Games & Entertainment",
+      "Web & Interactive",
+      "Animation",
+      "Colorful",
+      "Fullscreen",
+      "HTML5",
+      "Infinite Scroll",
+      "Illustration",
+      "Three.js",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2025-09",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "7df264bda369",
+    "title": "Damso",
+    "url": "https://damso.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/08/6899e8223a5ae242560325.png",
+    "source": "awwwards",
+    "category": [
+      "E-Commerce",
+      "Music & Sound",
+      "Promotional",
+      "Animation",
+      "Shopify",
+      "3D",
+      "Sanity"
+    ],
+    "taste": [],
+    "date": "2025-09",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
+  },
+  {
+    "id": "c96ae2f1a9a4",
+    "title": "Make It Real Foundation Merch",
+    "url": "https://www.mirfundmerch.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2025/07/687dfca475bdc593770376.png",
+    "source": "awwwards",
+    "category": [
+      "Art & Illustration",
+      "E-Commerce",
+      "Animation",
+      "Big Background Images",
+      "Wordpress",
+      "Colorful",
+      "Illustration",
+      "WooCommerce",
+      "Photo & Video",
+      "Contentful",
+      "Figma",
+      "Social responsibility"
+    ],
+    "taste": [],
+    "date": "2025-08",
+    "starred": false,
+    "firstSeen": "2026-08-10T02:07:17.350Z"
   },
   {
     "id": "8e5508706007",
@@ -57097,27 +57905,6 @@
     "firstSeen": "2026-07-02T03:56:18.427Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:25.356Z"
-  },
-  {
-    "id": "0175fa090107",
-    "title": " 山種美術館（Yamatane Museum of Art） ",
-    "url": "https://www.yamatane-museum.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/zm1kc5qftgas-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "ポータルサイト",
-      "美術館･イベント"
-    ],
-    "taste": [
-      "UI フラット",
-      "グリッドデザイン",
-      "モチーフ 線"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-29T04:20:41.410Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:26.123Z"
   },
   {
     "id": "08b66224fa62",
@@ -58622,29 +59409,6 @@
     "firstSeen": "2026-06-06T15:26:28.565Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:54.887Z"
-  },
-  {
-    "id": "6abfbd78be0d",
-    "title": "Utopia Tokyo",
-    "url": "https://www.utopiatokyo.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/s1dfq2ijlpo7-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "特設サイト",
-      "その他"
-    ],
-    "taste": [
-      "ゲーミフィケーション",
-      "和風",
-      "タイポグラフィー･文字",
-      "3Dアニメーション･3Dモデル",
-      "UI フラット"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:17.102Z"
   },
   {
     "id": "afd0f17e15ad",
