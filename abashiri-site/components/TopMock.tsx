@@ -50,10 +50,25 @@ const EVENT_CARDS: CardData[] = [
   { src: "/img/event-4.jpg", alt: "体験・イベント4" },
 ];
 
-/* No.付き楕円カード（ホバーで中の写真がズーム） */
+/* No.付き楕円カード（ホバーで中の写真がズーム）
+   No.1 → No.2 → … と少しずつ遅れてブラー出現する */
+const cardReveal: Variants = {
+  hidden: { opacity: 0, y: 32, filter: "blur(16px)" },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.25 + i * 0.25 },
+  }),
+};
+
 function Card({ card, index }: { card: CardData; index: number }) {
   return (
-    <motion.div variants={reveal} className="relative h-[410px] w-[730px] shrink-0">
+    <motion.div
+      variants={cardReveal}
+      custom={index}
+      className="relative h-[410px] w-[730px] shrink-0"
+    >
       <div className="group h-full w-full overflow-hidden rounded-[290px] border-8 border-white/70">
         <img
           src={card.src}
@@ -68,10 +83,12 @@ function Card({ card, index }: { card: CardData; index: number }) {
   );
 }
 
+/* カード列はモックの内側いっぱいに広げる（左だけ120pxの余白）。
+   980pxのグリッドから左右に飛び出させて、見切れをなくす */
 function CardRow({ cards }: { cards: CardData[] }) {
   return (
-    <div className="no-scrollbar -mt-[80px] w-[980px] overflow-x-auto pt-[80px]">
-      <div className="flex w-max gap-[80px]">
+    <div className="no-scrollbar -mx-[95px] -mt-[80px] w-[1170px] overflow-x-auto pt-[80px]">
+      <div className="flex w-max gap-[80px] pl-[120px] pr-[60px]">
         {cards.map((c, i) => (
           <Card key={c.src} card={c} index={i} />
         ))}
