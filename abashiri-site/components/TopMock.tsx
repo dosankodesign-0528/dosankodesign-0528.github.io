@@ -112,13 +112,17 @@ function ViewMore() {
 
 import { INTRO_PATTERNS } from "./introPatterns";
 import { KV_PATTERNS } from "./kvPatterns";
+import HeroWriting from "./HeroWriting";
 
 export default function TopMock({
   intro = 2,
   kv = 1,
+  write = 0,
 }: {
   intro?: number;
   kv?: number;
+  /** 1〜3: 手書きパスアニメーション（0は通常表示） */
+  write?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -141,9 +145,25 @@ export default function TopMock({
   const heroScale = useTransform(scrollY, [0, kp.range], kp.scale);
   const heroY = useTransform(scrollY, [0, kp.range], kp.y);
   const buttonY = useTransform(scrollY, [0, kp.range], [0, kp.buttonParallax ?? 0]);
-  const bgScale = useTransform(scrollY, [0, kp.range], kp.bgZoom ?? [1, 1]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
+
+  /* 背景写真：スクロールすると早めに濃いめのブラーがかかっていく。
+     ボケた時に端が透けないよう、ブラー量に応じて少しだけ拡大して補正 */
+  const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 9, 16]);
+  const bgFilter = useMotionTemplate`blur(${bgBlur}px)`;
+  const bgZoom = kp.bgZoom ?? [1, 1];
+  /* ブラー時に端が透けないよう、ズームに少し上乗せ（+0.08まで） */
+  const bgScale = useTransform(
+    scrollY,
+    [0, 160, 400, kp.range],
+    [
+      bgZoom[0],
+      bgZoom[0] + 0.045,
+      Math.max(bgZoom[0], bgZoom[1]) + 0.08,
+      bgZoom[1] + 0.08,
+    ]
+  );
 
   const viewport = { root: scrollerRef, once: true, amount: 0.2 } as const;
 
@@ -160,7 +180,7 @@ export default function TopMock({
             src="/img/bg-hero.jpg"
             alt=""
             className="h-full w-full object-cover object-bottom"
-            style={{ scale: bgScale }}
+            style={{ scale: bgScale, filter: bgFilter }}
           />
         </div>
 
@@ -169,12 +189,16 @@ export default function TopMock({
         <div className="pointer-events-none sticky top-0 -mt-[865px] h-[865px]">
           <motion.div
             className="flex h-full flex-col items-center pt-[120px]"
-            initial={{
-              opacity: 0,
-              filter: `blur(${ip.heroBlur}px)`,
-              y: ip.heroY,
-              scale: ip.heroScale,
-            }}
+            initial={
+              write
+                ? { opacity: 1 } /* 手書きアニメ時は書く動き自体が登場演出 */
+                : {
+                    opacity: 0,
+                    filter: `blur(${ip.heroBlur}px)`,
+                    y: ip.heroY,
+                    scale: ip.heroScale,
+                  }
+            }
             animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
             transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
           >
@@ -188,11 +212,15 @@ export default function TopMock({
                 pointerEvents: heroPointer,
               }}
             >
-              <img
-                src="/img/hero-message.svg"
-                alt="な〜んにもない たまらない"
-                className="h-[390px] w-[471px]"
-              />
+              {write ? (
+                <HeroWriting variant={write} />
+              ) : (
+                <img
+                  src="/img/hero-message.svg"
+                  alt="な〜んにもない たまらない"
+                  className="h-[390px] w-[471px]"
+                />
+              )}
               <motion.div style={{ y: buttonY }}>
                 <Link
                   href="/experience"
