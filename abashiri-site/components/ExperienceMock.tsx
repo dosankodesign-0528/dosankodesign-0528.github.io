@@ -186,11 +186,11 @@ export default function ExperienceMock({
               <StepIndicator step={step} />
 
               {/* 装飾の青カモメ */}
-              <div className="absolute left-[104px] top-[332px] h-[71px] w-[110px]">
-                <Bird src="/img/bird-blue-1.svg" flapDuration={0.7} driftDuration={9} />
+              <div className="absolute left-[104px] top-[332px] h-[62px] w-[108px]">
+                <Bird color="#b6dafc" flapDuration={0.62} driftDuration={9} />
               </div>
-              <div className="absolute right-[53px] top-[199px] h-[86px] w-[189px]">
-                <Bird src="/img/bird-blue-2.svg" flapDuration={0.8} driftDuration={11} delay={0.6} />
+              <div className="absolute right-[63px] top-[199px] h-[86px] w-[160px]">
+                <Bird color="#b6dafc" flapDuration={0.75} driftDuration={11} delay={0.6} />
               </div>
 
               <AnimatePresence mode="wait">

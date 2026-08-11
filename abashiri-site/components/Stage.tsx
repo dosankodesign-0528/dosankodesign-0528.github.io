@@ -38,11 +38,11 @@ export default function Stage({ children, illustration = "tamannee" }: StageProp
         }}
       >
         {/* 空のカモメ（左上・右中） */}
-        <div className="absolute left-[22px] top-[30px] h-[36px] w-[51px] -rotate-[19deg]">
-          <Bird src="/img/bird-sky-2.svg" flapDuration={0.55} driftDuration={7} />
+        <div className="absolute left-[22px] top-[26px] h-[40px] w-[64px] -rotate-[14deg]">
+          <Bird flapDuration={0.5} driftDuration={7} />
         </div>
-        <div className="absolute right-[-40px] top-[570px] h-[70px] w-[105px]">
-          <Bird src="/img/bird-sky-1.svg" flapDuration={0.7} driftDuration={9} delay={1.2} />
+        <div className="absolute right-[-30px] top-[560px] h-[62px] w-[105px]">
+          <Bird flapDuration={0.62} driftDuration={9} delay={1.2} />
         </div>
 
         {children}

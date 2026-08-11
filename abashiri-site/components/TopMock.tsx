@@ -93,14 +93,21 @@ function ViewMore() {
   );
 }
 
-export default function TopMock() {
-  const scrollerRef = useRef<HTMLDivElement>(null);
+import { INTRO_PATTERNS } from "./introPatterns";
 
-  /* スクロールに連れてヒーロー文字がボケて消えていく */
+export default function TopMock({ intro = 1 }: { intro?: number }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[1];
+
+  /* スクロールに連れてキービジュアル（文字＋ボタン）が
+     奥へ下がりながらボケて消えていく */
   const { scrollY } = useScroll({ container: scrollerRef });
-  const heroBlur = useTransform(scrollY, [0, 260, 460], [0, 8, 22]);
-  const heroOpacity = useTransform(scrollY, [0, 300, 480], [1, 0.55, 0]);
+  const heroBlur = useTransform(scrollY, [0, 300, 620], [0, 9, 24]);
+  const heroOpacity = useTransform(scrollY, [0, 420, 640], [1, 0.5, 0]);
+  const heroScale = useTransform(scrollY, [0, 640], [1, 0.76]);
+  const heroYScroll = useTransform(scrollY, [0, 640], [0, 250]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
+  const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
 
   const viewport = { root: scrollerRef, once: true, amount: 0.2 } as const;
 
@@ -120,27 +127,52 @@ export default function TopMock() {
         </div>
 
         <div className="relative -mt-[865px]">
-          <MockNav theme="light" />
+          {/* ヘッダー：ブラーで登場 */}
+          <motion.div
+            initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
+            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            transition={{ duration: ip.headerDur, ease: ip.ease }}
+          >
+            <MockNav theme="light" />
+          </motion.div>
 
           <div className="mx-auto flex w-[980px] flex-col items-center gap-[280px] py-[120px]">
-            {/* ヒーロー：な〜んにもない たまらない */}
-            <div className="flex flex-col items-center gap-[24px]">
-              <motion.div style={{ filter: heroFilter, opacity: heroOpacity }}>
+            {/* キービジュアル：ブラーで登場 → スクロールで奥へ下がって消える */}
+            <motion.div
+              initial={{
+                opacity: 0,
+                filter: `blur(${ip.heroBlur}px)`,
+                y: ip.heroY,
+                scale: ip.heroScale,
+              }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
+              transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
+            >
+              <motion.div
+                className="flex flex-col items-center gap-[24px]"
+                style={{
+                  filter: heroFilter,
+                  opacity: heroOpacity,
+                  scale: heroScale,
+                  y: heroYScroll,
+                  pointerEvents: heroPointer,
+                }}
+              >
                 <img
                   src="/img/hero-message.svg"
                   alt="な〜んにもない たまらない"
                   className="h-[390px] w-[471px]"
                 />
+                <Link
+                  href="/experience"
+                  className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+                >
+                  ぼーっとしてみる
+                </Link>
               </motion.div>
-              <Link
-                href="/experience"
-                className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
-              >
-                ぼーっとしてみる
-              </Link>
-            </div>
+            </motion.div>
 
-            <div className="flex w-full flex-col gap-[300px]">
+            <div className="relative z-10 flex w-full flex-col gap-[300px]">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-[80px]">
                 <motion.section
@@ -201,11 +233,11 @@ export default function TopMock() {
                     <span className="flex w-[200px] items-center justify-center rounded-[38px] bg-white px-[24px] py-[10px] text-[14px] font-black text-[#0070c9]">
                       さっそく体験する
                     </span>
-                    <div className="absolute right-[4.3%] top-[17%] h-[70px] w-[105px]">
-                      <Bird src="/img/bird-promo-1.svg" flapDuration={0.65} driftDuration={8} />
+                    <div className="absolute right-[4.3%] top-[17%] h-[60px] w-[100px]">
+                      <Bird flapDuration={0.6} driftDuration={8} />
                     </div>
-                    <div className="absolute left-[-0.9%] top-[13%] h-[32px] w-[62px]">
-                      <Bird src="/img/bird-promo-2.svg" flapDuration={0.5} driftDuration={6} delay={0.8} />
+                    <div className="absolute left-[0.5%] top-[13%] h-[34px] w-[58px]">
+                      <Bird flapDuration={0.48} driftDuration={6} delay={0.8} />
                     </div>
                   </Link>
                 </motion.div>
