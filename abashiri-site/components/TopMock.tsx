@@ -118,11 +118,14 @@ export default function TopMock({
   intro = 2,
   kv = 1,
   write = 0,
+  writePace = 2,
 }: {
   intro?: number;
   kv?: number;
   /** 1〜3: 手書きパスアニメーション（0は通常表示） */
   write?: number;
+  /** 1〜3: 書くスピード（WRITE_PACES） */
+  writePace?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -213,7 +216,7 @@ export default function TopMock({
               }}
             >
               {write ? (
-                <HeroWriting variant={write} />
+                <HeroWriting variant={write} pace={writePace} />
               ) : (
                 <img
                   src="/img/hero-message.svg"

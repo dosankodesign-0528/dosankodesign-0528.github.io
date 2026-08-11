@@ -37,8 +37,15 @@ function collectSorted(svg: SVGSVGElement): { bubble: SVGPathElement | null; res
   return { bubble: bubble.p, rest };
 }
 
+import { WRITE_PACES, type WritePace } from "./writePaces";
+
 /* 案1：パスをなぞるマスクで、ペンが走るように描く */
-function traceReveal(svg: SVGSVGElement, p: SVGPathElement, delay: number): number {
+function traceReveal(
+  svg: SVGSVGElement,
+  p: SVGPathElement,
+  delay: number,
+  pace: WritePace
+): number {
   const len = Math.max(p.getTotalLength(), 1);
   let defs = svg.querySelector("defs");
   if (!defs) {
@@ -62,7 +69,7 @@ function traceReveal(svg: SVGSVGElement, p: SVGPathElement, delay: number): numb
   defs.appendChild(mask);
   p.setAttribute("mask", `url(#${id})`);
 
-  const dur = Math.min(Math.max(len * 0.6, 120), 700);
+  const dur = Math.min(Math.max(len * pace.rate, pace.min), pace.max);
   c.animate(
     [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
     { duration: dur, delay, fill: "forwards", easing: "linear" }
@@ -97,7 +104,14 @@ function inkReveal(p: SVGPathElement, delay: number) {
   );
 }
 
-export default function HeroWriting({ variant }: { variant: number }) {
+export default function HeroWriting({
+  variant,
+  pace = 2,
+}: {
+  variant: number;
+  /** 1〜3: 書くスピード（WRITE_PACES） */
+  pace?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,12 +138,13 @@ export default function HeroWriting({ variant }: { variant: number }) {
         });
       }
 
+      const wp = WRITE_PACES[pace] ?? WRITE_PACES[2];
       let delay = 450;
       rest.forEach((it, i) => {
         if (variant === 1) {
-          const dur = traceReveal(svg, it.p, delay);
+          const dur = traceReveal(svg, it.p, delay, wp);
           it.p.style.opacity = "1";
-          delay += dur * 0.8; // 少し重ねて流れるように
+          delay += dur * wp.overlap + wp.gap; // 少し重ねつつ、画のあいだに小さな間
         } else if (variant === 2) {
           wipeReveal(it.p, 450 + i * 85);
         } else {
@@ -140,7 +155,7 @@ export default function HeroWriting({ variant }: { variant: number }) {
     return () => {
       aborted = true;
     };
-  }, [variant]);
+  }, [variant, pace]);
 
   return <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />;
 }
