@@ -216,7 +216,7 @@ export default function TopMock({
               }}
             >
               {write ? (
-                <HeroWriting variant={write} pace={writePace} />
+                <HeroWriting pace={writePace} />
               ) : (
                 <img
                   src="/img/hero-message.svg"

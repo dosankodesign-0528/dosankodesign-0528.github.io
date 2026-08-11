@@ -1,45 +1,37 @@
 "use client";
 
 /*
- * キービジュアルの手書き文字を「サインペンで書いている」ように見せる
- * パスアニメーション。hero-message.svg を読み込んでインライン展開し、
- * 各パスを書き順（吹き出し → 上段左→右 → 下段左→右）に並べて順番に描く。
+ * キービジュアルの手書きアニメーション（採用版）
  *
- * variant:
- *  1: なぞり書き …… ペン先が線をなぞって書き進む（マスクのダッシュアニメ）
- *  2: 筆順ワイプ …… 画ごとに左からサッと書き上がる
- *  3: インクがにじむ …… 画ごとにじわっとインクが染みるように現れる
+ * - 吹き出し＋「な〜んにもない」…… ブラーがふわっと晴れて出現
+ * - 「たまらない」…… サインペンでなぞり書き（一画ずつ順に）
+ * - 下の曲線のあしらい（矢印）…… 左から右へなぞって描く
+ *
+ * hero-message.svg を読み込んでインライン展開し、パスの位置から
+ * 上段（吹き出し内）と下段（たまらない＋矢印）に分けて演出する。
  */
 import { useEffect, useRef } from "react";
+import { WRITE_PACES, type WritePace } from "./writePaces";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 let maskSeq = 0;
 
-type Item = { p: SVGPathElement; x: number; midY: number; area: number };
+type Item = { p: SVGPathElement; x: number; midY: number; w: number; area: number };
 
-function collectSorted(svg: SVGSVGElement): { bubble: SVGPathElement | null; rest: Item[] } {
+function collect(svg: SVGSVGElement): { bubble: SVGPathElement | null; rest: Item[] } {
   const paths = Array.from(svg.querySelectorAll("path"));
   const items: Item[] = paths.map((p) => {
     const b = p.getBBox();
-    return { p, x: b.x, midY: b.y + b.height / 2, area: b.width * b.height };
+    return { p, x: b.x, midY: b.y + b.height / 2, w: b.width, area: b.width * b.height };
   });
   if (items.length === 0) return { bubble: null, rest: [] };
   // いちばん面積の大きいパス＝吹き出し
   const bubble = items.reduce((a, c) => (c.area > a.area ? c : a));
-  const rest = items
-    .filter((i) => i !== bubble)
-    .sort((a, b) => {
-      const rowA = a.midY < 205 ? 0 : 1;
-      const rowB = b.midY < 205 ? 0 : 1;
-      if (rowA !== rowB) return rowA - rowB;
-      return a.x - b.x;
-    });
+  const rest = items.filter((i) => i !== bubble).sort((a, b) => a.x - b.x);
   return { bubble: bubble.p, rest };
 }
 
-import { WRITE_PACES, type WritePace } from "./writePaces";
-
-/* 案1：パスをなぞるマスクで、ペンが走るように描く */
+/* ペン先が線をなぞって書き進む（マスクのダッシュアニメ） */
 function traceReveal(
   svg: SVGSVGElement,
   p: SVGPathElement,
@@ -70,45 +62,31 @@ function traceReveal(
   p.setAttribute("mask", `url(#${id})`);
 
   const dur = Math.min(Math.max(len * pace.rate, pace.min), pace.max);
-  c.animate(
-    [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
-    { duration: dur, delay, fill: "forwards", easing: "linear" }
-  );
+  c.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }], {
+    duration: dur,
+    delay,
+    fill: "forwards",
+    easing: "linear",
+  });
   return dur;
 }
 
-/* 案2：画ごとに左からワイプして書き上がる */
-function wipeReveal(p: SVGPathElement, delay: number) {
-  const hidden = "inset(-8% 108% -8% -8%)";
-  const shown = "inset(-8% -8% -8% -8%)";
+/* 幅の広い曲線あしらい用：左から右へペンを走らせるワイプ */
+function wipeLeftToRight(p: SVGPathElement, delay: number, dur: number) {
+  const hidden = "inset(-12% 112% -12% -12%)";
+  const shown = "inset(-12% -12% -12% -12%)";
   p.style.clipPath = hidden;
   p.animate([{ clipPath: hidden }, { clipPath: shown }], {
-    duration: 240,
+    duration: dur,
     delay,
     fill: "forwards",
-    easing: "ease-out",
+    easing: "cubic-bezier(0.45, 0, 0.4, 1)",
   });
 }
 
-/* 案3：画ごとにインクがじわっと染みる */
-function inkReveal(p: SVGPathElement, delay: number) {
-  p.style.opacity = "0";
-  p.style.transformBox = "fill-box";
-  p.style.transformOrigin = "center";
-  p.animate(
-    [
-      { opacity: 0, filter: "blur(5px)", transform: "scale(0.88)" },
-      { opacity: 1, filter: "blur(0px)", transform: "scale(1)" },
-    ],
-    { duration: 480, delay, fill: "forwards", easing: "ease-out" }
-  );
-}
-
 export default function HeroWriting({
-  variant,
   pace = 2,
 }: {
-  variant: number;
   /** 1〜3: 書くスピード（WRITE_PACES） */
   pace?: number;
 }) {
@@ -126,36 +104,61 @@ export default function HeroWriting({
       svg.setAttribute("width", "471");
       svg.setAttribute("height", "390");
 
-      const { bubble, rest } = collectSorted(svg);
+      const { bubble, rest } = collect(svg);
+      const upper = rest.filter((i) => i.midY < 205); // な〜んにもない
+      const lower = rest.filter((i) => i.midY >= 205); // たまらない＋あしらい
 
-      /* 吹き出しは最初にふわっと */
+      /* 吹き出し：ふわっと */
       if (bubble) {
         bubble.style.opacity = "0";
-        bubble.animate([{ opacity: 0 }, { opacity: 1 }], {
-          duration: 550,
-          fill: "forwards",
-          easing: "ease-out",
-        });
+        bubble.animate(
+          [
+            { opacity: 0, filter: "blur(10px)" },
+            { opacity: 1, filter: "blur(0px)" },
+          ],
+          { duration: 700, fill: "forwards", easing: "ease-out" }
+        );
       }
 
+      /* な〜んにもない：ブラーが晴れて出現 */
+      upper.forEach((it) => {
+        it.p.style.opacity = "0";
+        it.p.animate(
+          [
+            { opacity: 0, filter: "blur(9px)" },
+            { opacity: 1, filter: "blur(0px)" },
+          ],
+          {
+            duration: 900,
+            delay: 300,
+            fill: "forwards",
+            easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+          }
+        );
+      });
+
+      /* たまらない＋あしらい：左から順になぞり書き */
       const wp = WRITE_PACES[pace] ?? WRITE_PACES[2];
-      let delay = 450;
-      rest.forEach((it, i) => {
-        if (variant === 1) {
+      let delay = 1250;
+      lower.forEach((it) => {
+        if (it.w > 150) {
+          /* 幅広の曲線（矢印のあしらい）は左→右ワイプで描く */
+          const dur = Math.min(Math.max(it.w * wp.rate * 2.4, wp.min * 2.2), wp.max);
+          wipeLeftToRight(it.p, delay, dur);
+          delay += dur * wp.overlap + wp.gap;
+        } else {
           const dur = traceReveal(svg, it.p, delay, wp);
           it.p.style.opacity = "1";
-          delay += dur * wp.overlap + wp.gap; // 少し重ねつつ、画のあいだに小さな間
-        } else if (variant === 2) {
-          wipeReveal(it.p, 450 + i * 85);
-        } else {
-          inkReveal(it.p, 450 + i * 95);
+          delay += dur * wp.overlap + wp.gap;
         }
       });
     })();
     return () => {
       aborted = true;
     };
-  }, [variant, pace]);
+  }, [pace]);
 
-  return <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />;
+  return (
+    <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />
+  );
 }
