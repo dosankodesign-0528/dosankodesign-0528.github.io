@@ -94,18 +94,37 @@ function ViewMore() {
 }
 
 import { INTRO_PATTERNS } from "./introPatterns";
+import { KV_PATTERNS } from "./kvPatterns";
 
-export default function TopMock({ intro = 1 }: { intro?: number }) {
+export default function TopMock({
+  intro = 2,
+  kv = 1,
+}: {
+  intro?: number;
+  kv?: number;
+}) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[1];
+  const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
+  const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
   /* キービジュアル（文字＋ボタン）は画面中央に固定したまま、
-     スクロールに連れてその場で奥へ引いていき（縮小＋ブラー＋透明化）、
+     スクロール量に応じてその場で変化しながら消え、
      下からコンテンツがすべり込んで交代する */
   const { scrollY } = useScroll({ container: scrollerRef });
-  const heroBlur = useTransform(scrollY, [0, 260, 540], [0, 8, 22]);
-  const heroOpacity = useTransform(scrollY, [0, 340, 560], [1, 0.5, 0]);
-  const heroScale = useTransform(scrollY, [0, 560], [1, 0.8]);
+  const heroBlur = useTransform(
+    scrollY,
+    [0, kp.range * 0.45, kp.range],
+    [0, kp.blurMax * 0.35, kp.blurMax]
+  );
+  const heroOpacity = useTransform(
+    scrollY,
+    [0, kp.range * kp.fadeStart, kp.range],
+    [1, 0.55, 0]
+  );
+  const heroScale = useTransform(scrollY, [0, kp.range], kp.scale);
+  const heroY = useTransform(scrollY, [0, kp.range], kp.y);
+  const buttonY = useTransform(scrollY, [0, kp.range], [0, kp.buttonParallax ?? 0]);
+  const bgScale = useTransform(scrollY, [0, kp.range], kp.bgZoom ?? [1, 1]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
 
@@ -117,12 +136,14 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
         ref={scrollerRef}
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip rounded-[30px] bg-[#8ec6ea]"
       >
-        {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする */}
+        {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
+            パターンによってはスクロールに合わせてゆっくりズーム */}
         <div className="pointer-events-none sticky top-0 h-[865px] w-full overflow-hidden">
-          <img
+          <motion.img
             src="/img/bg-hero.jpg"
             alt=""
             className="h-full w-full object-cover object-bottom"
+            style={{ scale: bgScale }}
           />
         </div>
 
@@ -146,6 +167,7 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
                 filter: heroFilter,
                 opacity: heroOpacity,
                 scale: heroScale,
+                y: heroY,
                 pointerEvents: heroPointer,
               }}
             >
@@ -154,12 +176,14 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
                 alt="な〜んにもない たまらない"
                 className="h-[390px] w-[471px]"
               />
-              <Link
-                href="/experience"
-                className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
-              >
-                ぼーっとしてみる
-              </Link>
+              <motion.div style={{ y: buttonY }}>
+                <Link
+                  href="/experience"
+                  className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+                >
+                  ぼーっとしてみる
+                </Link>
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>
