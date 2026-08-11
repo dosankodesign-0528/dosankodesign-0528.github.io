@@ -59,6 +59,30 @@ body {
   animation-name: bird-frame-b;
 }
 
+/* 3コマ版：上げ→中間→下げ→中間 のループ */
+@keyframes bird3-a {
+  0%, 24.99% { opacity: 1; }
+  25%, 100% { opacity: 0; }
+}
+@keyframes bird3-m {
+  0%, 24.99% { opacity: 0; }
+  25%, 49.99% { opacity: 1; }
+  50%, 74.99% { opacity: 0; }
+  75%, 100% { opacity: 1; }
+}
+@keyframes bird3-b {
+  0%, 49.99% { opacity: 0; }
+  50%, 74.99% { opacity: 1; }
+  75%, 100% { opacity: 0; }
+}
+.bird3-a, .bird3-m, .bird3-b {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.bird3-a { animation-name: bird3-a; }
+.bird3-m { animation-name: bird3-m; }
+.bird3-b { animation-name: bird3-b; }
+
 /* ふわふわ漂う */
 @keyframes bird-drift {
   0%, 100% {

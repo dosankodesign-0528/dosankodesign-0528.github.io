@@ -1,9 +1,35 @@
 /*
- * 新規描き起こしのカモメ（2コマのGIF風パタパタ）
- * 羽が上がったコマと下がったコマを一定間隔でパチパチ切り替え、
- * さらに全体がゆっくり漂う。
+ * 新規描き起こしのカモメ（コマ切り替えのGIF風パタパタ）
+ * variant:
+ *  - "flap"    2コマ・大きめの羽ばたき（下げコマもアーチを残した曲線）
+ *  - "soft"    2コマ・カモメらしい「〜」の曲線を両コマともキープした控えめ版
+ *  - "smooth3" 3コマ・上げ→中間→下げ→中間 のなめらか版
  */
+export type BirdVariant = "flap" | "soft" | "smooth3";
+
+const FRAMES: Record<BirdVariant, string[]> = {
+  flap: [
+    "M12 32 C26 13 44 11 57 34 Q60 38 63 34 C76 11 94 13 108 32",
+    "M12 52 C26 48 38 30 56 30 Q60 28 64 30 C82 30 94 48 108 52",
+  ],
+  soft: [
+    "M11 36 C26 18 44 16 57 35 Q60 39 63 35 C76 16 94 18 109 36",
+    "M10 44 C26 29 44 25 57 35 Q60 38 63 35 C76 25 94 29 110 44",
+  ],
+  smooth3: [
+    "M12 32 C26 13 44 11 57 34 Q60 38 63 34 C76 11 94 13 108 32",
+    "M10 40 C24 22 44 19 57 34 Q60 38 63 34 C76 19 96 22 110 40",
+    "M12 52 C26 48 38 30 56 30 Q60 28 64 30 C82 30 94 48 108 52",
+  ],
+};
+
+const FRAME_CLASSES: Record<number, string[]> = {
+  2: ["bird-frame-a", "bird-frame-b"],
+  3: ["bird3-a", "bird3-m", "bird3-b"],
+};
+
 type BirdProps = {
+  variant?: BirdVariant;
   color?: string;
   flapDuration?: number;
   driftDuration?: number;
@@ -12,14 +38,17 @@ type BirdProps = {
 };
 
 export default function Bird({
+  variant = "flap",
   color = "#ffffff",
   flapDuration = 0.55,
   driftDuration = 8,
   delay = 0,
   className,
 }: BirdProps) {
+  const frames = FRAMES[variant];
+  const classes = FRAME_CLASSES[frames.length];
   const frameStyle = {
-    animationDuration: `${flapDuration}s`,
+    animationDuration: `${flapDuration * (frames.length === 3 ? 1.6 : 1)}s`,
     animationDelay: `${delay * 0.5}s`,
   };
   return (
@@ -28,26 +57,17 @@ export default function Bird({
       style={{ animationDuration: `${driftDuration}s`, animationDelay: `${delay}s` }}
     >
       <svg viewBox="0 0 120 64" className="h-full w-full" fill="none">
-        {/* コマ1：羽が上がった瞬間 */}
-        <g className="bird-frame-a" style={frameStyle}>
-          <path
-            d="M12 30 C26 12 44 10 57 34 Q60 38 63 34 C76 10 94 12 108 30"
-            stroke={color}
-            strokeWidth="7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
-        {/* コマ2：羽が下がった瞬間 */}
-        <g className="bird-frame-b" style={frameStyle}>
-          <path
-            d="M12 54 C28 46 46 38 57 30 Q60 27 63 30 C74 38 92 46 108 54"
-            stroke={color}
-            strokeWidth="7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </g>
+        {frames.map((d, i) => (
+          <g key={i} className={classes[i]} style={frameStyle}>
+            <path
+              d={d}
+              stroke={color}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ))}
       </svg>
     </div>
   );

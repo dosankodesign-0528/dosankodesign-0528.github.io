@@ -99,13 +99,13 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[1];
 
-  /* スクロールに連れてキービジュアル（文字＋ボタン）が
-     奥へ下がりながらボケて消えていく */
+  /* キービジュアル（文字＋ボタン）は画面中央に固定したまま、
+     スクロールに連れてその場で奥へ引いていき（縮小＋ブラー＋透明化）、
+     下からコンテンツがすべり込んで交代する */
   const { scrollY } = useScroll({ container: scrollerRef });
-  const heroBlur = useTransform(scrollY, [0, 300, 620], [0, 9, 24]);
-  const heroOpacity = useTransform(scrollY, [0, 420, 640], [1, 0.5, 0]);
-  const heroScale = useTransform(scrollY, [0, 640], [1, 0.76]);
-  const heroYScroll = useTransform(scrollY, [0, 640], [0, 250]);
+  const heroBlur = useTransform(scrollY, [0, 260, 540], [0, 8, 22]);
+  const heroOpacity = useTransform(scrollY, [0, 340, 560], [1, 0.5, 0]);
+  const heroScale = useTransform(scrollY, [0, 560], [1, 0.8]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
 
@@ -126,9 +126,48 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
           />
         </div>
 
-        <div className="relative -mt-[865px]">
+        {/* キービジュアル：画面中央に固定されたまま、ブラーで登場 →
+            スクロールでその場から奥へ引いて消える */}
+        <div className="pointer-events-none sticky top-0 -mt-[865px] h-[865px]">
+          <motion.div
+            className="flex h-full flex-col items-center pt-[120px]"
+            initial={{
+              opacity: 0,
+              filter: `blur(${ip.heroBlur}px)`,
+              y: ip.heroY,
+              scale: ip.heroScale,
+            }}
+            animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
+            transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
+          >
+            <motion.div
+              className="flex flex-col items-center gap-[24px]"
+              style={{
+                filter: heroFilter,
+                opacity: heroOpacity,
+                scale: heroScale,
+                pointerEvents: heroPointer,
+              }}
+            >
+              <img
+                src="/img/hero-message.svg"
+                alt="な〜んにもない たまらない"
+                className="h-[390px] w-[471px]"
+              />
+              <Link
+                href="/experience"
+                className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+              >
+                ぼーっとしてみる
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <div className="pointer-events-none relative z-10 -mt-[865px]">
           {/* ヘッダー：ブラーで登場 */}
           <motion.div
+            className="pointer-events-auto"
             initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
             animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
             transition={{ duration: ip.headerDur, ease: ip.ease }}
@@ -136,43 +175,8 @@ export default function TopMock({ intro = 1 }: { intro?: number }) {
             <MockNav theme="light" />
           </motion.div>
 
-          <div className="mx-auto flex w-[980px] flex-col items-center gap-[280px] py-[120px]">
-            {/* キービジュアル：ブラーで登場 → スクロールで奥へ下がって消える */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                filter: `blur(${ip.heroBlur}px)`,
-                y: ip.heroY,
-                scale: ip.heroScale,
-              }}
-              animate={{ opacity: 1, filter: "blur(0px)", y: 0, scale: 1 }}
-              transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
-            >
-              <motion.div
-                className="flex flex-col items-center gap-[24px]"
-                style={{
-                  filter: heroFilter,
-                  opacity: heroOpacity,
-                  scale: heroScale,
-                  y: heroYScroll,
-                  pointerEvents: heroPointer,
-                }}
-              >
-                <img
-                  src="/img/hero-message.svg"
-                  alt="な〜んにもない たまらない"
-                  className="h-[390px] w-[471px]"
-                />
-                <Link
-                  href="/experience"
-                  className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
-                >
-                  ぼーっとしてみる
-                </Link>
-              </motion.div>
-            </motion.div>
-
-            <div className="relative z-10 flex w-full flex-col gap-[300px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-[120px] pt-[884px]">
+            <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-[80px]">
                 <motion.section
