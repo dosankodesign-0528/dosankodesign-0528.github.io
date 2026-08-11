@@ -8,6 +8,13 @@
       "port": 8765
     },
     {
+      "name": "abashiri",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3096"],
+      "port": 3096,
+      "cwd": "abashiri-site"
+    },
+    {
       "name": "design-gallery",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "3099"],
