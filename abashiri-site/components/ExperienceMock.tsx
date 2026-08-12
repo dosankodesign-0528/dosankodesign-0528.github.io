@@ -167,6 +167,23 @@ export default function ExperienceMock({
     return () => clearInterval(id);
   }, [step, playing, remaining]);
 
+  /* 動画の音声が優先：再生状態を環境音（SoundUi）へ知らせる */
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent("abashiri:video-audio", {
+        detail: { active: step === 3 && playing },
+      })
+    );
+  }, [step, playing]);
+  useEffect(
+    () => () => {
+      window.dispatchEvent(
+        new CustomEvent("abashiri:video-audio", { detail: { active: false } })
+      );
+    },
+    []
+  );
+
   const toggleFeeling = (f: string) =>
     setFeelings((prev) =>
       prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
