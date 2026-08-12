@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   motion,
@@ -84,10 +84,22 @@ function Card({ card, index }: { card: CardData; index: number }) {
 }
 
 /* カード列はモックの内側いっぱいに広げる（左だけ120pxの余白）。
-   980pxのグリッドから左右に飛び出させて、見切れをなくす */
-function CardRow({ cards }: { cards: CardData[] }) {
+   980pxのグリッドから左右に飛び出させて、見切れをなくす。
+   縦スクロール→横スクロール切替のため ref を登録する */
+function CardRow({
+  cards,
+  rowIndex,
+  registerRow,
+}: {
+  cards: CardData[];
+  rowIndex: number;
+  registerRow: (i: number, el: HTMLDivElement | null) => void;
+}) {
   return (
-    <div className="no-scrollbar -mx-[95px] -mt-[80px] w-[1170px] overflow-x-auto pt-[80px]">
+    <div
+      ref={(el) => registerRow(rowIndex, el)}
+      className="no-scrollbar -mx-[95px] -mt-[80px] w-[1170px] overflow-x-auto pt-[80px]"
+    >
       <div className="flex w-max gap-[80px] pl-[120px] pr-[60px]">
         {cards.map((c, i) => (
           <Card key={c.src} card={c} index={i} />
@@ -199,6 +211,41 @@ export default function TopMock({
 
   const viewport = { root: scrollerRef, once: true, amount: 0.2 } as const;
 
+  /* ===== カード列：縦スクロールで来たら、No.4まで横に流れてから縦に戻る ===== */
+  const rowsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const registerRow = useCallback((i: number, el: HTMLDivElement | null) => {
+    rowsRef.current[i] = el;
+  }, []);
+
+  useEffect(() => {
+    const sc = scrollerRef.current;
+    if (!sc) return;
+    const onWheel = (e: WheelEvent) => {
+      /* トラックパッドの横ジェスチャはネイティブの横スクロールに任せる */
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const scRect = sc.getBoundingClientRect();
+      for (const row of rowsRef.current) {
+        if (!row) continue;
+        const r = row.getBoundingClientRect();
+        /* カード列がほぼ画面内に収まっている時だけ引き受ける */
+        const inView =
+          r.top >= scRect.top + scRect.height * 0.02 &&
+          r.bottom <= scRect.top + scRect.height * 0.99;
+        if (!inView) continue;
+        const max = row.scrollWidth - row.clientWidth;
+        if (max <= 0) continue;
+        const down = e.deltaY > 0;
+        if ((down && row.scrollLeft < max - 1) || (!down && row.scrollLeft > 1)) {
+          e.preventDefault();
+          row.scrollLeft = Math.max(0, Math.min(max, row.scrollLeft + e.deltaY));
+        }
+        break;
+      }
+    };
+    sc.addEventListener("wheel", onWheel, { passive: false });
+    return () => sc.removeEventListener("wheel", onWheel);
+  }, []);
+
   return (
     <div className="absolute left-[calc(50%-71px)] top-[87px] h-[960px] w-[1230px] -translate-x-1/2 rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
       <div
@@ -206,11 +253,12 @@ export default function TopMock({
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip rounded-[30px] bg-[#8ec6ea]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
-            パターンによってはスクロールに合わせてゆっくりズーム */}
-        <div className="pointer-events-none sticky top-0 h-[865px] w-full overflow-hidden">
-          {/* Figma上のトリミング・色加工（青め）を焼き込んだ書き出し画像 */}
+            パターンによってはスクロールに合わせてゆっくりズーム。
+            下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
+        <div className="pointer-events-none sticky top-0 h-[865px] w-full overflow-hidden bg-[#0160c4]">
+          {/* Figma上のトリミング・色加工（青め）を焼き込んだ書き出し画像（透過PNG） */}
           <motion.img
-            src="/img/bg-hero.jpg"
+            src="/img/bg-hero.png"
             alt=""
             className="h-full w-full object-cover"
             style={{ scale: bgScale, filter: bgFilter }}
@@ -343,7 +391,7 @@ export default function TopMock({
                     </div>
                     <ViewMore />
                   </motion.div>
-                  <CardRow cards={SPOT_CARDS} />
+                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} />
                 </motion.section>
 
                 {/* ぼーっとする、やってみない？ */}
@@ -410,7 +458,7 @@ export default function TopMock({
                   </div>
                   <ViewMore />
                 </motion.div>
-                <CardRow cards={GOURMET_CARDS} />
+                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} />
               </motion.section>
 
               {/* 体験・イベント */}
@@ -438,7 +486,7 @@ export default function TopMock({
                   </div>
                   <ViewMore />
                 </motion.div>
-                <CardRow cards={EVENT_CARDS} />
+                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} />
               </motion.section>
             </div>
           </div>
