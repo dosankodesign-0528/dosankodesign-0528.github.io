@@ -86,9 +86,12 @@ function wipeLeftToRight(p: SVGPathElement, delay: number, dur: number) {
 
 export default function HeroWriting({
   pace = 2,
+  onScheduled,
 }: {
   /** 1〜3: 書くスピード（WRITE_PACES） */
   pace?: number;
+  /** 全アニメーションの完了予定時刻(ms)を通知（ボタン出現などの後続演出用） */
+  onScheduled?: (totalMs: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -108,51 +111,53 @@ export default function HeroWriting({
       const upper = rest.filter((i) => i.midY < 205); // な〜んにもない
       const lower = rest.filter((i) => i.midY >= 205); // たまらない＋あしらい
 
-      /* 吹き出し：ふわっと */
-      if (bubble) {
-        bubble.style.opacity = "0";
-        bubble.animate(
-          [
-            { opacity: 0, filter: "blur(10px)" },
-            { opacity: 1, filter: "blur(0px)" },
-          ],
-          { duration: 700, fill: "forwards", easing: "ease-out" }
-        );
-      }
+      /* まず景色を見せてから、アニメーションを始める（全体を約1.5秒後ろへ） */
+      const BASE = 1850;
 
-      /* な〜んにもない：ブラーがゆっくり晴れて出現 */
-      upper.forEach((it) => {
-        it.p.style.opacity = "0";
-        it.p.animate(
+      /* 吹き出し＋な〜んにもない：個別ではなく、まとめて一枚のブラーで出現 */
+      const groupPaths = [...(bubble ? [bubble] : []), ...upper.map((i) => i.p)];
+      groupPaths.forEach((p) => {
+        p.style.opacity = "0";
+        p.animate(
           [
             { opacity: 0, filter: "blur(9px)" },
             { opacity: 1, filter: "blur(0px)" },
           ],
           {
             duration: 1450,
-            delay: 350,
+            delay: BASE,
             fill: "forwards",
             easing: "cubic-bezier(0.33, 1, 0.68, 1)",
           }
         );
       });
 
-      /* たまらない：左から順になぞり書き。
-         幅広の曲線（矢印のあしらい）は「い」まで書き終えた最後に左→右で描く */
+      /* たまらない：ブラーが晴れきる少し前から、左の画順になぞり書き */
       const wp = WRITE_PACES[pace] ?? WRITE_PACES[2];
       const letters = lower.filter((i) => i.w <= 150);
       const flourish = lower.filter((i) => i.w > 150);
-      let delay = 1550;
+      let delay = BASE + 950;
+      const startTimes: number[] = [];
       letters.forEach((it) => {
+        startTimes.push(delay);
         const dur = traceReveal(svg, it.p, delay, wp);
         it.p.style.opacity = "1";
         delay += dur * wp.overlap + wp.gap;
       });
+      const lettersEnd = delay;
+
+      /* 曲線のあしらいは「い」を書き始めるのと同時にスタート */
+      const iStart = startTimes.length >= 2 ? startTimes[startTimes.length - 2] : lettersEnd;
+      let flourishEnd = iStart;
       flourish.forEach((it) => {
         const dur = Math.min(Math.max(it.w * wp.rate * 2.4, wp.min * 2.2), wp.max);
-        wipeLeftToRight(it.p, delay + 120, dur); /* ひと呼吸おいてから */
-        delay += 120 + dur * wp.overlap + wp.gap;
+        wipeLeftToRight(it.p, iStart, dur);
+        flourishEnd = Math.max(flourishEnd, iStart + dur);
       });
+
+      /* 完了予定を通知（ぼーっとしてみるボタンの出現に使う） */
+      const total = Math.max(BASE + 1450, lettersEnd, flourishEnd);
+      onScheduled?.(total + 100);
     })();
     return () => {
       aborted = true;

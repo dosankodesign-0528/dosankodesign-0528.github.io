@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   motion,
@@ -131,6 +131,9 @@ export default function TopMock({
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
+  /* 手書きアニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
+  const [buttonIn, setButtonIn] = useState(!write);
+
   /* キービジュアル（文字＋ボタン）は画面中央に固定したまま、
      スクロール量に応じてその場で変化しながら消え、
      下からコンテンツがすべり込んで交代する */
@@ -216,7 +219,12 @@ export default function TopMock({
               }}
             >
               {write ? (
-                <HeroWriting pace={writePace} />
+                <HeroWriting
+                  pace={writePace}
+                  onScheduled={(totalMs) => {
+                    window.setTimeout(() => setButtonIn(true), totalMs);
+                  }}
+                />
               ) : (
                 <img
                   src="/img/hero-message.svg"
@@ -225,12 +233,19 @@ export default function TopMock({
                 />
               )}
               <motion.div style={{ y: buttonY }}>
-                <Link
-                  href="/experience"
-                  className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+                {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
+                <motion.div
+                  initial={write ? { opacity: 0, filter: "blur(10px)", y: 10 } : false}
+                  animate={buttonIn ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
+                  transition={{ duration: 1.0, ease: [0.33, 1, 0.68, 1] }}
                 >
-                  ぼーっとしてみる
-                </Link>
+                  <Link
+                    href="/experience"
+                    className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+                  >
+                    ぼーっとしてみる
+                  </Link>
+                </motion.div>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -242,7 +257,12 @@ export default function TopMock({
             className="pointer-events-auto"
             initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
             animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-            transition={{ duration: ip.headerDur, ease: ip.ease }}
+            transition={{
+              duration: ip.headerDur,
+              ease: ip.ease,
+              /* 手書き演出ありの時は、まず景色を見せてから */
+              delay: write ? 1.5 : 0,
+            }}
           >
             <MockNav theme="light" />
           </motion.div>
