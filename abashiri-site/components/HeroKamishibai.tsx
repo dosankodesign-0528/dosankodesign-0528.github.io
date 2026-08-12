@@ -86,45 +86,36 @@ export default function HeroKamishibai({
       bar.setAttribute("stroke-linecap", "round");
       bar.style.opacity = "0";
       svg.appendChild(bar);
-      let barW = strokeW;
-      let barA = 0;
+      /* 最初から最後まで「〜」の曲線のまま伸縮する（直線にしない・太さも一定）。
+         幅が小さい時だけ波も少し浅くして、にゅっと生えてくる感じに */
+      let barW = finalW * 0.5;
       const redraw = () => {
+        /* 長さに合わせて波の深さも育てて、伸びても「〜」の曲線に見えるように */
+        const ratio = Math.max(0.4, barW / finalW);
+        const a = amp * Math.pow(ratio, 0.75);
         bar.setAttribute(
           "d",
-          `M ${sx} ${cy} C ${sx + barW * 0.3} ${cy - barA} ${sx + barW * 0.7} ${cy + barA} ${sx + barW} ${cy}`
+          `M ${sx} ${cy} C ${sx + barW * 0.3} ${cy - a} ${sx + barW * 0.7} ${cy + a} ${sx + barW} ${cy}`
         );
       };
       redraw();
 
-      /* 文字グループの出現（バリエーションで質感を変える） */
+      /* 文字グループの出現：バウンスさせず、ふわっとブラーが晴れるだけ */
       const showChar = (strokes: typeof naChar, delay: number) => {
         strokes.forEach((it) => {
           const p = it.p;
-          p.style.transformBox = "fill-box";
-          p.style.transformOrigin = "center";
-          const frames =
-            kv.letterStyle === "pop"
-              ? [
-                  { opacity: 0, transform: "scale(0.4)" },
-                  { opacity: 1, transform: "scale(1.18)", offset: 0.6 },
-                  { opacity: 1, transform: "scale(1)" },
-                ]
-              : kv.letterStyle === "drop"
-                ? [
-                    { opacity: 0, transform: "translateY(-14px)" },
-                    { opacity: 1, transform: "translateY(2px)", offset: 0.7 },
-                    { opacity: 1, transform: "translateY(0)" },
-                  ]
-                : [
-                    { opacity: 0, filter: "blur(5px)" },
-                    { opacity: 1, filter: "blur(0px)" },
-                  ];
-          p.animate(frames, {
-            duration: kv.letterStyle === "fade" ? 420 : 330,
-            delay,
-            fill: "forwards",
-            easing: "cubic-bezier(0.34, 1.4, 0.64, 1)",
-          });
+          p.animate(
+            [
+              { opacity: 0, filter: "blur(5px)" },
+              { opacity: 1, filter: "blur(0px)" },
+            ],
+            {
+              duration: kv.letterDur,
+              delay,
+              fill: "forwards",
+              easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+            }
+          );
           p.style.opacity = "0";
         });
       };
@@ -151,9 +142,14 @@ export default function HeroKamishibai({
       await wait(430);
       if (aborted) return;
 
-      /* 3. 伸ばし棒がビヨーンと伸びる */
+      /* 3. 伸ばし棒が曲線のままビヨーンと伸びる（にゅっと生えて → 伸び切る） */
+      bar.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: 160,
+        fill: "forwards",
+        easing: "ease-out",
+      });
       bar.style.opacity = "1";
-      await animate(strokeW, longW, {
+      await animate(finalW * 0.5, longW, {
         duration: kv.growDur / 1000,
         ease: kv.growEase,
         onUpdate: (v) => {
@@ -164,30 +160,37 @@ export default function HeroKamishibai({
       await wait(kv.hold);
       if (aborted) return;
 
-      /* 4. バネで縮んで「〜」に収まる */
-      const spring = { type: "spring" as const, stiffness: kv.stiffness, damping: kv.damping };
-      await Promise.all([
-        animate(longW, finalW, {
-          ...spring,
-          onUpdate: (v) => {
-            barW = v;
-            redraw();
-          },
-        }),
-        animate(0, amp, {
-          ...spring,
-          onUpdate: (v) => {
-            barA = v;
-            redraw();
-          },
-        }),
-      ]);
+      /* 4. 「〜」の長さに戻る（弾むかどうかはパターン次第。曲線と太さは終始そのまま） */
+      const settleOpts =
+        kv.settle.type === "spring"
+          ? {
+              type: "spring" as const,
+              stiffness: kv.settle.stiffness,
+              damping: kv.settle.damping,
+            }
+          : { duration: kv.settle.dur / 1000, ease: kv.settle.ease };
+      await animate(longW, finalW, {
+        ...settleOpts,
+        onUpdate: (v: number) => {
+          barW = v;
+          redraw();
+        },
+      });
       if (aborted) return;
 
-      /* 収まった瞬間、本物の「〜」に差し替え */
+      /* 本物の「〜」の字形へ、ゆっくりクロスフェード（急な差し替えにしない） */
       if (tilde) {
-        tilde.p.style.opacity = "1";
-        bar.style.opacity = "0";
+        tilde.p.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: 420,
+          fill: "forwards",
+          easing: "ease-in-out",
+        });
+        tilde.p.style.opacity = "0";
+        bar.animate([{ opacity: 1 }, { opacity: 0 }], {
+          duration: 420,
+          fill: "forwards",
+          easing: "ease-in-out",
+        });
       }
 
       /* 5. んにもない が順に出る */
