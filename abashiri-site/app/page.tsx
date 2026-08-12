@@ -6,9 +6,9 @@ export default function Home() {
   return (
     <>
       <Stage illustration="tamannee" illustEntrance>
-        {/* 決定版候補：吹き出しブラー→な なぞり書き→伸ばし棒ビヨーン→んにもない なぞり書き
-            →たまらない まとめてブラー→ボタン→イラスト（開始0.5秒後） */}
-        <TopMock intro={2} combo writePace={2} />
+        {/* 決定版：吹き出し→な〜んにもない→たまらない を順にブラー
+            →ボタン→イラスト（ブラー後にクルンと一回転） */}
+        <TopMock intro={2} blurSeq />
       </Stage>
       {/* 網走の環境音：初回はON/OFF確認、以降は左下のスピーカーで切替 */}
       <SoundUi askConsent />

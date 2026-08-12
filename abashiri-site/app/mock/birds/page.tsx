@@ -2,15 +2,16 @@
 
 /*
  * カモメの位置・見た目の調整パネル
- * - 本物のTOPページを表示しながら、カモメごとに位置/サイズ/角度/線幅/速さをいじれる
- * - 「保存して再生」で値をこのブラウザに保存してリロード
- * - 決まった値は Claude に伝えれば本番のデフォルトに反映
+ * - カモメ本体を直接ドラッグして好きな場所へ動かせる（数値も連動）
+ * - パネルはドラッグで移動・折りたたみ可能
+ * - 「保存」でこのブラウザに記憶、「▶ 再生し直す」でリロード再生
  */
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
 import TopMock from "@/components/TopMock";
 import SoundUi from "@/components/SoundUi";
+import TunePanel from "@/components/TunePanel";
 import {
   BIRDS_STORAGE_KEY,
   DEFAULT_BIRDS,
@@ -26,7 +27,6 @@ const LABELS: Record<keyof BirdsConfig, string> = {
   promo2: "プロモ内・左の小さいカモメ",
 };
 
-/* 位置の単位（空=px / プロモ=%） */
 const UNITS: Record<keyof BirdsConfig, string> = {
   skyTopLeft: "px",
   skyRight: "px（右端から）",
@@ -38,8 +38,8 @@ function Row({
   label,
   value,
   step = 1,
-  min = -200,
-  max = 1000,
+  min = -400,
+  max = 2000,
   unit = "",
   onChange,
 }: {
@@ -73,7 +73,6 @@ function Row({
 export default function BirdsTunePage() {
   const [loaded, setLoaded] = useState(false);
   const [birds, setBirds] = useState<BirdsConfig>(DEFAULT_BIRDS);
-  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     try {
@@ -86,8 +85,9 @@ export default function BirdsTunePage() {
   const upd = (key: keyof BirdsConfig, patch: Partial<BirdTune>) =>
     setBirds((b) => ({ ...b, [key]: { ...b[key], ...patch } }));
 
-  const saveAndReplay = () => {
-    localStorage.setItem(BIRDS_STORAGE_KEY, JSON.stringify(birds));
+  const save = () => localStorage.setItem(BIRDS_STORAGE_KEY, JSON.stringify(birds));
+  const replay = () => {
+    save();
     location.reload();
   };
   const reset = () => {
@@ -98,73 +98,69 @@ export default function BirdsTunePage() {
   return (
     <>
       {loaded && (
-        <Stage illustration="tamannee" illustEntrance birds={birds}>
-          <TopMock intro={2} combo writePace={2} birds={birds} />
+        <Stage
+          illustration="tamannee"
+          illustEntrance
+          birds={birds}
+          birdsEditable
+          onBirdMove={(key, patch) => upd(key, patch)}
+        >
+          <TopMock
+            intro={2}
+            blurSeq
+            birds={birds}
+            birdsEditable
+            onBirdMove={(key, patch) => upd(key, patch)}
+          />
         </Stage>
       )}
       <SoundUi />
 
-      {/* 調整パネル */}
-      <div className="fixed right-3 top-3 z-[70] w-[300px]">
-        <div className="rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur">
-          <div className="mb-1 flex items-center justify-between">
-            <p className="text-[14px] font-black text-[#0070c9]">🕊 カモメ調整</p>
-            <button
-              onClick={() => setOpen((o) => !o)}
-              className="cursor-pointer rounded-full bg-[#e6f3ff] px-2 py-0.5 text-[11px] font-bold text-[#0070c9]"
-            >
-              {open ? "たたむ" : "ひらく"}
-            </button>
-          </div>
-
-          {open && (
-            <>
-              <div className="max-h-[70vh] overflow-y-auto pr-1">
-                {(Object.keys(LABELS) as (keyof BirdsConfig)[]).map((key, i) => (
-                  <details key={key} open={i === 1} className="border-b border-[#e0eefb] py-1">
-                    <summary className="cursor-pointer select-none py-1 text-[13px] font-black text-[#0070c9]">
-                      {LABELS[key]}
-                    </summary>
-                    <div className="pb-1">
-                      <Row label="位置X" value={birds[key].x} unit={UNITS[key]} onChange={(v) => upd(key, { x: v })} />
-                      <Row label="位置Y" value={birds[key].y} unit={UNITS[key].startsWith("%") ? "%" : "px"} onChange={(v) => upd(key, { y: v })} />
-                      <Row label="大きさ（横幅）" value={birds[key].w} min={16} max={400} unit="px" onChange={(v) => upd(key, { w: v })} />
-                      <Row label="傾き" value={birds[key].rotate} min={-90} max={90} unit="度" onChange={(v) => upd(key, { rotate: v })} />
-                      <Row label="線の太さ" value={birds[key].stroke} step={0.5} min={1} max={14} unit="" onChange={(v) => upd(key, { stroke: v })} />
-                      <Row label="羽ばたき周期" value={birds[key].flap} step={0.05} min={0.2} max={2} unit="秒" onChange={(v) => upd(key, { flap: v })} />
-                      <Row label="ふわふわ周期" value={birds[key].drift} step={0.5} min={2} max={20} unit="秒" onChange={(v) => upd(key, { drift: v })} />
-                    </div>
-                  </details>
-                ))}
+      <TunePanel title="🕊 カモメ調整（本体をドラッグでも動かせます）">
+        <div className="max-h-[68vh] overflow-y-auto pr-1">
+          {(Object.keys(LABELS) as (keyof BirdsConfig)[]).map((key, i) => (
+            <details key={key} open={i === 1} className="border-b border-[#e0eefb] py-1">
+              <summary className="cursor-pointer select-none py-1 text-[13px] font-black text-[#0070c9]">
+                {LABELS[key]}
+              </summary>
+              <div className="pb-1">
+                <Row label="位置X" value={birds[key].x} unit={UNITS[key]} onChange={(v) => upd(key, { x: v })} />
+                <Row label="位置Y" value={birds[key].y} unit={UNITS[key].startsWith("%") ? "%" : "px"} onChange={(v) => upd(key, { y: v })} />
+                <Row label="大きさ（横幅）" value={birds[key].w} min={16} max={400} unit="px" onChange={(v) => upd(key, { w: v })} />
+                <Row label="傾き" value={birds[key].rotate} min={-90} max={90} unit="度" onChange={(v) => upd(key, { rotate: v })} />
+                <Row label="線の太さ" value={birds[key].stroke} step={0.5} min={1} max={14} onChange={(v) => upd(key, { stroke: v })} />
+                <Row label="羽ばたき周期" value={birds[key].flap} step={0.05} min={0.2} max={2} unit="秒" onChange={(v) => upd(key, { flap: v })} />
+                <Row label="ふわふわ周期" value={birds[key].drift} step={0.5} min={2} max={20} unit="秒" onChange={(v) => upd(key, { drift: v })} />
               </div>
-
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={saveAndReplay}
-                  className="flex-1 cursor-pointer rounded-full bg-[#0070c9] py-2 text-[13px] font-black text-white transition-transform hover:scale-105"
-                >
-                  ▶ 保存して再生
-                </button>
-                <button
-                  onClick={reset}
-                  className="cursor-pointer rounded-full bg-[#e6f3ff] px-3 py-2 text-[12px] font-bold text-[#0070c9]"
-                >
-                  初期値
-                </button>
-              </div>
-              <p className="mt-2 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
-                値はこのブラウザにだけ保存されます。決まったら数値をClaudeに伝えてください（本番に反映します）
-              </p>
-            </>
-          )}
+            </details>
+          ))}
         </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={replay}
+            className="flex-1 cursor-pointer rounded-full bg-[#0070c9] py-2 text-[13px] font-black text-white transition-transform hover:scale-105"
+          >
+            ▶ 保存して再生し直す
+          </button>
+          <button
+            onClick={reset}
+            className="cursor-pointer rounded-full bg-[#e6f3ff] px-3 py-2 text-[12px] font-bold text-[#0070c9]"
+          >
+            初期値
+          </button>
+        </div>
+        <p className="mt-2 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
+          カモメは画面上で直接ドラッグでも動かせます（数値に反映）。
+          決まったら数値をClaudeに伝えてください（本番に反映します）
+        </p>
         <Link
           href="/"
-          className="mt-2 inline-block rounded-full bg-white/95 px-4 py-1.5 text-[12px] font-black text-[#0070c9] shadow"
+          className="mt-2 inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
         >
           ← TOPへ
         </Link>
-      </div>
+      </TunePanel>
     </>
   );
 }

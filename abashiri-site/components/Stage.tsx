@@ -18,6 +18,10 @@ type StageProps = {
   timing?: HeroTiming;
   /** カモメの配置・見た目（birdConfig.ts） */
   birds?: BirdsConfig;
+  /** true: カモメをドラッグで動かせる（調整パネル用） */
+  birdsEditable?: boolean;
+  /** ドラッグでカモメが動いた時の通知（調整パネル用） */
+  onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
 };
 
 /**
@@ -30,11 +34,37 @@ export default function Stage({
   illustEntrance = false,
   timing = DEFAULT_HERO_TIMING,
   birds = DEFAULT_BIRDS,
+  birdsEditable = false,
+  onBirdMove,
 }: StageProps) {
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
   );
   const [illustIn, setIllustIn] = useState(!illustEntrance);
+  const [spin, setSpin] = useState(false);
+
+  /* 調整パネル用：カモメをドラッグで動かす */
+  const dragBird = (key: "skyTopLeft" | "skyRight") => (e: React.PointerEvent) => {
+    if (!birdsEditable || !fit || !onBirdMove) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const start = { px: e.clientX, py: e.clientY, x: birds[key].x, y: birds[key].y };
+    const move = (ev: PointerEvent) => {
+      const dx = (ev.clientX - start.px) / fit.scale;
+      const dy = (ev.clientY - start.py) / fit.scale;
+      onBirdMove(key, {
+        /* skyRight は右端からの距離なので左右反転 */
+        x: Math.round(key === "skyRight" ? start.x - dx : start.x + dx),
+        y: Math.round(start.y + dy),
+      });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
 
   /* 高さ基準でスケールし、横は画面幅いっぱいまでステージを広げる
      （モックデバイス側が可変幅で伸びる） */
@@ -79,7 +109,8 @@ export default function Stage({
       >
         {/* 空のカモメ（左上・右中）。位置や線幅は birdConfig で調整できる */}
         <div
-          className="absolute"
+          className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+          onPointerDown={dragBird("skyTopLeft")}
           style={{
             left: birds.skyTopLeft.x,
             top: birds.skyTopLeft.y,
@@ -96,7 +127,8 @@ export default function Stage({
           />
         </div>
         <div
-          className="absolute"
+          className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+          onPointerDown={dragBird("skyRight")}
           style={{
             right: birds.skyRight.x,
             top: birds.skyRight.y,
@@ -115,7 +147,8 @@ export default function Stage({
 
         {children}
 
-        {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面に置く */}
+        {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面。
+            ブラーで出たあと、一回だけクルンと一回転（軽いバウンスつき）して目立たせる */}
         <motion.div
           className="pointer-events-none absolute right-0 top-[600px] z-30 h-[401px] w-[366px] overflow-clip"
           initial={
@@ -128,7 +161,16 @@ export default function Stage({
             duration: timing.illust.duration / 1000,
             ease: [0.33, 1, 0.68, 1],
           }}
+          onAnimationComplete={() => {
+            if (illustEntrance && illustIn) setSpin(true);
+          }}
         >
+          <motion.div
+            className="relative h-full w-full"
+            style={{ transformPerspective: 700 }}
+            animate={spin ? { rotateY: 360 } : { rotateY: 0 }}
+            transition={{ duration: 1.05, ease: [0.3, 1.25, 0.45, 1] }}
+          >
           {illustration === "tamannee" ? (
             <>
               <img
@@ -160,32 +202,33 @@ export default function Stage({
               />
             </>
           )}
+          </motion.div>
         </motion.div>
 
-        {/* 右レール：ロゴ・SNS */}
-        <div className="absolute right-[68px] top-[69px] flex flex-col items-center gap-[63px]">
-          <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
-            <img src="/img/logo-abashiri.svg" alt="網走" className="h-[164px] w-[62px]" />
-          </Link>
-          <div className="flex flex-col gap-[14px]">
-            <a href="#" aria-label="Instagram" className="relative block size-[44px] transition-transform hover:scale-110">
-              <img src="/img/sns-ig-frame.svg" alt="" className="absolute inset-0 size-full" />
-              <img src="/img/sns-ig-circle.svg" alt="" className="absolute inset-[24.32%]" />
-              <img src="/img/sns-ig-dot.svg" alt="" className="absolute right-[17.3%] top-[17.3%] size-[12%]" />
-            </a>
-            <a href="#" aria-label="X" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
-              <img src="/img/sns-x.svg" alt="" className="w-[40px]" />
-            </a>
-            <a href="#" aria-label="YouTube" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
-              <img src="/img/sns-yt.svg" alt="" className="w-[44px]" />
-            </a>
+        {/* 右レール：ロゴ・SNS・縦書き「観光サイト」（デザインカンプ 2026-08-12 修正版） */}
+        <div className="absolute right-[36px] top-[85px] flex items-start gap-[12px]">
+          <div className="flex flex-col items-center gap-[63px]">
+            <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
+              <img src="/img/logo-abashiri.svg" alt="網走" className="h-[159px] w-[75px]" />
+            </Link>
+            <div className="flex flex-col gap-[18px] opacity-70">
+              <a href="#" aria-label="Instagram" className="relative block size-[44px] transition-transform hover:scale-110">
+                <img src="/img/sns-ig-frame.svg" alt="" className="absolute inset-0 size-full" />
+                <img src="/img/sns-ig-circle.svg" alt="" className="absolute inset-[24.32%]" />
+                <img src="/img/sns-ig-dot.svg" alt="" className="absolute right-[17.3%] top-[17.3%] size-[12%]" />
+              </a>
+              <a href="#" aria-label="X" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
+                <img src="/img/sns-x.svg" alt="" className="w-[40px]" />
+              </a>
+              <a href="#" aria-label="YouTube" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
+                <img src="/img/sns-yt.svg" alt="" className="w-[44px]" />
+              </a>
+            </div>
           </div>
+          <p className="text-center text-[18px] font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
+            観光サイト
+          </p>
         </div>
-
-        {/* 縦書き「観光サイト」 */}
-        <p className="absolute right-[36px] top-[69px] text-center text-[16px] font-black leading-[1.3] tracking-[2px] text-white [writing-mode:vertical-rl]">
-          観光サイト
-        </p>
       </div>
     </div>
   );

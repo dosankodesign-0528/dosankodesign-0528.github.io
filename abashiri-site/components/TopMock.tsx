@@ -127,6 +127,7 @@ import { KV_PATTERNS } from "./kvPatterns";
 import HeroWriting from "./HeroWriting";
 import HeroKamishibai from "./HeroKamishibai";
 import HeroCombo from "./HeroCombo";
+import HeroBlurSeq from "./HeroBlurSeq";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 
@@ -140,8 +141,11 @@ export default function TopMock({
   writePace = 2,
   kami = 0,
   combo = false,
+  blurSeq = false,
   timing = DEFAULT_HERO_TIMING,
   birds = DEFAULT_BIRDS,
+  birdsEditable = false,
+  onBirdMove,
 }: {
   intro?: number;
   kv?: number;
@@ -151,19 +155,25 @@ export default function TopMock({
   writePace?: number;
   /** 1〜3: 紙芝居パターン（伸ばし棒ビヨーン。writeより優先） */
   kami?: number;
-  /** true: 決定版候補（な〜んにもない=なぞり書き+ビヨーン／たまらない=ブラー） */
+  /** true: なぞり書き+ビヨーン版（旧候補） */
   combo?: boolean;
+  /** true: 決定版（吹き出し→な〜んにもない→たまらない を順にブラー） */
+  blurSeq?: boolean;
   /** 登場演出のタイミング設定（heroTiming.ts） */
   timing?: HeroTiming;
   /** カモメの配置・見た目（birdConfig.ts） */
   birds?: BirdsConfig;
+  /** true: カモメをドラッグで動かせる（調整パネル用） */
+  birdsEditable?: boolean;
+  /** ドラッグでカモメが動いた時の通知（調整パネル用） */
+  onBirdMove?: (key: "promo1" | "promo2", patch: { x: number; y: number }) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
-  /* 手書き/紙芝居アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
-  const animated = Boolean(write || kami || combo);
+  /* アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
+  const animated = Boolean(write || kami || combo || blurSeq);
   const [buttonIn, setButtonIn] = useState(!animated);
 
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
@@ -215,6 +225,30 @@ export default function TopMock({
 
   const viewport = { root: scrollerRef, once: true, amount: 0.2 } as const;
 
+  /* 調整パネル用：プロモ内カモメをドラッグで動かす（%座標） */
+  const dragPromoBird =
+    (key: "promo1" | "promo2") => (e: React.PointerEvent) => {
+      if (!birdsEditable || !onBirdMove) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const parent = (e.currentTarget as HTMLElement).parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
+      const start = { px: e.clientX, py: e.clientY, x: birds[key].x, y: birds[key].y };
+      const move = (ev: PointerEvent) => {
+        onBirdMove(key, {
+          x: Math.round((start.x + ((ev.clientX - start.px) / rect.width) * 100) * 10) / 10,
+          y: Math.round((start.y + ((ev.clientY - start.py) / rect.height) * 100) * 10) / 10,
+        });
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    };
+
   /* ===== カード列：縦スクロールで来たら、No.4まで横に流れてから縦に戻る ===== */
   const rowsRef = useRef<(HTMLDivElement | null)[]>([]);
   const registerRow = useCallback((i: number, el: HTMLDivElement | null) => {
@@ -242,6 +276,8 @@ export default function TopMock({
       if (Math.abs(diff) > 0.5) {
         activeRow.scrollLeft = cur + diff * 0.13;
         raf = requestAnimationFrame(tick);
+      } else {
+        activeRow.scrollLeft = target; /* 終端で正確に止める */
       }
     };
     const kick = () => {
@@ -277,8 +313,10 @@ export default function TopMock({
       const max = row.scrollWidth - row.clientWidth;
       if (max <= 0) return;
       const down = e.deltaY > 0;
-      const canGo =
-        (down && row.scrollLeft < max - 1) || (!down && row.scrollLeft > 1);
+      /* 進める余地は「目標値」で判定する。
+         端まで送り済みなら（慣性の追いつき待ちでも）すぐ縦スクロールへ解放 */
+      const pos = activeRow === row ? target : row.scrollLeft;
+      const canGo = (down && pos < max - 1) || (!down && pos > 1);
       if (!canGo) {
         activeRow = null;
         return;
@@ -288,7 +326,9 @@ export default function TopMock({
       if (activeRow !== row) {
         activeRow = row;
         target = row.scrollLeft;
-        engagedAt = performance.now();
+        /* すでに中央付近にいる時（戻ってきた時など）はゆとり待ちをスキップ */
+        engagedAt =
+          Math.abs(dist) < scRect.height * 0.05 ? 0 : performance.now();
       }
 
       /* 1) 中央へじわっと吸着 */
@@ -358,7 +398,9 @@ export default function TopMock({
                 pointerEvents: heroPointer,
               }}
             >
-              {combo ? (
+              {blurSeq ? (
+                <HeroBlurSeq timing={timing} onScheduled={handleScheduled} />
+              ) : combo ? (
                 <HeroCombo
                   pace={writePace}
                   timing={timing}
@@ -489,7 +531,14 @@ export default function TopMock({
                       さっそく体験する
                     </span>
                     <div
-                      className="absolute"
+                      className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+                      onPointerDown={dragPromoBird("promo1")}
+                      onClickCapture={(e) => {
+                        if (birdsEditable) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
                       style={{
                         left: `${birds.promo1.x}%`,
                         top: `${birds.promo1.y}%`,
@@ -506,7 +555,14 @@ export default function TopMock({
                       />
                     </div>
                     <div
-                      className="absolute"
+                      className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+                      onPointerDown={dragPromoBird("promo2")}
+                      onClickCapture={(e) => {
+                        if (birdsEditable) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
                       style={{
                         left: `${birds.promo2.x}%`,
                         top: `${birds.promo2.y}%`,
