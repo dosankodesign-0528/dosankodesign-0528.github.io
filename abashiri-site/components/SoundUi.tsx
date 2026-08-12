@@ -10,6 +10,7 @@
  * - ぼーっと体験の動画再生中は環境音を自動で止め、動画が止まったら復帰
  */
 import { useEffect, useRef, useState } from "react";
+import { markConsentDone } from "./consentGate";
 
 const KEY = "abashiri-bgm";
 export const VIDEO_AUDIO_EVENT = "abashiri:video-audio";
@@ -96,7 +97,12 @@ export default function SoundUi({
     try {
       saved = sessionStorage.getItem(KEY);
     } catch {}
-    if (askConsent && (alwaysAsk || saved === null)) setShowDialog(true);
+    if (askConsent && (alwaysAsk || saved === null)) {
+      setShowDialog(true);
+    } else {
+      /* ダイアログを出さない時は、すぐアニメーション開始してよい */
+      markConsentDone();
+    }
     if (saved === "on") {
       intentRef.current = true;
       play();
@@ -135,6 +141,8 @@ export default function SoundUi({
     saveIntent(next);
     if (next) play();
     else audioRef.current?.pause();
+    /* ON/OFFを選んだらアニメーション開始の合図を出す */
+    markConsentDone();
   };
 
   /* ボタンは「今鳴っているか」で切り替える：
@@ -157,7 +165,7 @@ export default function SoundUi({
 
       {/* 初回のON/OFF確認（白カードのモーダル） */}
       {showDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b3c69]/25 backdrop-blur-[3px]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b3c69]/30 backdrop-blur-[18px]">
           <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-[28px] bg-white/95 p-8 text-center shadow-2xl">
             <p className="mb-6 text-[15px] font-bold leading-relaxed text-[#1e1e1e]">
               網走の環境音を楽しむことができます。

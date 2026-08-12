@@ -130,6 +130,7 @@ import HeroCombo from "./HeroCombo";
 import HeroBlurSeq from "./HeroBlurSeq";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
+import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
 export const ILLUST_IN_EVENT = "abashiri:illust-in";
@@ -146,6 +147,7 @@ export default function TopMock({
   birds = DEFAULT_BIRDS,
   birdsEditable = false,
   onBirdMove,
+  waitConsent = false,
 }: {
   intro?: number;
   kv?: number;
@@ -167,6 +169,8 @@ export default function TopMock({
   birdsEditable?: boolean;
   /** ドラッグでカモメが動いた時の通知（調整パネル用） */
   onBirdMove?: (key: "promo1" | "promo2", patch: { x: number; y: number }) => void;
+  /** true: 環境音のON/OFF確認が済むまで登場演出を待つ */
+  waitConsent?: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -175,6 +179,19 @@ export default function TopMock({
   /* アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
   const animated = Boolean(write || kami || combo || blurSeq);
   const [buttonIn, setButtonIn] = useState(!animated);
+
+  /* 環境音のON/OFF確認が済んでからヘッダー等の登場演出を始める */
+  const [go, setGo] = useState(!waitConsent);
+  useEffect(() => {
+    if (!waitConsent) return;
+    let alive = true;
+    waitForConsent().then(() => {
+      if (alive) setGo(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [waitConsent]);
 
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
   const handleScheduled = (writingEnd: number) => {
@@ -275,22 +292,42 @@ export default function TopMock({
     };
     let lock: Lock | null = null;
     let raf = 0;
+    /* 縦スクロールも慣性化：目標値へなめらかに追いかける */
+    let targetY = sc.scrollTop;
 
     const tick = () => {
       raf = 0;
-      if (!lock) return;
-      const cur = lock.row.scrollLeft;
-      const diff = lock.target - cur;
-      if (Math.abs(diff) > 0.5) {
-        lock.row.scrollLeft = cur + diff * 0.13;
-        raf = requestAnimationFrame(tick);
-      } else {
-        lock.row.scrollLeft = lock.target; /* 終端で正確に止める */
+      let busy = false;
+      /* 縦の慣性 */
+      const dy = targetY - sc.scrollTop;
+      if (Math.abs(dy) > 0.5) {
+        sc.scrollTop += dy * 0.12;
+        busy = true;
+      } else if (dy !== 0) {
+        sc.scrollTop = targetY;
       }
+      /* カルーセルの横の慣性 */
+      if (lock) {
+        const cur = lock.row.scrollLeft;
+        const diff = lock.target - cur;
+        if (Math.abs(diff) > 0.5) {
+          lock.row.scrollLeft = cur + diff * 0.13;
+          busy = true;
+        } else {
+          lock.row.scrollLeft = lock.target; /* 終端で正確に止める */
+        }
+      }
+      if (busy) raf = requestAnimationFrame(tick);
     };
     const kick = () => {
       if (!raf) raf = requestAnimationFrame(tick);
     };
+
+    /* アンカージャンプなど外部からのスクロールに目標値を同期 */
+    const onScroll = () => {
+      if (!raf) targetY = sc.scrollTop;
+    };
+    sc.addEventListener("scroll", onScroll, { passive: true });
 
     const onWheel = (e: WheelEvent) => {
       /* トラックパッドの横ジェスチャはネイティブの横スクロールに任せる */
@@ -316,9 +353,15 @@ export default function TopMock({
         }
       }
 
-      /* 帯の外に出たらロック解除。別の列に来たら新規ロック */
+      /* 帯の外に出たらロック解除して、縦は慣性スクロール */
       if (!row) {
         lock = null;
+        e.preventDefault();
+        targetY = Math.max(
+          0,
+          Math.min(sc.scrollHeight - sc.clientHeight, targetY + e.deltaY)
+        );
+        kick();
         return;
       }
       if (!lock || lock.row !== row) {
@@ -336,16 +379,26 @@ export default function TopMock({
       if (max <= 0) return;
       const down = e.deltaY > 0;
 
-      /* 完了方向へのさらなる入力は素通し＝縦スクロールに戻る */
-      if (lock.done === "fwd" && down) return;
-      if (lock.done === "back" && !down) return;
+      /* 完了方向へのさらなる入力は縦の慣性スクロールへ */
+      if ((lock.done === "fwd" && down) || (lock.done === "back" && !down)) {
+        e.preventDefault();
+        targetY = Math.max(
+          0,
+          Math.min(sc.scrollHeight - sc.clientHeight, targetY + e.deltaY)
+        );
+        kick();
+        return;
+      }
       /* 逆方向の入力が来たら完了状態を解除（巻き戻しできる） */
       if (lock.done) lock.done = false;
 
       e.preventDefault();
 
-      /* 1) 中央へじわっと吸着 */
-      if (Math.abs(dist) > 3) sc.scrollTop += (dist / scale) * 0.3;
+      /* 1) 中央へじわっと吸着（縦の目標値ごと動かす） */
+      if (Math.abs(dist) > 3) {
+        targetY += (dist / scale) * 0.3;
+        kick();
+      }
 
       /* 2) 吸着が済んで少し間が空いてから 3) 横送り */
       const settled =
@@ -362,6 +415,7 @@ export default function TopMock({
     sc.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       sc.removeEventListener("wheel", onWheel);
+      sc.removeEventListener("scroll", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -415,7 +469,11 @@ export default function TopMock({
               }}
             >
               {blurSeq ? (
-                <HeroBlurSeq timing={timing} onScheduled={handleScheduled} />
+                <HeroBlurSeq
+                  timing={timing}
+                  gate={waitConsent}
+                  onScheduled={handleScheduled}
+                />
               ) : combo ? (
                 <HeroCombo
                   pace={writePace}
@@ -473,7 +531,7 @@ export default function TopMock({
           <motion.div
             className="pointer-events-auto"
             initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
-            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            animate={go ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
             transition={{
               duration: ip.headerDur,
               ease: ip.ease,

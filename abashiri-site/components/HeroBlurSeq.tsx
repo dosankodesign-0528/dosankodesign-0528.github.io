@@ -13,12 +13,16 @@
 import { useEffect, useRef } from "react";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { collect } from "./writingCore";
+import { waitForConsent } from "./consentGate";
 
 export default function HeroBlurSeq({
   timing = DEFAULT_HERO_TIMING,
+  gate = false,
   onScheduled,
 }: {
   timing?: HeroTiming;
+  /** true: 環境音のON/OFF確認が済むまで開始を待つ */
+  gate?: boolean;
   /** 全体の完了予定時刻(ms)を通知（ボタン・イラスト出現の起点） */
   onScheduled?: (endMs: number) => void;
 }) {
@@ -39,6 +43,13 @@ export default function HeroBlurSeq({
       const { bubble, rest } = collect(svg);
       const upper = rest.filter((i) => i.midY < 205); // な〜んにもない
       const lower = rest.filter((i) => i.midY >= 205); // たまらない＋あしらい
+
+      /* 先に全部隠しておき、ON/OFFの選択が済んでから始める */
+      [...(bubble ? [bubble] : []), ...rest.map((i) => i.p)].forEach(
+        (p) => (p.style.opacity = "0")
+      );
+      if (gate) await waitForConsent();
+      if (aborted) return;
 
       const blurIn = (
         paths: SVGPathElement[],
@@ -89,7 +100,7 @@ export default function HeroBlurSeq({
       aborted = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timing]);
+  }, [timing, gate]);
 
   return (
     <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />

@@ -168,7 +168,7 @@ export default function Stage({
           <div className="relative h-full w-full">
           {illustration === "tamannee" ? (
             <>
-              {/* 人物だけ、4秒に1回クルンと一回転（文字とキラキラは回さない） */}
+              {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.img
                 src="/img/illust-main.png"
                 alt=""
@@ -181,7 +181,7 @@ export default function Stage({
                         duration: 1.0,
                         ease: [0.3, 1.25, 0.45, 1],
                         repeat: Infinity,
-                        repeatDelay: 3,
+                        repeatDelay: 14,
                       }
                     : undefined
                 }
