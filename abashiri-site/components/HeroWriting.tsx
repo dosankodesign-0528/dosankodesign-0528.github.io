@@ -120,7 +120,7 @@ export default function HeroWriting({
         );
       }
 
-      /* な〜んにもない：ブラーが晴れて出現 */
+      /* な〜んにもない：ブラーがゆっくり晴れて出現 */
       upper.forEach((it) => {
         it.p.style.opacity = "0";
         it.p.animate(
@@ -129,28 +129,29 @@ export default function HeroWriting({
             { opacity: 1, filter: "blur(0px)" },
           ],
           {
-            duration: 900,
-            delay: 300,
+            duration: 1450,
+            delay: 350,
             fill: "forwards",
             easing: "cubic-bezier(0.33, 1, 0.68, 1)",
           }
         );
       });
 
-      /* たまらない＋あしらい：左から順になぞり書き */
+      /* たまらない：左から順になぞり書き。
+         幅広の曲線（矢印のあしらい）は「い」まで書き終えた最後に左→右で描く */
       const wp = WRITE_PACES[pace] ?? WRITE_PACES[2];
-      let delay = 1250;
-      lower.forEach((it) => {
-        if (it.w > 150) {
-          /* 幅広の曲線（矢印のあしらい）は左→右ワイプで描く */
-          const dur = Math.min(Math.max(it.w * wp.rate * 2.4, wp.min * 2.2), wp.max);
-          wipeLeftToRight(it.p, delay, dur);
-          delay += dur * wp.overlap + wp.gap;
-        } else {
-          const dur = traceReveal(svg, it.p, delay, wp);
-          it.p.style.opacity = "1";
-          delay += dur * wp.overlap + wp.gap;
-        }
+      const letters = lower.filter((i) => i.w <= 150);
+      const flourish = lower.filter((i) => i.w > 150);
+      let delay = 1550;
+      letters.forEach((it) => {
+        const dur = traceReveal(svg, it.p, delay, wp);
+        it.p.style.opacity = "1";
+        delay += dur * wp.overlap + wp.gap;
+      });
+      flourish.forEach((it) => {
+        const dur = Math.min(Math.max(it.w * wp.rate * 2.4, wp.min * 2.2), wp.max);
+        wipeLeftToRight(it.p, delay + 120, dur); /* ひと呼吸おいてから */
+        delay += 120 + dur * wp.overlap + wp.gap;
       });
     })();
     return () => {
