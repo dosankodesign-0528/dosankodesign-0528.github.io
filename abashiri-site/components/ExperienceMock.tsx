@@ -296,6 +296,7 @@ export default function ExperienceMock({
                   src="/video/ryuhyo.mp4"
                   poster="/img/ice.jpg"
                   className="h-full w-full object-cover"
+                  preload="auto"
                   loop
                   playsInline
                 />
@@ -306,7 +307,14 @@ export default function ExperienceMock({
               {/* 再生／一時停止 */}
               <button
                 onClick={() => {
-                  setPlaying((p) => !p);
+                  /* stateの反映を待たず、videoを直接叩いてラグをなくす */
+                  const v = videoRef.current;
+                  if (playing) {
+                    v?.pause();
+                  } else {
+                    v?.play().catch(() => setPlaying(false));
+                  }
+                  setPlaying(!playing);
                   pokeUi();
                 }}
                 aria-label={playing ? "一時停止" : "再生"}

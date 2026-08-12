@@ -1,0 +1,214 @@
+"use client";
+
+/*
+ * キービジュアル 紙芝居パターン
+ *
+ * 1. 吹き出しだけがブラーで出現
+ * 2. 「な」がぽんと出る
+ * 3. 伸ばし棒がビヨーンと長く伸びる（既存パスを引き延ばさず、
+ *    同じ太さの線を新規に描いて伸縮させるので潰れない）
+ * 4. バネで縮んで「〜」に収まる（収まった瞬間に本物の字形へ差し替え）
+ * 5. 「んにもない」が紙芝居っぽく順に出る
+ * 6. 「たまらない」は採用済みのなぞり書き＋あしらい
+ */
+import { useEffect, useRef } from "react";
+import { animate } from "framer-motion";
+import { WRITE_PACES } from "./writePaces";
+import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
+import { collect, groupIntoCharacters, writeTamaranai, SVG_NS } from "./writingCore";
+import { KAMI_PATTERNS } from "./kamiPatterns";
+
+/** な〜んにもない（〜を除く）の画数：な3・ん1・に3・も1・な4・い2 */
+const UPPER_STROKES = [3, 1, 3, 1, 4, 2];
+
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export default function HeroKamishibai({
+  variant = 1,
+  pace = 2,
+  timing = DEFAULT_HERO_TIMING,
+  onScheduled,
+}: {
+  variant?: number;
+  pace?: number;
+  timing?: HeroTiming;
+  /** 呼び出し時点からの残り時間(ms)で通知 */
+  onScheduled?: (writingEndMs: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let aborted = false;
+    const kv = KAMI_PATTERNS[variant] ?? KAMI_PATTERNS[1];
+
+    (async () => {
+      const res = await fetch("/img/hero-message.svg");
+      const text = await res.text();
+      if (aborted || !ref.current) return;
+      ref.current.innerHTML = text;
+      const svg = ref.current.querySelector("svg");
+      if (!svg) return;
+      svg.setAttribute("width", "471");
+      svg.setAttribute("height", "390");
+
+      const { bubble, rest } = collect(svg);
+      const upper = rest.filter((i) => i.midY < 205);
+      const lower = rest.filter((i) => i.midY >= 205);
+
+      /* 伸ばし棒（幅広で平たい）を分離 */
+      const tilde = upper.find((i) => i.w > 40 && i.h < 25);
+      const upperLetters = upper.filter((i) => i !== tilde);
+      const chars = groupIntoCharacters(upperLetters, UPPER_STROKES);
+      const naChar = chars[0] ?? [];
+      const restChars = chars.slice(1);
+
+      /* 初期状態：全部隠す（吹き出しから紙芝居で出していく） */
+      [...upper, ...lower].forEach((i) => (i.p.style.opacity = "0"));
+      if (bubble) bubble.style.opacity = "0";
+
+      /* 自前の伸ばし棒（線）を用意 */
+      const letterFill = naChar[0]?.p.getAttribute("fill") || "#0070C9";
+      const tb = tilde ?? { x: 130, top: 96, w: 55, h: 14, midY: 103 };
+      const sx = tb.x;
+      const cy = tb.top + tb.h / 2;
+      const finalW = tb.w;
+      const amp = Math.max(3.5, tb.h * 0.38);
+      const strokeW = Math.max(6, tb.h * 0.55);
+      const bubbleBox = bubble?.getBBox();
+      const longW = bubbleBox
+        ? Math.max(finalW * 2.2, bubbleBox.x + bubbleBox.width - 34 - sx)
+        : finalW * 3;
+
+      const bar = document.createElementNS(SVG_NS, "path");
+      bar.setAttribute("fill", "none");
+      bar.setAttribute("stroke", letterFill);
+      bar.setAttribute("stroke-width", String(strokeW));
+      bar.setAttribute("stroke-linecap", "round");
+      bar.style.opacity = "0";
+      svg.appendChild(bar);
+      let barW = strokeW;
+      let barA = 0;
+      const redraw = () => {
+        bar.setAttribute(
+          "d",
+          `M ${sx} ${cy} C ${sx + barW * 0.3} ${cy - barA} ${sx + barW * 0.7} ${cy + barA} ${sx + barW} ${cy}`
+        );
+      };
+      redraw();
+
+      /* 文字グループの出現（バリエーションで質感を変える） */
+      const showChar = (strokes: typeof naChar, delay: number) => {
+        strokes.forEach((it) => {
+          const p = it.p;
+          p.style.transformBox = "fill-box";
+          p.style.transformOrigin = "center";
+          const frames =
+            kv.letterStyle === "pop"
+              ? [
+                  { opacity: 0, transform: "scale(0.4)" },
+                  { opacity: 1, transform: "scale(1.18)", offset: 0.6 },
+                  { opacity: 1, transform: "scale(1)" },
+                ]
+              : kv.letterStyle === "drop"
+                ? [
+                    { opacity: 0, transform: "translateY(-14px)" },
+                    { opacity: 1, transform: "translateY(2px)", offset: 0.7 },
+                    { opacity: 1, transform: "translateY(0)" },
+                  ]
+                : [
+                    { opacity: 0, filter: "blur(5px)" },
+                    { opacity: 1, filter: "blur(0px)" },
+                  ];
+          p.animate(frames, {
+            duration: kv.letterStyle === "fade" ? 420 : 330,
+            delay,
+            fill: "forwards",
+            easing: "cubic-bezier(0.34, 1.4, 0.64, 1)",
+          });
+          p.style.opacity = "0";
+        });
+      };
+
+      /* ===== 紙芝居ここから ===== */
+      await wait(timing.start);
+      if (aborted) return;
+
+      /* 1. 吹き出しがブラーで出現 */
+      if (bubble) {
+        bubble.animate(
+          [
+            { opacity: 0, filter: "blur(16px)" },
+            { opacity: 1, filter: "blur(0px)" },
+          ],
+          { duration: 900, fill: "forwards", easing: "cubic-bezier(0.33,1,0.68,1)" }
+        );
+      }
+      await wait(750);
+      if (aborted) return;
+
+      /* 2. 「な」がぽんと出る */
+      showChar(naChar, 0);
+      await wait(430);
+      if (aborted) return;
+
+      /* 3. 伸ばし棒がビヨーンと伸びる */
+      bar.style.opacity = "1";
+      await animate(strokeW, longW, {
+        duration: kv.growDur / 1000,
+        ease: kv.growEase,
+        onUpdate: (v) => {
+          barW = v;
+          redraw();
+        },
+      });
+      await wait(kv.hold);
+      if (aborted) return;
+
+      /* 4. バネで縮んで「〜」に収まる */
+      const spring = { type: "spring" as const, stiffness: kv.stiffness, damping: kv.damping };
+      await Promise.all([
+        animate(longW, finalW, {
+          ...spring,
+          onUpdate: (v) => {
+            barW = v;
+            redraw();
+          },
+        }),
+        animate(0, amp, {
+          ...spring,
+          onUpdate: (v) => {
+            barA = v;
+            redraw();
+          },
+        }),
+      ]);
+      if (aborted) return;
+
+      /* 収まった瞬間、本物の「〜」に差し替え */
+      if (tilde) {
+        tilde.p.style.opacity = "1";
+        bar.style.opacity = "0";
+      }
+
+      /* 5. んにもない が順に出る */
+      restChars.forEach((strokes, i) => showChar(strokes, 150 + i * kv.letterStagger));
+      const lettersDone = 150 + restChars.length * kv.letterStagger + 420;
+      await wait(lettersDone);
+      if (aborted) return;
+
+      /* 6. たまらない（なぞり書き＋あしらい） */
+      const wp = WRITE_PACES[pace] ?? WRITE_PACES[2];
+      const writingEnd = writeTamaranai(svg, lower, 150, wp, timing.flourish.offset);
+      onScheduled?.(writingEnd);
+    })();
+
+    return () => {
+      aborted = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, pace, timing]);
+
+  return (
+    <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />
+  );
+}

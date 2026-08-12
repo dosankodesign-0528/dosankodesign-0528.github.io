@@ -113,6 +113,7 @@ function ViewMore() {
 import { INTRO_PATTERNS } from "./introPatterns";
 import { KV_PATTERNS } from "./kvPatterns";
 import HeroWriting from "./HeroWriting";
+import HeroKamishibai from "./HeroKamishibai";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -123,6 +124,7 @@ export default function TopMock({
   kv = 1,
   write = 0,
   writePace = 2,
+  kami = 0,
   timing = DEFAULT_HERO_TIMING,
 }: {
   intro?: number;
@@ -131,6 +133,8 @@ export default function TopMock({
   write?: number;
   /** 1〜3: 書くスピード（WRITE_PACES） */
   writePace?: number;
+  /** 1〜3: 紙芝居パターン（伸ばし棒ビヨーン。writeより優先） */
+  kami?: number;
   /** 登場演出のタイミング設定（heroTiming.ts） */
   timing?: HeroTiming;
 }) {
@@ -138,8 +142,19 @@ export default function TopMock({
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
-  /* 手書きアニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
-  const [buttonIn, setButtonIn] = useState(!write);
+  /* 手書き/紙芝居アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
+  const animated = Boolean(write || kami);
+  const [buttonIn, setButtonIn] = useState(!animated);
+
+  /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
+  const handleScheduled = (writingEnd: number) => {
+    const buttonAt = writingEnd + timing.button.gap;
+    const illustAt = buttonAt + timing.button.duration + timing.illust.gap;
+    window.setTimeout(() => setButtonIn(true), buttonAt);
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(ILLUST_IN_EVENT));
+    }, illustAt);
+  };
 
   /* キービジュアル（文字＋ボタン）は画面中央に固定したまま、
      スクロール量に応じてその場で変化しながら消え、
@@ -204,8 +219,8 @@ export default function TopMock({
           <motion.div
             className="flex h-full flex-col items-center pt-[120px]"
             initial={
-              write
-                ? { opacity: 1 } /* 手書きアニメ時は書く動き自体が登場演出 */
+              animated
+                ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
                 : {
                     opacity: 0,
                     filter: `blur(${ip.heroBlur}px)`,
@@ -226,20 +241,18 @@ export default function TopMock({
                 pointerEvents: heroPointer,
               }}
             >
-              {write ? (
+              {kami ? (
+                <HeroKamishibai
+                  variant={kami}
+                  pace={writePace}
+                  timing={timing}
+                  onScheduled={handleScheduled}
+                />
+              ) : write ? (
                 <HeroWriting
                   pace={writePace}
                   timing={timing}
-                  onScheduled={(writingEnd) => {
-                    /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す */
-                    const buttonAt = writingEnd + timing.button.gap;
-                    const illustAt =
-                      buttonAt + timing.button.duration + timing.illust.gap;
-                    window.setTimeout(() => setButtonIn(true), buttonAt);
-                    window.setTimeout(() => {
-                      window.dispatchEvent(new CustomEvent(ILLUST_IN_EVENT));
-                    }, illustAt);
-                  }}
+                  onScheduled={handleScheduled}
                 />
               ) : (
                 <img
@@ -252,7 +265,7 @@ export default function TopMock({
                 {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
                 <motion.div
                   initial={
-                    write
+                    animated
                       ? { opacity: 0, filter: `blur(${timing.button.blur}px)`, y: 10 }
                       : false
                   }
@@ -284,7 +297,7 @@ export default function TopMock({
               duration: ip.headerDur,
               ease: ip.ease,
               /* 手書き演出ありの時は、まず景色を見せてから */
-              delay: write ? (timing.start + timing.header.extraDelay) / 1000 : 0,
+              delay: animated ? (timing.start + timing.header.extraDelay) / 1000 : 0,
             }}
           >
             <MockNav theme="light" />
