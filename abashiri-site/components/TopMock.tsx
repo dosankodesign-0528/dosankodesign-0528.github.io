@@ -113,12 +113,17 @@ function ViewMore() {
 import { INTRO_PATTERNS } from "./introPatterns";
 import { KV_PATTERNS } from "./kvPatterns";
 import HeroWriting from "./HeroWriting";
+import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
+
+/** イラスト出現の合図（Stage が拾う） */
+export const ILLUST_IN_EVENT = "abashiri:illust-in";
 
 export default function TopMock({
   intro = 2,
   kv = 1,
   write = 0,
   writePace = 2,
+  timing = DEFAULT_HERO_TIMING,
 }: {
   intro?: number;
   kv?: number;
@@ -126,6 +131,8 @@ export default function TopMock({
   write?: number;
   /** 1〜3: 書くスピード（WRITE_PACES） */
   writePace?: number;
+  /** 登場演出のタイミング設定（heroTiming.ts） */
+  timing?: HeroTiming;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -222,8 +229,16 @@ export default function TopMock({
               {write ? (
                 <HeroWriting
                   pace={writePace}
-                  onScheduled={(totalMs) => {
-                    window.setTimeout(() => setButtonIn(true), totalMs);
+                  timing={timing}
+                  onScheduled={(writingEnd) => {
+                    /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す */
+                    const buttonAt = writingEnd + timing.button.gap;
+                    const illustAt =
+                      buttonAt + timing.button.duration + timing.illust.gap;
+                    window.setTimeout(() => setButtonIn(true), buttonAt);
+                    window.setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent(ILLUST_IN_EVENT));
+                    }, illustAt);
                   }}
                 />
               ) : (
@@ -236,9 +251,16 @@ export default function TopMock({
               <motion.div style={{ y: buttonY }}>
                 {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
                 <motion.div
-                  initial={write ? { opacity: 0, filter: "blur(10px)", y: 10 } : false}
+                  initial={
+                    write
+                      ? { opacity: 0, filter: `blur(${timing.button.blur}px)`, y: 10 }
+                      : false
+                  }
                   animate={buttonIn ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
-                  transition={{ duration: 1.0, ease: [0.33, 1, 0.68, 1] }}
+                  transition={{
+                    duration: timing.button.duration / 1000,
+                    ease: [0.33, 1, 0.68, 1],
+                  }}
                 >
                   <Link
                     href="/experience"
@@ -262,7 +284,7 @@ export default function TopMock({
               duration: ip.headerDur,
               ease: ip.ease,
               /* 手書き演出ありの時は、まず景色を見せてから */
-              delay: write ? 1.5 : 0,
+              delay: write ? (timing.start + timing.header.extraDelay) / 1000 : 0,
             }}
           >
             <MockNav theme="light" />

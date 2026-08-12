@@ -17,7 +17,7 @@ export default async function WriteMockPage({
   const p = WRITE_PACES[num] ?? WRITE_PACES[2];
   return (
     <>
-      <Stage illustration="tamannee">
+      <Stage illustration="tamannee" illustEntrance>
         <TopMock intro={2} write={1} writePace={num} />
       </Stage>
       <div className="fixed left-3 top-3 z-50 flex items-center gap-2">

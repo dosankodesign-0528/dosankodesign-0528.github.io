@@ -3,20 +3,32 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import Bird from "./Bird";
+import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 
 type StageProps = {
   children: React.ReactNode;
   /** tamannee: TOP系（ニヤリ顔＋たまんねーっ） / bo: 動画視聴中（横顔＋ぼーっ） */
   illustration?: "tamannee" | "bo";
+  /** true: イラスト（人物＋たまんねーっ＋キラキラ）を演出の一番最後にブラーで出す */
+  illustEntrance?: boolean;
+  /** イラスト出現の質感（heroTiming.illust） */
+  timing?: HeroTiming;
 };
 
 /**
  * デザインカンプの 1512x982 ステージを画面サイズに合わせて等倍縮小して中央表示する。
  * 空・カモメ・人物イラスト・右レール（ロゴ/SNS）は全ページ共通。
  */
-export default function Stage({ children, illustration = "tamannee" }: StageProps) {
+export default function Stage({
+  children,
+  illustration = "tamannee",
+  illustEntrance = false,
+  timing = DEFAULT_HERO_TIMING,
+}: StageProps) {
   const [scale, setScale] = useState<number | null>(null);
+  const [illustIn, setIllustIn] = useState(!illustEntrance);
 
   useEffect(() => {
     const fit = () =>
@@ -25,6 +37,18 @@ export default function Stage({ children, illustration = "tamannee" }: StageProp
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
+
+  /* TopMock からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
+  useEffect(() => {
+    if (!illustEntrance) return;
+    const show = () => setIllustIn(true);
+    window.addEventListener("abashiri:illust-in", show);
+    const fallback = window.setTimeout(show, 12000);
+    return () => {
+      window.removeEventListener("abashiri:illust-in", show);
+      window.clearTimeout(fallback);
+    };
+  }, [illustEntrance]);
 
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -47,8 +71,20 @@ export default function Stage({ children, illustration = "tamannee" }: StageProp
 
         {children}
 
-        {/* 人物イラスト */}
-        <div className="pointer-events-none absolute left-[1146px] top-[600px] h-[401px] w-[366px] overflow-clip">
+        {/* 人物イラスト（たまんねーっ・キラキラ込みで、演出の一番最後にブラー出現） */}
+        <motion.div
+          className="pointer-events-none absolute left-[1146px] top-[600px] h-[401px] w-[366px] overflow-clip"
+          initial={
+            illustEntrance
+              ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
+              : false
+          }
+          animate={illustIn ? { opacity: 1, filter: "blur(0px)" } : undefined}
+          transition={{
+            duration: timing.illust.duration / 1000,
+            ease: [0.33, 1, 0.68, 1],
+          }}
+        >
           {illustration === "tamannee" ? (
             <>
               <img
@@ -81,7 +117,7 @@ export default function Stage({ children, illustration = "tamannee" }: StageProp
               />
             </>
           )}
-        </div>
+        </motion.div>
 
         {/* 右レール：ロゴ・SNS */}
         <div className="absolute left-[1382px] top-[69px] flex flex-col items-center gap-[63px]">
