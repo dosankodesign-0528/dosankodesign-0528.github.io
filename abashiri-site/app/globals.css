@@ -103,33 +103,17 @@ body {
   will-change: transform;
 }
 
-/* ===== キラキラ（GIF風に場所を移りながらまたたく） ===== */
+/* ===== キラキラ（GIF風：2箇所をパキッと行き来するだけ。フェード無し） ===== */
 @keyframes sparkle-hop {
-  0%, 32.9% {
-    transform: translate(0, 0);
+  0%, 49.9% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
   }
-  33%, 65.9% {
-    transform: translate(22px, -36px);
-  }
-  66%, 100% {
-    transform: translate(-8px, 26px);
+  50%, 100% {
+    transform: translate(22px, -34px) scale(0.82) rotate(18deg);
   }
 }
 .sparkle-hop {
-  animation: sparkle-hop 2.7s linear infinite;
-}
-@keyframes sparkle-twinkle {
-  0%, 100% {
-    transform: scale(0.65) rotate(-10deg);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.12) rotate(8deg);
-    opacity: 1;
-  }
-}
-.sparkle-twinkle {
-  animation: sparkle-twinkle 0.9s ease-in-out infinite;
+  animation: sparkle-hop 1.5s linear infinite;
 }
 
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */

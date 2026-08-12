@@ -73,7 +73,8 @@ export default function HeroKamishibai({
       const cy = tb.top + tb.h / 2;
       const finalW = tb.w;
       const amp = Math.max(3.5, tb.h * 0.38);
-      const strokeW = Math.max(6, tb.h * 0.55);
+      /* 線幅はデザインカンプのストローク値そのまま（Figma: 5） */
+      const strokeW = 5;
       const bubbleBox = bubble?.getBBox();
       const longW = bubbleBox
         ? Math.max(finalW * 2.2, bubbleBox.x + bubbleBox.width - 34 - sx)
