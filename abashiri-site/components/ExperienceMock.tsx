@@ -195,7 +195,7 @@ export default function ExperienceMock({
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    <div className="absolute left-[calc(50%-71px)] top-[87px] h-[960px] w-[1230px] -translate-x-1/2 rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
+    <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
       <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-[#e6f3ff]">
         <AnimatePresence mode="wait">
           {step !== 3 ? (

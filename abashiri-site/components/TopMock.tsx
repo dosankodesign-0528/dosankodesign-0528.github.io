@@ -98,7 +98,7 @@ function CardRow({
   return (
     <div
       ref={(el) => registerRow(rowIndex, el)}
-      className="no-scrollbar -mx-[95px] -mt-[80px] w-[1170px] overflow-x-auto pt-[80px]"
+      className="no-scrollbar -mt-[80px] ml-[calc((980px-100cqw)/2)] w-[100cqw] overflow-x-auto pt-[80px]"
     >
       <div className="flex w-max gap-[80px] pl-[120px] pr-[60px]">
         {cards.map((c, i) => (
@@ -224,20 +224,24 @@ export default function TopMock({
       /* トラックパッドの横ジェスチャはネイティブの横スクロールに任せる */
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
       const scRect = sc.getBoundingClientRect();
+      const scale = scRect.height / sc.clientHeight;
+      const viewCenter = scRect.top + scRect.height / 2;
       for (const row of rowsRef.current) {
         if (!row) continue;
-        const r = row.getBoundingClientRect();
-        /* カード列がほぼ画面内に収まっている時だけ引き受ける */
-        const inView =
-          r.top >= scRect.top + scRect.height * 0.02 &&
-          r.bottom <= scRect.top + scRect.height * 0.99;
-        if (!inView) continue;
+        /* 見出し＋カルーセルのセット（section）が上下の中央に来たら横送り開始 */
+        const sec = row.closest("section");
+        if (!sec) continue;
+        const sr = sec.getBoundingClientRect();
+        const dist = sr.top + sr.height / 2 - viewCenter;
+        if (Math.abs(dist) > scRect.height * 0.14) continue;
         const max = row.scrollWidth - row.clientWidth;
         if (max <= 0) continue;
         const down = e.deltaY > 0;
         if ((down && row.scrollLeft < max - 1) || (!down && row.scrollLeft > 1)) {
           e.preventDefault();
           row.scrollLeft = Math.max(0, Math.min(max, row.scrollLeft + e.deltaY));
+          /* 横送りの間に、セットをじわっと上下中央へ寄せる */
+          if (Math.abs(dist) > 2) sc.scrollTop += (dist / scale) * 0.25;
         }
         break;
       }
@@ -247,10 +251,10 @@ export default function TopMock({
   }, []);
 
   return (
-    <div className="absolute left-[calc(50%-71px)] top-[87px] h-[960px] w-[1230px] -translate-x-1/2 rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
+    <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip rounded-[30px] bg-[#8ec6ea]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip rounded-[30px] bg-[#8ec6ea] [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。

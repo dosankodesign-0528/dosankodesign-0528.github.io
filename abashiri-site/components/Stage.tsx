@@ -27,15 +27,25 @@ export default function Stage({
   illustEntrance = false,
   timing = DEFAULT_HERO_TIMING,
 }: StageProps) {
-  const [scale, setScale] = useState<number | null>(null);
+  const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
+    null
+  );
   const [illustIn, setIllustIn] = useState(!illustEntrance);
 
+  /* 高さ基準でスケールし、横は画面幅いっぱいまでステージを広げる
+     （モックデバイス側が可変幅で伸びる） */
   useEffect(() => {
-    const fit = () =>
-      setScale(Math.min(window.innerWidth / 1512, window.innerHeight / 982));
-    fit();
-    window.addEventListener("resize", fit);
-    return () => window.removeEventListener("resize", fit);
+    const calc = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const scale = Math.min(vh / 982, vw / 1512);
+      const stageW = Math.max(1512, vw / scale);
+      const top = Math.max(0, (vh - 982 * scale) / 2);
+      setFit({ scale, stageW, top });
+    };
+    calc();
+    window.addEventListener("resize", calc);
+    return () => window.removeEventListener("resize", calc);
   }, []);
 
   /* TopMock からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
@@ -53,12 +63,14 @@ export default function Stage({
   return (
     <div className="fixed inset-0 overflow-hidden">
       <div
-        className="absolute left-1/2 top-1/2 overflow-hidden bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] transition-opacity duration-300"
+        className="absolute left-0 overflow-hidden bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] transition-opacity duration-300"
         style={{
-          width: 1512,
+          width: fit?.stageW ?? 1512,
           height: 982,
-          transform: `translate(-50%, -50%) scale(${scale ?? 1})`,
-          opacity: scale ? 1 : 0,
+          top: fit?.top ?? 0,
+          transform: `scale(${fit?.scale ?? 1})`,
+          transformOrigin: "top left",
+          opacity: fit ? 1 : 0,
         }}
       >
         {/* 空のカモメ（左上・右中） */}
@@ -73,7 +85,7 @@ export default function Stage({
 
         {/* 人物イラスト（たまんねーっ・キラキラ込みで、演出の一番最後にブラー出現） */}
         <motion.div
-          className="pointer-events-none absolute left-[1146px] top-[600px] h-[401px] w-[366px] overflow-clip"
+          className="pointer-events-none absolute right-0 top-[600px] h-[401px] w-[366px] overflow-clip"
           initial={
             illustEntrance
               ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
@@ -119,7 +131,7 @@ export default function Stage({
         </motion.div>
 
         {/* 右レール：ロゴ・SNS */}
-        <div className="absolute left-[1382px] top-[69px] flex flex-col items-center gap-[63px]">
+        <div className="absolute right-[68px] top-[69px] flex flex-col items-center gap-[63px]">
           <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
             <img src="/img/logo-abashiri.svg" alt="網走" className="h-[164px] w-[62px]" />
           </Link>
@@ -139,7 +151,7 @@ export default function Stage({
         </div>
 
         {/* 縦書き「観光サイト」 */}
-        <p className="absolute left-[1460px] top-[69px] text-center text-[16px] font-black leading-[1.3] tracking-[2px] text-white [writing-mode:vertical-rl]">
+        <p className="absolute right-[36px] top-[69px] text-center text-[16px] font-black leading-[1.3] tracking-[2px] text-white [writing-mode:vertical-rl]">
           観光サイト
         </p>
       </div>
