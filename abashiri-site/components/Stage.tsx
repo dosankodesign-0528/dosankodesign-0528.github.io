@@ -165,18 +165,26 @@ export default function Stage({
             if (illustEntrance && illustIn) setSpin(true);
           }}
         >
-          <motion.div
-            className="relative h-full w-full"
-            style={{ transformPerspective: 700 }}
-            animate={spin ? { rotateY: 360 } : { rotateY: 0 }}
-            transition={{ duration: 1.05, ease: [0.3, 1.25, 0.45, 1] }}
-          >
+          <div className="relative h-full w-full">
           {illustration === "tamannee" ? (
             <>
-              <img
+              {/* 人物だけ、4秒に1回クルンと一回転（文字とキラキラは回さない） */}
+              <motion.img
                 src="/img/illust-main.png"
                 alt=""
                 className="absolute left-[1px] top-[44px] h-[357px] w-[284px] object-cover [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.15))]"
+                style={{ transformPerspective: 700 }}
+                animate={spin ? { rotateY: 360 } : { rotateY: 0 }}
+                transition={
+                  spin
+                    ? {
+                        duration: 1.0,
+                        ease: [0.3, 1.25, 0.45, 1],
+                        repeat: Infinity,
+                        repeatDelay: 3,
+                      }
+                    : undefined
+                }
               />
               {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
               <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">
@@ -202,7 +210,7 @@ export default function Stage({
               />
             </>
           )}
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* 右レール：ロゴ・SNS・縦書き「観光サイト」（デザインカンプ 2026-08-12 修正版） */}

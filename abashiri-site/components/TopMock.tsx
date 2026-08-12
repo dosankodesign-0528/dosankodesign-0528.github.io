@@ -262,22 +262,30 @@ export default function TopMock({
     /* 3段階で切り替える：
        1) セットが中央付近に来たら縦を引き受けて、じわっと中央へ吸着
        2) 吸着後に少し「ゆとり」（350ms）
-       3) 横送り開始。ホイール量は直接ぶつけず、目標値へ追いかける慣性スクロール */
-    let activeRow: HTMLDivElement | null = null;
-    let target = 0;
-    let engagedAt = 0;
+       3) 横送り開始。ホイール量は目標値へ貯めて、慣性で追いかける
+
+       重要：端まで送り切ったら「完了方向」を記憶して、その方向の入力は
+       セクションが画面から外れるまで素通しする（実位置が慣性で追いつく前に
+       再ロックして無限ループになるバグの根本対策） */
+    type Lock = {
+      row: HTMLDivElement;
+      target: number;
+      engagedAt: number;
+      done: false | "fwd" | "back";
+    };
+    let lock: Lock | null = null;
     let raf = 0;
 
     const tick = () => {
       raf = 0;
-      if (!activeRow) return;
-      const cur = activeRow.scrollLeft;
-      const diff = target - cur;
+      if (!lock) return;
+      const cur = lock.row.scrollLeft;
+      const diff = lock.target - cur;
       if (Math.abs(diff) > 0.5) {
-        activeRow.scrollLeft = cur + diff * 0.13;
+        lock.row.scrollLeft = cur + diff * 0.13;
         raf = requestAnimationFrame(tick);
       } else {
-        activeRow.scrollLeft = target; /* 終端で正確に止める */
+        lock.row.scrollLeft = lock.target; /* 終端で正確に止める */
       }
     };
     const kick = () => {
@@ -292,6 +300,7 @@ export default function TopMock({
       const scale = scRect.height / sc.clientHeight;
       const viewCenter = scRect.top + scRect.height / 2;
 
+      /* 中央帯にいるセクションのカード列を探す */
       let row: HTMLDivElement | null = null;
       let dist = 0;
       for (const r of rowsRef.current) {
@@ -306,41 +315,48 @@ export default function TopMock({
           break;
         }
       }
+
+      /* 帯の外に出たらロック解除。別の列に来たら新規ロック */
       if (!row) {
-        activeRow = null;
+        lock = null;
         return;
       }
+      if (!lock || lock.row !== row) {
+        lock = {
+          row,
+          target: row.scrollLeft,
+          /* すでに中央付近ならゆとり待ちをスキップ */
+          engagedAt:
+            Math.abs(dist) < scRect.height * 0.05 ? 0 : performance.now(),
+          done: false,
+        };
+      }
+
       const max = row.scrollWidth - row.clientWidth;
       if (max <= 0) return;
       const down = e.deltaY > 0;
-      /* 進める余地は「目標値」で判定する。
-         端まで送り済みなら（慣性の追いつき待ちでも）すぐ縦スクロールへ解放 */
-      const pos = activeRow === row ? target : row.scrollLeft;
-      const canGo = (down && pos < max - 1) || (!down && pos > 1);
-      if (!canGo) {
-        activeRow = null;
-        return;
-      }
+
+      /* 完了方向へのさらなる入力は素通し＝縦スクロールに戻る */
+      if (lock.done === "fwd" && down) return;
+      if (lock.done === "back" && !down) return;
+      /* 逆方向の入力が来たら完了状態を解除（巻き戻しできる） */
+      if (lock.done) lock.done = false;
 
       e.preventDefault();
-      if (activeRow !== row) {
-        activeRow = row;
-        target = row.scrollLeft;
-        /* すでに中央付近にいる時（戻ってきた時など）はゆとり待ちをスキップ */
-        engagedAt =
-          Math.abs(dist) < scRect.height * 0.05 ? 0 : performance.now();
-      }
 
       /* 1) 中央へじわっと吸着 */
       if (Math.abs(dist) > 3) sc.scrollTop += (dist / scale) * 0.3;
 
       /* 2) 吸着が済んで少し間が空いてから 3) 横送り */
       const settled =
-        performance.now() - engagedAt > 350 &&
+        performance.now() - lock.engagedAt > 350 &&
         Math.abs(dist) < scRect.height * 0.05;
       if (settled) {
-        target = Math.max(0, Math.min(max, target + e.deltaY));
+        lock.target = Math.max(0, Math.min(max, lock.target + e.deltaY));
         kick();
+        /* 端まで送り切ったら完了方向を記憶 */
+        if (down && lock.target >= max - 0.5) lock.done = "fwd";
+        if (!down && lock.target <= 0.5) lock.done = "back";
       }
     };
     sc.addEventListener("wheel", onWheel, { passive: false });
