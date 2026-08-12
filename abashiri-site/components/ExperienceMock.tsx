@@ -149,12 +149,13 @@ export default function ExperienceMock({
     }
   }, [playing, step]);
 
-  /* STEP03 に入ったら動画スタート＋タイマーリセット */
+  /* STEP03 に入ったら▶ボタン待ちの状態にする。
+     再生ボタンを押すと動画が流れ始め、タイマーも同時に始動する */
   useEffect(() => {
     if (step === 3) {
       setRemaining(5 * 60);
-      setPlaying(true);
-      pokeUi();
+      setPlaying(false);
+      setUiVisible(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
