@@ -254,7 +254,7 @@ export default function TopMock({
     <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip rounded-[30px] bg-[#8ec6ea] [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-[30px] bg-[#8ec6ea] [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。

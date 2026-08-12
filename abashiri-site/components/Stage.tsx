@@ -83,9 +83,9 @@ export default function Stage({
 
         {children}
 
-        {/* 人物イラスト（たまんねーっ・キラキラ込みで、演出の一番最後にブラー出現） */}
+        {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面に置く */}
         <motion.div
-          className="pointer-events-none absolute right-0 top-[600px] h-[401px] w-[366px] overflow-clip"
+          className="pointer-events-none absolute right-0 top-[600px] z-30 h-[401px] w-[366px] overflow-clip"
           initial={
             illustEntrance
               ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }

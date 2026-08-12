@@ -19,7 +19,7 @@ export default function ExperiencePage() {
         <ExperienceMock step={step} setStep={setStep} />
       </Stage>
       {/* 環境音のON/OFF切替（動画再生中は自動で止まる） */}
-      <SoundUi variant={1} />
+      <SoundUi />
     </>
   );
 }

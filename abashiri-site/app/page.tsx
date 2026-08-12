@@ -10,8 +10,8 @@ export default function Home() {
             →たまらない まとめてブラー→ボタン→イラスト（開始0.5秒後） */}
         <TopMock intro={2} combo writePace={2} />
       </Stage>
-      {/* 網走の環境音：初回はON/OFF確認、以降は左下ボタンで切替 */}
-      <SoundUi variant={1} askConsent />
+      {/* 網走の環境音：初回はON/OFF確認、以降は左下のスピーカーで切替 */}
+      <SoundUi askConsent />
     </>
   );
 }

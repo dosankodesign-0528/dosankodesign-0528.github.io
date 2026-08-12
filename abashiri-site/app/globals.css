@@ -10,6 +10,8 @@ html,
 body {
   height: 100%;
   overflow: hidden;
+  /* 上に引っ張った時のバウンドでステージが見切れないように */
+  overscroll-behavior: none;
   background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
 }
 
