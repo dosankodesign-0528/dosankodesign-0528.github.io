@@ -92,11 +92,10 @@ export default function Stage({
                 alt=""
                 className="absolute left-[1px] top-[44px] h-[357px] w-[284px] object-cover [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.15))]"
               />
-              <img
-                src="/img/sparkle.svg"
-                alt=""
-                className="absolute left-[14px] top-[116px] w-[30px]"
-              />
+              {/* キラキラ：GIF風に場所をピョンと移りながらまたたく */}
+              <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">
+                <img src="/img/sparkle.svg" alt="" className="sparkle-twinkle w-full" />
+              </div>
               <img
                 src="/img/text-tamannee.svg"
                 alt="たまんねーっ"

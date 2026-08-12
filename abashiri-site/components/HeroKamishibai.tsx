@@ -178,16 +178,19 @@ export default function HeroKamishibai({
       });
       if (aborted) return;
 
-      /* 本物の「〜」の字形へ、ゆっくりクロスフェード（急な差し替えにしない） */
-      if (tilde) {
+      /* 戻った後の字形の扱い：
+         none = 線をそのまま「〜」として残す（太さは一切変わらない）
+         fade = 本物の手書き字形へゆっくり馴染ませる */
+      if (tilde && kv.swap === "fade") {
+        const dur = kv.swapDur ?? 900;
         tilde.p.animate([{ opacity: 0 }, { opacity: 1 }], {
-          duration: 420,
+          duration: dur,
           fill: "forwards",
           easing: "ease-in-out",
         });
         tilde.p.style.opacity = "0";
         bar.animate([{ opacity: 1 }, { opacity: 0 }], {
-          duration: 420,
+          duration: dur,
           fill: "forwards",
           easing: "ease-in-out",
         });
