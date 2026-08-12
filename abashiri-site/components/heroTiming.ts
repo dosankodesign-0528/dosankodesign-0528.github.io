@@ -48,7 +48,7 @@ export type HeroTiming = {
 };
 
 export const DEFAULT_HERO_TIMING: HeroTiming = {
-  start: 1000,
+  start: 500,
   header: { extraDelay: 0 },
   kotoba: { delay: 300, duration: 1450, blur: 9 },
   tamaranai: { delay: 950 },

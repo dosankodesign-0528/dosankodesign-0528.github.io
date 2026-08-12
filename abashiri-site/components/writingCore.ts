@@ -103,6 +103,7 @@ export function traceReveal(
   mask.setAttribute("maskUnits", "userSpaceOnUse");
   const c = p.cloneNode() as SVGPathElement;
   c.removeAttribute("mask");
+  c.removeAttribute("style"); /* 元が非表示(opacity:0)でもマスクは白く塗れるように */
   c.setAttribute("fill", "none");
   c.setAttribute("stroke", "#fff");
   c.setAttribute("stroke-width", "18");

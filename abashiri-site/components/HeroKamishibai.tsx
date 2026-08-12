@@ -91,9 +91,10 @@ export default function HeroKamishibai({
          幅が小さい時だけ波も少し浅くして、にゅっと生えてくる感じに */
       let barW = finalW * 0.5;
       const redraw = () => {
-        /* 長さに合わせて波の深さも育てて、伸びても「〜」の曲線に見えるように */
+        /* カンプの「〜」に寄せて、しっかりうねらせる（制御点は見た目の約1.6倍）。
+           長さに合わせて波の深さも育てる */
         const ratio = Math.max(0.4, barW / finalW);
-        const a = amp * Math.pow(ratio, 0.75);
+        const a = amp * 1.6 * Math.pow(ratio, 0.85);
         bar.setAttribute(
           "d",
           `M ${sx} ${cy} C ${sx + barW * 0.3} ${cy - a} ${sx + barW * 0.7} ${cy + a} ${sx + barW} ${cy}`

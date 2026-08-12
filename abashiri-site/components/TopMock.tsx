@@ -114,6 +114,7 @@ import { INTRO_PATTERNS } from "./introPatterns";
 import { KV_PATTERNS } from "./kvPatterns";
 import HeroWriting from "./HeroWriting";
 import HeroKamishibai from "./HeroKamishibai";
+import HeroCombo from "./HeroCombo";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -125,6 +126,7 @@ export default function TopMock({
   write = 0,
   writePace = 2,
   kami = 0,
+  combo = false,
   timing = DEFAULT_HERO_TIMING,
 }: {
   intro?: number;
@@ -135,6 +137,8 @@ export default function TopMock({
   writePace?: number;
   /** 1〜3: 紙芝居パターン（伸ばし棒ビヨーン。writeより優先） */
   kami?: number;
+  /** true: 決定版候補（な〜んにもない=なぞり書き+ビヨーン／たまらない=ブラー） */
+  combo?: boolean;
   /** 登場演出のタイミング設定（heroTiming.ts） */
   timing?: HeroTiming;
 }) {
@@ -143,7 +147,7 @@ export default function TopMock({
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
   /* 手書き/紙芝居アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
-  const animated = Boolean(write || kami);
+  const animated = Boolean(write || kami || combo);
   const [buttonIn, setButtonIn] = useState(!animated);
 
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
@@ -241,7 +245,13 @@ export default function TopMock({
                 pointerEvents: heroPointer,
               }}
             >
-              {kami ? (
+              {combo ? (
+                <HeroCombo
+                  pace={writePace}
+                  timing={timing}
+                  onScheduled={handleScheduled}
+                />
+              ) : kami ? (
                 <HeroKamishibai
                   variant={kami}
                   pace={writePace}
