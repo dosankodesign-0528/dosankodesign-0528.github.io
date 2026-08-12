@@ -102,9 +102,6 @@ export default function SoundUi({
         /* 案1：白カードのモーダル（ど真ん中・いちばん丁寧） */
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b3c69]/25 backdrop-blur-[3px]">
           <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-[28px] bg-white/95 p-8 text-center shadow-2xl">
-            <span className="mb-3 flex size-12 items-center justify-center rounded-full bg-[#e6f3ff] text-[22px]">
-              🎧
-            </span>
             <p className="mb-6 text-[15px] font-bold leading-relaxed text-[#1e1e1e]">
               網走の環境音を楽しむことができます。
               <br />
