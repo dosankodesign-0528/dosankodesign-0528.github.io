@@ -260,9 +260,10 @@ export default function TopMock({
             パターンによってはスクロールに合わせてゆっくりズーム。
             下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
         <div className="pointer-events-none sticky top-0 h-[865px] w-full overflow-hidden bg-[#0160c4]">
-          {/* Figma上のトリミング・色加工（青め）を焼き込んだ書き出し画像（透過PNG） */}
+          {/* Figmaのトリミング・色加工を焼き込み、角丸の縁を切り落とした四角い書き出し画像。
+              角丸はCSS側だけで付けるので、継ぎ目やズレが出ない */}
           <motion.img
-            src="/img/bg-hero.png"
+            src="/img/bg-hero.jpg"
             alt=""
             className="h-full w-full object-cover"
             style={{ scale: bgScale, filter: bgFilter }}
