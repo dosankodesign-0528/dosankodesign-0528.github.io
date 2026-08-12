@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Bird from "./Bird";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
+import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 
 type StageProps = {
   children: React.ReactNode;
@@ -15,6 +16,8 @@ type StageProps = {
   illustEntrance?: boolean;
   /** イラスト出現の質感（heroTiming.illust） */
   timing?: HeroTiming;
+  /** カモメの配置・見た目（birdConfig.ts） */
+  birds?: BirdsConfig;
 };
 
 /**
@@ -26,6 +29,7 @@ export default function Stage({
   illustration = "tamannee",
   illustEntrance = false,
   timing = DEFAULT_HERO_TIMING,
+  birds = DEFAULT_BIRDS,
 }: StageProps) {
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
@@ -73,12 +77,40 @@ export default function Stage({
           opacity: fit ? 1 : 0,
         }}
       >
-        {/* 空のカモメ（左上・右中） */}
-        <div className="absolute left-[22px] top-[26px] h-[40px] w-[64px] -rotate-[14deg]">
-          <Bird flapDuration={0.5} driftDuration={7} />
+        {/* 空のカモメ（左上・右中）。位置や線幅は birdConfig で調整できる */}
+        <div
+          className="absolute"
+          style={{
+            left: birds.skyTopLeft.x,
+            top: birds.skyTopLeft.y,
+            width: birds.skyTopLeft.w,
+            height: birds.skyTopLeft.w * 0.58,
+            transform: `rotate(${birds.skyTopLeft.rotate}deg)`,
+          }}
+        >
+          <Bird
+            flapDuration={birds.skyTopLeft.flap}
+            driftDuration={birds.skyTopLeft.drift}
+            delay={birds.skyTopLeft.delay}
+            strokeWidth={birds.skyTopLeft.stroke}
+          />
         </div>
-        <div className="absolute right-[-30px] top-[560px] h-[62px] w-[105px]">
-          <Bird flapDuration={0.62} driftDuration={9} delay={1.2} />
+        <div
+          className="absolute"
+          style={{
+            right: birds.skyRight.x,
+            top: birds.skyRight.y,
+            width: birds.skyRight.w,
+            height: birds.skyRight.w * 0.58,
+            transform: `rotate(${birds.skyRight.rotate}deg)`,
+          }}
+        >
+          <Bird
+            flapDuration={birds.skyRight.flap}
+            driftDuration={birds.skyRight.drift}
+            delay={birds.skyRight.delay}
+            strokeWidth={birds.skyRight.stroke}
+          />
         </div>
 
         {children}

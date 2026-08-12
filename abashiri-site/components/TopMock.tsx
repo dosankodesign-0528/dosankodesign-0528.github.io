@@ -128,6 +128,7 @@ import HeroWriting from "./HeroWriting";
 import HeroKamishibai from "./HeroKamishibai";
 import HeroCombo from "./HeroCombo";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
+import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 
 /** イラスト出現の合図（Stage が拾う） */
 export const ILLUST_IN_EVENT = "abashiri:illust-in";
@@ -140,6 +141,7 @@ export default function TopMock({
   kami = 0,
   combo = false,
   timing = DEFAULT_HERO_TIMING,
+  birds = DEFAULT_BIRDS,
 }: {
   intro?: number;
   kv?: number;
@@ -153,6 +155,8 @@ export default function TopMock({
   combo?: boolean;
   /** 登場演出のタイミング設定（heroTiming.ts） */
   timing?: HeroTiming;
+  /** カモメの配置・見た目（birdConfig.ts） */
+  birds?: BirdsConfig;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -220,34 +224,90 @@ export default function TopMock({
   useEffect(() => {
     const sc = scrollerRef.current;
     if (!sc) return;
+
+    /* 3段階で切り替える：
+       1) セットが中央付近に来たら縦を引き受けて、じわっと中央へ吸着
+       2) 吸着後に少し「ゆとり」（350ms）
+       3) 横送り開始。ホイール量は直接ぶつけず、目標値へ追いかける慣性スクロール */
+    let activeRow: HTMLDivElement | null = null;
+    let target = 0;
+    let engagedAt = 0;
+    let raf = 0;
+
+    const tick = () => {
+      raf = 0;
+      if (!activeRow) return;
+      const cur = activeRow.scrollLeft;
+      const diff = target - cur;
+      if (Math.abs(diff) > 0.5) {
+        activeRow.scrollLeft = cur + diff * 0.13;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+
     const onWheel = (e: WheelEvent) => {
       /* トラックパッドの横ジェスチャはネイティブの横スクロールに任せる */
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
       const scRect = sc.getBoundingClientRect();
+      if (scRect.height < 10) return; /* 非表示中など計測不能時は素通し */
       const scale = scRect.height / sc.clientHeight;
       const viewCenter = scRect.top + scRect.height / 2;
-      for (const row of rowsRef.current) {
-        if (!row) continue;
-        /* 見出し＋カルーセルのセット（section）が上下の中央に来たら横送り開始 */
-        const sec = row.closest("section");
+
+      let row: HTMLDivElement | null = null;
+      let dist = 0;
+      for (const r of rowsRef.current) {
+        if (!r) continue;
+        const sec = r.closest("section");
         if (!sec) continue;
         const sr = sec.getBoundingClientRect();
-        const dist = sr.top + sr.height / 2 - viewCenter;
-        if (Math.abs(dist) > scRect.height * 0.14) continue;
-        const max = row.scrollWidth - row.clientWidth;
-        if (max <= 0) continue;
-        const down = e.deltaY > 0;
-        if ((down && row.scrollLeft < max - 1) || (!down && row.scrollLeft > 1)) {
-          e.preventDefault();
-          row.scrollLeft = Math.max(0, Math.min(max, row.scrollLeft + e.deltaY));
-          /* 横送りの間に、セットをじわっと上下中央へ寄せる */
-          if (Math.abs(dist) > 2) sc.scrollTop += (dist / scale) * 0.25;
+        const d = sr.top + sr.height / 2 - viewCenter;
+        if (Math.abs(d) <= scRect.height * 0.16) {
+          row = r;
+          dist = d;
+          break;
         }
-        break;
+      }
+      if (!row) {
+        activeRow = null;
+        return;
+      }
+      const max = row.scrollWidth - row.clientWidth;
+      if (max <= 0) return;
+      const down = e.deltaY > 0;
+      const canGo =
+        (down && row.scrollLeft < max - 1) || (!down && row.scrollLeft > 1);
+      if (!canGo) {
+        activeRow = null;
+        return;
+      }
+
+      e.preventDefault();
+      if (activeRow !== row) {
+        activeRow = row;
+        target = row.scrollLeft;
+        engagedAt = performance.now();
+      }
+
+      /* 1) 中央へじわっと吸着 */
+      if (Math.abs(dist) > 3) sc.scrollTop += (dist / scale) * 0.3;
+
+      /* 2) 吸着が済んで少し間が空いてから 3) 横送り */
+      const settled =
+        performance.now() - engagedAt > 350 &&
+        Math.abs(dist) < scRect.height * 0.05;
+      if (settled) {
+        target = Math.max(0, Math.min(max, target + e.deltaY));
+        kick();
       }
     };
     sc.addEventListener("wheel", onWheel, { passive: false });
-    return () => sc.removeEventListener("wheel", onWheel);
+    return () => {
+      sc.removeEventListener("wheel", onWheel);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
@@ -428,11 +488,39 @@ export default function TopMock({
                     <span className="flex w-[200px] items-center justify-center rounded-[38px] bg-white px-[24px] py-[10px] text-[14px] font-black text-[#0070c9]">
                       さっそく体験する
                     </span>
-                    <div className="absolute right-[4.3%] top-[17%] h-[60px] w-[100px]">
-                      <Bird flapDuration={0.6} driftDuration={8} />
+                    <div
+                      className="absolute"
+                      style={{
+                        left: `${birds.promo1.x}%`,
+                        top: `${birds.promo1.y}%`,
+                        width: birds.promo1.w,
+                        height: birds.promo1.w * 0.58,
+                        transform: `rotate(${birds.promo1.rotate}deg)`,
+                      }}
+                    >
+                      <Bird
+                        flapDuration={birds.promo1.flap}
+                        driftDuration={birds.promo1.drift}
+                        delay={birds.promo1.delay}
+                        strokeWidth={birds.promo1.stroke}
+                      />
                     </div>
-                    <div className="absolute left-[0.5%] top-[13%] h-[34px] w-[58px]">
-                      <Bird flapDuration={0.48} driftDuration={6} delay={0.8} />
+                    <div
+                      className="absolute"
+                      style={{
+                        left: `${birds.promo2.x}%`,
+                        top: `${birds.promo2.y}%`,
+                        width: birds.promo2.w,
+                        height: birds.promo2.w * 0.58,
+                        transform: `rotate(${birds.promo2.rotate}deg)`,
+                      }}
+                    >
+                      <Bird
+                        flapDuration={birds.promo2.flap}
+                        driftDuration={birds.promo2.drift}
+                        delay={birds.promo2.delay}
+                        strokeWidth={birds.promo2.stroke}
+                      />
                     </div>
                   </Link>
                 </motion.div>

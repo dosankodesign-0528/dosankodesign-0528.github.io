@@ -34,6 +34,8 @@ type BirdProps = {
   flapDuration?: number;
   driftDuration?: number;
   delay?: number;
+  /** 線の太さ（SVG座標系 viewBox 120 基準） */
+  strokeWidth?: number;
   className?: string;
 };
 
@@ -43,6 +45,7 @@ export default function Bird({
   flapDuration = 0.55,
   driftDuration = 8,
   delay = 0,
+  strokeWidth = 7,
   className,
 }: BirdProps) {
   const frames = FRAMES[variant];
@@ -62,7 +65,7 @@ export default function Bird({
             <path
               d={d}
               stroke={color}
-              strokeWidth="7"
+              strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeLinejoin="round"
             />
