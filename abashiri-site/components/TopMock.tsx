@@ -182,10 +182,11 @@ export default function TopMock({
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム */}
         <div className="pointer-events-none sticky top-0 h-[865px] w-full overflow-hidden">
+          {/* Figma上のトリミング・色加工（青め）を焼き込んだ書き出し画像 */}
           <motion.img
             src="/img/bg-hero.jpg"
             alt=""
-            className="h-full w-full object-cover object-bottom"
+            className="h-full w-full object-cover"
             style={{ scale: bgScale, filter: bgFilter }}
           />
         </div>
