@@ -150,12 +150,16 @@
     to   { transform: translateX(-50%); }
   }
 
-  /* ---- パターン/惑星スイッチャー ---- */
+  /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
   .switcher {
     position: fixed;
     left: 16px;
     bottom: 16px;
-    background: rgba(255,255,255,.92);
+    width: 380px;
+    min-width: 260px;
+    max-width: 92vw;
+    max-height: calc(100vh - 32px);
+    background: rgba(255,255,255,.95);
     backdrop-filter: blur(12px);
     border: 1px solid #e2e2e2;
     border-radius: 10px;
@@ -163,12 +167,65 @@
     font-size: 12px;
     color: #101828;
     z-index: 50;
-    padding: 12px 14px;
-    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    resize: both;
   }
+  .sw-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    cursor: grab;
+    user-select: none;
+    font-weight: 400;
+    flex: 0 0 auto;
+    touch-action: none;
+  }
+  .sw-head:active { cursor: grabbing; }
+  .sw-head .chev { transition: transform .25s; font-size: 10px; color: #888; cursor: pointer; padding: 2px 6px; }
+  .switcher.closed .sw-head .chev { transform: rotate(180deg); }
+  .sw-body { overflow-y: auto; padding: 0 12px 12px; flex: 1 1 auto; }
+  .switcher.closed .sw-body { display: none; }
+  .switcher.closed { resize: none; height: auto !important; width: auto !important; min-width: 200px; }
+  .sw-sec {
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    margin-top: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .sw-sec-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    font-weight: 500;
+    background: #fafafa;
+    cursor: pointer;
+    user-select: none;
+  }
+  .sw-sec-head:hover { background: #f2f2f2; }
+  .sw-sec-cur { color: #999; font-weight: 300; margin-left: auto; }
+  .sw-sec-chev { font-size: 10px; color: #888; transition: transform .2s; }
+  .sw-sec.closed .sw-sec-chev { transform: rotate(-90deg); }
+  .sw-sec-body { padding: 8px 10px 10px; }
+  .sw-sec.closed .sw-sec-body { display: none; }
   .sw-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .sw-row + .sw-row { margin-top: 8px; }
-  .sw-label { flex: 0 0 44px; color: #555; font-weight: 300; }
+  .sw-copy {
+    width: 100%;
+    margin-top: 10px;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #d8d8d8;
+    background: #fff;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .sw-copy:hover { background: #f2f2f2; }
   .sw-pill {
     font-family: inherit;
     font-size: 11px;
@@ -356,14 +413,17 @@
   </div>
 </div>
 
-<!-- ================= パターン/惑星スイッチャー ================= -->
+<!-- ================= パターン切替スイッチャー (ドラッグ移動・リサイズ可) ================= -->
 <div class="switcher" id="switcher">
-  <div class="sw-row" id="swPatterns"><span class="sw-label">アニメ</span></div>
-  <div class="sw-row" id="swSways"><span class="sw-label">ゆらぎ</span></div>
-  <div class="sw-row" id="swDesigns"><span class="sw-label">惑星</span></div>
-  <div class="sw-row" id="swLights"><span class="sw-label">ライト</span></div>
-  <div class="sw-row" id="swDithers" style="display:none"><span class="sw-label">ディザ</span></div>
-  <div class="sw-desc" id="swDesc"></div>
+  <div class="sw-head" id="swHead">
+    <span>🎛 パターン切替</span>
+    <span class="chev" id="swChev">▲</span>
+  </div>
+  <div class="sw-body">
+    <div id="swSecs"></div>
+    <div class="sw-desc" id="swDesc"></div>
+    <button class="sw-copy" id="swCopy">📋 いまの設定をコピー（デフォルト化用）</button>
+  </div>
 </div>
 
 <!-- ================= アニメ調整パネル ================= -->
@@ -393,40 +453,19 @@ const DOTS = [
 ];
 const DOT_R = 5.606;
 
-/* ================= アニメパターン (5案) ================= */
-const PATTERNS = [
-  { name: '① スタンダード', desc: '緩急のゆらぎでゆったり進む（現行）。自転は多面ゆらぎ。' },
-  { name: '② コメット', desc: '彗星みたいに、惑星のそばでグッと加速して離れるとゆったり。自転は少し速め。' },
-  { name: '③ ドリフト', desc: '各ドットが気まぐれに漂う。止まりかけたり、すっと進んだり。自転は大きくうねる。' },
-  { name: '④ すれ違い', desc: '内側と外側の軌道が逆回転して、ドット同士がすれ違う。自転はどっしりゆっくり。' },
-  { name: '⑤ リズム', desc: 'コツン、コツンと一定のリズムで進む（データが流れるイメージ）。自転も同じリズムで刻む。' },
-];
-
-/* ================= ゆらぎ (グラフィック全体の動き 10案) ================= */
+/* ================= ゆらぎ (グラフィック全体の動き) ================= */
 const SWAYS = [
-  { name: '①固定', desc: 'ゆらぎなし。カンプの構図のまま。' },
-  { name: '②ふわふわ', desc: '全体がゆっくり上下に浮き沈みする。' },
-  { name: '③シーソー', desc: '全体が±3°ほどでゆっくり傾く。' },
-  { name: '④うねり', desc: '2つの波が重なって傾きが複雑にうねる（歳差運動風）。' },
-  { name: '⑤ジェリー', desc: '軌道の輪だけがぷにぷに伸び縮みする（惑星は固定）。' },
-  { name: '⑥惑星ゆらり', desc: '惑星だけがゆっくり漂う（軌道は固定）。' },
-  { name: '⑦逆位相', desc: '軌道が傾くと惑星は逆へ動き、軌道と惑星の角度が変わって見える。' },
-  { name: '⑧漂流', desc: '全体が8の字を描いてゆっくり漂う。' },
-  { name: '⑨呼吸', desc: '全体がわずかに膨らんだり縮んだりする。' },
-  { name: '⑩波乗り', desc: '傾きと上下ゆれのミックスで、波に乗るように揺れる。' },
-  { name: '⑪クロス', desc: '2本の軌道が逆方向に傾いて、たまに交差する。（軌道ごとの「ゆれ」設定でも自作できます）' },
+  { id: 'none',   name: '①固定', desc: 'ゆらぎなし。カンプの構図のまま。' },
+  { id: 'seesaw', name: '②シーソー', desc: '全体が±3°ほどでゆっくり傾く。' },
+  { id: 'cross',  name: '③クロス', desc: '2本の軌道が逆方向に傾いて、たまに交差する。（軌道ごとの「ゆれ」設定でも自作できます）' },
 ];
 
-/* ================= ディザ演出 (惑星E専用 5案) ================= */
+/* ================= ディザ演出 (惑星E専用) ================= */
 const DITHERS = [
   { name: '①固定', desc: '色は動かない。' },
   { name: '②うつろい', desc: '場所ごとに白⇄青⇄紫をゆっくり行き来して、境目のピクセルがパラパラ入れ替わる。' },
   { name: '③流れ', desc: '白→青→紫の色の帯が斜めに流れていき、ピクセルが順にめくれていく。' },
   { name: '④さざ波', desc: '細かい色の波が球面を通って、通り道のドットがパラパラ変わる。' },
-  { name: '⑤ざわめき', desc: 'ドット単位で色がチラチラと揺れ続ける（砂嵐の弱いやつ）。' },
-  { name: '⑥グロウ波', desc: '白→シアン→青→紫のグラデの波が通って、ドットが順にパラパラめくれていく。' },
-  { name: '⑦グロウ漂い', desc: '光の玉がゆっくり漂い、明るいところだけドットが密に点く。' },
-  { name: '⑧グロウ鼓動', desc: '中心から波紋が広がって、リング状にドットがパラパラ切り替わる。' },
 ];
 
 /* ================= ライティング (全惑星共通 2案) ================= */
@@ -440,18 +479,6 @@ const LIGHTS = [
    デザインごとに専用シェーダー(finish)で質感を仕上げる。
    裏側はカンプに存在しないため鏡映で生成 (uv を d.xy から取ると表裏対称になる)。 */
 const DESIGNS = {
-  A: {
-    name: 'A やわらかパステル',
-    swatch: 'radial-gradient(circle at 30% 30%, #ffffff 15%, #ffb3d1 55%, #64d2f5 100%)',
-    src: 'assets/planet-a.png',
-    grainScale: '220.0',
-    /* なめらかグラデ優先: 立体感は控えめ、粒はごく薄く */
-    finish: `
-      float hi = pow(max(dot(n, normalize(vec3(-0.48, 0.62, 0.62))), 0.0), 2.0);
-      col = mix(col, vec3(1.0), hi * 0.15);
-      col *= 1.0 - pow(1.0 - n.z, 2.0) * 0.06;
-      col += grain * 0.05 * uNoise;`,
-  },
   B: {
     name: 'B ビビッドブルー',
     swatch: 'linear-gradient(140deg, #ff5d97 5%, #ffffff 30%, #1e9bff 65%, #0b6bff 100%)',
@@ -592,11 +619,6 @@ void main(){
     lum += sin((p.x + p.y) * 8.0 - uTime * 2.4) * 0.16;
   }
   float dith = bayer8(cellId);
-  if (uDither > 4.5) {
-    /* ⑤ざわめき: ドット単位で色としきい値がチラつき続ける */
-    dith = fract(dith + (hash(vec3(cellId, floor(uTime * 6.0) * 0.031)) - 0.5) * 0.7);
-    lum += (hash(vec3(cellId, floor(uTime * 4.0) * 0.117)) - 0.5) * 0.10;
-  }
 
   /* ベイヤーディザ: 階調を段に割って、隣のセルと交互に混ぜる → 網点 */
   float spread = 0.8 + uNoise * 1.2;
@@ -604,41 +626,10 @@ void main(){
   float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, -0.6, 1.0);
   vec3 col = ramp(q);
 
-  if (uDither > 5.5) {
-    /* グロウ系 (⑥波 ⑦漂い ⑧鼓動): ドットマトリクス表現。
-       色は今までのランプ (白⇄シアン⇄青⇄紫⇄マゼンタ) をそのまま使い、
-       明るさの場 field がしきい値をまたぐたびにドットがパラパラめくれる */
-    vec3 L2 = normalize(vec3(0.5, 0.5, 0.7));
-    float lam2 = dot(n, L2) * 0.5 + 0.5;
-    float field = 0.35 + lam2 * 0.55 + flow * 0.25;
-    if (uDither < 6.5) {
-      /* ⑥波: グラデの波が斜めに通っていく (谷だけ紫に沈む) */
-      field += sin(dot(p, normalize(vec2(0.8, -0.6))) * 3.0 - uTime * 1.3) * 0.42 - 0.08;
-    } else if (uDither < 7.5) {
-      /* ⑦漂い: 光の玉が2つゆっくり漂う */
-      vec3 c1 = normalize(vec3(cos(uTime * 0.20), sin(uTime * 0.13), 0.62));
-      vec3 c2 = normalize(vec3(-cos(uTime * 0.15), sin(uTime * 0.23 + 2.1), 0.55));
-      field += exp(-dot(n - c1, n - c1) * 1.8) * 0.7 + exp(-dot(n - c2, n - c2) * 2.2) * 0.5 - 0.15;
-    } else {
-      /* ⑧鼓動: 中心から波紋が広がる */
-      field += sin(length(p) * 7.0 - uTime * 1.8) * 0.32 - 0.05;
-    }
-    float fq = clamp(field, -0.55, 1.0);
-    vec3 bright = ramp(fq);                              /* ドットの色 (ブランド色) */
-    vec3 baseCol = bright * 0.55 + vec3(0.04, 0.06, 0.18); /* 同系色を沈めた下地 */
-    float PITCH = 5.0;
-    vec2 cid = floor(fcTrue / PITCH);
-    vec2 ic = fract(fcTrue / PITCH);
-    float thr = bayer4(cid) * 0.9 + 0.05;
-    float on = step(thr, field);
-    float dotMask = step(0.10, ic.x) * step(ic.x, 0.62) * step(0.10, ic.y) * step(ic.y, 0.62);
-    col = baseCol + bright * on * dotMask * 0.92;
-  } else {
-    /* 左下のマゼンタリム (これもディザで混ぜる) */
-    float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
-    float mg = clamp(floor((rim * 1.5 + flow * 0.25) * 3.0 + (dith - 0.5) * 1.3 + 0.5) / 3.0, 0.0, 1.0);
-    col = mix(col, vec3(1.0, 0.27, 0.78), mg * 0.92);
-  }
+  /* 左下のマゼンタリム (これもディザで混ぜる) */
+  float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
+  float mg = clamp(floor((rim * 1.5 + flow * 0.25) * 3.0 + (dith - 0.5) * 1.3 + 0.5) / 3.0, 0.0, 1.0);
+  col = mix(col, vec3(1.0, 0.27, 0.78), mg * 0.92);
 
   /* ---- 右上光源モード: 白を「光の反射」として陰影をつける ---- */
   if (uLight > 1.5) {
@@ -658,10 +649,9 @@ void main(){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  pattern: 1,        // アニメパターン 1〜5
-  sway: 1,           // ゆらぎ 1〜11
-  design: 'A',       // 惑星デザイン A〜E
-  dither: 1,         // ディザ演出 1〜8 (惑星E専用)
+  sway: 1,           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
+  design: 'B',       // 惑星デザイン B〜E
+  dither: 1,         // ディザ演出 1〜4 (惑星E専用)
   light: 1,          // ライティング 1=なし / 2=右上光源
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
@@ -688,7 +678,7 @@ const DEFAULTS = {
   },
   dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v3';
+const STORAGE_KEY = 'anyflow-embed-anim-v4';
 
 let params = load();
 function load() {
@@ -705,6 +695,10 @@ function load() {
       };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
+      /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
+      if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
+      if (merged.sway < 1 || merged.sway > SWAYS.length) merged.sway = 1;
+      if (merged.dither < 1 || merged.dither > DITHERS.length) merged.dither = 1;
       return merged;
     }
   } catch (e) {}
@@ -737,7 +731,7 @@ function orbitGeom(key) {
   if (p.wobbleAmp > 0 && p.wobblePeriod > 0) {
     wobble = p.wobbleAmp * Math.sin(2 * Math.PI * elapsed / p.wobblePeriod + p.wobblePhase * Math.PI / 180);
   }
-  if (params.sway === 11) { /* クロスプリセット: 2本が逆方向に傾く */
+  if (SWAYS[(params.sway || 1) - 1].id === 'cross') { /* クロス: 2本が逆方向に傾く */
     wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10);
   }
   return {
@@ -811,44 +805,12 @@ function warpTime(t, amp, period, phaseDeg) {
 let elapsed = 0;      // 再生中のみ進む累積時間
 let lastTs = null;
 
-/* ステップ&グライド: ph(周期単位) → コツンと進む累積量 */
-function stepGlide(ph) {
-  const k = Math.floor(ph), f = ph - k;
-  const g = Math.min(1, f / 0.4);           // 周期の前半40%で移動、残りは静止
-  const ease = g * g * (3 - 2 * g);
-  return k + ease;
-}
-
-/* パターン別: ドットの現在角度(deg)を返す */
+/* ドットの現在角度(deg): 緩急ゆらぎつきの周回 */
 function patternDeg(d, i, p) {
   const base = 360 / params.duration * params.globalSpeed * params.direction;
   const et = effectiveTime(elapsed, p.delay, params.ramp);
-  switch (params.pattern) {
-    case 2: { /* コメット: 軌道上の位置で加減速 (惑星の裏側あたりで最速) */
-      const lin = d.angle + p.offset + base * p.speed * et;
-      return lin + 45 * Math.sin((lin - 270) * Math.PI / 180);
-    }
-    case 3: { /* ドリフト: 周期の違うサイン波を重ねた気まぐれな漂い */
-      const a = 0.4 + params.pulse.amp;
-      const n = (2.2 * Math.sin(0.23 * et + i * 2.7)
-               + 1.3 * Math.sin(0.53 * et + i * 1.9)
-               + 0.7 * Math.sin(1.13 * et + i * 5.1)) * a * 0.45;
-      return d.angle + p.offset + base * p.speed * (et + n);
-    }
-    case 4: { /* すれ違い: 内側の軌道だけ逆回転 */
-      const dir = d.ellipse === 'inner' ? -1 : 1;
-      return d.angle + p.offset + base * p.speed * dir * et * (0.85 + 0.06 * i);
-    }
-    case 5: { /* リズム: 45°ずつコツンと進む (ドットごとに少し時間差) */
-      const period = params.duration / 8 / params.globalSpeed;
-      const ph = et / period + i * 0.37;
-      return d.angle + p.offset + params.direction * 45 * stepGlide(ph);
-    }
-    default: { /* スタンダード: 緩急ゆらぎ */
-      const wt = warpTime(et, params.pulse.amp, params.pulse.period, p.pulsePhase);
-      return d.angle + p.offset + base * p.speed * wt;
-    }
-  }
+  const wt = warpTime(et, params.pulse.amp, params.pulse.period, p.pulsePhase);
+  return d.angle + p.offset + base * p.speed * wt;
 }
 
 function renderFrame() {
@@ -880,26 +842,10 @@ const swayEls = {
 function applySway() {
   const t = elapsed;
   let orbit = '', svg = '', sph = '';
-  switch (params.sway) {
-    case 2: /* ふわふわ */
-      orbit = `translateY(${(Math.sin(t * 0.5) * 10).toFixed(2)}px)`; break;
-    case 3: /* シーソー */
+  switch (SWAYS[(params.sway || 1) - 1].id) {
+    case 'seesaw': /* シーソー: 全体がゆっくり傾く */
       orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`; break;
-    case 4: /* うねり (歳差運動風) */
-      orbit = `rotate(${(Math.sin(t * 0.35) * 4 + Math.sin(t * 0.13 + 1.7) * 2.5).toFixed(3)}deg)`; break;
-    case 5: /* ジェリー (軌道の輪だけ伸縮) */
-      svg = `scale(${(1 + Math.sin(t * 0.6) * 0.02).toFixed(4)}, ${(1 - Math.sin(t * 0.6) * 0.03).toFixed(4)})`; break;
-    case 6: /* 惑星ゆらり (軌道は固定) */
-      sph = `translate(${(Math.sin(t * 0.45) * 6).toFixed(2)}px, ${(Math.sin(t * 0.6 + 1.2) * 8).toFixed(2)}px)`; break;
-    case 7: /* 逆位相 (軌道と惑星の角度が変わる) */
-      svg = `rotate(${(Math.sin(t * 0.4) * 2.5).toFixed(3)}deg)`;
-      sph = `translateY(${(-Math.sin(t * 0.4) * 9).toFixed(2)}px)`; break;
-    case 8: /* 漂流 (8の字) */
-      orbit = `translate(${(Math.sin(t * 0.3) * 9).toFixed(2)}px, ${(Math.sin(t * 0.6) * 5).toFixed(2)}px)`; break;
-    case 9: /* 呼吸 */
-      orbit = `scale(${(1 + Math.sin(t * 0.5) * 0.01).toFixed(4)})`; break;
-    case 10: /* 波乗り */
-      orbit = `rotate(${(Math.sin(t * 0.4) * 2.5).toFixed(3)}deg) translateY(${(Math.sin(t * 0.55 + 0.8) * 7).toFixed(2)}px)`; break;
+    /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
   swayEls.orbit.style.transform = orbit;
   swayEls.svgs.forEach(s => s.style.transform = svg);
@@ -1056,36 +1002,27 @@ void main(){
 function sphereFallback() {
   sphereGL = null;
   sphereCanvas.classList.add('fallback');
-  const ds = DESIGNS[params.design] || DESIGNS.A;
+  const ds = DESIGNS[params.design] || DESIGNS[Object.keys(DESIGNS)[0]];
   sphereCanvas.style.backgroundImage = `url('${ds.src}')`;
 }
 
-/* パターン別: 球体の回転角 (主回転, 2軸目) */
+/* 球体の回転角 (主回転, 2軸目) */
 function sphereAngles() {
   const sp = params.sphere;
-  switch (params.pattern) {
-    case 2: { const a = 2 * Math.PI * elapsed / (sp.duration * 0.75); return [a, a * sp.tumble]; }
-    case 3: { const a = 2 * Math.PI * elapsed / (sp.duration * 1.3); return [a, a * Math.max(0.8, sp.tumble)]; }
-    case 4: { const a = 2 * Math.PI * elapsed / (sp.duration * 1.5); return [a, a * sp.tumble * 0.4]; }
-    case 5: { /* ドットと同じリズムで刻む */
-      const period = params.duration / 8 / params.globalSpeed;
-      const a = 2 * Math.PI / 8 * stepGlide(elapsed / period) * (sp.duration ? 32 / sp.duration : 1);
-      return [a, a * sp.tumble];
-    }
-    default: { const a = 2 * Math.PI * elapsed / sp.duration; return [a, a * sp.tumble]; }
-  }
+  const a = 2 * Math.PI * elapsed / sp.duration;
+  return [a, a * sp.tumble];
 }
 
 function renderSphere() {
   if (!sphereGL) {
     if (sphereCanvas.classList.contains('fallback')) {
-      const ds = DESIGNS[params.design] || DESIGNS.A;
+      const ds = DESIGNS[params.design] || DESIGNS[Object.keys(DESIGNS)[0]];
       sphereCanvas.style.backgroundImage = `url('${ds.src}')`;
     }
     return;
   }
   const { gl, progs } = sphereGL;
-  const pr = progs[params.design] || progs.A;
+  const pr = progs[params.design] || progs[Object.keys(progs)[0]];
   if (!pr || (pr.needsTex && !pr.tex)) return;
   const [ang, ang2] = sphereAngles();
   gl.useProgram(pr.prog);
@@ -1128,7 +1065,6 @@ renderFrame();
 window.__anim = {
   step(dt) { elapsed += dt; renderFrame(); },
   setElapsed(v) { elapsed = v; renderFrame(); },
-  setPattern(n) { params.pattern = n; renderFrame(); },
   setSway(n) { params.sway = n; renderFrame(); },
   setDesign(k) { params.design = k; renderFrame(); },
   setDither(n) { params.dither = n; renderFrame(); },
@@ -1304,112 +1240,118 @@ applyMarquee();
 
 /* ================= パターン/惑星スイッチャー ================= */
 function buildSwitcher() {
-  const pRow = document.getElementById('swPatterns');
-  const sRow = document.getElementById('swSways');
-  const dRow = document.getElementById('swDesigns');
-  const liRow = document.getElementById('swLights');
-  const diRow = document.getElementById('swDithers');
+  const secsRoot = document.getElementById('swSecs');
   const desc = document.getElementById('swDesc');
-  pRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
-  sRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
-  dRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
-  liRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
-  diRow.querySelectorAll('.sw-pill').forEach(el => el.remove());
+  secsRoot.innerHTML = '';
 
-  function syncDitherRow() {
-    diRow.style.display = params.design === 'E' ? '' : 'none';
+  /* 折りたたみセクション (大カテゴリ) */
+  function section(label, open) {
+    const sec = document.createElement('div');
+    sec.className = 'sw-sec' + (open ? '' : ' closed');
+    const head = document.createElement('div');
+    head.className = 'sw-sec-head';
+    head.innerHTML = `<span>${label}</span><span class="sw-sec-cur"></span><span class="sw-sec-chev">▾</span>`;
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'sw-sec-body';
+    head.onclick = () => sec.classList.toggle('closed');
+    sec.append(head, bodyEl);
+    secsRoot.appendChild(sec);
+    return { body: bodyEl, cur: head.querySelector('.sw-sec-cur'), sec };
   }
-  function syncDesc() {
-    let html =
-      'アニメ: ' + PATTERNS[params.pattern - 1].desc +
-      '<br>ゆらぎ: ' + SWAYS[params.sway - 1].desc;
-    if (params.light === 2) {
-      html += '<br>ライト: ' + LIGHTS[1].desc;
-    }
-    if (params.design === 'E') {
-      html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
-    }
+  /* 選択ピルの行 */
+  function pills(container, items, isOn, onPick) {
+    const row = document.createElement('div');
+    row.className = 'sw-row';
+    items.forEach((it, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw-pill';
+      if (it.swatch) {
+        const sw = document.createElement('span');
+        sw.className = 'sw-swatch';
+        sw.style.background = it.swatch;
+        b.append(sw);
+      }
+      b.append(document.createTextNode(it.name));
+      b.classList.toggle('on', isOn(it, i));
+      b.onclick = () => {
+        onPick(it, i);
+        row.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', isOn(items[j], j)));
+        syncAll();
+        save();
+      };
+      row.appendChild(b);
+    });
+    container.appendChild(row);
+  }
+
+  const secSway = section('ゆらぎ', true);
+  pills(secSway.body, SWAYS, (_, i) => params.sway === i + 1, (_, i) => params.sway = i + 1);
+
+  const secDesign = section('惑星', false);
+  pills(secDesign.body,
+    Object.entries(DESIGNS).map(([key, d]) => ({ key, name: d.name, swatch: d.swatch })),
+    it => params.design === it.key, it => params.design = it.key);
+
+  const secLight = section('ライト', false);
+  pills(secLight.body, LIGHTS, (_, i) => params.light === i + 1, (_, i) => params.light = i + 1);
+
+  const secDither = section('ディザ', false);
+  pills(secDither.body, DITHERS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
+
+  function syncAll() {
+    secSway.cur.textContent = SWAYS[params.sway - 1].name;
+    secDesign.cur.textContent = (DESIGNS[params.design] || {}).name || '';
+    secLight.cur.textContent = LIGHTS[params.light - 1].name;
+    secDither.cur.textContent = DITHERS[params.dither - 1].name;
+    secDither.sec.style.display = params.design === 'E' ? '' : 'none';
+    let html = 'ゆらぎ: ' + SWAYS[params.sway - 1].desc;
+    if (params.light === 2) html += '<br>ライト: ' + LIGHTS[1].desc;
+    if (params.design === 'E') html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
     desc.innerHTML = html;
   }
-  PATTERNS.forEach((pt, i) => {
-    const b = document.createElement('button');
-    b.className = 'sw-pill';
-    b.textContent = pt.name;
-    const sync = () => b.classList.toggle('on', params.pattern === i + 1);
-    b.onclick = () => {
-      params.pattern = i + 1;
-      pRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.pattern === j + 1));
-      syncDesc();
-      save();
-    };
-    sync();
-    pRow.appendChild(b);
-  });
-  SWAYS.forEach((sw, i) => {
-    const b = document.createElement('button');
-    b.className = 'sw-pill';
-    b.textContent = sw.name;
-    const sync = () => b.classList.toggle('on', params.sway === i + 1);
-    b.onclick = () => {
-      params.sway = i + 1;
-      sRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.sway === j + 1));
-      syncDesc();
-      save();
-    };
-    sync();
-    sRow.appendChild(b);
-  });
-  Object.entries(DESIGNS).forEach(([key, ds]) => {
-    const b = document.createElement('button');
-    b.className = 'sw-pill';
-    const sw = document.createElement('span');
-    sw.className = 'sw-swatch';
-    sw.style.background = ds.swatch;
-    b.append(sw, document.createTextNode(ds.name));
-    const sync = () => b.classList.toggle('on', params.design === key);
-    b.onclick = () => {
-      params.design = key;
-      dRow.querySelectorAll('.sw-pill').forEach(el => el.classList.remove('on'));
-      b.classList.add('on');
-      syncDitherRow();
-      syncDesc();
-      save();
-    };
-    sync();
-    dRow.appendChild(b);
-  });
-  LIGHTS.forEach((lt, i) => {
-    const b = document.createElement('button');
-    b.className = 'sw-pill';
-    b.textContent = lt.name;
-    const sync = () => b.classList.toggle('on', params.light === i + 1);
-    b.onclick = () => {
-      params.light = i + 1;
-      liRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.light === j + 1));
-      syncDesc();
-      save();
-    };
-    sync();
-    liRow.appendChild(b);
-  });
-  DITHERS.forEach((dt, i) => {
-    const b = document.createElement('button');
-    b.className = 'sw-pill';
-    b.textContent = dt.name;
-    const sync = () => b.classList.toggle('on', params.dither === i + 1);
-    b.onclick = () => {
-      params.dither = i + 1;
-      diRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', params.dither === j + 1));
-      syncDesc();
-      save();
-    };
-    sync();
-    diRow.appendChild(b);
-  });
-  syncDitherRow();
-  syncDesc();
+  syncAll();
 }
 buildSwitcher();
+
+/* スイッチャー: 開閉・ドラッグ移動 */
+const switcherEl = document.getElementById('switcher');
+document.getElementById('swChev').addEventListener('click', (e) => {
+  e.stopPropagation();
+  switcherEl.classList.toggle('closed');
+});
+(function enableSwitcherDrag() {
+  const head = document.getElementById('swHead');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.id === 'swChev') return;
+    dragging = true;
+    const r = switcherEl.getBoundingClientRect();
+    switcherEl.style.top = r.top + 'px';
+    switcherEl.style.bottom = 'auto';
+    switcherEl.style.left = r.left + 'px';
+    sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+    head.setPointerCapture(e.pointerId);
+  });
+  head.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    switcherEl.style.left = Math.max(0, Math.min(window.innerWidth - 60, ox + e.clientX - sx)) + 'px';
+    switcherEl.style.top = Math.max(0, Math.min(window.innerHeight - 40, oy + e.clientY - sy)) + 'px';
+  });
+  head.addEventListener('pointerup', () => { dragging = false; });
+})();
+
+/* いまの設定をコピー → Claudeに貼ればコードのデフォルトに焼き込める */
+document.getElementById('swCopy').addEventListener('click', async () => {
+  const btn = document.getElementById('swCopy');
+  const json = JSON.stringify(params, null, 2);
+  try {
+    await navigator.clipboard.writeText(json);
+    btn.textContent = '✅ コピーしました！Claudeに貼ればデフォルト化できます';
+  } catch (e) {
+    window.prompt('この内容をコピーしてください', json);
+  }
+  setTimeout(() => { btn.textContent = '📋 いまの設定をコピー（デフォルト化用）'; }, 3000);
+});
 
 /* パネル開閉 */
 const panel = document.getElementById('panel');
