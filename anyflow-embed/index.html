@@ -150,6 +150,413 @@
     to   { transform: translateX(-50%); }
   }
 
+  /* ================= スクロールセクション共通 ================= */
+  html { scroll-behavior: smooth; }
+  :root { --s: 1; --sp: 1; }
+
+  /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
+  .pin { position: relative; }
+  .pin-vp {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #f3f3f3;
+  }
+  .pin-stage {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1440px;
+    height: 921px;
+    transform: translate(-50%, -50%) scale(var(--sp));
+  }
+
+  /* 通常フローのステージ (KVと同じスケール方式) */
+  .flow-wrap { width: 100%; overflow: hidden; }
+  .flow-stage {
+    position: relative;
+    width: 1440px;
+    transform-origin: top left;
+    transform: scale(var(--s));
+  }
+
+  /* ブラー出現の共通初期状態 (JSが毎フレーム上書きする) */
+  .rv { opacity: 0; will-change: opacity, filter, transform; }
+
+  /* ---- Vision セクション ---- */
+  .vis-label {
+    position: absolute;
+    left: 120px;
+    top: 265px;
+    font-weight: 300;
+    font-size: 28px;
+    color: #101828;
+  }
+  .vis-line {
+    position: absolute;
+    left: 120px;
+    font-weight: 100;
+    font-size: 96px;
+    line-height: 170px;
+    color: #101828;
+    white-space: nowrap;
+    will-change: transform, clip-path, filter, opacity;
+  }
+  .vis-l1 { top: 318px; }
+  .vis-l2 { top: 488px; }
+
+  /* Platform 図 (ミニ楕円 → 実寸へ育つ) */
+  .pf-wrap {
+    position: absolute;
+    left: 0;
+    top: 127px;
+    width: 862px;
+    height: 667px;
+    transform-origin: 50% 50%;
+    will-change: transform, opacity, filter;
+  }
+  .pf-wrap svg { position: absolute; inset: 0; overflow: visible; }
+  .pf-dot {
+    position: absolute;
+    width: 13.4px;
+    height: 13.4px;
+    border-radius: 50%;
+    margin: -6.7px 0 0 -6.7px;
+    will-change: transform, opacity;
+  }
+  .pf-name {
+    position: absolute;
+    font-weight: 300;
+    font-size: 18px;
+    color: #101828;
+    white-space: nowrap;
+  }
+  .pf-title {
+    position: absolute;
+    left: 267px;
+    top: 277px;
+    width: 330px;
+    font-weight: 100;
+    font-size: 48px;
+    color: #101828;
+  }
+  .pf-title small {
+    display: block;
+    margin-top: 10px;
+    padding-left: 21px;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+  .val-head {
+    position: absolute;
+    left: 893px;
+    top: 148px;
+    color: #101828;
+  }
+  .val-head .vh-s { font-weight: 300; font-size: 24px; display: block; }
+  .val-head .vh-l { font-weight: 100; font-size: 56px; display: block; margin-top: 6px; }
+  .val-point { position: absolute; width: 328px; color: #101828; }
+  .val-p1 { left: 934px; top: 342px; }
+  .val-p2 { left: 992px; top: 529px; }
+  .val-point .vp-tag {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 300;
+    font-size: 15px;
+  }
+  .val-point .vp-tag i {
+    width: 7px; height: 7px;
+    background: #FF5D97;
+    display: inline-block;
+  }
+  .val-point .vp-tag em { font-style: normal; color: #FF5D97; }
+  .val-point h3 { font-weight: 300; font-size: 28px; margin-top: 8px; }
+  .val-point p { font-weight: 300; font-size: 14px; line-height: 21px; margin-top: 20px; color: #333; }
+
+  /* ---- 実績セクション ---- */
+  #results .flow-stage { height: 760px; }
+  .res-img {
+    position: absolute;
+    left: -95px;
+    top: 58px;
+    width: 993px;
+    height: 430px;
+    object-fit: cover;
+    will-change: filter, opacity;
+  }
+  .res-head {
+    position: absolute;
+    left: 1038px;
+    top: 117px;
+    font-weight: 100;
+    font-size: 40px;
+    line-height: 59px;
+    color: #101828;
+  }
+  .res-lead {
+    position: absolute;
+    left: 1027px;
+    top: 274px;
+    width: 291px;
+    text-align: right;
+    color: #101828;
+  }
+  .res-lead .rl-label { font-weight: 300; font-size: 18px; display: block; }
+  .res-lead .rl-num {
+    font-weight: 100;
+    font-size: 110px;
+    line-height: 120px;
+    display: block;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .res-text {
+    position: absolute;
+    left: 120px;
+    top: 600px;
+    width: 491px;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 27px;
+    color: #333;
+  }
+  .res-stats {
+    position: absolute;
+    left: 745px;
+    top: 588px;
+    display: flex;
+    color: #101828;
+  }
+  .res-stats .st {
+    padding: 0 32px;
+    text-align: center;
+    border-left: 1px solid #d9d9d9;
+  }
+  .res-stats .st:first-child { border-left: none; }
+  .res-stats .st b {
+    display: block;
+    font-weight: 300;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .res-stats .st span {
+    font-weight: 100;
+    font-size: 42px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ---- 開発者体験 (ダーク) ---- */
+  #dev .pin-vp {
+    background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+  }
+  #dev .pin-stage { background: transparent; }
+  .dev-center {
+    position: absolute;
+    left: 0;
+    width: 1440px;
+    text-align: center;
+    color: #eaeaea;
+    will-change: transform, opacity, filter;
+  }
+  .dev-center .dc-label {
+    display: block;
+    font-weight: 300;
+    font-size: 16px;
+    color: #00ABEB;
+    margin-bottom: 14px;
+  }
+  .dev-center .dc-a, .dev-center .dc-b {
+    display: block;
+    font-weight: 200;
+    font-size: 44px;
+    line-height: 66px;
+    will-change: transform, opacity;
+  }
+  .dev-mock {
+    position: absolute;
+    left: 475px;
+    top: 284px;
+    width: 840px;
+    height: 504px;
+    will-change: transform, opacity, filter;
+  }
+  /* モック本体: カンプのダークガラスをHTMLで再現 (画像書き出しだと白くなるため) */
+  .dm-panel {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.13);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(0,0,0,.38);
+    overflow: hidden;
+  }
+  .dm-side {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 42px;
+    border-right: 1px solid rgba(255,255,255,.08);
+  }
+  .dm-side i {
+    position: absolute;
+    left: 17px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.22);
+  }
+  .dm-side i.pk { background: #FF5D97; }
+  .dm-code { position: absolute; left: 110px; top: 46px; }
+  .dm-row { display: flex; gap: 7px; margin-bottom: 16.5px; }
+  .dm-row .b { height: 7px; border-radius: 4px; }
+  .b.cp { background: #FF5D97; }
+  .b.cb { background: #38B7F5; }
+  .b.cw { background: rgba(255,255,255,.72); }
+  .b.cf { background: rgba(255,255,255,.26); }
+  .dm-chat {
+    position: absolute;
+    left: 545px; top: 0; bottom: 0; right: 0;
+    border-left: 1px solid rgba(255,255,255,.08);
+  }
+  .dm-chat-head {
+    position: absolute;
+    left: 12px; top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,.92);
+  }
+  .dm-chat-head svg { display: block; }
+  .dm-msg { position: absolute; left: 13px; display: flex; gap: 9px; }
+  .dm-msg .av {
+    flex: 0 0 auto;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #0EBBFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #fff;
+    font-style: normal;
+  }
+  .dm-msg .av.pk { background: #FF5D97; }
+  .dm-msg .lines {
+    background: rgba(255,255,255,.07);
+    border-radius: 10px;
+    padding: 11px 14px;
+  }
+  .dm-msg .lines i {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.5);
+    margin-top: 8px;
+  }
+  .dm-msg .lines i:first-child { margin-top: 0; }
+  .dm-input {
+    position: absolute;
+    left: 12px; right: 44px; bottom: 16px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 300;
+    color: rgba(255,255,255,.38);
+  }
+  .dm-send {
+    position: absolute;
+    right: 8px; bottom: 15px;
+    width: 27px; height: 27px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    color: #333;
+    font-size: 14px;
+    font-style: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dev-strength {
+    position: absolute;
+    left: 118px;
+    top: 390px;
+    width: 320px;
+    color: #eaeaea;
+    will-change: opacity, filter, transform;
+  }
+  .dev-strength .ds-label {
+    display: block;
+    font-weight: 300;
+    font-size: 16px;
+    color: #00ABEB;
+    margin-bottom: 10px;
+  }
+  .dev-strength .ds-title { font-weight: 200; font-size: 34px; }
+
+  /* ---- 導入事例 ---- */
+  .case-title {
+    position: absolute;
+    left: 120px;
+    top: 100px;
+    font-weight: 100;
+    font-size: 44px;
+    color: #101828;
+  }
+  .case-card {
+    position: absolute;
+    left: 440px;
+    top: 270px;
+    width: 880px;
+    height: 345px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.06);
+    will-change: transform, opacity, filter;
+  }
+  .case-card img {
+    position: absolute;
+    left: 44px;
+    top: 32px;
+    width: 421px;
+    height: 281px;
+    object-fit: cover;
+    display: block;
+  }
+  .case-card .cc-body {
+    position: absolute;
+    left: 489px;
+    top: 69px;
+    width: 347px;
+  }
+  .case-card .cc-quote {
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 32px;
+    color: #101828;
+  }
+  .case-card .cc-tag {
+    display: inline-block;
+    margin-top: 26px;
+    padding: 2px 10px;
+    border: 1px solid #c9c9c9;
+    font-weight: 300;
+    font-size: 12px;
+    color: #555;
+  }
+  .case-card .cc-company {
+    margin-top: 8px;
+    font-weight: 300;
+    font-size: 26px;
+    color: #101828;
+  }
+
   /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
   .switcher {
     position: fixed;
@@ -343,10 +750,10 @@
       <div class="logo"><img src="assets/header-logo.svg" alt="Anyflow Embed"></div>
       <nav class="nav">
         <div class="nav-links">
-          <a href="#">ビジョン</a>
-          <a href="#">提供できること</a>
-          <a href="#">使用イメージ</a>
-          <a href="#">導入事例</a>
+          <a href="#vision">ビジョン</a>
+          <a href="#results">提供できること</a>
+          <a href="#dev">使用イメージ</a>
+          <a href="#cases">導入事例</a>
         </div>
         <button class="cta">お問い合わせ</button>
       </nav>
@@ -413,6 +820,141 @@
   </div>
 </div>
 
+<!-- ================= Vision + 2つの価値 (スクロールジャック) ================= -->
+<section class="pin" id="vision">
+  <div class="pin-vp">
+    <div class="pin-stage">
+      <div class="vis-label rv" id="visLabel">Our Vison</div>
+      <div class="vis-line vis-l1" id="visL1">つなぐことが、</div>
+      <div class="vis-line vis-l2" id="visL2">強みになる時代へ。</div>
+
+      <div class="pf-wrap" id="pfWrap">
+        <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="pfG0" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FF5D97"/><stop offset="0.370192" stop-color="#FFCFE0"/><stop offset="0.490385" stop-color="white"/><stop offset="0.600962" stop-color="#A2E6FF"/><stop offset="1" stop-color="#00ABEB"/>
+            </linearGradient>
+            <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="363.464" cy="333.499" rx="473.816" ry="158.868" transform="rotate(-23.3266 363.464 333.499)" stroke="url(#pfG0)" stroke-width="3"/>
+          <ellipse cx="363.463" cy="333.522" rx="473.816" ry="158.868" transform="rotate(-5.36549 363.463 333.522)" stroke="url(#pfG1)" stroke-width="3"/>
+        </svg>
+        <div id="pfDots"></div>
+        <div class="pf-title rv" id="pfTitle">Platform<small>プラットフォーム</small></div>
+      </div>
+
+      <div class="val-head rv" id="valHead">
+        <span class="vh-s">連携が生む、</span>
+        <span class="vh-l">2つの価値</span>
+      </div>
+      <div class="val-point val-p1 rv" id="valP1">
+        <div class="vp-tag"><i></i>Point <em>01</em></div>
+        <h3>賢いAIの土台をつくる</h3>
+        <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
+      </div>
+      <div class="val-point val-p2 rv" id="valP2">
+        <div class="vp-tag"><i></i>Point <em>02</em></div>
+        <h3>業務実行の手足となる</h3>
+        <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 実績 (カウンター) ================= -->
+<section class="flow-wrap" id="results">
+  <div class="flow-stage">
+    <img class="res-img rv" id="resImg" src="assets/results-gradient.png" alt="">
+    <div class="res-head rv" id="resHead">事業の推進力を<br>生み出す</div>
+    <div class="res-lead rv" id="resLead">
+      <span class="rl-label">導入企業</span>
+      <span class="rl-num" id="cntMain">200+</span>
+    </div>
+    <div class="res-text rv" id="resText">テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</div>
+    <div class="res-stats rv" id="resStats">
+      <div class="st"><b>連携実績</b><span id="cntSub1">500+</span></div>
+      <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
+      <div class="st"><b>最短リリース</b><span>1week</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 開発者体験 (ダーク・スクロールジャック) ================= -->
+<section class="pin" id="dev">
+  <div class="pin-vp">
+    <div class="pin-stage">
+      <div class="dev-center" id="devH1" style="top:380px">
+        <span class="dc-label">Strength 01</span>
+        <span class="dc-a">自動生成で</span>
+        <span class="dc-b">開発スピードを加速</span>
+      </div>
+      <div class="dev-center" id="devH2" style="top:380px">
+        <span class="dc-label">Strength 01</span>
+        <span class="dc-a">開発環境に</span>
+        <span class="dc-b">柔軟に適用</span>
+      </div>
+      <div class="dev-mock" id="devMock">
+        <div class="dm-panel">
+          <div class="dm-side">
+            <i class="pk" style="top:113px"></i><i style="top:143px"></i><i style="top:170px"></i><i style="top:197px"></i><i style="top:226px"></i>
+          </div>
+          <div class="dm-code" id="dmCode"></div>
+          <div class="dm-chat">
+            <div class="dm-chat-head">
+              <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 1.5l1.6 4.3 4.4 1.2-4.4 1.6-1.6 4.4-1.4-4.4L2.5 7l4.6-1.2L8.5 1.5z" fill="#38B7F5"/><circle cx="14" cy="3" r="1.4" fill="#38B7F5"/></svg>
+              AI Assistant
+            </div>
+            <div class="dm-msg" style="top:70px"><i class="av">🤖</i><div class="lines" style="width:238px"><i style="width:150px"></i><i style="width:196px"></i><i style="width:116px"></i></div></div>
+            <div class="dm-msg" style="top:150px"><i class="av pk">👤</i><div class="lines" style="width:226px"><i style="width:176px"></i><i style="width:148px"></i></div></div>
+            <div class="dm-msg" style="top:216px"><i class="av">🤖</i><div class="lines" style="width:180px"><i style="width:92px"></i><i style="width:124px"></i></div></div>
+            <div class="dm-input">Ask anything...</div>
+            <i class="dm-send">↑</i>
+          </div>
+        </div>
+      </div>
+      <div class="dev-strength" id="devStrength">
+        <span class="ds-label">Strength 01</span>
+        <span class="ds-title" id="devStrengthTitle">CLIへの対応</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 導入事例 (カードスタック) ================= -->
+<section class="pin" id="cases">
+  <div class="pin-vp">
+    <div class="pin-stage">
+      <div class="case-title rv" id="caseTitle">導入事例</div>
+      <div class="case-card" id="caseCard0">
+        <img src="assets/case-smarthr.png" alt="株式会社SmartHR">
+        <div class="cc-body">
+          <div class="cc-quote">1年で15種類の連携機能を提供！！外部データ連携のインフラとしてAnyflowを活用</div>
+          <span class="cc-tag">HRテック</span>
+          <div class="cc-company">株式会社SmartHR</div>
+        </div>
+      </div>
+      <div class="case-card" id="caseCard1">
+        <img src="assets/case-deex.png" alt="deex株式会社">
+        <div class="cc-body">
+          <div class="cc-quote">CRMと自社プロダクトを相互連携。実物の連携画面で商談を推進！！</div>
+          <span class="cc-tag">セールステック</span>
+          <div class="cc-company">deex株式会社</div>
+        </div>
+      </div>
+      <div class="case-card" id="caseCard2">
+        <img src="assets/case-salesgo.png" alt="SALES GO 株式会社">
+        <div class="cc-body">
+          <div class="cc-quote">単なるデジタル化でなく”真の営業DX”へ。100種以上のツール連携を推進中！！</div>
+          <span class="cc-tag">セールステック</span>
+          <div class="cc-company">SALES GO 株式会社</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= パターン切替スイッチャー (ドラッグ移動・リサイズ可) ================= -->
 <div class="switcher" id="switcher">
   <div class="sw-head" id="swHead">
@@ -472,6 +1014,18 @@ const DITHERS = [
 const LIGHTS = [
   { name: '①なし', desc: 'カンプのテクスチャそのまま（現行）。' },
   { name: '②右上光源', desc: '右上からライトが当たっているように陰影をつける。白は光の反射として表現（真っ白にはしない）。' },
+];
+
+/* ================= セクション演出の複数案 =================
+   絵コンテで「Claude側で補完して」とされた箇所は案を出し分けられる */
+const DEV_PATTERNS = [
+  { key: 'A', name: '案A ブラースワップ', desc: 'モックは右に据え置き、訴求文がブラーで入れ替わる。切替の瞬間にモックが一瞬やわらかくぼける。' },
+  { key: 'B', name: '案B 縦送り', desc: '訴求文が上下にスライドして入れ替わり、モックもふわっと連動して浮く。' },
+  { key: 'C', name: '案C ズーム切替', desc: '切り替わるたびにモックへ一歩ずつ寄っていく。没入感重視。' },
+];
+const CASE_PATTERNS = [
+  { key: 'A', name: '案A 奥行きスタック', desc: '絵コンテ準拠。新しいカードが手前に重なり、前のカードは奥に沈んでいく。' },
+  { key: 'B', name: '案B 順番に表示', desc: 'カンプ準拠の縦並びレイアウトのまま、スクロールで1枚ずつブラー表示。' },
 ];
 
 /* ================= 惑星デザイン (Figmaカンプ5種) =================
@@ -677,8 +1231,16 @@ const DEFAULTS = {
     direction: 1,    // 1=左へ / -1=右へ
   },
   dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
+  /* スクロールセクションの調整値 */
+  sections: {
+    vision:  { lenVh: 700, spinTurns: 2, blur: 8 },   // 尺(スクロール量) / ドット周回数 / 文字ブラー量
+    results: { countDur: 1.4, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
+    dev:     { lenVh: 900, swapBlur: 10 },            // 尺 / CLI・API・SDK切替のブラー量
+    cases:   { lenVh: 450, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
+  },
+  patterns: { dev: 'A', cases: 'A' },                 // セクション演出の採用案
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v4';
+const STORAGE_KEY = 'anyflow-embed-anim-v5';
 
 let params = load();
 function load() {
@@ -694,6 +1256,15 @@ function load() {
         inner: { ...DEFAULTS.orbits.inner, ...((s.orbits && s.orbits.inner) || {}) },
       };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
+      merged.sections = {
+        vision:  { ...DEFAULTS.sections.vision,  ...((s.sections && s.sections.vision) || {}) },
+        results: { ...DEFAULTS.sections.results, ...((s.sections && s.sections.results) || {}) },
+        dev:     { ...DEFAULTS.sections.dev,     ...((s.sections && s.sections.dev) || {}) },
+        cases:   { ...DEFAULTS.sections.cases,   ...((s.sections && s.sections.cases) || {}) },
+      };
+      merged.patterns = { ...DEFAULTS.patterns, ...(s.patterns || {}) };
+      if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
+      if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
@@ -830,6 +1401,7 @@ function renderFrame() {
   });
   applySway();
   renderSphere();
+  updateSections();
 }
 
 /* ゆらぎ: グラフィック全体(軌道・惑星)へのゆるい動き */
@@ -854,6 +1426,362 @@ function applySway() {
   const plT = (pl.dx || pl.dy || pl.scale !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale})` : '';
   swayEls.sphere.style.transform = (sph + plT).trim();
+}
+
+/* ================= スクロール連動セクション ================= */
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeOutC = t => 1 - Math.pow(1 - t, 3);
+/* 進捗 p のうち区間 [a,b] を 0→1 に切り出す (イージング付き) */
+function seg(p, a, b, ez) { return (ez || easeIO)(clamp01((p - a) / (b - a))); }
+
+const SECS = {
+  vision: document.getElementById('vision'),
+  results: document.getElementById('results'),
+  dev: document.getElementById('dev'),
+  cases: document.getElementById('cases'),
+};
+
+/* ピン留めセクションのスクロール進捗 0〜1 */
+const progOverride = {};   // デバッグ用: __anim.setProgress で固定できる
+function pinP(sec) {
+  const r = sec.getBoundingClientRect();
+  const vh = window.innerHeight || 1;
+  const total = r.height - vh;
+  if (total <= 0) return 0;
+  return clamp01(-r.top / total);
+}
+
+/* ブラー出現の共通適用 (KVの reveal と同じ質感: ブラー6-8px + 浮き上がり) */
+function rv(el, k, blur, dy) {
+  el.style.opacity = k.toFixed(3);
+  el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
+  if (dy != null) el.style.transform = k >= 1 ? '' : `translateY(${((1 - k) * dy).toFixed(2)}px)`;
+}
+
+/* ---------- Vision: Platform図のジオメトリ (Figma SVG書き出しから) ---------- */
+const PF_ELL = [
+  { cx: 363.464, cy: 333.499, rx: 473.816, ry: 158.868, rot: -23.3266 },
+  { cx: 363.463, cy: 333.522, rx: 473.816, ry: 158.868, rot: -5.36549 },
+];
+/* 停止角度はカンプのドット位置から楕円式で逆算。lx/ly はラベルのオフセット */
+const PF_DOTS = [
+  { ell: 0, deg: 263.7, color: '#0E4497', label: 'コネクタ',     lx: -50, ly: -49 },
+  { ell: 0, deg: 117.8, color: '#0EBBFF', label: '監査',         lx: -16, ly: 14 },
+  { ell: 0, deg: 72.9,  color: '#000000', label: '権限',         lx: 0,   ly: 14 },
+  { ell: 0, deg: 47.1,  color: '#FF5D97', label: 'ワークフロー', lx: 0,   ly: 17 },
+  { ell: 0, deg: -30.6, color: '#0EBBFF', label: '' },
+  { ell: 1, deg: 205.4, color: '#FF5D97', label: '' },
+];
+function pfDotPos(d, deg) {
+  const e = PF_ELL[d.ell];
+  const t = deg * Math.PI / 180, r = e.rot * Math.PI / 180;
+  const lx = e.rx * Math.cos(t), ly = e.ry * Math.sin(t);
+  return { x: e.cx + lx * Math.cos(r) - ly * Math.sin(r), y: e.cy + lx * Math.sin(r) + ly * Math.cos(r) };
+}
+
+const visEls = {
+  label: document.getElementById('visLabel'),
+  l1: document.getElementById('visL1'),
+  l2: document.getElementById('visL2'),
+  pfWrap: document.getElementById('pfWrap'),
+  pfTitle: document.getElementById('pfTitle'),
+  valHead: document.getElementById('valHead'),
+  valP1: document.getElementById('valP1'),
+  valP2: document.getElementById('valP2'),
+  dots: [], names: [],
+};
+(function buildPfDots() {
+  const root = document.getElementById('pfDots');
+  PF_DOTS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'pf-dot';
+    el.style.background = d.color;
+    el.style.opacity = 0;
+    root.appendChild(el);
+    visEls.dots.push(el);
+    if (d.label) {
+      const nm = document.createElement('div');
+      nm.className = 'pf-name rv';
+      nm.textContent = d.label;
+      const pos = pfDotPos(d, d.deg);
+      nm.style.left = (pos.x + d.lx) + 'px';
+      nm.style.top = (pos.y + d.ly) + 'px';
+      root.appendChild(nm);
+      visEls.names.push(nm);
+    }
+  });
+})();
+
+/* ビジョンのフェーズ境界 (セクション進捗 0〜1 の中の割合) */
+const VIS_P = {
+  label: [0.00, 0.05], l1: [0.05, 0.15], l2: [0.15, 0.25],
+  slide: [0.27, 0.35], mini: [0.36, 0.42], exit: [0.44, 0.52],
+  move:  [0.52, 0.63], spin: [0.63, 0.73], pf: [0.72, 0.80],
+  vhead: [0.80, 0.86], pt1: [0.86, 0.92], pt2: [0.92, 0.98],
+};
+
+function updateVision(p) {
+  const B = params.sections.vision.blur;
+  const ex = seg(p, ...VIS_P.exit);
+
+  rv(visEls.label, seg(p, ...VIS_P.label) * (1 - ex), B, 10);
+
+  /* 見出し2行: トリミング出現 → 左へスライド → 上下に分かれて退場 */
+  const sl = seg(p, ...VIS_P.slide);
+  [[visEls.l1, VIS_P.l1, 265, -280], [visEls.l2, VIS_P.l2, 170, 280]].forEach(([el, ph, off, exDy]) => {
+    const k = seg(p, ...ph);
+    el.style.clipPath = k >= 1 ? '' : `inset(-12% ${((1 - k) * 104).toFixed(2)}% -12% -2%)`;
+    el.style.opacity = (k > 0 ? 1 : 0) * (1 - ex);
+    el.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 3).toFixed(2)}px)` : '';
+    el.style.transform = `translate(${((1 - sl) * off).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+  });
+
+  /* 楕円: 見出しの右横に小さく出現 → 左下の実寸位置へ移動しながら拡大 */
+  const mi = seg(p, ...VIS_P.mini);
+  const mv = seg(p, ...VIS_P.move);
+  const s = 0.22 + 0.78 * mv;
+  visEls.pfWrap.style.opacity = mi.toFixed(3);
+  visEls.pfWrap.style.transform =
+    `translate(${((1 - mv) * 554).toFixed(2)}px, ${((1 - mv) * -55).toFixed(2)}px) scale(${s.toFixed(4)})`;
+  visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
+
+  /* ドット: 出現して勢いよく周回 → 減速して規定位置に停止 */
+  const sp = seg(p, ...VIS_P.spin, easeOutC);
+  const fadeIn = seg(p, VIS_P.spin[0], VIS_P.spin[0] + 0.03);
+  const turns = params.sections.vision.spinTurns;
+  PF_DOTS.forEach((d, i) => {
+    const el = visEls.dots[i];
+    if (sp <= 0) { el.style.opacity = 0; return; }
+    el.style.opacity = fadeIn.toFixed(3);
+    const pos = pfDotPos(d, d.deg + 360 * turns * (1 - sp));
+    el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
+  });
+
+  /* 役割ラベル + Platform 見出し + 2つの価値 */
+  visEls.names.forEach((el, i) => rv(el, seg(p, VIS_P.pf[0] + i * 0.012, VIS_P.pf[1] + i * 0.012), B, 6));
+  rv(visEls.pfTitle, seg(p, ...VIS_P.pf), B, 8);
+  rv(visEls.valHead, seg(p, ...VIS_P.vhead), B, 12);
+  rv(visEls.valP1, seg(p, ...VIS_P.pt1), B, 14);
+  rv(visEls.valP2, seg(p, ...VIS_P.pt2), B, 14);
+}
+
+/* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
+const resEls = {
+  img: document.getElementById('resImg'),
+  head: document.getElementById('resHead'),
+  lead: document.getElementById('resLead'),
+  text: document.getElementById('resText'),
+  stats: document.getElementById('resStats'),
+  cntMain: document.getElementById('cntMain'),
+  cntSub1: document.getElementById('cntSub1'),
+  cntSub2: document.getElementById('cntSub2'),
+};
+let resT0 = null;
+
+/* ランダム数字 → 左の桁から順に確定するカウンター */
+function setCounter(el, finalStr, suffix, t, dur) {
+  const chars = finalStr.split('');
+  const nDigits = chars.filter(ch => /\d/.test(ch)).length;
+  let di = 0, out = '';
+  for (const ch of chars) {
+    if (!/\d/.test(ch)) { out += ch; continue; }
+    const lockAt = dur * (di + 1) / nDigits;
+    out += (t >= lockAt) ? ch : String(Math.floor(Math.random() * 10));
+    di++;
+  }
+  el.textContent = out + suffix;
+}
+
+function updateResults() {
+  const r = SECS.results.getBoundingClientRect();
+  const vh = window.innerHeight || 1;
+  if (r.top > vh) resT0 = null;                                  // 下へ戻ったらリセット (再生し直せる)
+  else if (resT0 === null && r.top < vh * 0.6) resT0 = elapsed;  // 6割まで入ったら開始
+  const c = params.sections.results;
+  const t = resT0 === null ? 0 : elapsed - resT0;
+
+  /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠) */
+  const kImg = easeOutC(clamp01(t / 1.2));
+  resEls.img.style.opacity = clamp01(t / 0.5).toFixed(3);
+  resEls.img.style.filter = kImg >= 1 ? '' : `blur(${((1 - kImg) * c.imgBlur).toFixed(2)}px)`;
+
+  rv(resEls.head, easeOutC(clamp01((t - 0.35) / 0.8)), 8, 12);
+  rv(resEls.lead, easeOutC(clamp01((t - 0.5) / 0.7)), 8, 12);
+  rv(resEls.text, easeOutC(clamp01((t - 0.7) / 0.8)), 8, 10);
+  rv(resEls.stats, easeOutC(clamp01((t - 0.8) / 0.8)), 8, 10);
+
+  setCounter(resEls.cntMain, '200', '+', t - 0.7, c.countDur);
+  setCounter(resEls.cntSub1, '500', '+', t - 1.0, c.countDur);
+  setCounter(resEls.cntSub2, '99.9', '%', t - 1.0, c.countDur);
+}
+
+/* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
+/* モックのコード行: カンプの並びを再現 [インデント, [色,幅]...] */
+const DM_ROWS = [
+  { i: 0,  b: [['cp', 40], ['cb', 64]] },
+  { i: 20, b: [['cw', 52], ['cb', 92], ['cp', 28]] },
+  { i: 33, b: [['cb', 76], ['cw', 35]] },
+  { i: 33, b: [['cf', 115]] },
+  { i: 20, b: [['cw', 19]] },
+  { i: 3,  b: [['cf', 8]] },
+  { i: 0,  b: [['cp', 30], ['cb', 84]], gap: 24 },
+  { i: 20, b: [['cw', 62], ['cp', 44]] },
+  { i: 33, b: [['cb', 117], ['cb', 22]] },
+  { i: 33, b: [['cw', 61]] },
+  { i: 46, b: [['cp', 30], ['cb', 80]] },
+  { i: 33, b: [['cw', 40]] },
+  { i: 5,  b: [['cp', 13]] },
+];
+(function buildDmCode() {
+  const root = document.getElementById('dmCode');
+  DM_ROWS.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'dm-row';
+    row.style.paddingLeft = r.i + 'px';
+    if (r.gap) row.style.marginTop = r.gap + 'px';
+    r.b.forEach(([cls, w]) => {
+      const bar = document.createElement('span');
+      bar.className = 'b ' + cls;
+      bar.style.width = w + 'px';
+      row.appendChild(bar);
+    });
+    root.appendChild(row);
+  });
+})();
+
+const devEls = {
+  h1: document.getElementById('devH1'),
+  h2: document.getElementById('devH2'),
+  mock: document.getElementById('devMock'),
+  strength: document.getElementById('devStrength'),
+  strengthTitle: document.getElementById('devStrengthTitle'),
+};
+const DEV_P = {
+  h1: [0.00, 0.06], split1: [0.10, 0.20], grow1: [0.12, 0.26], out1: [0.30, 0.36],
+  h2: [0.38, 0.44], split2: [0.46, 0.56], grow2: [0.48, 0.62], out2: [0.58, 0.64],
+  dock: [0.64, 0.72], sw1: [0.76, 0.80], sw2: [0.87, 0.91],
+};
+
+/* 見出し: ブラー出現 → 上下に割れる → ブラー退場 */
+function devHeading(el, inK, splitK, outK) {
+  el.style.opacity = (inK * (1 - outK)).toFixed(3);
+  el.style.filter = (inK < 1 || outK > 0)
+    ? `blur(${((1 - inK) * 10 + outK * 12).toFixed(2)}px)` : '';
+  const d = (splitK * 180).toFixed(2);
+  el.querySelector('.dc-label').style.transform = `translateY(${-d}px)`;
+  el.querySelector('.dc-a').style.transform = `translateY(${-d}px)`;
+  el.querySelector('.dc-b').style.transform = `translateY(${d}px)`;
+}
+
+function updateDev(p) {
+  const c = params.sections.dev;
+  const pat = params.patterns.dev;
+
+  devHeading(devEls.h1, seg(p, ...DEV_P.h1), seg(p, ...DEV_P.split1), seg(p, ...DEV_P.out1));
+  devHeading(devEls.h2, seg(p, ...DEV_P.h2), seg(p, ...DEV_P.split2), seg(p, ...DEV_P.out2));
+
+  const g1 = seg(p, ...DEV_P.grow1), o1 = seg(p, ...DEV_P.out1);
+  const g2 = seg(p, ...DEV_P.grow2), dk = seg(p, ...DEV_P.dock);
+  const s1 = seg(p, ...DEV_P.sw1), s2 = seg(p, ...DEV_P.sw2);
+
+  /* モックの状態: ちら見え → 分割の間から拡大 → 退場 → 再拡大 → 右へドック */
+  let op = 0, sc = 1, tx = 0, ty = 0, bl = 0;
+  if (p < DEV_P.h2[0]) {
+    const peek = 1 - seg(p, 0.06, 0.11);           // 冒頭: 画面下にちら見え
+    if (g1 > 0) {
+      op = Math.min(1, g1 * 3) * (1 - o1);
+      sc = 0.14 + 0.6 * g1;
+      tx = -175.7; ty = -46;
+      bl = o1 * 16;
+    } else if (peek > 0) {
+      op = 0.9 * peek * seg(p, 0.0, 0.04);
+      sc = 0.6; tx = -175.7; ty = 520;
+    }
+  } else {
+    op = Math.min(1, g2 * 3);
+    sc = 0.14 + 0.86 * g2;
+    tx = -175.7 * (1 - dk);
+    ty = -36 * (1 - dk);
+    /* CLI/API/SDK 切替の演出 (採用案で分岐) */
+    const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
+    const dip = Math.sin(Math.PI * swapK);
+    if (pat === 'A') {
+      bl = dip * c.swapBlur * 0.4;                  // 一瞬やわらかくぼける
+    } else if (pat === 'B') {
+      ty += dip * -24;                              // 小さく連動して浮く
+      bl = dip * c.swapBlur * 0.2;
+    } else if (pat === 'C') {
+      sc *= 1 + 0.05 * (s1 + s2);                   // 一歩ずつ寄る
+      bl = dip * c.swapBlur * 0.5;
+    }
+  }
+  devEls.mock.style.opacity = op.toFixed(3);
+  devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
+  devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
+
+  /* 左の訴求テキスト: ドック完了で出現、スクロールごとに CLI → API → SDK */
+  const title = s1 < 0.5 ? 'CLIへの対応' : s2 < 0.5 ? 'APIへの対応' : 'SDKへの対応';
+  if (devEls.strengthTitle.textContent !== title) devEls.strengthTitle.textContent = title;
+  const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
+  const dip = Math.sin(Math.PI * swapK);
+  const stIn = dk;
+  let stOp = stIn * (1 - dip);
+  let stY = (1 - stIn) * 20;
+  let stBl = (1 - stIn) * 10 + dip * c.swapBlur;
+  if (pat === 'B') stY += (swapK < 0.5 ? -swapK * 60 : (1 - swapK) * 60);
+  devEls.strength.style.opacity = stOp.toFixed(3);
+  devEls.strength.style.transform = `translateY(${stY.toFixed(2)}px)`;
+  devEls.strength.style.filter = stBl > 0.05 ? `blur(${stBl.toFixed(2)}px)` : '';
+}
+
+/* ---------- 導入事例 (カードスタック) ---------- */
+const caseEls = {
+  title: document.getElementById('caseTitle'),
+  cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
+};
+const CASE_IN = [[0.02, 0.20], [0.34, 0.52], [0.66, 0.84]];
+
+function updateCases(p) {
+  const c = params.sections.cases;
+  rv(caseEls.title, seg(p, 0, 0.10), 8, 8);
+
+  if (params.patterns.cases === 'A') {
+    /* 案A: 固定追従スタック。前のカードは奥に沈む (絵コンテ準拠) */
+    caseEls.cards.forEach((el, i) => {
+      const inK = seg(p, ...CASE_IN[i]);
+      let back = 0;
+      for (let j = i + 1; j < 3; j++) back += seg(p, ...CASE_IN[j]);
+      const d = c.depth;
+      /* 出現: 不透明化は早め、移動はゆっくり (重なりが濁らないように) */
+      const op = Math.min(1, inK * 2.5);
+      const sc = 1 - back * 0.05 * d - (1 - inK) * 0.03;
+      const y = (1 - inK) * 420 - back * 36 * d;
+      el.style.transformOrigin = '50% 0%';
+      el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc.toFixed(4)})`;
+      el.style.opacity = (op * (1 - back * 0.16 * d)).toFixed(3);
+      const bl = (1 - inK) * 6 + back * 2.2 * d;
+      el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
+      el.style.zIndex = i + 1;
+    });
+  } else {
+    /* 案B: カンプ準拠の縦並びを 1枚ずつブラー表示 */
+    caseEls.cards.forEach((el, i) => {
+      const inK = seg(p, 0.06 + i * 0.26, 0.30 + i * 0.26);
+      el.style.transformOrigin = '0 0';
+      el.style.transform = `translate(0px, ${(150 + i * 245 - 270 + (1 - inK) * 30).toFixed(2)}px) scale(0.68)`;
+      el.style.opacity = inK.toFixed(3);
+      el.style.filter = inK >= 1 ? '' : `blur(${((1 - inK) * 10).toFixed(2)}px)`;
+      el.style.zIndex = i + 1;
+    });
+  }
+}
+
+function updateSections() {
+  updateVision(progOverride.vision != null ? progOverride.vision : pinP(SECS.vision));
+  updateDev(progOverride.dev != null ? progOverride.dev : pinP(SECS.dev));
+  updateCases(progOverride.cases != null ? progOverride.cases : pinP(SECS.cases));
+  updateResults();
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -1069,6 +1997,10 @@ window.__anim = {
   setDesign(k) { params.design = k; renderFrame(); },
   setDither(n) { params.dither = n; renderFrame(); },
   setLight(n) { params.light = n; renderFrame(); },
+  /* セクション進捗を固定して確認する: __anim.setProgress('dev', 0.5) / 解除は null */
+  setProgress(key, v) { if (v == null) delete progOverride[key]; else progOverride[key] = v; renderFrame(); },
+  setPattern(sec, key) { params.patterns[sec] = key; renderFrame(); },
+  startResults() { resT0 = elapsed; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
 
@@ -1076,8 +2008,17 @@ window.__anim = {
 const stage = document.getElementById('stage');
 function fit() {
   const s = Math.min(1, window.innerWidth / 1440);
+  /* ピン留めセクションは縦横どちらもはみ出さないように収める */
+  const sp = Math.min(window.innerWidth / 1440, window.innerHeight / 921);
+  document.documentElement.style.setProperty('--s', s);
+  document.documentElement.style.setProperty('--sp', sp);
   stage.style.transform = `scale(${s})`;
   stage.parentElement.style.height = (921 * s) + 'px';
+  /* スクロール尺 (調整パネルから変えられる) */
+  SECS.vision.style.height = params.sections.vision.lenVh + 'vh';
+  SECS.dev.style.height = params.sections.dev.lenVh + 'vh';
+  SECS.cases.style.height = params.sections.cases.lenVh + 'vh';
+  SECS.results.style.height = (760 * s) + 'px';
 }
 window.addEventListener('resize', fit);
 fit();
@@ -1211,6 +2152,23 @@ function buildPanel() {
   segRow('流れる方向', [['← 左へ', 1], ['右へ →', -1]],
     () => params.marquee.direction, v => { params.marquee.direction = v; applyMarquee(); save(); });
 
+  /* ========== 🎬 セクション演出 (スクロール) ========== */
+  const catSec = category('🎬 セクション演出（スクロール）', false);
+  const sv = () => params.sections;
+  sub(catSec, '📖 ビジョン');
+  rows.push(slider('スクロール尺', 300, 1400, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('ドット周回数', 0.5, 4, 0.5, () => sv().vision.spinTurns, v => sv().vision.spinTurns = v, v => v + '周'));
+  rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
+  sub(catSec, '📈 実績カウンター');
+  rows.push(slider('カウント時間', 0.4, 3, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px'));
+  sub(catSec, '🖥 開発者体験');
+  rows.push(slider('スクロール尺', 400, 1800, 20, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('切替ブラー量', 0, 24, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px'));
+  sub(catSec, '🗂 導入事例');
+  rows.push(slider('スクロール尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
+
   /* ボタン */
   const btns = document.createElement('div');
   btns.className = 'btns';
@@ -1298,15 +2256,27 @@ function buildSwitcher() {
   const secDither = section('ディザ', false);
   pills(secDither.body, DITHERS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
 
+  const secDev = section('開発者体験の切替', false);
+  pills(secDev.body, DEV_PATTERNS, it => params.patterns.dev === it.key, it => params.patterns.dev = it.key);
+
+  const secCase = section('導入事例カード', false);
+  pills(secCase.body, CASE_PATTERNS, it => params.patterns.cases === it.key, it => params.patterns.cases = it.key);
+
   function syncAll() {
     secSway.cur.textContent = SWAYS[params.sway - 1].name;
     secDesign.cur.textContent = (DESIGNS[params.design] || {}).name || '';
     secLight.cur.textContent = LIGHTS[params.light - 1].name;
     secDither.cur.textContent = DITHERS[params.dither - 1].name;
     secDither.sec.style.display = params.design === 'E' ? '' : 'none';
+    const devPat = DEV_PATTERNS.find(x => x.key === params.patterns.dev) || DEV_PATTERNS[0];
+    const casePat = CASE_PATTERNS.find(x => x.key === params.patterns.cases) || CASE_PATTERNS[0];
+    secDev.cur.textContent = devPat.name;
+    secCase.cur.textContent = casePat.name;
     let html = 'ゆらぎ: ' + SWAYS[params.sway - 1].desc;
     if (params.light === 2) html += '<br>ライト: ' + LIGHTS[1].desc;
     if (params.design === 'E') html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
+    html += '<br>開発者体験: ' + devPat.desc;
+    html += '<br>導入事例: ' + casePat.desc;
     desc.innerHTML = html;
   }
   syncAll();

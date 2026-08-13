@@ -56,8 +56,9 @@
     {
       "name": "anyflow-embed",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed' && exec python3 -m http.server 8773"],
-      "port": 8773
+      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed' && exec python3 -m http.server ${PORT:-8773}"],
+      "port": 8773,
+      "autoPort": true
     },
     {
       "name": "halftone-gen",
