@@ -653,7 +653,10 @@ export default function TopMock({
           </motion.div>
         </div>
 
-        <div className="pointer-events-none relative z-10 -mt-[865px]">
+        {/* z-index は付けない：付けると独立した重なりグループになり、
+            見出しの「ぼーっ」のオーバーレイ混色が背景写真まで届かなくなる。
+            KV より後ろのDOM順なので、relative だけで手前に描画される */}
+        <div className="pointer-events-none relative -mt-[865px]">
 
           <div className="mx-auto flex w-[980px] flex-col items-center pb-[200px] pt-[1005px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
