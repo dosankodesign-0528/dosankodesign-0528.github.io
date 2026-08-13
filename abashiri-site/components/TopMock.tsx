@@ -199,6 +199,7 @@ import HeroCombo from "./HeroCombo";
 import HeroBlurSeq from "./HeroBlurSeq";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
+import { type BubbleTune } from "./bubbleConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -220,6 +221,7 @@ export default function TopMock({
   cardHover = 1,
   moreAnim = 1,
   bubbleAnim = 0,
+  bubbleTune,
 }: {
   intro?: number;
   kv?: number;
@@ -249,6 +251,8 @@ export default function TopMock({
   moreAnim?: number;
   /** 1〜3: 吹き出しのムニムニアニメ（0でなし） */
   bubbleAnim?: number;
+  /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
+  bubbleTune?: BubbleTune;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -557,6 +561,7 @@ export default function TopMock({
                   timing={timing}
                   gate={waitConsent}
                   bubbleAnim={bubbleAnim}
+                  bubbleTune={bubbleTune}
                   onScheduled={handleScheduled}
                 />
               ) : combo ? (

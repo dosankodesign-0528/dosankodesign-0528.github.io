@@ -12,8 +12,45 @@
  */
 import { useEffect, useRef } from "react";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
+import { DEFAULT_BUBBLE, type BubbleTune } from "./bubbleConfig";
 import { collect } from "./writingCore";
 import { waitForConsent } from "./consentGate";
+
+/*
+ * 吹き出しパスの平滑化：
+ * 輪郭を等間隔の点でなぞり直し、隣どうしの平均で角を取り、
+ * なめらかな曲線（Catmull-Rom→ベジェ）として描き直す。
+ */
+function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
+  if (passes <= 0 || points < 8) return;
+  const len = p.getTotalLength();
+  if (!len) return;
+  let pts: { x: number; y: number }[] = [];
+  for (let i = 0; i < points; i++) {
+    const pt = p.getPointAtLength((len * i) / points);
+    pts.push({ x: pt.x, y: pt.y });
+  }
+  for (let k = 0; k < passes; k++) {
+    pts = pts.map((pt, i) => {
+      const a = pts[(i - 1 + pts.length) % pts.length];
+      const b = pts[(i + 1) % pts.length];
+      return { x: (a.x + pt.x * 2 + b.x) / 4, y: (a.y + pt.y * 2 + b.y) / 4 };
+    });
+  }
+  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} `;
+  for (let i = 0; i < pts.length; i++) {
+    const p0 = pts[(i - 1 + pts.length) % pts.length];
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % pts.length];
+    const p3 = pts[(i + 2) % pts.length];
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
+  }
+  p.setAttribute("d", d + "Z");
+}
 
 /* 吹き出しのムニムニアニメ（1〜3。0でなし） */
 const BUBBLE_WOBBLE_FILTER = `
@@ -25,19 +62,30 @@ const BUBBLE_WOBBLE_FILTER = `
   <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
 </filter>`;
 
-function startBubbleAnim(bubble: SVGPathElement, svg: SVGSVGElement, variant: number) {
+function startBubbleAnim(
+  bubble: SVGPathElement,
+  svg: SVGSVGElement,
+  variant: number,
+  tune: BubbleTune
+) {
   bubble.style.transformBox = "fill-box";
   bubble.style.transformOrigin = "50% 50%";
   if (variant === 1) {
-    /* 案1: ぷにぷに呼吸（縦横を逆位相でスクイッシュ） */
+    /* 案1: ぷにぷに呼吸（縦横を逆位相でスクイッシュ）。量と速さは bubbleConfig */
+    const ax = tune.puni.ampX / 100;
+    const ay = tune.puni.ampY / 100;
     bubble.animate(
       [
         { transform: "scale(1, 1)" },
-        { transform: "scale(1.016, 0.984)" },
-        { transform: "scale(0.99, 1.012)" },
+        { transform: `scale(${1 + ax}, ${1 - ay})` },
+        { transform: `scale(${1 - ax * 0.6}, ${1 + ay * 0.7})` },
         { transform: "scale(1, 1)" },
       ],
-      { duration: 3600, iterations: Infinity, easing: "ease-in-out" }
+      {
+        duration: tune.puni.period * 1000,
+        iterations: Infinity,
+        easing: "ease-in-out",
+      }
     );
   } else if (variant === 2) {
     /* 案2: ふわゆら漂い（浮遊＋ごくわずかな傾き） */
@@ -72,6 +120,7 @@ export default function HeroBlurSeq({
   timing = DEFAULT_HERO_TIMING,
   gate = false,
   bubbleAnim = 0,
+  bubbleTune = DEFAULT_BUBBLE,
   onScheduled,
 }: {
   timing?: HeroTiming;
@@ -79,6 +128,8 @@ export default function HeroBlurSeq({
   gate?: boolean;
   /** 1〜3: 吹き出しのムニムニアニメ（0でなし） */
   bubbleAnim?: number;
+  /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
+  bubbleTune?: BubbleTune;
   /** 全体の完了予定時刻(ms)を通知（ボタン・イラスト出現の起点） */
   onScheduled?: (endMs: number) => void;
 }) {
@@ -97,6 +148,10 @@ export default function HeroBlurSeq({
       svg.setAttribute("height", "390");
 
       const { bubble, rest } = collect(svg);
+      /* 吹き出しの歪みをならす（表示前に一度だけ） */
+      if (bubble) {
+        smoothBubblePath(bubble, bubbleTune.smooth.passes, bubbleTune.smooth.points);
+      }
       const upper = rest.filter((i) => i.midY < 205); // な〜んにもない
       const lower = rest.filter((i) => i.midY >= 205); // たまらない＋あしらい
 
@@ -136,7 +191,7 @@ export default function HeroBlurSeq({
       /* 登場が済んだらムニムニ開始 */
       if (bubble && bubbleAnim) {
         setTimeout(() => {
-          if (!aborted) startBubbleAnim(bubble, svg, bubbleAnim);
+          if (!aborted) startBubbleAnim(bubble, svg, bubbleAnim, bubbleTune);
         }, t0 + 950);
       }
       /* 2. な〜んにもない */
@@ -162,7 +217,7 @@ export default function HeroBlurSeq({
       aborted = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timing, gate, bubbleAnim]);
+  }, [timing, gate, bubbleAnim, bubbleTune]);
 
   return (
     <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />

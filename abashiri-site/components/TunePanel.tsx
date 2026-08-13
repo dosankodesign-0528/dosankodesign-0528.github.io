@@ -3,6 +3,7 @@
 /*
  * 調整パネル共通シェル
  * - ヘッダーをドラッグして好きな位置に移動できる
+ * - 右下の「◢」をドラッグしてサイズを変えられる（中身が長い時はスクロール）
  * - 「たたむ/ひらく」で折りたためる
  * 今後の調整パネルは必ずこれで作る（ヒデさんルール）
  */
@@ -18,6 +19,10 @@ export default function TunePanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(true);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [size, setSize] = useState<{ w: number; h: number | null }>({
+    w: 300,
+    h: null,
+  });
 
   const startDrag = (e: React.PointerEvent) => {
     const panel = panelRef.current;
@@ -38,13 +43,41 @@ export default function TunePanel({
     window.addEventListener("pointerup", up);
   };
 
+  const startResize = (e: React.PointerEvent) => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = panel.getBoundingClientRect();
+    const sx = e.clientX;
+    const sy = e.clientY;
+    const w0 = rect.width;
+    const h0 = rect.height;
+    /* 右上基準(right指定)のままだと広げた時に左に伸びて戸惑うので、位置を固定してから広げる */
+    if (!pos) setPos({ x: rect.left, y: rect.top });
+    const move = (ev: PointerEvent) =>
+      setSize({
+        w: Math.max(240, Math.min(600, w0 + ev.clientX - sx)),
+        h: Math.max(180, Math.min(window.innerHeight - 24, h0 + ev.clientY - sy)),
+      });
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
   return (
     <div
       ref={panelRef}
-      className="fixed z-[80] w-[300px]"
-      style={pos ? { left: pos.x, top: pos.y } : { right: 12, top: 12 }}
+      className="fixed z-[80]"
+      style={{
+        width: size.w,
+        ...(pos ? { left: pos.x, top: pos.y } : { right: 12, top: 12 }),
+      }}
     >
-      <div className="rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur">
+      <div className="relative rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur">
         <div
           className="mb-1 flex cursor-move select-none items-center justify-between"
           onPointerDown={startDrag}
@@ -59,7 +92,25 @@ export default function TunePanel({
             {open ? "たたむ" : "ひらく"}
           </button>
         </div>
-        {open && children}
+        {open && (
+          <div
+            className="overflow-y-auto pr-1"
+            style={size.h ? { maxHeight: size.h - 64 } : undefined}
+          >
+            {children}
+          </div>
+        )}
+        {open && (
+          <div
+            onPointerDown={startResize}
+            title="ドラッグでサイズ変更"
+            className="absolute bottom-1 right-1 flex h-5 w-5 cursor-nwse-resize items-end justify-end text-[#9db9d1]"
+          >
+            <svg viewBox="0 0 10 10" className="h-3 w-3" fill="currentColor">
+              <path d="M9 1v8H1l2-2h4V3l2-2Z" opacity="0.7" />
+            </svg>
+          </div>
+        )}
       </div>
     </div>
   );

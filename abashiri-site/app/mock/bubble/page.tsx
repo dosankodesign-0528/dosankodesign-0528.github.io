@@ -30,6 +30,15 @@ export default function BubbleMockIndex() {
           <br />
           登場演出（ブラー順出し）はどの案も今のままです。
         </p>
+        <Link
+          href="/mock/bubble/tune"
+          className="mb-4 block rounded-2xl bg-[#0070c9]/90 p-5 backdrop-blur transition-transform hover:scale-[1.02]"
+        >
+          <p className="mb-1 text-[18px] font-black text-white">🫧 調整パネル（おすすめ）</p>
+          <p className="text-[13px] font-medium leading-relaxed text-white/90">
+            パスのなめらか補正＋大げさめのぷにぷに呼吸（案1）を、数値をいじりながら確認できます。
+          </p>
+        </Link>
         <div className="flex flex-col gap-4">
           {items.map((it) => (
             <Link
