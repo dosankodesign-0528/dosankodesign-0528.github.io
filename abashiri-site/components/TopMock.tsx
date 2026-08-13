@@ -281,6 +281,8 @@ export default function TopMock({
   layout?: Partial<LayoutTune> | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  /* 「ぼーっと過ごせるスポット」見出し（オーバーレイ混色のため出現後に filter を外す） */
+  const spotHeadRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
@@ -567,7 +569,7 @@ export default function TopMock({
             スクロールでその場から奥へ引いて消える */}
         <div className="pointer-events-none sticky top-0 -mt-[945px] h-[865px]">
           <motion.div
-            className="flex h-full flex-col items-center pt-[120px]"
+            className="flex h-full flex-col items-center pt-[130px]"
             initial={
               animated
                 ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
@@ -653,7 +655,7 @@ export default function TopMock({
 
         <div className="pointer-events-none relative z-10 -mt-[865px]">
 
-          <div className="mx-auto flex w-[980px] flex-col items-center pb-[200px] pt-[870px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-[200px] pt-[1005px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-[80px]">
@@ -666,8 +668,19 @@ export default function TopMock({
                   variants={stagger}
                 >
                   <motion.div
+                    ref={spotHeadRef}
                     variants={reveal}
                     className="flex w-full items-end justify-between"
+                    /* 登場アニメが残す filter/transform はスタッキングコンテキストを
+                       作ってしまい、「ぼーっ」のオーバーレイ混色が背景写真に届かない。
+                       出現し終わったら消して、カンプ通り写真と混ざるようにする */
+                    onAnimationComplete={() => {
+                      const el = spotHeadRef.current;
+                      if (el) {
+                        el.style.filter = "none";
+                        el.style.transform = "none";
+                      }
+                    }}
                   >
                     <div className="flex items-start">
                       <div className="mix-blend-overlay">
