@@ -394,9 +394,15 @@ export default function TopMock({
 
       e.preventDefault();
 
-      /* 1) 中央へじわっと吸着（縦の目標値ごと動かす） */
+      /* 1) 中央へじわっと吸着。
+         「今の位置＋ズレ」＝センターに合う絶対位置を目標にする。
+         毎回同じ値に収束するので、足し込みすぎによるガタつきが起きない */
       if (Math.abs(dist) > 3) {
-        targetY += (dist / scale) * 0.3;
+        const desiredY = sc.scrollTop + dist / scale;
+        targetY = Math.max(
+          0,
+          Math.min(sc.scrollHeight - sc.clientHeight, desiredY)
+        );
         kick();
       }
 
