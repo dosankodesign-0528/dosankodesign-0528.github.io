@@ -247,13 +247,14 @@
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
+  /* 拡大でボケないよう、この箱は変形させない。
+     楕円は SVG の座標そのものを毎フレーム計算して描く (常にベクターの実寸) */
   .pf-wrap {
     position: absolute;
     left: 0;
     top: 127px;
     width: 862px;
     height: 667px;
-    transform-origin: 50% 50%;
   }
   .pf-wrap svg {
     position: absolute;
@@ -261,6 +262,7 @@
     overflow: visible;
     shape-rendering: geometricPrecision;
   }
+  .pf-texts { position: absolute; inset: 0; }
   .pf-dot {
     position: absolute;
     width: 13.378px;
@@ -1080,8 +1082,10 @@
           <ellipse cx="363.463" cy="333.522" rx="473.816" ry="158.868" transform="rotate(-5.36549 363.463 333.522)" stroke="url(#pfG1)" stroke-width="3"/>
         </svg>
         <div id="pfDots"></div>
-        <div class="pf-title rv" id="pfTitle">Platform</div>
-        <div class="pf-sub rv" id="pfSub">プラットフォーム</div>
+        <div class="pf-texts" id="pfTexts">
+          <div class="pf-title rv" id="pfTitle">Platform</div>
+          <div class="pf-sub rv" id="pfSub">プラットフォーム</div>
+        </div>
       </div>
 
       <div class="val-group">
@@ -1534,26 +1538,26 @@ const DEFAULTS = {
   /* スクロールセクションの調整値 */
   sections: {
     common: {
-      smooth: 2.5,       // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
+      smooth: 5,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
     vision:  {
       lenVh: 260,        // 尺(自動再生ぶんは尺を食わないので短くてよい)
       labelAt: 0.35,     // Our Vison がブラーで出る
-      labelDur: 1.7,     // その所要時間
-      line1At: 1.15,     // 1行目 (Our Vison に続けてすぐ)
-      line2Gap: 0.85,    // 2行目までの間
-      revealDur: 1.35,   // 1行の出現時間
+      labelDur: 1.4,     // その所要時間
+      line1At: 0.9,      // 1行目 (Our Vison に続けてすぐ)
+      line2Gap: 0.7,     // 2行目までの間
+      revealDur: 1.1,    // 1行の出現時間
       slideGap: 0.15,    // 2行そろってすぐ左へ動き出す
-      slideDur: 1.7,     // 左へ吸着する時間
+      slideDur: 1.4,     // 左へ吸着する時間
       slideStagger: 0.45,// 2行目が遅れて動き出す割合
       slideX1: 0,        // 中央スタート位置の微調整(px)
       slideX2: 0,
       charStagger: 0.45, // 案C: 文字ごとの時間差
       miniGap: 0.25,     // 左に着いてから軌道グラフィックが出るまで
-      miniDur: 1.4,      // 軌道グラフィックの出現時間
-      moveDur: 2.6,      // ワンスクロールで左下へ移動する時間(秒・ゆったり)
+      miniDur: 1.1,      // 軌道グラフィックの出現時間
+      moveDur: 2.0,      // ワンスクロールで左下へ移動する時間(秒)
       miniX: 559,        // ミニ楕円の初期オフセット(px)
       miniY: -100,
       miniScale: 0.26,   // ミニ楕円の縮小率
@@ -1569,7 +1573,10 @@ const DEFAULTS = {
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v7';
+/* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
+   上げないと、利用者のブラウザに残った旧値が新しいデフォルトを上書きして
+   レイアウトが壊れる (v7→v8: slideX を絶対位置から中央からの微調整に変更) */
+const STORAGE_KEY = 'anyflow-embed-anim-v8';
 
 let params = load();
 function load() {
@@ -1842,6 +1849,7 @@ const visEls = {
   pfWrap: document.getElementById('pfWrap'),
   pfTitle: document.getElementById('pfTitle'),
   pfSub: document.getElementById('pfSub'),
+  pfTexts: document.getElementById('pfTexts'),
   valHead: document.getElementById('valHead'),
   valP1: document.getElementById('valP1'),
   valP2: document.getElementById('valP2'),
@@ -1849,6 +1857,7 @@ const visEls = {
 };
 (function buildPfDots() {
   const root = document.getElementById('pfDots');
+  const textRoot = document.getElementById('pfTexts');
   PF_DOTS.forEach(d => {
     const el = document.createElement('div');
     el.className = 'pf-dot';
@@ -1863,7 +1872,7 @@ const visEls = {
     nm.textContent = l.text;
     nm.style.left = l.x + 'px';
     nm.style.top = l.y + 'px';
-    root.appendChild(nm);
+    textRoot.appendChild(nm);
     visEls.names.push(nm);
   });
 })();
@@ -1967,16 +1976,30 @@ function updateVision(p) {
     }
   });
 
-  /* 軌道グラフィック: 文字の右横に小さくブラー出現(自動) → ワンスクロールで左下へ＋実寸 */
+  /* 軌道グラフィック: 文字の右横に小さくブラー出現(自動) → ワンスクロールで左下へ＋実寸。
+     CSSのscaleで拡大するとラスタライズ済みの絵が引き伸ばされて粗くなるため、
+     楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
   const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
   const sc = c.miniScale + (1 - c.miniScale) * mv;
+  const ox = (1 - mv) * c.miniX, oy = (1 - mv) * c.miniY;
+  const PVX = 431, PVY = 333.5;                      // 縮小の中心 (pf-wrap の中央)
+  const mapX = x => (x - PVX) * sc + PVX + ox;
+  const mapY = y => (y - PVY) * sc + PVY + oy;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
-  visEls.pfWrap.style.transform =
-    `translate(${((1 - mv) * c.miniX).toFixed(2)}px, ${((1 - mv) * c.miniY).toFixed(2)}px) scale(${sc.toFixed(4)})`;
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
-  /* 線の太さ: 縮小時に細くなりすぎないよう、見た目の太さを保つ */
-  const sw = (c.strokeW / Math.max(0.2, sc)).toFixed(2);
-  pfEllEls.forEach(el => el.setAttribute('stroke-width', sw));
+  pfEllEls.forEach((el, i) => {
+    const e = PF_ELL[i];
+    const cx = mapX(e.cx), cy = mapY(e.cy);
+    el.setAttribute('cx', cx.toFixed(2));
+    el.setAttribute('cy', cy.toFixed(2));
+    el.setAttribute('rx', (e.rx * sc).toFixed(2));
+    el.setAttribute('ry', (e.ry * sc).toFixed(2));
+    el.setAttribute('transform', `rotate(${e.rot} ${cx.toFixed(2)} ${cy.toFixed(2)})`);
+    /* 小さい時は線も細く (カンプのミニ軌道の見え方に合わせる) */
+    el.setAttribute('stroke-width', (c.strokeW * (0.45 + 0.55 * mv)).toFixed(2));
+  });
+  /* Platform文字・役割名は移動完了後にしか出ないので、縮小中は隠しておく */
+  visEls.pfTexts.style.opacity = mv >= 0.999 ? 1 : 0;
 
   /* 移動と同時にドットがフェードイン＆周回 → 減速して規定位置に停止 */
   const T = mvT;
@@ -1997,7 +2020,8 @@ function updateVision(p) {
     el.style.opacity = dotIn.toFixed(3);
     if (dotIn <= 0) return;
     const pos = pfDotPos(d, d.deg - totalRot + rot);
-    el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
+    el.style.transform =
+      `translate(${mapX(pos.x).toFixed(2)}px, ${mapY(pos.y).toFixed(2)}px) scale(${sc.toFixed(3)})`;
   });
 
   /* 左下に着いたら間を置かずに Platform → プラットフォーム → 役割名 →
