@@ -7,6 +7,50 @@ import { motion } from "framer-motion";
 import Bird from "./Bird";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
+import { mergeLayout, type LayoutTune } from "./layoutConfig";
+
+/*
+ * 人物イラストのアニメ（/mock/illust で比較）。どれも約15秒に1回動く。
+ * 1=くるん一回転（現行） 2=ゆらゆらスイング 3=ぷるんと弾む
+ * 4=ぴょこんと跳ねる 5=おじぎ＆のけぞり
+ */
+const ILLUST_ANIMS: Record<
+  number,
+  {
+    animate: Record<string, number | number[]>;
+    transition: Record<string, unknown>;
+    style?: React.CSSProperties & { transformPerspective?: number };
+  }
+> = {
+  1: {
+    animate: { rotateY: 360 },
+    transition: { duration: 1.0, ease: [0.3, 1.25, 0.45, 1], repeat: Infinity, repeatDelay: 14 },
+    style: { transformPerspective: 700 },
+  },
+  2: {
+    animate: { rotate: [0, -7, 6, -4, 2.5, 0] },
+    transition: { duration: 1.6, ease: "easeInOut", repeat: Infinity, repeatDelay: 13.4 },
+    style: { transformOrigin: "50% 85%" },
+  },
+  3: {
+    animate: {
+      scaleX: [1, 1.08, 0.94, 1.04, 1],
+      scaleY: [1, 0.9, 1.08, 0.97, 1],
+    },
+    transition: { duration: 0.9, ease: "easeInOut", repeat: Infinity, repeatDelay: 14.1 },
+    style: { transformOrigin: "50% 100%" },
+  },
+  4: {
+    animate: { y: [0, -26, 0, -10, 0], scaleY: [1, 1.04, 0.94, 1.02, 1] },
+    transition: { duration: 0.85, ease: "easeOut", repeat: Infinity, repeatDelay: 14.15 },
+    style: { transformOrigin: "50% 100%" },
+  },
+  5: {
+    animate: { rotate: [0, 10, -12, 5, 0], y: [0, 2, -4, 0, 0] },
+    transition: { duration: 1.8, ease: "easeInOut", repeat: Infinity, repeatDelay: 13.2 },
+    style: { transformOrigin: "50% 90%" },
+  },
+};
 
 type StageProps = {
   children: React.ReactNode;
@@ -22,6 +66,10 @@ type StageProps = {
   birdsEditable?: boolean;
   /** ドラッグでカモメが動いた時の通知（調整パネル用） */
   onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
+  /** 1〜5: 人物イラストの繰り返しアニメ（ILLUST_ANIMS） */
+  illustAnim?: number;
+  /** 右カラムなどの位置（layoutConfig.ts） */
+  layout?: Partial<LayoutTune> | null;
 };
 
 /**
@@ -36,7 +84,11 @@ export default function Stage({
   birds = DEFAULT_BIRDS,
   birdsEditable = false,
   onBirdMove,
+  illustAnim = 1,
+  layout,
 }: StageProps) {
+  const L = mergeLayout(layout);
+  const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[1];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
   );
@@ -173,18 +225,9 @@ export default function Stage({
                 src="/img/illust-main.png"
                 alt=""
                 className="absolute left-[1px] top-[44px] h-[357px] w-[284px] object-cover [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.15))]"
-                style={{ transformPerspective: 700 }}
-                animate={spin ? { rotateY: 360 } : { rotateY: 0 }}
-                transition={
-                  spin
-                    ? {
-                        duration: 1.0,
-                        ease: [0.3, 1.25, 0.45, 1],
-                        repeat: Infinity,
-                        repeatDelay: 14,
-                      }
-                    : undefined
-                }
+                style={ia.style}
+                animate={spin ? ia.animate : undefined}
+                transition={spin ? ia.transition : undefined}
               />
               {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
               <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">
@@ -213,8 +256,11 @@ export default function Stage({
           </div>
         </motion.div>
 
-        {/* 右レール：ロゴ・SNS・縦書き「観光サイト」（デザインカンプ 2026-08-12 修正版） */}
-        <div className="absolute right-[36px] top-[85px] flex items-start gap-[12px]">
+        {/* 右レール：ロゴ・SNS・縦書き「観光サイト」。位置は layoutConfig で調整できる */}
+        <div
+          className="absolute flex items-start gap-[12px]"
+          style={{ right: L.railX, top: L.railY }}
+        >
           <div className="flex flex-col items-center gap-[63px]">
             <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
               <img src="/img/logo-abashiri.svg" alt="網走" className="h-[159px] w-[75px]" />

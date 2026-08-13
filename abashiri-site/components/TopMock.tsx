@@ -201,6 +201,7 @@ import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
 import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
+import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -240,6 +241,7 @@ export default function TopMock({
   bubbleTune,
   mockShadow = 0,
   shadowTune,
+  layout,
 }: {
   intro?: number;
   kv?: number;
@@ -275,6 +277,8 @@ export default function TopMock({
   mockShadow?: number;
   /** 浮遊シャドウの細かい調整（shadowConfig.ts。mockShadow=0の時に有効） */
   shadowTune?: Partial<ShadowTune>;
+  /** タブレットの位置ずらし（layoutConfig.ts） */
+  layout?: Partial<LayoutTune> | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -531,11 +535,15 @@ export default function TopMock({
   }, []);
 
   const sh = MOCK_SHADOWS[mockShadow];
+  const L = mergeLayout(layout);
 
   return (
     <div
       className={`absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white ${sh ? sh.frame : ""}`}
-      style={sh ? undefined : { boxShadow: buildShadow(mergeShadow(shadowTune)) }}
+      style={{
+        ...(sh ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
+        transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
+      }}
     >
       <div
         ref={scrollerRef}

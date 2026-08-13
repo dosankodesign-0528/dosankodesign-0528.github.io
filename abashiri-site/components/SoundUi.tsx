@@ -18,6 +18,14 @@ import { devSilent } from "./devSound";
 /** 白モック内のボタン置き場（TopMock / ExperienceMock が用意する） */
 const SLOT_ID = "abashiri-sound-slot";
 
+import {
+  DEFAULT_SOUND_BTN,
+  SOUND_BTN_STORAGE_KEY,
+  SOUND_BTN_TUNE_EVENT,
+  mergeSoundBtn,
+  type SoundBtnTune,
+} from "./soundBtnConfig";
+
 const KEY = "abashiri-bgm";
 export const VIDEO_AUDIO_EVENT = "abashiri:video-audio";
 
@@ -65,6 +73,19 @@ export default function SoundUi({
   const [audible, setAudible] = useState(false);
   const duckRef = useRef(false); /* 動画再生中フラグ（動画の音声優先） */
   const [showDialog, setShowDialog] = useState(false);
+
+  /* ボタンの見た目（白の濃さ・背景ブラー）。調整パネルからライブで変えられる */
+  const [btnTune, setBtnTune] = useState<SoundBtnTune>(DEFAULT_SOUND_BTN);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SOUND_BTN_STORAGE_KEY);
+      if (raw) setBtnTune(mergeSoundBtn(JSON.parse(raw)));
+    } catch {}
+    const onTune = (e: Event) =>
+      setBtnTune(mergeSoundBtn((e as CustomEvent).detail));
+    window.addEventListener(SOUND_BTN_TUNE_EVENT, onTune);
+    return () => window.removeEventListener(SOUND_BTN_TUNE_EVENT, onTune);
+  }, []);
 
   /* ボタンはモック内左上の置き場に出す。無いページでは画面左下に出す */
   const pathname = usePathname();
@@ -217,9 +238,14 @@ export default function SoundUi({
             <button
               onClick={toggle}
               aria-label={audible ? "環境音をOFFにする" : "環境音をONにする"}
+              style={{
+                backgroundColor: `rgba(255,255,255,${btnTune.opacity / 100})`,
+                backdropFilter: `blur(${btnTune.blur}px)`,
+                WebkitBackdropFilter: `blur(${btnTune.blur}px)`,
+              }}
               className={`${
                 slot ? "" : "fixed bottom-4 left-4 z-50 "
-              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur transition-transform hover:scale-110 ${
+              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110 ${
                 audible ? "text-[#0070c9]" : "text-[#9db9d1]"
               }`}
             >

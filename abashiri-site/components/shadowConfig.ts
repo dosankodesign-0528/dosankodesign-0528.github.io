@@ -22,8 +22,9 @@ export const DEFAULT_SHADOW: ShadowTune = {
   y: 55,
   blur: 80,
   spread: -12,
-  color: "#03345f",
-  opacity: 45,
+  /* ヒデさん調整値（2026-08-13） */
+  color: "#005fb3",
+  opacity: 70,
 };
 
 export function mergeShadow(partial?: Partial<ShadowTune> | null): ShadowTune {
