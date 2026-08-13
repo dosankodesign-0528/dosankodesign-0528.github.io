@@ -1241,21 +1241,23 @@ const DEFAULTS = {
   dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
   /* スクロールセクションの調整値 */
   sections: {
+    common: {
+      smooth: 6,         // スクロール慣性補間の強さ (0=オフ、大きいほど機敏)
+    },
     vision:  {
-      lenVh: 700,        // 尺(スクロール量)
+      lenVh: 900,        // 尺(スクロール量)
       revealLen: 0.10,   // 1行の出現にかけるスクロール割合 (出る速度)
       line2Delay: 0.10,  // 2行目が出始めるまでの遅れ
-      spinDur: 1.2,      // ドットがくるくる回る秒数 (時間駆動)
-      spinTurns: 2,      // その間の周回数
+      spinDur: 4,        // ドットが軌道を流れる秒数 (KVと同じ角速度で流れて最後に減速停止)
       blur: 8,           // 文字ブラー量
     },
     results: { countDur: 1.4, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
-    dev:     { lenVh: 900, swapBlur: 10 },            // 尺 / CLI・API・SDK切替のブラー量
-    cases:   { lenVh: 450, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
+    dev:     { lenVh: 1100, swapBlur: 10 },           // 尺 / CLI・API・SDK切替のブラー量
+    cases:   { lenVh: 600, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
   },
   patterns: { dev: 'A', cases: 'A' },                 // セクション演出の採用案
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v5';
+const STORAGE_KEY = 'anyflow-embed-anim-v6';
 
 let params = load();
 function load() {
@@ -1272,6 +1274,7 @@ function load() {
       };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
       merged.sections = {
+        common:  { ...DEFAULTS.sections.common,  ...((s.sections && s.sections.common) || {}) },
         vision:  { ...DEFAULTS.sections.vision,  ...((s.sections && s.sections.vision) || {}) },
         results: { ...DEFAULTS.sections.results, ...((s.sections && s.sections.results) || {}) },
         dev:     { ...DEFAULTS.sections.dev,     ...((s.sections && s.sections.dev) || {}) },
@@ -1390,6 +1393,7 @@ function warpTime(t, amp, period, phaseDeg) {
 
 let elapsed = 0;      // 再生中のみ進む累積時間
 let lastTs = null;
+let frameDt = 1 / 60; // 直近フレームの実時間 (スクロール慣性補間用・一時停止中も進む)
 
 /* ドットの現在角度(deg): 緩急ゆらぎつきの周回 */
 function patternDeg(d, i, p) {
@@ -1581,26 +1585,33 @@ function updateVision(p) {
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
 
   /* 所定位置に着いたら時間駆動チェーン開始 (スクロールと無関係に進む):
-     ドット出現→KVと同じくるくる(spinDur秒)→規定位置に停止、
+     ドット出現 → KVのドットと同じ角速度で軌道を流れ、最後だけなめらかに減速して規定位置に停止 →
      Platform文字ブラー出現 → 役割名称 → 「連携が生む、2つの価値」 */
   const atPlace = p >= PH.move[1];
   if (!atPlace) visSpinT0 = null;
   else if (visSpinT0 === null) visSpinT0 = elapsed;
   const spinT = visSpinT0 === null ? 0 : elapsed - visSpinT0;
-  const dur = Math.max(0.2, c.spinDur);
-  const sp = easeOutC(clamp01(spinT / dur));
-  const dotIn = atPlace ? clamp01(spinT / 0.25) : 0;
+  const dur = Math.max(0.5, c.spinDur);
+  /* KVと同じ角速度 (deg/s)。等速で流れて、最後の brake 秒だけ二次曲線で減速する */
+  const v = 360 / params.duration * params.globalSpeed;
+  const brake = Math.min(1.8, dur * 0.45);
+  const cruise = dur - brake;
+  const t = Math.min(spinT, dur);
+  const remaining = t < cruise
+    ? v * (cruise - t) + v * brake / 2
+    : v * Math.pow(dur - t, 2) / (2 * brake);
+  const dotIn = atPlace ? clamp01(spinT / 0.6) : 0;
   PF_DOTS.forEach((d, i) => {
     const el = visEls.dots[i];
     el.style.opacity = dotIn.toFixed(3);
     if (dotIn <= 0) return;
-    const pos = pfDotPos(d, d.deg + 360 * c.spinTurns * (1 - sp));
+    const pos = pfDotPos(d, d.deg - remaining);
     el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
   });
-  rv(visEls.pfTitle, easeOutC(clamp01((spinT - dur * 0.6) / 0.6)), B, 8);
+  rv(visEls.pfTitle, easeOutC(clamp01((spinT - dur * 0.75) / 0.8)), B, 8);
   visEls.names.forEach((el, i) =>
-    rv(el, easeOutC(clamp01((spinT - dur - 0.25 - i * 0.12) / 0.5)), B, 6));
-  rv(visEls.valHead, easeOutC(clamp01((spinT - dur - 0.9) / 0.6)), B, 12);
+    rv(el, easeOutC(clamp01((spinT - dur - 0.3 - i * 0.15) / 0.6)), B, 6));
+  rv(visEls.valHead, easeOutC(clamp01((spinT - dur - 1.1) / 0.8)), B, 12);
 
   /* Point 01 / 02 はその後のスクロールで出す (絵コンテ準拠) */
   rv(visEls.valP1, seg(p, ...PH.pt1), B, 14);
@@ -1818,10 +1829,21 @@ function updateCases(p) {
   }
 }
 
+/* スクロール慣性補間: 生のスクロール進捗を毎フレーム少しずつ追いかける (lenis風のぬるっと感) */
+const smoothP = { vision: -1, dev: -1, cases: -1 };   // -1 = 未初期化
+function smoothTo(key, target) {
+  const k = params.sections.common.smooth;
+  if (k <= 0 || smoothP[key] < 0) { smoothP[key] = target; return target; }
+  const a = 1 - Math.exp(-frameDt * k);
+  smoothP[key] += (target - smoothP[key]) * a;
+  if (Math.abs(target - smoothP[key]) < 0.0004) smoothP[key] = target;
+  return smoothP[key];
+}
+
 function updateSections() {
-  updateVision(progOverride.vision != null ? progOverride.vision : pinP(SECS.vision));
-  updateDev(progOverride.dev != null ? progOverride.dev : pinP(SECS.dev));
-  updateCases(progOverride.cases != null ? progOverride.cases : pinP(SECS.cases));
+  updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
+  updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
+  updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', pinP(SECS.cases)));
   updateResults();
 }
 
@@ -2020,8 +2042,9 @@ function applyMarquee() {
 }
 
 function frame(ts) {
-  if (lastTs !== null && params.running) {
-    elapsed += Math.min(0.1, (ts - lastTs) / 1000);
+  if (lastTs !== null) {
+    frameDt = Math.min(0.1, (ts - lastTs) / 1000);
+    if (params.running) elapsed += frameDt;
   }
   lastTs = ts;
   renderFrame();
@@ -2196,14 +2219,16 @@ function buildPanel() {
   /* ========== 🎬 セクション演出 (スクロール) ========== */
   const catSec = category('🎬 セクション演出（スクロール）', false);
   const sv = () => params.sections;
+  sub(catSec, '🌊 共通（体験の質感）');
+  rows.push(slider('慣性のなめらかさ', 0, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
+    v => v === 0 ? 'オフ' : (v <= 4 ? 'とろり ' : v <= 8 ? 'なめらか ' : '機敏 ') + v));
   sub(catSec, '📖 ビジョン（文字の出方）');
   rows.push(slider('スクロール尺', 300, 1400, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
   rows.push(slider('出る速さ', 0.03, 0.25, 0.01, () => sv().vision.revealLen, v => sv().vision.revealLen = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('2行目の遅れ', 0, 0.25, 0.01, () => sv().vision.line2Delay, v => sv().vision.line2Delay = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
   sub(catSec, '📖 ビジョン（ドットの周回）');
-  rows.push(slider('くるくる時間', 0.4, 3, 0.1, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
-  rows.push(slider('周回数', 0.5, 4, 0.5, () => sv().vision.spinTurns, v => sv().vision.spinTurns = v, v => v + '周'));
+  rows.push(slider('流れる時間', 1, 8, 0.5, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
   sub(catSec, '📈 実績カウンター');
   rows.push(slider('カウント時間', 0.4, 3, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px'));
