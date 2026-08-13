@@ -299,6 +299,15 @@
     white-space: nowrap;
   }
   /* 右カラム: カンプでは Point02 の右端がちょうど余白120px。そこを基準に右アンカーする */
+  /* カンプ1440の構図をそのまま保つ枠。右端に寄せることで
+     軌道と「2つの価値」の間隔がカンプと同じになる */
+  .vis-comp {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 1440px;
+    height: 100%;
+  }
   .val-group {
     position: absolute;
     right: 120px;
@@ -339,7 +348,7 @@
   .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: 24px; }
 
   /* ---- 実績セクション ---- */
-  #results .flow-stage { height: 760px; }
+  #results .pin-stage { height: 921px; }
   /* カンプ座標 = TOP y - 2800 */
   .res-img {
     position: absolute;
@@ -429,14 +438,24 @@
   }
 
   /* ---- 開発者体験 (ダーク) ---- */
-  #dev .pin-vp {
+  #dev .pin-vp { background: #070707; }
+  /* 暗→明の背景。最後に明るい元の背景へ戻す */
+  .dev-bg {
+    position: absolute;
+    inset: 0;
     background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+  }
+  .dev-bg2 {
+    position: absolute;
+    inset: 0;
+    background: #f3f3f3;
+    opacity: 0;
   }
   #dev .pin-stage { background: transparent; }
   .dev-center {
     position: absolute;
     left: 0;
-    width: 1440px;
+    right: 0;                 /* ステージ幅いっぱいに広げて本当の中央に置く */
     text-align: center;
     color: #eaeaea;
     will-change: transform, opacity, filter;
@@ -480,7 +499,7 @@
     box-shadow: 0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
     overflow: hidden;
   }
-  .dm-editor { flex: 1 0 0; min-width: 0; display: flex; align-items: stretch; }
+  .dm-editor { flex: 1 0 0; min-width: 0; display: flex; align-items: stretch; position: relative; }
   /* editor-sidebar: w52 / py24 / gap24 */
   .dm-side {
     flex: 0 0 52px;
@@ -514,6 +533,42 @@
     height: 16px;
     flex: 0 0 auto;
     max-width: 100%;
+  }
+  /* 実コード表示 */
+  .dm-code.code { gap: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .dm-line {
+    height: 16px;
+    line-height: 16px;
+    font-size: 11.5px;
+    white-space: pre;
+    flex: 0 0 auto;
+    color: rgba(255,255,255,.9);
+    clip-path: inset(0 100% 0 0);
+  }
+  .dm-line .kw { color: #FF5D97; }
+  .dm-line .id { color: #0EBBFF; }
+  .dm-line .st { color: #9BE8A4; }
+  .dm-line .cm { color: rgba(255,255,255,.32); }
+  .dm-line .pl { color: rgba(255,255,255,.82); }
+  .dm-line .ok { color: #7CE7A6; }
+  /* 生成前のローディング (スケルトンがシマーする) */
+  .dm-load {
+    position: absolute;
+    left: 52px; right: 0; top: 0; bottom: 0;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .dm-load .sk {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(100deg,
+      rgba(255,255,255,.06) 30%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.06) 70%);
+    background-size: 260% 100%;
   }
   .dm-row .b { height: 6px; border-radius: 3px; flex: 0 0 auto; }
   .dm-row .sp { flex: 0 0 auto; height: 6px; }
@@ -988,6 +1043,7 @@
       <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、</span></div>
       <div class="vis-line vis-l2" id="visL2"><span class="vl-in">強みになる時代へ。</span></div>
 
+      <div class="vis-comp">
       <div class="pf-wrap" id="pfWrap">
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -1003,8 +1059,6 @@
           </defs>
           <ellipse cx="363.464" cy="333.499" rx="473.816" ry="158.868" transform="rotate(-23.3266 363.464 333.499)" stroke="url(#pfG0)" stroke-width="3"/>
           <ellipse cx="363.463" cy="333.522" rx="473.816" ry="158.868" transform="rotate(-5.36549 363.463 333.522)" stroke="url(#pfG1)" stroke-width="3"/>
-          <!-- 軌道を流れる光 (データが流れるニュアンス)。JSで生成・dashoffsetで走らせる -->
-          <g id="pfGlows" filter="url(#pfGlowF)"></g>
         </svg>
         <div id="pfDots"></div>
         <div class="pf-title rv" id="pfTitle">Platform</div>
@@ -1027,13 +1081,15 @@
           <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ================= 実績 (カウンター) ================= -->
-<section class="flow-wrap" id="results">
-  <div class="flow-stage">
+<!-- ================= 実績 (中央でピン留めしてから次へ) ================= -->
+<section class="pin" id="results">
+  <div class="pin-vp">
+    <div class="pin-stage">
     <img class="res-img rv" id="resImg" src="assets/results-gradient.png" alt="">
     <div class="res-head rv" id="resHead">事業の推進力を<br>生み出す</div>
     <div class="res-lead rv" id="resLead">
@@ -1046,12 +1102,15 @@
       <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
       <div class="st"><b>最短リリース</b><span>1week</span></div>
     </div>
+    </div>
   </div>
 </section>
 
 <!-- ================= 開発者体験 (ダーク・スクロールジャック) ================= -->
 <section class="pin" id="dev">
   <div class="pin-vp">
+    <div class="dev-bg"></div>
+    <div class="dev-bg2" id="devBg2"></div>
     <div class="pin-stage">
       <div class="dev-center" id="devH1" style="top:175px">
         <span class="dc-label">Strength 01</span>
@@ -1077,6 +1136,7 @@
               </div>
             </div>
             <div class="dm-code" id="dmCode"></div>
+            <div class="dm-load" id="dmLoad"></div>
           </div>
           <div class="dm-chat">
             <div class="dm-chat-head">
@@ -1410,8 +1470,8 @@ void main(){
 const DEFAULTS = {
   running: true,
   sway: 1,           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
-  design: 'B',       // 惑星デザイン B〜E
-  dither: 1,         // ディザ演出 1〜4 (惑星E専用)
+  design: 'E',       // 惑星デザイン B〜E
+  dither: 2,         // ディザ演出 1〜4 (惑星E専用)
   light: 1,          // ライティング 1=なし / 2=右上光源
   duration: 24,      // ドット1周の基準秒数
   globalSpeed: 1,    // 全体スピード倍率
@@ -1426,14 +1486,15 @@ const DEFAULTS = {
     tumble: 0.37,    // 多面ゆらぎ (2軸目の回転比率)
     noise: 0.5,      // 質感の粒の強さ
   },
-  planet: { dx: 0, dy: 20, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
+  planet: { dx: 0, dy: 52, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
   /* KV: グラフィック全体の位置と登場シーケンス(秒) */
   kv: {
-    gx: 0, gy: -20,   // 軌道グループ全体の位置ずらし
+    gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
     headerAt: 0.25,   // ヘッダーがブラーで出る
     eyebrowAt: 1.15,  // 「APIでデータを繋ぐプラットフォーム」
     typeAt: 2.1,      // タイピング開始
-    charDur: 0.12,    // 1文字あたり
+    charDur: 0.12,    // 1文字あたり(平均)
+    typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
     lineGap: 0.45,    // 改行の間
     graphicGap: 0.45, // 打ち終わってからグラフィックが出るまで
   },
@@ -1455,34 +1516,33 @@ const DEFAULTS = {
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
     vision:  {
-      lenVh: 1200,       // 尺(スクロール量)
-      labelAt: 0.4,      // Our Vison がブラーで出る
-      labelDur: 2.2,     // その所要時間 (ゆったり)
-      line1At: 2.2,      // 1行目が出はじめる
-      line2Gap: 1.2,     // 2行目までの間
-      revealDur: 1.7,    // 1行の出現時間
-      slideGap: 0.6,     // 2行そろってから左へ動き出すまで
-      slideDur: 1.8,     // 左へ吸着する時間
-      slideStagger: 0.5, // 2行目が遅れて動き出す割合
-      slideX1: 236,      // 1行目の開始オフセット(px)
-      slideX2: 178,      // 2行目の開始オフセット(px)
+      lenVh: 1000,       // 尺(スクロール量)
+      labelAt: 0.35,     // Our Vison がブラーで出る
+      labelDur: 1.7,     // その所要時間
+      line1At: 1.15,     // 1行目 (Our Vison に続けてすぐ)
+      line2Gap: 0.85,    // 2行目までの間
+      revealDur: 1.35,   // 1行の出現時間
+      slideGap: 0.15,    // 2行そろってすぐ左へ動き出す
+      slideDur: 1.7,     // 左へ吸着する時間
+      slideStagger: 0.45,// 2行目が遅れて動き出す割合
+      slideX1: 0,        // 中央スタート位置の微調整(px)
+      slideX2: 0,
       charStagger: 0.45, // 案C: 文字ごとの時間差
-      miniGap: 0.4,      // 左に着いてから軌道グラフィックが出るまで
-      miniDur: 1.6,      // 軌道グラフィックの出現時間
-      moveLen: 0.30,     // ワンスクロールで左下へ移動する量(スクロール割合)
+      miniGap: 0.25,     // 左に着いてから軌道グラフィックが出るまで
+      miniDur: 1.4,      // 軌道グラフィックの出現時間
+      moveDur: 2.6,      // ワンスクロールで左下へ移動する時間(秒・ゆったり)
       miniX: 559,        // ミニ楕円の初期オフセット(px)
       miniY: -100,
       miniScale: 0.26,   // ミニ楕円の縮小率
+      strokeW: 4,        // 軌道線の太さ(px)
       spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
       spinDur: 4,        // 等速で流れる秒数
       spinBrake: 2.5,    // 減速して止まるまでの秒数
-      glow: 1,           // 軌道を流れる光の強さ (0でオフ)
-      glowDur: 7,        // 光が1周する秒数
       blur: 8,           // 文字ブラー量
     },
-    results: { countDur: 2.8, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
+    results: { lenVh: 260, countDur: 2.8, imgBlur: 24 },  // 尺(中央で止まる) / カウント時間 / 画像のぼけ
     dev:     { lenVh: 1400, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    cases:   { lenVh: 900, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
+    cases:   { lenVh: 900, depth: 0.6, autoGap: 0.55 },   // 尺 / 奥行き / 自動表示のディレイ
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1742,6 +1802,7 @@ const PF_LABELS = [
   { text: '権限',         x: 548.87, y: 430.35 },
   { text: '監査',         x: 202.16, y: 560.82 },
 ];
+const pfEllEls = [...document.querySelectorAll('.pf-wrap svg ellipse')];
 function pfDotPos(d, deg) {
   const e = PF_ELL[d.ell];
   const t = deg * Math.PI / 180, r = e.rot * Math.PI / 180;
@@ -1798,30 +1859,6 @@ const visEls = {
   });
 })();
 
-/* 軌道を流れる光: 楕円ごとに3本重ねて尾を引かせる (データが流れるニュアンス) */
-const pfGlowEls = [];
-(function buildPfGlows() {
-  const root = document.getElementById('pfGlows');
-  PF_ELL.forEach(e => {
-    /* 楕円の周長 (ラマヌジャン近似) */
-    const perim = Math.PI * (3 * (e.rx + e.ry) - Math.sqrt((3 * e.rx + e.ry) * (e.rx + 3 * e.ry)));
-    [[130, 0.16], [70, 0.34], [26, 0.9]].forEach(([len, op]) => {
-      const el = document.createElementNS(SVG_NS, 'ellipse');
-      el.setAttribute('cx', e.cx); el.setAttribute('cy', e.cy);
-      el.setAttribute('rx', e.rx); el.setAttribute('ry', e.ry);
-      el.setAttribute('transform', `rotate(${e.rot} ${e.cx} ${e.cy})`);
-      el.setAttribute('fill', 'none');
-      el.setAttribute('stroke', '#ffffff');
-      el.setAttribute('stroke-width', '3');
-      el.setAttribute('stroke-linecap', 'round');
-      el.setAttribute('stroke-dasharray', `${len} ${perim - len}`);
-      el.dataset.perim = perim;
-      el.dataset.op = op;
-      root.appendChild(el);
-      pfGlowEls.push(el);
-    });
-  });
-})();
 
 /* ビジョンのフェーズ境界: 調整パネルの値から組み立てる (絵コンテ準拠)
    コマ順: OurVisonブラー出現 → 1行ずつ下からトリミング出現 → 1行目から左へスライド →
@@ -1833,16 +1870,26 @@ const pfGlowEls = [];
    そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
 let visAutoT0 = null;    // 自動シーケンスの開始時刻
 let visAutoDone = false; // 自動パートが終わったか
-let visMoveP0 = null;    // 自動完了時のスクロール位置 (ここからワンスクロール)
-let visDotT0 = null;     // 軌道が動き出した時刻 (ドット周回とその後のチェーンの起点)
+let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
+let visCenterX = [0, 0]; // 2行を画面中央に置くためのオフセット(px)
+
+/* 見出し2行を中央配置にするためのオフセットを測る (フォント読込・リサイズ後に再計算) */
+function measureVisCenter() {
+  const left = 112;
+  [visEls.l1, visEls.l2].forEach((el, i) => {
+    const w = el.firstElementChild.offsetWidth;
+    if (w > 0) visCenterX[i] = (stagePinW - w) / 2 - left;
+  });
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureVisCenter);
 
 function updateVision(p) {
   const c = params.sections.vision;
   const B = c.blur;
 
   /* セクションに入ったら自動再生スタート。戻ったらリセットして再生し直せる */
-  if (p <= 0.002) { visAutoT0 = null; visAutoDone = false; visMoveP0 = null; }
-  else if (visAutoT0 === null) visAutoT0 = elapsed;
+  if (p <= 0.002) { visAutoT0 = null; visAutoDone = false; visMoveT0 = null; }
+  else if (visAutoT0 === null) { visAutoT0 = elapsed; measureVisCenter(); }
   const A = visAutoT0 === null ? -1 : elapsed - visAutoT0;
 
   /* --- 自動パートの時間割 (秒) --- */
@@ -1852,23 +1899,24 @@ function updateVision(p) {
   const slideAt2 = slideAt + c.slideDur * c.slideStagger;
   const miniAt = slideAt2 + c.slideDur + c.miniGap;
   const autoEnd = miniAt + c.miniDur;
-  if (A >= autoEnd && !visAutoDone) { visAutoDone = true; visMoveP0 = p; }
+  if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
-  /* --- ワンスクロールで進む部分 --- */
-  const mvStart = visMoveP0 === null ? 9 : Math.min(visMoveP0 + 0.02, 0.55);
-  const mv = visAutoDone ? seg(p, mvStart, mvStart + c.moveLen, easeIO) : 0;
-  const ex = visAutoDone ? seg(p, mvStart, mvStart + c.moveLen * 0.7, easeIO) : 0;
+  /* --- ワンスクロールで左下へ (触れたら時間駆動でゆったり最後まで動く) --- */
+  if (visAutoDone && visMoveT0 === null && p > 0.02) visMoveT0 = elapsed;
+  const mvT = visMoveT0 === null ? -1 : elapsed - visMoveT0;
+  const mv = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
+  const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
 
   rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - ex), B, 10);
 
-  /* 見出し2行: 下からトリミング出現 → 左へスライド(3案) → 上下に分かれてブラーで消える */
+  /* 見出し2行: 中央から下トリミングで出現 → 左へ吸着 → 上下に分かれてブラーで消える */
   const pat = params.patterns.visionSlide;
   const ez = pat === 'B' ? easeOutBack : easeOutQ;
   const slideK = [
     ez(clamp01((A - slideAt) / c.slideDur)),
     ez(clamp01((A - slideAt2) / c.slideDur)),
   ];
-  const offs = [c.slideX1, c.slideX2];
+  const offs = [visCenterX[0] + c.slideX1, visCenterX[1] + c.slideX2];
   [[visEls.l1, l1At, -240, 0], [visEls.l2, l2At, 240, 1]].forEach(([el, at, exDy, idx]) => {
     const k = easeOutQ(clamp01((A - at) / c.revealDur));
     const inner = el.firstElementChild;
@@ -1879,7 +1927,6 @@ function updateVision(p) {
 
     const chars = visEls.chars[idx];
     if (pat === 'C') {
-      /* 案C: 行は動かさず、文字が1つずつ時間差で左へ流れて整列 */
       el.style.transform = `translate(0px, ${(ex * exDy).toFixed(2)}px)`;
       const raw = clamp01((A - (idx === 0 ? slideAt : slideAt2)) / c.slideDur);
       const n = chars.length;
@@ -1895,22 +1942,19 @@ function updateVision(p) {
     }
   });
 
-  /* 軌道グラフィック: 文字の右横に小さくブラー出現(自動) → ワンスクロールで左下へ移動＋実寸 */
+  /* 軌道グラフィック: 文字の右横に小さくブラー出現(自動) → ワンスクロールで左下へ＋実寸 */
   const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
   const sc = c.miniScale + (1 - c.miniScale) * mv;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
   visEls.pfWrap.style.transform =
     `translate(${((1 - mv) * c.miniX).toFixed(2)}px, ${((1 - mv) * c.miniY).toFixed(2)}px) scale(${sc.toFixed(4)})`;
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
+  /* 線の太さ: 縮小時に細くなりすぎないよう、見た目の太さを保つ */
+  const sw = (c.strokeW / Math.max(0.2, sc)).toFixed(2);
+  pfEllEls.forEach(el => el.setAttribute('stroke-width', sw));
 
-  /* 移動開始と同時にドットがフェードイン＆周回。所定位置で減速停止し、
-     そのあと Platform → プラットフォーム → 役割名 → 2つの価値 → Point01 → Point02 を
-     ディレイで1つずつ (1スクロール内・時間駆動) */
-  const moving = mv > 0.001;
-  if (!moving) visDotT0 = null;
-  else if (visDotT0 === null) visDotT0 = elapsed;
-  const T = visDotT0 === null ? -1 : elapsed - visDotT0;
-
+  /* 移動と同時にドットがフェードイン＆周回 → 減速して規定位置に停止 */
+  const T = mvT;
   const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed;
   const cruise = Math.max(0.2, c.spinDur), brake = Math.max(0.3, c.spinBrake);
   const totalRot = v * cruise + v * brake / 2;
@@ -1931,24 +1975,15 @@ function updateVision(p) {
     el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
   });
 
-  /* 軌道を流れる光 (データが流れるニュアンス) */
-  const glowOn = c.glow > 0 && mi > 0;
-  pfGlowEls.forEach((el, i) => {
-    if (!glowOn) { el.style.opacity = 0; return; }
-    const perim = parseFloat(el.dataset.perim);
-    const lane = i < 3 ? 0 : 1;
-    const off = ((elapsed / Math.max(1, c.glowDur) + lane * 0.45) % 1) * perim * params.direction;
-    el.setAttribute('stroke-dashoffset', (-off).toFixed(2));
-    el.style.opacity = (parseFloat(el.dataset.op) * c.glow * mi).toFixed(3);
-  });
-
-  const C = T < 0 ? -99 : T - cruise - brake;
-  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.2) / 1.1)), B, 8);
-  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.45) / 1.1)), B, 8);
-  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.9 - i * 0.22) / 1.0)), B, 6));
-  rv(visEls.valHead, easeOutQ(clamp01((C - 2.1) / 1.2)), B, 12);
-  rv(visEls.valP1,   easeOutQ(clamp01((C - 2.9) / 1.2)), B, 14);
-  rv(visEls.valP2,   easeOutQ(clamp01((C - 3.6) / 1.2)), B, 14);
+  /* 左下に着いたら間を置かずに Platform → プラットフォーム → 役割名 →
+     2つの価値 → Point01 → Point02 をディレイで出す (位置は動かさずブラーのみ) */
+  const C = mvT < 0 ? -99 : mvT - c.moveDur;
+  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / 0.9)), B, 0);
+  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / 0.9)), B, 0);
+  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / 0.8)), B, 0));
+  rv(visEls.valHead, easeOutQ(clamp01((C - 1.0) / 0.9)), B, 10);
+  rv(visEls.valP1,   easeOutQ(clamp01((C - 1.45) / 0.9)), B, 12);
+  rv(visEls.valP2,   easeOutQ(clamp01((C - 1.85) / 0.9)), B, 12);
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -1978,13 +2013,12 @@ function setCounter(el, finalStr, suffix, t, dur) {
   el.textContent = out + suffix;
 }
 
-function updateResults() {
-  const r = SECS.results.getBoundingClientRect();
-  const vh = window.innerHeight || 1;
-  if (r.top > vh) resT0 = null;                                    // 下へ戻ったらリセット (再生し直せる)
-  else if (resT0 === null && r.top < vh * 0.92) resT0 = elapsed;   // 画面に入った瞬間に開始
+/* 中央でピン留めされたら自動再生。ワンスクロールで下のセクションへ抜ける */
+function updateResults(p) {
+  if (p <= 0.002) resT0 = null;
+  else if (resT0 === null) resT0 = elapsed;
   const c = params.sections.results;
-  const t = resT0 === null ? 0 : elapsed - resT0;
+  const t = resT0 === null ? -1 : elapsed - resT0;
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   const kImg = easeOutQ(clamp01(t / 2.4));
@@ -2002,6 +2036,7 @@ function updateResults() {
 }
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
+const devBg2 = document.getElementById('devBg2');
 const devEls = {
   h1: document.getElementById('devH1'),
   h2: document.getElementById('devH2'),
@@ -2024,8 +2059,9 @@ const DEV_P = {
   split2:[0.56, 0.66],
   grow2: [0.57, 0.69],
   dock:  [0.70, 0.78],   // 右へ移動 (＋見出しはブラーで消える)
-  sw1:   [0.845, 0.875], // CLI → API
-  sw2:   [0.925, 0.955], // API → SDK
+  sw1:   [0.80, 0.83],   // CLI → API
+  sw2:   [0.87, 0.90],   // API → SDK
+  finish:[0.945, 1.0],   // 背景が明るい元の背景に戻る
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
@@ -2044,118 +2080,116 @@ function devHeading(el, inK, splitK, outK) {
   if (b) b.style.transform = `translateY(${d}px)`;
 }
 
-/* ===== モックの中身: 画面ごとの「コード行」データ (カンプの行構成に準拠) =====
-   b: [色クラス, 幅px] / i: インデント / gap: 余白行 */
-const DM_SCREENS = {
+/* ===== モックの中身: 画面ごとの実コード (ダミー) =====
+   [クラス, 文字列] のトークン列。kw=キーワード / id=識別子 / st=文字列 / cm=コメント / ok=成功表示 */
+const DM_CODE = {
   editor: [
-    { b: [['cp', 48], ['cb', 80]] },
-    { i: 16, b: [['cw', 64], ['cb', 110], ['cp', 36]] },
-    { i: 32, b: [['cb', 92], ['cw', 44]] },
-    { i: 32, b: [['cf', 120]] },
-    { i: 16, b: [['cw', 24]] },
-    { b: [['cw', 8]] },
-    { gap: 8 },
-    { b: [['cp', 36], ['cb', 100]] },
-    { i: 16, b: [['cw', 80], ['cp', 54]] },
-    { i: 32, b: [['cb', 140], ['cb', 28]] },
-    { i: 32, b: [['cw', 74], ['cf', 52]] },
-    { i: 48, b: [['cp', 36], ['cb', 98]] },
-    { i: 32, b: [['cw', 48]] },
-    { i: 16, b: [['cp', 16]] },
+    [['kw', 'import'], ['pl', ' { '], ['id', 'Anyflow'], ['pl', ' } '], ['kw', 'from'], ['st', ' "@anyflow/sdk"'], ['pl', ';']],
+    [],
+    [['cm', '// Slack の通知を kintone へ連携する']],
+    [['kw', 'const'], ['pl', ' '], ['id', 'flow'], ['pl', ' = '], ['id', 'anyflow'], ['pl', '.'], ['id', 'createFlow'], ['pl', '({']],
+    [['pl', '  name: '], ['st', '"slack-to-kintone"'], ['pl', ',']],
+    [['pl', '  trigger: '], ['id', 'slack'], ['pl', '.'], ['id', 'onMessage'], ['pl', '('], ['st', '"#sales"'], ['pl', '),']],
+    [['pl', '});']],
+    [],
+    [['id', 'flow'], ['pl', '.'], ['id', 'step'], ['pl', '('], ['st', '"transform"'], ['pl', ', (msg) => ({']],
+    [['pl', '  title: msg.text,']],
+    [['pl', '  user:  msg.user.name,']],
+    [['pl', '}));']],
+    [],
+    [['id', 'flow'], ['pl', '.'], ['id', 'step'], ['pl', '('], ['st', '"create"'], ['pl', ', '], ['id', 'kintone'], ['pl', '.'], ['id', 'addRecord'], ['pl', ');']],
+    [['kw', 'export'], ['pl', ' '], ['kw', 'default'], ['pl', ' '], ['id', 'flow'], ['pl', ';']],
   ],
-  /* CLI: プロンプト($)＋出力ログが順に流れる */
   cli: [
-    { b: [['cp', 10], ['cw', 116]] },
-    { i: 16, b: [['cf', 176]] },
-    { i: 16, b: [['cf', 148]] },
-    { gap: 8 },
-    { b: [['cp', 10], ['cw', 92]] },
-    { i: 16, b: [['cb', 56], ['cf', 120]] },
-    { i: 16, b: [['cf', 168]] },
-    { i: 16, b: [['cf', 136]] },
-    { gap: 8 },
-    { b: [['cp', 10], ['cw', 146]] },
-    { i: 16, b: [['cb', 44], ['cw', 78]] },
-    { i: 16, b: [['cf', 158]] },
-    { b: [['cp', 10]] },
+    [['kw', '$'], ['pl', ' anyflow login --token '], ['st', '••••••••']],
+    [['ok', '✔'], ['cm', ' Authenticated as dosanko-design']],
+    [],
+    [['kw', '$'], ['pl', ' anyflow flows create slack-to-kintone']],
+    [['cm', '→ resolving connectors...']],
+    [['ok', '✔'], ['cm', ' Created flow '], ['id', 'flw_8Xk2']],
+    [],
+    [['kw', '$'], ['pl', ' anyflow deploy --prod']],
+    [['cm', '→ bundling  (12 files)']],
+    [['cm', '→ uploading (1.4 MB)']],
+    [['ok', '✔'], ['cm', ' Deployed in '], ['id', '4.2s']],
+    [],
+    [['kw', '$'], ['pl', ' anyflow logs --follow']],
+    [['cm', '  12:04:31  run '], ['ok', 'succeeded']],
   ],
-  /* API: リクエスト → ヘッダ → 200 レスポンス */
   api: [
-    { b: [['cb', 40], ['cw', 148]] },
-    { i: 16, b: [['cf', 108]] },
-    { gap: 8 },
-    { b: [['cw', 30], ['cb', 88]] },
-    { i: 16, b: [['cw', 58], ['cp', 78]] },
-    { i: 16, b: [['cw', 52], ['cb', 118]] },
-    { gap: 8 },
-    { b: [['cp', 34], ['cw', 44]] },
-    { i: 16, b: [['cb', 128], ['cw', 36]] },
-    { i: 32, b: [['cw', 84], ['cf', 58]] },
-    { i: 32, b: [['cb', 102]] },
-    { i: 16, b: [['cw', 16]] },
-    { b: [['cw', 8]] },
+    [['kw', 'POST'], ['pl', ' /v1/flows/'], ['id', 'flw_8Xk2'], ['pl', '/run']],
+    [['pl', 'Host: '], ['id', 'api.anyflow.jp']],
+    [['pl', 'Authorization: '], ['kw', 'Bearer'], ['st', ' sk_live_••••']],
+    [['pl', 'Content-Type: '], ['st', 'application/json']],
+    [],
+    [['pl', '{']],
+    [['pl', '  '], ['st', '"input"'], ['pl', ': {']],
+    [['pl', '    '], ['st', '"channel"'], ['pl', ': '], ['st', '"#sales"']],
+    [['pl', '  }']],
+    [['pl', '}']],
+    [],
+    [['ok', '200 OK'], ['cm', '  · 128ms']],
+    [['pl', '{ '], ['st', '"status"'], ['pl', ': '], ['ok', '"succeeded"'], ['pl', ', '], ['st', '"records"'], ['pl', ': '], ['id', '3'], ['pl', ' }']],
   ],
-  /* SDK: import 群 → 初期化 → 呼び出し */
   sdk: [
-    { b: [['cp', 52], ['cb', 118]] },
-    { b: [['cp', 52], ['cb', 94]] },
-    { gap: 8 },
-    { b: [['cw', 40], ['cb', 108], ['cp', 28]] },
-    { i: 16, b: [['cw', 70], ['cf', 62]] },
-    { i: 16, b: [['cb', 128]] },
-    { b: [['cw', 16]] },
-    { gap: 8 },
-    { b: [['cp', 30], ['cw', 86]] },
-    { i: 16, b: [['cb', 122], ['cw', 40]] },
-    { i: 32, b: [['cw', 64], ['cf', 46]] },
-    { i: 16, b: [['cp', 20]] },
-    { b: [['cw', 8]] },
+    [['kw', 'import'], ['pl', ' { '], ['id', 'Anyflow'], ['pl', ' } '], ['kw', 'from'], ['st', ' "@anyflow/sdk"'], ['pl', ';']],
+    [],
+    [['kw', 'const'], ['pl', ' '], ['id', 'client'], ['pl', ' = '], ['kw', 'new'], ['pl', ' '], ['id', 'Anyflow'], ['pl', '({']],
+    [['pl', '  apiKey: process.env.'], ['id', 'ANYFLOW_KEY'], ['pl', ',']],
+    [['pl', '});']],
+    [],
+    [['kw', 'const'], ['pl', ' '], ['id', 'run'], ['pl', ' = '], ['kw', 'await'], ['pl', ' '], ['id', 'client'], ['pl', '.flows.'], ['id', 'run'], ['pl', '(']],
+    [['st', '  "flw_8Xk2"'], ['pl', ', { input: { channel: '], ['st', '"#sales"'], ['pl', ' } },']],
+    [['pl', ');']],
+    [],
+    [['id', 'console'], ['pl', '.log('], ['id', 'run'], ['pl', '.status); '], ['cm', '// "succeeded"']],
+    [['id', 'console'], ['pl', '.log('], ['id', 'run'], ['pl', '.records); '], ['cm', '// 3']],
   ],
 };
-/* 画面ごとの生成テンポ (開始秒・行間隔・1行の時間・ループ長) */
+/* 画面ごとのテンポ: chat=会話パートの有無 / load=ローディング開始 / hold=溜め / burst=一気に書く */
 const DM_TIMING = {
-  editor: { start: 4.2, step: 0.26, dur: 0.5, loop: 12 },
-  cli:    { start: 0.5, step: 0.30, dur: 0.42, loop: 7.5 },
-  api:    { start: 0.5, step: 0.26, dur: 0.5, loop: 7.0 },
-  sdk:    { start: 0.5, step: 0.24, dur: 0.5, loop: 6.5 },
+  editor: { chat: true,  load: 4.3, holdT: 0.55, step: 0.075, dur: 0.2, loop: 14 },
+  cli:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
+  api:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
+  sdk:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
 };
 
 const dmCodeRoot = document.getElementById('dmCode');
-let dmRowEls = [], dmCurScreen = null;
+const dmLoadRoot = document.getElementById('dmLoad');
+let dmLineEls = [], dmCurScreen = null;
+(function buildLoader() {
+  [180, 240, 150, 210, 120, 190].forEach(w => {
+    const b = document.createElement('div');
+    b.className = 'sk';
+    b.style.width = w + 'px';
+    dmLoadRoot.appendChild(b);
+  });
+})();
+const dmSkEls = [...dmLoadRoot.children];
+
 function dmBuildScreen(key) {
   if (dmCurScreen === key) return;
   dmCurScreen = key;
+  dmCodeRoot.className = 'dm-code code';
   dmCodeRoot.innerHTML = '';
-  dmRowEls = [];
-  DM_SCREENS[key].forEach(r => {
-    if (r.gap) {
-      const g = document.createElement('div');
-      g.className = 'dm-gap';
-      g.style.height = r.gap + 'px';
-      dmCodeRoot.appendChild(g);
-      return;
-    }
-    const row = document.createElement('div');
-    row.className = 'dm-row';
-    if (r.i) {
+  dmLineEls = [];
+  DM_CODE[key].forEach(tokens => {
+    const line = document.createElement('div');
+    line.className = 'dm-line';
+    if (!tokens.length) line.innerHTML = '&nbsp;';
+    else tokens.forEach(([cls, text]) => {
       const sp = document.createElement('span');
-      sp.className = 'sp';
-      sp.style.width = r.i + 'px';
-      row.appendChild(sp);
-    }
-    r.b.forEach(([cls, w]) => {
-      const bar = document.createElement('span');
-      bar.className = 'b ' + cls;
-      bar.style.width = w + 'px';
-      row.appendChild(bar);
+      sp.className = cls;
+      sp.textContent = text;
+      line.appendChild(sp);
     });
-    dmCodeRoot.appendChild(row);
-    dmRowEls.push(row);
+    dmCodeRoot.appendChild(line);
+    dmLineEls.push(line);
   });
 }
 dmBuildScreen('editor');
 
-/* ---- モック内アニメ (絵コンテのメモ: 右チャットに入力 → 応答 → 左でコード生成) ---- */
+/* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
 const dmEls = {
   typed: document.getElementById('dmTyped'),
@@ -2167,50 +2201,8 @@ const dmEls = {
   think: document.getElementById('dmThink'),
 };
 
-/* コード行の出現: 3案 (A=生成タイプ / B=スケルトンの光 / C=グロー) */
-function dmRevealRows(t, tm) {
-  const pat = params.patterns.mock;
-  dmRowEls.forEach((r, i) => {
-    const at = tm.start + i * tm.step;
-    const k = clamp01((t - at) / tm.dur);
-    const bars = r.children;
-    if (k <= 0) {
-      r.style.opacity = 0;
-      r.style.clipPath = 'inset(0 100% 0 0)';
-      r.classList.remove('sweep');
-      return;
-    }
-    if (pat === 'A') {
-      /* 案A: 左から一気に書き出される (タイプライタ) */
-      r.classList.remove('sweep');
-      r.style.opacity = 1;
-      r.style.clipPath = k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`;
-      for (const b of bars) b.style.boxShadow = '';
-    } else if (pat === 'B') {
-      /* 案B: スケルトンのまま光のグラデーションが走って定着する */
-      r.style.clipPath = 'none';
-      r.style.opacity = (0.3 + 0.7 * easeOutQ(k)).toFixed(3);
-      if (k < 1) {
-        r.classList.add('sweep');
-        const x = (170 - k * 240).toFixed(1);
-        for (const b of bars) { b.style.backgroundPositionX = x + '%'; b.style.boxShadow = ''; }
-      } else {
-        r.classList.remove('sweep');
-        for (const b of bars) b.style.backgroundPositionX = '';
-      }
-    } else {
-      /* 案C: 発光しながら現れて、光が引いて落ち着く */
-      r.style.clipPath = 'none';
-      r.classList.remove('sweep');
-      const e = easeOutQ(k);
-      r.style.opacity = (0.15 + 0.85 * e).toFixed(3);
-      const glow = (1 - k) * 12;
-      for (const b of bars) {
-        b.style.boxShadow = glow > 0.4
-          ? `0 0 ${glow.toFixed(1)}px rgba(120,220,255,${(0.9 * (1 - k)).toFixed(2)})` : '';
-      }
-    }
-  });
+function dmClearCode() {
+  dmLineEls.forEach(l => { l.style.clipPath = 'inset(0 100% 0 0)'; l.style.opacity = 1; l.style.filter = ''; });
 }
 
 function devMockContent(mode, t, screen) {
@@ -2223,12 +2215,13 @@ function devMockContent(mode, t, screen) {
     dmEls.msg1.style.opacity = 0;
     dmEls.msg2.style.opacity = 0;
     dmEls.think.style.display = 'none';
-    dmRowEls.forEach(r => { r.style.opacity = 0; r.style.clipPath = 'inset(0 100% 0 0)'; r.classList.remove('sweep'); });
+    dmLoadRoot.style.opacity = 0;
+    dmClearCode();
     return;
   }
   const T = t % tm.loop;
-  if (screen === 'editor') {
-    /* 会話 → 生成 のフルシーケンス */
+
+  if (tm.chat) {
     const sent = T >= 2.2;
     const n = sent ? 0 : Math.floor(clamp01((T - 0.4) / 1.6) * DM_TEXT.length);
     dmEls.typed.textContent = DM_TEXT.slice(0, n);
@@ -2236,15 +2229,13 @@ function devMockContent(mode, t, screen) {
     dmEls.cursor.style.opacity = (!sent && T > 0.3 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
     dmEls.msg0.style.opacity = clamp01(T / 0.5).toFixed(3);
     dmEls.msg1.style.opacity = clamp01((T - 2.2) / 0.4).toFixed(3);
-    const thinkOn = T > 2.7 && T < 3.9;
+    const thinkOn = T > 2.7 && T < 4.1;
     dmEls.think.style.display = thinkOn ? 'flex' : 'none';
-    dmEls.think.style.opacity = thinkOn ? 1 : 0;
     dmEls.think.querySelectorAll('.dm-think-b i').forEach((d, i) => {
       d.style.opacity = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
     });
-    dmEls.msg2.style.opacity = clamp01((T - 3.9) / 0.4).toFixed(3);
+    dmEls.msg2.style.opacity = clamp01((T - 4.1) / 0.4).toFixed(3);
   } else {
-    /* CLI / API / SDK 画面: 会話は出したまま、コードだけ動かす */
     dmEls.typed.textContent = '';
     dmEls.ph.style.display = '';
     dmEls.cursor.style.opacity = 0;
@@ -2253,7 +2244,38 @@ function devMockContent(mode, t, screen) {
     dmEls.msg2.style.opacity = 1;
     dmEls.think.style.display = 'none';
   }
-  dmRevealRows(T, tm);
+
+  /* ① ローディング: スケルトンに光が走る */
+  const loadIn = clamp01((T - tm.load) / 0.25);
+  const burstAt = tm.load + tm.holdT + 0.9;
+  const loadOut = clamp01((T - (burstAt - 0.15)) / 0.2);
+  dmLoadRoot.style.opacity = (loadIn * (1 - loadOut)).toFixed(3);
+  dmSkEls.forEach((b, i) => {
+    const ph = ((T - tm.load) * 1.5 - i * 0.12) % 1;
+    b.style.backgroundPositionX = (170 - ph * 240).toFixed(1) + '%';
+  });
+
+  /* ② 溜め → ③ 一気に書き出す */
+  const pat = params.patterns.mock;
+  dmLineEls.forEach((line, i) => {
+    const at = burstAt + i * tm.step;
+    const k = clamp01((T - at) / tm.dur);
+    if (k <= 0) { line.style.clipPath = 'inset(0 100% 0 0)'; line.style.filter = ''; line.style.opacity = 1; return; }
+    line.style.clipPath = k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`;
+    if (pat === 'B') {
+      /* 案B: 書き出した直後だけ白くにじむ */
+      line.style.filter = k < 1 ? `brightness(${(1 + (1 - k) * 1.6).toFixed(2)})` : '';
+      line.style.opacity = 1;
+    } else if (pat === 'C') {
+      /* 案C: 発光しながら現れる */
+      line.style.filter = k < 1
+        ? `drop-shadow(0 0 ${((1 - k) * 7).toFixed(1)}px rgba(120,220,255,.9)) brightness(${(1 + (1 - k)).toFixed(2)})` : '';
+      line.style.opacity = 1;
+    } else {
+      line.style.filter = '';
+      line.style.opacity = 1;
+    }
+  });
 }
 
 let devHoldT0 = null, devScreenT0 = null;
@@ -2269,11 +2291,11 @@ function updateDev(p) {
   const g2 = seg(p, ...DEV_P.grow2, easeIO);
   const dk = seg(p, ...DEV_P.dock, easeIO);
   const s1 = seg(p, ...DEV_P.sw1, easeIO), s2 = seg(p, ...DEV_P.sw2, easeIO);
-  /* 右へ移動しきったら「開発環境に/柔軟に適用」はブラーで完全に消す */
-  const out2 = seg(p, DEV_P.dock[0], DEV_P.dock[0] + 0.05, easeIO);
+  const fin = seg(p, ...DEV_P.finish, easeIO);   // 背景が明るく戻る
 
   devHeading(devEls.h1, in1, 0, o1);
-  devHeading(devEls.h2, in2, sp2, out2);
+  /* モックが割れた文字の間から出てきたら、後ろの文字は徐々にブラーで消える */
+  devHeading(devEls.h2, in2, sp2, g2 * 0.85 + dk * 0.15);
 
   const cx = mockCenterX();
   let op = 0, sc = 1, tx = cx, ty = MOCK_CY, bl = 0;
@@ -2283,14 +2305,13 @@ function updateDev(p) {
     ty = MOCK_CY + (1 - rise) * 560;
     bl = o1 * 20;
   } else {
-    op = Math.min(1, g2 * 3);
+    op = Math.min(1, g2 * 3) * (1 - fin);
     sc = 0.16 + 0.84 * g2;
     tx = cx * (1 - dk);
     ty = MOCK_CY * (1 - dk) + (1 - g2) * 30;
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
     const dip = Math.sin(Math.PI * swapK);
-    /* 文字が切り替わるのに合わせてモックもブラーで切り替わる */
-    bl = dip * c.swapBlur;
+    bl = dip * c.swapBlur + fin * 16;
     if (pat === 'B') ty += dip * -24;
     else if (pat === 'C') sc *= 1 + 0.05 * (s1 + s2);
   }
@@ -2298,7 +2319,10 @@ function updateDev(p) {
   devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
   devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
 
-  /* --- 表示する画面を決める (ブラーが濃い瞬間に中身を差し替える) --- */
+  /* 最後にワンスクロールで背景がグラデーションで明るい元の背景へ戻る */
+  devBg2.style.opacity = fin.toFixed(3);
+
+  /* 表示する画面 (ブラーが濃い瞬間に中身を差し替える) */
   let screen = 'editor';
   if (p >= DEV_P.dock[0]) screen = s1 < 0.5 ? 'cli' : s2 < 0.5 ? 'api' : 'sdk';
   if (screen !== dmCurScreen) { dmBuildScreen(screen); devScreenT0 = elapsed; }
@@ -2310,15 +2334,15 @@ function updateDev(p) {
   if (!started) devMockContent('empty', 0, screen);
   else devMockContent('anim', elapsed - (screen === 'editor' ? devHoldT0 : devScreenT0), screen);
 
-  /* --- 左の訴求テキスト: 右へ移動し終わってから CLI → API → SDK --- */
+  /* 左の訴求テキスト */
   const title = s1 < 0.5 ? 'CLIへの対応' : s2 < 0.5 ? 'APIへの対応' : 'SDKへの対応';
   if (devEls.strengthTitle.textContent !== title) devEls.strengthTitle.textContent = title;
   const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
   const dip = Math.sin(Math.PI * swapK);
   let stY = (1 - dk) * 24;
-  let stBl = (1 - dk) * 12 + dip * c.swapBlur;
+  let stBl = (1 - dk) * 12 + dip * c.swapBlur + fin * 14;
   if (pat === 'B') stY += (swapK < 0.5 ? -swapK * 60 : (1 - swapK) * 60);
-  devEls.strength.style.opacity = (dk * (1 - dip)).toFixed(3);
+  devEls.strength.style.opacity = (dk * (1 - dip) * (1 - fin)).toFixed(3);
   devEls.strength.style.transform = `translateY(${stY.toFixed(2)}px)`;
   devEls.strength.style.filter = stBl > 0.05 ? `blur(${stBl.toFixed(2)}px)` : '';
 }
@@ -2328,46 +2352,47 @@ const caseEls = {
   title: document.getElementById('caseTitle'),
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
-/* カードが重なるテンポ (ゆったりめ) */
-const CASE_IN = [[0.04, 0.30], [0.36, 0.62], [0.68, 0.94]];
+let caseT0 = null;
 
 function updateCases(p) {
   const c = params.sections.cases;
-  rv(caseEls.title, seg(p, 0, 0.10), 8, 8);
+  /* セクションに入ったら自動で1,2,3枚と出る */
+  if (p <= 0.002) caseT0 = null;
+  else if (caseT0 === null) caseT0 = elapsed;
+  const A = caseT0 === null ? -1 : elapsed - caseT0;
+
+  rv(caseEls.title, easeOutQ(clamp01((A - 0.2) / 1.2)), 8, 8);
+  const inK = [0, 1, 2].map(i => easeOutQ(clamp01((A - 0.6 - i * c.autoGap) / 1.2)));
+  /* そのあとスクロールすると奥行きが深まっていく */
+  const deep = seg(p, 0.18, 0.92, easeIO);
 
   if (params.patterns.cases === 'A') {
-    /* 案A: 固定追従スタック。前のカードは奥に沈む (絵コンテ準拠) */
     caseEls.cards.forEach((el, i) => {
-      const inK = seg(p, ...CASE_IN[i]);
       let back = 0;
-      for (let j = i + 1; j < 3; j++) back += seg(p, ...CASE_IN[j]);
-      const d = c.depth;
-      /* 出現: 不透明化は早め、移動はゆっくり (重なりが濁らないように) */
-      const op = Math.min(1, inK * 2.5);
-      const sc = 1 - back * 0.05 * d - (1 - inK) * 0.03;
-      const y = (1 - inK) * 420 - back * 36 * d;
+      for (let j = i + 1; j < 3; j++) back += inK[j];
+      const d = c.depth * (0.55 + 0.85 * deep);
+      const sc = 1 - back * 0.05 * d - (1 - inK[i]) * 0.03;
+      const y = (1 - inK[i]) * 420 - back * 36 * d;
       el.style.transformOrigin = '50% 0%';
       el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc.toFixed(4)})`;
-      el.style.opacity = (op * (1 - back * 0.16 * d)).toFixed(3);
-      const bl = (1 - inK) * 6 + back * 2.2 * d;
+      el.style.opacity = (Math.min(1, inK[i] * 2.5) * (1 - back * 0.16 * d)).toFixed(3);
+      const bl = (1 - inK[i]) * 6 + back * 2.2 * d;
       el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
       el.style.zIndex = i + 1;
     });
   } else {
-    /* 案B: カンプ準拠の縦並びを 1枚ずつブラー表示 */
     caseEls.cards.forEach((el, i) => {
-      const inK = seg(p, 0.06 + i * 0.26, 0.30 + i * 0.26);
       el.style.transformOrigin = '0 0';
-      el.style.transform = `translate(0px, ${(150 + i * 245 - 270 + (1 - inK) * 30).toFixed(2)}px) scale(0.68)`;
-      el.style.opacity = inK.toFixed(3);
-      el.style.filter = inK >= 1 ? '' : `blur(${((1 - inK) * 10).toFixed(2)}px)`;
+      el.style.transform = `translate(0px, ${(150 + i * 245 - 270 + (1 - inK[i]) * 30).toFixed(2)}px) scale(0.68)`;
+      el.style.opacity = inK[i].toFixed(3);
+      el.style.filter = inK[i] >= 1 ? '' : `blur(${((1 - inK[i]) * 10).toFixed(2)}px)`;
       el.style.zIndex = i + 1;
     });
   }
 }
 
 /* スクロール慣性補間: 生のスクロール進捗を毎フレーム少しずつ追いかける (lenis風のぬるっと感) */
-const smoothP = { vision: -1, dev: -1, cases: -1 };   // -1 = 未初期化
+const smoothP = { vision: -1, dev: -1, cases: -1, results: -1 };   // -1 = 未初期化
 function smoothTo(key, target) {
   const k = params.sections.common.smooth;
   if (k <= 0 || smoothP[key] < 0) { smoothP[key] = target; return target; }
@@ -2411,13 +2436,22 @@ function updateKV() {
   /* 1文字ずつ打ち込む */
   const tt = t - c.typeAt;
   const n0 = kvEls.chars[0].length, n1 = kvEls.chars[1].length;
-  const line2At = n0 * c.charDur + c.lineGap;
+  /* 緩急: 最初はゆっくり、だんだん速くなる。
+     i文字目までの所要時間 = charDur * n * (i/n をイーズインした値) */
+  const e = c.typeEase;
+  const ease = x => x * (1 - e) + e * x * x;          // 0→1 を前半ゆっくりに
+  const timeOf = (i, n) => c.charDur * n * ease(i / Math.max(1, n));
+  const line1End = timeOf(n0, n0);
+  const line2At = line1End + c.lineGap;
   kvEls.chars.forEach((arr, li) => {
     const base = li === 0 ? 0 : line2At;
+    const n = arr.length;
     /* 未入力の文字は display:none。こうするとカーソルが打った文字の直後に来る */
-    arr.forEach((el, ci) => { el.style.display = tt >= base + ci * c.charDur ? 'inline-block' : 'none'; });
+    arr.forEach((el, ci) => {
+      el.style.display = tt >= base + timeOf(ci, n) ? 'inline-block' : 'none';
+    });
   });
-  const typeEnd = line2At + n1 * c.charDur;
+  const typeEnd = line2At + timeOf(n1, n1);
   const blink = ((tt * 1.7) % 1 < 0.55) ? 1 : 0;
   const typing = tt > -0.15 && tt < typeEnd + 0.5;
   kvEls.carets[0].style.opacity = (typing && tt < line2At - c.lineGap * 0.4) ? blink : 0;
@@ -2434,7 +2468,7 @@ function updateSections() {
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', pinP(SECS.cases)));
-  updateResults();
+  updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', pinP(SECS.results)));
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -2680,7 +2714,7 @@ function fit() {
   SECS.vision.style.height = params.sections.vision.lenVh + 'vh';
   SECS.dev.style.height = params.sections.dev.lenVh + 'vh';
   SECS.cases.style.height = params.sections.cases.lenVh + 'vh';
-  SECS.results.style.height = (760 * s) + 'px';
+  SECS.results.style.height = params.sections.results.lenVh + 'vh';
 }
 window.addEventListener('resize', fit);
 window.addEventListener('load', fit);
@@ -2778,6 +2812,7 @@ function buildPanel() {
   rows.push(slider('小見出しが出る', 0, 4, 0.05, () => params.kv.eyebrowAt, v => params.kv.eyebrowAt = v, v => v.toFixed(2) + 's'));
   rows.push(slider('タイピング開始', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + 's'));
   rows.push(slider('1文字の速さ', 0.03, 0.3, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('タイピング緩急', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('改行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('グラフィックまで', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + 's'));
   sub(catPlanet, '位置・サイズ');
@@ -2849,18 +2884,18 @@ function buildPanel() {
   sub(catSec, '📖 ビジョン（軌道グラフィック）');
   rows.push(slider('出るまでの間', 0, 3, 0.1, () => sv().vision.miniGap, v => sv().vision.miniGap = v, v => v.toFixed(1) + 's'));
   rows.push(slider('出現時間', 0.4, 4, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + 's'));
-  rows.push(slider('左下へ動く量', 0.1, 0.6, 0.02, () => sv().vision.moveLen, v => sv().vision.moveLen = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('左下へ動く時間', 0.8, 6, 0.1, () => sv().vision.moveDur, v => sv().vision.moveDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px'));
   rows.push(slider('小さい時の大きさ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2)));
   rows.push(slider('小さい時のX', 0, 900, 5, () => sv().vision.miniX, v => sv().vision.miniX = v, v => v + 'px'));
   rows.push(slider('小さい時のY', -400, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px'));
-  rows.push(slider('光の強さ', 0, 1.5, 0.05, () => sv().vision.glow, v => sv().vision.glow = v, v => v === 0 ? 'オフ' : Math.round(v * 100) + '%'));
-  rows.push(slider('光が1周する時間', 2, 20, 0.5, () => sv().vision.glowDur, v => sv().vision.glowDur = v, v => v.toFixed(1) + 's'));
   sub(catSec, '📖 ビジョン（ドットの周回）');
   rows.push(slider('速さ(×KV)', 0.5, 5, 0.1, () => sv().vision.spinSpeed, v => sv().vision.spinSpeed = v, v => '×' + v.toFixed(1)));
   rows.push(slider('流れる時間', 0.5, 10, 0.5, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('止まるまで', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + 's'));
   sub(catSec, '📈 実績カウンター');
-  rows.push(slider('カウント時間', 0.4, 3, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('スクロール尺', 120, 600, 10, () => sv().results.lenVh, v => { sv().results.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('カウント時間', 0.4, 5, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px'));
   sub(catSec, '🖥 開発者体験');
   rows.push(slider('スクロール尺', 400, 1800, 20, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh'));
@@ -2868,6 +2903,7 @@ function buildPanel() {
   sub(catSec, '🗂 導入事例');
   rows.push(slider('スクロール尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('カードが出る間隔', 0.1, 1.5, 0.05, () => sv().cases.autoGap, v => sv().cases.autoGap = v, v => v.toFixed(2) + 's'));
 
   /* ボタン */
   const btns = document.createElement('div');
