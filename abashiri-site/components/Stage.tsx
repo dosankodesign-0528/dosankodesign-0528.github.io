@@ -62,9 +62,9 @@ const ILLUST_ANIMS: Record<number, IllustAnim> = {
     },
     style: SWING_STYLE,
   },
-  /* 案4: 小刻みシェイク→ピタッ。プルプルッと震えてすっと止まる */
+  /* 案4【採用】: 小刻みシェイク→ピタッ。右へ傾いてから震えてすっと止まる */
   4: {
-    animate: { rotate: [0, -4, 3.5, -3, 2.5, -1.5, 0] },
+    animate: { rotate: [0, 4, -3.5, 3, -2.5, 1.5, 0] },
     transition: {
       duration: 1.6,
       times: [0, 0.12, 0.24, 0.36, 0.5, 0.68, 1],
@@ -102,7 +102,7 @@ type StageProps = {
   birdsEditable?: boolean;
   /** ドラッグでカモメが動いた時の通知（調整パネル用） */
   onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
-  /** 1〜5: 人物イラストのスイングパターン（ILLUST_ANIMS） */
+  /** 1〜5: 人物イラストのスイングパターン（既定は採用版の案4） */
   illustAnim?: number;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
@@ -120,11 +120,11 @@ export default function Stage({
   birds = DEFAULT_BIRDS,
   birdsEditable = false,
   onBirdMove,
-  illustAnim = 1,
+  illustAnim = 4,
   layout,
 }: StageProps) {
   const L = mergeLayout(layout);
-  const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[1];
+  const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
   );
