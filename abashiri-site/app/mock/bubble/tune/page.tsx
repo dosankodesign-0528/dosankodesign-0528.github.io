@@ -163,6 +163,15 @@ export default function BubbleTunePage() {
             unit="%"
             onChange={(v) => upd("tail", { overshoot: v })}
           />
+          <Row
+            label="先の角丸を弱める（0=今まで/100=元絵）"
+            value={tune.tail.sharp}
+            step={5}
+            min={0}
+            max={100}
+            unit="%"
+            onChange={(v) => upd("tail", { sharp: v })}
+          />
         </Section>
 
         <Section title="波打ちアニメ（パスに沿って波が流れる）" defaultOpen>

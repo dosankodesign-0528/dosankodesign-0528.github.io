@@ -39,14 +39,27 @@ function samplePath(p: SVGPathElement, points: number): Pt[] | null {
   return pts;
 }
 
-/** 隣どうしの平均で角を取る（passes回） */
-function smoothPts(src: Pt[], passes: number): Pt[] {
+/**
+ * 隣どうしの平均で角を取る（passes回）。
+ * strengthAt を渡すと、点ごとに補正の効き具合を 0〜1 で変えられる。
+ * （0＝その点は元のまま＝角が残る、1＝しっかりならす）
+ * しっぽの先だけ角丸を弱めたいので使う。
+ */
+function smoothPts(
+  src: Pt[],
+  passes: number,
+  strengthAt?: (i: number) => number
+): Pt[] {
   let pts = src;
   for (let k = 0; k < passes; k++) {
     pts = pts.map((pt, i) => {
       const a = pts[(i - 1 + pts.length) % pts.length];
       const b = pts[(i + 1) % pts.length];
-      return { x: (a.x + pt.x * 2 + b.x) / 4, y: (a.y + pt.y * 2 + b.y) / 4 };
+      const sx = (a.x + pt.x * 2 + b.x) / 4;
+      const sy = (a.y + pt.y * 2 + b.y) / 4;
+      const w = strengthAt ? strengthAt(i) : 1;
+      if (w >= 1) return { x: sx, y: sy };
+      return { x: pt.x + (sx - pt.x) * w, y: pt.y + (sy - pt.y) * w };
     });
   }
   return pts;
@@ -69,11 +82,14 @@ function ptsToPath(pts: Pt[]): string {
   return d + "Z";
 }
 
-function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
-  if (passes <= 0) return;
-  const pts = samplePath(p, points);
-  if (!pts) return;
-  p.setAttribute("d", ptsToPath(smoothPts(pts, passes)));
+/**
+ * しっぽの範囲の中で、補正をどれだけ弱めるかの重み。
+ * 先端でいちばん弱く、付け根に向かってなだらかに元の強さへ戻す。
+ * （いきなり切り替えると付け根に折れ目が出るため）
+ */
+function tailSoftenAt(k: number, len: number): number {
+  const t = (k + 0.5) / len;
+  return Math.min(1, Math.min(t, 1 - t) / 0.25);
 }
 
 /* ───────── しっぽ（吹き出しの下のとんがり）を伸ばす演出 ─────────
@@ -134,13 +150,40 @@ type TailPlan = {
   retracted: (Pt | undefined)[];
 };
 
-function planTail(bubble: SVGPathElement, points: number): TailPlan | null {
-  const full = samplePath(bubble, Math.max(48, points));
-  if (!full) return null;
-  const range = findTailRange(full);
-  if (!range) return null;
-  const N = full.length;
+/**
+ * 吹き出しの下ごしらえ（表示前に一度だけ）。
+ *
+ * 1. 輪郭を等間隔の点でなぞる
+ * 2. その素の点列からしっぽの範囲を見つける
+ *    （ならしたあとだと、しっぽが浅くなっていて見つけにくい）
+ * 3. 歪みをならす。ただし tail.sharp のぶんだけ、しっぽの先は効きを弱める
+ *    → 胴体はツルッとしたまま、しっぽの先の丸まりすぎだけ戻る
+ * 4. 「しっぽを引っ込めた形」も作っておく（伸ばす演出の開始形）
+ *
+ * 点列は使い回す。ここで作った形をもう一度なぞり直すと、
+ * せっかく残したしっぽの先がまた削れてしまうため。
+ */
+function prepareBubble(bubble: SVGPathElement, tune: BubbleTune): TailPlan | null {
+  const raw = samplePath(bubble, Math.max(48, tune.smooth.points));
+  if (!raw) return null;
+  const N = raw.length;
   const at = (i: number) => (i + N * 2) % N;
+  const range = findTailRange(raw);
+
+  /* しっぽの先だけ、ならしの効きを (1 - sharp) 倍に落とす */
+  const sharp = Math.min(1, Math.max(0, tune.tail.sharp / 100));
+  const strengthAt =
+    range && sharp > 0
+      ? (i: number) => {
+          const k = at(i - range.i0);
+          if (k >= range.len) return 1; /* しっぽの外は今までどおり */
+          return 1 - sharp * tailSoftenAt(k, range.len);
+        }
+      : undefined;
+  const full = smoothPts(raw, tune.smooth.passes, strengthAt);
+  bubble.setAttribute("d", ptsToPath(full));
+
+  if (!range) return null;
   /* しっぽの外側2点ずつを使って、しっぽがなかった場合の底を引き直す */
   const a2 = full[at(range.i0 - 2)];
   const a1 = full[at(range.i0 - 1)];
@@ -310,17 +353,12 @@ export default function HeroBlurSeq({
       svg.setAttribute("height", "390");
 
       const { bubble, rest } = collect(svg);
-      /* 吹き出しの歪みをならす（表示前に一度だけ） */
-      if (bubble) {
-        smoothBubblePath(bubble, bubbleTune.smooth.passes, bubbleTune.smooth.points);
-      }
-      /* しっぽを引っ込めた形を用意して、まずその形にしておく */
+      /* 吹き出しの歪みをならしつつ、しっぽを引っ込めた形も用意する */
       const tail = bubbleTune.tail;
       const tailStart = Math.max(0, 1 - tail.retract / 100);
-      const tailPlan =
-        bubble && tail.duration > 0 && tail.retract > 0
-          ? planTail(bubble, bubbleTune.smooth.points)
-          : null;
+      const plan = bubble ? prepareBubble(bubble, bubbleTune) : null;
+      const tailPlan = tail.duration > 0 && tail.retract > 0 ? plan : null;
+      /* まずしっぽが引っ込んだ形にしておく */
       if (bubble && tailPlan) drawTail(bubble, tailPlan, tailStart);
       /* 上下の振り分けは高さではなくSVGのグループ構造で行う
          （高さだと「たまらない」の上に飛び出た点が上段に混ざる） */

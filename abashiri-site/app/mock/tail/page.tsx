@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { TAIL_PRESETS } from "./presets";
 
-/* 吹き出しのしっぽが伸びる演出 比較 mock 一覧 */
+/* しっぽの先の角丸の強さ 比較 mock 一覧 */
 export default function TailMockIndex() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
-          吹き出しのしっぽが伸びる 比較mock（5案）
+          しっぽの先の角丸 比較mock（5案）
         </h1>
         <p className="mb-8 text-[14px] font-bold leading-relaxed text-white/90">
-          どの案も「しっぽのない丸い吹き出し」で登場して、そこから下へしっぽが
-          伸びていきます。伸びはじめのタイミング・伸びる速さ・伸びきった時の
-          ぽよん具合だけが違います。
+          しっぽが伸びる動き（速さ・タイミング・ぽよん）はどの案も本番と同じで、
+          違うのは<strong>しっぽの先の丸さだけ</strong>です。数字が大きいほど、
+          丸まりすぎていたのが元イラストの形に戻ります。
+          <br />
+          <br />
+          どの案も輪郭は曲線で描いているので、<strong>角ばることはありません</strong>。
+          しっぽが伸びきったあとの形をじっくり見比べてください。
           <br />
           スマホなら画面をリロードするたびに頭から再生されます。
         </p>

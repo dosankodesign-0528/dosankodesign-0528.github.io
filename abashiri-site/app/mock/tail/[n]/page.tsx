@@ -14,7 +14,7 @@ export default async function TailMockPage({
   params: Promise<{ n: string }>;
 }) {
   const { n } = await params;
-  const preset = TAIL_PRESETS[n] ?? TAIL_PRESETS["2"];
+  const preset = TAIL_PRESETS[n] ?? TAIL_PRESETS["3"];
   return (
     <>
       <Stage illustration="tamannee" illustEntrance>
@@ -34,7 +34,7 @@ export default async function TailMockPage({
           ← 一覧へ
         </Link>
         <p className="rounded-full bg-[#0070c9]/85 px-4 py-2 text-[13px] font-bold text-white shadow">
-          {preset.title}（吹き出しの下に注目）
+          {preset.title}（しっぽの先の丸さに注目）
         </p>
       </div>
     </>
