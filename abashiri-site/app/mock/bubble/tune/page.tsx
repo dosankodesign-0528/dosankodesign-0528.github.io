@@ -126,6 +126,45 @@ export default function BubbleTunePage() {
           />
         </Section>
 
+        <Section title="しっぽが伸びる（しゃべり出す演出）" defaultOpen>
+          <Row
+            label="伸び出すまでの間"
+            value={tune.tail.delay}
+            step={50}
+            min={0}
+            max={3000}
+            unit="ms"
+            onChange={(v) => upd("tail", { delay: v })}
+          />
+          <Row
+            label="伸びきるまでの時間"
+            value={tune.tail.duration}
+            step={50}
+            min={0}
+            max={4000}
+            unit="ms"
+            onChange={(v) => upd("tail", { duration: v })}
+          />
+          <Row
+            label="はじめの引っ込み量（100でしっぽなし）"
+            value={tune.tail.retract}
+            step={5}
+            min={0}
+            max={100}
+            unit="%"
+            onChange={(v) => upd("tail", { retract: v })}
+          />
+          <Row
+            label="伸びきる時の行き過ぎ（ぽよん）"
+            value={tune.tail.overshoot}
+            step={2}
+            min={0}
+            max={60}
+            unit="%"
+            onChange={(v) => upd("tail", { overshoot: v })}
+          />
+        </Section>
+
         <Section title="波打ちアニメ（パスに沿って波が流れる）" defaultOpen>
           <Row
             label="波の高さ"

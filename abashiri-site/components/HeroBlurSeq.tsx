@@ -3,12 +3,16 @@
 /*
  * キービジュアル 決定版（なぞり書きなしのブラー順出し）
  *
- * 1. 白い吹き出しがブラーで出現
+ * 1. 白い吹き出しが「しっぽなし」の丸い形でブラー出現
  * 2. 「な〜んにもない」の文字がブラーで出現
- * 3. 「たまらない」（下の曲線あしらい込み）がブラーで出現
+ *    （同時に、吹き出しのしっぽが下へじわーっと伸びはじめる）
+ * 3. しっぽが伸びきってぷるんと落ち着くのに合わせて
+ *    「たまらない」（下の曲線あしらい込み）がブラーで出現
+ *    ＝吹き出しが「たまらない」としゃべったように見える
  * 4. （TopMock経由で）「ぼーっとしてみる」ボタン → 最後にイラスト
  *
  * タイミングは heroTiming.ts の共通パラメーターに追従する。
+ * しっぽの伸びは bubbleConfig.ts の tail で調整する。
  */
 import { useEffect, useRef } from "react";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
@@ -70,6 +74,110 @@ function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
   const pts = samplePath(p, points);
   if (!pts) return;
   p.setAttribute("d", ptsToPath(smoothPts(pts, passes)));
+}
+
+/* ───────── しっぽ（吹き出しの下のとんがり）を伸ばす演出 ─────────
+ * 輪郭を点でなぞって、いちばん下へ飛び出している部分＝しっぽを見つけ、
+ * そこを「なだらかな底」に置き換えた〈引っ込めた形〉を作っておく。
+ * 登場後にその形から本来の形へ点を補間していくと、
+ * しっぽがにゅーっと下へ伸びて、しゃべり出したように見える。
+ */
+
+/** Catmull-Rom（4点を通るなめらかな曲線）上の点を取る */
+function crPoint(p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const axis = (a: number, b: number, c: number, d: number) =>
+    0.5 *
+    (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+  return {
+    x: axis(p0.x, p1.x, p2.x, p3.x),
+    y: axis(p0.y, p1.y, p2.y, p3.y),
+  };
+}
+
+/**
+ * 輪郭の点列から、下に飛び出したしっぽの範囲を探す。
+ * いちばん下の点から左右へ「下り坂が続くかぎり」広げ、
+ * 谷の両肩（＝これ以上下がらなくなる点）の内側をしっぽとみなす。
+ */
+function findTailRange(pts: Pt[]): { i0: number; len: number } | null {
+  const N = pts.length;
+  if (N < 16) return null;
+  const at = (i: number) => (i + N * 2) % N;
+  let apex = 0;
+  for (let i = 1; i < N; i++) if (pts[i].y > pts[apex].y) apex = i;
+
+  let lo = apex;
+  for (let k = 0; k < N; k++) {
+    if (pts[at(lo - 1)].y >= pts[lo].y) break;
+    lo = at(lo - 1);
+  }
+  let hi = apex;
+  for (let k = 0; k < N; k++) {
+    if (pts[at(hi + 1)].y >= pts[hi].y) break;
+    hi = at(hi + 1);
+  }
+  /* 両肩そのものは動かさない（付け根をなめらかに保つ） */
+  const i0 = at(lo + 1);
+  const len = at(hi - 1 - i0) + 1;
+  /* 谷が浅すぎる／広すぎるときは「しっぽ」ではないので何もしない */
+  const depth = pts[apex].y - Math.max(pts[at(i0 - 1)].y, pts[at(i0 + len)].y);
+  if (len < 2 || len > N * 0.35 || depth < 4) return null;
+  return { i0, len };
+}
+
+type TailPlan = {
+  /** 本来の輪郭（伸びきった状態） */
+  full: Pt[];
+  /** しっぽを引っ込めた輪郭（しっぽの範囲だけ差し替え） */
+  retracted: (Pt | undefined)[];
+};
+
+function planTail(bubble: SVGPathElement, points: number): TailPlan | null {
+  const full = samplePath(bubble, Math.max(48, points));
+  if (!full) return null;
+  const range = findTailRange(full);
+  if (!range) return null;
+  const N = full.length;
+  const at = (i: number) => (i + N * 2) % N;
+  /* しっぽの外側2点ずつを使って、しっぽがなかった場合の底を引き直す */
+  const a2 = full[at(range.i0 - 2)];
+  const a1 = full[at(range.i0 - 1)];
+  const b1 = full[at(range.i0 + range.len)];
+  const b2 = full[at(range.i0 + range.len + 1)];
+  const retracted: (Pt | undefined)[] = new Array(N);
+  for (let k = 0; k < range.len; k++) {
+    retracted[at(range.i0 + k)] = crPoint(a2, a1, b1, b2, (k + 1) / (range.len + 1));
+  }
+  return { full, retracted };
+}
+
+/** 伸び具合 p（0=引っ込み, 1=本来の形, 1超で行き過ぎ）を反映する */
+function drawTail(bubble: SVGPathElement, plan: TailPlan, p: number) {
+  const pts = plan.full.map((pt, i) => {
+    const r = plan.retracted[i];
+    if (!r) return pt;
+    return { x: r.x + (pt.x - r.x) * p, y: r.y + (pt.y - r.y) * p };
+  });
+  bubble.setAttribute("d", ptsToPath(pts));
+}
+
+/**
+ * 伸びのカーブ：
+ * じわーっと伸びて（ease-in-out）、行き過ぎたところから
+ * ぷるんと本来の長さへ戻る。返り値は「伸び具合」の生の値。
+ */
+function tailCurve(elapsed: number, duration: number, overshoot: number): number {
+  const os = overshoot / 100;
+  if (elapsed < duration) {
+    const u = elapsed / duration;
+    const ease = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+    return (1 + os) * ease;
+  }
+  const relax = Math.max(1, duration * 0.45);
+  const v = Math.min(1, (elapsed - duration) / relax);
+  return 1 + os * Math.pow(1 - v, 3);
 }
 
 /* 吹き出しのムニムニアニメ（1〜3。0でなし） */
@@ -206,6 +314,14 @@ export default function HeroBlurSeq({
       if (bubble) {
         smoothBubblePath(bubble, bubbleTune.smooth.passes, bubbleTune.smooth.points);
       }
+      /* しっぽを引っ込めた形を用意して、まずその形にしておく */
+      const tail = bubbleTune.tail;
+      const tailStart = Math.max(0, 1 - tail.retract / 100);
+      const tailPlan =
+        bubble && tail.duration > 0 && tail.retract > 0
+          ? planTail(bubble, bubbleTune.smooth.points)
+          : null;
+      if (bubble && tailPlan) drawTail(bubble, tailPlan, tailStart);
       /* 上下の振り分けは高さではなくSVGのグループ構造で行う
          （高さだと「たまらない」の上に飛び出た点が上段に混ざる） */
       const upperG = Array.from(svg.querySelectorAll("g")).find((g) =>
@@ -246,14 +362,36 @@ export default function HeroBlurSeq({
         });
       };
 
-      /* 1. 吹き出し */
+      /* 1. 吹き出し（しっぽは引っ込んだ丸い形で出てくる） */
       const t0 = timing.start;
       blurIn(bubble ? [bubble] : [], t0, 900, 16);
-      /* 登場が済んだらムニムニ開始 */
+
+      /* 1.5 しっぽがじわーっと下へ伸びる（＝しゃべり出す） */
+      let tailEndAt = t0 + 950;
+      if (bubble && tailPlan) {
+        const totalMs = tail.duration * 1.45;
+        tailEndAt = Math.max(tailEndAt, t0 + tail.delay + totalMs + 50);
+        setTimeout(() => {
+          if (aborted) return;
+          let from: number | null = null;
+          const tick = (now: number) => {
+            if (aborted || !bubble.isConnected) return;
+            if (from === null) from = now;
+            const elapsed = now - from;
+            const raw = tailCurve(elapsed, tail.duration, tail.overshoot);
+            drawTail(bubble, tailPlan, tailStart + (1 - tailStart) * raw);
+            if (elapsed < totalMs) requestAnimationFrame(tick);
+            else drawTail(bubble, tailPlan, 1); /* 最後はきっちり本来の形へ */
+          };
+          requestAnimationFrame(tick);
+        }, t0 + tail.delay);
+      }
+
+      /* 登場としっぽ伸ばしが済んだらムニムニ開始 */
       if (bubble && bubbleAnim) {
         setTimeout(() => {
           if (!aborted) startBubbleAnim(bubble, svg, bubbleAnim, bubbleTune);
-        }, t0 + 950);
+        }, tailEndAt);
       }
       /* 2. な〜んにもない */
       const t1 = t0 + 650;
