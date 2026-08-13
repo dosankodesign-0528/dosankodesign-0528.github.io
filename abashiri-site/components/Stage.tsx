@@ -12,8 +12,12 @@ import { mergeLayout, type LayoutTune } from "./layoutConfig";
 /*
  * 人物イラストのアニメ（/mock/illust で比較）。どれも約15秒に1回動く。
  * 1=くるん一回転（現行） 2=ゆらゆらスイング 3=ぷるんと弾む
- * 4=ぴょこんと跳ねる 5=おじぎ＆のけぞり
+ * 4=スイングB（キレ鋭め） 5=スイングC（振り子減衰）
+ * 回転系は角度がつくとイラスト下端の切れ目が見えるため、
+ * 少し下げて（top+18px）切れ目が枠の外に出るようにしている。
  */
+const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 85%", top: 62 };
+
 const ILLUST_ANIMS: Record<
   number,
   {
@@ -30,7 +34,7 @@ const ILLUST_ANIMS: Record<
   2: {
     animate: { rotate: [0, -7, 6, -4, 2.5, 0] },
     transition: { duration: 1.6, ease: "easeInOut", repeat: Infinity, repeatDelay: 13.4 },
-    style: { transformOrigin: "50% 85%" },
+    style: SWING_STYLE,
   },
   3: {
     animate: {
@@ -41,14 +45,28 @@ const ILLUST_ANIMS: Record<
     style: { transformOrigin: "50% 100%" },
   },
   4: {
-    animate: { y: [0, -26, 0, -10, 0], scaleY: [1, 1.04, 0.94, 1.02, 1] },
-    transition: { duration: 0.85, ease: "easeOut", repeat: Infinity, repeatDelay: 14.15 },
-    style: { transformOrigin: "50% 100%" },
+    /* スイングB: 最初にビュッと振れて、あとはスッと収まるキレ重視 */
+    animate: { rotate: [0, -9, 6, -3.5, 1.5, 0] },
+    transition: {
+      duration: 1.3,
+      times: [0, 0.1, 0.35, 0.6, 0.8, 1],
+      ease: ["easeOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
+      repeat: Infinity,
+      repeatDelay: 13.7,
+    },
+    style: SWING_STYLE,
   },
   5: {
-    animate: { rotate: [0, 10, -12, 5, 0], y: [0, 2, -4, 0, 0] },
-    transition: { duration: 1.8, ease: "easeInOut", repeat: Infinity, repeatDelay: 13.2 },
-    style: { transformOrigin: "50% 90%" },
+    /* スイングC: 振り子みたいに大きく振れてだんだん減衰 */
+    animate: { rotate: [0, -10, 8, -5.5, 3.5, -1.8, 0.8, 0] },
+    transition: {
+      duration: 2.2,
+      times: [0, 0.14, 0.3, 0.46, 0.62, 0.77, 0.9, 1],
+      ease: "easeInOut",
+      repeat: Infinity,
+      repeatDelay: 12.8,
+    },
+    style: SWING_STYLE,
   },
 };
 

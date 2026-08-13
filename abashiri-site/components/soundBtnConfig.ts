@@ -10,9 +10,10 @@ export type SoundBtnTune = {
   blur: number;
 };
 
+/* ヒデさん調整値（2026-08-13） */
 export const DEFAULT_SOUND_BTN: SoundBtnTune = {
-  opacity: 55,
-  blur: 12,
+  opacity: 70,
+  blur: 30,
 };
 
 export function mergeSoundBtn(partial?: Partial<SoundBtnTune> | null): SoundBtnTune {

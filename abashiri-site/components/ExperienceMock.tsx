@@ -8,6 +8,7 @@ import Bird from "./Bird";
 import MockNav from "./MockNav";
 import { devSilent } from "./devSound";
 import { buildShadow, mergeShadow } from "./shadowConfig";
+import { mergeLayout } from "./layoutConfig";
 
 export type Step = 1 | 2 | 3;
 
@@ -199,12 +200,15 @@ export default function ExperienceMock({
 
   return (
     <div
-      className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white"
-      style={{ boxShadow: buildShadow(mergeShadow(null)) }}
+      className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-t-[60px] border-[30px] border-white"
+      style={{
+        boxShadow: buildShadow(mergeShadow(null)),
+        transform: `translate(${mergeLayout(null).tabletX}px, ${mergeLayout(null).tabletY}px)`,
+      }}
     >
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
-      <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-[#e6f3ff]">
+      <div className="relative h-full w-full overflow-hidden rounded-t-[30px] bg-[#e6f3ff]">
         <AnimatePresence mode="wait">
           {step !== 3 ? (
             <motion.div key="select" className="absolute inset-0" {...stepTransition}>

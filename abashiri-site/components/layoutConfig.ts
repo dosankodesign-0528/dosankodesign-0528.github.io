@@ -15,11 +15,12 @@ export type LayoutTune = {
   railY: number;
 };
 
+/* ヒデさん調整値（2026-08-13） */
 export const DEFAULT_LAYOUT: LayoutTune = {
-  tabletX: 0,
-  tabletY: 0,
-  railX: 36,
-  railY: 85,
+  tabletX: -30,
+  tabletY: -40,
+  railX: 60,
+  railY: 80,
 };
 
 export function mergeLayout(partial?: Partial<LayoutTune> | null): LayoutTune {

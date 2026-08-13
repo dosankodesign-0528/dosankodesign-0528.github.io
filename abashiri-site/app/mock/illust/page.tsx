@@ -20,20 +20,20 @@ export default function IllustMockIndex() {
     },
     {
       href: "/mock/illust/4",
-      title: "案4：ぴょこんと跳ねる",
-      desc: "その場で2回ぴょこぴょこジャンプ。着地でちょっとつぶれる。",
+      title: "案2-B：スイング（キレ鋭め）",
+      desc: "最初にビュッと振れて、あとはスッと収まる。緩急がはっきりした揺れ。",
     },
     {
       href: "/mock/illust/5",
-      title: "案5：おじぎ＆のけぞり",
-      desc: "前へぺこっとおじぎ→後ろへのけぞり。角度が大きめで表情が出る揺れ。",
+      title: "案2-C：スイング（振り子減衰）",
+      desc: "振り子みたいに大きく振れて、だんだん小さくなって止まる。",
     },
   ];
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
-          人物イラストアニメ 比較mock（5案）
+          人物イラストアニメ 比較mock（1〜3案＋スイング変化形）
         </h1>
         <p className="mb-8 text-[14px] font-bold leading-relaxed text-white/90">
           どの案も約15秒に1回動きます。登場直後に1回目が始まるので、開いてすぐ確認できます。
