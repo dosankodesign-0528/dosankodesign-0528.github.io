@@ -303,7 +303,8 @@
      軌道と「2つの価値」の間隔がカンプと同じになる */
   .vis-comp {
     position: absolute;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     top: 0;
     width: 1440px;
     height: 100%;
@@ -691,7 +692,7 @@
   .dev-strength {
     position: absolute;
     left: 118.65px;
-    top: 421.13px;
+    top: 345.63px;   /* モックと同じだけ上げて上下中央に揃える */
     width: 320px;
     color: #eaeaea;
   }
@@ -706,20 +707,38 @@
   .dev-strength .ds-title { font-weight: 200; font-size: 36px; line-height: 49px; }
 
   /* ---- 導入事例 ---- */
+  /* カンプ: 「導入事例」とカード1枚目が上揃え。カードは880幅で388.78px間隔 */
+  .case-comp {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    width: 1440px;
+    height: 100%;
+  }
   .case-title {
     position: absolute;
     left: 120px;
-    top: 100px;
+    top: 96px;
     font-weight: 100;
     font-size: 44px;
+    line-height: 64px;
     color: #101828;
+  }
+  .case-list {
+    position: absolute;
+    left: 440px;
+    top: 96px;
+    width: 880px;
+    height: 1122.34px;
+    transform-origin: left top;
   }
   .case-card {
     position: absolute;
-    right: 120px;
-    top: 270px;
+    left: 0;
+    top: 0;
     width: 880px;
-    height: 345px;
+    height: 344.78px;
     background: #fff;
     border-radius: 4px;
     box-shadow: 0 10px 40px rgba(0,0,0,.06);
@@ -1039,11 +1058,11 @@
 <section class="pin" id="vision">
   <div class="pin-vp">
     <div class="pin-stage">
+      <div class="vis-comp">
       <div class="vis-label rv" id="visLabel">Our Vison</div>
       <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、</span></div>
       <div class="vis-line vis-l2" id="visL2"><span class="vl-in">強みになる時代へ。</span></div>
 
-      <div class="vis-comp">
       <div class="pf-wrap" id="pfWrap">
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -1180,7 +1199,9 @@
 <section class="pin" id="cases">
   <div class="pin-vp">
     <div class="pin-stage">
+      <div class="case-comp">
       <div class="case-title rv" id="caseTitle">導入事例</div>
+      <div class="case-list" id="caseList">
       <div class="case-card" id="caseCard0">
         <img src="assets/case-smarthr.png" alt="株式会社SmartHR">
         <div class="cc-body">
@@ -1205,13 +1226,15 @@
           <div class="cc-company">SALES GO 株式会社</div>
         </div>
       </div>
+      </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ================= 調整UI (右下にまとめて固定) ================= -->
 <div class="tools">
-<div class="switcher" id="switcher">
+<div class="switcher closed" id="switcher">
   <div class="sw-head" id="swHead">
     <span>🎛 パターン切替</span>
     <span class="chev" id="swChev">▲</span>
@@ -1224,7 +1247,7 @@
 </div>
 
 <!-- ================= アニメ調整パネル ================= -->
-<div class="panel" id="panel">
+<div class="panel closed" id="panel">
   <div class="panel-head" id="panelHead">
     <span>⚙️ アニメーション調整</span>
     <span class="chev">▲</span>
@@ -1511,12 +1534,12 @@ const DEFAULTS = {
   /* スクロールセクションの調整値 */
   sections: {
     common: {
-      smooth: 6,         // スクロール慣性補間の強さ (0=オフ、大きいほど機敏)
+      smooth: 2.5,       // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
     vision:  {
-      lenVh: 1000,       // 尺(スクロール量)
+      lenVh: 260,        // 尺(自動再生ぶんは尺を食わないので短くてよい)
       labelAt: 0.35,     // Our Vison がブラーで出る
       labelDur: 1.7,     // その所要時間
       line1At: 1.15,     // 1行目 (Our Vison に続けてすぐ)
@@ -1541,8 +1564,8 @@ const DEFAULTS = {
       blur: 8,           // 文字ブラー量
     },
     results: { lenVh: 260, countDur: 2.8, imgBlur: 24 },  // 尺(中央で止まる) / カウント時間 / 画像のぼけ
-    dev:     { lenVh: 1400, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    cases:   { lenVh: 900, depth: 0.6, autoGap: 0.55 },   // 尺 / 奥行き / 自動表示のディレイ
+    dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
+    cases:   { lenVh: 420, depth: 0.6, autoGap: 0.5 },    // 尺 / 奥行き / カードが出る間隔
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1778,7 +1801,9 @@ function pinP(sec) {
 function rv(el, k, blur, dy) {
   el.style.opacity = k.toFixed(3);
   el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
-  if (dy != null) el.style.transform = k >= 1 ? '' : `translateY(${((1 - k) * dy).toFixed(2)}px)`;
+  /* dy を渡した時だけ transform を触る。0や未指定なら要素本来の transform
+     (.pf-title の translateX(-50%) など) を壊さない */
+  if (dy) el.style.transform = k >= 1 ? '' : `translateY(${((1 - k) * dy).toFixed(2)}px)`;
 }
 
 /* ---------- Vision: Platform図のジオメトリ (Figma SVG書き出しから) ---------- */
@@ -1878,7 +1903,7 @@ function measureVisCenter() {
   const left = 112;
   [visEls.l1, visEls.l2].forEach((el, i) => {
     const w = el.firstElementChild.offsetWidth;
-    if (w > 0) visCenterX[i] = (stagePinW - w) / 2 - left;
+    if (w > 0) visCenterX[i] = (1440 - w) / 2 - left;   /* 構図枠(1440)の中央 */
   });
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureVisCenter);
@@ -1978,9 +2003,9 @@ function updateVision(p) {
   /* 左下に着いたら間を置かずに Platform → プラットフォーム → 役割名 →
      2つの価値 → Point01 → Point02 をディレイで出す (位置は動かさずブラーのみ) */
   const C = mvT < 0 ? -99 : mvT - c.moveDur;
-  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / 0.9)), B, 0);
-  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / 0.9)), B, 0);
-  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / 0.8)), B, 0));
+  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / 0.9)), B);
+  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / 0.9)), B);
+  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / 0.8)), B));
   rv(visEls.valHead, easeOutQ(clamp01((C - 1.0) / 0.9)), B, 10);
   rv(visEls.valP1,   easeOutQ(clamp01((C - 1.45) / 0.9)), B, 12);
   rv(visEls.valP2,   easeOutQ(clamp01((C - 1.85) / 0.9)), B, 12);
@@ -2051,22 +2076,22 @@ const devEls = {
    ④ブラーで消える →⑤「開発環境に/柔軟に適用」出現 →⑥上下に分割しその間からモック
    →⑦右へ移動し、文字はブラーで消え、左に CLI → API → SDK が入れ替わる */
 const DEV_P = {
-  h1:    [0.00, 0.05],
-  rise:  [0.08, 0.26],   // 下からせり上がって拡大
-  hold:  [0.26, 0.38],   // 規定位置 (モック内アニメが走る)
-  out1:  [0.38, 0.45],
-  h2:    [0.47, 0.53],
-  split2:[0.56, 0.66],
-  grow2: [0.57, 0.69],
-  dock:  [0.70, 0.78],   // 右へ移動 (＋見出しはブラーで消える)
-  sw1:   [0.80, 0.83],   // CLI → API
-  sw2:   [0.87, 0.90],   // API → SDK
-  finish:[0.945, 1.0],   // 背景が明るい元の背景に戻る
+  h1:    [0.00, 0.04],
+  rise:  [0.04, 0.17],   // 下からせり上がって拡大 (この時点でモック内アニメも開始)
+  hold:  [0.17, 0.26],   // 規定位置
+  out1:  [0.26, 0.32],
+  h2:    [0.33, 0.38],   // ワンスクロールですぐ次の文字
+  split2:[0.40, 0.48],
+  grow2: [0.41, 0.50],
+  dock:  [0.52, 0.58],   // 右へ移動 (＋見出しはブラーで消える)
+  sw1:   [0.64, 0.67],   // CLI → API
+  sw2:   [0.74, 0.77],   // API → SDK
+  finish:[0.83, 0.89],   // 背景が明るい元の背景に戻る (浅いスクロールで完了)
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
 function mockCenterX() { return MOCK_RIGHT + MOCK_W - stagePinW / 2 - MOCK_W / 2; }
-const MOCK_CY = -13;
+const MOCK_CY = -75.5;   // ステージの上下中央に置くためのオフセット
 
 /* 見出し: ブラー出現 → (2行のときだけ)上下に割れる → ブラー退場 */
 function devHeading(el, inK, splitK, outK) {
@@ -2148,10 +2173,12 @@ const DM_CODE = {
 };
 /* 画面ごとのテンポ: chat=会話パートの有無 / load=ローディング開始 / hold=溜め / burst=一気に書く */
 const DM_TIMING = {
-  editor: { chat: true,  load: 4.3, holdT: 0.55, step: 0.075, dur: 0.2, loop: 14 },
-  cli:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
-  api:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
-  sdk:    { chat: false, load: 0.4, holdT: 0.45, step: 0.075, dur: 0.2, loop: 9 },
+  /* load=ローディング開始 / loadDur=ゆったり見せる時間 / holdT=書き出す前の溜め
+     step,dur=一気に書き出すテンポ */
+  editor: { chat: true,  load: 4.3, loadDur: 2.6, holdT: 0.5, step: 0.07, dur: 0.18, loop: 16 },
+  cli:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
+  api:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
+  sdk:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
 };
 
 const dmCodeRoot = document.getElementById('dmCode');
@@ -2246,12 +2273,13 @@ function devMockContent(mode, t, screen) {
   }
 
   /* ① ローディング: スケルトンに光が走る */
-  const loadIn = clamp01((T - tm.load) / 0.25);
-  const burstAt = tm.load + tm.holdT + 0.9;
-  const loadOut = clamp01((T - (burstAt - 0.15)) / 0.2);
+  const loadIn = clamp01((T - tm.load) / 0.5);
+  const burstAt = tm.load + tm.loadDur + tm.holdT;
+  const loadOut = clamp01((T - (burstAt - 0.35)) / 0.3);
   dmLoadRoot.style.opacity = (loadIn * (1 - loadOut)).toFixed(3);
   dmSkEls.forEach((b, i) => {
-    const ph = ((T - tm.load) * 1.5 - i * 0.12) % 1;
+    /* ゆっくり光が横切る (0.55周/秒) */
+    const ph = (((T - tm.load) * 0.55 - i * 0.1) % 1 + 1) % 1;
     b.style.backgroundPositionX = (170 - ph * 240).toFixed(1) + '%';
   });
 
@@ -2308,7 +2336,7 @@ function updateDev(p) {
     op = Math.min(1, g2 * 3) * (1 - fin);
     sc = 0.16 + 0.84 * g2;
     tx = cx * (1 - dk);
-    ty = MOCK_CY * (1 - dk) + (1 - g2) * 30;
+    ty = MOCK_CY + (1 - g2) * 30;   /* 右へ動いても上下中央のまま */
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
     const dip = Math.sin(Math.PI * swapK);
     bl = dip * c.swapBlur + fin * 16;
@@ -2327,8 +2355,9 @@ function updateDev(p) {
   if (p >= DEV_P.dock[0]) screen = s1 < 0.5 ? 'cli' : s2 < 0.5 ? 'api' : 'sdk';
   if (screen !== dmCurScreen) { dmBuildScreen(screen); devScreenT0 = elapsed; }
 
-  const started = p >= (screen === 'editor' ? DEV_P.hold[0] : DEV_P.dock[0]);
-  if (p < DEV_P.hold[0]) { devHoldT0 = null; devScreenT0 = null; }
+  /* スクロールし切る前 (せり上がり中) からアニメを走らせる */
+  const started = p >= (screen === 'editor' ? DEV_P.rise[0] : DEV_P.dock[0]);
+  if (p < DEV_P.rise[0]) { devHoldT0 = null; devScreenT0 = null; }
   else if (devHoldT0 === null) devHoldT0 = elapsed;
   if (devScreenT0 === null) devScreenT0 = elapsed;
   if (!started) devMockContent('empty', 0, screen);
@@ -2353,42 +2382,45 @@ const caseEls = {
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
 let caseT0 = null;
+const caseListEl = document.getElementById('caseList');
+const CASE_STEP = 388.78;   // カンプのカード間隔
 
 function updateCases(p) {
   const c = params.sections.cases;
-  /* セクションに入ったら自動で1,2,3枚と出る */
+  /* セクションに入ったら自動で1,2,3枚と縦に並ぶ (カンプの並び) */
   if (p <= 0.002) caseT0 = null;
   else if (caseT0 === null) caseT0 = elapsed;
   const A = caseT0 === null ? -1 : elapsed - caseT0;
 
   rv(caseEls.title, easeOutQ(clamp01((A - 0.2) / 1.2)), 8, 8);
-  const inK = [0, 1, 2].map(i => easeOutQ(clamp01((A - 0.6 - i * c.autoGap) / 1.2)));
-  /* そのあとスクロールすると奥行きが深まっていく */
-  const deep = seg(p, 0.18, 0.92, easeIO);
+  const inK = [0, 1, 2].map(i => easeOutQ(clamp01((A - 0.5 - i * c.autoGap) / 1.1)));
 
-  if (params.patterns.cases === 'A') {
-    caseEls.cards.forEach((el, i) => {
-      let back = 0;
-      for (let j = i + 1; j < 3; j++) back += inK[j];
-      const d = c.depth * (0.55 + 0.85 * deep);
-      const sc = 1 - back * 0.05 * d - (1 - inK[i]) * 0.03;
-      const y = (1 - inK[i]) * 420 - back * 36 * d;
-      el.style.transformOrigin = '50% 0%';
-      el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc.toFixed(4)})`;
-      el.style.opacity = (Math.min(1, inK[i] * 2.5) * (1 - back * 0.16 * d)).toFixed(3);
-      const bl = (1 - inK[i]) * 6 + back * 2.2 * d;
-      el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
-      el.style.zIndex = i + 1;
-    });
-  } else {
-    caseEls.cards.forEach((el, i) => {
-      el.style.transformOrigin = '0 0';
-      el.style.transform = `translate(0px, ${(150 + i * 245 - 270 + (1 - inK[i]) * 30).toFixed(2)}px) scale(0.68)`;
-      el.style.opacity = inK[i].toFixed(3);
-      el.style.filter = inK[i] >= 1 ? '' : `blur(${((1 - inK[i]) * 10).toFixed(2)}px)`;
-      el.style.zIndex = i + 1;
-    });
-  }
+  /* 3枚が縦に並んだ状態を画面に収めるための縮小率 */
+  const k = Math.min(1, (921 - 96 - 40) / (CASE_STEP * 2 + 344.78));
+  caseListEl.style.transform = `scale(${k.toFixed(4)})`;
+
+  /* 並び終わったあと、スクロールすると1枚ずつ重なっていく */
+  const stackK = [0, 1, 2].map(i => seg(p, 0.20 + i * 0.20, 0.46 + i * 0.20, easeIO));
+  /* 重なったときの位置: 画面の上下中央あたりに寄せる */
+  const stackTop = ((921 - 96 * 2) / k - 344.78) / 2;
+
+  caseEls.cards.forEach((el, i) => {
+    const lined = i * CASE_STEP;
+    const st = stackK[i];
+    const y = lined + (stackTop + i * 26 - lined) * st;
+    /* 自分より後ろのカードが重なってきた分だけ奥へ沈む */
+    let back = 0;
+    for (let j = i + 1; j < 3; j++) back += stackK[j];
+    const d = c.depth;
+    const sc = 1 - back * 0.05 * d - (1 - inK[i]) * 0.03;
+    el.style.transformOrigin = '50% 0%';
+    el.style.transform =
+      `translateY(${(y + (1 - inK[i]) * 60).toFixed(2)}px) scale(${sc.toFixed(4)})`;
+    el.style.opacity = (Math.min(1, inK[i] * 2.5) * (1 - back * 0.14 * d)).toFixed(3);
+    const bl = (1 - inK[i]) * 6 + back * 2.2 * d;
+    el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
+    el.style.zIndex = i + 1;
+  });
 }
 
 /* スクロール慣性補間: 生のスクロール進捗を毎フレーム少しずつ追いかける (lenis風のぬるっと感) */
