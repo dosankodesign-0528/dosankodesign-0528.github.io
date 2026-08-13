@@ -23,24 +23,27 @@
     overflow-x: clip;
   }
 
-  /* ---- 1440x921 の固定ステージを画面幅に合わせてスケール ---- */
+  /* ---- ステージ: 高さ921pxのカンプ座標系のまま、幅だけ画面いっぱいに広げる（フィル） ----
+     左右の要素は left:120px / right:120px でアンカーするので、幅が変わっても余白は120pxのまま */
   .stage-wrap { width: 100%; overflow: hidden; }
   .stage {
     position: relative;
-    width: 1440px;
+    width: var(--sw, 1440px);
     height: 921px;
     transform-origin: top left;
+    transform: scale(var(--s, 1));
   }
 
   /* ---- Header ---- */
   .header {
     position: absolute;
-    left: 38px;
+    left: 50px;
+    right: 50px;
     top: 26px;
-    width: 1340px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    opacity: 0;
   }
   .header .logo img { width: 255px; height: 47px; display: block; }
   .nav { display: flex; align-items: center; gap: 32px; }
@@ -80,10 +83,6 @@
     top: 263px;
     color: #101828;
     white-space: nowrap;
-    opacity: 0;
-    transform: translateY(14px);
-    filter: blur(6px);
-    animation: reveal 1.6s cubic-bezier(.16, 1, .3, 1) .3s forwards;
   }
   .hl-eyebrow {
     display: flex;
@@ -92,6 +91,7 @@
     font-weight: 400;
     font-size: 14px;
     color: #000;
+    opacity: 0;
   }
   .hl-eyebrow i { display: block; width: 26px; height: 1px; background: #000; }
   .hl-main {
@@ -101,19 +101,30 @@
     font-size: 70px;
     line-height: 1.4;
   }
+  .hl-line { display: block; position: relative; }
+  .hl-line .hl-ch { display: none; }
+  /* タイピングのカーソル */
+  .hl-caret {
+    display: inline-block;
+    width: 2px;
+    height: 62px;
+    background: #101828;
+    vertical-align: -12px;
+    opacity: 0;
+  }
   @keyframes reveal {
     to { opacity: 1; transform: translateY(0); filter: blur(0); }
   }
 
   /* ---- Orbit + Sphere ---- */
+  /* 軌道グループ: カンプは右端から28.5px。フィル時も右アンカーで位置を保つ */
   .orbit {
     position: absolute;
-    left: 496px;
+    right: 28.5px;
     top: 179px;
     width: 915.483px;
     height: 630px;
     opacity: 0;
-    animation: fadein 1.6s ease .15s forwards;
   }
   @keyframes fadein { to { opacity: 1; } }
   .orbit { transform-origin: 50% 50%; }
@@ -147,11 +158,10 @@
   .logos {
     position: absolute;
     left: 0;
+    right: 0;
     top: 796px;
-    width: 1440px;
     overflow: hidden;
     opacity: 0;
-    animation: fadein 1.4s ease .6s forwards;
   }
   .marquee-track {
     display: flex;
@@ -186,18 +196,19 @@
   }
   .pin-stage {
     position: absolute;
-    left: 50%;
+    left: 0;
     top: 50%;
-    width: 1440px;
+    width: var(--swp, 1440px);
     height: 921px;
-    transform: translate(-50%, -50%) scale(var(--sp));
+    transform: translateY(-50%) scale(var(--sp));
+    transform-origin: left center;
   }
 
   /* 通常フローのステージ (KVと同じスケール方式) */
   .flow-wrap { width: 100%; overflow: hidden; }
   .flow-stage {
     position: relative;
-    width: 1440px;
+    width: var(--sw, 1440px);
     transform-origin: top left;
     transform: scale(var(--s));
   }
@@ -207,10 +218,11 @@
 
   /* ---- Vision セクション (カンプ 14708:37961 準拠) ----
      Our Vison = SF Pro Light 40px / 本文 = Noto Sans JP Thin 100px lh1.7 / gap 13px */
+  /* セクション全体を50px上げた位置 (カンプ264 → 214) */
   .vis-label {
     position: absolute;
     left: 120px;
-    top: 264px;
+    top: 214px;
     font-family: var(--font-en);
     font-weight: 300;
     font-size: 40px;
@@ -219,7 +231,8 @@
   }
   .vis-line {
     position: absolute;
-    left: 120px;
+    /* 和文は左サイドベアリングが広いので、その分だけ左へ出して Our Vison と面を合わせる */
+    left: 112px;
     font-weight: 100;
     font-size: 100px;
     line-height: 170px;
@@ -229,8 +242,8 @@
   }
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
-  .vis-l1 { top: 317px; }
-  .vis-l2 { top: 487px; }
+  .vis-l1 { top: 267px; }
+  .vis-l2 { top: 437px; }
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -285,10 +298,18 @@
     color: #000;
     white-space: nowrap;
   }
+  /* 右カラム: カンプでは Point02 の右端がちょうど余白120px。そこを基準に右アンカーする */
+  .val-group {
+    position: absolute;
+    right: 120px;
+    top: 0;
+    width: 328px;
+    height: 100%;
+  }
   /* 「連携が生む、2つの価値」= Regular 20px + Thin 60px (カンプ 14693:28340) */
   .val-head {
     position: absolute;
-    left: 892.95px;
+    left: -99.05px;
     top: 148.11px;
     width: 272px;
     color: #101828;
@@ -296,8 +317,8 @@
   .val-head .vh-s { display: block; font-weight: 400; font-size: 20px; line-height: normal; }
   .val-head .vh-l { display: block; font-weight: 100; font-size: 60px; line-height: normal; }
   .val-point { position: absolute; width: 328px; color: #101828; }
-  .val-p1 { left: 933.95px; top: 342.19px; }
-  .val-p2 { left: 992px; top: 529.02px; }
+  .val-p1 { left: -58.05px; top: 342.19px; }
+  .val-p2 { left: 0; top: 529.02px; }
   .val-point .vp-tag {
     display: flex;
     align-items: center;
@@ -330,7 +351,7 @@
   }
   .res-head {
     position: absolute;
-    left: 1038.19px;
+    right: 121.81px;
     top: 117px;
     font-weight: 300;          /* カンプ: Noto Sans JP Light 40px */
     font-size: 40px;
@@ -340,7 +361,7 @@
   }
   .res-lead {
     position: absolute;
-    left: 1027.19px;
+    right: 121.81px;
     top: 274.13px;
     width: 291px;
     color: #000;
@@ -374,7 +395,7 @@
   }
   .res-stats {
     position: absolute;
-    left: 745.19px;
+    right: 121.81px;
     top: 587.88px;
     width: 573px;
     display: flex;
@@ -434,145 +455,183 @@
     font-size: 36px;
     line-height: 54px;
   }
+  /* カンプ: 右端から124px・上から284px・840.6×504.37。フィル時も右アンカーを保つ */
   .dev-mock {
     position: absolute;
-    left: 475px;
+    right: 124px;
     top: 284px;
-    width: 840px;
-    height: 504px;
-    will-change: transform, opacity, filter;
+    width: 840.6px;
+    height: 504.37px;
+    z-index: 3;                 /* 文字より前に重ねる */
   }
-  /* モック本体: カンプのダークガラスをHTMLで再現 (画像書き出しだと白くなるため) */
+  .dev-center { z-index: 1; }
+  .dev-strength { z-index: 2; }
+  /* ===== モック本体: カンプ 14708:37855 を忠実に再現 (840.6×504.37) ===== */
   .dm-panel {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255,.07);
-    border: 1px solid rgba(255,255,255,.13);
-    border-radius: 14px;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 30px 80px rgba(0,0,0,.38);
+    display: flex;
+    align-items: stretch;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 24px;
+    background: rgba(255,255,255,.1);
+    backdrop-filter: blur(75px);
+    -webkit-backdrop-filter: blur(75px);
+    box-shadow: 0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
     overflow: hidden;
   }
+  .dm-editor { flex: 1 0 0; min-width: 0; display: flex; align-items: stretch; }
+  /* editor-sidebar: w52 / py24 / gap24 */
   .dm-side {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 42px;
-    border-right: 1px solid rgba(255,255,255,.08);
+    flex: 0 0 52px;
+    background: rgba(255,255,255,.1);
+    border-right: 1px solid rgba(255,255,255,.1);
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
   }
-  .dm-side i {
-    position: absolute;
-    left: 17px;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.22);
+  .dm-side .dm-logo { width: 8px; height: 40px; display: block; }
+  .dm-side .dm-divider { width: 24px; height: 1px; background: rgba(255,255,255,.1); }
+  .dm-side .dm-icons { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+  .dm-side .dm-icons img { width: 16px; height: 16px; display: block; }
+  /* editor-code-view: p32 / gap12 / 行h16 gap6 / バーh6 r3 */
+  .dm-code {
+    flex: 1 0 0;
+    min-width: 0;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+    overflow: hidden;
   }
-  .dm-side i.pk { background: #FF5D97; }
-  .dm-code { position: absolute; left: 110px; top: 46px; }
   .dm-row {
     display: flex;
-    gap: 7px;
-    margin-bottom: 16.5px;
-    clip-path: inset(0 100% 0 0);   /* JSで左から伸ばして「生成されていく」感じを出す */
+    gap: 6px;
+    align-items: center;
+    height: 16px;
+    flex: 0 0 auto;
+    max-width: 100%;
   }
-  .dm-row .b { height: 7px; border-radius: 4px; }
-  /* コード生成中のカーソル */
-  .dm-caret {
-    position: absolute;
-    width: 2px;
-    height: 12px;
-    background: rgba(255,255,255,.75);
-    opacity: 0;
-  }
+  .dm-row .b { height: 6px; border-radius: 3px; flex: 0 0 auto; }
+  .dm-row .sp { flex: 0 0 auto; height: 6px; }
   .b.cp { background: #FF5D97; }
-  .b.cb { background: #38B7F5; }
-  .b.cw { background: rgba(255,255,255,.72); }
-  .b.cf { background: rgba(255,255,255,.26); }
+  .b.cb { background: #0EBBFF; }
+  .b.cw { background: #ffffff; }
+  .b.cf { background: rgba(255,255,255,.1); }
+  .dm-gap { height: 8px; flex: 0 0 auto; }
+  /* 案B/C: 生成中の行を光のグラデーションが走る (スケルトンローディング風) */
+  .dm-row.sweep .b {
+    background-image: linear-gradient(100deg,
+      rgba(255,255,255,0) 34%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 66%);
+    background-repeat: no-repeat;
+    background-size: 260% 100%;
+  }
+  /* chat-pane: w400 */
   .dm-chat {
-    position: absolute;
-    left: 545px; top: 0; bottom: 0; right: 0;
-    border-left: 1px solid rgba(255,255,255,.08);
+    flex: 0 0 400px;
+    border-left: 1px solid rgba(255,255,255,.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
   .dm-chat-head {
-    position: absolute;
-    left: 12px; top: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    flex: 0 0 auto;
+  }
+  .dm-chat-head .ttl {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
-    font-weight: 400;
-    color: rgba(255,255,255,.92);
+    font-family: 'Inter', var(--font-en);
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
   }
-  .dm-chat-head svg { display: block; }
-  .dm-msg { position: absolute; left: 13px; display: flex; gap: 9px; opacity: 0; }
+  .dm-chat-head img { width: 16px; height: 16px; display: block; }
+  .dm-history {
+    flex: 1 0 0;
+    min-height: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    overflow: hidden;
+  }
+  .dm-msg { display: flex; gap: 12px; align-items: flex-start; width: 100%; opacity: 0; }
   .dm-msg .av {
-    flex: 0 0 auto;
+    flex: 0 0 28px;
     width: 28px; height: 28px;
-    border-radius: 50%;
+    border-radius: 14px;
     background: #0EBBFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    color: #fff;
-    font-style: normal;
   }
   .dm-msg .av.pk { background: #FF5D97; }
+  .dm-msg .av img { width: 14px; height: 14px; display: block; }
   .dm-msg .lines {
-    background: rgba(255,255,255,.07);
-    border-radius: 10px;
-    padding: 11px 14px;
+    flex: 1 0 0;
+    min-width: 0;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
   }
-  .dm-msg .lines i {
-    display: block;
-    height: 6px;
-    border-radius: 3px;
-    background: rgba(255,255,255,.5);
-    margin-top: 8px;
-  }
-  .dm-msg .lines i:first-child { margin-top: 0; }
-  .dm-input {
-    position: absolute;
-    left: 12px; right: 44px; bottom: 16px;
-    height: 30px;
+  .dm-msg .lines i { display: block; height: 6px; border-radius: 3px; background: #fff; }
+  .dm-input-c {
     display: flex;
     align-items: center;
-    font-size: 12px;
-    font-weight: 300;
-    color: rgba(255,255,255,.38);
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,.1);
+    flex: 0 0 auto;
+  }
+  .dm-input {
+    flex: 1 0 0;
+    min-width: 0;
+    font-family: 'Inter', var(--font-en);
+    font-weight: 400;
+    font-size: 13px;
+    color: rgba(255,255,255,.16);   /* カンプ: プレースホルダは 10% 相当 */
     white-space: nowrap;
     overflow: hidden;
   }
-  /* 入力中のテキスト (JSで1文字ずつ出す) */
-  .dm-input .dm-typed { color: rgba(255,255,255,.82); }
+  .dm-input .dm-typed { color: rgba(255,255,255,.92); }
   .dm-input .dm-cursor {
     display: inline-block;
     width: 1px;
     height: 13px;
-    margin-left: 2px;
-    background: rgba(255,255,255,.8);
+    margin-left: 1px;
+    background: rgba(255,255,255,.85);
     vertical-align: -2px;
-  }
-  /* AIが考えてる時の3点 */
-  .dm-think { display: flex; gap: 5px; padding: 13px 14px; }
-  .dm-think i {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.55);
+    opacity: 0;
   }
   .dm-send {
-    position: absolute;
-    right: 8px; bottom: 15px;
-    width: 27px; height: 27px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.9);
-    color: #333;
-    font-size: 14px;
-    font-style: normal;
+    flex: 0 0 28px;
+    width: 28px; height: 28px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.1);
     display: flex;
     align-items: center;
     justify-content: center;
   }
+  .dm-send img { width: 12px; height: 12px; display: block; }
+  /* AIが考えている3点 */
+  .dm-think-b { display: flex !important; flex-direction: row !important; gap: 5px; }
+  .dm-think-b i { width: 5px; height: 5px; border-radius: 50%; background: #fff; }
   /* カンプ 14708:37856 (x118.65 y4174.10 / セクション上端4752.97 からの相対) */
   .dev-strength {
     position: absolute;
@@ -602,7 +661,7 @@
   }
   .case-card {
     position: absolute;
-    left: 440px;
+    right: 120px;
     top: 270px;
     width: 880px;
     height: 345px;
@@ -649,14 +708,24 @@
   }
 
   /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
-  .switcher {
+  /* 調整UIは右下にまとめて固定 */
+  .tools {
     position: fixed;
-    left: 16px;
+    right: 16px;
     bottom: 16px;
-    width: 380px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    max-height: calc(100vh - 32px);
+  }
+  .switcher {
+    position: relative;
+    width: 360px;
     min-width: 260px;
     max-width: 92vw;
-    max-height: calc(100vh - 32px);
+    max-height: 42vh;
     background: rgba(255,255,255,.95);
     backdrop-filter: blur(12px);
     border: 1px solid #e2e2e2;
@@ -745,11 +814,9 @@
 
   /* ---- 調整パネル ---- */
   .panel {
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    width: 300px;
-    max-height: calc(100vh - 32px);
+    position: relative;
+    width: 360px;
+    max-height: 46vh;
     background: rgba(255,255,255,.92);
     backdrop-filter: blur(12px);
     border: 1px solid #e2e2e2;
@@ -851,8 +918,11 @@
     </header>
 
     <h1 class="headline">
-      <span class="hl-eyebrow"><i></i>APIでデータを繋ぐプラットフォーム</span>
-      <span class="hl-main">AIと事業を<br>強くする</span>
+      <span class="hl-eyebrow" id="hlEyebrow"><i></i>APIでデータを繋ぐプラットフォーム</span>
+      <span class="hl-main">
+        <span class="hl-line" id="hlL1">AIと事業を<i class="hl-caret"></i></span>
+        <span class="hl-line" id="hlL2">強くする<i class="hl-caret"></i></span>
+      </span>
     </h1>
 
     <div class="orbit">
@@ -941,19 +1011,21 @@
         <div class="pf-sub rv" id="pfSub">プラットフォーム</div>
       </div>
 
-      <div class="val-head rv" id="valHead">
-        <span class="vh-s">連携が生む、</span>
-        <span class="vh-l">2つの価値</span>
-      </div>
-      <div class="val-point val-p1 rv" id="valP1">
-        <div class="vp-tag"><i></i>Point <em>01</em></div>
-        <h3>賢いAIの土台をつくる</h3>
-        <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
-      </div>
-      <div class="val-point val-p2 rv" id="valP2">
-        <div class="vp-tag"><i></i>Point <em>02</em></div>
-        <h3>業務実行の手足となる</h3>
-        <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
+      <div class="val-group">
+        <div class="val-head rv" id="valHead">
+          <span class="vh-s">連携が生む、</span>
+          <span class="vh-l">2つの価値</span>
+        </div>
+        <div class="val-point val-p1 rv" id="valP1">
+          <div class="vp-tag"><i></i>Point <em>01</em></div>
+          <h3>賢いAIの土台をつくる</h3>
+          <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
+        </div>
+        <div class="val-point val-p2 rv" id="valP2">
+          <div class="vp-tag"><i></i>Point <em>02</em></div>
+          <h3>業務実行の手足となる</h3>
+          <p>AIは、つながったデータの分だけ賢くなる。連携が、AIの燃料になる。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -992,21 +1064,47 @@
       </div>
       <div class="dev-mock" id="devMock">
         <div class="dm-panel">
-          <div class="dm-side">
-            <i class="pk" style="top:113px"></i><i style="top:143px"></i><i style="top:170px"></i><i style="top:197px"></i><i style="top:226px"></i>
+          <div class="dm-editor">
+            <div class="dm-side">
+              <img class="dm-logo" src="assets/mock/logo.svg" alt="">
+              <div class="dm-divider"></div>
+              <div class="dm-icons">
+                <img src="assets/mock/side1.svg" alt="">
+                <img src="assets/mock/side2.svg" alt="">
+                <img src="assets/mock/side2.svg" alt="">
+                <img src="assets/mock/side2.svg" alt="">
+                <img src="assets/mock/side2.svg" alt="">
+              </div>
+            </div>
+            <div class="dm-code" id="dmCode"></div>
           </div>
-          <div class="dm-code" id="dmCode"></div>
           <div class="dm-chat">
             <div class="dm-chat-head">
-              <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 1.5l1.6 4.3 4.4 1.2-4.4 1.6-1.6 4.4-1.4-4.4L2.5 7l4.6-1.2L8.5 1.5z" fill="#38B7F5"/><circle cx="14" cy="3" r="1.4" fill="#38B7F5"/></svg>
-              AI Assistant
+              <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">AI Assistant</span>
+              <img src="assets/mock/ellipsis.svg" alt="">
             </div>
-            <div class="dm-msg" id="dmMsg0" style="top:70px"><i class="av">🤖</i><div class="lines" style="width:238px"><i style="width:150px"></i><i style="width:196px"></i><i style="width:116px"></i></div></div>
-            <div class="dm-msg" id="dmMsg1" style="top:150px"><i class="av pk">👤</i><div class="lines" style="width:226px"><i style="width:176px"></i><i style="width:148px"></i></div></div>
-            <div class="dm-msg" id="dmThink" style="top:216px"><i class="av">🤖</i><div class="lines dm-think"><i></i><i></i><i></i></div></div>
-            <div class="dm-msg" id="dmMsg2" style="top:216px"><i class="av">🤖</i><div class="lines" style="width:180px"><i style="width:92px"></i><i style="width:124px"></i></div></div>
-            <div class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span id="dmPlaceholder">Ask anything...</span></div>
-            <i class="dm-send">↑</i>
+            <div class="dm-history">
+              <div class="dm-msg" id="dmMsg0">
+                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
+                <div class="lines"><i style="width:180px;opacity:.8"></i><i style="width:220px;opacity:.6"></i><i style="width:140px;opacity:.6"></i></div>
+              </div>
+              <div class="dm-msg" id="dmMsg1">
+                <span class="av pk"><img src="assets/mock/user.svg" alt=""></span>
+                <div class="lines"><i style="width:210px;opacity:.8"></i><i style="width:190px;opacity:.6"></i></div>
+              </div>
+              <div class="dm-msg" id="dmThink">
+                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
+                <div class="lines dm-think-b"><i></i><i></i><i></i></div>
+              </div>
+              <div class="dm-msg" id="dmMsg2">
+                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
+                <div class="lines"><i style="width:110px;opacity:.8"></i><i style="width:150px;opacity:.6"></i></div>
+              </div>
+            </div>
+            <div class="dm-input-c">
+              <span class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span id="dmPlaceholder">Ask anything...</span></span>
+              <span class="dm-send"><img src="assets/mock/arrow-up.svg" alt=""></span>
+            </div>
           </div>
         </div>
       </div>
@@ -1051,7 +1149,8 @@
   </div>
 </section>
 
-<!-- ================= パターン切替スイッチャー (ドラッグ移動・リサイズ可) ================= -->
+<!-- ================= 調整UI (右下にまとめて固定) ================= -->
+<div class="tools">
 <div class="switcher" id="switcher">
   <div class="sw-head" id="swHead">
     <span>🎛 パターン切替</span>
@@ -1071,6 +1170,7 @@
     <span class="chev">▲</span>
   </div>
   <div class="panel-body" id="panelBody"></div>
+</div>
 </div>
 
 <script>
@@ -1118,6 +1218,11 @@ const VISION_SLIDES = [
   { key: 'A', name: '案A なめらか', desc: '上の行が先に、下の行が追って左へ。ゆったり減速する上品な動き（カンプ準拠）。' },
   { key: 'B', name: '案B 吸着', desc: '左端でわずかに行き過ぎて戻る。「Our Vison」に吸い寄せられた感じが出る。' },
   { key: 'C', name: '案C 文字が流れる', desc: '文字が1つずつ時間差で左へ流れて整列する。もっとも動きが豊か。' },
+];
+const MOCK_PATTERNS = [
+  { key: 'A', name: '案A タイプ生成', desc: 'コードが左から書き出されていく。素直で読みやすい。' },
+  { key: 'B', name: '案B 光が走る', desc: 'スケルトンのまま光のグラデーションが横切って定着する。ローディング的でAIらしい。' },
+  { key: 'C', name: '案C 発光', desc: '行が青白く発光しながら現れ、光が引いて落ち着く。もっともハイテク寄り。' },
 ];
 const DEV_PATTERNS = [
   { key: 'A', name: '案A ブラースワップ', desc: 'モックは右に据え置き、訴求文がブラーで入れ替わる。切替の瞬間にモックが一瞬やわらかくぼける。' },
@@ -1321,7 +1426,17 @@ const DEFAULTS = {
     tumble: 0.37,    // 多面ゆらぎ (2軸目の回転比率)
     noise: 0.5,      // 質感の粒の強さ
   },
-  planet: { dx: 0, dy: 0, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
+  planet: { dx: 0, dy: 20, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
+  /* KV: グラフィック全体の位置と登場シーケンス(秒) */
+  kv: {
+    gx: 0, gy: -20,   // 軌道グループ全体の位置ずらし
+    headerAt: 0.25,   // ヘッダーがブラーで出る
+    eyebrowAt: 1.15,  // 「APIでデータを繋ぐプラットフォーム」
+    typeAt: 2.1,      // タイピング開始
+    charDur: 0.12,    // 1文字あたり
+    lineGap: 0.45,    // 改行の間
+    graphicGap: 0.45, // 打ち終わってからグラフィックが出るまで
+  },
   orbits: {
     /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
     outer: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
@@ -1337,16 +1452,24 @@ const DEFAULTS = {
     common: {
       smooth: 6,         // スクロール慣性補間の強さ (0=オフ、大きいほど機敏)
     },
+    /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
+       自動パートの時間はすべて秒で指定する */
     vision:  {
-      lenVh: 1000,       // 尺(スクロール量)
-      revealLen: 0.10,   // 1行の出現にかけるスクロール割合 (出る速度)
-      line2Delay: 0.10,  // 2行目が出始めるまでの遅れ
-      slideLen: 0.12,    // 左へ吸着する動きの長さ
+      lenVh: 1200,       // 尺(スクロール量)
+      labelAt: 0.4,      // Our Vison がブラーで出る
+      labelDur: 2.2,     // その所要時間 (ゆったり)
+      line1At: 2.2,      // 1行目が出はじめる
+      line2Gap: 1.2,     // 2行目までの間
+      revealDur: 1.7,    // 1行の出現時間
+      slideGap: 0.6,     // 2行そろってから左へ動き出すまで
+      slideDur: 1.8,     // 左へ吸着する時間
       slideStagger: 0.5, // 2行目が遅れて動き出す割合
-      slideX1: 236,      // 1行目の開始オフセット(px) カンプの中央寄り位置
+      slideX1: 236,      // 1行目の開始オフセット(px)
       slideX2: 178,      // 2行目の開始オフセット(px)
       charStagger: 0.45, // 案C: 文字ごとの時間差
-      exitLen: 0.13,     // 上下に分かれて消える長さ
+      miniGap: 0.4,      // 左に着いてから軌道グラフィックが出るまで
+      miniDur: 1.6,      // 軌道グラフィックの出現時間
+      moveLen: 0.30,     // ワンスクロールで左下へ移動する量(スクロール割合)
       miniX: 559,        // ミニ楕円の初期オフセット(px)
       miniY: -100,
       miniScale: 0.26,   // ミニ楕円の縮小率
@@ -1357,13 +1480,13 @@ const DEFAULTS = {
       glowDur: 7,        // 光が1周する秒数
       blur: 8,           // 文字ブラー量
     },
-    results: { countDur: 1.4, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
-    dev:     { lenVh: 1100, swapBlur: 10 },           // 尺 / CLI・API・SDK切替のブラー量
-    cases:   { lenVh: 600, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
+    results: { countDur: 2.8, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
+    dev:     { lenVh: 1400, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
+    cases:   { lenVh: 900, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
   },
-  patterns: { dev: 'A', cases: 'A', visionSlide: 'A' },   // セクション演出の採用案
+  patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
-const STORAGE_KEY = 'anyflow-embed-anim-v6';
+const STORAGE_KEY = 'anyflow-embed-anim-v7';
 
 let params = load();
 function load() {
@@ -1374,6 +1497,7 @@ function load() {
       merged.pulse = { ...DEFAULTS.pulse, ...(s.pulse || {}) };
       merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.planet = { ...DEFAULTS.planet, ...(s.planet || {}) };
+      merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
       merged.orbits = {
         outer: { ...DEFAULTS.orbits.outer, ...((s.orbits && s.orbits.outer) || {}) },
         inner: { ...DEFAULTS.orbits.inner, ...((s.orbits && s.orbits.inner) || {}) },
@@ -1390,6 +1514,7 @@ function load() {
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
       if (!['A', 'B', 'C'].includes(merged.patterns.visionSlide)) merged.patterns.visionSlide = 'A';
+      if (!['A', 'B', 'C'].includes(merged.patterns.mock)) merged.patterns.mock = 'B';
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
@@ -1545,7 +1670,9 @@ function applySway() {
       orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`; break;
     /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
-  swayEls.orbit.style.transform = orbit;
+  /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
+  const kv = params.kv;
+  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px) ${orbit}`.trim();
   swayEls.svgs.forEach(s => s.style.transform = svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
   const pl = params.planet;
@@ -1555,6 +1682,8 @@ function applySway() {
 }
 
 /* ================= スクロール連動セクション ================= */
+/* ステージの設計幅 (フィル時に画面幅へ広がる)。fit() で更新される */
+let stageW = 1440, stagePinW = 1440;
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOutC = t => 1 - Math.pow(1 - t, 3);
@@ -1699,93 +1828,98 @@ const pfGlowEls = [];
    ミニ楕円ブラー出現 → 上下に分かれてブラーで消える → 楕円が左下へ移動＋実寸へ拡大 →
    ドットがくるくる(時間駆動・約1秒) → Platform文字 → ドット停止＋役割名 → 2つの価値 →
    スクロールで Point 01 → Point 02 */
-function visPhases() {
-  const c = params.sections.vision;
-  const r = Math.max(0.03, c.revealLen);
-  const l1 = [0.05, 0.05 + r];
-  const l2 = [0.05 + c.line2Delay, 0.05 + c.line2Delay + r];
-  const tEnd = Math.min(Math.max(l1[1], l2[1]), 0.34);
-  const sl0 = tEnd + 0.03;
-  const sd = Math.max(0.04, c.slideLen);
-  const slide1 = [sl0, sl0 + sd];                                 // 上の行が先に左へ
-  const slide2 = [sl0 + sd * c.slideStagger, sl0 + sd + sd * c.slideStagger]; // 下の行が追従
-  const mini = [slide2[1] + 0.03, slide2[1] + 0.11];
-  const ex0 = mini[1] + 0.04;
-  const exLen = Math.max(0.08, c.exitLen);
-  /* 文字が上下に分かれるのと「同時に」楕円が左下へ動き出す (ユーザー指示) */
-  const exit = [ex0, ex0 + exLen];
-  const move = [ex0, ex0 + exLen * 1.4];
-  return { label: [0, 0.05], l1, l2, slide1, slide2, mini, exit, move };
-}
-let visDotT0 = null;   // 楕円が左下へ動き出した時刻 (ドット周回＋以降のチェーンの起点)
+/* ビジョンは「セクションがピン留めされたら自動再生」。
+   Our Vison → 1行ずつ文字 → 左へスライド → 軌道グラフィック出現 までが自動。
+   そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
+let visAutoT0 = null;    // 自動シーケンスの開始時刻
+let visAutoDone = false; // 自動パートが終わったか
+let visMoveP0 = null;    // 自動完了時のスクロール位置 (ここからワンスクロール)
+let visDotT0 = null;     // 軌道が動き出した時刻 (ドット周回とその後のチェーンの起点)
 
 function updateVision(p) {
   const c = params.sections.vision;
   const B = c.blur;
-  const PH = visPhases();
-  const ex = seg(p, ...PH.exit, easeIO);
 
-  rv(visEls.label, seg(p, ...PH.label, easeOutQ) * (1 - ex), B, 10);
+  /* セクションに入ったら自動再生スタート。戻ったらリセットして再生し直せる */
+  if (p <= 0.002) { visAutoT0 = null; visAutoDone = false; visMoveP0 = null; }
+  else if (visAutoT0 === null) visAutoT0 = elapsed;
+  const A = visAutoT0 === null ? -1 : elapsed - visAutoT0;
 
-  /* 見出し2行: 下からトリミング(マスク)出現 → 左へスライド(3案) → 上下に分かれてブラーで消える */
+  /* --- 自動パートの時間割 (秒) --- */
+  const l1At = c.line1At;
+  const l2At = c.line1At + c.line2Gap;
+  const slideAt = l2At + c.revealDur + c.slideGap;
+  const slideAt2 = slideAt + c.slideDur * c.slideStagger;
+  const miniAt = slideAt2 + c.slideDur + c.miniGap;
+  const autoEnd = miniAt + c.miniDur;
+  if (A >= autoEnd && !visAutoDone) { visAutoDone = true; visMoveP0 = p; }
+
+  /* --- ワンスクロールで進む部分 --- */
+  const mvStart = visMoveP0 === null ? 9 : Math.min(visMoveP0 + 0.02, 0.55);
+  const mv = visAutoDone ? seg(p, mvStart, mvStart + c.moveLen, easeIO) : 0;
+  const ex = visAutoDone ? seg(p, mvStart, mvStart + c.moveLen * 0.7, easeIO) : 0;
+
+  rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - ex), B, 10);
+
+  /* 見出し2行: 下からトリミング出現 → 左へスライド(3案) → 上下に分かれてブラーで消える */
   const pat = params.patterns.visionSlide;
   const ez = pat === 'B' ? easeOutBack : easeOutQ;
-  const slides = [seg(p, ...PH.slide1, ez), seg(p, ...PH.slide2, ez)];
+  const slideK = [
+    ez(clamp01((A - slideAt) / c.slideDur)),
+    ez(clamp01((A - slideAt2) / c.slideDur)),
+  ];
   const offs = [c.slideX1, c.slideX2];
-  [[visEls.l1, PH.l1, -240, 0], [visEls.l2, PH.l2, 240, 1]].forEach(([el, ph, exDy, idx]) => {
-    const k = seg(p, ...ph, easeOutQ);
+  [[visEls.l1, l1At, -240, 0], [visEls.l2, l2At, 240, 1]].forEach(([el, at, exDy, idx]) => {
+    const k = easeOutQ(clamp01((A - at) / c.revealDur));
     const inner = el.firstElementChild;
     inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
     inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
     el.style.opacity = ((k > 0 ? 1 : 0) * (1 - ex)).toFixed(3);
     el.style.filter = ex > 0 ? `blur(${(ex * B).toFixed(2)}px)` : '';
 
-    const sl = slides[idx];
     const chars = visEls.chars[idx];
     if (pat === 'C') {
-      /* 案C: 行全体は動かさず、文字が1つずつ時間差で左へ流れて整列する */
+      /* 案C: 行は動かさず、文字が1つずつ時間差で左へ流れて整列 */
       el.style.transform = `translate(0px, ${(ex * exDy).toFixed(2)}px)`;
-      const raw = clamp01((p - PH['slide' + (idx + 1)][0]) / (PH['slide' + (idx + 1)][1] - PH['slide' + (idx + 1)][0]));
+      const raw = clamp01((A - (idx === 0 ? slideAt : slideAt2)) / c.slideDur);
       const n = chars.length;
       const span = Math.max(0.15, 1 - c.charStagger);
-      chars.forEach((s, ci) => {
+      chars.forEach((sp, ci) => {
         const kc = easeOutQ(clamp01((raw - (ci / Math.max(1, n - 1)) * c.charStagger) / span));
-        s.style.transform = `translateX(${((1 - kc) * offs[idx]).toFixed(2)}px)`;
+        sp.style.transform = `translateX(${((1 - kc) * offs[idx]).toFixed(2)}px)`;
       });
     } else {
-      if (chars[0] && chars[0].style.transform) chars.forEach(s => s.style.transform = '');
+      if (chars[0] && chars[0].style.transform) chars.forEach(sp => sp.style.transform = '');
       el.style.transform =
-        `translate(${((1 - sl) * offs[idx]).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+        `translate(${((1 - slideK[idx]) * offs[idx]).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
     }
   });
 
-  /* 楕円: 文字の右横に小さくブラー出現 → 退場と同時に左下の実寸位置へ移動しながら拡大 */
-  const mi = seg(p, ...PH.mini, easeOutQ);
-  const mv = seg(p, ...PH.move, easeIO);
-  const s = c.miniScale + (1 - c.miniScale) * mv;
+  /* 軌道グラフィック: 文字の右横に小さくブラー出現(自動) → ワンスクロールで左下へ移動＋実寸 */
+  const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
+  const sc = c.miniScale + (1 - c.miniScale) * mv;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
   visEls.pfWrap.style.transform =
-    `translate(${((1 - mv) * c.miniX).toFixed(2)}px, ${((1 - mv) * c.miniY).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    `translate(${((1 - mv) * c.miniX).toFixed(2)}px, ${((1 - mv) * c.miniY).toFixed(2)}px) scale(${sc.toFixed(4)})`;
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
 
-  /* 移動開始と同時にドットがフェードイン＆周回開始 (KVと同じ角速度)。
-     spinDur 秒だけ流れて、そこから spinBrake 秒かけて減速し、カンプの規定位置にピタリ停止。
-     停止後は時間チェーン: Platform → プラットフォーム → 役割名 → 2つの価値 → Point01 → Point02
-     (ユーザー指示: 1スクロールでディレイで1個ずつ) */
-  const moving = p >= PH.move[0];
+  /* 移動開始と同時にドットがフェードイン＆周回。所定位置で減速停止し、
+     そのあと Platform → プラットフォーム → 役割名 → 2つの価値 → Point01 → Point02 を
+     ディレイで1つずつ (1スクロール内・時間駆動) */
+  const moving = mv > 0.001;
   if (!moving) visDotT0 = null;
   else if (visDotT0 === null) visDotT0 = elapsed;
   const T = visDotT0 === null ? -1 : elapsed - visDotT0;
 
   const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed;
   const cruise = Math.max(0.2, c.spinDur), brake = Math.max(0.3, c.spinBrake);
-  const totalRot = v * cruise + v * brake / 2;   // 停止までに進む総角度
+  const totalRot = v * cruise + v * brake / 2;
   let rot = 0;
   if (T > 0) {
     if (T < cruise) rot = v * T;
     else {
       const u = clamp01((T - cruise) / brake);
-      rot = v * cruise + v * brake * (u - u * u / 2);   // 速度 v→0 の一次減速
+      rot = v * cruise + v * brake * (u - u * u / 2);
     }
   }
   const dotIn = T < 0 ? 0 : clamp01(T / 0.9);
@@ -1797,18 +1931,18 @@ function updateVision(p) {
     el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
   });
 
-  /* 軌道を流れる光 (データが流れるニュアンス)。楕円が見え始めてから流す */
+  /* 軌道を流れる光 (データが流れるニュアンス) */
   const glowOn = c.glow > 0 && mi > 0;
   pfGlowEls.forEach((el, i) => {
     if (!glowOn) { el.style.opacity = 0; return; }
     const perim = parseFloat(el.dataset.perim);
-    const lane = i < 3 ? 0 : 1;   // 楕円ごとに位相をずらす
+    const lane = i < 3 ? 0 : 1;
     const off = ((elapsed / Math.max(1, c.glowDur) + lane * 0.45) % 1) * perim * params.direction;
     el.setAttribute('stroke-dashoffset', (-off).toFixed(2));
     el.style.opacity = (parseFloat(el.dataset.op) * c.glow * mi).toFixed(3);
   });
 
-  const C = T < 0 ? -99 : T - cruise - brake;   // 停止からの経過秒
+  const C = T < 0 ? -99 : T - cruise - brake;
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.2) / 1.1)), B, 8);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.45) / 1.1)), B, 8);
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.9 - i * 0.22) / 1.0)), B, 6));
@@ -1847,60 +1981,27 @@ function setCounter(el, finalStr, suffix, t, dur) {
 function updateResults() {
   const r = SECS.results.getBoundingClientRect();
   const vh = window.innerHeight || 1;
-  if (r.top > vh) resT0 = null;                                  // 下へ戻ったらリセット (再生し直せる)
-  else if (resT0 === null && r.top < vh * 0.6) resT0 = elapsed;  // 6割まで入ったら開始
+  if (r.top > vh) resT0 = null;                                    // 下へ戻ったらリセット (再生し直せる)
+  else if (resT0 === null && r.top < vh * 0.92) resT0 = elapsed;   // 画面に入った瞬間に開始
   const c = params.sections.results;
   const t = resT0 === null ? 0 : elapsed - resT0;
 
-  /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠) */
-  const kImg = easeOutC(clamp01(t / 1.2));
-  resEls.img.style.opacity = clamp01(t / 0.5).toFixed(3);
+  /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
+  const kImg = easeOutQ(clamp01(t / 2.4));
+  resEls.img.style.opacity = clamp01(t / 1.0).toFixed(3);
   resEls.img.style.filter = kImg >= 1 ? '' : `blur(${((1 - kImg) * c.imgBlur).toFixed(2)}px)`;
 
-  rv(resEls.head, easeOutC(clamp01((t - 0.35) / 0.8)), 8, 12);
-  rv(resEls.lead, easeOutC(clamp01((t - 0.5) / 0.7)), 8, 12);
-  rv(resEls.text, easeOutC(clamp01((t - 0.7) / 0.8)), 8, 10);
-  rv(resEls.stats, easeOutC(clamp01((t - 0.8) / 0.8)), 8, 10);
+  rv(resEls.head, easeOutQ(clamp01((t - 0.7) / 1.6)), 8, 14);
+  rv(resEls.lead, easeOutQ(clamp01((t - 1.1) / 1.6)), 8, 14);
+  rv(resEls.text, easeOutQ(clamp01((t - 1.5) / 1.6)), 8, 12);
+  rv(resEls.stats, easeOutQ(clamp01((t - 1.8) / 1.6)), 8, 12);
 
-  setCounter(resEls.cntMain, '200', '+', t - 0.7, c.countDur);
-  setCounter(resEls.cntSub1, '500', '+', t - 1.0, c.countDur);
-  setCounter(resEls.cntSub2, '99.9', '%', t - 1.0, c.countDur);
+  setCounter(resEls.cntMain, '200', '+', t - 1.4, c.countDur);
+  setCounter(resEls.cntSub1, '500', '+', t - 2.1, c.countDur);
+  setCounter(resEls.cntSub2, '99.9', '%', t - 2.1, c.countDur);
 }
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
-/* モックのコード行: カンプの並びを再現 [インデント, [色,幅]...] */
-const DM_ROWS = [
-  { i: 0,  b: [['cp', 40], ['cb', 64]] },
-  { i: 20, b: [['cw', 52], ['cb', 92], ['cp', 28]] },
-  { i: 33, b: [['cb', 76], ['cw', 35]] },
-  { i: 33, b: [['cf', 115]] },
-  { i: 20, b: [['cw', 19]] },
-  { i: 3,  b: [['cf', 8]] },
-  { i: 0,  b: [['cp', 30], ['cb', 84]], gap: 24 },
-  { i: 20, b: [['cw', 62], ['cp', 44]] },
-  { i: 33, b: [['cb', 117], ['cb', 22]] },
-  { i: 33, b: [['cw', 61]] },
-  { i: 46, b: [['cp', 30], ['cb', 80]] },
-  { i: 33, b: [['cw', 40]] },
-  { i: 5,  b: [['cp', 13]] },
-];
-(function buildDmCode() {
-  const root = document.getElementById('dmCode');
-  DM_ROWS.forEach(r => {
-    const row = document.createElement('div');
-    row.className = 'dm-row';
-    row.style.paddingLeft = r.i + 'px';
-    if (r.gap) row.style.marginTop = r.gap + 'px';
-    r.b.forEach(([cls, w]) => {
-      const bar = document.createElement('span');
-      bar.className = 'b ' + cls;
-      bar.style.width = w + 'px';
-      row.appendChild(bar);
-    });
-    root.appendChild(row);
-  });
-})();
-
 const devEls = {
   h1: document.getElementById('devH1'),
   h2: document.getElementById('devH2'),
@@ -1913,33 +2014,146 @@ const devEls = {
    ②スクロールでモックが中央へ上がりながら実寸まで拡大 (規定位置までは中身は空)
    ③規定位置でモック内アニメ開始 (右チャットに入力→返答→左でコード生成)
    ④ブラーで消える →⑤「開発環境に/柔軟に適用」出現 →⑥上下に分割しその間からモック
-   →⑦右へ移動して左に CLI → API → SDK が入れ替わる */
+   →⑦右へ移動し、文字はブラーで消え、左に CLI → API → SDK が入れ替わる */
 const DEV_P = {
-  h1:    [0.00, 0.06],
-  rise:  [0.09, 0.30],   // 下からせり上がって拡大
-  hold:  [0.30, 0.42],   // 規定位置 (モック内アニメが走る)
-  out1:  [0.42, 0.50],
-  h2:    [0.52, 0.58],
-  split2:[0.60, 0.71],
-  grow2: [0.61, 0.74],
-  dock:  [0.75, 0.83],
-  sw1:   [0.87, 0.905],
-  sw2:   [0.94, 0.975],
+  h1:    [0.00, 0.05],
+  rise:  [0.08, 0.26],   // 下からせり上がって拡大
+  hold:  [0.26, 0.38],   // 規定位置 (モック内アニメが走る)
+  out1:  [0.38, 0.45],
+  h2:    [0.47, 0.53],
+  split2:[0.56, 0.66],
+  grow2: [0.57, 0.69],
+  dock:  [0.70, 0.78],   // 右へ移動 (＋見出しはブラーで消える)
+  sw1:   [0.845, 0.875], // CLI → API
+  sw2:   [0.925, 0.955], // API → SDK
 };
-const MOCK_CX = -175.7;   // ステージ中央に置くための X オフセット
-const MOCK_CY = -13;      // 同 Y
+const MOCK_W = 840.6, MOCK_RIGHT = 124;
+/* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
+function mockCenterX() { return MOCK_RIGHT + MOCK_W - stagePinW / 2 - MOCK_W / 2; }
+const MOCK_CY = -13;
 
 /* 見出し: ブラー出現 → (2行のときだけ)上下に割れる → ブラー退場 */
 function devHeading(el, inK, splitK, outK) {
   el.style.opacity = (inK * (1 - outK)).toFixed(3);
   el.style.filter = (inK < 1 || outK > 0)
-    ? `blur(${((1 - inK) * 12 + outK * 14).toFixed(2)}px)` : '';
+    ? `blur(${((1 - inK) * 12 + outK * 16).toFixed(2)}px)` : '';
   const d = (splitK * 190).toFixed(2);
   const lab = el.querySelector('.dc-label'), a = el.querySelector('.dc-a'), b = el.querySelector('.dc-b');
   if (lab) lab.style.transform = `translateY(${-d}px)`;
   if (a) a.style.transform = `translateY(${-d}px)`;
   if (b) b.style.transform = `translateY(${d}px)`;
 }
+
+/* ===== モックの中身: 画面ごとの「コード行」データ (カンプの行構成に準拠) =====
+   b: [色クラス, 幅px] / i: インデント / gap: 余白行 */
+const DM_SCREENS = {
+  editor: [
+    { b: [['cp', 48], ['cb', 80]] },
+    { i: 16, b: [['cw', 64], ['cb', 110], ['cp', 36]] },
+    { i: 32, b: [['cb', 92], ['cw', 44]] },
+    { i: 32, b: [['cf', 120]] },
+    { i: 16, b: [['cw', 24]] },
+    { b: [['cw', 8]] },
+    { gap: 8 },
+    { b: [['cp', 36], ['cb', 100]] },
+    { i: 16, b: [['cw', 80], ['cp', 54]] },
+    { i: 32, b: [['cb', 140], ['cb', 28]] },
+    { i: 32, b: [['cw', 74], ['cf', 52]] },
+    { i: 48, b: [['cp', 36], ['cb', 98]] },
+    { i: 32, b: [['cw', 48]] },
+    { i: 16, b: [['cp', 16]] },
+  ],
+  /* CLI: プロンプト($)＋出力ログが順に流れる */
+  cli: [
+    { b: [['cp', 10], ['cw', 116]] },
+    { i: 16, b: [['cf', 176]] },
+    { i: 16, b: [['cf', 148]] },
+    { gap: 8 },
+    { b: [['cp', 10], ['cw', 92]] },
+    { i: 16, b: [['cb', 56], ['cf', 120]] },
+    { i: 16, b: [['cf', 168]] },
+    { i: 16, b: [['cf', 136]] },
+    { gap: 8 },
+    { b: [['cp', 10], ['cw', 146]] },
+    { i: 16, b: [['cb', 44], ['cw', 78]] },
+    { i: 16, b: [['cf', 158]] },
+    { b: [['cp', 10]] },
+  ],
+  /* API: リクエスト → ヘッダ → 200 レスポンス */
+  api: [
+    { b: [['cb', 40], ['cw', 148]] },
+    { i: 16, b: [['cf', 108]] },
+    { gap: 8 },
+    { b: [['cw', 30], ['cb', 88]] },
+    { i: 16, b: [['cw', 58], ['cp', 78]] },
+    { i: 16, b: [['cw', 52], ['cb', 118]] },
+    { gap: 8 },
+    { b: [['cp', 34], ['cw', 44]] },
+    { i: 16, b: [['cb', 128], ['cw', 36]] },
+    { i: 32, b: [['cw', 84], ['cf', 58]] },
+    { i: 32, b: [['cb', 102]] },
+    { i: 16, b: [['cw', 16]] },
+    { b: [['cw', 8]] },
+  ],
+  /* SDK: import 群 → 初期化 → 呼び出し */
+  sdk: [
+    { b: [['cp', 52], ['cb', 118]] },
+    { b: [['cp', 52], ['cb', 94]] },
+    { gap: 8 },
+    { b: [['cw', 40], ['cb', 108], ['cp', 28]] },
+    { i: 16, b: [['cw', 70], ['cf', 62]] },
+    { i: 16, b: [['cb', 128]] },
+    { b: [['cw', 16]] },
+    { gap: 8 },
+    { b: [['cp', 30], ['cw', 86]] },
+    { i: 16, b: [['cb', 122], ['cw', 40]] },
+    { i: 32, b: [['cw', 64], ['cf', 46]] },
+    { i: 16, b: [['cp', 20]] },
+    { b: [['cw', 8]] },
+  ],
+};
+/* 画面ごとの生成テンポ (開始秒・行間隔・1行の時間・ループ長) */
+const DM_TIMING = {
+  editor: { start: 4.2, step: 0.26, dur: 0.5, loop: 12 },
+  cli:    { start: 0.5, step: 0.30, dur: 0.42, loop: 7.5 },
+  api:    { start: 0.5, step: 0.26, dur: 0.5, loop: 7.0 },
+  sdk:    { start: 0.5, step: 0.24, dur: 0.5, loop: 6.5 },
+};
+
+const dmCodeRoot = document.getElementById('dmCode');
+let dmRowEls = [], dmCurScreen = null;
+function dmBuildScreen(key) {
+  if (dmCurScreen === key) return;
+  dmCurScreen = key;
+  dmCodeRoot.innerHTML = '';
+  dmRowEls = [];
+  DM_SCREENS[key].forEach(r => {
+    if (r.gap) {
+      const g = document.createElement('div');
+      g.className = 'dm-gap';
+      g.style.height = r.gap + 'px';
+      dmCodeRoot.appendChild(g);
+      return;
+    }
+    const row = document.createElement('div');
+    row.className = 'dm-row';
+    if (r.i) {
+      const sp = document.createElement('span');
+      sp.className = 'sp';
+      sp.style.width = r.i + 'px';
+      row.appendChild(sp);
+    }
+    r.b.forEach(([cls, w]) => {
+      const bar = document.createElement('span');
+      bar.className = 'b ' + cls;
+      bar.style.width = w + 'px';
+      row.appendChild(bar);
+    });
+    dmCodeRoot.appendChild(row);
+    dmRowEls.push(row);
+  });
+}
+dmBuildScreen('editor');
 
 /* ---- モック内アニメ (絵コンテのメモ: 右チャットに入力 → 応答 → 左でコード生成) ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
@@ -1951,23 +2165,56 @@ const dmEls = {
   msg1: document.getElementById('dmMsg1'),
   msg2: document.getElementById('dmMsg2'),
   think: document.getElementById('dmThink'),
-  rows: [...document.querySelectorAll('.dm-row')],
 };
-const DM_LOOP = 11;   // 1巡の秒数
 
-function devMockContent(mode, t) {
-  /* mode: 'empty' = 中身なし / 'anim' = 生成アニメ / 'full' = 全部表示 */
-  if (mode === 'full') {
-    dmEls.typed.textContent = '';
-    dmEls.ph.style.display = '';
-    dmEls.cursor.style.opacity = 0;
-    dmEls.msg0.style.opacity = 1;
-    dmEls.msg1.style.opacity = 1;
-    dmEls.msg2.style.opacity = 1;
-    dmEls.think.style.opacity = 0;
-    dmEls.rows.forEach(r => r.style.clipPath = 'none');
-    return;
-  }
+/* コード行の出現: 3案 (A=生成タイプ / B=スケルトンの光 / C=グロー) */
+function dmRevealRows(t, tm) {
+  const pat = params.patterns.mock;
+  dmRowEls.forEach((r, i) => {
+    const at = tm.start + i * tm.step;
+    const k = clamp01((t - at) / tm.dur);
+    const bars = r.children;
+    if (k <= 0) {
+      r.style.opacity = 0;
+      r.style.clipPath = 'inset(0 100% 0 0)';
+      r.classList.remove('sweep');
+      return;
+    }
+    if (pat === 'A') {
+      /* 案A: 左から一気に書き出される (タイプライタ) */
+      r.classList.remove('sweep');
+      r.style.opacity = 1;
+      r.style.clipPath = k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`;
+      for (const b of bars) b.style.boxShadow = '';
+    } else if (pat === 'B') {
+      /* 案B: スケルトンのまま光のグラデーションが走って定着する */
+      r.style.clipPath = 'none';
+      r.style.opacity = (0.3 + 0.7 * easeOutQ(k)).toFixed(3);
+      if (k < 1) {
+        r.classList.add('sweep');
+        const x = (170 - k * 240).toFixed(1);
+        for (const b of bars) { b.style.backgroundPositionX = x + '%'; b.style.boxShadow = ''; }
+      } else {
+        r.classList.remove('sweep');
+        for (const b of bars) b.style.backgroundPositionX = '';
+      }
+    } else {
+      /* 案C: 発光しながら現れて、光が引いて落ち着く */
+      r.style.clipPath = 'none';
+      r.classList.remove('sweep');
+      const e = easeOutQ(k);
+      r.style.opacity = (0.15 + 0.85 * e).toFixed(3);
+      const glow = (1 - k) * 12;
+      for (const b of bars) {
+        b.style.boxShadow = glow > 0.4
+          ? `0 0 ${glow.toFixed(1)}px rgba(120,220,255,${(0.9 * (1 - k)).toFixed(2)})` : '';
+      }
+    }
+  });
+}
+
+function devMockContent(mode, t, screen) {
+  const tm = DM_TIMING[screen] || DM_TIMING.editor;
   if (mode === 'empty') {
     dmEls.typed.textContent = '';
     dmEls.ph.style.display = '';
@@ -1975,35 +2222,41 @@ function devMockContent(mode, t) {
     dmEls.msg0.style.opacity = 0;
     dmEls.msg1.style.opacity = 0;
     dmEls.msg2.style.opacity = 0;
-    dmEls.think.style.opacity = 0;
-    dmEls.rows.forEach(r => r.style.clipPath = 'inset(0 100% 0 0)');
+    dmEls.think.style.display = 'none';
+    dmRowEls.forEach(r => { r.style.opacity = 0; r.style.clipPath = 'inset(0 100% 0 0)'; r.classList.remove('sweep'); });
     return;
   }
-  const T = t % DM_LOOP;
-  dmEls.msg0.style.opacity = clamp01(t / 0.5).toFixed(3);
-  /* ① 入力欄に1文字ずつ打ち込む */
-  const sent = T >= 2.2;
-  const n = sent ? 0 : Math.floor(clamp01((T - 0.4) / 1.6) * DM_TEXT.length);
-  dmEls.typed.textContent = DM_TEXT.slice(0, n);
-  dmEls.ph.style.display = n > 0 ? 'none' : '';
-  dmEls.cursor.style.opacity = (!sent && T > 0.3 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
-  /* ② 送信するとユーザーの吹き出しが出る */
-  dmEls.msg1.style.opacity = clamp01((T - 2.2) / 0.35).toFixed(3);
-  /* ③ AIが考える3点 → ④ 返答 */
-  const thinkIn = clamp01((T - 2.6) / 0.3), thinkOut = clamp01((T - 3.5) / 0.25);
-  dmEls.think.style.opacity = (thinkIn * (1 - thinkOut)).toFixed(3);
-  dmEls.think.querySelectorAll('.dm-think i').forEach((d, i) => {
-    d.style.opacity = (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
-  });
-  dmEls.msg2.style.opacity = clamp01((T - 3.7) / 0.35).toFixed(3);
-  /* ⑤ 返答に応じて左のコードが上から生成されていく */
-  dmEls.rows.forEach((r, i) => {
-    const k = easeOutQ(clamp01((T - 4.1 - i * 0.24) / 0.45));
-    r.style.clipPath = k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`;
-  });
+  const T = t % tm.loop;
+  if (screen === 'editor') {
+    /* 会話 → 生成 のフルシーケンス */
+    const sent = T >= 2.2;
+    const n = sent ? 0 : Math.floor(clamp01((T - 0.4) / 1.6) * DM_TEXT.length);
+    dmEls.typed.textContent = DM_TEXT.slice(0, n);
+    dmEls.ph.style.display = n > 0 ? 'none' : '';
+    dmEls.cursor.style.opacity = (!sent && T > 0.3 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
+    dmEls.msg0.style.opacity = clamp01(T / 0.5).toFixed(3);
+    dmEls.msg1.style.opacity = clamp01((T - 2.2) / 0.4).toFixed(3);
+    const thinkOn = T > 2.7 && T < 3.9;
+    dmEls.think.style.display = thinkOn ? 'flex' : 'none';
+    dmEls.think.style.opacity = thinkOn ? 1 : 0;
+    dmEls.think.querySelectorAll('.dm-think-b i').forEach((d, i) => {
+      d.style.opacity = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
+    });
+    dmEls.msg2.style.opacity = clamp01((T - 3.9) / 0.4).toFixed(3);
+  } else {
+    /* CLI / API / SDK 画面: 会話は出したまま、コードだけ動かす */
+    dmEls.typed.textContent = '';
+    dmEls.ph.style.display = '';
+    dmEls.cursor.style.opacity = 0;
+    dmEls.msg0.style.opacity = 1;
+    dmEls.msg1.style.opacity = 1;
+    dmEls.msg2.style.opacity = 1;
+    dmEls.think.style.display = 'none';
+  }
+  dmRevealRows(T, tm);
 }
 
-let devHoldT0 = null;
+let devHoldT0 = null, devScreenT0 = null;
 
 function updateDev(p) {
   const c = params.sections.dev;
@@ -2016,41 +2269,46 @@ function updateDev(p) {
   const g2 = seg(p, ...DEV_P.grow2, easeIO);
   const dk = seg(p, ...DEV_P.dock, easeIO);
   const s1 = seg(p, ...DEV_P.sw1, easeIO), s2 = seg(p, ...DEV_P.sw2, easeIO);
+  /* 右へ移動しきったら「開発環境に/柔軟に適用」はブラーで完全に消す */
+  const out2 = seg(p, DEV_P.dock[0], DEV_P.dock[0] + 0.05, easeIO);
 
   devHeading(devEls.h1, in1, 0, o1);
-  devHeading(devEls.h2, in2, sp2, 0);
+  devHeading(devEls.h2, in2, sp2, out2);
 
-  /* --- モックの位置・大きさ --- */
-  let op = 0, sc = 1, tx = MOCK_CX, ty = MOCK_CY, bl = 0;
+  const cx = mockCenterX();
+  let op = 0, sc = 1, tx = cx, ty = MOCK_CY, bl = 0;
   if (p < DEV_P.h2[0]) {
-    /* 前半: 画面下にちら見え → せり上がって実寸へ → ブラーで退場 */
-    op = clamp01((p - 0.01) / 0.03) * (1 - o1);
+    op = clamp01((p - 0.005) / 0.02) * (1 - o1);
     sc = 0.78 + 0.22 * rise;
     ty = MOCK_CY + (1 - rise) * 560;
-    bl = o1 * 18;
+    bl = o1 * 20;
   } else {
-    /* 後半: 分割した文字の間から小さく出て実寸へ → 右へ移動 */
     op = Math.min(1, g2 * 3);
     sc = 0.16 + 0.84 * g2;
-    tx = MOCK_CX * (1 - dk);
+    tx = cx * (1 - dk);
     ty = MOCK_CY * (1 - dk) + (1 - g2) * 30;
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
     const dip = Math.sin(Math.PI * swapK);
-    if (pat === 'A') bl = dip * c.swapBlur * 0.4;
-    else if (pat === 'B') { ty += dip * -24; bl = dip * c.swapBlur * 0.2; }
-    else if (pat === 'C') { sc *= 1 + 0.05 * (s1 + s2); bl = dip * c.swapBlur * 0.5; }
+    /* 文字が切り替わるのに合わせてモックもブラーで切り替わる */
+    bl = dip * c.swapBlur;
+    if (pat === 'B') ty += dip * -24;
+    else if (pat === 'C') sc *= 1 + 0.05 * (s1 + s2);
   }
   devEls.mock.style.opacity = op.toFixed(3);
   devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
   devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
 
-  /* --- モック内アニメ: 規定位置に着いたら時間駆動で開始しループ --- */
-  const atHold = p >= DEV_P.hold[0] && p < DEV_P.out1[1];
-  if (p < DEV_P.hold[0]) devHoldT0 = null;
+  /* --- 表示する画面を決める (ブラーが濃い瞬間に中身を差し替える) --- */
+  let screen = 'editor';
+  if (p >= DEV_P.dock[0]) screen = s1 < 0.5 ? 'cli' : s2 < 0.5 ? 'api' : 'sdk';
+  if (screen !== dmCurScreen) { dmBuildScreen(screen); devScreenT0 = elapsed; }
+
+  const started = p >= (screen === 'editor' ? DEV_P.hold[0] : DEV_P.dock[0]);
+  if (p < DEV_P.hold[0]) { devHoldT0 = null; devScreenT0 = null; }
   else if (devHoldT0 === null) devHoldT0 = elapsed;
-  if (p < DEV_P.hold[0]) devMockContent('empty');
-  else if (atHold) devMockContent('anim', elapsed - devHoldT0);
-  else devMockContent('full');
+  if (devScreenT0 === null) devScreenT0 = elapsed;
+  if (!started) devMockContent('empty', 0, screen);
+  else devMockContent('anim', elapsed - (screen === 'editor' ? devHoldT0 : devScreenT0), screen);
 
   /* --- 左の訴求テキスト: 右へ移動し終わってから CLI → API → SDK --- */
   const title = s1 < 0.5 ? 'CLIへの対応' : s2 < 0.5 ? 'APIへの対応' : 'SDKへの対応';
@@ -2070,7 +2328,8 @@ const caseEls = {
   title: document.getElementById('caseTitle'),
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
-const CASE_IN = [[0.02, 0.20], [0.34, 0.52], [0.66, 0.84]];
+/* カードが重なるテンポ (ゆったりめ) */
+const CASE_IN = [[0.04, 0.30], [0.36, 0.62], [0.68, 0.94]];
 
 function updateCases(p) {
   const c = params.sections.cases;
@@ -2118,7 +2377,60 @@ function smoothTo(key, target) {
   return smoothP[key];
 }
 
+/* ---------- キービジュアルの登場 (ヘッダー → 小見出し → タイピング → グラフィック) ---------- */
+const kvEls = {
+  header: document.querySelector('.header'),
+  eyebrow: document.getElementById('hlEyebrow'),
+  lines: [document.getElementById('hlL1'), document.getElementById('hlL2')],
+  orbit: document.querySelector('.orbit'),
+  logos: document.querySelector('.logos'),
+  chars: [[], []],
+  carets: [],
+};
+(function buildKvChars() {
+  kvEls.lines.forEach((line, i) => {
+    const caret = line.querySelector('.hl-caret');
+    const text = line.firstChild.textContent;
+    line.removeChild(line.firstChild);
+    [...text].forEach(ch => {
+      const sp = document.createElement('span');
+      sp.className = 'hl-ch';
+      sp.textContent = ch;
+      line.insertBefore(sp, caret);
+      kvEls.chars[i].push(sp);
+    });
+    kvEls.carets.push(caret);
+  });
+})();
+
+function updateKV() {
+  const c = params.kv, t = elapsed;
+  rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / 1.5)), 8, 10);
+  rv(kvEls.eyebrow, easeOutQ(clamp01((t - c.eyebrowAt) / 1.4)), 8, 8);
+
+  /* 1文字ずつ打ち込む */
+  const tt = t - c.typeAt;
+  const n0 = kvEls.chars[0].length, n1 = kvEls.chars[1].length;
+  const line2At = n0 * c.charDur + c.lineGap;
+  kvEls.chars.forEach((arr, li) => {
+    const base = li === 0 ? 0 : line2At;
+    /* 未入力の文字は display:none。こうするとカーソルが打った文字の直後に来る */
+    arr.forEach((el, ci) => { el.style.display = tt >= base + ci * c.charDur ? 'inline-block' : 'none'; });
+  });
+  const typeEnd = line2At + n1 * c.charDur;
+  const blink = ((tt * 1.7) % 1 < 0.55) ? 1 : 0;
+  const typing = tt > -0.15 && tt < typeEnd + 0.5;
+  kvEls.carets[0].style.opacity = (typing && tt < line2At - c.lineGap * 0.4) ? blink : 0;
+  kvEls.carets[1].style.opacity = (typing && tt >= line2At - c.lineGap * 0.4) ? blink : 0;
+
+  /* 打ち終わってからグラフィック → ロゴ */
+  const gAt = c.typeAt + typeEnd + c.graphicGap;
+  rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / 1.9)), 12);
+  rv(kvEls.logos, easeOutQ(clamp01((t - gAt - 0.6) / 1.5)), 8);
+}
+
 function updateSections() {
+  updateKV();
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', pinP(SECS.cases)));
@@ -2346,15 +2658,23 @@ window.__anim = {
   getState() { return { elapsed, params }; },
 };
 
-/* ================= ステージのスケーリング ================= */
+/* ================= ステージのスケーリング =================
+   高さ921pxのカンプ座標系はそのままに、幅だけ画面いっぱいへ広げる（フィル）。
+   左右の要素は left:120px / right:120px でアンカーしているので余白は常に120px */
 const stage = document.getElementById('stage');
 function fit() {
-  const s = Math.min(1, window.innerWidth / 1440);
-  /* ピン留めセクションは縦横どちらもはみ出さないように収める */
-  const sp = Math.min(window.innerWidth / 1440, window.innerHeight / 921);
-  document.documentElement.style.setProperty('--s', s);
-  document.documentElement.style.setProperty('--sp', sp);
-  stage.style.transform = `scale(${s})`;
+  /* 描画前などで 0 が返る環境があるのでフォールバックを噛ませる (NaN 防止) */
+  const w = window.innerWidth || document.documentElement.clientWidth || 1440;
+  const h = window.innerHeight || document.documentElement.clientHeight || 921;
+  const s = Math.min(1, w / 1440);                 // 1440以上では等倍(100%表示)
+  const sp = Math.min(1, w / 1440, h / 921);       // ピンは縦も収まるように
+  stageW = Math.max(1440, w / s);
+  stagePinW = Math.max(1440, w / sp);
+  const st = document.documentElement.style;
+  st.setProperty('--s', s);
+  st.setProperty('--sp', sp);
+  st.setProperty('--sw', stageW + 'px');
+  st.setProperty('--swp', stagePinW + 'px');
   stage.parentElement.style.height = (921 * s) + 'px';
   /* スクロール尺 (調整パネルから変えられる) */
   SECS.vision.style.height = params.sections.vision.lenVh + 'vh';
@@ -2363,6 +2683,8 @@ function fit() {
   SECS.results.style.height = (760 * s) + 'px';
 }
 window.addEventListener('resize', fit);
+window.addEventListener('load', fit);
+if (window.ResizeObserver) new ResizeObserver(fit).observe(document.documentElement);
 fit();
 
 /* ================= 調整パネル UI ================= */
@@ -2449,6 +2771,15 @@ function buildPanel() {
   rows.push(slider('1回転の秒数', 8, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + 's'));
   rows.push(slider('多面ゆらぎ', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('質感の粒', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%'));
+  sub(catPlanet, 'キービジュアル全体');
+  rows.push(slider('グラフィックX', -300, 300, 1, () => params.kv.gx, v => params.kv.gx = v, v => v + 'px'));
+  rows.push(slider('グラフィックY', -300, 300, 1, () => params.kv.gy, v => params.kv.gy = v, v => v + 'px'));
+  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('小見出しが出る', 0, 4, 0.05, () => params.kv.eyebrowAt, v => params.kv.eyebrowAt = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('タイピング開始', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('1文字の速さ', 0.03, 0.3, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('改行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('グラフィックまで', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + 's'));
   sub(catPlanet, '位置・サイズ');
   rows.push(slider('X位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px'));
   rows.push(slider('Y位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px'));
@@ -2500,19 +2831,25 @@ function buildPanel() {
   sub(catSec, '🌊 共通（体験の質感）');
   rows.push(slider('慣性のなめらかさ', 0, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => v === 0 ? 'オフ' : (v <= 4 ? 'とろり ' : v <= 8 ? 'なめらか ' : '機敏 ') + v));
-  sub(catSec, '📖 ビジョン（文字の出方）');
-  rows.push(slider('スクロール尺', 300, 1600, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
-  rows.push(slider('出る速さ', 0.03, 0.25, 0.01, () => sv().vision.revealLen, v => sv().vision.revealLen = v, v => Math.round(v * 100) + '%'));
-  rows.push(slider('2行目の遅れ', 0, 0.25, 0.01, () => sv().vision.line2Delay, v => sv().vision.line2Delay = v, v => Math.round(v * 100) + '%'));
+  sub(catSec, '📖 ビジョン（自動再生の時間割）');
+  rows.push(slider('スクロール尺', 400, 2000, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('OurVisonが出る', 0, 3, 0.1, () => sv().vision.labelAt, v => sv().vision.labelAt = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('その所要時間', 0.5, 5, 0.1, () => sv().vision.labelDur, v => sv().vision.labelDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('1行目が出る', 0.5, 6, 0.1, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('2行目までの間', 0.2, 4, 0.1, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('1行の出現時間', 0.5, 4, 0.1, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
   sub(catSec, '📖 ビジョン（左へのスライド）');
-  rows.push(slider('動きの長さ', 0.04, 0.30, 0.01, () => sv().vision.slideLen, v => sv().vision.slideLen = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('動き出すまで', 0, 3, 0.1, () => sv().vision.slideGap, v => sv().vision.slideGap = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('動く時間', 0.4, 5, 0.1, () => sv().vision.slideDur, v => sv().vision.slideDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('2行目のずれ', 0, 1, 0.05, () => sv().vision.slideStagger, v => sv().vision.slideStagger = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('1行目の移動量', 0, 500, 2, () => sv().vision.slideX1, v => sv().vision.slideX1 = v, v => v + 'px'));
   rows.push(slider('2行目の移動量', 0, 500, 2, () => sv().vision.slideX2, v => sv().vision.slideX2 = v, v => v + 'px'));
   rows.push(slider('文字のずれ(案C)', 0, 0.8, 0.05, () => sv().vision.charStagger, v => sv().vision.charStagger = v, v => Math.round(v * 100) + '%'));
-  rows.push(slider('上下に消える長さ', 0.08, 0.30, 0.01, () => sv().vision.exitLen, v => sv().vision.exitLen = v, v => Math.round(v * 100) + '%'));
   sub(catSec, '📖 ビジョン（軌道グラフィック）');
+  rows.push(slider('出るまでの間', 0, 3, 0.1, () => sv().vision.miniGap, v => sv().vision.miniGap = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('出現時間', 0.4, 4, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('左下へ動く量', 0.1, 0.6, 0.02, () => sv().vision.moveLen, v => sv().vision.moveLen = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('小さい時の大きさ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2)));
   rows.push(slider('小さい時のX', 0, 900, 5, () => sv().vision.miniX, v => sv().vision.miniX = v, v => v + 'px'));
   rows.push(slider('小さい時のY', -400, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px'));
@@ -2622,6 +2959,9 @@ function buildSwitcher() {
   const secVis = section('ビジョンの左スライド', false);
   pills(secVis.body, VISION_SLIDES, it => params.patterns.visionSlide === it.key, it => params.patterns.visionSlide = it.key);
 
+  const secMock = section('モック内アニメ', false);
+  pills(secMock.body, MOCK_PATTERNS, it => params.patterns.mock === it.key, it => params.patterns.mock = it.key);
+
   const secDev = section('開発者体験の切替', false);
   pills(secDev.body, DEV_PATTERNS, it => params.patterns.dev === it.key, it => params.patterns.dev = it.key);
 
@@ -2637,13 +2977,16 @@ function buildSwitcher() {
     const devPat = DEV_PATTERNS.find(x => x.key === params.patterns.dev) || DEV_PATTERNS[0];
     const casePat = CASE_PATTERNS.find(x => x.key === params.patterns.cases) || CASE_PATTERNS[0];
     const visPat = VISION_SLIDES.find(x => x.key === params.patterns.visionSlide) || VISION_SLIDES[0];
+    const mockPat = MOCK_PATTERNS.find(x => x.key === params.patterns.mock) || MOCK_PATTERNS[0];
     secDev.cur.textContent = devPat.name;
     secCase.cur.textContent = casePat.name;
     secVis.cur.textContent = visPat.name;
+    secMock.cur.textContent = mockPat.name;
     let html = 'ゆらぎ: ' + SWAYS[params.sway - 1].desc;
     if (params.light === 2) html += '<br>ライト: ' + LIGHTS[1].desc;
     if (params.design === 'E') html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
     html += '<br>ビジョン: ' + visPat.desc;
+    html += '<br>モック内: ' + mockPat.desc;
     html += '<br>開発者体験: ' + devPat.desc;
     html += '<br>導入事例: ' + casePat.desc;
     desc.innerHTML = html;
@@ -2658,26 +3001,7 @@ document.getElementById('swChev').addEventListener('click', (e) => {
   e.stopPropagation();
   switcherEl.classList.toggle('closed');
 });
-(function enableSwitcherDrag() {
-  const head = document.getElementById('swHead');
-  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
-  head.addEventListener('pointerdown', (e) => {
-    if (e.target.id === 'swChev') return;
-    dragging = true;
-    const r = switcherEl.getBoundingClientRect();
-    switcherEl.style.top = r.top + 'px';
-    switcherEl.style.bottom = 'auto';
-    switcherEl.style.left = r.left + 'px';
-    sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
-    head.setPointerCapture(e.pointerId);
-  });
-  head.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    switcherEl.style.left = Math.max(0, Math.min(window.innerWidth - 60, ox + e.clientX - sx)) + 'px';
-    switcherEl.style.top = Math.max(0, Math.min(window.innerHeight - 40, oy + e.clientY - sy)) + 'px';
-  });
-  head.addEventListener('pointerup', () => { dragging = false; });
-})();
+/* スイッチャーは右下固定になったのでドラッグ移動は廃止 */
 
 /* いまの設定をコピー → Claudeに貼ればコードのデフォルトに焼き込める */
 document.getElementById('swCopy').addEventListener('click', async () => {
