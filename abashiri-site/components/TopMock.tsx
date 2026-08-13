@@ -525,7 +525,7 @@ export default function TopMock({
             スクロールでその場から奥へ引いて消える */}
         <div className="pointer-events-none sticky top-0 -mt-[865px] h-[865px]">
           <motion.div
-            className="flex h-full flex-col items-center pt-[130px]"
+            className="flex h-full flex-col items-center pt-[120px]"
             initial={
               animated
                 ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
@@ -609,7 +609,7 @@ export default function TopMock({
 
         <div className="pointer-events-none relative z-10 -mt-[865px]">
 
-          <div className="mx-auto flex w-[980px] flex-col items-center pb-[120px] pt-[884px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-[120px] pt-[870px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-[80px]">
