@@ -7,7 +7,7 @@ Vercel ダッシュボードで設定している各プロジェクトの状態�
 > ⚠️ 値そのもの（API キー等）はここに書かない。値の管理は `.env.local` ＋
 > `dotenvx` 暗号化済み `.env.production` で別途行う。
 
-最終更新: 2026-05-13
+最終更新: 2026-08-14
 
 ## プロジェクト共通
 
@@ -27,6 +27,31 @@ Vercel ダッシュボードで設定している各プロジェクトの状態�
 | `prj_0PFWbicnMhDclphX9PtiF49XEsXU` | design-gallery | 親リポ subdir (`design-gallery`, main) | `.` | Next.js | https://design-gallery-puce.vercel.app | 🛠 手動 |
 | `prj_mkKya8Hr3XlH3li3dwspClOLSS8G` | akijikan-mitsukeru-kun | 親リポ subdir (`akijikan-mitsukeru-kun`, main) | `.` | Other (静的) | https://akijikan-mitsukeru-kun.vercel.app | 🛠 手動 |
 | `prj_quCYKGmCeVVY5dymibs8CxbYeQ1E` | retro-games | 親リポ subdir (`Retro Games`, main) | `.` | Other (静的) | https://retro-games-one.vercel.app | 🛠 手動 |
+| `prj_OIXN98ujgsQn3JlUZjkevUOOJhnz` | abashiri-site | 親リポ subdir (`abashiri-site`, main) | `abashiri-site` | Next.js | https://abashiri-site.vercel.app | 🤖 git push で自動（2026-08-14 設定） |
+
+### ⚠️ abashiri-site を Git 自動デプロイに切り替えた話（2026-08-14）
+
+もともと **Git 未連携**（Settings > Git が「Connect Git Repository」のまま）で、
+Mac から `npx vercel --prod` を叩いた時だけ更新されるプロジェクトだった。
+そのため `main` に push しても本番に反映されず、「修正が反映されてへん」となった。
+
+やったこと：
+
+1. Settings > Git で `hideyuki-yamanaka/hideyuki-yamanaka.github.io` を接続（Production Branch = `main`）
+2. Settings > Build and Deployment > **Root Directory** に `abashiri-site` を設定
+3. 同じ枠の **Skip deployments when there are no changes to the root directory** を **Enabled**
+   （モノレポなので、design-gallery の毎朝のスクレイパー commit で網走サイトまで
+   ビルドされるのを防ぐ）
+
+**ハマりどころ**: 上の設定をした直後に既存デプロイの「Redeploy」を押すと
+`The specified Root Directory "abashiri-site" does not exist.` で失敗する。
+Redeploy は**同じソースを再生するだけ**で、既存デプロイのソースは CLI が
+`abashiri-site/` の中から上げたもの＝その中に `abashiri-site/` は無いため。
+切り替え後の初回は **Redeploy ではなく git push**（＝Git 由来のデプロイ）で走らせること。
+
+**手動デプロイのコマンドも変わる**: Root Directory 設定後に `abashiri-site/` の中で
+`npx vercel --prod` を叩くとパスが二重になって失敗する。手動で上げ直す時は
+`npx vercel redeploy abashiri-site.vercel.app` を使う（design-gallery と同じ）。
 
 > **手動 deploy** が必要な理由: 親リポの subdir 変更は Vercel の Git Integration が拾えない（リポルートに `.vercel/project.json` が houmon-app 用のため）。subdir に cd してから `npx vercel --prod --yes` で叩く。
 
@@ -61,7 +86,7 @@ Vercel ダッシュボードで設定している各プロジェクトの状態�
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase URL (`https://fkpspoclslkwxngpxral.supabase.co`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase 公開鍵 |
 
-### design-gallery / akijikan-mitsukeru-kun / retro-games
+### design-gallery / akijikan-mitsukeru-kun / retro-games / abashiri-site
 - env なし（静的サイト or 認証なしの公開ページ）
 
 ## ゼロから再構築する手順

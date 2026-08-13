@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 網走観光サイト（な〜んにもない たまらない）
 
-## Getting Started
+Next.js 製の観光サイト。トップのキービジュアルは、吹き出し → 「な〜んにもない」→
+「たまらない」→ ボタン → 人物イラスト、の順に出てくる登場アニメーションで構成されている。
 
-First, run the development server:
+## ローカルで動かす
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 を開く。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 本番
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- URL: https://abashiri-site.vercel.app
+- Vercel Project: `abashiri-site`（Root Directory = `abashiri-site`）
+- **`main` に push すると自動でデプロイされる**（2026-08-14 に Git 連携を設定）
 
-## Learn More
+手動で上げ直したい時は、リポジトリのどこからでも:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx vercel redeploy abashiri-site.vercel.app
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> ⚠️ このディレクトリの中で `npx vercel --prod` を叩くと、Vercel 側の Root Directory と
+> 二重になって失敗する。詳細は [../docs/VERCEL-PROJECTS.md](../docs/VERCEL-PROJECTS.md)。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 演出まわりの調整ファイル
 
-## Deploy on Vercel
+数値をいじるだけで動きを変えられるように、パラメーターは設定ファイルに切り出してある。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| ファイル | 何を決めているか |
+|---|---|
+| [components/heroTiming.ts](components/heroTiming.ts) | 登場演出全体のタイミング（何秒後に何が出るか） |
+| [components/bubbleConfig.ts](components/bubbleConfig.ts) | 吹き出しの形の補正、しっぽが伸びる演出、ムニムニ |
+| [components/layoutConfig.ts](components/layoutConfig.ts) | キービジュアルの配置 |
+| [components/birdConfig.ts](components/birdConfig.ts) | カモメの位置とふわふわ |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 比較用モックページ
+
+`/mock/` 配下は認証不要で、実機（iPhone）で開いて触れる比較ページ。
+採用案が決まったら不採用のモックは消す。
+
+| URL | 中身 |
+|---|---|
+| `/mock/tail` | 吹き出しのしっぽが伸びる演出（5案） |
+| `/mock/bubble` | 吹き出しのムニムニ（3案） |
+| `/mock/bubble/tune` | 吹き出しの数値を触りながら確認する調整パネル |
+| `/mock/tune` | 登場タイミングの調整パネル |
+| `/mock/illust` | 人物イラストのスイング |
+| `/mock/kv` / `/mock/layout` / `/mock/shadow` / `/mock/bird` | キービジュアル各種 |
