@@ -29,25 +29,26 @@ const stagger: Variants = {
   show: { transition: { staggerChildren: 0.2 } },
 };
 
-type CardData = { src: string; alt: string };
+type CardData = { src: string; alt: string; title: string };
 
+/* タイトルは仮のものあり。正式名称が決まったら差し替える */
 const SPOT_CARDS: CardData[] = [
-  { src: "/img/spot-1.jpg", alt: "能取岬" },
-  { src: "/img/spot-2.jpg", alt: "ぼーっとスポット2" },
-  { src: "/img/spot-3.jpg", alt: "ぼーっとスポット3" },
-  { src: "/img/spot-4.jpg", alt: "ぼーっとスポット4" },
+  { src: "/img/spot-1.jpg", alt: "天都山展望台", title: "天都山展望台" },
+  { src: "/img/spot-2.jpg", alt: "ひまわり畑", title: "ひまわり畑" },
+  { src: "/img/spot-3.jpg", alt: "能取岬", title: "能取岬" },
+  { src: "/img/spot-4.jpg", alt: "オホーツクの海", title: "オホーツクの海" },
 ];
 const GOURMET_CARDS: CardData[] = [
-  { src: "/img/gourmet-1.jpg", alt: "素朴なグルメ1" },
-  { src: "/img/gourmet-2.jpg", alt: "素朴なグルメ2" },
-  { src: "/img/gourmet-3.jpg", alt: "素朴なグルメ3" },
-  { src: "/img/gourmet-4.jpg", alt: "素朴なグルメ4" },
+  { src: "/img/gourmet-1.jpg", alt: "わかさぎの唐揚げ", title: "わかさぎの唐揚げ" },
+  { src: "/img/gourmet-2.jpg", alt: "浜の海鮮焼き", title: "浜の海鮮焼き" },
+  { src: "/img/gourmet-3.jpg", alt: "地魚の御膳", title: "地魚の御膳" },
+  { src: "/img/gourmet-4.jpg", alt: "浜のちゃんこ鍋", title: "浜のちゃんこ鍋" },
 ];
 const EVENT_CARDS: CardData[] = [
-  { src: "/img/event-1.jpg", alt: "体験・イベント1" },
-  { src: "/img/event-2.jpg", alt: "体験・イベント2" },
-  { src: "/img/event-3.jpg", alt: "体験・イベント3" },
-  { src: "/img/event-4.jpg", alt: "体験・イベント4" },
+  { src: "/img/event-1.jpg", alt: "監獄食体験", title: "監獄食体験" },
+  { src: "/img/event-2.jpg", alt: "あざらしに会う", title: "あざらしに会う" },
+  { src: "/img/event-3.jpg", alt: "流氷カヤック", title: "流氷カヤック" },
+  { src: "/img/event-4.jpg", alt: "流氷ウォーク", title: "流氷ウォーク" },
 ];
 
 /* No.付き楕円カード（ホバーで中の写真がズーム）
@@ -62,7 +63,41 @@ const cardReveal: Variants = {
   }),
 };
 
-function Card({ card, index }: { card: CardData; index: number }) {
+/* ホバー時のオーバーレイ表現（3パターン）
+   1: 下からすっと …… グラデが現れて文字が下からスライドイン（カンプ基準）
+   2: じんわりフォーカス …… グラデがゆっくり現れ、文字はブラーが晴れてピントが合う
+   3: せり上がりワイプ …… グラデの幕が下からせり上がり、文字がぽんと乗る */
+const CARD_OVERLAY: Record<number, { overlay: string; title: string }> = {
+  1: {
+    overlay:
+      "opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100",
+    title:
+      "translate-y-[18px] opacity-0 transition-all delay-75 duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100",
+  },
+  2: {
+    overlay:
+      "opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100",
+    title:
+      "opacity-0 [filter:blur(6px)] transition-all duration-700 ease-out group-hover:opacity-100 group-hover:[filter:blur(0px)]",
+  },
+  3: {
+    overlay:
+      "translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.35,1)] group-hover:translate-y-0",
+    title:
+      "translate-y-[24px] opacity-0 transition-all delay-100 duration-500 ease-[cubic-bezier(0.3,1.4,0.5,1)] group-hover:translate-y-0 group-hover:opacity-100",
+  },
+};
+
+function Card({
+  card,
+  index,
+  hoverStyle = 1,
+}: {
+  card: CardData;
+  index: number;
+  hoverStyle?: number;
+}) {
+  const ov = CARD_OVERLAY[hoverStyle] ?? CARD_OVERLAY[1];
   return (
     <motion.div
       variants={cardReveal}
@@ -75,6 +110,14 @@ function Card({ card, index }: { card: CardData; index: number }) {
           alt={card.alt}
           className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
         />
+        {/* ホバー：下から黒グラデ+ブラーの上にスポット名 */}
+        <div
+          className={`absolute inset-0 flex items-end justify-center rounded-[290px] bg-gradient-to-b from-transparent to-black/60 pb-[40px] backdrop-blur-[6px] ${ov.overlay}`}
+        >
+          <p className={`text-[32px] leading-[1.2] text-white ${ov.title}`}>
+            {card.title}
+          </p>
+        </div>
       </div>
       <p className="font-rounded pointer-events-none absolute left-[-16px] top-[-65px] text-[140px] font-thin leading-none text-white opacity-80">
         No.{index + 1}
@@ -90,10 +133,12 @@ function CardRow({
   cards,
   rowIndex,
   registerRow,
+  hoverStyle = 1,
 }: {
   cards: CardData[];
   rowIndex: number;
   registerRow: (i: number, el: HTMLDivElement | null) => void;
+  hoverStyle?: number;
 }) {
   return (
     <div
@@ -102,22 +147,46 @@ function CardRow({
     >
       <div className="flex w-max gap-[80px] pl-[120px] pr-[60px]">
         {cards.map((c, i) => (
-          <Card key={c.src} card={c} index={i} />
+          <Card key={c.src} card={c} index={i} hoverStyle={hoverStyle} />
         ))}
       </div>
     </div>
   );
 }
 
-function ViewMore() {
+/* もっと見る（新デザイン：テキスト+62pxの丸アイコン）のホバーアニメ3パターン
+   1: 矢印スライド …… アイコンが右へ10pxスッと動いて戻る
+   2: くるっと回転 …… アイコンが一回転しながら少し大きくなる
+   3: ふわっと開く …… テキストとアイコンの間がふわっと広がる */
+const MORE_ANIM: Record<number, { text: string; icon: string }> = {
+  1: {
+    text: "",
+    icon: "transition-transform duration-300 ease-out group-hover:translate-x-[10px]",
+  },
+  2: {
+    text: "",
+    icon: "transition-transform duration-500 ease-[cubic-bezier(0.3,1.2,0.4,1)] group-hover:rotate-[360deg] group-hover:scale-110",
+  },
+  3: {
+    text: "transition-transform duration-300 ease-out group-hover:-translate-x-[6px]",
+    icon: "transition-transform duration-300 ease-out group-hover:translate-x-[8px] group-hover:scale-105",
+  },
+};
+
+function ViewMore({ anim = 1 }: { anim?: number }) {
+  const a = MORE_ANIM[anim] ?? MORE_ANIM[1];
   return (
     <a
       href="#"
       onClick={(e) => e.preventDefault()}
-      className="flex items-center gap-[4px] text-[20px] font-medium text-white transition-opacity hover:opacity-70"
+      className="group flex cursor-pointer items-center gap-[24px] text-[20px] font-medium text-white"
     >
-      もっと見る
-      <img src="/img/icon-arrow.svg" alt="" className="size-[18px]" />
+      <span className={a.text}>もっと見る</span>
+      <img
+        src="/img/icon-more-circle.svg"
+        alt=""
+        className={`size-[62px] ${a.icon}`}
+      />
     </a>
   );
 }
@@ -148,6 +217,8 @@ export default function TopMock({
   birdsEditable = false,
   onBirdMove,
   waitConsent = false,
+  cardHover = 1,
+  moreAnim = 1,
 }: {
   intro?: number;
   kv?: number;
@@ -171,6 +242,10 @@ export default function TopMock({
   onBirdMove?: (key: "promo1" | "promo2", patch: { x: number; y: number }) => void;
   /** true: 環境音のON/OFF確認が済むまで登場演出を待つ */
   waitConsent?: boolean;
+  /** 1〜3: カードホバーのオーバーレイ表現 */
+  cardHover?: number;
+  /** 1〜3: もっと見るボタンのホバーアニメ */
+  moreAnim?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -562,9 +637,9 @@ export default function TopMock({
                         と過ごせるスポット
                       </p>
                     </div>
-                    <ViewMore />
+                    <ViewMore anim={moreAnim} />
                   </motion.div>
-                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} />
+                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} hoverStyle={cardHover} />
                 </motion.section>
 
                 {/* ぼーっとする、やってみない？ */}
@@ -576,7 +651,7 @@ export default function TopMock({
                 >
                   <Link
                     href="/experience"
-                    className="relative flex w-full flex-col items-center justify-center gap-[32px] overflow-clip rounded-[24px] bg-[rgba(0,123,221,0.7)] px-[16px] py-[60px] backdrop-blur-[40px] transition-transform duration-500 hover:scale-[1.01]"
+                    className="relative flex w-full flex-col items-center justify-center gap-[32px] overflow-clip rounded-[24px] bg-[rgba(0,123,221,0.9)] px-[16px] py-[60px] backdrop-blur-[40px] transition-transform duration-500 hover:scale-[1.01]"
                   >
                     <div className="flex flex-col items-center gap-[4px]">
                       <p className="text-[18px] font-bold leading-[1.4] text-white">
@@ -671,9 +746,9 @@ export default function TopMock({
                       素朴なグルメ
                     </p>
                   </div>
-                  <ViewMore />
+                  <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} />
+                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} hoverStyle={cardHover} />
               </motion.section>
 
               {/* 体験・イベント */}
@@ -699,9 +774,9 @@ export default function TopMock({
                       体験・イベント
                     </p>
                   </div>
-                  <ViewMore />
+                  <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} />
+                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} hoverStyle={cardHover} />
               </motion.section>
             </div>
           </div>
