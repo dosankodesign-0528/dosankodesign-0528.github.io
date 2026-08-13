@@ -32,7 +32,7 @@ export type BirdsConfig = {
 
 export const DEFAULT_BIRDS: BirdsConfig = {
   /* 左上の小さいカモメ */
-  skyTopLeft: { x: 22, y: 26, w: 64, rotate: -14, stroke: 7, flap: 0.5, drift: 7, delay: 0 },
+  skyTopLeft: { x: 17, y: 26, w: 64, rotate: -14, stroke: 7, flap: 0.5, drift: 7, delay: 0 },
   /* 右中の大きいカモメ（手前）。全体が見えるよう左に寄せ、線は細めに */
   skyRight: { x: 50, y: 535, w: 105, rotate: 0, stroke: 4.5, flap: 0.62, drift: 9, delay: 1.2 },
   /* プロモ内・右上の白カモメ */

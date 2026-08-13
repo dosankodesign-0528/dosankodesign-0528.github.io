@@ -194,12 +194,20 @@ export default function LayoutTunePage() {
         <p className="mt-2 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
           すべてその場で反映されます。決まったら数値をClaudeに伝えてください（本番に反映します）
         </p>
-        <Link
-          href="/"
-          className="mt-2 inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
-        >
-          ← TOPへ
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Link
+            href="/"
+            className="inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
+          >
+            ← TOPへ
+          </Link>
+          <Link
+            href="/mock/birds"
+            className="inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
+          >
+            🕊 カモメ調整
+          </Link>
+        </div>
       </TunePanel>
     </>
   );

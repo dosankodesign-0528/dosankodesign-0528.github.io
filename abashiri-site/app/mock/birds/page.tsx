@@ -115,7 +115,7 @@ export default function BirdsTunePage() {
       )}
 
       <TunePanel title="🕊 カモメ調整（本体をドラッグでも動かせます）">
-        <div className="max-h-[68vh] overflow-y-auto pr-1">
+        <div>
           {(Object.keys(LABELS) as (keyof BirdsConfig)[]).map((key, i) => (
             <details key={key} open={i === 1} className="border-b border-[#e0eefb] py-1">
               <summary className="cursor-pointer select-none py-1 text-[13px] font-black text-[#0070c9]">
@@ -152,12 +152,20 @@ export default function BirdsTunePage() {
           カモメは画面上で直接ドラッグでも動かせます（数値に反映）。
           決まったら数値をClaudeに伝えてください（本番に反映します）
         </p>
-        <Link
-          href="/"
-          className="mt-2 inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
-        >
-          ← TOPへ
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <Link
+            href="/"
+            className="inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
+          >
+            ← TOPへ
+          </Link>
+          <Link
+            href="/mock/layout"
+            className="inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
+          >
+            📐 レイアウト調整
+          </Link>
+        </div>
       </TunePanel>
     </>
   );
