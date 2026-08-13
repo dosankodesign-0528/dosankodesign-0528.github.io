@@ -11,6 +11,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { markConsentDone } from "./consentGate";
+import { devSilent } from "./devSound";
 
 const KEY = "abashiri-bgm";
 export const VIDEO_AUDIO_EVENT = "abashiri:video-audio";
@@ -63,6 +64,7 @@ export default function SoundUi({
   const play = () => {
     const a = audioRef.current;
     if (!a || duckRef.current) return;
+    if (devSilent()) return; /* 開発中(localhost)は鳴らさない。?sound で解除 */
     a.volume = 0.45;
     a.muted = false;
     a.play().catch(() => {});

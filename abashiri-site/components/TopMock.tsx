@@ -46,7 +46,7 @@ const GOURMET_CARDS: CardData[] = [
 ];
 const EVENT_CARDS: CardData[] = [
   { src: "/img/event-1.jpg", alt: "監獄食体験", title: "監獄食体験" },
-  { src: "/img/event-2.jpg", alt: "あざらしに会う", title: "あざらしに会う" },
+  { src: "/img/event-2.jpg", alt: "タオルが凍る極寒体験", title: "タオルが凍る極寒体験" },
   { src: "/img/event-3.jpg", alt: "流氷カヤック", title: "流氷カヤック" },
   { src: "/img/event-4.jpg", alt: "流氷ウォーク", title: "流氷ウォーク" },
 ];
@@ -219,6 +219,7 @@ export default function TopMock({
   waitConsent = false,
   cardHover = 1,
   moreAnim = 1,
+  bubbleAnim = 0,
 }: {
   intro?: number;
   kv?: number;
@@ -246,6 +247,8 @@ export default function TopMock({
   cardHover?: number;
   /** 1〜3: もっと見るボタンのホバーアニメ */
   moreAnim?: number;
+  /** 1〜3: 吹き出しのムニムニアニメ（0でなし） */
+  bubbleAnim?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -553,6 +556,7 @@ export default function TopMock({
                 <HeroBlurSeq
                   timing={timing}
                   gate={waitConsent}
+                  bubbleAnim={bubbleAnim}
                   onScheduled={handleScheduled}
                 />
               ) : combo ? (
@@ -609,7 +613,7 @@ export default function TopMock({
 
         <div className="pointer-events-none relative z-10 -mt-[865px]">
 
-          <div className="mx-auto flex w-[980px] flex-col items-center pb-[120px] pt-[870px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-[200px] pt-[870px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-[80px]">

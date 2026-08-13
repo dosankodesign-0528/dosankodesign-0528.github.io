@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Bird from "./Bird";
 import MockNav from "./MockNav";
+import { devSilent } from "./devSound";
 
 export type Step = 1 | 2 | 3;
 
@@ -143,6 +144,7 @@ export default function ExperienceMock({
     if (playing) {
       /* 音声ありで再生。ブラウザの自動再生ポリシーで拒否されたら
          一時停止表示にして、ユーザーの再生ボタン押下（ジェスチャ）で鳴らす */
+      v.muted = devSilent(); /* 開発中(localhost)は無音 */
       v.play().catch(() => setPlaying(false));
     } else {
       v.pause();
