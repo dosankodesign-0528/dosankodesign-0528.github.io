@@ -36,9 +36,9 @@ export const DEFAULT_BIRDS: BirdsConfig = {
   /* 右中の大きいカモメ（手前）。全体が見えるよう左に寄せ、線は細めに */
   skyRight: { x: 40, y: 560, w: 105, rotate: 0, stroke: 4.5, flap: 0.62, drift: 9, delay: 1.2 },
   /* プロモ内・右上の白カモメ */
-  promo1: { x: 84, y: 17, w: 100, rotate: 0, stroke: 5.5, flap: 0.6, drift: 8, delay: 0 },
+  promo1: { x: 84, y: 17, w: 100, rotate: 0, stroke: 4.5, flap: 0.6, drift: 8, delay: 0 },
   /* プロモ内・左の小さい白カモメ */
-  promo2: { x: 0.5, y: 13, w: 58, rotate: 0, stroke: 6.5, flap: 0.48, drift: 6, delay: 0.8 },
+  promo2: { x: 0.5, y: 13, w: 58, rotate: 0, stroke: 8, flap: 0.48, drift: 6, delay: 0.8 },
 };
 
 export function mergeBirds(partial?: Partial<BirdsConfig> | null): BirdsConfig {

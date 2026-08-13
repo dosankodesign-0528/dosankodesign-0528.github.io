@@ -33,7 +33,7 @@ function StepIndicator({ step }: { step: Step }) {
     return "idle";
   });
   return (
-    <div className="absolute left-1/2 top-[72px] h-[104px] w-[666px] -translate-x-1/2">
+    <div className="absolute left-1/2 top-[120px] h-[104px] w-[666px] -translate-x-1/2">
       <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-[#cce4fa]" />
       {states.map((state, i) => (
         <div
@@ -77,7 +77,7 @@ function StepButtons({
   onBack: () => void;
 }) {
   return (
-    <div className="absolute left-1/2 top-[660px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-[20px]">
+    <div className="absolute left-1/2 top-[690px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-[20px]">
       <button
         onClick={onNext}
         disabled={!canProceed}
@@ -204,11 +204,11 @@ export default function ExperienceMock({
               <StepIndicator step={step} />
 
               {/* 装飾の青カモメ */}
-              <div className="absolute left-[104px] top-[332px] h-[62px] w-[108px]">
-                <Bird color="#b6dafc" flapDuration={0.62} driftDuration={9} />
+              <div className="absolute left-[134px] top-[362px] h-[64px] w-[110px]">
+                <Bird color="#b6dafc" flapDuration={0.62} driftDuration={9} strokeWidth={4.2} />
               </div>
-              <div className="absolute right-[63px] top-[199px] h-[86px] w-[160px]">
-                <Bird color="#b6dafc" flapDuration={0.75} driftDuration={11} delay={0.6} />
+              <div className="absolute right-[83px] top-[229px] h-[86px] w-[189px]">
+                <Bird color="#b6dafc" flapDuration={0.75} driftDuration={11} delay={0.6} strokeWidth={2.5} />
               </div>
 
               <AnimatePresence mode="wait">
@@ -216,7 +216,7 @@ export default function ExperienceMock({
                   /* STEP01：気持ちの複数選択 */
                   <motion.div
                     key="step1"
-                    className="absolute inset-x-0 top-[240px] flex flex-col items-center gap-[34px]"
+                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-[34px]"
                     {...stepTransition}
                   >
                     <p className="text-[32px] font-black leading-[1.2] text-[#1e1e1e]">
@@ -249,7 +249,7 @@ export default function ExperienceMock({
                   /* STEP02：場面の選択 */
                   <motion.div
                     key="step2"
-                    className="absolute inset-x-0 top-[240px] flex flex-col items-center gap-[34px]"
+                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-[34px]"
                     {...stepTransition}
                   >
                     <p className="text-[32px] font-black leading-[1.2] text-[#1e1e1e]">

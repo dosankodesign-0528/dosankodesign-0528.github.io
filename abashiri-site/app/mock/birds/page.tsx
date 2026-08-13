@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
 import TopMock from "@/components/TopMock";
-import SoundUi from "@/components/SoundUi";
 import TunePanel from "@/components/TunePanel";
 import {
   BIRDS_STORAGE_KEY,
@@ -114,7 +113,6 @@ export default function BirdsTunePage() {
           />
         </Stage>
       )}
-      <SoundUi />
 
       <TunePanel title="🕊 カモメ調整（本体をドラッグでも動かせます）">
         <div className="max-h-[68vh] overflow-y-auto pr-1">

@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
 import TopMock from "@/components/TopMock";
-import SoundUi from "@/components/SoundUi";
 import TunePanel from "@/components/TunePanel";
 import {
   DEFAULT_HERO_TIMING,
@@ -105,7 +104,6 @@ export default function TunePage() {
           <TopMock intro={2} blurSeq timing={timing} />
         </Stage>
       )}
-      <SoundUi />
 
       <TunePanel title="⏱ 演出タイミング調整">
         <Section title="全体" defaultOpen>

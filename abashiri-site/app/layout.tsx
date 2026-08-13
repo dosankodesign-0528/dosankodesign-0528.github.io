@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Zen_Kaku_Gothic_New, M_PLUS_Rounded_1c } from "next/font/google";
+import SoundUi from "@/components/SoundUi";
 import "./globals.css";
 
 const zen = Zen_Kaku_Gothic_New({
@@ -29,7 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={`${zen.variable} ${rounded.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* 環境音はレイアウト常駐：ページを移動しても途切れず流れ続ける */}
+        <SoundUi askConsent />
+      </body>
     </html>
   );
 }
