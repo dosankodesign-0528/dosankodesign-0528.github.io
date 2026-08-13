@@ -539,7 +539,7 @@ export default function TopMock({
 
   return (
     <div
-      className={`absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-t-[60px] border-[30px] border-white ${sh ? sh.frame : ""}`}
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-[60px] border-[30px] border-white ${sh ? sh.frame : ""}`}
       style={{
         ...(sh ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
         transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
@@ -552,7 +552,7 @@ export default function TopMock({
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
             下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
-        <div className="pointer-events-none sticky top-0 h-[900px] w-full overflow-hidden bg-[#0160c4]">
+        <div className="pointer-events-none sticky top-0 h-[945px] w-full overflow-hidden bg-[#0160c4]">
           {/* Figmaのトリミング・色加工を焼き込み、角丸の縁を切り落とした四角い書き出し画像。
               角丸はCSS側だけで付けるので、継ぎ目やズレが出ない */}
           <motion.img
@@ -565,7 +565,7 @@ export default function TopMock({
 
         {/* キービジュアル：画面中央に固定されたまま、ブラーで登場 →
             スクロールでその場から奥へ引いて消える */}
-        <div className="pointer-events-none sticky top-0 -mt-[900px] h-[865px]">
+        <div className="pointer-events-none sticky top-0 -mt-[945px] h-[865px]">
           <motion.div
             className="flex h-full flex-col items-center pt-[120px]"
             initial={

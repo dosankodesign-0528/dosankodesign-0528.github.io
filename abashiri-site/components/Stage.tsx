@@ -45,14 +45,15 @@ const ILLUST_ANIMS: Record<
     style: { transformOrigin: "50% 100%" },
   },
   4: {
-    /* スイングB: 最初にビュッと振れて、あとはスッと収まるキレ重視 */
-    animate: { rotate: [0, -9, 6, -3.5, 1.5, 0] },
+    /* スイングB: 時計回りへビュッと振れて、バネのように振動しながら戻る。
+       反時計回りは戻りの行き過ぎ分だけ（控えめ） */
+    animate: { rotate: [0, 11, -3, 4.5, -1.5, 0] },
     transition: {
-      duration: 1.3,
-      times: [0, 0.1, 0.35, 0.6, 0.8, 1],
+      duration: 1.4,
+      times: [0, 0.12, 0.4, 0.62, 0.82, 1],
       ease: ["easeOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
       repeat: Infinity,
-      repeatDelay: 13.7,
+      repeatDelay: 13.6,
     },
     style: SWING_STYLE,
   },

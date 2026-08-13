@@ -200,7 +200,7 @@ export default function ExperienceMock({
 
   return (
     <div
-      className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-t-[60px] border-[30px] border-white"
+      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-[60px] border-[30px] border-white"
       style={{
         boxShadow: buildShadow(mergeShadow(null)),
         transform: `translate(${mergeLayout(null).tabletX}px, ${mergeLayout(null).tabletY}px)`,
