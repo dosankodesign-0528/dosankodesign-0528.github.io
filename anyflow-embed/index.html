@@ -12,7 +12,10 @@
   html, body {
     background: #f3f3f3;
     font-family: 'Noto Sans JP', sans-serif;
+    /* overflow-x: hidden は position: sticky を殺すため clip を使う
+       (clip はスクロールコンテナを作らないので sticky が生きる) */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* ---- 1440x921 の固定ステージを画面幅に合わせてスケール ---- */
@@ -201,7 +204,12 @@
     line-height: 170px;
     color: #101828;
     white-space: nowrap;
-    will-change: transform, clip-path, filter, opacity;
+    overflow: hidden;               /* 下からのトリミング出現用マスク */
+    will-change: transform, filter, opacity;
+  }
+  .vis-line .vl-in {
+    display: inline-block;
+    will-change: transform, filter;
   }
   .vis-l1 { top: 318px; }
   .vis-l2 { top: 488px; }
@@ -825,8 +833,8 @@
   <div class="pin-vp">
     <div class="pin-stage">
       <div class="vis-label rv" id="visLabel">Our Vison</div>
-      <div class="vis-line vis-l1" id="visL1">つなぐことが、</div>
-      <div class="vis-line vis-l2" id="visL2">強みになる時代へ。</div>
+      <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、</span></div>
+      <div class="vis-line vis-l2" id="visL2"><span class="vl-in">強みになる時代へ。</span></div>
 
       <div class="pf-wrap" id="pfWrap">
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1233,7 +1241,14 @@ const DEFAULTS = {
   dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
   /* スクロールセクションの調整値 */
   sections: {
-    vision:  { lenVh: 700, spinTurns: 2, blur: 8 },   // 尺(スクロール量) / ドット周回数 / 文字ブラー量
+    vision:  {
+      lenVh: 700,        // 尺(スクロール量)
+      revealLen: 0.10,   // 1行の出現にかけるスクロール割合 (出る速度)
+      line2Delay: 0.10,  // 2行目が出始めるまでの遅れ
+      spinDur: 1.2,      // ドットがくるくる回る秒数 (時間駆動)
+      spinTurns: 2,      // その間の周回数
+      blur: 8,           // 文字ブラー量
+    },
     results: { countDur: 1.4, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
     dev:     { lenVh: 900, swapBlur: 10 },            // 尺 / CLI・API・SDK切替のブラー量
     cases:   { lenVh: 450, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
@@ -1513,57 +1528,83 @@ const visEls = {
   });
 })();
 
-/* ビジョンのフェーズ境界 (セクション進捗 0〜1 の中の割合) */
-const VIS_P = {
-  label: [0.00, 0.05], l1: [0.05, 0.15], l2: [0.15, 0.25],
-  slide: [0.27, 0.35], mini: [0.36, 0.42], exit: [0.44, 0.52],
-  move:  [0.52, 0.63], spin: [0.63, 0.73], pf: [0.72, 0.80],
-  vhead: [0.80, 0.86], pt1: [0.86, 0.92], pt2: [0.92, 0.98],
-};
+/* ビジョンのフェーズ境界: 調整パネルの値から組み立てる (絵コンテ準拠)
+   コマ順: OurVisonブラー出現 → 1行ずつ下からトリミング出現 → 1行目から左へスライド →
+   ミニ楕円ブラー出現 → 上下に分かれてブラーで消える → 楕円が左下へ移動＋実寸へ拡大 →
+   ドットがくるくる(時間駆動・約1秒) → Platform文字 → ドット停止＋役割名 → 2つの価値 →
+   スクロールで Point 01 → Point 02 */
+function visPhases() {
+  const c = params.sections.vision;
+  const r = Math.max(0.03, c.revealLen);
+  const l1 = [0.05, 0.05 + r];
+  const l2 = [0.05 + c.line2Delay, 0.05 + c.line2Delay + r];
+  const tEnd = Math.min(Math.max(l1[1], l2[1]), 0.36);
+  const sl0 = tEnd + 0.02;
+  const slide1 = [sl0, sl0 + 0.07];          // 上の行から先に左へ
+  const slide2 = [sl0 + 0.035, sl0 + 0.105]; // 下の行も自然に続く
+  const mini = [sl0 + 0.115, sl0 + 0.175];
+  const ex0 = Math.min(mini[1] + 0.02, 0.56);
+  const exit = [ex0, ex0 + 0.10];
+  const move = [ex0 + 0.06, ex0 + 0.20];     // 消えきる頃に移動開始 (少し重ねる)
+  return { label: [0, 0.05], l1, l2, slide1, slide2, mini, exit, move,
+           pt1: [0.78, 0.86], pt2: [0.88, 0.96] };
+}
+let visSpinT0 = null;   // 楕円が所定位置に着いた時刻 (時間駆動チェーンの起点)
 
 function updateVision(p) {
-  const B = params.sections.vision.blur;
-  const ex = seg(p, ...VIS_P.exit);
+  const c = params.sections.vision;
+  const B = c.blur;
+  const PH = visPhases();
+  const ex = seg(p, ...PH.exit);
 
-  rv(visEls.label, seg(p, ...VIS_P.label) * (1 - ex), B, 10);
+  rv(visEls.label, seg(p, ...PH.label) * (1 - ex), B, 10);
 
-  /* 見出し2行: トリミング出現 → 左へスライド → 上下に分かれて退場 */
-  const sl = seg(p, ...VIS_P.slide);
-  [[visEls.l1, VIS_P.l1, 265, -280], [visEls.l2, VIS_P.l2, 170, 280]].forEach(([el, ph, off, exDy]) => {
-    const k = seg(p, ...ph);
-    el.style.clipPath = k >= 1 ? '' : `inset(-12% ${((1 - k) * 104).toFixed(2)}% -12% -2%)`;
-    el.style.opacity = (k > 0 ? 1 : 0) * (1 - ex);
-    el.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 3).toFixed(2)}px)` : '';
-    el.style.transform = `translate(${((1 - sl) * off).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+  /* 見出し2行: 下からトリミング(マスク)出現 → 1行目から左へ → 上下に分かれてブラーで消える */
+  const slides = [seg(p, ...PH.slide1), seg(p, ...PH.slide2)];
+  [[visEls.l1, PH.l1, 265, -240, 0], [visEls.l2, PH.l2, 170, 240, 1]].forEach(([el, ph, off, exDy, idx]) => {
+    const k = seg(p, ...ph, easeOutC);
+    const inner = el.firstElementChild;
+    inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
+    inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
+    el.style.opacity = ((k > 0 ? 1 : 0) * (1 - ex)).toFixed(3);
+    el.style.transform = `translate(${((1 - slides[idx]) * off).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+    el.style.filter = ex > 0 ? `blur(${(ex * B).toFixed(2)}px)` : '';
   });
 
-  /* 楕円: 見出しの右横に小さく出現 → 左下の実寸位置へ移動しながら拡大 */
-  const mi = seg(p, ...VIS_P.mini);
-  const mv = seg(p, ...VIS_P.move);
-  const s = 0.22 + 0.78 * mv;
+  /* 楕円: 「つなぐことが、」の右横に小さくブラー出現 → 左下の実寸位置へ移動しながら拡大 */
+  const mi = seg(p, ...PH.mini);
+  const mv = seg(p, ...PH.move);
+  const s = 0.26 + 0.74 * mv;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
   visEls.pfWrap.style.transform =
-    `translate(${((1 - mv) * 554).toFixed(2)}px, ${((1 - mv) * -55).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    `translate(${((1 - mv) * 654).toFixed(2)}px, ${((1 - mv) * -115).toFixed(2)}px) scale(${s.toFixed(4)})`;
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
 
-  /* ドット: 出現して勢いよく周回 → 減速して規定位置に停止 */
-  const sp = seg(p, ...VIS_P.spin, easeOutC);
-  const fadeIn = seg(p, VIS_P.spin[0], VIS_P.spin[0] + 0.03);
-  const turns = params.sections.vision.spinTurns;
+  /* 所定位置に着いたら時間駆動チェーン開始 (スクロールと無関係に進む):
+     ドット出現→KVと同じくるくる(spinDur秒)→規定位置に停止、
+     Platform文字ブラー出現 → 役割名称 → 「連携が生む、2つの価値」 */
+  const atPlace = p >= PH.move[1];
+  if (!atPlace) visSpinT0 = null;
+  else if (visSpinT0 === null) visSpinT0 = elapsed;
+  const spinT = visSpinT0 === null ? 0 : elapsed - visSpinT0;
+  const dur = Math.max(0.2, c.spinDur);
+  const sp = easeOutC(clamp01(spinT / dur));
+  const dotIn = atPlace ? clamp01(spinT / 0.25) : 0;
   PF_DOTS.forEach((d, i) => {
     const el = visEls.dots[i];
-    if (sp <= 0) { el.style.opacity = 0; return; }
-    el.style.opacity = fadeIn.toFixed(3);
-    const pos = pfDotPos(d, d.deg + 360 * turns * (1 - sp));
+    el.style.opacity = dotIn.toFixed(3);
+    if (dotIn <= 0) return;
+    const pos = pfDotPos(d, d.deg + 360 * c.spinTurns * (1 - sp));
     el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
   });
+  rv(visEls.pfTitle, easeOutC(clamp01((spinT - dur * 0.6) / 0.6)), B, 8);
+  visEls.names.forEach((el, i) =>
+    rv(el, easeOutC(clamp01((spinT - dur - 0.25 - i * 0.12) / 0.5)), B, 6));
+  rv(visEls.valHead, easeOutC(clamp01((spinT - dur - 0.9) / 0.6)), B, 12);
 
-  /* 役割ラベル + Platform 見出し + 2つの価値 */
-  visEls.names.forEach((el, i) => rv(el, seg(p, VIS_P.pf[0] + i * 0.012, VIS_P.pf[1] + i * 0.012), B, 6));
-  rv(visEls.pfTitle, seg(p, ...VIS_P.pf), B, 8);
-  rv(visEls.valHead, seg(p, ...VIS_P.vhead), B, 12);
-  rv(visEls.valP1, seg(p, ...VIS_P.pt1), B, 14);
-  rv(visEls.valP2, seg(p, ...VIS_P.pt2), B, 14);
+  /* Point 01 / 02 はその後のスクロールで出す (絵コンテ準拠) */
+  rv(visEls.valP1, seg(p, ...PH.pt1), B, 14);
+  rv(visEls.valP2, seg(p, ...PH.pt2), B, 14);
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -2155,10 +2196,14 @@ function buildPanel() {
   /* ========== 🎬 セクション演出 (スクロール) ========== */
   const catSec = category('🎬 セクション演出（スクロール）', false);
   const sv = () => params.sections;
-  sub(catSec, '📖 ビジョン');
+  sub(catSec, '📖 ビジョン（文字の出方）');
   rows.push(slider('スクロール尺', 300, 1400, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
-  rows.push(slider('ドット周回数', 0.5, 4, 0.5, () => sv().vision.spinTurns, v => sv().vision.spinTurns = v, v => v + '周'));
+  rows.push(slider('出る速さ', 0.03, 0.25, 0.01, () => sv().vision.revealLen, v => sv().vision.revealLen = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('2行目の遅れ', 0, 0.25, 0.01, () => sv().vision.line2Delay, v => sv().vision.line2Delay = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
+  sub(catSec, '📖 ビジョン（ドットの周回）');
+  rows.push(slider('くるくる時間', 0.4, 3, 0.1, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('周回数', 0.5, 4, 0.5, () => sv().vision.spinTurns, v => sv().vision.spinTurns = v, v => v + '周'));
   sub(catSec, '📈 実績カウンター');
   rows.push(slider('カウント時間', 0.4, 3, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px'));
