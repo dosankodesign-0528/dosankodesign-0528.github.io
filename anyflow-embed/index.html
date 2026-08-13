@@ -9,6 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    /* カンプの英字は SF Pro (Apple システムフォント)。Mac では -apple-system で実物が出る */
+    --font-en: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    --font-jp: 'Noto Sans JP', sans-serif;
+  }
   html, body {
     background: #f3f3f3;
     font-family: 'Noto Sans JP', sans-serif;
@@ -68,21 +73,34 @@
   .cta:hover { opacity: .78; }
 
   /* ---- Copy ---- */
+  /* カンプ: frame x120 y263 w358 / 罫線26px + 14px Regular、gap 9px、本文 Thin 70px lh1.4 */
   .headline {
     position: absolute;
-    left: 109px;
-    top: 210px;
-    font-weight: 100;
-    line-height: normal;
+    left: 120px;
+    top: 263px;
     color: #101828;
     white-space: nowrap;
     opacity: 0;
     transform: translateY(14px);
     filter: blur(6px);
-    animation: reveal 1.2s ease .3s forwards;
+    animation: reveal 1.6s cubic-bezier(.16, 1, .3, 1) .3s forwards;
   }
-  .headline .hl-s { font-size: 50px; }
-  .headline .hl-l { font-size: 80px; }
+  .hl-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 400;
+    font-size: 14px;
+    color: #000;
+  }
+  .hl-eyebrow i { display: block; width: 26px; height: 1px; background: #000; }
+  .hl-main {
+    display: block;
+    margin-top: 9px;
+    font-weight: 100;
+    font-size: 70px;
+    line-height: 1.4;
+  }
   @keyframes reveal {
     to { opacity: 1; transform: translateY(0); filter: blur(0); }
   }
@@ -187,34 +205,35 @@
   /* ブラー出現の共通初期状態 (JSが毎フレーム上書きする) */
   .rv { opacity: 0; will-change: opacity, filter, transform; }
 
-  /* ---- Vision セクション ---- */
+  /* ---- Vision セクション (カンプ 14708:37961 準拠) ----
+     Our Vison = SF Pro Light 40px / 本文 = Noto Sans JP Thin 100px lh1.7 / gap 13px */
   .vis-label {
     position: absolute;
     left: 120px;
-    top: 265px;
+    top: 264px;
+    font-family: var(--font-en);
     font-weight: 300;
-    font-size: 28px;
-    color: #101828;
+    font-size: 40px;
+    line-height: 1;
+    color: #000;
   }
   .vis-line {
     position: absolute;
     left: 120px;
     font-weight: 100;
-    font-size: 96px;
+    font-size: 100px;
     line-height: 170px;
     color: #101828;
     white-space: nowrap;
     overflow: hidden;               /* 下からのトリミング出現用マスク */
-    will-change: transform, filter, opacity;
   }
-  .vis-line .vl-in {
-    display: inline-block;
-    will-change: transform, filter;
-  }
-  .vis-l1 { top: 318px; }
-  .vis-l2 { top: 488px; }
+  .vis-line .vl-in { display: inline-block; }
+  .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
+  .vis-l1 { top: 317px; }
+  .vis-l2 { top: 487px; }
 
-  /* Platform 図 (ミニ楕円 → 実寸へ育つ) */
+  /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
+     top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
   .pf-wrap {
     position: absolute;
     left: 0;
@@ -222,137 +241,168 @@
     width: 862px;
     height: 667px;
     transform-origin: 50% 50%;
-    will-change: transform, opacity, filter;
   }
-  .pf-wrap svg { position: absolute; inset: 0; overflow: visible; }
+  .pf-wrap svg {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    shape-rendering: geometricPrecision;
+  }
   .pf-dot {
     position: absolute;
-    width: 13.4px;
-    height: 13.4px;
+    width: 13.378px;
+    height: 13.378px;
     border-radius: 50%;
-    margin: -6.7px 0 0 -6.7px;
-    will-change: transform, opacity;
+    margin: -6.689px 0 0 -6.689px;
   }
   .pf-name {
     position: absolute;
     font-weight: 300;
-    font-size: 18px;
-    color: #101828;
+    font-size: 14px;
+    line-height: normal;
+    color: #000;
     white-space: nowrap;
   }
   .pf-title {
     position: absolute;
-    left: 267px;
+    left: 363.13px;
     top: 277px;
-    width: 330px;
-    font-weight: 100;
-    font-size: 48px;
-    color: #101828;
+    transform: translateX(-50%);
+    font-family: var(--font-en);
+    font-weight: 200;
+    font-size: 50px;
+    line-height: 1;
+    color: #000;
+    white-space: nowrap;
   }
-  .pf-title small {
-    display: block;
-    margin-top: 10px;
-    padding-left: 21px;
-    font-size: 18px;
+  .pf-sub {
+    position: absolute;
+    left: 287.73px;
+    top: 335.58px;
     font-weight: 300;
-    letter-spacing: 1px;
+    font-size: 16px;
+    line-height: normal;
+    color: #000;
+    white-space: nowrap;
   }
+  /* 「連携が生む、2つの価値」= Regular 20px + Thin 60px (カンプ 14693:28340) */
   .val-head {
     position: absolute;
-    left: 893px;
-    top: 148px;
+    left: 892.95px;
+    top: 148.11px;
+    width: 272px;
     color: #101828;
   }
-  .val-head .vh-s { font-weight: 300; font-size: 24px; display: block; }
-  .val-head .vh-l { font-weight: 100; font-size: 56px; display: block; margin-top: 6px; }
+  .val-head .vh-s { display: block; font-weight: 400; font-size: 20px; line-height: normal; }
+  .val-head .vh-l { display: block; font-weight: 100; font-size: 60px; line-height: normal; }
   .val-point { position: absolute; width: 328px; color: #101828; }
-  .val-p1 { left: 934px; top: 342px; }
-  .val-p2 { left: 992px; top: 529px; }
+  .val-p1 { left: 933.95px; top: 342.19px; }
+  .val-p2 { left: 992px; top: 529.02px; }
   .val-point .vp-tag {
     display: flex;
     align-items: center;
     gap: 7px;
+    font-family: var(--font-en);
     font-weight: 300;
-    font-size: 15px;
+    font-size: 20px;
+    line-height: 1;
+    color: #000;
   }
   .val-point .vp-tag i {
+    display: inline-block;
     width: 7px; height: 7px;
     background: #FF5D97;
-    display: inline-block;
   }
   .val-point .vp-tag em { font-style: normal; color: #FF5D97; }
-  .val-point h3 { font-weight: 300; font-size: 28px; margin-top: 8px; }
-  .val-point p { font-weight: 300; font-size: 14px; line-height: 21px; margin-top: 20px; color: #333; }
+  .val-point h3 { font-weight: 300; font-size: 26px; line-height: normal; margin-top: 4px; }
+  .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: 24px; }
 
   /* ---- 実績セクション ---- */
   #results .flow-stage { height: 760px; }
+  /* カンプ座標 = TOP y - 2800 */
   .res-img {
     position: absolute;
-    left: -95px;
+    left: -94.97px;
     top: 58px;
     width: 993px;
     height: 430px;
     object-fit: cover;
-    will-change: filter, opacity;
   }
   .res-head {
     position: absolute;
-    left: 1038px;
+    left: 1038.19px;
     top: 117px;
-    font-weight: 100;
+    font-weight: 300;          /* カンプ: Noto Sans JP Light 40px */
     font-size: 40px;
     line-height: 59px;
-    color: #101828;
+    color: #000;
+    white-space: nowrap;
   }
   .res-lead {
     position: absolute;
-    left: 1027px;
-    top: 274px;
+    left: 1027.19px;
+    top: 274.13px;
     width: 291px;
-    text-align: right;
-    color: #101828;
+    color: #000;
   }
-  .res-lead .rl-label { font-weight: 300; font-size: 18px; display: block; }
-  .res-lead .rl-num {
-    font-weight: 100;
-    font-size: 110px;
-    line-height: 120px;
+  .res-lead .rl-label {
     display: block;
+    font-weight: 400;          /* カンプ: Regular 16px / lh24 / 右寄せ */
+    font-size: 16px;
+    line-height: 24px;
+    text-align: right;
+  }
+  .res-lead .rl-num {
+    display: block;
+    font-family: var(--font-en);
+    font-weight: 100;          /* カンプ: SF Pro Ultralight 120px */
+    font-size: 120px;
+    line-height: 1;
+    text-align: center;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
   .res-text {
     position: absolute;
     left: 120px;
-    top: 600px;
+    top: 600.88px;
     width: 491px;
     font-weight: 300;
     font-size: 14px;
     line-height: 27px;
-    color: #333;
+    color: #000;
   }
   .res-stats {
     position: absolute;
-    left: 745px;
-    top: 588px;
+    left: 745.19px;
+    top: 587.88px;
+    width: 573px;
     display: flex;
-    color: #101828;
+    align-items: center;
+    color: #000;
   }
   .res-stats .st {
-    padding: 0 32px;
-    text-align: center;
-    border-left: 1px solid #d9d9d9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-left: 32px;
+    padding-right: 33px;
+    border-right: 1px solid #d1d5dc;
   }
-  .res-stats .st:first-child { border-left: none; }
+  .res-stats .st:last-child { border-right: none; padding-right: 0; }
   .res-stats .st b {
-    display: block;
-    font-weight: 300;
+    font-weight: 300;          /* カンプ: Noto Sans JP Light 16px / lh24 */
     font-size: 16px;
-    margin-bottom: 12px;
+    line-height: 24px;
+    white-space: nowrap;
   }
   .res-stats .st span {
-    font-weight: 100;
-    font-size: 42px;
+    font-family: var(--font-en);
+    font-weight: 200;          /* カンプ: SF Pro Thin 50px */
+    font-size: 50px;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
@@ -374,15 +424,15 @@
     display: block;
     font-weight: 300;
     font-size: 16px;
+    line-height: 1;
     color: #00ABEB;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
-  .dev-center .dc-a, .dev-center .dc-b {
+  .dev-center .dc-a, .dev-center .dc-b, .dev-center .dc-one {
     display: block;
     font-weight: 200;
-    font-size: 44px;
-    line-height: 66px;
-    will-change: transform, opacity;
+    font-size: 36px;
+    line-height: 54px;
   }
   .dev-mock {
     position: absolute;
@@ -419,8 +469,21 @@
   }
   .dm-side i.pk { background: #FF5D97; }
   .dm-code { position: absolute; left: 110px; top: 46px; }
-  .dm-row { display: flex; gap: 7px; margin-bottom: 16.5px; }
+  .dm-row {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 16.5px;
+    clip-path: inset(0 100% 0 0);   /* JSで左から伸ばして「生成されていく」感じを出す */
+  }
   .dm-row .b { height: 7px; border-radius: 4px; }
+  /* コード生成中のカーソル */
+  .dm-caret {
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: rgba(255,255,255,.75);
+    opacity: 0;
+  }
   .b.cp { background: #FF5D97; }
   .b.cb { background: #38B7F5; }
   .b.cw { background: rgba(255,255,255,.72); }
@@ -441,7 +504,7 @@
     color: rgba(255,255,255,.92);
   }
   .dm-chat-head svg { display: block; }
-  .dm-msg { position: absolute; left: 13px; display: flex; gap: 9px; }
+  .dm-msg { position: absolute; left: 13px; display: flex; gap: 9px; opacity: 0; }
   .dm-msg .av {
     flex: 0 0 auto;
     width: 28px; height: 28px;
@@ -477,6 +540,25 @@
     font-size: 12px;
     font-weight: 300;
     color: rgba(255,255,255,.38);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  /* 入力中のテキスト (JSで1文字ずつ出す) */
+  .dm-input .dm-typed { color: rgba(255,255,255,.82); }
+  .dm-input .dm-cursor {
+    display: inline-block;
+    width: 1px;
+    height: 13px;
+    margin-left: 2px;
+    background: rgba(255,255,255,.8);
+    vertical-align: -2px;
+  }
+  /* AIが考えてる時の3点 */
+  .dm-think { display: flex; gap: 5px; padding: 13px 14px; }
+  .dm-think i {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.55);
   }
   .dm-send {
     position: absolute;
@@ -491,22 +573,23 @@
     align-items: center;
     justify-content: center;
   }
+  /* カンプ 14708:37856 (x118.65 y4174.10 / セクション上端4752.97 からの相対) */
   .dev-strength {
     position: absolute;
-    left: 118px;
-    top: 390px;
+    left: 118.65px;
+    top: 421.13px;
     width: 320px;
     color: #eaeaea;
-    will-change: opacity, filter, transform;
   }
   .dev-strength .ds-label {
     display: block;
     font-weight: 300;
     font-size: 16px;
+    line-height: 20px;
     color: #00ABEB;
     margin-bottom: 10px;
   }
-  .dev-strength .ds-title { font-weight: 200; font-size: 34px; }
+  .dev-strength .ds-title { font-weight: 200; font-size: 36px; line-height: 49px; }
 
   /* ---- 導入事例 ---- */
   .case-title {
@@ -768,9 +851,8 @@
     </header>
 
     <h1 class="headline">
-      <span class="hl-s">API連携で</span><br>
-      <span class="hl-l">AIと事業を</span><br>
-      <span class="hl-l">強くする</span>
+      <span class="hl-eyebrow"><i></i>APIでデータを繋ぐプラットフォーム</span>
+      <span class="hl-main">AIと事業を<br>強くする</span>
     </h1>
 
     <div class="orbit">
@@ -845,12 +927,18 @@
             <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
               <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
             </linearGradient>
+            <filter id="pfGlowF" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="2"/>
+            </filter>
           </defs>
           <ellipse cx="363.464" cy="333.499" rx="473.816" ry="158.868" transform="rotate(-23.3266 363.464 333.499)" stroke="url(#pfG0)" stroke-width="3"/>
           <ellipse cx="363.463" cy="333.522" rx="473.816" ry="158.868" transform="rotate(-5.36549 363.463 333.522)" stroke="url(#pfG1)" stroke-width="3"/>
+          <!-- 軌道を流れる光 (データが流れるニュアンス)。JSで生成・dashoffsetで走らせる -->
+          <g id="pfGlows" filter="url(#pfGlowF)"></g>
         </svg>
         <div id="pfDots"></div>
-        <div class="pf-title rv" id="pfTitle">Platform<small>プラットフォーム</small></div>
+        <div class="pf-title rv" id="pfTitle">Platform</div>
+        <div class="pf-sub rv" id="pfSub">プラットフォーム</div>
       </div>
 
       <div class="val-head rv" id="valHead">
@@ -893,12 +981,11 @@
 <section class="pin" id="dev">
   <div class="pin-vp">
     <div class="pin-stage">
-      <div class="dev-center" id="devH1" style="top:380px">
+      <div class="dev-center" id="devH1" style="top:175px">
         <span class="dc-label">Strength 01</span>
-        <span class="dc-a">自動生成で</span>
-        <span class="dc-b">開発スピードを加速</span>
+        <span class="dc-one">自動生成で開発スピードを加速</span>
       </div>
-      <div class="dev-center" id="devH2" style="top:380px">
+      <div class="dev-center" id="devH2" style="top:390px">
         <span class="dc-label">Strength 01</span>
         <span class="dc-a">開発環境に</span>
         <span class="dc-b">柔軟に適用</span>
@@ -914,10 +1001,11 @@
               <svg width="17" height="17" viewBox="0 0 17 17" fill="none"><path d="M8.5 1.5l1.6 4.3 4.4 1.2-4.4 1.6-1.6 4.4-1.4-4.4L2.5 7l4.6-1.2L8.5 1.5z" fill="#38B7F5"/><circle cx="14" cy="3" r="1.4" fill="#38B7F5"/></svg>
               AI Assistant
             </div>
-            <div class="dm-msg" style="top:70px"><i class="av">🤖</i><div class="lines" style="width:238px"><i style="width:150px"></i><i style="width:196px"></i><i style="width:116px"></i></div></div>
-            <div class="dm-msg" style="top:150px"><i class="av pk">👤</i><div class="lines" style="width:226px"><i style="width:176px"></i><i style="width:148px"></i></div></div>
-            <div class="dm-msg" style="top:216px"><i class="av">🤖</i><div class="lines" style="width:180px"><i style="width:92px"></i><i style="width:124px"></i></div></div>
-            <div class="dm-input">Ask anything...</div>
+            <div class="dm-msg" id="dmMsg0" style="top:70px"><i class="av">🤖</i><div class="lines" style="width:238px"><i style="width:150px"></i><i style="width:196px"></i><i style="width:116px"></i></div></div>
+            <div class="dm-msg" id="dmMsg1" style="top:150px"><i class="av pk">👤</i><div class="lines" style="width:226px"><i style="width:176px"></i><i style="width:148px"></i></div></div>
+            <div class="dm-msg" id="dmThink" style="top:216px"><i class="av">🤖</i><div class="lines dm-think"><i></i><i></i><i></i></div></div>
+            <div class="dm-msg" id="dmMsg2" style="top:216px"><i class="av">🤖</i><div class="lines" style="width:180px"><i style="width:92px"></i><i style="width:124px"></i></div></div>
+            <div class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span id="dmPlaceholder">Ask anything...</span></div>
             <i class="dm-send">↑</i>
           </div>
         </div>
@@ -1026,6 +1114,11 @@ const LIGHTS = [
 
 /* ================= セクション演出の複数案 =================
    絵コンテで「Claude側で補完して」とされた箇所は案を出し分けられる */
+const VISION_SLIDES = [
+  { key: 'A', name: '案A なめらか', desc: '上の行が先に、下の行が追って左へ。ゆったり減速する上品な動き（カンプ準拠）。' },
+  { key: 'B', name: '案B 吸着', desc: '左端でわずかに行き過ぎて戻る。「Our Vison」に吸い寄せられた感じが出る。' },
+  { key: 'C', name: '案C 文字が流れる', desc: '文字が1つずつ時間差で左へ流れて整列する。もっとも動きが豊か。' },
+];
 const DEV_PATTERNS = [
   { key: 'A', name: '案A ブラースワップ', desc: 'モックは右に据え置き、訴求文がブラーで入れ替わる。切替の瞬間にモックが一瞬やわらかくぼける。' },
   { key: 'B', name: '案B 縦送り', desc: '訴求文が上下にスライドして入れ替わり、モックもふわっと連動して浮く。' },
@@ -1245,17 +1338,30 @@ const DEFAULTS = {
       smooth: 6,         // スクロール慣性補間の強さ (0=オフ、大きいほど機敏)
     },
     vision:  {
-      lenVh: 900,        // 尺(スクロール量)
+      lenVh: 1000,       // 尺(スクロール量)
       revealLen: 0.10,   // 1行の出現にかけるスクロール割合 (出る速度)
       line2Delay: 0.10,  // 2行目が出始めるまでの遅れ
-      spinDur: 4,        // ドットが軌道を流れる秒数 (KVと同じ角速度で流れて最後に減速停止)
+      slideLen: 0.12,    // 左へ吸着する動きの長さ
+      slideStagger: 0.5, // 2行目が遅れて動き出す割合
+      slideX1: 236,      // 1行目の開始オフセット(px) カンプの中央寄り位置
+      slideX2: 178,      // 2行目の開始オフセット(px)
+      charStagger: 0.45, // 案C: 文字ごとの時間差
+      exitLen: 0.13,     // 上下に分かれて消える長さ
+      miniX: 559,        // ミニ楕円の初期オフセット(px)
+      miniY: -100,
+      miniScale: 0.26,   // ミニ楕円の縮小率
+      spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
+      spinDur: 4,        // 等速で流れる秒数
+      spinBrake: 2.5,    // 減速して止まるまでの秒数
+      glow: 1,           // 軌道を流れる光の強さ (0でオフ)
+      glowDur: 7,        // 光が1周する秒数
       blur: 8,           // 文字ブラー量
     },
     results: { countDur: 1.4, imgBlur: 24 },          // カウント時間 / 画像のぼけ→鮮明
     dev:     { lenVh: 1100, swapBlur: 10 },           // 尺 / CLI・API・SDK切替のブラー量
     cases:   { lenVh: 600, depth: 0.6 },              // 尺 / カードが奥に沈む強さ
   },
-  patterns: { dev: 'A', cases: 'A' },                 // セクション演出の採用案
+  patterns: { dev: 'A', cases: 'A', visionSlide: 'A' },   // セクション演出の採用案
 };
 const STORAGE_KEY = 'anyflow-embed-anim-v6';
 
@@ -1283,6 +1389,7 @@ function load() {
       merged.patterns = { ...DEFAULTS.patterns, ...(s.patterns || {}) };
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
+      if (!['A', 'B', 'C'].includes(merged.patterns.visionSlide)) merged.patterns.visionSlide = 'A';
       merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
@@ -1451,6 +1558,13 @@ function applySway() {
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOutC = t => 1 - Math.pow(1 - t, 3);
+/* ゆったり上質な減速 (quint)。上品さを出したい所はこちらを使う */
+const easeOutQ = t => 1 - Math.pow(1 - t, 5);
+/* 行き過ぎて戻る「吸着」感 */
+const easeOutBack = t => {
+  const c1 = 1.1, c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+};
 /* 進捗 p のうち区間 [a,b] を 0→1 に切り出す (イージング付き) */
 function seg(p, a, b, ez) { return (ez || easeIO)(clamp01((p - a) / (b - a))); }
 
@@ -1483,14 +1597,21 @@ const PF_ELL = [
   { cx: 363.464, cy: 333.499, rx: 473.816, ry: 158.868, rot: -23.3266 },
   { cx: 363.463, cy: 333.522, rx: 473.816, ry: 158.868, rot: -5.36549 },
 ];
-/* 停止角度はカンプのドット位置から楕円式で逆算。lx/ly はラベルのオフセット */
+/* 停止角度はカンプのドット位置から楕円式で逆算 */
 const PF_DOTS = [
-  { ell: 0, deg: 263.7, color: '#0E4497', label: 'コネクタ',     lx: -50, ly: -49 },
-  { ell: 0, deg: 117.8, color: '#0EBBFF', label: '監査',         lx: -16, ly: 14 },
-  { ell: 0, deg: 72.9,  color: '#000000', label: '権限',         lx: 0,   ly: 14 },
-  { ell: 0, deg: 47.1,  color: '#FF5D97', label: 'ワークフロー', lx: 0,   ly: 17 },
-  { ell: 0, deg: -30.6, color: '#0EBBFF', label: '' },
-  { ell: 1, deg: 205.4, color: '#FF5D97', label: '' },
+  { ell: 0, deg: 263.7, color: '#0E4497' },
+  { ell: 0, deg: 117.8, color: '#0EBBFF' },
+  { ell: 0, deg: 72.9,  color: '#000000' },
+  { ell: 0, deg: 47.1,  color: '#FF5D97' },
+  { ell: 0, deg: -30.6, color: '#0EBBFF' },
+  { ell: 1, deg: 205.4, color: '#FF5D97' },
+];
+/* 役割名: カンプの実座標 (TOP座標の y から 1851.98 を引いた値) */
+const PF_LABELS = [
+  { text: 'コネクタ',     x: 202.16, y: 159.44 },
+  { text: 'ワークフロー', x: 700.37, y: 329.85 },
+  { text: '権限',         x: 548.87, y: 430.35 },
+  { text: '監査',         x: 202.16, y: 560.82 },
 ];
 function pfDotPos(d, deg) {
   const e = PF_ELL[d.ell];
@@ -1505,10 +1626,11 @@ const visEls = {
   l2: document.getElementById('visL2'),
   pfWrap: document.getElementById('pfWrap'),
   pfTitle: document.getElementById('pfTitle'),
+  pfSub: document.getElementById('pfSub'),
   valHead: document.getElementById('valHead'),
   valP1: document.getElementById('valP1'),
   valP2: document.getElementById('valP2'),
-  dots: [], names: [],
+  dots: [], names: [], chars: [[], []],
 };
 (function buildPfDots() {
   const root = document.getElementById('pfDots');
@@ -1519,16 +1641,56 @@ const visEls = {
     el.style.opacity = 0;
     root.appendChild(el);
     visEls.dots.push(el);
-    if (d.label) {
-      const nm = document.createElement('div');
-      nm.className = 'pf-name rv';
-      nm.textContent = d.label;
-      const pos = pfDotPos(d, d.deg);
-      nm.style.left = (pos.x + d.lx) + 'px';
-      nm.style.top = (pos.y + d.ly) + 'px';
-      root.appendChild(nm);
-      visEls.names.push(nm);
-    }
+  });
+  PF_LABELS.forEach(l => {
+    const nm = document.createElement('div');
+    nm.className = 'pf-name rv';
+    nm.textContent = l.text;
+    nm.style.left = l.x + 'px';
+    nm.style.top = l.y + 'px';
+    root.appendChild(nm);
+    visEls.names.push(nm);
+  });
+})();
+
+/* 見出しの文字を1文字ずつ span に分解 (案C 文字カスケード用) */
+(function buildVisChars() {
+  [visEls.l1, visEls.l2].forEach((line, i) => {
+    const inner = line.firstElementChild;
+    const text = inner.textContent;
+    inner.textContent = '';
+    [...text].forEach(ch => {
+      const s = document.createElement('span');
+      s.className = 'vl-ch';
+      s.textContent = ch;
+      inner.appendChild(s);
+      visEls.chars[i].push(s);
+    });
+  });
+})();
+
+/* 軌道を流れる光: 楕円ごとに3本重ねて尾を引かせる (データが流れるニュアンス) */
+const pfGlowEls = [];
+(function buildPfGlows() {
+  const root = document.getElementById('pfGlows');
+  PF_ELL.forEach(e => {
+    /* 楕円の周長 (ラマヌジャン近似) */
+    const perim = Math.PI * (3 * (e.rx + e.ry) - Math.sqrt((3 * e.rx + e.ry) * (e.rx + 3 * e.ry)));
+    [[130, 0.16], [70, 0.34], [26, 0.9]].forEach(([len, op]) => {
+      const el = document.createElementNS(SVG_NS, 'ellipse');
+      el.setAttribute('cx', e.cx); el.setAttribute('cy', e.cy);
+      el.setAttribute('rx', e.rx); el.setAttribute('ry', e.ry);
+      el.setAttribute('transform', `rotate(${e.rot} ${e.cx} ${e.cy})`);
+      el.setAttribute('fill', 'none');
+      el.setAttribute('stroke', '#ffffff');
+      el.setAttribute('stroke-width', '3');
+      el.setAttribute('stroke-linecap', 'round');
+      el.setAttribute('stroke-dasharray', `${len} ${perim - len}`);
+      el.dataset.perim = perim;
+      el.dataset.op = op;
+      root.appendChild(el);
+      pfGlowEls.push(el);
+    });
   });
 })();
 
@@ -1542,80 +1704,117 @@ function visPhases() {
   const r = Math.max(0.03, c.revealLen);
   const l1 = [0.05, 0.05 + r];
   const l2 = [0.05 + c.line2Delay, 0.05 + c.line2Delay + r];
-  const tEnd = Math.min(Math.max(l1[1], l2[1]), 0.36);
-  const sl0 = tEnd + 0.02;
-  const slide1 = [sl0, sl0 + 0.07];          // 上の行から先に左へ
-  const slide2 = [sl0 + 0.035, sl0 + 0.105]; // 下の行も自然に続く
-  const mini = [sl0 + 0.115, sl0 + 0.175];
-  const ex0 = Math.min(mini[1] + 0.02, 0.56);
-  const exit = [ex0, ex0 + 0.10];
-  const move = [ex0 + 0.06, ex0 + 0.20];     // 消えきる頃に移動開始 (少し重ねる)
-  return { label: [0, 0.05], l1, l2, slide1, slide2, mini, exit, move,
-           pt1: [0.78, 0.86], pt2: [0.88, 0.96] };
+  const tEnd = Math.min(Math.max(l1[1], l2[1]), 0.34);
+  const sl0 = tEnd + 0.03;
+  const sd = Math.max(0.04, c.slideLen);
+  const slide1 = [sl0, sl0 + sd];                                 // 上の行が先に左へ
+  const slide2 = [sl0 + sd * c.slideStagger, sl0 + sd + sd * c.slideStagger]; // 下の行が追従
+  const mini = [slide2[1] + 0.03, slide2[1] + 0.11];
+  const ex0 = mini[1] + 0.04;
+  const exLen = Math.max(0.08, c.exitLen);
+  /* 文字が上下に分かれるのと「同時に」楕円が左下へ動き出す (ユーザー指示) */
+  const exit = [ex0, ex0 + exLen];
+  const move = [ex0, ex0 + exLen * 1.4];
+  return { label: [0, 0.05], l1, l2, slide1, slide2, mini, exit, move };
 }
-let visSpinT0 = null;   // 楕円が所定位置に着いた時刻 (時間駆動チェーンの起点)
+let visDotT0 = null;   // 楕円が左下へ動き出した時刻 (ドット周回＋以降のチェーンの起点)
 
 function updateVision(p) {
   const c = params.sections.vision;
   const B = c.blur;
   const PH = visPhases();
-  const ex = seg(p, ...PH.exit);
+  const ex = seg(p, ...PH.exit, easeIO);
 
-  rv(visEls.label, seg(p, ...PH.label) * (1 - ex), B, 10);
+  rv(visEls.label, seg(p, ...PH.label, easeOutQ) * (1 - ex), B, 10);
 
-  /* 見出し2行: 下からトリミング(マスク)出現 → 1行目から左へ → 上下に分かれてブラーで消える */
-  const slides = [seg(p, ...PH.slide1), seg(p, ...PH.slide2)];
-  [[visEls.l1, PH.l1, 265, -240, 0], [visEls.l2, PH.l2, 170, 240, 1]].forEach(([el, ph, off, exDy, idx]) => {
-    const k = seg(p, ...ph, easeOutC);
+  /* 見出し2行: 下からトリミング(マスク)出現 → 左へスライド(3案) → 上下に分かれてブラーで消える */
+  const pat = params.patterns.visionSlide;
+  const ez = pat === 'B' ? easeOutBack : easeOutQ;
+  const slides = [seg(p, ...PH.slide1, ez), seg(p, ...PH.slide2, ez)];
+  const offs = [c.slideX1, c.slideX2];
+  [[visEls.l1, PH.l1, -240, 0], [visEls.l2, PH.l2, 240, 1]].forEach(([el, ph, exDy, idx]) => {
+    const k = seg(p, ...ph, easeOutQ);
     const inner = el.firstElementChild;
     inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
     inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
     el.style.opacity = ((k > 0 ? 1 : 0) * (1 - ex)).toFixed(3);
-    el.style.transform = `translate(${((1 - slides[idx]) * off).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
     el.style.filter = ex > 0 ? `blur(${(ex * B).toFixed(2)}px)` : '';
+
+    const sl = slides[idx];
+    const chars = visEls.chars[idx];
+    if (pat === 'C') {
+      /* 案C: 行全体は動かさず、文字が1つずつ時間差で左へ流れて整列する */
+      el.style.transform = `translate(0px, ${(ex * exDy).toFixed(2)}px)`;
+      const raw = clamp01((p - PH['slide' + (idx + 1)][0]) / (PH['slide' + (idx + 1)][1] - PH['slide' + (idx + 1)][0]));
+      const n = chars.length;
+      const span = Math.max(0.15, 1 - c.charStagger);
+      chars.forEach((s, ci) => {
+        const kc = easeOutQ(clamp01((raw - (ci / Math.max(1, n - 1)) * c.charStagger) / span));
+        s.style.transform = `translateX(${((1 - kc) * offs[idx]).toFixed(2)}px)`;
+      });
+    } else {
+      if (chars[0] && chars[0].style.transform) chars.forEach(s => s.style.transform = '');
+      el.style.transform =
+        `translate(${((1 - sl) * offs[idx]).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+    }
   });
 
-  /* 楕円: 「つなぐことが、」の右横に小さくブラー出現 → 左下の実寸位置へ移動しながら拡大 */
-  const mi = seg(p, ...PH.mini);
-  const mv = seg(p, ...PH.move);
-  const s = 0.26 + 0.74 * mv;
+  /* 楕円: 文字の右横に小さくブラー出現 → 退場と同時に左下の実寸位置へ移動しながら拡大 */
+  const mi = seg(p, ...PH.mini, easeOutQ);
+  const mv = seg(p, ...PH.move, easeIO);
+  const s = c.miniScale + (1 - c.miniScale) * mv;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
   visEls.pfWrap.style.transform =
-    `translate(${((1 - mv) * 654).toFixed(2)}px, ${((1 - mv) * -115).toFixed(2)}px) scale(${s.toFixed(4)})`;
+    `translate(${((1 - mv) * c.miniX).toFixed(2)}px, ${((1 - mv) * c.miniY).toFixed(2)}px) scale(${s.toFixed(4)})`;
   visEls.pfWrap.style.filter = mi >= 1 ? '' : `blur(${((1 - mi) * B).toFixed(2)}px)`;
 
-  /* 所定位置に着いたら時間駆動チェーン開始 (スクロールと無関係に進む):
-     ドット出現 → KVのドットと同じ角速度で軌道を流れ、最後だけなめらかに減速して規定位置に停止 →
-     Platform文字ブラー出現 → 役割名称 → 「連携が生む、2つの価値」 */
-  const atPlace = p >= PH.move[1];
-  if (!atPlace) visSpinT0 = null;
-  else if (visSpinT0 === null) visSpinT0 = elapsed;
-  const spinT = visSpinT0 === null ? 0 : elapsed - visSpinT0;
-  const dur = Math.max(0.5, c.spinDur);
-  /* KVと同じ角速度 (deg/s)。等速で流れて、最後の brake 秒だけ二次曲線で減速する */
-  const v = 360 / params.duration * params.globalSpeed;
-  const brake = Math.min(1.8, dur * 0.45);
-  const cruise = dur - brake;
-  const t = Math.min(spinT, dur);
-  const remaining = t < cruise
-    ? v * (cruise - t) + v * brake / 2
-    : v * Math.pow(dur - t, 2) / (2 * brake);
-  const dotIn = atPlace ? clamp01(spinT / 0.6) : 0;
+  /* 移動開始と同時にドットがフェードイン＆周回開始 (KVと同じ角速度)。
+     spinDur 秒だけ流れて、そこから spinBrake 秒かけて減速し、カンプの規定位置にピタリ停止。
+     停止後は時間チェーン: Platform → プラットフォーム → 役割名 → 2つの価値 → Point01 → Point02
+     (ユーザー指示: 1スクロールでディレイで1個ずつ) */
+  const moving = p >= PH.move[0];
+  if (!moving) visDotT0 = null;
+  else if (visDotT0 === null) visDotT0 = elapsed;
+  const T = visDotT0 === null ? -1 : elapsed - visDotT0;
+
+  const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed;
+  const cruise = Math.max(0.2, c.spinDur), brake = Math.max(0.3, c.spinBrake);
+  const totalRot = v * cruise + v * brake / 2;   // 停止までに進む総角度
+  let rot = 0;
+  if (T > 0) {
+    if (T < cruise) rot = v * T;
+    else {
+      const u = clamp01((T - cruise) / brake);
+      rot = v * cruise + v * brake * (u - u * u / 2);   // 速度 v→0 の一次減速
+    }
+  }
+  const dotIn = T < 0 ? 0 : clamp01(T / 0.9);
   PF_DOTS.forEach((d, i) => {
     const el = visEls.dots[i];
     el.style.opacity = dotIn.toFixed(3);
     if (dotIn <= 0) return;
-    const pos = pfDotPos(d, d.deg - remaining);
+    const pos = pfDotPos(d, d.deg - totalRot + rot);
     el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px)`;
   });
-  rv(visEls.pfTitle, easeOutC(clamp01((spinT - dur * 0.75) / 0.8)), B, 8);
-  visEls.names.forEach((el, i) =>
-    rv(el, easeOutC(clamp01((spinT - dur - 0.3 - i * 0.15) / 0.6)), B, 6));
-  rv(visEls.valHead, easeOutC(clamp01((spinT - dur - 1.1) / 0.8)), B, 12);
 
-  /* Point 01 / 02 はその後のスクロールで出す (絵コンテ準拠) */
-  rv(visEls.valP1, seg(p, ...PH.pt1), B, 14);
-  rv(visEls.valP2, seg(p, ...PH.pt2), B, 14);
+  /* 軌道を流れる光 (データが流れるニュアンス)。楕円が見え始めてから流す */
+  const glowOn = c.glow > 0 && mi > 0;
+  pfGlowEls.forEach((el, i) => {
+    if (!glowOn) { el.style.opacity = 0; return; }
+    const perim = parseFloat(el.dataset.perim);
+    const lane = i < 3 ? 0 : 1;   // 楕円ごとに位相をずらす
+    const off = ((elapsed / Math.max(1, c.glowDur) + lane * 0.45) % 1) * perim * params.direction;
+    el.setAttribute('stroke-dashoffset', (-off).toFixed(2));
+    el.style.opacity = (parseFloat(el.dataset.op) * c.glow * mi).toFixed(3);
+  });
+
+  const C = T < 0 ? -99 : T - cruise - brake;   // 停止からの経過秒
+  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.2) / 1.1)), B, 8);
+  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.45) / 1.1)), B, 8);
+  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.9 - i * 0.22) / 1.0)), B, 6));
+  rv(visEls.valHead, easeOutQ(clamp01((C - 2.1) / 1.2)), B, 12);
+  rv(visEls.valP1,   easeOutQ(clamp01((C - 2.9) / 1.2)), B, 14);
+  rv(visEls.valP2,   easeOutQ(clamp01((C - 3.6) / 1.2)), B, 14);
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -1709,80 +1908,159 @@ const devEls = {
   strength: document.getElementById('devStrength'),
   strengthTitle: document.getElementById('devStrengthTitle'),
 };
+/* 絵コンテのコマ順:
+   ①真っ黒→「自動生成で開発スピードを加速」(1行)がブラー出現・下にモックちら見え
+   ②スクロールでモックが中央へ上がりながら実寸まで拡大 (規定位置までは中身は空)
+   ③規定位置でモック内アニメ開始 (右チャットに入力→返答→左でコード生成)
+   ④ブラーで消える →⑤「開発環境に/柔軟に適用」出現 →⑥上下に分割しその間からモック
+   →⑦右へ移動して左に CLI → API → SDK が入れ替わる */
 const DEV_P = {
-  h1: [0.00, 0.06], split1: [0.10, 0.20], grow1: [0.12, 0.26], out1: [0.30, 0.36],
-  h2: [0.38, 0.44], split2: [0.46, 0.56], grow2: [0.48, 0.62], out2: [0.58, 0.64],
-  dock: [0.64, 0.72], sw1: [0.76, 0.80], sw2: [0.87, 0.91],
+  h1:    [0.00, 0.06],
+  rise:  [0.09, 0.30],   // 下からせり上がって拡大
+  hold:  [0.30, 0.42],   // 規定位置 (モック内アニメが走る)
+  out1:  [0.42, 0.50],
+  h2:    [0.52, 0.58],
+  split2:[0.60, 0.71],
+  grow2: [0.61, 0.74],
+  dock:  [0.75, 0.83],
+  sw1:   [0.87, 0.905],
+  sw2:   [0.94, 0.975],
 };
+const MOCK_CX = -175.7;   // ステージ中央に置くための X オフセット
+const MOCK_CY = -13;      // 同 Y
 
-/* 見出し: ブラー出現 → 上下に割れる → ブラー退場 */
+/* 見出し: ブラー出現 → (2行のときだけ)上下に割れる → ブラー退場 */
 function devHeading(el, inK, splitK, outK) {
   el.style.opacity = (inK * (1 - outK)).toFixed(3);
   el.style.filter = (inK < 1 || outK > 0)
-    ? `blur(${((1 - inK) * 10 + outK * 12).toFixed(2)}px)` : '';
-  const d = (splitK * 180).toFixed(2);
-  el.querySelector('.dc-label').style.transform = `translateY(${-d}px)`;
-  el.querySelector('.dc-a').style.transform = `translateY(${-d}px)`;
-  el.querySelector('.dc-b').style.transform = `translateY(${d}px)`;
+    ? `blur(${((1 - inK) * 12 + outK * 14).toFixed(2)}px)` : '';
+  const d = (splitK * 190).toFixed(2);
+  const lab = el.querySelector('.dc-label'), a = el.querySelector('.dc-a'), b = el.querySelector('.dc-b');
+  if (lab) lab.style.transform = `translateY(${-d}px)`;
+  if (a) a.style.transform = `translateY(${-d}px)`;
+  if (b) b.style.transform = `translateY(${d}px)`;
 }
+
+/* ---- モック内アニメ (絵コンテのメモ: 右チャットに入力 → 応答 → 左でコード生成) ---- */
+const DM_TEXT = 'Slackの通知をkintoneに連携したい';
+const dmEls = {
+  typed: document.getElementById('dmTyped'),
+  cursor: document.getElementById('dmCursor'),
+  ph: document.getElementById('dmPlaceholder'),
+  msg0: document.getElementById('dmMsg0'),
+  msg1: document.getElementById('dmMsg1'),
+  msg2: document.getElementById('dmMsg2'),
+  think: document.getElementById('dmThink'),
+  rows: [...document.querySelectorAll('.dm-row')],
+};
+const DM_LOOP = 11;   // 1巡の秒数
+
+function devMockContent(mode, t) {
+  /* mode: 'empty' = 中身なし / 'anim' = 生成アニメ / 'full' = 全部表示 */
+  if (mode === 'full') {
+    dmEls.typed.textContent = '';
+    dmEls.ph.style.display = '';
+    dmEls.cursor.style.opacity = 0;
+    dmEls.msg0.style.opacity = 1;
+    dmEls.msg1.style.opacity = 1;
+    dmEls.msg2.style.opacity = 1;
+    dmEls.think.style.opacity = 0;
+    dmEls.rows.forEach(r => r.style.clipPath = 'none');
+    return;
+  }
+  if (mode === 'empty') {
+    dmEls.typed.textContent = '';
+    dmEls.ph.style.display = '';
+    dmEls.cursor.style.opacity = 0;
+    dmEls.msg0.style.opacity = 0;
+    dmEls.msg1.style.opacity = 0;
+    dmEls.msg2.style.opacity = 0;
+    dmEls.think.style.opacity = 0;
+    dmEls.rows.forEach(r => r.style.clipPath = 'inset(0 100% 0 0)');
+    return;
+  }
+  const T = t % DM_LOOP;
+  dmEls.msg0.style.opacity = clamp01(t / 0.5).toFixed(3);
+  /* ① 入力欄に1文字ずつ打ち込む */
+  const sent = T >= 2.2;
+  const n = sent ? 0 : Math.floor(clamp01((T - 0.4) / 1.6) * DM_TEXT.length);
+  dmEls.typed.textContent = DM_TEXT.slice(0, n);
+  dmEls.ph.style.display = n > 0 ? 'none' : '';
+  dmEls.cursor.style.opacity = (!sent && T > 0.3 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
+  /* ② 送信するとユーザーの吹き出しが出る */
+  dmEls.msg1.style.opacity = clamp01((T - 2.2) / 0.35).toFixed(3);
+  /* ③ AIが考える3点 → ④ 返答 */
+  const thinkIn = clamp01((T - 2.6) / 0.3), thinkOut = clamp01((T - 3.5) / 0.25);
+  dmEls.think.style.opacity = (thinkIn * (1 - thinkOut)).toFixed(3);
+  dmEls.think.querySelectorAll('.dm-think i').forEach((d, i) => {
+    d.style.opacity = (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
+  });
+  dmEls.msg2.style.opacity = clamp01((T - 3.7) / 0.35).toFixed(3);
+  /* ⑤ 返答に応じて左のコードが上から生成されていく */
+  dmEls.rows.forEach((r, i) => {
+    const k = easeOutQ(clamp01((T - 4.1 - i * 0.24) / 0.45));
+    r.style.clipPath = k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`;
+  });
+}
+
+let devHoldT0 = null;
 
 function updateDev(p) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
 
-  devHeading(devEls.h1, seg(p, ...DEV_P.h1), seg(p, ...DEV_P.split1), seg(p, ...DEV_P.out1));
-  devHeading(devEls.h2, seg(p, ...DEV_P.h2), seg(p, ...DEV_P.split2), seg(p, ...DEV_P.out2));
+  const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
+  const rise = seg(p, ...DEV_P.rise, easeIO);
+  const in2 = seg(p, ...DEV_P.h2, easeOutQ);
+  const sp2 = seg(p, ...DEV_P.split2, easeIO);
+  const g2 = seg(p, ...DEV_P.grow2, easeIO);
+  const dk = seg(p, ...DEV_P.dock, easeIO);
+  const s1 = seg(p, ...DEV_P.sw1, easeIO), s2 = seg(p, ...DEV_P.sw2, easeIO);
 
-  const g1 = seg(p, ...DEV_P.grow1), o1 = seg(p, ...DEV_P.out1);
-  const g2 = seg(p, ...DEV_P.grow2), dk = seg(p, ...DEV_P.dock);
-  const s1 = seg(p, ...DEV_P.sw1), s2 = seg(p, ...DEV_P.sw2);
+  devHeading(devEls.h1, in1, 0, o1);
+  devHeading(devEls.h2, in2, sp2, 0);
 
-  /* モックの状態: ちら見え → 分割の間から拡大 → 退場 → 再拡大 → 右へドック */
-  let op = 0, sc = 1, tx = 0, ty = 0, bl = 0;
+  /* --- モックの位置・大きさ --- */
+  let op = 0, sc = 1, tx = MOCK_CX, ty = MOCK_CY, bl = 0;
   if (p < DEV_P.h2[0]) {
-    const peek = 1 - seg(p, 0.06, 0.11);           // 冒頭: 画面下にちら見え
-    if (g1 > 0) {
-      op = Math.min(1, g1 * 3) * (1 - o1);
-      sc = 0.14 + 0.6 * g1;
-      tx = -175.7; ty = -46;
-      bl = o1 * 16;
-    } else if (peek > 0) {
-      op = 0.9 * peek * seg(p, 0.0, 0.04);
-      sc = 0.6; tx = -175.7; ty = 520;
-    }
+    /* 前半: 画面下にちら見え → せり上がって実寸へ → ブラーで退場 */
+    op = clamp01((p - 0.01) / 0.03) * (1 - o1);
+    sc = 0.78 + 0.22 * rise;
+    ty = MOCK_CY + (1 - rise) * 560;
+    bl = o1 * 18;
   } else {
+    /* 後半: 分割した文字の間から小さく出て実寸へ → 右へ移動 */
     op = Math.min(1, g2 * 3);
-    sc = 0.14 + 0.86 * g2;
-    tx = -175.7 * (1 - dk);
-    ty = -36 * (1 - dk);
-    /* CLI/API/SDK 切替の演出 (採用案で分岐) */
+    sc = 0.16 + 0.84 * g2;
+    tx = MOCK_CX * (1 - dk);
+    ty = MOCK_CY * (1 - dk) + (1 - g2) * 30;
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
     const dip = Math.sin(Math.PI * swapK);
-    if (pat === 'A') {
-      bl = dip * c.swapBlur * 0.4;                  // 一瞬やわらかくぼける
-    } else if (pat === 'B') {
-      ty += dip * -24;                              // 小さく連動して浮く
-      bl = dip * c.swapBlur * 0.2;
-    } else if (pat === 'C') {
-      sc *= 1 + 0.05 * (s1 + s2);                   // 一歩ずつ寄る
-      bl = dip * c.swapBlur * 0.5;
-    }
+    if (pat === 'A') bl = dip * c.swapBlur * 0.4;
+    else if (pat === 'B') { ty += dip * -24; bl = dip * c.swapBlur * 0.2; }
+    else if (pat === 'C') { sc *= 1 + 0.05 * (s1 + s2); bl = dip * c.swapBlur * 0.5; }
   }
   devEls.mock.style.opacity = op.toFixed(3);
   devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
   devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
 
-  /* 左の訴求テキスト: ドック完了で出現、スクロールごとに CLI → API → SDK */
+  /* --- モック内アニメ: 規定位置に着いたら時間駆動で開始しループ --- */
+  const atHold = p >= DEV_P.hold[0] && p < DEV_P.out1[1];
+  if (p < DEV_P.hold[0]) devHoldT0 = null;
+  else if (devHoldT0 === null) devHoldT0 = elapsed;
+  if (p < DEV_P.hold[0]) devMockContent('empty');
+  else if (atHold) devMockContent('anim', elapsed - devHoldT0);
+  else devMockContent('full');
+
+  /* --- 左の訴求テキスト: 右へ移動し終わってから CLI → API → SDK --- */
   const title = s1 < 0.5 ? 'CLIへの対応' : s2 < 0.5 ? 'APIへの対応' : 'SDKへの対応';
   if (devEls.strengthTitle.textContent !== title) devEls.strengthTitle.textContent = title;
   const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
   const dip = Math.sin(Math.PI * swapK);
-  const stIn = dk;
-  let stOp = stIn * (1 - dip);
-  let stY = (1 - stIn) * 20;
-  let stBl = (1 - stIn) * 10 + dip * c.swapBlur;
+  let stY = (1 - dk) * 24;
+  let stBl = (1 - dk) * 12 + dip * c.swapBlur;
   if (pat === 'B') stY += (swapK < 0.5 ? -swapK * 60 : (1 - swapK) * 60);
-  devEls.strength.style.opacity = stOp.toFixed(3);
+  devEls.strength.style.opacity = (dk * (1 - dip)).toFixed(3);
   devEls.strength.style.transform = `translateY(${stY.toFixed(2)}px)`;
   devEls.strength.style.filter = stBl > 0.05 ? `blur(${stBl.toFixed(2)}px)` : '';
 }
@@ -2223,12 +2501,27 @@ function buildPanel() {
   rows.push(slider('慣性のなめらかさ', 0, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => v === 0 ? 'オフ' : (v <= 4 ? 'とろり ' : v <= 8 ? 'なめらか ' : '機敏 ') + v));
   sub(catSec, '📖 ビジョン（文字の出方）');
-  rows.push(slider('スクロール尺', 300, 1400, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('スクロール尺', 300, 1600, 20, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh'));
   rows.push(slider('出る速さ', 0.03, 0.25, 0.01, () => sv().vision.revealLen, v => sv().vision.revealLen = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('2行目の遅れ', 0, 0.25, 0.01, () => sv().vision.line2Delay, v => sv().vision.line2Delay = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
+  sub(catSec, '📖 ビジョン（左へのスライド）');
+  rows.push(slider('動きの長さ', 0.04, 0.30, 0.01, () => sv().vision.slideLen, v => sv().vision.slideLen = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('2行目のずれ', 0, 1, 0.05, () => sv().vision.slideStagger, v => sv().vision.slideStagger = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('1行目の移動量', 0, 500, 2, () => sv().vision.slideX1, v => sv().vision.slideX1 = v, v => v + 'px'));
+  rows.push(slider('2行目の移動量', 0, 500, 2, () => sv().vision.slideX2, v => sv().vision.slideX2 = v, v => v + 'px'));
+  rows.push(slider('文字のずれ(案C)', 0, 0.8, 0.05, () => sv().vision.charStagger, v => sv().vision.charStagger = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('上下に消える長さ', 0.08, 0.30, 0.01, () => sv().vision.exitLen, v => sv().vision.exitLen = v, v => Math.round(v * 100) + '%'));
+  sub(catSec, '📖 ビジョン（軌道グラフィック）');
+  rows.push(slider('小さい時の大きさ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2)));
+  rows.push(slider('小さい時のX', 0, 900, 5, () => sv().vision.miniX, v => sv().vision.miniX = v, v => v + 'px'));
+  rows.push(slider('小さい時のY', -400, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px'));
+  rows.push(slider('光の強さ', 0, 1.5, 0.05, () => sv().vision.glow, v => sv().vision.glow = v, v => v === 0 ? 'オフ' : Math.round(v * 100) + '%'));
+  rows.push(slider('光が1周する時間', 2, 20, 0.5, () => sv().vision.glowDur, v => sv().vision.glowDur = v, v => v.toFixed(1) + 's'));
   sub(catSec, '📖 ビジョン（ドットの周回）');
-  rows.push(slider('流れる時間', 1, 8, 0.5, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('速さ(×KV)', 0.5, 5, 0.1, () => sv().vision.spinSpeed, v => sv().vision.spinSpeed = v, v => '×' + v.toFixed(1)));
+  rows.push(slider('流れる時間', 0.5, 10, 0.5, () => sv().vision.spinDur, v => sv().vision.spinDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('止まるまで', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + 's'));
   sub(catSec, '📈 実績カウンター');
   rows.push(slider('カウント時間', 0.4, 3, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px'));
@@ -2326,6 +2619,9 @@ function buildSwitcher() {
   const secDither = section('ディザ', false);
   pills(secDither.body, DITHERS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
 
+  const secVis = section('ビジョンの左スライド', false);
+  pills(secVis.body, VISION_SLIDES, it => params.patterns.visionSlide === it.key, it => params.patterns.visionSlide = it.key);
+
   const secDev = section('開発者体験の切替', false);
   pills(secDev.body, DEV_PATTERNS, it => params.patterns.dev === it.key, it => params.patterns.dev = it.key);
 
@@ -2340,11 +2636,14 @@ function buildSwitcher() {
     secDither.sec.style.display = params.design === 'E' ? '' : 'none';
     const devPat = DEV_PATTERNS.find(x => x.key === params.patterns.dev) || DEV_PATTERNS[0];
     const casePat = CASE_PATTERNS.find(x => x.key === params.patterns.cases) || CASE_PATTERNS[0];
+    const visPat = VISION_SLIDES.find(x => x.key === params.patterns.visionSlide) || VISION_SLIDES[0];
     secDev.cur.textContent = devPat.name;
     secCase.cur.textContent = casePat.name;
+    secVis.cur.textContent = visPat.name;
     let html = 'ゆらぎ: ' + SWAYS[params.sway - 1].desc;
     if (params.light === 2) html += '<br>ライト: ' + LIGHTS[1].desc;
     if (params.design === 'E') html += '<br>ディザ: ' + DITHERS[params.dither - 1].desc;
+    html += '<br>ビジョン: ' + visPat.desc;
     html += '<br>開発者体験: ' + devPat.desc;
     html += '<br>導入事例: ' + casePat.desc;
     desc.innerHTML = html;
