@@ -200,6 +200,7 @@ import HeroBlurSeq from "./HeroBlurSeq";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
+import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -207,15 +208,11 @@ export const ILLUST_IN_EVENT = "abashiri:illust-in";
 
 /*
  * タブレットの浮遊シャドウ（/mock/shadow で比較）
- * タブレットは下端が画面外に見切れるデザインなので、
- * 左右の縁でも「浮き」が伝わる影にしてある。
- * 0=現行（採用決定までのデフォルト）
- * 1=ふんわりハロー: 深い海色のやわらかい光暈をぐるっと均一にまとう
- * 2=二層リアル: 近くの濃い影＋遠くの淡い広がりの2枚重ねで高さを出す
- * 3=斜め光: 右上から光が当たっている体で、左下へ長く影が伸びる
+ * 採用は案3「斜め光」。デフォルト(0)は shadowConfig.ts のパラメーター基準で、
+ * /mock/shadow/tune から強さ・色などを細かく調整できる。
+ * 1=ふんわりハロー / 2=二層リアル / 3=斜め光（比較mock用に残置）
  */
 const MOCK_SHADOWS: Record<number, { frame: string }> = {
-  0: { frame: "shadow-[0px_28px_16px_0px_#0f98c2]" },
   1: { frame: "shadow-[0_0_80px_12px_rgba(3,52,102,0.35)]" },
   2: {
     frame:
@@ -242,6 +239,7 @@ export default function TopMock({
   bubbleAnim = 0,
   bubbleTune,
   mockShadow = 0,
+  shadowTune,
 }: {
   intro?: number;
   kv?: number;
@@ -273,8 +271,10 @@ export default function TopMock({
   bubbleAnim?: number;
   /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
   bubbleTune?: BubbleTune;
-  /** 1〜3: タブレットの浮遊シャドウ（0で現行） */
+  /** 1〜3: 浮遊シャドウの比較mock用（0で採用版=パラメーター基準） */
   mockShadow?: number;
+  /** 浮遊シャドウの細かい調整（shadowConfig.ts。mockShadow=0の時に有効） */
+  shadowTune?: Partial<ShadowTune>;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -530,11 +530,12 @@ export default function TopMock({
     };
   }, []);
 
-  const sh = MOCK_SHADOWS[mockShadow] ?? MOCK_SHADOWS[0];
+  const sh = MOCK_SHADOWS[mockShadow];
 
   return (
     <div
-      className={`absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white ${sh.frame}`}
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white ${sh ? sh.frame : ""}`}
+      style={sh ? undefined : { boxShadow: buildShadow(mergeShadow(shadowTune)) }}
     >
       <div
         ref={scrollerRef}

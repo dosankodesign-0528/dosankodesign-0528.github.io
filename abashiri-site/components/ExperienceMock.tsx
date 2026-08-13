@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Bird from "./Bird";
 import MockNav from "./MockNav";
 import { devSilent } from "./devSound";
+import { buildShadow, mergeShadow } from "./shadowConfig";
 
 export type Step = 1 | 2 | 3;
 
@@ -197,7 +198,10 @@ export default function ExperienceMock({
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
+    <div
+      className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white"
+      style={{ boxShadow: buildShadow(mergeShadow(null)) }}
+    >
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
       <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-[#e6f3ff]">

@@ -29,6 +29,15 @@ export default function ShadowMockIndex() {
           現行のくっきりした水色の影を外して、トンマナになじむ新しい影に差し替えた比較です。
           ※ タブレットの下端は画面外に見切れるデザインなので、左右の縁の見え方で選ぶのがおすすめ。
         </p>
+        <Link
+          href="/mock/shadow/tune"
+          className="mb-4 block rounded-2xl bg-[#0070c9]/90 p-5 backdrop-blur transition-transform hover:scale-[1.02]"
+        >
+          <p className="mb-1 text-[18px] font-black text-white">🌫 調整パネル（案3採用版）</p>
+          <p className="text-[13px] font-medium leading-relaxed text-white/90">
+            影の位置・ぼかし・広がり・色・濃さをその場でいじって確認できます。
+          </p>
+        </Link>
         <div className="flex flex-col gap-4">
           {items.map((it) => (
             <Link
