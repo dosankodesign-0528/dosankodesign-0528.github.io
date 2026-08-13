@@ -10,8 +10,13 @@
  * - ぼーっと体験の動画再生中は環境音を自動で止め、動画が止まったら復帰
  */
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { markConsentDone } from "./consentGate";
 import { devSilent } from "./devSound";
+
+/** 白モック内のボタン置き場（TopMock / ExperienceMock が用意する） */
+const SLOT_ID = "abashiri-sound-slot";
 
 const KEY = "abashiri-bgm";
 export const VIDEO_AUDIO_EVENT = "abashiri:video-audio";
@@ -60,6 +65,18 @@ export default function SoundUi({
   const [audible, setAudible] = useState(false);
   const duckRef = useRef(false); /* 動画再生中フラグ（動画の音声優先） */
   const [showDialog, setShowDialog] = useState(false);
+
+  /* ボタンはモック内左上の置き場に出す。無いページでは画面左下に出す */
+  const pathname = usePathname();
+  const [slot, setSlot] = useState<Element | null>(null);
+  useEffect(() => {
+    const find = () => setSlot(document.getElementById(SLOT_ID));
+    find();
+    /* ページ遷移直後は置き場がまだ無いことがあるので現れるまで監視 */
+    const obs = new MutationObserver(find);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, [pathname]);
 
   const play = () => {
     const a = audioRef.current;
@@ -192,18 +209,25 @@ export default function SoundUi({
         </div>
       )}
 
-      {/* 常設のON/OFF切り替え（スピーカーのピクトグラム） */}
-      {!showDialog && (
-        <button
-          onClick={toggle}
-          aria-label={audible ? "環境音をOFFにする" : "環境音をONにする"}
-          className={`fixed bottom-4 left-4 z-50 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur transition-transform hover:scale-110 ${
-            audible ? "text-[#0070c9]" : "text-[#9db9d1]"
-          }`}
-        >
-          <SpeakerIcon on={audible} />
-        </button>
-      )}
+      {/* 常設のON/OFF切り替え（スピーカーのピクトグラム）
+          白モック内の置き場があればそこ（左上）、無いページでは画面左下 */}
+      {!showDialog &&
+        (() => {
+          const btn = (
+            <button
+              onClick={toggle}
+              aria-label={audible ? "環境音をOFFにする" : "環境音をONにする"}
+              className={`${
+                slot ? "" : "fixed bottom-4 left-4 z-50 "
+              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur transition-transform hover:scale-110 ${
+                audible ? "text-[#0070c9]" : "text-[#9db9d1]"
+              }`}
+            >
+              <SpeakerIcon on={audible} />
+            </button>
+          );
+          return slot ? createPortal(btn, slot) : btn;
+        })()}
     </>
   );
 }

@@ -21,15 +21,23 @@ import { waitForConsent } from "./consentGate";
  * 輪郭を等間隔の点でなぞり直し、隣どうしの平均で角を取り、
  * なめらかな曲線（Catmull-Rom→ベジェ）として描き直す。
  */
-function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
-  if (passes <= 0 || points < 8) return;
+type Pt = { x: number; y: number };
+
+/** 輪郭を等間隔の点でなぞり直す */
+function samplePath(p: SVGPathElement, points: number): Pt[] | null {
   const len = p.getTotalLength();
-  if (!len) return;
-  let pts: { x: number; y: number }[] = [];
+  if (!len || points < 8) return null;
+  const pts: Pt[] = [];
   for (let i = 0; i < points; i++) {
     const pt = p.getPointAtLength((len * i) / points);
     pts.push({ x: pt.x, y: pt.y });
   }
+  return pts;
+}
+
+/** 隣どうしの平均で角を取る（passes回） */
+function smoothPts(src: Pt[], passes: number): Pt[] {
+  let pts = src;
   for (let k = 0; k < passes; k++) {
     pts = pts.map((pt, i) => {
       const a = pts[(i - 1 + pts.length) % pts.length];
@@ -37,6 +45,11 @@ function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
       return { x: (a.x + pt.x * 2 + b.x) / 4, y: (a.y + pt.y * 2 + b.y) / 4 };
     });
   }
+  return pts;
+}
+
+/** 点列をなめらかな閉曲線（Catmull-Rom→ベジェ）に変換 */
+function ptsToPath(pts: Pt[]): string {
   let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)} `;
   for (let i = 0; i < pts.length; i++) {
     const p0 = pts[(i - 1 + pts.length) % pts.length];
@@ -49,7 +62,14 @@ function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
     const c2y = p2.y - (p3.y - p1.y) / 6;
     d += `C ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)} `;
   }
-  p.setAttribute("d", d + "Z");
+  return d + "Z";
+}
+
+function smoothBubblePath(p: SVGPathElement, passes: number, points: number) {
+  if (passes <= 0) return;
+  const pts = samplePath(p, points);
+  if (!pts) return;
+  p.setAttribute("d", ptsToPath(smoothPts(pts, passes)));
 }
 
 /* 吹き出しのムニムニアニメ（1〜3。0でなし） */
@@ -98,6 +118,40 @@ function startBubbleAnim(
       ],
       { duration: 5200, iterations: Infinity, easing: "ease-in-out" }
     );
+  } else if (variant === 4) {
+    /* 案4: パス波打ち。輪郭の曲線に沿って、法線方向のゆるい波が流れていく */
+    const base = samplePath(bubble, Math.max(48, tune.smooth.points));
+    if (!base) return;
+    const N = base.length;
+    const normals = base.map((_, i) => {
+      const a = base[(i - 1 + N) % N];
+      const b = base[(i + 1) % N];
+      const tx = b.x - a.x;
+      const ty = b.y - a.y;
+      const l = Math.hypot(tx, ty) || 1;
+      return { x: ty / l, y: -tx / l };
+    });
+    let startAt: number | null = null;
+    const tick = (now: number) => {
+      if (!bubble.isConnected) return; /* 画面から消えたら止める */
+      if (startAt === null) startAt = now;
+      /* いきなり波打たず、1.2秒かけてじわっと波を立ち上げる */
+      const ramp = Math.min(1, (now - startAt) / 1200);
+      const t = now / 1000;
+      const flow = (Math.PI * 2 * t) / tune.wave.period;
+      const pts = base.map((pt, i) => {
+        const th = (i / N) * tune.wave.waves * Math.PI * 2;
+        /* 主の波＋細かい揺らぎを少し混ぜて機械っぽさを消す */
+        const o =
+          ramp *
+          tune.wave.amp *
+          (0.75 * Math.sin(th - flow) + 0.25 * Math.sin(th * 2 + t * 1.3 + 1.7));
+        return { x: pt.x + normals[i].x * o, y: pt.y + normals[i].y * o };
+      });
+      bubble.setAttribute("d", ptsToPath(pts));
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   } else if (variant === 3) {
     /* 案3: 輪郭ムニムニ（ゆらぎノイズで縁が本当に波打つ） */
     if (!svg.querySelector("#bubbleWobble")) {

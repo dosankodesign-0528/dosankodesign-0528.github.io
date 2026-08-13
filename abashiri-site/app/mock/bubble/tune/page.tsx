@@ -101,7 +101,7 @@ export default function BubbleTunePage() {
     <>
       {loaded && (
         <Stage illustration="tamannee" illustEntrance>
-          <TopMock intro={2} blurSeq bubbleAnim={1} bubbleTune={tune} />
+          <TopMock intro={2} blurSeq bubbleAnim={4} bubbleTune={tune} />
         </Stage>
       )}
 
@@ -126,33 +126,33 @@ export default function BubbleTunePage() {
           />
         </Section>
 
-        <Section title="ぷにぷに呼吸（案1）" defaultOpen>
+        <Section title="波打ちアニメ（パスに沿って波が流れる）" defaultOpen>
           <Row
-            label="横のふくらみ量"
-            value={tune.puni.ampX}
+            label="波の高さ"
+            value={tune.wave.amp}
             step={0.5}
             min={0}
             max={12}
-            unit="%"
-            onChange={(v) => upd("puni", { ampX: v })}
+            unit="px"
+            onChange={(v) => upd("wave", { amp: v })}
           />
           <Row
-            label="縦のふくらみ量"
-            value={tune.puni.ampY}
-            step={0.5}
-            min={0}
-            max={12}
-            unit="%"
-            onChange={(v) => upd("puni", { ampY: v })}
+            label="波の数（一周あたり）"
+            value={tune.wave.waves}
+            step={1}
+            min={1}
+            max={14}
+            unit="個"
+            onChange={(v) => upd("wave", { waves: v })}
           />
           <Row
-            label="1回の呼吸の長さ"
-            value={tune.puni.period}
+            label="波が一周流れる時間"
+            value={tune.wave.period}
             step={0.2}
             min={0.5}
-            max={10}
+            max={12}
             unit="秒"
-            onChange={(v) => upd("puni", { period: v })}
+            onChange={(v) => upd("wave", { period: v })}
           />
         </Section>
 

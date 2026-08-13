@@ -19,12 +19,21 @@ export type BubbleTune = {
     /** 1回の呼吸にかける時間(秒) */
     period: number;
   };
+  wave: {
+    /** 波の高さ(px)。輪郭が法線方向にどれだけ揺れるか */
+    amp: number;
+    /** 輪郭一周あたりの波の数 */
+    waves: number;
+    /** 波が一周ぶん流れるのにかける時間(秒) */
+    period: number;
+  };
 };
 
 export const DEFAULT_BUBBLE: BubbleTune = {
   smooth: { passes: 2, points: 72 },
-  /* モーションがわかるよう大げさめの初期値 */
   puni: { ampX: 3.5, ampY: 3, period: 2.6 },
+  /* パスの曲線に沿ってゆっくり波が伝わる（採用候補） */
+  wave: { amp: 3, waves: 6, period: 3.2 },
 };
 
 export function mergeBubble(partial?: Partial<BubbleTune> | null): BubbleTune {
@@ -33,6 +42,7 @@ export function mergeBubble(partial?: Partial<BubbleTune> | null): BubbleTune {
   return {
     smooth: { ...d.smooth, ...partial.smooth },
     puni: { ...d.puni, ...partial.puni },
+    wave: { ...d.wave, ...partial.wave },
   };
 }
 

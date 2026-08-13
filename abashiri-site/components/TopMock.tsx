@@ -205,6 +205,25 @@ import { waitForConsent } from "./consentGate";
 /** イラスト出現の合図（Stage が拾う） */
 export const ILLUST_IN_EVENT = "abashiri:illust-in";
 
+/*
+ * タブレットの浮遊シャドウ（/mock/shadow で比較）
+ * タブレットは下端が画面外に見切れるデザインなので、
+ * 左右の縁でも「浮き」が伝わる影にしてある。
+ * 0=現行（採用決定までのデフォルト）
+ * 1=ふんわりハロー: 深い海色のやわらかい光暈をぐるっと均一にまとう
+ * 2=二層リアル: 近くの濃い影＋遠くの淡い広がりの2枚重ねで高さを出す
+ * 3=斜め光: 右上から光が当たっている体で、左下へ長く影が伸びる
+ */
+const MOCK_SHADOWS: Record<number, { frame: string }> = {
+  0: { frame: "shadow-[0px_28px_16px_0px_#0f98c2]" },
+  1: { frame: "shadow-[0_0_80px_12px_rgba(3,52,102,0.35)]" },
+  2: {
+    frame:
+      "shadow-[0_18px_35px_rgba(3,52,102,0.28),0_0_120px_24px_rgba(3,52,102,0.24)]",
+  },
+  3: { frame: "shadow-[-45px_55px_80px_-12px_rgba(3,52,102,0.45)]" },
+};
+
 export default function TopMock({
   intro = 2,
   kv = 1,
@@ -222,6 +241,7 @@ export default function TopMock({
   moreAnim = 1,
   bubbleAnim = 0,
   bubbleTune,
+  mockShadow = 0,
 }: {
   intro?: number;
   kv?: number;
@@ -253,6 +273,8 @@ export default function TopMock({
   bubbleAnim?: number;
   /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
   bubbleTune?: BubbleTune;
+  /** 1〜3: タブレットの浮遊シャドウ（0で現行） */
+  mockShadow?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -508,8 +530,12 @@ export default function TopMock({
     };
   }, []);
 
+  const sh = MOCK_SHADOWS[mockShadow] ?? MOCK_SHADOWS[0];
+
   return (
-    <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
+    <div
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white ${sh.frame}`}
+    >
       <div
         ref={scrollerRef}
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-[30px] bg-[#8ec6ea] [container-type:inline-size]"
@@ -808,6 +834,9 @@ export default function TopMock({
           <MockNav theme="light" />
         </motion.div>
       </div>
+
+      {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
+      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
     </div>
   );
 }

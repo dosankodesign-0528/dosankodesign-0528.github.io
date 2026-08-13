@@ -198,6 +198,8 @@ export default function ExperienceMock({
 
   return (
     <div className="absolute left-[76px] right-[206px] top-[87px] h-[960px] rounded-[60px] border-[30px] border-white shadow-[0px_28px_16px_0px_#0f98c2]">
+      {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
+      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
       <div className="relative h-full w-full overflow-hidden rounded-[30px] bg-[#e6f3ff]">
         <AnimatePresence mode="wait">
           {step !== 3 ? (
