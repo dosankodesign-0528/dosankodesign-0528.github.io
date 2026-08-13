@@ -533,20 +533,6 @@ export default function TopMock({
         </div>
 
         <div className="pointer-events-none relative z-10 -mt-[865px]">
-          {/* ヘッダー：ブラーで登場 */}
-          <motion.div
-            className="pointer-events-auto"
-            initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
-            animate={go ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
-            transition={{
-              duration: ip.headerDur,
-              ease: ip.ease,
-              /* 手書き演出ありの時は、まず景色を見せてから */
-              delay: animated ? (timing.start + timing.header.extraDelay) / 1000 : 0,
-            }}
-          >
-            <MockNav theme="light" />
-          </motion.div>
 
           <div className="mx-auto flex w-[980px] flex-col items-center pb-[120px] pt-[884px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
@@ -720,6 +706,23 @@ export default function TopMock({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 追従ヘッダー：スクロールの外に置いて常に表示 */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
+        <motion.div
+          className="pointer-events-auto"
+          initial={{ opacity: 0, filter: `blur(${ip.headerBlur}px)`, y: ip.headerY }}
+          animate={go ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
+          transition={{
+            duration: ip.headerDur,
+            ease: ip.ease,
+            /* 演出ありの時は、まず景色を見せてから */
+            delay: animated ? (timing.start + timing.header.extraDelay) / 1000 : 0,
+          }}
+        >
+          <MockNav theme="light" />
+        </motion.div>
       </div>
     </div>
   );
