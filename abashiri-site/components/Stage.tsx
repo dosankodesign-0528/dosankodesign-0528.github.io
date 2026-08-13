@@ -10,65 +10,29 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 
 /*
- * 人物イラストのアニメ（/mock/illust で比較）。どれも約15秒に1回動く。
- * 1=くるん一回転（現行） 2=ゆらゆらスイング 3=ぷるんと弾む
- * 4=スイングB（キレ鋭め） 5=スイングC（振り子減衰）
- * 回転系は角度がつくとイラスト下端の切れ目が見えるため、
- * 少し下げて（top+18px）切れ目が枠の外に出るようにしている。
+ * 人物イラストのアニメ（採用版：スイング キレ鋭め＋バウンス減衰）
+ * - 1回目の振り（時計回り+14°）はゆったりゆらゆら
+ * - 2回目からは間隔を詰めて素早く、揺れ幅も半分ずつ小さくなって収まる
+ * - 約15秒に1回繰り返す
+ * 回転で下端の切れ目が見えないよう、イラストは18px下げてある（top:62）
  */
-const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 85%", top: 62 };
+import type { Transition } from "framer-motion";
 
-const ILLUST_ANIMS: Record<
-  number,
-  {
-    animate: Record<string, number | number[]>;
-    transition: Record<string, unknown>;
-    style?: React.CSSProperties & { transformPerspective?: number };
-  }
-> = {
-  1: {
-    animate: { rotateY: 360 },
-    transition: { duration: 1.0, ease: [0.3, 1.25, 0.45, 1], repeat: Infinity, repeatDelay: 14 },
-    style: { transformPerspective: 700 },
+const ILLUST_ANIM: {
+  animate: Record<string, number[]>;
+  transition: Transition;
+  style: React.CSSProperties;
+} = {
+  animate: { rotate: [0, 14, -7, 4, -2, 1, 0] },
+  transition: {
+    duration: 2.0,
+    /* 1振り目に全体の1/3を使い（ゆらゆら）、残りをテンポよく刻む */
+    times: [0, 0.32, 0.52, 0.67, 0.8, 0.9, 1],
+    ease: ["easeInOut", "easeInOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
+    repeat: Infinity,
+    repeatDelay: 13,
   },
-  2: {
-    animate: { rotate: [0, -7, 6, -4, 2.5, 0] },
-    transition: { duration: 1.6, ease: "easeInOut", repeat: Infinity, repeatDelay: 13.4 },
-    style: SWING_STYLE,
-  },
-  3: {
-    animate: {
-      scaleX: [1, 1.08, 0.94, 1.04, 1],
-      scaleY: [1, 0.9, 1.08, 0.97, 1],
-    },
-    transition: { duration: 0.9, ease: "easeInOut", repeat: Infinity, repeatDelay: 14.1 },
-    style: { transformOrigin: "50% 100%" },
-  },
-  4: {
-    /* スイングB: 時計回りへビュッと大きく振れたあと、
-       バウンスみたいに揺れ幅が半分ずつ小さくなりながら収まる */
-    animate: { rotate: [0, 14, -7, 4, -2, 1, 0] },
-    transition: {
-      duration: 1.8,
-      times: [0, 0.12, 0.32, 0.52, 0.7, 0.86, 1],
-      ease: ["easeOut", "easeInOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
-      repeat: Infinity,
-      repeatDelay: 13.2,
-    },
-    style: SWING_STYLE,
-  },
-  5: {
-    /* スイングC: 振り子みたいに大きく振れてだんだん減衰 */
-    animate: { rotate: [0, -10, 8, -5.5, 3.5, -1.8, 0.8, 0] },
-    transition: {
-      duration: 2.2,
-      times: [0, 0.14, 0.3, 0.46, 0.62, 0.77, 0.9, 1],
-      ease: "easeInOut",
-      repeat: Infinity,
-      repeatDelay: 12.8,
-    },
-    style: SWING_STYLE,
-  },
+  style: { transformOrigin: "50% 85%", top: 62 },
 };
 
 type StageProps = {
@@ -85,8 +49,6 @@ type StageProps = {
   birdsEditable?: boolean;
   /** ドラッグでカモメが動いた時の通知（調整パネル用） */
   onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
-  /** 1〜5: 人物イラストの繰り返しアニメ（ILLUST_ANIMS） */
-  illustAnim?: number;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
 };
@@ -103,11 +65,10 @@ export default function Stage({
   birds = DEFAULT_BIRDS,
   birdsEditable = false,
   onBirdMove,
-  illustAnim = 1,
   layout,
 }: StageProps) {
   const L = mergeLayout(layout);
-  const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[1];
+  const ia = ILLUST_ANIM;
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
   );

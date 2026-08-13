@@ -206,8 +206,15 @@ export default function HeroBlurSeq({
       if (bubble) {
         smoothBubblePath(bubble, bubbleTune.smooth.passes, bubbleTune.smooth.points);
       }
-      const upper = rest.filter((i) => i.midY < 205); // な〜んにもない
-      const lower = rest.filter((i) => i.midY >= 205); // たまらない＋あしらい
+      /* 上下の振り分けは高さではなくSVGのグループ構造で行う
+         （高さだと「たまらない」の上に飛び出た点が上段に混ざる） */
+      const upperG = Array.from(svg.querySelectorAll("g")).find((g) =>
+        (g.id || "").includes("んにもない")
+      );
+      const upper = upperG
+        ? rest.filter((i) => upperG.contains(i.p)) // な〜んにもない
+        : rest.filter((i) => i.midY < 205);
+      const lower = rest.filter((i) => !upper.includes(i)); // たまらない＋あしらい
 
       /* 先に全部隠しておき、ON/OFFの選択が済んでから始める */
       [...(bubble ? [bubble] : []), ...rest.map((i) => i.p)].forEach(
@@ -265,7 +272,8 @@ export default function HeroBlurSeq({
         timing.kotoba.blur
       );
 
-      onScheduled?.(t2 + 850);
+      /* ボタンは「たまらない」と同時に出す（t2起点） */
+      onScheduled?.(t2);
     })();
     return () => {
       aborted = true;
