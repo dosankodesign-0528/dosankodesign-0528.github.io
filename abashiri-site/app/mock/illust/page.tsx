@@ -5,39 +5,40 @@ export default function IllustMockIndex() {
   const items = [
     {
       href: "/mock/illust/1",
-      title: "案1：スタンダード",
-      desc: "ためゆっくり（全体の4割）→ シュッと戻って3回弾む。バランス型。",
+      title: "案1：タメて→スナップ",
+      desc: "左へゆっくり傾いてタメたあと、右へ一気に振り抜いて弾みながら戻る。いちばん王道のメリハリ。",
     },
     {
       href: "/mock/illust/2",
-      title: "案2：ためたっぷり",
-      desc: "全体の半分を使ってじーっくりためる → 戻りの速さが際立つ。弾みも強め。",
+      title: "案2：速い2往復→ふわり収束",
+      desc: "出だしに全力で2往復してから、ゆっくり中央へ収まる。前半が元気で後半が余韻。",
     },
     {
       href: "/mock/illust/3",
-      title: "案3：キレ重視",
-      desc: "+16°まで大きくためて戻りは超速。弾みは小さく短く、スパッと止まる。",
+      title: "案3：ワイパー",
+      desc: "右へじーっくりタメて、左へビュッと1回。あとはゆっくり中央へ。動きが1回だけで上品。",
     },
     {
       href: "/mock/illust/4",
-      title: "案4：大振りコミカル",
-      desc: "+18°の大振り＋たっぷり5回弾む、一番にぎやかで漫画っぽい動き。",
+      title: "案4：小刻みシェイク→ピタッ",
+      desc: "プルプルッと細かく震えて、最後にすっと止まる。テンポが速くコミカル。",
     },
     {
       href: "/mock/illust/5",
-      title: "案5：小ぶり上品",
-      desc: "同じ緩急のまま揺れ幅を+9°に抑えた、さりげない控えめ版。",
+      title: "案5：静止のタメ→ワンモーション",
+      desc: "左に傾いた状態で一瞬ピタッと止まり、そこから右へ大きく振り抜く。間があるぶん動きが目立つ。",
     },
   ];
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
-          人物スイング 比較mock（5案）
+          人物スイング 比較mock（5案・±4°）
         </h1>
         <p className="mb-8 text-[14px] font-bold leading-relaxed text-white/90">
-          どの案も「息を吸うようにゆっくりため → 一気に戻る → 弾んで収まる」が共通で、
-          ための長さ・角度・弾み方が違います。約15秒に1回動きます（登場直後に1回目）。
+          どの案も回転の軸はイラストの下辺中央、傾きは −4°〜+4° の範囲だけ。
+          その中で緩急（メリハリ）の付け方が違います。約15秒に1回動きます（登場直後に1回目）。
         </p>
         <div className="flex flex-col gap-4">
           {items.map((it) => (

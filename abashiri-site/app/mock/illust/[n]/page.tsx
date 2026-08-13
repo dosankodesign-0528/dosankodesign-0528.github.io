@@ -3,11 +3,11 @@ import Stage from "@/components/Stage";
 import TopMock from "@/components/TopMock";
 
 const TITLES: Record<string, string> = {
-  "1": "案1:スタンダード",
-  "2": "案2:ためたっぷり",
-  "3": "案3:キレ重視",
-  "4": "案4:大振りコミカル",
-  "5": "案5:小ぶり上品",
+  "1": "案1:タメて→スナップ",
+  "2": "案2:速い2往復→ふわり収束",
+  "3": "案3:ワイパー",
+  "4": "案4:小刻みシェイク→ピタッ",
+  "5": "案5:静止のタメ→ワンモーション",
 };
 
 export function generateStaticParams() {

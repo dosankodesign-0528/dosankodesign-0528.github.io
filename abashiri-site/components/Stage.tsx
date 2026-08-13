@@ -11,13 +11,13 @@ import { mergeLayout, type LayoutTune } from "./layoutConfig";
 
 /*
  * 人物イラストのスイング（/mock/illust で5パターン比較）
- * 共通コンセプト：行きの振り（時計回り）は息を吸うようにゆーっくり →
- * 戻りで一気に加速 → そのまま弾んで（バウンス）収まる。約15秒に1回。
- * 回転で下端の切れ目が見えないよう、イラストは28px下げてある（top:72）
+ * 共通ルール：回転軸はイラストの下辺中央（transformOrigin 50% 100%）、
+ * 角度は −4°〜+4° の範囲だけ。その中で緩急（メリハリ）の付け方を変えている。
+ * 約15秒に1回。下端の切れ目対策でイラストは28px下げてある（top:72）
  */
 import type { Transition } from "framer-motion";
 
-const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 85%", top: 72 };
+const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%", top: 72 };
 
 type IllustAnim = {
   animate: Record<string, number[]>;
@@ -26,63 +26,63 @@ type IllustAnim = {
 };
 
 const ILLUST_ANIMS: Record<number, IllustAnim> = {
-  /* 案1: スタンダード（ため42%→速い戻り→弾み3回） */
+  /* 案1: タメて→スナップ。左へゆっくり傾いてから右へ一気、弾んで戻る */
   1: {
-    animate: { rotate: [0, 14, -6, 3, -1, 0] },
+    animate: { rotate: [0, -4, 4, -1.5, 0.5, 0] },
     transition: {
       duration: 2.2,
-      times: [0, 0.42, 0.56, 0.72, 0.86, 1],
+      times: [0, 0.35, 0.5, 0.7, 0.85, 1],
       ease: ["easeInOut", "easeIn", "easeOut", "easeOut", "easeOut"],
       repeat: Infinity,
       repeatDelay: 12.8,
     },
     style: SWING_STYLE,
   },
-  /* 案2: ためたっぷり（半分ためる）＋バウンス強め */
+  /* 案2: 速い2往復→ゆっくり収束。出だし全力、あとはふわっと */
   2: {
-    animate: { rotate: [0, 12, -8, 5, -2.5, 1, 0] },
-    transition: {
-      duration: 2.6,
-      times: [0, 0.5, 0.61, 0.72, 0.82, 0.91, 1],
-      ease: ["easeInOut", "easeIn", "easeOut", "easeOut", "easeOut", "easeOut"],
-      repeat: Infinity,
-      repeatDelay: 12.4,
-    },
-    style: SWING_STYLE,
-  },
-  /* 案3: キレ重視（大きくためて戻りは超速・弾み小さめ短め） */
-  3: {
-    animate: { rotate: [0, 16, -4, 2, 0] },
-    transition: {
-      duration: 1.9,
-      times: [0, 0.45, 0.56, 0.76, 1],
-      ease: ["easeInOut", "easeIn", "easeOut", "easeOut"],
-      repeat: Infinity,
-      repeatDelay: 13.1,
-    },
-    style: SWING_STYLE,
-  },
-  /* 案4: 大振り＋たっぷり弾む（一番コミカル） */
-  4: {
-    animate: { rotate: [0, 18, -9, 5, -3, 1.5, 0] },
-    transition: {
-      duration: 2.8,
-      times: [0, 0.4, 0.51, 0.63, 0.76, 0.88, 1],
-      ease: ["easeInOut", "easeIn", "easeOut", "easeOut", "easeOut", "easeOut"],
-      repeat: Infinity,
-      repeatDelay: 12.2,
-    },
-    style: SWING_STYLE,
-  },
-  /* 案5: 小ぶり上品（揺れ幅ひかえめ、同じ緩急） */
-  5: {
-    animate: { rotate: [0, 9, -4, 2, -1, 0] },
+    animate: { rotate: [0, 4, -4, 4, -2, 0] },
     transition: {
       duration: 2.0,
-      times: [0, 0.45, 0.58, 0.73, 0.87, 1],
-      ease: ["easeInOut", "easeIn", "easeOut", "easeOut", "easeOut"],
+      times: [0, 0.15, 0.35, 0.55, 0.8, 1],
+      ease: ["easeOut", "easeInOut", "easeInOut", "easeOut", "easeInOut"],
       repeat: Infinity,
       repeatDelay: 13,
+    },
+    style: SWING_STYLE,
+  },
+  /* 案3: ワイパー。右へじーっくりため → 左へビュッ → ゆっくり中央へ */
+  3: {
+    animate: { rotate: [0, 4, -4, 0] },
+    transition: {
+      duration: 2.4,
+      times: [0, 0.5, 0.62, 1],
+      ease: ["easeInOut", "easeIn", "easeInOut"],
+      repeat: Infinity,
+      repeatDelay: 12.6,
+    },
+    style: SWING_STYLE,
+  },
+  /* 案4: 小刻みシェイク→ピタッ。プルプルッと震えてすっと止まる */
+  4: {
+    animate: { rotate: [0, -4, 3.5, -3, 2.5, -1.5, 0] },
+    transition: {
+      duration: 1.6,
+      times: [0, 0.12, 0.24, 0.36, 0.5, 0.68, 1],
+      ease: ["easeOut", "easeInOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
+      repeat: Infinity,
+      repeatDelay: 13.4,
+    },
+    style: SWING_STYLE,
+  },
+  /* 案5: タメ静止つきワンモーション。左でピタッと静止→右へ大きく→中央へ */
+  5: {
+    animate: { rotate: [0, -4, -4, 4, 0] },
+    transition: {
+      duration: 2.4,
+      times: [0, 0.25, 0.42, 0.64, 1],
+      ease: ["easeInOut", "linear", "easeIn", "easeOut"],
+      repeat: Infinity,
+      repeatDelay: 12.6,
     },
     style: SWING_STYLE,
   },
