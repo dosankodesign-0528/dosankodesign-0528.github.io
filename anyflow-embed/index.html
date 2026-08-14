@@ -710,19 +710,19 @@
   .case-title {
     position: absolute;
     left: 120px;
-    top: 96px;
+    top: 172px;
     font-weight: 100;
     font-size: 44px;
     line-height: 64px;
     color: #101828;
   }
+  /* カードの位置はステージ座標そのままで動かすので、箱は変形させない */
   .case-list {
     position: absolute;
     right: 120px;
-    top: 96px;
+    top: 0;
     width: 880px;
-    height: 1122.34px;
-    transform-origin: right top;   /* 右端(余白120px)を保ったまま縮小する */
+    height: 921px;
   }
   .case-card {
     position: absolute;
@@ -1541,8 +1541,8 @@ const DEFAULTS = {
     },
     results: { lenVh: 260, countDur: 2.8, imgBlur: 24 },  // 尺(中央で止まる) / カウント時間 / 画像のぼけ
     dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    /* 尺 / 奥行き(縮小の効き) / カードが出る間隔 / 出現ブラー / 重なりの段差(px) / 重なった時に実寸へ戻す量 */
-    cases:   { lenVh: 420, depth: 0, autoGap: 0.5, inBlur: 20, step: 24, zoom: 1 },
+    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / カードの重なり量(px) */
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, overlap: 196 },
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1550,8 +1550,9 @@ const DEFAULTS = {
    上げないと、利用者のブラウザに残った旧値が新しいデフォルトを上書きして
    レイアウトが壊れる (v7→v8: slideX を絶対位置から中央からの微調整に変更
    / v8→v9: 導入事例の depth を「ブラーと透明度の効き」から「絵コンテ通りの縮小率」に変更
-   / v9→v10: 導入事例の重なりを spread(%) から step(px) に変更、惑星の既定位置を更新) */
-const STORAGE_KEY = 'anyflow-embed-anim-v10';
+   / v9→v10: 導入事例の重なりを spread(%) から step(px) に変更、惑星の既定位置を更新
+   / v10→v11: 導入事例を「縦に並べてから重ねる」→ カンプ通りのスティッキースタックに作り直し) */
+const STORAGE_KEY = 'anyflow-embed-anim-v11';
 
 let params = load();
 function load() {
@@ -1961,14 +1962,15 @@ function updateVision(p) {
      CSSのscaleで拡大するとラスタライズ済みの絵が引き伸ばされて粗くなるため、
      楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
   const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
-  /* 画面幅に合わせて軌道も拡大する。こうすると「2つの価値」との間隔が
-     カンプの比率(31px)のまま保たれ、軌道は左端へ自然に見切れる。
-     縦にはみ出さない範囲で頭打ちにする */
+  /* 画面幅に合わせて軌道も拡大する。縦にはみ出さない範囲で頭打ちにする */
   const kFill = Math.min(stagePinW / 1440, (921 - 80) / 667);
   const R = 861.46;                                  // 軌道の右端 (pf-wrap ローカル座標)
-  const valHeadLeft = stagePinW - 120 - 328 - 99.05; // 「連携が生む、」の左端
   const scFinal = kFill;
-  const txFinal = (valHeadLeft - 31 * kFill) - R * scFinal;
+  /* ⚠️ カンプでは軌道の原点(ローカル0)がページの左端。楕円はそこから左へ約108px
+     はみ出して見切れる。以前は「2つの価値」の左端から逆算して置いていたため、
+     ウィンドウが 1440×921 ちょうどの時だけ一致し、それ以外では右へズレていた。
+     左端に固定するのが正しい (右側の余白はウィンドウ幅に応じて広がる) */
+  const txFinal = 0;
   const scMini = kFill * c.miniScale;
   const txMini = (stagePinW / 2 + 350 + c.miniGapX) - R * scMini;   // 1行目の右横
   const sc = scMini + (scFinal - scMini) * mv;
@@ -1991,6 +1993,12 @@ function updateVision(p) {
   });
   /* Platform文字・役割名は移動完了後にしか出ないので、縮小中は隠しておく */
   visEls.pfTexts.style.opacity = mv >= 0.999 ? 1 : 0;
+  /* ⚠️ Platform・プラットフォーム・役割名も、軌道と同じ拡大＆移動に乗せる。
+     これが無いと、ウィンドウが 1440×921 ちょうどの時以外は
+     軌道だけ拡大されて文字が元の位置に取り残され、位置がズレる */
+  visEls.pfTexts.style.transformOrigin = '0 0';
+  visEls.pfTexts.style.transform =
+    `translate(${tx.toFixed(2)}px, ${(333.5 + ty - 333.5 * sc).toFixed(2)}px) scale(${sc.toFixed(4)})`;
 
   /* 移動と同時にドットがフェードイン＆周回 → 減速して規定位置に停止 */
   const T = mvT;
@@ -2401,56 +2409,41 @@ const caseEls = {
   title: document.getElementById('caseTitle'),
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
-let caseT0 = null;
-const caseListEl = document.getElementById('caseList');
-const CASE_STEP = 388.78;   // カンプのカード間隔
-const CASE_H = 344.78;      // カード1枚の高さ
-const CASE_TOP = 96;        // .case-list の top (CSS と合わせる)
-/* 重なり方: 後のカードほど step(px) ずつ下にずれて、上のカードの軸へ重なっていく。
-   カードの横幅は 880px のまま (奥行きの強さ=0 のとき縮小しない)。
-   絵コンテ最終コマの「奥ほど小さく大きくずれる」形にしたい時は
-   調整パネルで 段差=約120px / 奥行き=100% にする。 */
+const CASE_H = 344.78;      // カード1枚の高さ (カンプ)
+const CASE_TOP = 172;       // 「導入事例」ラベルと1枚目の上端 (カンプ 14767:16333)
+/* 重なり方 (カンプ 14767:16333):
+     1枚目 上端172 / 幅704 (0.8倍)
+     2枚目 上端251.8 / 幅792 (0.9倍)
+     3枚目 上端366.1 / 幅880 (等倍)
+   規則はシンプルで「次のカードの上端 = 前のカードの下端 − 196px」。
+   奥に送られるたびに 0.1 ずつ縮小する。3枚とも左右中央そろえ。 */
 
 function updateCases(p) {
   const c = params.sections.cases;
-  /* セクションに入ったら自動で1,2,3枚と縦に並ぶ (カンプの並び) */
-  if (p <= 0.002) caseT0 = null;
-  else if (caseT0 === null) caseT0 = elapsed;
-  const A = caseT0 === null ? -1 : elapsed - caseT0;
 
-  rv(caseEls.title, easeOutQ(clamp01((A - 0.2) / 1.2)), 8, 8);
-  const inK = [0, 1, 2].map(i => easeOutQ(clamp01((A - 0.5 - i * c.autoGap) / 1.1)));
+  /* 「導入事例」ラベルと1枚目は、セクションに入ってすぐブラーで出る */
+  const intro = seg(p, 0.02, 0.16, easeOutQ);
+  rv(caseEls.title, intro, 8, 8);
 
-  /* 3枚が縦に並んだ状態を画面に収めるための縮小率 */
-  const k = Math.min(1, (921 - CASE_TOP - 40) / (CASE_STEP * 2 + CASE_H));
+  /* arr = 何枚目まで積み上がったか (0=1枚目だけ / 1=2枚目が着地 / 2=3枚目が着地) */
+  const arr = seg(p, 0.20, 0.52, easeIO) + seg(p, 0.54, 0.86, easeIO);
 
-  /* 並び終わったあと、スクロールすると1枚ずつ重なっていく */
-  const stackK = [0, 1, 2].map(i => seg(p, 0.20 + i * 0.20, 0.46 + i * 0.20, easeIO));
-  /* 重なりきると実寸 (カード880px幅・右余白120px) に戻る */
-  const zTarget = k + (1 - k) * c.zoom;
-  const s = k + (zTarget - k) * seg(p, 0.20, 0.86, easeIO);
-  caseListEl.style.transform = `scale(${s.toFixed(4)})`;
-
-  /* 重なった3枚を画面の上下中央に置く (段差はプラスでもマイナスでもいいように両端から求める) */
-  const tops = [0, 1, 2].map(i => i * c.step * zTarget);
-  const minT = Math.min(...tops), maxT = Math.max(...tops);
-  const stackBase = (921 - ((maxT - minT) + CASE_H * zTarget)) / 2 - minT - CASE_TOP;
+  /* 奥へ送られた段数だけ縮小 (カンプ: 0.8 / 0.9 / 1.0) */
+  const sc = [0, 1, 2].map(i => 1 - Math.min(2, Math.max(0, arr - i)) * 0.1 * c.depth);
+  /* 重なった時の上端は、前のカードの下端から overlap px 戻した位置 */
+  const tops = [CASE_TOP];
+  for (let i = 1; i < 3; i++) tops[i] = tops[i - 1] + CASE_H * sc[i - 1] - c.overlap;
 
   caseEls.cards.forEach((el, i) => {
-    const st = stackK[i];
-    /* 位置もサイズも「画面上でどう見えるか」で補間してから、リストの縮小率で割り戻す。
-       こうしないと、拡大中に3枚目が一度下へはみ出してから戻ってくる動きになる */
-    const linedY = k * (i * CASE_STEP);
-    const stackedY = stackBase + tops[i];
-    const onY = linedY + (stackedY - linedY) * st + (1 - inK[i]) * 60;
-    /* 奥行きを効かせる時だけ、奥のカードを 1段につき10%小さくする (既定は0＝880pxのまま) */
-    const onS = k + (zTarget * (1 - (2 - i) * 0.10 * c.depth) - k) * st - (1 - inK[i]) * 0.03 * k;
+    /* 1枚目はその場でブラー出現、2枚目以降は画面の下から上がってきて所定の位置に貼り付く */
+    const k = i === 0 ? intro : clamp01(arr - (i - 1));
+    const from = i === 0 ? tops[0] + 60 : 921 + 40;
+    const y = from + (tops[i] - from) * k;
     el.style.transformOrigin = '50% 0%';
-    el.style.transform =
-      `translateY(${(onY / s).toFixed(2)}px) scale(${(onS / s).toFixed(4)})`;
-    el.style.opacity = Math.min(1, inK[i] * 2.5).toFixed(3);
-    /* ブラーは「出現するとき」だけ (絵コンテ: カードは3つ順番にブラーで出てくる) */
-    const bl = (1 - inK[i]) * c.inBlur;
+    el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc[i].toFixed(4)})`;
+    el.style.opacity = Math.min(1, k * 3).toFixed(3);
+    /* ブラーは出てくる間だけ (絵コンテ: カードは3つ順番にブラーで出てくる) */
+    const bl = (1 - k) * c.inBlur;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
     el.style.zIndex = i + 1;
   });
@@ -3001,13 +2994,10 @@ function buildPanel() {
   sub(catCase, 'スクロール尺');
   rows.push(slider('尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
   sub(catCase, '演出');
-  rows.push(slider('カードが出る間隔', 0.1, 1.5, 0.05, () => sv().cases.autoGap, v => sv().cases.autoGap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
-  sub(catCase, '重なり (絵コンテ最終コマ)');
+  sub(catCase, '重なり (カンプ 14767:16333)');
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
-  /* マイナスにすると、後のカードほど上にずれる (奥のカードが下から覗く重なり方) */
-  rows.push(slider('重なりの段差', -160, 160, 2, () => sv().cases.step, v => sv().cases.step = v, v => v + 'px'));
-  rows.push(slider('実寸へ戻す量', 0, 1, 0.05, () => sv().cases.zoom, v => sv().cases.zoom = v, v => Math.round(v * 100) + '%'));
+  rows.push(slider('カードの重なり量', 60, 300, 2, () => sv().cases.overlap, v => sv().cases.overlap = v, v => v + 'px'));
 
   /* ボタン */
   const btns = document.createElement('div');
