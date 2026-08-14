@@ -54,7 +54,7 @@
     color: #101828;
     text-decoration: none;
     white-space: nowrap;
-    transition: opacity .25s;
+    transition: opacity var(--t-fast) var(--e-fast);
   }
   .nav-links a:hover { opacity: .55; }
   .cta {
@@ -71,7 +71,7 @@
     justify-content: center;
     cursor: pointer;
     font-family: inherit;
-    transition: opacity .25s;
+    transition: opacity var(--t-fast) var(--e-fast);
   }
   .cta:hover { opacity: .78; }
 
@@ -182,8 +182,18 @@
   }
 
   /* ================= スクロールセクション共通 ================= */
-  html { scroll-behavior: smooth; }
-  :root { --s: 1; --sp: 1; --dh: 921px; }
+  /* ⚠️ scroll-behavior: smooth は慣性スクロール(Lenis)と喧嘩するので入れないこと */
+  /* ===== 動きの共通トークン =====
+     参考36サイトの実測から。ぜんぶこの3段階に寄せる。
+       小さい反応(ホバー等) 0.25s / 出現 0.8s / 大きい移動 1.3s
+     カーブは easeOutQuint = cubic-bezier(.22,1,.36,1) を基準にする
+     (実測でいちばん多かった。JS側の easeOutQ = 1-(1-t)^5 と同じカーブ) */
+  :root {
+    --s: 1; --sp: 1; --dh: 921px;
+    --t-fast: .25s; --t-in: .8s; --t-big: 1.3s;
+    --e-fast: cubic-bezier(.4, 0, .2, 1);
+    --e-out: cubic-bezier(.22, 1, .36, 1);
+  }
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
@@ -1319,6 +1329,7 @@
 </div>
 </div>
 
+<script src="assets/lenis.min.js"></script>
 <script>
 /* ================= 軌道データ (Figma カンプから抽出) ================= */
 const ROTDEG = -23.3266;
@@ -1627,11 +1638,12 @@ const DEFAULTS = {
       spinDur: 4,        // 等速で流れる秒数
       spinBrake: 2.5,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
+      charLag: 0.5,      // 1文字ずつの遅れ (0=行まるごと / 大きいほどバラける)
     },
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: { lenVh: 300, countDur: 2.8, imgBlur: 24 },
-    dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
+    dev:     { lenVh: 500, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 重なりのズレ(px。0=完全に重なる) */
     cases:   { lenVh: 420, depth: 1, inBlur: 20, step: 0 },
   },
@@ -1646,8 +1658,10 @@ const DEFAULTS = {
    / v11→v12: 見出しスライドを5案化・2行目の追従を即時に、実績の余白と尺を変更
    / v12→v13: スライド⑤を削除、実績を時間＋スクロール併用に、開発者体験の間合いを緩める、
               KVのタイピング速さを行ごとに分離
-   / v13→v14: 導入事例の重なりを overlap(px) から step(ズレ px・既定0＝完全に重なる) に変更) */
-const STORAGE_KEY = 'anyflow-embed-anim-v14';
+   / v13→v14: 導入事例の重なりを overlap(px) から step(ズレ px・既定0＝完全に重なる) に変更
+   / v14→v15: 出現の秒数をトークン(0.25/0.8/1.3)に統一、開発者体験の尺を800→500vh、
+              見出しの1文字ずつ出しを追加、慣性スクロール(Lenis)を導入) */
+const STORAGE_KEY = 'anyflow-embed-anim-v15';
 
 let params = load();
 function load() {
@@ -1859,8 +1873,11 @@ let lastFitW = 0, lastFitH = 0, fitReady = false;
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOutC = t => 1 - Math.pow(1 - t, 3);
-/* ゆったり上質な減速 (quint)。上品さを出したい所はこちらを使う */
+/* ゆったり上質な減速 (quint)。CSS の cubic-bezier(.22,1,.36,1) と同じカーブで、
+   参考36サイトの実測でいちばん多かった標準。出現系はぜんぶこれを使う */
 const easeOutQ = t => 1 - Math.pow(1 - t, 5);
+/* 動きの共通トークン(秒)。CSS の --t-fast / --t-in / --t-big と同じ値 */
+const T_FAST = 0.25, T_IN = 0.8, T_BIG = 1.3;
 /* 行き過ぎて戻る「吸着」感 */
 const easeOutBack = t => {
   const c1 = 1.1, c3 = c1 + 1;
@@ -2064,28 +2081,55 @@ function updateVision(p) {
     return Math.min(14, Math.abs(offs[i]) * v / c.slideDur * 0.02);
   });
   [[visEls.l1, l1At, -240, 0], [visEls.l2, l2At, 240, 1]].forEach(([el, at, exDy, idx]) => {
-    const k = easeOutQ(clamp01((A - at) / c.revealDur));
+    /* 1文字ずつわずかな時間差で立ち上がる (参考サイトの SplitText と同じ考え方)。
+       行の箱は overflow:hidden なので、下から出てくる所はちゃんとマスクされる */
+    const raw0 = clamp01((A - at) / c.revealDur);
+    const k = easeOutQ(raw0);
     const inner = el.firstElementChild;
-    inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
-    inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
+    const chars = visEls.chars[idx];
+    const n = chars.length;
+    const lag = c.charLag;                 // 1文字ぶんの遅れ (行全体の何割か)
+    const perChar = lag > 0 && n > 1;
+
+    /* 行まるごと出す場合は内側の箱を動かす。1文字ずつの場合は下の forEach で文字を動かす */
+    if (perChar) {
+      inner.style.transform = ''; inner.style.filter = '';
+    } else {
+      inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
+      inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
+    }
     el.style.opacity = ((k > 0 ? 1 : 0) * (1 - ex)).toFixed(3);
     const fb = ex * B + mBlur[idx];
     el.style.filter = fb > 0.05 ? `blur(${fb.toFixed(2)}px)` : '';
 
-    const chars = visEls.chars[idx];
-    if (pat === 'C') {
-      el.style.transform = `translate(0px, ${(ex * exDy).toFixed(2)}px)`;
-      const raw = clamp01((A - (idx === 0 ? slideAt : slideAt2)) / c.slideDur);
-      const n = chars.length;
-      const span = Math.max(0.15, 1 - c.charStagger);
+    /* 案C だけは左へのスライドも文字ごとに時間差でやる */
+    const cSlide = pat === 'C';
+    if (cSlide) el.style.transform = `translate(0px, ${(ex * exDy).toFixed(2)}px)`;
+    else el.style.transform =
+      `translate(${((1 - slideK[idx]) * offs[idx]).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+
+    /* 文字ごとの transform は「出現の縦」と「案Cの横」をまとめて1回で当てる。
+       別々に書くと後から書いた方が前のを消してしまう */
+    if (perChar || cSlide) {
+      const rawC = cSlide ? clamp01((A - (idx === 0 ? slideAt : slideAt2)) / c.slideDur) : 0;
+      const spanIn = Math.max(0.2, 1 - lag);
+      const spanC = Math.max(0.15, 1 - c.charStagger);
       chars.forEach((sp, ci) => {
-        const kc = easeOutQ(clamp01((raw - (ci / Math.max(1, n - 1)) * c.charStagger) / span));
-        sp.style.transform = `translateX(${((1 - kc) * offs[idx]).toFixed(2)}px)`;
+        const r = ci / (n - 1);
+        let t = '';
+        if (cSlide) {
+          const kc = easeOutQ(clamp01((rawC - r * c.charStagger) / spanC));
+          t += `translateX(${((1 - kc) * offs[idx]).toFixed(2)}px) `;
+        }
+        if (perChar) {
+          const ki = easeOutQ(clamp01((raw0 - r * lag) / spanIn));
+          t += `translateY(${((1 - ki) * 108).toFixed(2)}%)`;
+          sp.style.filter = (ki > 0 && ki < 1) ? `blur(${((1 - ki) * 5).toFixed(2)}px)` : '';
+        }
+        sp.style.transform = t.trim();
       });
-    } else {
-      if (chars[0] && chars[0].style.transform) chars.forEach(sp => sp.style.transform = '');
-      el.style.transform =
-        `translate(${((1 - slideK[idx]) * offs[idx]).toFixed(2)}px, ${(ex * exDy).toFixed(2)}px)`;
+    } else if (chars[0] && chars[0].style.transform) {
+      chars.forEach(sp => { sp.style.transform = ''; sp.style.filter = ''; });
     }
   });
 
@@ -2158,12 +2202,12 @@ function updateVision(p) {
   /* 左下に着いたら間を置かずに Platform → プラットフォーム → 役割名 →
      2つの価値 → Point01 → Point02 をディレイで出す (位置は動かさずブラーのみ) */
   const C = mvT < 0 ? -99 : mvT - c.moveDur;
-  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / 0.9)), B);
-  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / 0.9)), B);
-  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / 0.8)), B));
-  rv(visEls.valHead, easeOutQ(clamp01((C - 1.0) / 0.9)), B, 10);
-  rv(visEls.valP1,   easeOutQ(clamp01((C - 1.45) / 0.9)), B, 12);
-  rv(visEls.valP2,   easeOutQ(clamp01((C - 1.85) / 0.9)), B, 12);
+  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
+  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / T_IN)), B);
+  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / T_IN)), B));
+  rv(visEls.valHead, easeOutQ(clamp01((C - 1.0) / T_IN)), B, 10);
+  rv(visEls.valP1,   easeOutQ(clamp01((C - 1.45) / T_IN)), B, 12);
+  rv(visEls.valP2,   easeOutQ(clamp01((C - 1.85) / T_IN)), B, 12);
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -2215,10 +2259,10 @@ function updateResults(p) {
   resEls.img.style.opacity = clamp01(t / 1.2).toFixed(3);
   resEls.img.style.filter = kImg >= 1 ? '' : `blur(${((1 - kImg) * c.imgBlur).toFixed(2)}px)`;
 
-  rv(resEls.head,  easeOutQ(clamp01((t - 2.4) / 1.5)), 8, 14);
-  rv(resEls.lead,  easeOutQ(clamp01((t - 3.0) / 1.5)), 8, 14);
-  rv(resEls.text,  easeOutQ(clamp01((t - 4.4) / 1.5)), 8, 12);
-  rv(resEls.stats, easeOutQ(clamp01((t - 4.6) / 1.5)), 8, 12);
+  rv(resEls.head,  easeOutQ(clamp01((t - 2.4) / T_IN)), 8, 14);
+  rv(resEls.lead,  easeOutQ(clamp01((t - 3.0) / T_IN)), 8, 14);
+  rv(resEls.text,  easeOutQ(clamp01((t - 4.4) / T_IN)), 8, 12);
+  rv(resEls.stats, easeOutQ(clamp01((t - 4.6) / T_IN)), 8, 12);
 
   setCounter(resEls.cntMain, '200', '+', t - 3.2, c.countDur);
   setCounter(resEls.cntSub1, '500', '+', t - 4.8, c.countDur);
@@ -2240,22 +2284,21 @@ const devEls = {
    ③規定位置でモック内アニメ開始 (右チャットに入力→返答→左でコード生成)
    ④ブラーで消える →⑤「開発環境に/柔軟に適用」出現 →⑥上下に分割しその間からモック
    →⑦右へ移動し、文字はブラーで消え、左に CLI → API → SDK が入れ替わる */
+/* ⚠️ 尺は「見せ場の数 × 1つあたり 50〜70vh」で決まる。参考36サイトで固定が2画面を
+   超えるサイトは1つも無かったので、2026-08-14 に【1巡目のモック(せり上がり〜保持〜退場)
+   を廃止】して 800vh → 500vh に圧縮した。1つ1つの間合いは緩めたまま総尺だけ減らせる、
+   いちばん効く削り方。※ スクロール可能量は 400vh なので「%×400」が実際の vh */
 const DEV_P = {
-  h1:    [0.00, 0.04],
-  rise:  [0.04, 0.17],   // 下からせり上がって拡大 (この時点でモック内アニメも開始)
-  hold:  [0.17, 0.26],   // 規定位置
-  out1:  [0.26, 0.32],
-  h2:    [0.33, 0.38],   // ワンスクロールですぐ次の文字
-  split2:[0.40, 0.48],
-  grow2: [0.41, 0.50],
-  /* 右へ移動 (＋見出しはブラーで消える)。6%→12%に倍増して、ぬるっと運ぶ */
-  dock:  [0.52, 0.64],
-  /* CLI → API → SDK の入れ替え。3%→8%に広げて、ブラーがゆっくり溶けて戻るようにした */
-  sw1:   [0.68, 0.76],
-  sw2:   [0.80, 0.88],
-  /* 背景が明るい元の背景に戻る。ピンが外れる直前(0.99)で終わらせて、
-     白くなってから導入事例が来るまでの「何も起きない空スクロール」を無くす */
-  finish:[0.91, 0.99],
+  h1:    [0.00, 0.06],   // 1つめの訴求文がブラーで出る (モックは出さない)
+  out1:  [0.11, 0.17],   // そのまま消える
+  h2:    [0.19, 0.25],   // 2つめの訴求文
+  split2:[0.29, 0.39],   // 上下に割れる
+  grow2: [0.30, 0.41],   // その間からモックが出て拡大
+  dock:  [0.44, 0.58],   // 右へ移動 (14% = 56vh。ぬるっと運ぶ)
+  sw1:   [0.62, 0.71],   // CLI → API (9% = 36vh)
+  sw2:   [0.75, 0.84],   // API → SDK
+  /* 背景が明るい元の背景に戻る。ピンが外れる直前で終わらせて空スクロールを無くす */
+  finish:[0.88, 0.97],
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
@@ -2485,7 +2528,6 @@ function updateDev(p) {
   const pat = params.patterns.dev;
 
   const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
-  const rise = seg(p, ...DEV_P.rise, easeIO);
   const in2 = seg(p, ...DEV_P.h2, easeOutQ);
   const sp2 = seg(p, ...DEV_P.split2, easeIO);
   const g2 = seg(p, ...DEV_P.grow2, easeIO);
@@ -2502,10 +2544,8 @@ function updateDev(p) {
   const mk = mockK();
   let op = 0, sc = mk, tx = cx, ty = MOCK_CY, bl = 0;
   if (p < DEV_P.h2[0]) {
-    op = clamp01((p - 0.005) / 0.02) * (1 - o1);
-    sc = (0.78 + 0.22 * rise) * mk;
-    ty = MOCK_CY_TOP + (1 - rise) * 560;   /* 見出しの下に収める */
-    bl = o1 * 20;
+    /* 1巡目はモックを出さない (尺を8画面→5画面に詰めるため 2026-08-14 に廃止) */
+    op = 0;
   } else {
     op = Math.min(1, g2 * 3) * (1 - fin);
     sc = (0.16 + 0.84 * g2) * mk;
@@ -2532,9 +2572,9 @@ function updateDev(p) {
 
   /* スクロールし切る前 (せり上がり中) からアニメを走らせる。
      一度走り出したら、戻っても空に戻さない (リプレイなし) */
-  if (p >= (screen === 'editor' ? DEV_P.rise[0] : DEV_P.dock[0])) devStarted = true;
+  if (p >= (screen === 'editor' ? DEV_P.grow2[0] : DEV_P.dock[0])) devStarted = true;
   const started = devStarted;
-  if (devHoldT0 === null && p >= DEV_P.rise[0]) devHoldT0 = elapsed;
+  if (devHoldT0 === null && p >= DEV_P.grow2[0]) devHoldT0 = elapsed;
   if (devScreenT0 === null) devScreenT0 = elapsed;
   if (!started) devMockContent('empty', 0, screen);
   else devMockContent('anim', elapsed - (screen === 'editor' ? devHoldT0 : devScreenT0), screen);
@@ -2648,8 +2688,8 @@ const kvEls = {
 
 function updateKV() {
   const c = params.kv, t = elapsed;
-  rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / 1.5)), 8, 10);
-  rv(kvEls.eyebrow, easeOutQ(clamp01((t - c.eyebrowAt) / 1.4)), 8, 8);
+  rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
+  rv(kvEls.eyebrow, easeOutQ(clamp01((t - c.eyebrowAt) / T_IN)), 8, 8);
 
   /* 1文字ずつ打ち込む */
   const tt = t - c.typeAt;
@@ -2679,8 +2719,8 @@ function updateKV() {
 
   /* 打ち終わってからグラフィック → ロゴ */
   const gAt = c.typeAt + typeEnd + c.graphicGap;
-  rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / 1.9)), 12);
-  rv(kvEls.logos, easeOutQ(clamp01((t - gAt - 0.6) / 1.5)), 8);
+  rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / T_BIG)), 12);
+  rv(kvEls.logos, easeOutQ(clamp01((t - gAt - 0.6) / T_IN)), 8);
 }
 
 function updateSections() {
@@ -2885,7 +2925,24 @@ function applyMarquee() {
   marqueeTrack.style.animationPlayState = params.running ? 'running' : 'paused';
 }
 
+/* ===== 慣性スクロール =====
+   ホイールを回した分をそのまま反映せず、毎フレーム少しずつ追いつかせる。
+   参考36サイト中21サイトが採用していた「なめらかさ」の土台。
+   ・スマホ(タッチ)は端末標準の慣性の方が自然なので掛けない
+   ・OS側で「視差効果を減らす」にしている人には掛けない
+   ・native の scroll を動かす方式なので position:sticky はそのまま生きる */
+let lenis = null;
+if (window.Lenis && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  lenis = new window.Lenis({
+    duration: 1.1,                                  // 追いつくまでの時間
+    easing: t => 1 - Math.pow(1 - t, 5),            // easeOutQuint (トークンと同じカーブ)
+    smoothWheel: true,
+    syncTouch: false,                               // スマホは端末標準に任せる
+  });
+}
+
 function frame(ts) {
+  if (lenis) lenis.raf(ts);
   if (lastTs !== null) {
     frameDt = Math.min(0.1, (ts - lastTs) / 1000);
     if (params.running) elapsed += frameDt;
@@ -2953,6 +3010,15 @@ window.addEventListener('load', fit);
    ブラウザ既定の「前回のスクロール位置を復元」を切っておかないと、
    途中から復元されて各セクションの自動再生が中途半端な状態で始まってしまう */
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+/* ヘッダーのアンカーリンクも慣性スクロールで飛ばす */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const el = document.querySelector(a.getAttribute('href'));
+  if (!el) return;
+  e.preventDefault();
+  if (lenis) lenis.scrollTo(el, { duration: 1.6 }); else el.scrollIntoView();
+});
 window.addEventListener('load', () => window.scrollTo(0, 0));
 window.scrollTo(0, 0);
 if (window.ResizeObserver) new ResizeObserver(fit).observe(document.documentElement);
@@ -3133,6 +3199,7 @@ function buildPanel() {
   rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('1行の出現時間', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + 's'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
+  rows.push(slider('1文字ずつの遅れ', 0, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => v === 0 ? '行ごと' : Math.round(v * 100) + '%'));
   sub(catVis, '左へのスライド（動きの種類）');
   pillRow(VISION_SLIDES, it => params.patterns.visionSlide === it.key,
     it => params.patterns.visionSlide = it.key);
