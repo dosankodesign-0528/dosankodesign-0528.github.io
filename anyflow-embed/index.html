@@ -270,11 +270,14 @@
     border-radius: 50%;
     margin: -6.689px 0 0 -6.689px;
   }
+  /* カンプの文字幅から逆算した字間。コネクタ=65.98px / プラットフォーム=150.8px /
+     Platform=192px になる (カンプは字間を広めに空けている) */
   .pf-name {
     position: absolute;
     font-weight: 300;
     font-size: 14px;
-    line-height: normal;
+    letter-spacing: 0.178em;
+    line-height: 24.741px;   /* カンプのテキスト枠の高さ。上端 top を合わせると字も揃う */
     color: #000;
     white-space: nowrap;
   }
@@ -286,6 +289,7 @@
     font-family: var(--font-en);
     font-weight: 200;
     font-size: 50px;
+    letter-spacing: 0.0588em;
     line-height: 1;
     color: #000;
     white-space: nowrap;
@@ -296,7 +300,8 @@
     top: 335.58px;
     font-weight: 300;
     font-size: 16px;
-    line-height: normal;
+    letter-spacing: 0.178em;
+    line-height: 28.276px;   /* カンプのテキスト枠の高さ */
     color: #000;
     white-space: nowrap;
   }
@@ -337,6 +342,8 @@
     background: #FF5D97;
   }
   .val-point .vp-tag em { font-style: normal; color: #FF5D97; }
+  /* カンプでは Point 02 の数字だけ水色 (■ は両方ピンクのまま) */
+  .val-p2 .vp-tag em { color: #0EBBFF; }
   .val-point h3 { font-weight: 300; font-size: 26px; line-height: normal; margin-top: 4px; }
   .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: 24px; }
 
@@ -1478,7 +1485,7 @@ const DEFAULTS = {
     tumble: 0.37,    // 多面ゆらぎ (2軸目の回転比率)
     noise: 0.5,      // 質感の粒の強さ
   },
-  planet: { dx: 0, dy: 52, scale: 1 },   // 惑星の位置ずらし(px)と大きさ
+  planet: { dx: 21, dy: 46, scale: 0.99 },   // 惑星の位置ずらし(px)と大きさ
   /* KV: グラフィック全体の位置と登場シーケンス(秒) */
   kv: {
     gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
@@ -1526,7 +1533,7 @@ const DEFAULTS = {
       miniGapX: 70,      // ミニ軌道と1行目の間隔(px)
       miniY: -105,       // ミニ軌道の縦位置(px)
       miniScale: 0.26,   // ミニ楕円の縮小率
-      strokeW: 4,        // 軌道線の太さ(px)
+      strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
       spinDur: 4,        // 等速で流れる秒数
       spinBrake: 2.5,    // 減速して止まるまでの秒数
@@ -1534,16 +1541,17 @@ const DEFAULTS = {
     },
     results: { lenVh: 260, countDur: 2.8, imgBlur: 24 },  // 尺(中央で止まる) / カウント時間 / 画像のぼけ
     dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    /* 尺 / 奥行き(縮小の効き) / カードが出る間隔 / 出現ブラー / 重なりの段差 / 重なった時に実寸へ戻す量 */
-    cases:   { lenVh: 420, depth: 1, autoGap: 0.5, inBlur: 20, spread: 1, zoom: 1 },
+    /* 尺 / 奥行き(縮小の効き) / カードが出る間隔 / 出現ブラー / 重なりの段差(px) / 重なった時に実寸へ戻す量 */
+    cases:   { lenVh: 420, depth: 0, autoGap: 0.5, inBlur: 20, step: 24, zoom: 1 },
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
    上げないと、利用者のブラウザに残った旧値が新しいデフォルトを上書きして
    レイアウトが壊れる (v7→v8: slideX を絶対位置から中央からの微調整に変更
-   / v8→v9: 導入事例の depth を「ブラーと透明度の効き」から「絵コンテ通りの縮小率」に変更) */
-const STORAGE_KEY = 'anyflow-embed-anim-v9';
+   / v8→v9: 導入事例の depth を「ブラーと透明度の効き」から「絵コンテ通りの縮小率」に変更
+   / v9→v10: 導入事例の重なりを spread(%) から step(px) に変更、惑星の既定位置を更新) */
+const STORAGE_KEY = 'anyflow-embed-anim-v10';
 
 let params = load();
 function load() {
@@ -2095,7 +2103,9 @@ const DEV_P = {
   dock:  [0.52, 0.58],   // 右へ移動 (＋見出しはブラーで消える)
   sw1:   [0.64, 0.67],   // CLI → API
   sw2:   [0.74, 0.77],   // API → SDK
-  finish:[0.83, 0.89],   // 背景が明るい元の背景に戻る (浅いスクロールで完了)
+  /* 背景が明るい元の背景に戻る。ピンが外れる直前(0.99)で終わらせて、
+     白くなってから導入事例が来るまでの「何も起きない空スクロール」を無くす */
+  finish:[0.85, 0.99],
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
@@ -2396,10 +2406,10 @@ const caseListEl = document.getElementById('caseList');
 const CASE_STEP = 388.78;   // カンプのカード間隔
 const CASE_H = 344.78;      // カード1枚の高さ
 const CASE_TOP = 96;        // .case-list の top (CSS と合わせる)
-/* 絵コンテ最終コマ (Figma 14708:46833) の重なり方。
-   カード上端が 0 / 137.9 / 241.1 px ずつ下がり、奥のカードほど 0.8 → 0.9 → 1.0 と小さい。
-   奥のカードもブラーはかからず鮮明なまま (絵コンテで確認済み)。 */
-const CASE_STACK_TOP = [0, 137.9, 241.1];
+/* 重なり方: 後のカードほど step(px) ずつ下にずれて、上のカードの軸へ重なっていく。
+   カードの横幅は 880px のまま (奥行きの強さ=0 のとき縮小しない)。
+   絵コンテ最終コマの「奥ほど小さく大きくずれる」形にしたい時は
+   調整パネルで 段差=約120px / 奥行き=100% にする。 */
 
 function updateCases(p) {
   const c = params.sections.cases;
@@ -2416,19 +2426,24 @@ function updateCases(p) {
 
   /* 並び終わったあと、スクロールすると1枚ずつ重なっていく */
   const stackK = [0, 1, 2].map(i => seg(p, 0.20 + i * 0.20, 0.46 + i * 0.20, easeIO));
-  /* 重なりきると絵コンテ通りの実寸 (前面カードが右余白120pxの880px幅) に戻る */
+  /* 重なりきると実寸 (カード880px幅・右余白120px) に戻る */
   const zTarget = k + (1 - k) * c.zoom;
   const s = k + (zTarget - k) * seg(p, 0.20, 0.86, easeIO);
   caseListEl.style.transform = `scale(${s.toFixed(4)})`;
+
+  /* 重なった3枚を画面の上下中央に置く (段差はプラスでもマイナスでもいいように両端から求める) */
+  const tops = [0, 1, 2].map(i => i * c.step * zTarget);
+  const minT = Math.min(...tops), maxT = Math.max(...tops);
+  const stackBase = (921 - ((maxT - minT) + CASE_H * zTarget)) / 2 - minT - CASE_TOP;
 
   caseEls.cards.forEach((el, i) => {
     const st = stackK[i];
     /* 位置もサイズも「画面上でどう見えるか」で補間してから、リストの縮小率で割り戻す。
        こうしないと、拡大中に3枚目が一度下へはみ出してから戻ってくる動きになる */
     const linedY = k * (i * CASE_STEP);
-    const stackedY = CASE_STACK_TOP[i] * c.spread * zTarget;
+    const stackedY = stackBase + tops[i];
     const onY = linedY + (stackedY - linedY) * st + (1 - inK[i]) * 60;
-    /* 奥のカードほど小さく (絵コンテ: 0.8 / 0.9 / 1.0) */
+    /* 奥行きを効かせる時だけ、奥のカードを 1段につき10%小さくする (既定は0＝880pxのまま) */
     const onS = k + (zTarget * (1 - (2 - i) * 0.10 * c.depth) - k) * st - (1 - inK[i]) * 0.03 * k;
     el.style.transformOrigin = '50% 0%';
     el.style.transform =
@@ -2990,7 +3005,8 @@ function buildPanel() {
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
   sub(catCase, '重なり (絵コンテ最終コマ)');
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
-  rows.push(slider('重なりの段差', 0, 1.5, 0.05, () => sv().cases.spread, v => sv().cases.spread = v, v => Math.round(v * 100) + '%'));
+  /* マイナスにすると、後のカードほど上にずれる (奥のカードが下から覗く重なり方) */
+  rows.push(slider('重なりの段差', -160, 160, 2, () => sv().cases.step, v => sv().cases.step = v, v => v + 'px'));
   rows.push(slider('実寸へ戻す量', 0, 1, 0.05, () => sv().cases.zoom, v => sv().cases.zoom = v, v => Math.round(v * 100) + '%'));
 
   /* ボタン */
