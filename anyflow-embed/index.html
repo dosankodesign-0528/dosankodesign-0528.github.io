@@ -1281,7 +1281,6 @@ const VISION_SLIDES = [
   { key: 'B', name: '②吸着', desc: '左端でわずかに行き過ぎて戻る。「Our Vison」に吸い寄せられた感じ。' },
   { key: 'C', name: '③文字が流れる', desc: '文字が1つずつ時間差で左へ流れて整列する。もっとも動きが豊か。' },
   { key: 'D', name: '④走ってブレる', desc: '勢いよく走り出し、速い間だけ横にブレて、止まるとシャープに決まる。' },
-  { key: 'E', name: '⑤すっと→ぴたっ', desc: '一気に手前まで運んでから、最後のひと詰めだけゆっくり寄せる2段階。' },
 ];
 const MOCK_PATTERNS = [
   { key: 'A', name: '案A タイプ生成', desc: 'コードが左から書き出されていく。素直で読みやすい。' },
@@ -1497,7 +1496,8 @@ const DEFAULTS = {
     headerAt: 0.25,   // ヘッダーがブラーで出る
     eyebrowAt: 1.15,  // 「APIでデータを繋ぐプラットフォーム」
     typeAt: 2.1,      // タイピング開始
-    charDur: 0.12,    // 1文字あたり(平均)
+    charDur: 0.09,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
+    charDur2: 0.20,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
     typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
     lineGap: 0.45,    // 改行の間
     graphicGap: 0.45, // 打ち終わってからグラフィックが出るまで
@@ -1545,8 +1545,8 @@ const DEFAULTS = {
       blur: 8,           // 文字ブラー量
     },
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
-       尺は「出てき終わるまで固定していられる長さ」。短いと途中で下に抜けてしまう */
-    results: { lenVh: 400, countDur: 2.8, imgBlur: 24 },
+       尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
+    results: { lenVh: 300, countDur: 2.8, imgBlur: 24 },
     dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / カードの重なり量(px) */
     cases:   { lenVh: 420, depth: 1, inBlur: 20, overlap: 196 },
@@ -1559,8 +1559,10 @@ const DEFAULTS = {
    / v8→v9: 導入事例の depth を「ブラーと透明度の効き」から「絵コンテ通りの縮小率」に変更
    / v9→v10: 導入事例の重なりを spread(%) から step(px) に変更、惑星の既定位置を更新
    / v10→v11: 導入事例を「縦に並べてから重ねる」→ カンプ通りのスティッキースタックに作り直し
-   / v11→v12: 見出しスライドを5案化・2行目の追従を即時に、実績の余白と尺を変更) */
-const STORAGE_KEY = 'anyflow-embed-anim-v12';
+   / v11→v12: 見出しスライドを5案化・2行目の追従を即時に、実績の余白と尺を変更
+   / v12→v13: スライド⑤を削除、実績を時間＋スクロール併用に、開発者体験の間合いを緩める、
+              KVのタイピング速さを行ごとに分離) */
+const STORAGE_KEY = 'anyflow-embed-anim-v13';
 
 let params = load();
 function load() {
@@ -1779,12 +1781,14 @@ const SLICK_K = 5.2, SLICK_N = 1 - Math.exp(-SLICK_K) * (1 + SLICK_K);
 const easeSlick = t => (1 - Math.exp(-SLICK_K * t) * (1 + SLICK_K * t)) / SLICK_N;
 /* 勢いよく飛び出して一気に減速 (走る感じ) */
 const easeOutExpo = t => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
-/* 一気に運んでから、最後のひと詰めだけゆっくり寄せる2段階 */
-const easeTwoStep = t => (t < 0.55
-  ? 0.86 * easeOutQ(t / 0.55)
-  : 0.86 + 0.14 * easeIO((t - 0.55) / 0.45));
-/* 見出しの左スライド 5案のイージング */
-const SLIDE_EZ = { A: easeSlick, B: easeOutBack, C: easeOutQ, D: easeOutExpo, E: easeTwoStep };
+/* 見出しの左スライド 4案のイージング。
+   途中で止まってから詰め直す2段階(旧⑤)は「いらない」との指示で削除済み */
+const SLIDE_EZ = { A: easeSlick, B: easeOutBack, C: easeOutQ, D: easeOutExpo };
+
+/* CLI/API/SDK の入れ替えで使う「溶けて戻る」カーブ。
+   指数を1より小さくすると山が丸くなり、ブラーの濃い時間が長くなる
+   = ゆっくり溶けて、ゆっくり戻る (上品な入れ替わりに見せるための肝) */
+const swapDip = k => (k <= 0 || k >= 1 ? 0 : Math.pow(Math.sin(Math.PI * k), 0.7));
 
 /* 進捗 p のうち区間 [a,b] を 0→1 に切り出す (イージング付き) */
 function seg(p, a, b, ez) { return (ez || easeIO)(clamp01((p - a) / (b - a))); }
@@ -2074,6 +2078,7 @@ const resEls = {
   cntSub2: document.getElementById('cntSub2'),
 };
 let resT0 = null;
+let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
 /* ランダム数字 → 左の桁から順に確定するカウンター */
 function setCounter(el, finalStr, suffix, t, dur) {
@@ -2089,12 +2094,19 @@ function setCounter(el, finalStr, suffix, t, dur) {
   el.textContent = out + suffix;
 }
 
-/* 中央でピン留めされたら自動再生。出終わったらスクロールで下のセクションへ抜ける。
-   一度再生したら巻き戻さない (戻っても終わった状態のまま) */
+/* 全部出そろうまでの秒数 (下段カウンターの終わり = 4.8 + countDur) */
+const RES_TOTAL = 7.6;
+/* 中央でピン留めされたら再生。出終わったらスクロールで下のセクションへ抜ける。
+   ⚠️ 以前は「時間だけ」で進めていたので、ピンしている間にスクロールしても何も進まず、
+      再生が終わってからさらに数画面スクロールしないと下へ抜けられなかった。
+      いまは【時間でも進む／スクロールでも進む、速い方を採用】。止まっていても勝手に出てくるし、
+      スクロールした分はちゃんと先へ進むので、無駄なスクロールが発生しない。
+      max で持つので巻き戻りもしない (リプレイなし) */
 function updateResults(p) {
   if (resT0 === null && p > 0.002) resT0 = elapsed;
   const c = params.sections.results;
-  const t = resT0 === null ? -1 : elapsed - resT0;
+  if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (p / 0.8) * RES_TOTAL);
+  const t = resT;
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
@@ -2136,12 +2148,14 @@ const DEV_P = {
   h2:    [0.33, 0.38],   // ワンスクロールですぐ次の文字
   split2:[0.40, 0.48],
   grow2: [0.41, 0.50],
-  dock:  [0.52, 0.58],   // 右へ移動 (＋見出しはブラーで消える)
-  sw1:   [0.64, 0.67],   // CLI → API
-  sw2:   [0.74, 0.77],   // API → SDK
+  /* 右へ移動 (＋見出しはブラーで消える)。6%→12%に倍増して、ぬるっと運ぶ */
+  dock:  [0.52, 0.64],
+  /* CLI → API → SDK の入れ替え。3%→8%に広げて、ブラーがゆっくり溶けて戻るようにした */
+  sw1:   [0.68, 0.76],
+  sw2:   [0.80, 0.88],
   /* 背景が明るい元の背景に戻る。ピンが外れる直前(0.99)で終わらせて、
      白くなってから導入事例が来るまでの「何も起きない空スクロール」を無くす */
-  finish:[0.85, 0.99],
+  finish:[0.91, 0.99],
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
@@ -2373,7 +2387,8 @@ function updateDev(p) {
   const in2 = seg(p, ...DEV_P.h2, easeOutQ);
   const sp2 = seg(p, ...DEV_P.split2, easeIO);
   const g2 = seg(p, ...DEV_P.grow2, easeIO);
-  const dk = seg(p, ...DEV_P.dock, easeIO);
+  /* 右へのドックは「ぬるっと」担当のイージング (そっと出て慣性で長く止まる) */
+  const dk = seg(p, ...DEV_P.dock, easeSlick);
   const s1 = seg(p, ...DEV_P.sw1, easeIO), s2 = seg(p, ...DEV_P.sw2, easeIO);
   const fin = seg(p, ...DEV_P.finish, easeIO);   // 背景が明るく戻る
 
@@ -2394,8 +2409,9 @@ function updateDev(p) {
     tx = cx * (1 - dk);
     ty = MOCK_CY + (1 - g2) * 30;   /* 右へ動いても上下中央のまま */
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
-    const dip = Math.sin(Math.PI * swapK);
-    bl = dip * c.swapBlur + fin * 16;
+    /* モックは消さずに「やわらかくぼける」だけ。文字より控えめにする */
+    const dip = swapDip(swapK);
+    bl = dip * c.swapBlur * 0.6 + fin * 16;
     if (pat === 'B') ty += dip * -24;
     else if (pat === 'C') sc *= 1 + 0.05 * (s1 + s2);
   }
@@ -2424,11 +2440,14 @@ function updateDev(p) {
   const title = s1 < 0.5 ? 'CLIへの対応' : s2 < 0.5 ? 'APIへの対応' : 'SDKへの対応';
   if (devEls.strengthTitle.textContent !== title) devEls.strengthTitle.textContent = title;
   const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
-  const dip = Math.sin(Math.PI * swapK);
+  const dip = swapDip(swapK);
   let stY = (1 - dk) * 24;
   let stBl = (1 - dk) * 12 + dip * c.swapBlur + fin * 14;
   if (pat === 'B') stY += (swapK < 0.5 ? -swapK * 60 : (1 - swapK) * 60);
-  devEls.strength.style.opacity = (dk * (1 - dip) * (1 - fin)).toFixed(3);
+  /* 文字は完全に消えてから次が出る。1.35倍して真ん中に「何も無い間」を作る
+     (薄いまま入れ替わると同じ文字がクロスフェードしたように見えて安っぽい) */
+  const stFade = clamp01(1 - dip * 1.35);
+  devEls.strength.style.opacity = (dk * stFade * (1 - fin)).toFixed(3);
   devEls.strength.style.transform = `translateY(${stY.toFixed(2)}px)`;
   devEls.strength.style.filter = stBl > 0.05 ? `blur(${stBl.toFixed(2)}px)` : '';
 }
@@ -2482,7 +2501,7 @@ function updateCases(p) {
    通常はリプレイさせないので触らないが、「↺ 最初から」と検証用フックからだけ呼ぶ */
 function resetSectionClocks() {
   visAutoT0 = null; visAutoDone = false; visMoveT0 = null;
-  resT0 = null;
+  resT0 = null; resT = -1;
   devHoldT0 = null; devScreenT0 = null; devStarted = false;
 }
 
@@ -2535,18 +2554,20 @@ function updateKV() {
      i文字目までの所要時間 = charDur * n * (i/n をイーズインした値) */
   const e = c.typeEase;
   const ease = x => x * (1 - e) + e * x * x;          // 0→1 を前半ゆっくりに
-  const timeOf = (i, n) => c.charDur * n * ease(i / Math.max(1, n));
-  const line1End = timeOf(n0, n0);
+  /* 1行目「AIと事業を」は素早く、2行目「強くする」はゆったり打つ (行ごとに速さを変える) */
+  const timeOf = (i, n, dur) => dur * n * ease(i / Math.max(1, n));
+  const line1End = timeOf(n0, n0, c.charDur);
   const line2At = line1End + c.lineGap;
   kvEls.chars.forEach((arr, li) => {
     const base = li === 0 ? 0 : line2At;
+    const dur = li === 0 ? c.charDur : c.charDur2;
     const n = arr.length;
     /* 未入力の文字は display:none。こうするとカーソルが打った文字の直後に来る */
     arr.forEach((el, ci) => {
-      el.style.display = tt >= base + timeOf(ci, n) ? 'inline-block' : 'none';
+      el.style.display = tt >= base + timeOf(ci, n, dur) ? 'inline-block' : 'none';
     });
   });
-  const typeEnd = line2At + timeOf(n1, n1);
+  const typeEnd = line2At + timeOf(n1, n1, c.charDur2);
   const blink = ((tt * 1.7) % 1 < 0.55) ? 1 : 0;
   const typing = tt > -0.15 && tt < typeEnd + 0.5;
   kvEls.carets[0].style.opacity = (typing && tt < line2At - c.lineGap * 0.4) ? blink : 0;
@@ -2785,7 +2806,7 @@ window.__anim = {
   /* セクション進捗を固定して確認する: __anim.setProgress('dev', 0.5) / 解除は null */
   setProgress(key, v) { if (v == null) delete progOverride[key]; else progOverride[key] = v; renderFrame(); },
   setPattern(sec, key) { params.patterns[sec] = key; renderFrame(); },
-  startResults() { resT0 = elapsed; renderFrame(); },
+  startResults() { resT0 = elapsed; resT = -1; renderFrame(); },
   getState() { return { elapsed, params }; },
 };
 
@@ -2945,7 +2966,8 @@ function buildPanel() {
   rows.push(slider('ヘッダー', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + 's'));
   rows.push(slider('小見出し', 0, 4, 0.05, () => params.kv.eyebrowAt, v => params.kv.eyebrowAt = v, v => v.toFixed(2) + 's'));
   rows.push(slider('タイピング開始', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + 's'));
-  rows.push(slider('1文字の速さ', 0.03, 0.3, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('1行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('2行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's'));
   rows.push(slider('タイピング緩急', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%'));
   rows.push(slider('改行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('グラフィックまで', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + 's'));
