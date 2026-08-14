@@ -1548,8 +1548,8 @@ const DEFAULTS = {
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: { lenVh: 300, countDur: 2.8, imgBlur: 24 },
     dev:     { lenVh: 800, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / カードの重なり量(px) */
-    cases:   { lenVh: 420, depth: 1, inBlur: 20, overlap: 196 },
+    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 重なりのズレ(px。0=完全に重なる) */
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, step: 0 },
   },
   patterns: { dev: 'A', cases: 'A', visionSlide: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1561,8 +1561,9 @@ const DEFAULTS = {
    / v10→v11: 導入事例を「縦に並べてから重ねる」→ カンプ通りのスティッキースタックに作り直し
    / v11→v12: 見出しスライドを5案化・2行目の追従を即時に、実績の余白と尺を変更
    / v12→v13: スライド⑤を削除、実績を時間＋スクロール併用に、開発者体験の間合いを緩める、
-              KVのタイピング速さを行ごとに分離) */
-const STORAGE_KEY = 'anyflow-embed-anim-v13';
+              KVのタイピング速さを行ごとに分離
+   / v13→v14: 導入事例の重なりを overlap(px) から step(ズレ px・既定0＝完全に重なる) に変更) */
+const STORAGE_KEY = 'anyflow-embed-anim-v14';
 
 let params = load();
 function load() {
@@ -1808,6 +1809,15 @@ function pinP(sec) {
   const total = r.height - vh;
   if (total <= 0) return 0;
   return clamp01(-r.top / total);
+}
+/* セクションが画面下から入ってきた割合 0〜1（0=画面下端に到達 / 1=画面いっぱいに来て固定開始）。
+   ⚠️ sticky の仕組み上、前のセクションの固定が外れてから次のセクションが固定され始めるまでに
+   ちょうど1画面ぶんのスクロールが必ず挟まる。そこで何も起きないと「無駄なスクロール」に見えるので、
+   この助走区間のうちに次のセクションの出だしを見せるために使う */
+function preP(sec) {
+  const r = sec.getBoundingClientRect();
+  const vh = window.innerHeight || 1;
+  return clamp01((vh - r.top) / vh);
 }
 
 /* ブラー出現の共通適用 (KVの reveal と同じ質感: ブラー6-8px + 浮き上がり) */
@@ -2459,28 +2469,27 @@ const caseEls = {
 };
 const CASE_H = 344.78;      // カード1枚の高さ (カンプ)
 const CASE_TOP = 172;       // 「導入事例」ラベルと1枚目の上端 (カンプ 14767:16333)
-/* 重なり方 (カンプ 14767:16333):
-     1枚目 上端172 / 幅704 (0.8倍)
-     2枚目 上端251.8 / 幅792 (0.9倍)
-     3枚目 上端366.1 / 幅880 (等倍)
-   規則はシンプルで「次のカードの上端 = 前のカードの下端 − 196px」。
-   奥に送られるたびに 0.1 ずつ縮小する。3枚とも左右中央そろえ。 */
+/* 重なり方: 3枚とも同じ上端(＝「導入事例」の上っ面)に貼り付いて終わる。
+   奥へ送られたカードは 0.1 ずつ縮むので、手前のカードの内側に隠れる。
+   ズラして重ねたい時は調整パネルの「重なりのズレ」を 0 より大きくする。 */
 
 function updateCases(p) {
   const c = params.sections.cases;
 
-  /* 「導入事例」ラベルと1枚目は、セクションに入ってすぐブラーで出る */
-  const intro = seg(p, 0.02, 0.16, easeOutQ);
+  /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
+     こうしないと、前の開発者体験セクションの固定が外れてから
+     ここが固定され始めるまでの1画面ぶんが、まるまる何も起きない空スクロールになる */
+  const pre = progOverride.casesPre != null ? progOverride.casesPre : preP(SECS.cases);
+  const intro = seg(pre, 0.15, 0.85, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
   /* arr = 何枚目まで積み上がったか (0=1枚目だけ / 1=2枚目が着地 / 2=3枚目が着地) */
-  const arr = seg(p, 0.20, 0.52, easeIO) + seg(p, 0.54, 0.86, easeIO);
+  const arr = seg(p, 0.14, 0.50, easeIO) + seg(p, 0.54, 0.90, easeIO);
 
   /* 奥へ送られた段数だけ縮小 (カンプ: 0.8 / 0.9 / 1.0) */
   const sc = [0, 1, 2].map(i => 1 - Math.min(2, Math.max(0, arr - i)) * 0.1 * c.depth);
-  /* 重なった時の上端は、前のカードの下端から overlap px 戻した位置 */
-  const tops = [CASE_TOP];
-  for (let i = 1; i < 3; i++) tops[i] = tops[i - 1] + CASE_H * sc[i - 1] - c.overlap;
+  /* 3枚とも同じ位置に着地する (ズレを付けたい時だけ step を使う) */
+  const tops = [0, 1, 2].map(i => CASE_TOP + i * c.step);
 
   caseEls.cards.forEach((el, i) => {
     /* 1枚目はその場でブラー出現、2枚目以降は画面の下から上がってきて所定の位置に貼り付く */
@@ -3068,9 +3077,10 @@ function buildPanel() {
   rows.push(slider('尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
   sub(catCase, '演出');
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
-  sub(catCase, '重なり (カンプ 14767:16333)');
+  sub(catCase, '重なり');
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
-  rows.push(slider('カードの重なり量', 60, 300, 2, () => sv().cases.overlap, v => sv().cases.overlap = v, v => v + 'px'));
+  /* 0 = 3枚が完全に同じ位置で重なる。上げると後のカードほど下にずれて奥が覗く */
+  rows.push(slider('重なりのズレ', 0, 200, 2, () => sv().cases.step, v => sv().cases.step = v, v => v + 'px'));
 
   /* ボタン */
   const btns = document.createElement('div');
