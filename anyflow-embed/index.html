@@ -29,7 +29,7 @@
   .stage {
     position: relative;
     width: var(--sw, 1440px);
-    height: 921px;
+    height: var(--dh, 921px);
     transform-origin: top left;
     transform: scale(var(--s, 1));
   }
@@ -183,7 +183,7 @@
 
   /* ================= スクロールセクション共通 ================= */
   html { scroll-behavior: smooth; }
-  :root { --s: 1; --sp: 1; }
+  :root { --s: 1; --sp: 1; --dh: 921px; }
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
@@ -199,7 +199,7 @@
     left: 0;
     top: 50%;
     width: var(--swp, 1440px);
-    height: 921px;
+    height: var(--dh, 921px);
     transform: translateY(-50%) scale(var(--sp));
     transform-origin: left center;
   }
@@ -348,7 +348,7 @@
   .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: 24px; }
 
   /* ---- 実績セクション ---- */
-  #results .pin-stage { height: 921px; }
+  #results .pin-stage { height: var(--dh, 921px); }
   /* カンプ座標 = TOP y - 2800 + 90.56。
      カンプでは実績のかたまり(画像の上端〜下段の数字まで 623.9px)の上下にたっぷり余白がある
      (上 約420px / 下 約270px)。ビューポートに固定する以上そのpx数は入らないので、
@@ -773,6 +773,90 @@
     font-weight: 300;
     font-size: 26px;
     color: #101828;
+  }
+
+  /* ================= スマホ (設計フレーム 390×780) =================
+     PCの1440×921をそのまま縮めると本文が4pxくらいになって読めないので、
+     JS側(fit)で座標系ごと 390×780 に差し替え、ここで中身を組み直している。
+     ここに書く数値は 390px幅の実寸そのもの。 */
+  @media (max-width: 780px) {
+    /* --- ヘッダー --- */
+    .header { left: 20px; right: 20px; top: 18px; }
+    .header .logo img { width: 148px; height: 27px; }
+    .nav-links { display: none; }            /* ナビは省略 (後で必要ならハンバーガー化) */
+    .cta { width: 104px; font-size: 12px; padding: 8px 10px; }
+
+    /* --- キービジュアル --- */
+    .headline { left: 24px; top: 104px; }
+    .hl-eyebrow { font-size: 11px; gap: 8px; }
+    .hl-eyebrow i { width: 18px; }
+    .hl-main { font-size: 38px; line-height: 1.35; margin-top: 8px; }
+    .hl-caret { height: 34px; vertical-align: -6px; }
+    /* 軌道は JS 側で 0.40 倍。原点を左上にして左寄せで置く */
+    .orbit { right: auto; left: -22px; top: 280px; transform-origin: 0 0; }
+    .logos { top: 640px; }
+    .marquee-track img { height: 26px; padding-right: 40px; }
+
+    /* --- ビジョン --- */
+    .vis-label { left: 24px; top: 74px; font-size: 18px; }
+    .vis-line { left: 20px; font-size: 32px; line-height: 54px; }
+    .vis-l1 { top: 116px; }
+    .vis-l2 { top: 170px; }
+    /* 軌道図は JS の kFill が 0.43 前後になる。中心は pf-wrap の top+333.5 */
+    .pf-wrap { top: -128px; }
+    /* 図が縮むぶん、図の中の文字は大きめに置いて実効サイズを稼ぐ */
+    .pf-name { font-size: 26px; line-height: 46px; }
+    .pf-sub { font-size: 34px; line-height: 60px; top: 400px; }
+    .pf-title { font-size: 100px; top: 268px; }
+    /* 右カラムはPCでは右アンカーだが、スマホは画面いっぱいの1カラムにする */
+    .val-group { left: 0; right: auto; width: 390px; }
+    .val-head { left: 24px; top: 372px; width: 342px; }
+    .val-head .vh-s { font-size: 13px; }
+    .val-head .vh-l { font-size: 34px; }
+    .val-point { width: 342px; }
+    .val-p1 { left: 24px; top: 462px; }
+    .val-p2 { left: 40px; top: 600px; }
+    .val-point .vp-tag { font-size: 14px; line-height: 14px; }
+    .val-point .vp-tag i { width: 6px; height: 6px; }
+    .val-point h3 { font-size: 20px; margin-top: 8px; }
+    .val-point p { font-size: 12px; line-height: 20px; margin-top: 12px; }
+
+    /* --- 実績 --- */
+    .res-img { left: -24px; top: 128px; width: 438px; height: 190px; }
+    .res-head { left: 24px; right: auto; top: 352px; font-size: 26px; line-height: 38px; }
+    .res-lead { left: 24px; right: auto; top: 436px; width: 342px; }
+    .res-lead .rl-label { font-size: 13px; line-height: 18px; text-align: left; }
+    .res-lead .rl-num { font-size: 76px; text-align: left; }
+    .res-stats { left: 24px; right: auto; top: 566px; width: 342px; }
+    .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; }
+    .res-stats .st b { font-size: 11px; line-height: 16px; }
+    .res-stats .st span { font-size: 26px; }
+    .res-text { left: 24px; top: 672px; width: 342px; font-size: 11px; line-height: 19px; }
+
+    /* --- 開発者体験 --- */
+    /* 見出しの top は HTML の inline style なので !important で上書きする */
+    #devH1 { top: 118px !important; }
+    #devH2 { top: 118px !important; }
+    .dev-center .dc-label { font-size: 12px; margin-bottom: 10px; }
+    .dev-center .dc-a, .dev-center .dc-b, .dev-center .dc-one { font-size: 24px; line-height: 36px; }
+    /* モックは JS 側で 0.40 倍。中央に置いて左右の余白を揃える */
+    .dev-mock { right: auto; left: 50%; top: 110px; margin-left: -420.3px; }
+    .dev-strength { left: 24px; top: 452px; width: 342px; }
+    .dev-strength .ds-label { font-size: 12px; line-height: 16px; margin-bottom: 6px; }
+    .dev-strength .ds-title { font-size: 26px; line-height: 38px; }
+
+    /* --- 導入事例: 写真が上・文章が下の縦組みに変える --- */
+    .case-title { left: 24px; top: 60px; font-size: 28px; line-height: 40px; }
+    .case-list { right: 24px; top: 0; width: 342px; height: var(--dh, 780px); }
+    .case-card { width: 342px; height: 372px; border-radius: 6px; }
+    .case-card img { left: 0; top: 0; width: 342px; height: 200px; border-radius: 6px 6px 0 0; }
+    .case-card .cc-body { left: 18px; top: 222px; width: 306px; }
+    .case-card .cc-quote { font-size: 16px; line-height: 24px; }
+    .case-card .cc-tag { margin-top: 16px; font-size: 11px; padding: 2px 8px; }
+    .case-card .cc-company { margin-top: 6px; font-size: 18px; }
+
+    /* --- 調整パネルは画面いっぱいに --- */
+    .tools { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; }
   }
 
   /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
@@ -1753,7 +1837,9 @@ function applySway() {
   }
   /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
   const kv = params.kv;
-  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px) ${orbit}`.trim();
+  /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある) */
+  const ob = isMobile ? ' scale(0.40)' : '';
+  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}`.trim();
   swayEls.svgs.forEach(s => s.style.transform = svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
   const pl = params.planet;
@@ -1766,6 +1852,9 @@ function applySway() {
 /* ステージの設計幅 (フィル時に画面幅へ広がる)。fit() で更新される。
    ※ renderFrame() より前に宣言しておくこと (後だと初回呼び出しで参照エラーになる) */
 let stageW = 1440, stagePinW = 1440;
+/* 設計フレーム。スマホ(<=780px)では 390×780 に切り替わる */
+const MOBILE_MAX = 780;
+let DW = 1440, DH = 921, isMobile = false;
 let lastFitW = 0, lastFitH = 0, fitReady = false;
 const clamp01 = v => Math.max(0, Math.min(1, v));
 const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -2005,7 +2094,8 @@ function updateVision(p) {
      楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
   const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
   /* 画面幅に合わせて軌道も拡大する。縦にはみ出さない範囲で頭打ちにする */
-  const kFill = Math.min(stagePinW / 1440, (921 - 80) / 667);
+  /* スマホは基準幅を狭めて、軌道が画面幅いっぱいに見えるようにする */
+  const kFill = Math.min(stagePinW / (isMobile ? 900 : 1440), (DH - 80) / 667);
   const R = 861.46;                                  // 軌道の右端 (pf-wrap ローカル座標)
   const scFinal = kFill;
   /* ⚠️ カンプでは軌道の原点(ローカル0)がページの左端。楕円はそこから左へ約108px
@@ -2169,7 +2259,9 @@ const DEV_P = {
 };
 const MOCK_W = 840.6, MOCK_RIGHT = 124;
 /* ステージ幅から「中央に置くための X オフセット」を求める (フィル幅に追従) */
-function mockCenterX() { return MOCK_RIGHT + MOCK_W - stagePinW / 2 - MOCK_W / 2; }
+const mockK = () => (isMobile ? 0.40 : 1);   // スマホでのモックの縮小率
+/* スマホは右にドックする余白が無いので中央のまま (CSSで中央に置いてある) */
+function mockCenterX() { return isMobile ? 0 : (MOCK_RIGHT + MOCK_W - stagePinW / 2 - MOCK_W / 2); }
 const MOCK_CY = -75.5;    // 見出しが無いとき(CLI/API/SDK)の上下中央
 const MOCK_CY_TOP = -12.5; // 見出しが上にあるとき(1コマ目)。見出しと重ならない位置
 
@@ -2407,15 +2499,16 @@ function updateDev(p) {
   devHeading(devEls.h2, in2, sp2, g2 * 0.85 + dk * 0.15);
 
   const cx = mockCenterX();
-  let op = 0, sc = 1, tx = cx, ty = MOCK_CY, bl = 0;
+  const mk = mockK();
+  let op = 0, sc = mk, tx = cx, ty = MOCK_CY, bl = 0;
   if (p < DEV_P.h2[0]) {
     op = clamp01((p - 0.005) / 0.02) * (1 - o1);
-    sc = 0.78 + 0.22 * rise;
+    sc = (0.78 + 0.22 * rise) * mk;
     ty = MOCK_CY_TOP + (1 - rise) * 560;   /* 見出しの下に収める */
     bl = o1 * 20;
   } else {
     op = Math.min(1, g2 * 3) * (1 - fin);
-    sc = 0.16 + 0.84 * g2;
+    sc = (0.16 + 0.84 * g2) * mk;
     tx = cx * (1 - dk);
     ty = MOCK_CY + (1 - g2) * 30;   /* 右へ動いても上下中央のまま */
     const swapK = (s1 > 0 && s1 < 1) ? s1 : (s2 > 0 && s2 < 1) ? s2 : 0;
@@ -2467,8 +2560,9 @@ const caseEls = {
   title: document.getElementById('caseTitle'),
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
-const CASE_H = 344.78;      // カード1枚の高さ (カンプ)
-const CASE_TOP = 172;       // 「導入事例」ラベルと1枚目の上端 (カンプ 14767:16333)
+/* カード1枚の高さと着地位置。スマホは写真が上・文章が下の縦組みに変わるので別寸法 */
+const caseH = () => (isMobile ? 372 : 344.78);
+const caseTop = () => (isMobile ? 118 : 172);
 /* 重なり方: 3枚とも同じ上端(＝「導入事例」の上っ面)に貼り付いて終わる。
    奥へ送られたカードは 0.1 ずつ縮むので、手前のカードの内側に隠れる。
    ズラして重ねたい時は調整パネルの「重なりのズレ」を 0 より大きくする。 */
@@ -2489,12 +2583,13 @@ function updateCases(p) {
   /* 奥へ送られた段数だけ縮小 (カンプ: 0.8 / 0.9 / 1.0) */
   const sc = [0, 1, 2].map(i => 1 - Math.min(2, Math.max(0, arr - i)) * 0.1 * c.depth);
   /* 3枚とも同じ位置に着地する (ズレを付けたい時だけ step を使う) */
+  const CASE_TOP = caseTop(), CASE_H = caseH();
   const tops = [0, 1, 2].map(i => CASE_TOP + i * c.step);
 
   caseEls.cards.forEach((el, i) => {
     /* 1枚目はその場でブラー出現、2枚目以降は画面の下から上がってきて所定の位置に貼り付く */
     const k = i === 0 ? intro : clamp01(arr - (i - 1));
-    const from = i === 0 ? tops[0] + 60 : 921 + 40;
+    const from = i === 0 ? tops[0] + 60 : DH + 40;
     const y = from + (tops[i] - from) * k;
     el.style.transformOrigin = '50% 0%';
     el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc[i].toFixed(4)})`;
@@ -2828,16 +2923,23 @@ function fit() {
   const w = window.innerWidth || document.documentElement.clientWidth || 1440;
   const h = window.innerHeight || document.documentElement.clientHeight || 921;
   lastFitW = w; lastFitH = h;
-  const s = Math.min(1, w / 1440);                 // 1440以上では等倍(100%表示)
-  const sp = Math.min(1, w / 1440, h / 921);       // ピンは縦も収まるように
-  stageW = Math.max(1440, w / s);
-  stagePinW = Math.max(1440, w / sp);
+  /* スマホは 390×780 の設計フレームに切り替える (PCの1440×921をそのまま縮めると
+     本文が4pxくらいになって読めないため、座標系ごと差し替える) */
+  isMobile = w <= MOBILE_MAX;
+  DW = isMobile ? 390 : 1440;
+  DH = isMobile ? 780 : 921;
+  document.documentElement.classList.toggle('mb', isMobile);
+  const s = Math.min(1, w / DW);                   // 設計幅以上では等倍(100%表示)
+  const sp = Math.min(1, w / DW, h / DH);          // ピンは縦も収まるように
+  stageW = Math.max(DW, w / s);
+  stagePinW = Math.max(DW, w / sp);
   const st = document.documentElement.style;
   st.setProperty('--s', s);
   st.setProperty('--sp', sp);
   st.setProperty('--sw', stageW + 'px');
   st.setProperty('--swp', stagePinW + 'px');
-  stage.parentElement.style.height = (921 * s) + 'px';
+  st.setProperty('--dh', DH + 'px');
+  stage.parentElement.style.height = (DH * s) + 'px';
   /* スクロール尺 (調整パネルから変えられる) */
   SECS.vision.style.height = params.sections.vision.lenVh + 'vh';
   SECS.dev.style.height = params.sections.dev.lenVh + 'vh';
