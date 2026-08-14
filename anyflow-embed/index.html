@@ -880,11 +880,6 @@
     right: 16px;
     bottom: 16px;
     z-index: 50;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
-    max-height: calc(100vh - 32px);
   }
   .switcher {
     position: relative;
@@ -982,7 +977,16 @@
   .panel {
     position: relative;
     width: 360px;
-    max-height: 46vh;
+    /* ⚠️ 高さを内容で決めない。アコーディオンを開くたびに外寸が変わると
+       パネル全体が動いて(レイアウトシフト)、触っている場所がズレるため。
+       外寸は固定して、中身だけスクロールさせる */
+    width: 360px;
+    height: 520px;
+    min-width: 260px;
+    min-height: 46px;
+    max-width: 92vw;
+    max-height: 92vh;
+    resize: both;            /* 右下つまみでサイズ変更 */
     background: rgba(255,255,255,.92);
     backdrop-filter: blur(12px);
     border: 1px solid #e2e2e2;
@@ -1000,16 +1004,22 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px;
-    cursor: pointer;
+    cursor: grab;            /* ここを掴んで移動 */
     user-select: none;
     font-weight: 400;
+    flex: 0 0 auto;
   }
+  .panel-head:active { cursor: grabbing; }
   .panel-head .chev { transition: transform .25s; font-size: 10px; color: #888; }
   .panel.closed .chev { transform: rotate(180deg); }
   .panel-body {
+    flex: 1 1 auto;
     overflow-y: auto;
+    /* ページ側へスクロールが伝播しないようにする (端まで来ても背後が動かない) */
+    overscroll-behavior: contain;
     padding: 0 14px 14px;
   }
+  .panel.closed { height: auto !important; resize: none; }
   .panel.closed .panel-body { display: none; }
   /* 大カテゴリ (アコーディオン) */
   .cat {
@@ -1767,7 +1777,7 @@ const DEFAULTS = {
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
     vision:  {
-      lenVh: 260,        // 尺(自動再生ぶんは尺を食わないので短くてよい)
+      lenVh: 240,        // 尺。8.8割スクロールすると全部出そろい、残りで下へ抜ける
       labelAt: 0.35,     // Our Vison がブラーで出る
       labelDur: 1.4,     // その所要時間
       line1At: 0.9,      // 1行目 (Our Vison に続けてすぐ)
@@ -1792,8 +1802,8 @@ const DEFAULTS = {
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: { lenVh: 220, countDur: 2.8, imgBlur: 24 },
     dev:     { lenVh: 850, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
-    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 重なりのズレ(px。0=完全に重なる) */
-    cases:   { lenVh: 420, depth: 1, inBlur: 20, step: 0 },
+    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 40 },
   },
   patterns: { dev: 'A', cases: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1813,8 +1823,10 @@ const DEFAULTS = {
               実績を220vhへ短縮し乗り換え区間も使う、導入事例の文字を黒抜け直後に出す
    / v16→v17: ビジョンの見出しを中央寄せにし、左スライド廃止 → 上下に分かれて
               間から軌道が出る形に変更 (slide* を split* に差し替え)
-   / v17→v18: 惑星に「波が流れる」F/G/H を追加) */
-const STORAGE_KEY = 'anyflow-embed-anim-v18';
+   / v17→v18: 惑星に「波が流れる」F/G/H を追加
+   / v18→v19: 導入事例を「縦に並んでスクロールで重なる」形に変更 (step → gap)、
+              ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ) */
+const STORAGE_KEY = 'anyflow-embed-anim-v19';
 
 let params = load();
 function load() {
@@ -2173,6 +2185,8 @@ const visEls = {
    Our Vison → 1行ずつ文字 → 左へスライド → 軌道グラフィック出現 までが自動。
    そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
 let visAutoT0 = null;    // 自動シーケンスの開始時刻
+let visT = -1;           // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
+const VIS_TOTAL = 9.6;   // 「2つの価値」まで全部出そろうまでの秒数
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
 
@@ -2180,10 +2194,17 @@ function updateVision(p) {
   const c = params.sections.vision;
   const B = c.blur;
 
-  /* セクションに入ったら自動再生スタート。
-     一度再生したら巻き戻さない (スクロールで戻っても再生し直さず、終わった状態のまま) */
-  if (visAutoT0 === null && p > 0.002) visAutoT0 = elapsed;
-  const A = visAutoT0 === null ? -1 : elapsed - visAutoT0;
+  /* ⚠️ 2026-08-14 まで、このセクションは【全部が時間駆動】だった。
+     つまりピン留めされている1.6画面ぶん、いくらスクロールしても進捗が1ミリも動かず、
+     「所定の位置に来たのに何度もスクロールしないと先へ進めない」状態になっていた。
+     いまは実績と同じく【時間でも進む／スクロールでも進む、速い方を採用】。
+     止まっていても勝手に再生され、スクロールした分はちゃんと先へ進む。
+     max で持つので巻き戻りもしない (リプレイなし) */
+  const pre = progOverride.visionPre != null ? progOverride.visionPre : preP(SECS.vision);
+  const q = pre < 1 ? pre * 0.25 : 0.25 + p * 0.75;    // 助走で2.5割、固定中に7.5割
+  if (visAutoT0 === null && q > 0.002) visAutoT0 = elapsed;
+  if (visAutoT0 !== null) visT = Math.max(visT, elapsed - visAutoT0, (q / 0.88) * VIS_TOTAL);
+  const A = visAutoT0 === null ? -1 : visT;
 
   /* --- 自動パートの時間割 (秒) --- */
   const l1At = c.line1At;
@@ -2195,9 +2216,8 @@ function updateVision(p) {
   const autoEnd = miniAt + c.miniDur;
   if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
-  /* --- ワンスクロールで左下へ (触れたら時間駆動でゆったり最後まで動く) --- */
-  if (visAutoDone && visMoveT0 === null && p > 0.02) visMoveT0 = elapsed;
-  const mvT = visMoveT0 === null ? -1 : elapsed - visMoveT0;
+  /* --- 自動パートが終わったら、続けて軌道が左下へ (同じ時計で動かす) --- */
+  const mvT = A < 0 ? -1 : A - autoEnd;
   const mv = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
   const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
 
@@ -2366,7 +2386,7 @@ function updateResults(p) {
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
-  if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (q / 0.85) * RES_TOTAL);
+  if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (q / 0.92) * RES_TOTAL);
   const t = resT;
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
@@ -2646,9 +2666,15 @@ function devMockContent(mode, t, screen) {
 
 let devHoldT0 = null, devScreenT0 = null, devStarted = false;
 
-function updateDev(p) {
+function updateDev(pRaw) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
+  /* ⚠️ 前のセクションが抜けてから固定が始まるまでの1画面は、
+     このままだと「黒い画面がせり上がってくるだけで何も起きない」空スクロールになる。
+     助走ぶんを進捗の頭 12% として繰り込み、1つめの訴求文が助走のうちに出るようにする */
+  const pre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
+  const PRE = 0.12;
+  const p = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
 
   const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
   const rise = seg(p, ...DEV_P.rise, easeSlick);   // せり上がりも「ぬるっと」で
@@ -2745,29 +2771,29 @@ function updateCases(p) {
      こうすると黒いセクションを抜けた瞬間にもう文字が見えていて、
      真っさらな画面を挟まずに次の話へ移れる */
   const intro = seg(pre, 0.02, 0.45, easeOutQ);
-  /* 1枚目のカードは文字より少し遅らせて、助走の終わりに入ってくる */
-  const card0In = seg(pre, 0.45, 0.98, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
-  /* arr = 何枚目まで積み上がったか (0=1枚目だけ / 1=2枚目が着地 / 2=3枚目が着地) */
-  const arr = seg(p, 0.14, 0.50, easeIO) + seg(p, 0.54, 0.90, easeIO);
+  /* カードは【カンプのように縦にgap分空けて並んだ状態】でブラー出現し、
+     スクロールするとリストごと上へ流れて、上端に着いたものから順に貼り付いて重なる。
+     (2026-08-14: 画面外から1枚ずつ飛び込んでくる形をやめてこの形に) */
+  const inK = [0, 1, 2].map(i => seg(pre, 0.30 + i * 0.16, 0.78 + i * 0.16, easeOutQ));
 
-  /* 奥へ送られた段数だけ縮小 (カンプ: 0.8 / 0.9 / 1.0) */
-  const sc = [0, 1, 2].map(i => 1 - Math.min(2, Math.max(0, arr - i)) * 0.1 * c.depth);
-  /* 3枚とも同じ位置に着地する (ズレを付けたい時だけ step を使う) */
   const CASE_TOP = caseTop(), CASE_H = caseH();
-  const tops = [0, 1, 2].map(i => CASE_TOP + i * c.step);
+  const step = CASE_H + c.gap;              // カード1枚ぶんの送り量
+  /* 2枚ぶん送ると3枚とも上端に重なりきる */
+  const offset = seg(p, 0.06, 0.94, easeIO) * step * 2;
 
   caseEls.cards.forEach((el, i) => {
-    /* 1枚目はその場でブラー出現、2枚目以降は画面の下から上がってきて所定の位置に貼り付く */
-    const k = i === 0 ? card0In : clamp01(arr - (i - 1));
-    const from = i === 0 ? tops[0] + 60 : DH + 40;
-    const y = from + (tops[i] - from) * k;
+    const natural = i * step - offset;      // 0未満 = 上端に貼り付いている
+    const y = CASE_TOP + Math.max(0, natural) + (1 - inK[i]) * 60;
+    /* 自分の上に何枚積まれたか = 奥行きの段数 (カンプ: 0.8 / 0.9 / 1.0) */
+    const depth = Math.min(2, Math.max(0, -natural / step));
+    const sc = 1 - depth * 0.1 * c.depth;
     el.style.transformOrigin = '50% 0%';
-    el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc[i].toFixed(4)})`;
-    el.style.opacity = Math.min(1, k * 3).toFixed(3);
+    el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc.toFixed(4)})`;
+    el.style.opacity = Math.min(1, inK[i] * 3).toFixed(3);
     /* ブラーは出てくる間だけ (絵コンテ: カードは3つ順番にブラーで出てくる) */
-    const bl = (1 - k) * c.inBlur;
+    const bl = (1 - inK[i]) * c.inBlur;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
     el.style.zIndex = i + 1;
   });
@@ -2776,7 +2802,7 @@ function updateCases(p) {
 /* 各セクションの「自動再生の開始時刻」をまとめて初期化する。
    通常はリプレイさせないので触らないが、「↺ 最初から」と検証用フックからだけ呼ぶ */
 function resetSectionClocks() {
-  visAutoT0 = null; visAutoDone = false; visMoveT0 = null;
+  visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1;
   resT0 = null; resT = -1;
   devHoldT0 = null; devScreenT0 = null; devStarted = false;
 }
@@ -3070,6 +3096,9 @@ if (window.Lenis && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     easing: t => 1 - Math.pow(1 - t, 5),            // easeOutQuint (トークンと同じカーブ)
     smoothWheel: true,
     syncTouch: false,                               // スマホは端末標準に任せる
+    /* ⚠️ 調整パネルの中でホイールを回した時にページが動かないようにする。
+       これが無いと Lenis が wheel を全部さらってしまい、パネル内スクロールが効かない */
+    prevent: node => !!(node && node.closest && node.closest('.tools')),
   });
 }
 
@@ -3375,8 +3404,7 @@ function buildPanel() {
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
   sub(catCase, '重なり');
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%'));
-  /* 0 = 3枚が完全に同じ位置で重なる。上げると後のカードほど下にずれて奥が覗く */
-  rows.push(slider('重なりのズレ', 0, 200, 2, () => sv().cases.step, v => sv().cases.step = v, v => v + 'px'));
+  rows.push(slider('カードの間隔', 0, 120, 4, () => sv().cases.gap, v => sv().cases.gap = v, v => v + 'px'));
 
   /* ボタン */
   const btns = document.createElement('div');
@@ -3424,6 +3452,39 @@ applyMarquee();
 
 /* パネル開閉 */
 const panel = document.getElementById('panel');
+/* ===== 調整パネルの移動 (ヘッダーをドラッグ) =====
+   .tools は既定で right/bottom 固定。掴んだら left/top 指定に切り替える */
+(() => {
+  const tools = document.querySelector('.tools');
+  const head = document.getElementById('panelHead');
+  let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
+  head.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    const r = tools.getBoundingClientRect();
+    tools.style.left = r.left + 'px';
+    tools.style.top = r.top + 'px';
+    tools.style.right = 'auto';
+    tools.style.bottom = 'auto';
+    sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+    moved = false; dragging = true;
+    head.setPointerCapture(e.pointerId);
+  });
+  head.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+    const w = tools.offsetWidth, h = tools.offsetHeight;
+    tools.style.left = Math.min(Math.max(0, ox + dx), innerWidth - Math.min(w, 120)) + 'px';
+    tools.style.top = Math.min(Math.max(0, oy + dy), innerHeight - 40) + 'px';
+  });
+  head.addEventListener('pointerup', e => {
+    dragging = false;
+    try { head.releasePointerCapture(e.pointerId); } catch (err) {}
+  });
+  /* ドラッグした時は開閉トグルを発火させない */
+  head.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); moved = false; } }, true);
+})();
+
 document.getElementById('panelHead').addEventListener('click', () => {
   panel.classList.toggle('closed');
 });
