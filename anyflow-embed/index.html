@@ -2103,7 +2103,8 @@ const DEFAULTS = {
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
       miniScale: 0.16,   // ミニ楕円の縮小率 (2026-08-15: もっと小さく始める指定)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
-      spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
+      spinSpeed: 1,      // (未使用。周回数で決めるようになった)
+      spinLaps: 1,       // 止まるまでに何周するか (2026-08-15: きっちり1周)
       spinHold: 0.5,     // 左下に着いてから止まり始めるまでの秒数
                          /* ⚠️ spinHold + spinBrake = 1.35 にすると、役割名(コネクタ等)が
                             Point 02 とちょうど同じタイミングで出る (2026-08-15 指定) */
@@ -2209,7 +2210,9 @@ const DEFAULTS = {
              / ゆらぎクロスは平行から始める / パネルの確定項目を整理 / 滑らかさ既定3 */
 /* v50→v51: ビジョンの2行を上下中央へ / 実績も再生中はスクロールを止める
              / 開発者体験の日本語見出しを4px下げ / モックの会話をスピーディーに */
-const STORAGE_KEY = 'anyflow-embed-anim-v51';
+/* v51→v52: ドットはきっちり1周して止まる / 実績はタイピング廃止＆カウントアップ
+             / ラベルと数字を右端そろえ / パネルをいじったらその場でリプレイ */
+const STORAGE_KEY = 'anyflow-embed-anim-v52';
 
 let params = load();
 function load() {
@@ -2959,10 +2962,13 @@ function updateVision(p) {
   /* 減速中の角速度は v×(1-u)^n。積分すると回転量は
        v·brake·(1-(1-u)^(n+1))/(n+1)
      n が大きいほど「はじめにグッと落ちて、最後は長く尾を引く」止まり方になる */
+  /* 【2026-08-15】「ちょうど◯周して止まる」形にする。
+     総回転量を 360×spinLaps に固定し、そこから速さ v を逆算する。
+     こうすると、時間割を変えても必ずきっちり周回して止まる */
   const SP = VIS_SPINS[(params.visSpin || 1) - 1];
-  const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed * SP.fast;
   const n1 = SP.n + 1;
-  const totalRot = v * brakeStart + v * brake / n1;
+  const totalRot = 360 * c.spinLaps * params.direction;
+  const v = totalRot / Math.max(0.01, brakeStart + brake / n1);
   let rot = 0;
   if (S > 0) {
     if (S < brakeStart) rot = v * S;
@@ -3035,17 +3041,15 @@ let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
 /* ランダム数字 → 左の桁から順に確定するカウンター */
+/* 数字は 0 から目標値まで【下から上へ】上がっていき、徐々に減速して止まる。
+   ⚠️ 以前はランダムな数字がパラパラ変わる演出だったが、2026-08-15 にこちらへ変更。
+   桁数は最初からそろえておく（数字の幅が動くとガタつくため）*/
 function setCounter(el, finalStr, suffix, t, dur) {
-  const chars = finalStr.split('');
-  const nDigits = chars.filter(ch => /\d/.test(ch)).length;
-  let di = 0, out = '';
-  for (const ch of chars) {
-    if (!/\d/.test(ch)) { out += ch; continue; }
-    const lockAt = dur * (di + 1) / nDigits;
-    out += (t >= lockAt) ? ch : String(Math.floor(Math.random() * 10));
-    di++;
-  }
-  el.textContent = out + suffix;
+  const target = parseFloat(finalStr);
+  const dec = (finalStr.split('.')[1] || '').length;
+  const k = t <= 0 ? 0 : easeOutQ(clamp01(t / Math.max(0.1, dur)));
+  const now = target * k;
+  el.textContent = now.toFixed(dec) + suffix;
 }
 
 /* 全部出そろうまでの秒数 (下段カウンターの終わり = 2.9 + countDur 2.2) */
@@ -3084,16 +3088,17 @@ function updateResults(p) {
   if (t < 0) {
     resEls.dark.style.opacity = 0;
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { el.style.opacity = 0; });
-    resHeadChars.forEach(sp => { sp.style.opacity = 0; });
+    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
+    resEls.head.style.opacity = 0;
     return;
   }
 
   if (patB) {
-    /* ---- 案B: 見出しをタイピング。始まると同時に、他は全部ブラーでゆったり出る ---- */
-    const n = resHeadChars.length;
-    resHeadChars.forEach((sp, i) => {
-      sp.style.opacity = (t >= c.typeAt + i * c.charDur) ? 1 : 0;
-    });
+    /* ---- 案B: 【2026-08-15】タイピングをやめ、見出しもブラーでゆったり出す ---- */
+    const headK = easeOutQ(clamp01((t - c.typeAt) / c.softDur));
+    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
+    resEls.head.style.opacity = headK.toFixed(3);
+    resEls.head.style.filter = headK >= 1 ? '' : `blur(${((1 - headK) * 12).toFixed(2)}px)`;
     const soft = easeOutQ(clamp01((t - c.typeAt) / c.softDur));   // ゆったり出す
     rv(resEls.main,  1, 0);                     // 箱は出したまま(中の文字で見せる)
     resEls.main.style.filter = '';
@@ -3107,6 +3112,7 @@ function updateResults(p) {
   } else {
     /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
+    resEls.head.style.opacity = 1; resEls.head.style.filter = '';
     const kTx = easeOutQ(clamp01((t - 0.1) / c.softDur));
     rv(resEls.main,  kTx, 8, 14);
     resEls.main.querySelector('.res-line').style.opacity = 1;
@@ -4161,6 +4167,25 @@ const body = document.getElementById('panelBody');
 
 /* 既定値をそのまま読むためのヘルパー。
    スライダーの get は params を参照する閉包なので、一瞬だけ params を初期値に差し替えて呼ぶ */
+/* 数値をいじったら「いま画面に映っているセクション」の時計だけ巻き戻して、
+   その場でアニメを流し直す。リロードもパネルの開き直しも要らなくする。
+   ⚠️ ドラッグ中に毎回やると重いので、0.25秒手が止まってからにする */
+let replayTimer = 0;
+function replayHere(now) {
+  clearTimeout(replayTimer);
+  const doIt = () => {
+    for (const k in SECS) {
+      const r = SECS[k].getBoundingClientRect();
+      if (r.top < innerHeight && r.bottom > 0) resetSectionClock(k);
+    }
+    /* キービジュアルは時計そのものを戻す */
+    const kv = document.querySelector('.hero') || document.body;
+    if (kv && kv.getBoundingClientRect().bottom > 0 && scrollY < innerHeight) elapsed = 0;
+    renderFrame();
+  };
+  if (now) doIt(); else replayTimer = setTimeout(doIt, 250);
+}
+
 function defaultOf(get) {
   const keep = params;
   try { params = DEFAULTS; return get(); }
@@ -4191,7 +4216,9 @@ function slider(label, min, max, step, get, set, fmt, hint) {
     set(parseFloat(input.value));
     val.textContent = f(parseFloat(input.value));
     save();
+    replayHere();            /* 手が止まったら、その場で流し直す */
   });
+  input.addEventListener('change', () => replayHere(true));
   row.append(lab, input, val);
   row._sync = () => { input.value = get(); val.textContent = f(get()); };
   mount.appendChild(row);
@@ -4255,7 +4282,7 @@ function segRow(label, opts, getDir, setDir) {
   const bs = opts.map(([text, value]) => {
     const b = document.createElement('button');
     b.textContent = text;
-    b.onclick = () => { setDir(value); sync(); };
+    b.onclick = () => { setDir(value); sync(); replayHere(true); };
     seg.appendChild(b);
     return [b, value];
   });
@@ -4285,6 +4312,7 @@ function pillRow(items, isOn, onPick) {
       row.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', isOn(items[j], j)));
       save();
       buildPanel();
+      replayHere(true);      /* 案を切り替えたら、その場で流し直す */
     };
     row.appendChild(b);
   });
@@ -4459,8 +4487,8 @@ function buildPanel() {
   rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
     '楕円の線の太さ。'));
   sub(catVis, 'ドットの周回');
-  rows.push(slider('速さ(×KV)', 0.5, 5, 0.1, () => sv().vision.spinSpeed, v => sv().vision.spinSpeed = v, v => '×' + v.toFixed(1),
-    'キービジュアルのドットの何倍の速さで回るか。'));
+  rows.push(slider('止まるまでの周回数', 0.25, 4, 0.25, () => sv().vision.spinLaps, v => sv().vision.spinLaps = v, v => v.toFixed(2) + '周',
+    '止まるまでに何周するか。1.00周ならきっちり一周して元の位置で止まる。'));
   rows.push(slider('たっぷり回す時間', 0.5, 10, 0.1, () => sv().vision.spinHold, v => sv().vision.spinHold = v, v => v.toFixed(1) + 's',
     '定位置に着いてから止まり始めるまで。この間に Platform と2つの価値が出る。'));
   rows.push(slider('止まるまで', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + 's',
