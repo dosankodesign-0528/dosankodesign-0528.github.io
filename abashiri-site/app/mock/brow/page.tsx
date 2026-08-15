@@ -9,7 +9,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import IllustTamannee from "@/components/IllustTamannee";
 import { DEFAULT_BROW, type BrowConfig } from "@/components/browConfig";
@@ -58,8 +58,8 @@ export default function BrowTunePage() {
 
   return (
     <>
-      <Stage illustration="tamannee" brow={brow}>
-        <TopMock intro={2} />
+      <Stage illustration="tamannee" face={{ browLift: brow.lift, hoverPad: brow.hoverPad }}>
+        <TopPage intro={2} />
       </Stage>
 
       <TunePanel title="🤨 眉毛ホバー調整">
@@ -74,7 +74,7 @@ export default function BrowTunePage() {
               }}
             >
               <IllustTamannee
-                browLift={loupeOver ? brow.lift : 0}
+                lift={loupeOver ? brow.lift : 0}
                 className="size-full"
               />
             </div>
