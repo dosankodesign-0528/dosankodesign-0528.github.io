@@ -543,21 +543,12 @@
     width: 840.6px;
     height: 504.37px;
     transform-origin: 50% 50%;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
     will-change: transform, opacity;
     pointer-events: none;
   }
-  .dm-ghost .dg-panel {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 24px;
-    background: rgba(255,255,255,.06);
-    box-shadow: 0 24px 48px rgba(0,0,0,.25);
-    overflow: hidden;
-  }
-  .dm-ghost .dg-side { flex: 0 0 52px; background: rgba(255,255,255,.07); }
-  .dm-ghost .dg-body { flex: 1 0 0; }
+  /* 中身は本物と同じ .dm-panel をそのまま使う (手前に回ってきた時に見た目が変わらないように) */
   .dev-mock {
     position: absolute;
     left: 0;
@@ -1463,9 +1454,37 @@
         <span class="dc-one">開発環境に柔軟に適応</span>
       </div>
       <div class="dev-group">
-      <!-- カンプ 14924:21985: モックの後ろに2枚控える。ホバーで前後が入れ替わる -->
-      <div class="dm-ghost" id="dmGhost0" aria-hidden="true"><div class="dg-panel"><div class="dg-side"></div><div class="dg-body"></div></div></div>
-      <div class="dm-ghost" id="dmGhost1" aria-hidden="true"><div class="dg-panel"><div class="dg-side"></div><div class="dg-body"></div></div></div>
+      <!-- カンプ 14924:21985: 後ろに2枚控える。ホバーで輪の上を横に回って入れ替わる(案1)。
+           ⚠️ 簡易パネルではなく【本物と同じ作り】にすること。手前に来た時に見た目が変わらないため -->
+      <div class="dm-ghost" id="dmGhost0" aria-hidden="true">
+        <div class="dm-panel is-term">
+          <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
+          <div class="dm-editor"><div class="dm-code code" id="dmCodeCli"></div></div>
+        </div>
+      </div>
+      <div class="dm-ghost" id="dmGhost1" aria-hidden="true">
+        <div class="dm-panel is-sdk">
+          <div class="dm-editor">
+            <div class="dm-side">
+              <img class="dm-logo" src="assets/mock/logo.svg" alt="">
+              <div class="dm-divider"></div>
+              <div class="dm-icons">
+                <img src="assets/mock/side1.svg" alt=""><img src="assets/mock/side2.svg" alt="">
+                <img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt="">
+                <img src="assets/mock/side2.svg" alt="">
+              </div>
+            </div>
+            <div class="dm-code code" id="dmCodeSdk"></div>
+          </div>
+          <div class="dm-sdk">
+            <div class="dm-chat-head">
+              <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">SDK Reference</span>
+              <img src="assets/mock/ellipsis.svg" alt="">
+            </div>
+            <div class="dm-sdk-list" id="dmSdkList2"></div>
+          </div>
+        </div>
+      </div>
       <div class="dev-mock" id="devMock">
         <div class="dm-panel" id="dmPanel">
           <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
@@ -2056,11 +2075,13 @@ const DEFAULTS = {
       moveLead: 0.35,    // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
       moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
-      miniScale: 0.26,   // ミニ楕円の縮小率
+      miniScale: 0.16,   // ミニ楕円の縮小率 (2026-08-15: もっと小さく始める指定)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
-      spinHold: 1.9,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
-      spinBrake: 1.2,    // 減速して止まるまでの秒数
+      spinHold: 0.5,     // 左下に着いてから止まり始めるまでの秒数
+                         /* ⚠️ spinHold + spinBrake = 1.35 にすると、役割名(コネクタ等)が
+                            Point 02 とちょうど同じタイミングで出る (2026-08-15 指定) */
+      spinBrake: 0.85,   // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
       /* 「2つの価値」まわりの位置ずらし(px)。カンプ位置からの相対。
          2026-08-15 にヒデさんが調整パネルで詰めた値を既定にした */
@@ -2088,7 +2109,7 @@ const DEFAULTS = {
       outTo: 0.86,     // 案B: ここで完全に暗い背景になる (短くして一気に切り替える)
       outBlur: 22,     // 消える時のぼかし量
     },
-    dev:     { lenVh: 200, swapBlur: 14 },   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
+    dev:     { lenVh: 200, swapBlur: 14, stackDur: 1.3 },   // stackDur=カードが回って入れ替わる秒数   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 200, depth: 1, inBlur: 20, gap: 44, playSec: 5.4 },
   },
@@ -2154,7 +2175,9 @@ const DEFAULTS = {
              / 章②を短縮しリストは一括 / ホバーは下線＋白文字 / 開発者体験②を3枚スタックに */
 /* v45→v46: 実績→開発者体験の暗幕を fixed にして流れないように / つなぎの1画面をモックと見出しで埋める
              / 2つの価値の位置を調整値で既定化 / ホバー切替のブラーを廃止 */
-const STORAGE_KEY = 'anyflow-embed-anim-v46';
+/* v46→v47: 軌道の出はじめを小さく / 役割名を Point02 と同時に / カード入れ替えを案1(横に回る)で本実装
+             / 実績の開始をビューポート中央に戻す */
+const STORAGE_KEY = 'anyflow-embed-anim-v47';
 
 let params = load();
 function load() {
@@ -2906,7 +2929,7 @@ function updateVision(p) {
   rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = S < 0 ? -99 : S - (brakeStart + brake);
-  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - 0.1 - i * 0.14) / T_IN)), B));
+  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -2974,7 +2997,9 @@ function updateResults(p) {
   /* 【2026-08-15】「ビューポートに入った段階で始めてよい（中央でなくてよい）」指定。
      ピンで固定して止めるのはやめ、セクションが画面に入った時刻を起点に時間で再生する */
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
-  if (resT0 === null && (pre > 0.12 || p > 0.002)) resT0 = elapsed;
+  /* 【2026-08-15】開始は「セクションがビューポート中央に来てから」に戻した。
+     固定(ピン)が始まった瞬間 = ステージが画面の上下中央に収まった瞬間 */
+  if (resT0 === null && p > 0.0005) resT0 = elapsed;
   const t = resT0 === null ? -1 : elapsed - resT0;
 
   /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
@@ -3090,15 +3115,15 @@ const DEV_P = {
   h2:    [0.560, 0.660],  // ②見出し (移動の途中から重ねて出す)
   list:  [0.600, 0.720],  // ②右のリストは【一括】で出す
 };
-/* カンプ 14924:21985 の実測から起こしたカードスタック。
-   手前(実物) 0.905倍 / 中 0.814倍 / 奥 0.733倍。中は左に、奥は右にずらして端をのぞかせる。
-   選ばれている画面が変わると、この3つの席を回して入れ替わる（3Dっぽく見せる） */
-/* カンプの実測（3枚の中心座標の差）から起こした値
-   手前 中心(498.3, 549.4) / 中 中心(403.8, 552.4) / 奥 中心(626.8, 533.1) */
+/* 【案1「横に回る」】ヒデさん採用 (2026-08-15)
+   3枚が横一列の輪の上を回り、選ばれたカードが手前へ回り込んでくる。
+   席は カンプ 14924:21985 の実測（手前0.905 / 中0.814 / 奥0.733 倍）を土台に、
+   Y軸まわりの回転と奥行き(Z)を足して輪に見せている。
+   動きの速さはサイト共通の「大きい移動 1.3秒 + ぬるっと止まるカーブ」。 */
 const DEV_STACK = [
-  { sc: 0.905, dx:     0, dy:    0, op: 1.00, z: 3 },   /* 手前 = 実物のモック */
-  { sc: 0.814, dx: -94.5, dy:    3, op: 0.55, z: 2 },   /* 中 = 左にのぞく */
-  { sc: 0.733, dx: 128.5, dy:  -16, op: 0.38, z: 1 },   /* 奥 = 右にのぞく */
+  { sc: 0.905, dx:    0, dy:   0, dz:    0, ry:   0, op: 1.00, z: 3 },   /* 手前 */
+  { sc: 0.870, dx: -150, dy:   6, dz: -120, ry:  16, op: 0.55, z: 2 },   /* 左後ろ */
+  { sc: 0.790, dx:  150, dy: -12, dz: -120, ry: -16, op: 0.38, z: 1 },   /* 右後ろ */
 ];
 const DEV_SCREENS = ['api', 'cli', 'sdk'];
 
@@ -3222,6 +3247,36 @@ const dmSdkRowEls = (() => {
   });
 })();
 
+/* ---- 後ろに控える2枚(CLI / SDK)の中身。手前に回ってきた時に見た目が変わらないよう
+       本物と同じ組み方で、静止した状態で置いておく ---- */
+function dmFillStatic(rootId, key) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  root.innerHTML = '';
+  (DM_CODE[key] || []).forEach(tokens => {
+    const line = document.createElement('div');
+    line.className = 'dm-line';
+    if (!tokens.length) line.innerHTML = '&nbsp;';
+    else tokens.forEach(([cls, text]) => {
+      const sp = document.createElement('span');
+      sp.className = cls; sp.textContent = text; line.appendChild(sp);
+    });
+    root.appendChild(line);
+  });
+}
+function dmFillSdkList(rootId) {
+  const root = document.getElementById(rootId);
+  if (!root) return;
+  root.innerHTML = '';
+  DM_SDK_ROWS.forEach(([ns, m, t]) => {
+    const el = document.createElement('div');
+    el.className = 'dm-sdk-row';
+    el.style.opacity = 1;
+    el.innerHTML = `<span class="dot"></span><span><span class="k">${ns}</span>${m}</span><span class="t">${t}</span>`;
+    root.appendChild(el);
+  });
+}
+
 const dmCodeRoot = document.getElementById('dmCode');
 const dmLoadRoot = document.getElementById('dmLoad');
 let dmLineEls = [], dmCurScreen = null;
@@ -3256,6 +3311,9 @@ function dmBuildScreen(key) {
   });
 }
 dmBuildScreen('editor');
+dmFillStatic('dmCodeCli', 'cli');
+dmFillStatic('dmCodeSdk', 'sdk');
+dmFillSdkList('dmSdkList2');
 
 /* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
@@ -3455,24 +3513,41 @@ function updateDev(pRaw) {
      ホバーで選択が変わると席が回り、3Dっぽく入れ替わって見える */
   const stackK = patStack ? mv : 0;                 // 左へ着くにつれてスタックが開く
   const sel = Math.max(0, DEV_SCREENS.indexOf(screen));
-  devEls.ghosts.forEach((gEl, i) => {
-    if (!gEl) return;
-    /* 実物が「手前」の席。影武者は選択に応じて中/奥の席を入れ替わる */
-    const seat = DEV_STACK[1 + ((i + sel) % 2)];
-    const gx = tx + seat.dx * stackK, gy = ty + seat.dy * stackK;
-    const gs = (0.82 + 0.18 * inM1) * mk * (1 + (seat.sc - 1) * stackK);
-    gEl.style.opacity = (op * seat.op * stackK).toFixed(3);
-    gEl.style.zIndex = seat.z;
-    gEl.style.transform =
-      `translate(${gx.toFixed(2)}px, ${gy.toFixed(2)}px) scale(${gs.toFixed(4)}) rotateY(${(seat.dx > 0 ? -6 : 6) * stackK}deg)`;
-    gEl.style.filter = bl > 0.05 ? `blur(${(bl * 0.6).toFixed(2)}px)` : '';
+  /* 3枚を輪の上に並べる。選ばれたカードが席0(手前)に来るように席を回す。
+     ⚠️ CSS の transition には任せない。位置は毎フレーム JS が書き換えるので、
+        transition を掛けると常に追いかけっこになって動きが濁る。
+        サイトの他の部分と同じく【JS で席から席へ補間】する (1.3秒・ぬるっと止まるカーブ) */
+  const cards = [devEls.mock, devEls.ghosts[0], devEls.ghosts[1]];   /* 0=API 1=CLI 2=SDK */
+  cards.forEach((el, i) => {
+    if (!el) return;
+    const seatI = (i - sel + 3) % 3;
+    if (el._seat !== seatI) {
+      el._from = el._cur || DEV_STACK[seatI];   /* いまの見た目から次の席へ動かす */
+      el._seat = seatI;
+      el._t0 = elapsed;
+    }
+    const to = DEV_STACK[seatI];
+    const kk = el._t0 == null ? 1 : easeOutQ(clamp01((elapsed - el._t0) / c.stackDur));
+    const cur = {
+      sc: el._from.sc + (to.sc - el._from.sc) * kk,
+      dx: el._from.dx + (to.dx - el._from.dx) * kk,
+      dy: el._from.dy + (to.dy - el._from.dy) * kk,
+      dz: el._from.dz + (to.dz - el._from.dz) * kk,
+      ry: el._from.ry + (to.ry - el._from.ry) * kk,
+      op: el._from.op + (to.op - el._from.op) * kk,
+    };
+    el._cur = cur;
+    const cx2 = tx + cur.dx * stackK, cy2 = ty + cur.dy * stackK;
+    const cs = (0.82 + 0.18 * inM1) * mk * (1 + (cur.sc - 1) * stackK);
+    /* 手前(席0)は常に見える。後ろの2枚は②で開いていく分だけ見える */
+    el.style.opacity = (op * (seatI === 0 ? 1 : cur.op * stackK)).toFixed(3);
+    /* 重なり順は今の大きさで決める。回っている途中でも前後が破綻しない */
+    el.style.zIndex = Math.round(cur.sc * 1000);
+    el.style.transform =
+      `translate3d(${cx2.toFixed(2)}px, ${cy2.toFixed(2)}px, ${(cur.dz * stackK).toFixed(1)}px)` +
+      ` rotateY(${(cur.ry * stackK).toFixed(2)}deg) scale(${cs.toFixed(4)})`;
+    el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
   });
-  devEls.mock.style.zIndex = DEV_STACK[0].z;
-  const frontSc = sc * (1 + (DEV_STACK[0].sc - 1) * stackK);
-  const frontY = ty + DEV_STACK[0].dy * stackK;
-  devEls.mock.style.opacity = op.toFixed(3);
-  devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${frontY.toFixed(2)}px) scale(${frontSc.toFixed(4)})`;
-  devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
 
   /* 最後にスクロールで背景がグラデーションで明るい元の背景へ戻る */
   devBg2.style.opacity = fin.toFixed(3);
@@ -4363,8 +4438,8 @@ function buildPanel() {
   rows.push(slider('尺', 110, 1600, 10, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh',
     '大きいほど、章から章へ送るのに必要なスクロール量が増える。小さいと軽いひと振りで次の章へ。'));
   sub(catDev, '演出');
-  rows.push(slider('切替ブラー量', 0, 24, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
-    'API/CLI/SDK を切り替える瞬間の、モックのぼけ具合。'));
+  rows.push(slider('カードが回る時間', 0.4, 3, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + 's',
+    'API/CLI/SDK を切り替えた時に、3枚が回って入れ替わるのにかける時間。大きいほどゆったり。'));
 
   /* ========== 🗂 導入事例 ========== */
   const catCase = category('🗂 導入事例', false);
