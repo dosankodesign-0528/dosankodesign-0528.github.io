@@ -37,17 +37,32 @@ npx vercel redeploy abashiri-site.vercel.app
 | [components/bubbleConfig.ts](components/bubbleConfig.ts) | 吹き出しの形の補正、しっぽが伸びる演出、ムニムニ |
 | [components/layoutConfig.ts](components/layoutConfig.ts) | キービジュアルの配置 |
 | [components/birdConfig.ts](components/birdConfig.ts) | カモメの位置とふわふわ |
-| [components/browConfig.ts](components/browConfig.ts) | 人物イラストの眉毛ピクッ（動く量・テンポ・左右） |
+| [components/faceConfig.ts](components/faceConfig.ts) | 人物イラストがマウスに反応する動き（眉・黒目） |
 
-## 人物イラストがベクターになっている理由
+## 人物イラストがマウスに反応する仕組み
 
-右下の「たまんねーっ」の人物は、もとは 1枚のPNGだったので眉毛だけ動かせなかった。
+右下の「たまんねーっ」の人物は、もとは 1枚のPNGだったので眉毛も黒目も動かせなかった。
 いまは [components/illustMainPaths.ts](components/illustMainPaths.ts) にベクター化して
-持っていて、**眉毛だけ別レイヤー**になっている。眉が上にずれても下から肌色の
-レイヤーが出てくるので、眉があった跡は残らない。
+持っていて、**眉毛と黒目が別レイヤー**になっている。
 
-眉毛はキラキラ（`.sparkle-hop`）と `--hop-cycle` を共有していて、必ず同じ瞬間に
-パキッと切り替わる。動きの量は `browConfig.ts` の `lift`（画面上のpx）。
+- 眉が上にずれても、下から**肌色**レイヤーが出るので跡は残らない
+- 黒目がずれても、下から**白目**レイヤーが出るので跡は白いまま
+- 黒目は**白目の形でクリップ**してあるので、動かしても目の外へはみ出さない
+
+反応のさせ方は [components/useFaceReaction.ts](components/useFaceReaction.ts)。
+⚠️ イラストは `pointer-events-none`（クリックがすり抜ける）のままにしたいので、
+**CSS の `:hover` は使えない**。使うと後ろのキービジュアルのボタンをイラストが
+覆ってしまう。なので window でカーソルを監視して、イラストの矩形に入ったかを
+自前で判定している。
+
+- **眉**: カーソルがイラストに乗っている間だけ持ち上がる
+- **目**: `follow` ならページのどこにいてもその方向を見る／`front` なら乗った時だけ正面
+- **スマホ**: 指で触っている間だけ反応する（離すと戻る）
+- 動きは全部「パキッと1コマ」。トランジションは掛けていない
+- `prefers-reduced-motion` の時は動かさない
+
+量やモードは [components/faceConfig.ts](components/faceConfig.ts) で、
+`/mock/face` の調整パネルから触りながら決められる。
 
 イラストを描き直した時は [scripts/illust-trace.py](scripts/illust-trace.py) で
 `illustMainPaths.ts` を作り直す（手で書き換えない）。もとのPNGは
@@ -65,5 +80,5 @@ npx vercel redeploy abashiri-site.vercel.app
 | `/mock/bubble/tune` | 吹き出しの数値を触りながら確認する調整パネル |
 | `/mock/tune` | 登場タイミングの調整パネル |
 | `/mock/illust` | 人物イラストのスイング |
-| `/mock/brow` | 眉毛ピクッの調整パネル（顔を拡大した確認窓つき） |
+| `/mock/face` | 顔の反応（眉・黒目）の調整パネル（顔を拡大した確認窓つき） |
 | `/mock/kv` / `/mock/layout` / `/mock/shadow` / `/mock/bird` | キービジュアル各種 |

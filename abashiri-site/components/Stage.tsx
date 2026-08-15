@@ -1,14 +1,15 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Bird from "./Bird";
 import IllustTamannee from "./IllustTamannee";
+import { useFaceReaction } from "./useFaceReaction";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
-import { mergeBrow, type BrowConfig } from "./browConfig";
+import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 
 /*
@@ -106,8 +107,8 @@ type StageProps = {
   onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
   /** 1〜5: 人物イラストのスイングパターン（既定は採用版の案4） */
   illustAnim?: number;
-  /** 眉毛ピクッの量とテンポ（browConfig.ts） */
-  brow?: Partial<BrowConfig> | null;
+  /** マウスに反応する顔の動き（faceConfig.ts） */
+  face?: Partial<FaceConfig> | null;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
 };
@@ -125,11 +126,15 @@ export default function Stage({
   birdsEditable = false,
   onBirdMove,
   illustAnim = 4,
-  brow,
+  face,
   layout,
 }: StageProps) {
   const L = mergeLayout(layout);
-  const br = mergeBrow(brow);
+  const fc = mergeFace(face);
+  /* イラストは pointer-events-none のままにしたいので、:hover ではなく
+     カーソルの座標を見て自前で判定する（詳細は useFaceReaction.ts） */
+  const illustRef = useRef<HTMLDivElement>(null);
+  const faceState = useFaceReaction(illustRef, fc);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
@@ -245,8 +250,6 @@ export default function Stage({
             ブラーで出たあと、一回だけクルンと一回転（軽いバウンスつき）して目立たせる */}
         <motion.div
           className="pointer-events-none absolute right-0 top-[600px] z-30 h-[401px] w-[366px] overflow-clip"
-          /* 眉毛とキラキラはこの拍を共有して、同じ瞬間にパキッと切り替わる */
-          style={{ "--hop-cycle": `${br.cycle}s` } as React.CSSProperties}
           initial={
             illustEntrance
               ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
@@ -266,12 +269,13 @@ export default function Stage({
             <>
               {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.div
+                ref={illustRef}
                 className="absolute left-[1px] top-[44px] h-[357px] w-[284px] [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.15))]"
                 style={ia.style}
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
               >
-                <IllustTamannee brow={br} className="size-full" />
+                <IllustTamannee face={faceState} className="size-full" />
               </motion.div>
               {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
               <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">

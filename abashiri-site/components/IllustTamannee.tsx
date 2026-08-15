@@ -1,29 +1,60 @@
 /*
  * 人物イラスト「たまんねーっ」（ベクター版）
  *
- * もとは 1枚の PNG だったので眉毛だけ動かせなかった。トレースして
- * 「肌 → 頬 → 髪 → 線」の色レイヤーに分け、眉毛だけ別の SVG に切り出してある。
- * 眉が上にずれても下から肌色レイヤーが出てくるので、抜けた跡は残らない。
+ * もとは 1枚の PNG だったので眉毛も黒目も動かせなかった。トレースして
+ * 「肌 → 白目 → ほお → 髪 → 線」の色レイヤーに分け、眉毛と黒目だけ
+ * 別データに切り出してある。
+ *   - 眉が上にずれても、下から肌色レイヤーが出るので跡は残らない
+ *   - 黒目がずれても、下から白目レイヤーが出るので跡は白いまま
+ *   - 黒目は白目の形でクリップしてあるので、動かしても目の外へはみ出さない
  *
- * 眉とキラキラは同じ --hop-cycle（Stage 側で指定）で動くので、
- * 必ず同じ瞬間にパキッと切り替わる。
+ * 動きは「パキッと1コマ」。トランジションは掛けない。
  */
+import { memo, useId } from "react";
 import {
   BROW_D,
-  BROW_FILL,
+  EYE_CLIP_D,
   ILLUST_FLIP,
-  ILLUST_LAYERS,
+  ILLUST_LAYERS_OVER,
+  ILLUST_LAYERS_UNDER,
   ILLUST_VIEWBOX,
+  MOVING_FILL,
+  PUPIL_D,
+  type IllustLayer,
 } from "./illustMainPaths";
-import { DEFAULT_BROW, type BrowConfig } from "./browConfig";
+import type { FaceState } from "./useFaceReaction";
+
+/*
+ * 動かす量は画面px で受け取るが、SVG の中の transform は viewBox の単位で効く。
+ * このイラストは Stage でも調整パネルでも 284x357 で描画される前提なので、
+ * その比率で換算する（size を変える時はここも直すこと）。
+ */
+export const ILLUST_RENDER = { w: 284, h: 357 } as const;
+const UNIT = ILLUST_VIEWBOX.h / ILLUST_RENDER.h;
 
 const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
 /* もとの <img> が object-cover だったので、SVG も同じ詰め方に合わせる */
 const FIT = "xMidYMid slice";
 
-function Paths({ d, fill }: { d: readonly string[]; fill: string }) {
+function Layers({ layers }: { layers: IllustLayer[] }) {
   return (
-    <g transform={ILLUST_FLIP} fill={fill} stroke="none">
+    <>
+      {layers.map((layer) => (
+        <g key={layer.name} transform={ILLUST_FLIP} fill={layer.fill} stroke="none">
+          {layer.d.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </g>
+      ))}
+    </>
+  );
+}
+/* 動かないところは描き直さない（カーソルに合わせて何度も再描画されるため） */
+const StaticLayers = memo(Layers);
+
+function Moving({ d }: { d: readonly string[] }) {
+  return (
+    <g transform={ILLUST_FLIP} fill={MOVING_FILL} stroke="none">
       {d.map((path, i) => (
         <path key={i} d={path} />
       ))}
@@ -32,45 +63,52 @@ function Paths({ d, fill }: { d: readonly string[]; fill: string }) {
 }
 
 type Props = {
-  /** 眉の動き（browConfig.ts）。lift=0 で止まる */
-  brow?: BrowConfig;
+  /** いまの顔の状態（useFaceReaction が返す値）。単位は画面px */
+  face?: FaceState;
   /** 外枠（サイズ・影・位置）に当てるクラス */
   className?: string;
 };
 
-export default function IllustTamannee({ brow = DEFAULT_BROW, className }: Props) {
-  /* 動かさない眉も .brow-hop は付けたまま持ち上げ量を0にする。
-     クラスを付け外しするとアニメが再スタートして、キラキラと拍がズレるため */
-  const liftOf = (side: "left" | "right") =>
-    brow.target === "both" || brow.target === side ? brow.lift : 0;
+export default function IllustTamannee({ face, className }: Props) {
+  /* 同じページに複数置いてもクリップが混ざらないように id を分ける */
+  const clipId = `${useId()}-eye`;
+  const lift = -(face?.browLift ?? 0) * UNIT;
+  const ex = (face?.eyeX ?? 0) * UNIT;
+  const ey = (face?.eyeY ?? 0) * UNIT;
 
   return (
-    <div className={`relative ${className ?? ""}`}>
-      {/* 眉以外ぜんぶ。眉があった所は肌色で埋まっている */}
-      <svg
-        className="absolute inset-0 size-full"
-        viewBox={VIEW_BOX}
-        preserveAspectRatio={FIT}
-        aria-hidden
-      >
-        {ILLUST_LAYERS.map((layer) => (
-          <Paths key={layer.name} d={layer.d} fill={layer.fill} />
-        ))}
-      </svg>
+    <svg
+      className={className}
+      viewBox={VIEW_BOX}
+      preserveAspectRatio={FIT}
+      aria-hidden
+    >
+      <defs>
+        {/* clipPath の中に <g> は置けないので、変換は clipPath 自身に付ける */}
+        <clipPath id={clipId} transform={ILLUST_FLIP}>
+          {EYE_CLIP_D.map((d, i) => (
+            <path key={i} d={d} />
+          ))}
+        </clipPath>
+      </defs>
 
-      {/* 眉毛だけ別レイヤー。CSS で上下するので px はそのまま画面上の px */}
-      {(["left", "right"] as const).map((side) => (
-        <svg
-          key={side}
-          className="brow-hop absolute inset-0 size-full"
-          style={{ "--brow-lift": liftOf(side) } as React.CSSProperties}
-          viewBox={VIEW_BOX}
-          preserveAspectRatio={FIT}
-          aria-hidden
-        >
-          <Paths d={BROW_D[side]} fill={BROW_FILL} />
-        </svg>
-      ))}
-    </div>
+      <StaticLayers layers={ILLUST_LAYERS_UNDER} />
+
+      {/* 黒目。白目の形で切り抜いてあるので目の外には出ない */}
+      <g clipPath={`url(#${clipId})`}>
+        <g transform={`translate(${ex} ${ey})`}>
+          <Moving d={PUPIL_D.left} />
+          <Moving d={PUPIL_D.right} />
+        </g>
+      </g>
+
+      <StaticLayers layers={ILLUST_LAYERS_OVER} />
+
+      {/* 眉毛。上にずれた跡は下の肌色レイヤーが出る */}
+      <g transform={`translate(0 ${lift})`}>
+        <Moving d={BROW_D.left} />
+        <Moving d={BROW_D.right} />
+      </g>
+    </svg>
   );
 }
