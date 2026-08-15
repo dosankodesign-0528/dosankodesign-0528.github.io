@@ -1796,13 +1796,13 @@ const DEFAULTS = {
        自動パートの時間はすべて秒で指定する */
     vision:  {
       lenVh: 240,        // 尺。8.8割スクロールすると全部出そろい、残りで下へ抜ける
-      labelAt: 0.35,     // Our Vison がブラーで出る
-      labelDur: 1.4,     // その所要時間
-      line1At: 0.9,      // 1行目 (Our Vison に続けてすぐ)
-      line2Gap: 1.15,    // 2行目までの間 (1行目が出きってからスクロールで出す)
-      revealDur: 1.1,    // 1行の出現時間
-      splitGap: 0.35,    // 2行そろってから上下に分かれ始めるまで
-      splitDur: 1.5,     // 上下に分かれる時間
+      labelAt: 0.15,     // Our Vison がブラーで出る
+      labelDur: 1.0,     // その所要時間
+      line1At: 0.45,     // 1行目 (Our Vison に続けてすぐ)
+      line2Gap: 0.55,    // 2行目までの間 (1行目が出きる前に始まってよい＝絵コンテ指定)
+      revealDur: 0.9,    // 1行の出現時間
+      splitGap: 0.25,    // 2行そろってから上下に分かれ始めるまで
+      splitDur: 0.9,     // 上下に分かれる時間
       splitAmt: 92,      // 上下に開く量(px・片側)
       miniGap: 0.45,     // 分かれ始めてから軌道が出るまで (splitDur に対する割合)
       miniDur: 1.1,      // 軌道グラフィックの出現時間
@@ -1811,14 +1811,14 @@ const DEFAULTS = {
       miniScale: 0.26,   // ミニ楕円の縮小率
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
-      spinDur: 4,        // 等速で流れる秒数
-      spinBrake: 2.5,    // 減速して止まるまでの秒数
+      spinDur: 1.0,      // 等速で流れる秒数 (絵コンテ:「1秒ぐらいでいいかな」)
+      spinBrake: 1.2,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
       charLag: 0.5,      // 1文字ずつの遅れ (0=行まるごと / 大きいほどバラける)
     },
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
-    results: { lenVh: 220, countDur: 2.8, imgBlur: 24 },
+    results: { lenVh: 220, countDur: 2.2, imgBlur: 24 },
     dev:     { lenVh: 850, swapBlur: 14, playSec: 16 },   // 1本の映像として何秒で流すか           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44, playSec: 8 },
@@ -1853,8 +1853,9 @@ const DEFAULTS = {
    / v24→v25: スクロール速度の上限(maxRate)は“のっそり”するため撤去。元の追従に戻した
    / v25→v26: Platform図の役割ラベルをドット基準の相対配置に変更、
               スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長
-   / v26→v27: 全セクションを「所定の位置で止めて1本の映像として自動再生」方式に) */
-const STORAGE_KEY = 'anyflow-embed-anim-v27';
+   / v26→v27: 全セクションを「所定の位置で止めて1本の映像として自動再生」方式に
+   / v27→v28: ビジョンの出だし・行間・上下分割と、実績のテキスト出現を詰めた) */
+const STORAGE_KEY = 'anyflow-embed-anim-v28';
 
 let params = load();
 function load() {
@@ -2290,8 +2291,8 @@ let visT = -1;           // 実際に進んだ再生位置(秒)。時間とス�
 /* 自動パート(5.275) + 軌道が左下へ(2.0) + ドット周回して停止(4+2.5)
    + そこから Platform〜2つの価値のチェーン(約3.5) をぜんぶ含む長さ。
    ⚠️ 短いとドットが回りっぱなしになったり、文字が出切らない（両方踏んだ） */
-const VIS_TOTAL = 15.6;
-const VIS_AUTO_HEAD = 2.05;  // ここまでは自動 (「Our Vison」と1行目が出るところまで)
+const VIS_TOTAL = 8.4;
+const VIS_AUTO_HEAD = 1.35;  // 近づいてくる間に出す分 (「Our Vison」と1行目)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
 
@@ -2485,8 +2486,8 @@ function setCounter(el, finalStr, suffix, t, dur) {
   el.textContent = out + suffix;
 }
 
-/* 全部出そろうまでの秒数 (下段カウンターの終わり = 4.8 + countDur) */
-const RES_TOTAL = 7.6;
+/* 全部出そろうまでの秒数 (下段カウンターの終わり = 2.9 + countDur 2.2) */
+const RES_TOTAL = 5.4;
 /* 中央でピン留めされたら再生。出終わったらスクロールで下のセクションへ抜ける。
    ⚠️ 以前は「時間だけ」で進めていたので、ピンしている間にスクロールしても何も進まず、
       再生が終わってからさらに数画面スクロールしないと下へ抜けられなかった。
@@ -2507,18 +2508,18 @@ function updateResults(p) {
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
      ④見出しが出る ⑤導入企業200+ がランダム→確定 ⑥下段の 500+ / 99.9% も同様 */
-  const kImg = easeOutQ(clamp01((t - 0.3) / 2.2));
-  resEls.img.style.opacity = clamp01(t / 1.2).toFixed(3);
+  const kImg = easeOutQ(clamp01((t - 0.15) / 1.4));
+  resEls.img.style.opacity = clamp01(t / 0.8).toFixed(3);
   resEls.img.style.filter = kImg >= 1 ? '' : `blur(${((1 - kImg) * c.imgBlur).toFixed(2)}px)`;
 
-  rv(resEls.head,  easeOutQ(clamp01((t - 2.4) / T_IN)), 8, 14);
-  rv(resEls.lead,  easeOutQ(clamp01((t - 3.0) / T_IN)), 8, 14);
-  rv(resEls.text,  easeOutQ(clamp01((t - 4.4) / T_IN)), 8, 12);
-  rv(resEls.stats, easeOutQ(clamp01((t - 4.6) / T_IN)), 8, 12);
+  rv(resEls.head,  easeOutQ(clamp01((t - 1.2) / T_IN)), 8, 14);
+  rv(resEls.lead,  easeOutQ(clamp01((t - 1.6) / T_IN)), 8, 14);
+  rv(resEls.text,  easeOutQ(clamp01((t - 2.6) / T_IN)), 8, 12);
+  rv(resEls.stats, easeOutQ(clamp01((t - 2.7) / T_IN)), 8, 12);
 
-  setCounter(resEls.cntMain, '200', '+', t - 3.2, c.countDur);
-  setCounter(resEls.cntSub1, '500', '+', t - 4.8, c.countDur);
-  setCounter(resEls.cntSub2, '99.9', '%', t - 4.8, c.countDur);
+  setCounter(resEls.cntMain, '200', '+', t - 1.8, c.countDur);
+  setCounter(resEls.cntSub1, '500', '+', t - 2.9, c.countDur);
+  setCounter(resEls.cntSub2, '99.9', '%', t - 2.9, c.countDur);
 }
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
