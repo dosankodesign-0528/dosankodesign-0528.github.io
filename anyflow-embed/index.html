@@ -414,6 +414,15 @@
     font-family: var(--font-en); font-weight: 200; font-size: 50px; line-height: 1;
     text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
+  /* 実績 → 開発者体験 のつなぎ。暗いグラデーションが下から覆っていく */
+  .res-dark {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
   .res-img-frame { overflow: hidden; }
   .res-img-frame img { display: block; }
 
@@ -508,10 +517,20 @@
   }
   /* カンプ 14791:29706 はモック左79.7 + リスト右端1309.7 = 幅1230 で 25.3px 左寄りだった。
      ヒデさん指定で「モックとAPI/CLI/SDKのまとまりを中央揃え」にするため両方 +25.3px */
+  /* ⚠️ モックと右リストを固定の left で置くと、画面幅が広がった時に左へ寄ってしまう
+     （実測 1637px幅で 左105 / 右302 とズレた）。1230px の枠ごと画面中央に置くこと */
+  .dev-group {
+    position: absolute;
+    left: 50%;
+    margin-left: -615px;      /* 1230 / 2 */
+    width: 1230px;
+    top: 274px;
+    height: 504.37px;
+  }
   .dev-mock {
     position: absolute;
-    left: 105px;
-    top: 274px;
+    left: 0;
+    top: 0;
     width: 840.6px;
     height: 504.37px;
     z-index: 3;                 /* 文字より前に重ねる */
@@ -524,8 +543,8 @@
      それ以外: 縦線なし / 不透明度 0.2  ← カンプ実測値 */
   .dev-list {
     position: absolute;
-    left: 1005.6px;
-    top: 274px;
+    left: 900.617px;   /* 1230 - 329.383 */
+    top: 0;
     width: 329.383px;
     padding-top: 20px;
     display: flex;
@@ -561,33 +580,6 @@
   /* カンプ: Noto Sans JP Light(300) 12px / 行間 1.9 */
   .dl-body p { font-weight: 300; font-size: 12px; line-height: 1.9; }
 
-  /* ===== スキップ動線 (カンプには無い。ユーザビリティのため追加) ===== */
-  .dev-skip {
-    position: absolute;
-    left: 0; right: 0;
-    text-align: center;
-    z-index: 5;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .dev-skip.is-on { pointer-events: auto; }
-  .dev-skip button {
-    font: inherit;
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: .04em;
-    color: rgba(255,255,255,.45);
-    background: none;
-    border: 0;
-    padding: 6px 10px;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-color: rgba(255,255,255,.25);
-    transition: color var(--t-fast) var(--e-fast);
-  }
-  .dev-skip button:hover { color: #fff; text-decoration-color: rgba(255,255,255,.6); }
-  #devSkipTop { top: 235px; }
   /* ===== モック本体: カンプ 14708:37855 を忠実に再現 (840.6×504.37) ===== */
   .dm-panel {
     position: absolute;
@@ -724,6 +716,26 @@
     overflow: hidden;
   }
   .dm-msg { display: flex; gap: 12px; align-items: flex-start; width: 100%; opacity: 0; }
+  /* ユーザーの発言: アイコンなし。打った文字がそのまま入る */
+  .dm-msg.dm-user { justify-content: flex-end; }
+  .dm-msg.dm-user p {
+    max-width: 86%;
+    padding: 10px 14px;
+    border-radius: 14px 14px 4px 14px;
+    background: rgba(255,255,255,.14);
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255,255,255,.92);
+  }
+  /* AIの返答: 普通のテキストで返す */
+  .dm-msg.dm-bot p {
+    flex: 1 0 0;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.85;
+    color: rgba(255,255,255,.82);
+    padding-top: 3px;
+  }
   .dm-msg .av {
     flex: 0 0 28px;
     width: 28px; height: 28px;
@@ -787,6 +799,8 @@
     justify-content: center;
   }
   .dm-send img { width: 12px; height: 12px; display: block; }
+  .dm-send { transition: transform .18s var(--e-fast), background-color .18s var(--e-fast); }
+  .dm-send.is-hit { transform: scale(.84); background: #0EBBFF; }
   /* AIが考えている3点 */
   /* 見出しの文字が出るまで、モックは「空の枠」だけにする (2026-08-15 指定)。
      ヘッダーの AI Assistant やロボットのアイコン、入力欄も含めて全部隠す */
@@ -976,12 +990,12 @@
     .dev-center .dc-label { font-size: 12px; margin-bottom: 8px; }
     .dev-center .dc-one { font-size: 24px; line-height: 36px; }
     /* モックは JS 側で 0.40 倍。中央に置いて左右の余白を揃える */
+    .dev-group { left: 0; margin-left: 0; width: 390px; top: 0; height: auto; }
     .dev-mock { left: 50%; top: 190px; margin-left: -420.3px; }
     .dev-list { left: 24px; top: 470px; width: 342px; padding-top: 0; gap: 22px; align-items: flex-start; }
     .dl-body { width: 314px; }
     .dl-head b { font-size: 22px; }
     .dl-head span { font-size: 15px; }
-    #devSkipTop { top: 158px; }
 
     /* --- 導入事例: 写真が上・文章が下の縦組みに変える --- */
     .case-title { left: 24px; top: 60px; font-size: 28px; line-height: 40px; }
@@ -1357,6 +1371,8 @@
   <div class="pin-vp">
     <div class="pin-stage">
     <!-- 案A: カンプ 14824:22160 / 案B: カンプ 14831:22066 (既定) -->
+    <!-- 案B: 全部出そろったあと、ブラーで消えながら開発者体験の暗い背景へつなぐ板 -->
+    <div class="res-dark" id="resDark"></div>
     <div class="res-img-frame rv" id="resImg">
       <img src="assets/results-image.png" alt="">
     </div>
@@ -1393,7 +1409,7 @@
         <span class="dc-label">Strength 02</span>
         <span class="dc-one">開発環境に柔軟に適応</span>
       </div>
-      <div class="dev-skip" id="devSkipTop"><button type="button">スキップして次へ ›</button></div>
+      <div class="dev-group">
       <div class="dev-mock" id="devMock">
         <div class="dm-panel" id="dmPanel">
           <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
@@ -1417,22 +1433,16 @@
               <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">AI Assistant</span>
               <img src="assets/mock/ellipsis.svg" alt="">
             </div>
+            <!-- 空の状態から、入力→送信→履歴に反映→AIが返答、の順に動く -->
             <div class="dm-history">
-              <div class="dm-msg" id="dmMsg0">
-                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
-                <div class="lines"><i style="width:180px;opacity:.8"></i><i style="width:220px;opacity:.6"></i><i style="width:140px;opacity:.6"></i></div>
-              </div>
-              <div class="dm-msg" id="dmMsg1">
-                <span class="av pk"><img src="assets/mock/user.svg" alt=""></span>
-                <div class="lines"><i style="width:210px;opacity:.8"></i><i style="width:190px;opacity:.6"></i></div>
-              </div>
-              <div class="dm-msg" id="dmThink">
+              <div class="dm-msg dm-user" id="dmUserMsg"><p id="dmUserText"></p></div>
+              <div class="dm-msg dm-bot" id="dmThink">
                 <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
                 <div class="lines dm-think-b"><i></i><i></i><i></i></div>
               </div>
-              <div class="dm-msg" id="dmMsg2">
+              <div class="dm-msg dm-bot" id="dmBotMsg">
                 <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
-                <div class="lines"><i style="width:110px;opacity:.8"></i><i style="width:150px;opacity:.6"></i></div>
+                <p id="dmBotText"></p>
               </div>
             </div>
             <div class="dm-input-c">
@@ -1472,6 +1482,7 @@
             <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -2016,6 +2027,9 @@ const DEFAULTS = {
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
+      outFrom: 0.30,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
+      outTo: 0.90,     // 案B: ここで完全に暗い背景になる
+      outBlur: 22,     // 消える時のぼかし量
     },
     dev:     { lenVh: 220, swapBlur: 14 },   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
@@ -2076,7 +2090,9 @@ const DEFAULTS = {
 /* v40→v41: 実績をカンプ 14824:22160 へ (見出し変更・罫線追加・数字80px・画像はフレームでトリミング) */
 /* v41→v42: 軌道の拡大を移動の“途中で”じわじわに / 2つの価値の位置をパネルで動かせるように */
 /* v42→v43: 実績に案B(カンプ 14831:22066)を追加して既定に。案Aは「テキスト→画像」の順へ */
-const STORAGE_KEY = 'anyflow-embed-anim-v43';
+/* v43→v44: スキップ削除 / モックの会話を作り直し / モックは消さず左へスライド
+             / 実績(案B)の終わりで暗い背景へトランジション */
+const STORAGE_KEY = 'anyflow-embed-anim-v44';
 
 let params = load();
 function load() {
@@ -2837,6 +2853,7 @@ const resEls = {
   imgInner: document.querySelector('#resImg img'),
   main: document.getElementById('resMain'),
   head: document.getElementById('resHead'),
+  dark: document.getElementById('resDark'),
   stats: document.getElementById('resStats'),
   text: document.getElementById('resText'),
   cntMain: document.getElementById('cntMain'),
@@ -2949,6 +2966,17 @@ function updateResults(p) {
   setCounter(resEls.cntMain, '200', '+', t - c.countAt, c.countDur);
   setCounter(resEls.cntSub1, '500', '+', t - c.countAt, c.countDur);
   setCounter(resEls.cntSub2, '99.9', '%', t - c.countAt, c.countDur);
+
+  /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
+     中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
+  const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
+  resEls.dark.style.opacity = outK.toFixed(3);
+  if (outK > 0) {
+    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
+      el.style.opacity = ((+el.style.opacity || 0) * (1 - outK)).toFixed(3);
+      el.style.filter = `blur(${(outK * c.outBlur).toFixed(2)}px)`;
+    });
+  }
 }
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
@@ -2960,7 +2988,6 @@ const devEls = {
   panel: document.getElementById('dmPanel'),
   list: document.getElementById('devList'),
   listItems: [...document.querySelectorAll('#devList .dl-item')],
-  skips: [document.getElementById('devSkipTop')],
 };
 /* 絵コンテのコマ順:
    ①真っ黒→「自動生成で開発スピードを加速」(1行)がブラー出現・下にモックちら見え
@@ -2981,14 +3008,17 @@ const devEls = {
      ①下からスケールアップでモックが出る → 「Strength 01 / 自動生成で…」の文字 → 中身のアニメ
      ②モックが出直す → カンプの位置(左)へ移動 → 「Strength 02 / 開発環境に…」の文字
        → 右に API / CLI / SDK のリスト → 以降はホバーで左のモックが切り替わる */
+/* ===== 開発者体験の時間割 =====
+   ①モックが下からスケールアップ → 見出し① → 中の会話とコード
+   ②【見出し①だけ】ブラーで消え、モックは消えずにそのまま左へスライド
+     → 見出し② → 右の API/CLI/SDK がブラーで出現 */
 const DEV_P = {
   mock1: [0.000, 0.110],  // ①モックが下からスケールアップ
   h1:    [0.120, 0.200],  // ①見出し
-  out1:  [0.420, 0.480],  // ①退場 (見出しもモックも)
-  mock2: [0.500, 0.620],  // ②モックが出直す (中央)
-  move:  [0.660, 0.800],  // ②中央 → カンプの位置(左)へ
-  h2:    [0.780, 0.860],  // ②見出し
-  list:  [0.860, 1.000],  // ②右のリストが順に出る
+  out1:  [0.420, 0.500],  // ②見出し①だけがブラーで消える (モックは消さない)
+  move:  [0.480, 0.720],  // ②モックが中央 → カンプの位置(左)へスライド
+  h2:    [0.660, 0.760],  // ②見出し
+  list:  [0.760, 1.000],  // ②右のリストが順に出る
 };
 const DEV_CH = [
   /* ⚠️ 章の終わり(to)は「退場の開始点(out1[0]=0.42)」より必ず手前に置くこと。
@@ -3002,7 +3032,9 @@ const MOCK_W = 840.6, MOCK_LEFT = 105;
 const mockK = () => (isMobile ? 0.40 : 1);   // スマホでのモックの縮小率
 /* カンプ位置(左寄せ)から見て「画面中央に置くための X オフセット」。
    ①では中央、②でここから 0 へ動かすとカンプの位置に着く */
-function mockCenterX() { return isMobile ? 0 : (stagePinW / 2 - (MOCK_LEFT + MOCK_W / 2)); }
+/* モックは 1230px の枠の左端にいる。枠は画面中央にあるので、
+   モック単体を画面中央に見せるためのズラし量は (1230 - 840.6) / 2 で【画面幅によらず一定】 */
+function mockCenterX() { return isMobile ? 0 : (1230 - MOCK_W) / 2; }
 
 /* 見出し: ブラーで出て、ブラーで退場するだけ (上下分割はカンプ変更で廃止) */
 function devHeading(el, inK, outK) {
@@ -3082,7 +3114,7 @@ const DM_CODE = {
 const DM_TIMING = {
   /* load=ローディング開始 / loadDur=ゆったり見せる時間 / holdT=書き出す前の溜め
      step,dur=一気に書き出すテンポ */
-  editor: { chat: true,  load: 4.3, loadDur: 2.6, holdT: 0.5, step: 0.07, dur: 0.18, loop: 16 },
+  editor: { chat: true,  load: 6.2, loadDur: 2.2, holdT: 0.4, step: 0.06, dur: 0.16, loop: 17 },
   cli:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
   api:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
   sdk:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
@@ -3145,13 +3177,16 @@ dmBuildScreen('editor');
 
 /* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
+const DM_REPLY = 'Slack と kintone をつなぐフローを作成します。トリガーと変換処理まで一式生成しますね。';
 const dmEls = {
   typed: document.getElementById('dmTyped'),
   cursor: document.getElementById('dmCursor'),
   ph: document.getElementById('dmPlaceholder'),
-  msg0: document.getElementById('dmMsg0'),
-  msg1: document.getElementById('dmMsg1'),
-  msg2: document.getElementById('dmMsg2'),
+  send: document.querySelector('.dm-send'),
+  userMsg: document.getElementById('dmUserMsg'),
+  userText: document.getElementById('dmUserText'),
+  botMsg: document.getElementById('dmBotMsg'),
+  botText: document.getElementById('dmBotText'),
   think: document.getElementById('dmThink'),
 };
 
@@ -3165,9 +3200,11 @@ function devMockContent(mode, t, screen) {
     dmEls.typed.textContent = '';
     dmEls.ph.style.display = '';
     dmEls.cursor.style.opacity = 0;
-    dmEls.msg0.style.opacity = 0;
-    dmEls.msg1.style.opacity = 0;
-    dmEls.msg2.style.opacity = 0;
+    dmEls.userMsg.style.opacity = 0;
+    dmEls.botMsg.style.opacity = 0;
+    dmEls.userText.textContent = '';
+    dmEls.botText.textContent = '';
+    dmEls.send.classList.remove('is-hit');
     dmEls.think.style.display = 'none';
     dmLoadRoot.style.opacity = 0;
     dmSdkRowEls.forEach(e => { e.style.opacity = 0; });
@@ -3177,26 +3214,39 @@ function devMockContent(mode, t, screen) {
   const T = t % tm.loop;
 
   if (tm.chat) {
-    const sent = T >= 2.2;
-    const n = sent ? 0 : Math.floor(clamp01((T - 0.4) / 1.6) * DM_TEXT.length);
+    /* 【2026-08-15】空の状態 → 入力欄にタイピング → 送信ボタンを押す
+       → 打った文字がそのまま履歴に入る（アイコンなし）
+       → AIが普通のテキストで返す → そのあと左のコードが流れる */
+    const typeFrom = 0.35, typeTo = typeFrom + DM_TEXT.length * 0.075;
+    const sendAt = typeTo + 0.35;          // 送信ボタンを押す
+    const postAt = sendAt + 0.25;          // 履歴に反映
+    const thinkTo = postAt + 1.25;         // 考え中
+    const replyTo = thinkTo + DM_REPLY.length * 0.045;
+
+    const sent = T >= sendAt;
+    const n = sent ? 0 : Math.floor(clamp01((T - typeFrom) / (typeTo - typeFrom)) * DM_TEXT.length);
     dmEls.typed.textContent = DM_TEXT.slice(0, n);
     dmEls.ph.style.display = n > 0 ? 'none' : '';
-    dmEls.cursor.style.opacity = (!sent && T > 0.3 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
-    dmEls.msg0.style.opacity = clamp01(T / 0.5).toFixed(3);
-    dmEls.msg1.style.opacity = clamp01((T - 2.2) / 0.4).toFixed(3);
-    const thinkOn = T > 2.7 && T < 4.1;
+    dmEls.cursor.style.opacity = (!sent && T > typeFrom - 0.1 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
+    dmEls.send.classList.toggle('is-hit', T >= sendAt && T < sendAt + 0.22);
+
+    dmEls.userMsg.style.opacity = clamp01((T - postAt) / 0.3).toFixed(3);
+    dmEls.userText.textContent = T >= postAt ? DM_TEXT : '';
+
+    const thinkOn = T > postAt + 0.35 && T < thinkTo;
     dmEls.think.style.display = thinkOn ? 'flex' : 'none';
     dmEls.think.querySelectorAll('.dm-think-b i').forEach((d, i) => {
       d.style.opacity = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
     });
-    dmEls.msg2.style.opacity = clamp01((T - 4.1) / 0.4).toFixed(3);
+    dmEls.botMsg.style.opacity = clamp01((T - thinkTo) / 0.25).toFixed(3);
+    const rn = Math.floor(clamp01((T - thinkTo) / (replyTo - thinkTo)) * DM_REPLY.length);
+    dmEls.botText.textContent = T >= thinkTo ? DM_REPLY.slice(0, rn) : '';
   } else {
     dmEls.typed.textContent = '';
     dmEls.ph.style.display = '';
     dmEls.cursor.style.opacity = 0;
-    dmEls.msg0.style.opacity = 1;
-    dmEls.msg1.style.opacity = 1;
-    dmEls.msg2.style.opacity = 1;
+    dmEls.userMsg.style.opacity = 0;
+    dmEls.botMsg.style.opacity = 0;
     dmEls.think.style.display = 'none';
   }
 
@@ -3261,44 +3311,16 @@ let devScreen2 = 'api', devSwapT0 = null;
 
 /* ---- スキップ: いまの章を終わらせて、次の章の位置までスクロールする ----
    「見終わらないと進めない」のが不安との指摘への動線。目立たないテキストリンク */
-let devSkipT0 = null, devSkipDone = false;
-function devSkip() {
-  const st = secPlay.dev;
-  if (!st || st.t0 === null || devSkipT0 !== null) return;
-  devSkipT0 = elapsed; devSkipDone = false;   /* 実際の切り替えはブラーが濃い瞬間に行う */
-}
-/* ブラーが最も濃い瞬間(中間)で中身を入れ替えるので、パッと変わって見えない */
-function devSkipStep() {
-  if (devSkipT0 === null) return 0;
-  const k = clamp01((elapsed - devSkipT0) / 0.95);
-  if (!devSkipDone && k >= 0.5) {
-    devSkipDone = true;
-    const st = secPlay.dev;
-    if (st) {
-      const next = st.ch + 1;
-      const pin = Math.max(1, SECS.dev.offsetHeight - innerHeight);
-      const target = SECS.dev.offsetTop + pin * (next < DEV_CH.length ? DEV_CH[next].at + 0.02 : 1);
-      st.skip += 999;                   /* いまの章だけ終わらせる (全体を飛ばさない) */
-      if (lenis) lenis.scrollTo(target, { duration: 0.5, force: true });
-      else window.scrollTo(0, target);
-    }
-  }
-  if (k >= 1) { devSkipT0 = null; return 0; }
-  return swapDip(k);                    /* 0 → 1 → 0 の山。これをブラー量に使う */
-}
-devEls.skips.forEach(w => w.querySelector('button').addEventListener('click', devSkip));
 
 function updateDev(pRaw) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
   /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
   const p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
-  const skipDip = devSkipStep();   /* スキップ中だけ 0→1→0 に膨らむ */
 
   const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
   const in1  = seg(p, ...DEV_P.h1,    easeOutQ);
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
-  const inM2 = seg(p, ...DEV_P.mock2, easeSlick);
   const mv   = seg(p, ...DEV_P.move,  easeSlick);
   const in2  = seg(p, ...DEV_P.h2,    easeOutQ);
   /* 白へ戻すのは【章が全部終わってから、そこからさらにスクロールした分だけ】。
@@ -3310,8 +3332,8 @@ function updateDev(pRaw) {
   const fin = (stD && stD.endP != null)
     ? seg(pRaw, stD.endP + 0.03, Math.min(0.99, stD.endP + DEV_FIN), easeIO) : 0;
 
-  devHeading(devEls.h1, in1, Math.max(o1, skipDip));
-  devHeading(devEls.h2, in2, Math.max(fin, skipDip));
+  devHeading(devEls.h1, in1, o1);
+  devHeading(devEls.h2, in2, fin);
 
   /* ---- 表示する画面 ---- */
   /* 章②の頭でいったん空に戻す (2つ目の見出しが出るまで中身を見せない) */
@@ -3330,24 +3352,13 @@ function updateDev(pRaw) {
   const swapDipK = devSwapT0 === null ? 0 : swapDip(clamp01((elapsed - devSwapT0) / 0.55));
 
   /* ---- モック ---- */
+  /* 【2026-08-15】モックは章をまたいでも消さない。中央 → 左へスライドするだけ */
   const cx = mockCenterX(), mk = mockK();
-  let op, sc, tx, bl = 0, ty = 0;
-  if (p < DEV_P.out1[0]) {
-    /* ①下からスケールアップ */
-    op = Math.min(1, inM1 * 4) * (1 - o1);
-    sc = (0.82 + 0.18 * inM1) * mk;
-    tx = cx;
-    ty = (1 - inM1) * 120;
-    bl = (1 - inM1) * 10 + o1 * 20 + skipDip * 26;
-  } else {
-    /* ②出直して、カンプの位置(左)へ移動 */
-    op = Math.min(1, inM2 * 4) * (1 - fin);
-    sc = (0.82 + 0.18 * inM2) * mk;
-    tx = cx * (1 - mv);
-    ty = (1 - inM2) * 120;
-    bl = (1 - inM2) * 10 + swapDipK * c.swapBlur * 0.6 + fin * 16 + skipDip * 26;
-    if (pat === 'C') sc *= 1 + 0.03 * swapDipK;
-  }
+  const op = Math.min(1, inM1 * 4) * (1 - fin);
+  const sc = (0.82 + 0.18 * inM1) * mk;
+  const tx = cx * (1 - mv);
+  const ty = (1 - inM1) * 120;
+  let bl = (1 - inM1) * 10 + swapDipK * c.swapBlur * 0.6 + fin * 16;
   devEls.mock.style.opacity = op.toFixed(3);
   devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
   devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
@@ -3365,17 +3376,7 @@ function updateDev(pRaw) {
     const want = on ? 1 : 0.2;
     it._k = it._k == null ? want : it._k + (want - it._k) * Math.min(1, frameDt * 9);
     it.style.opacity = (k * it._k * (1 - fin)).toFixed(3);
-    const ib = (1 - k) * 10 + skipDip * 22;
-    it.style.filter = ib > 0.05 ? `blur(${ib.toFixed(2)}px)` : '';
-  });
-
-  /* ---- スキップ動線: 再生中で、1秒以上たってから静かに出す ---- */
-  const st = secPlay.dev;
-  const playing = !!(st && st.t0 !== null && !st.done);
-  const skipK = playing ? clamp01((elapsed - st.t0 - 1.0) / 0.5) : 0;
-  devEls.skips.forEach(w => {
-    w.style.opacity = skipK.toFixed(3);
-    w.classList.toggle('is-on', skipK > 0.9);
+    it.style.filter = k < 1 ? `blur(${((1 - k) * 10).toFixed(2)}px)` : '';
   });
 
   /* ---- モック内アニメ ----
@@ -3469,7 +3470,7 @@ function resetSectionClock(k) {
   delete storyP[k];
   if (k === 'vision')  { visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1; }
   if (k === 'results') { resT0 = null; resT = -1; }
-  if (k === 'dev')     { devHoldT0 = null; devScreenT0 = null; devStarted = false; devSkipT0 = null;
+  if (k === 'dev')     { devHoldT0 = null; devScreenT0 = null; devStarted = false;
                          devScreen2 = 'api'; devSwapT0 = null; dmBuildScreen('editor'); }
 }
 
@@ -4236,6 +4237,14 @@ function buildPanel() {
     '大きいほど、ランダム数字が始まるのが遅くなる。'));
   rows.push(slider('画像が出るまで(案A)', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + 's',
     '案Aで、テキスト群のあと何秒で画像がブラーから出るか。'));
+  sub(catRes, '次のセクションへのつなぎ（案B）');
+  note('出そろったあと、中身がブラーで消えるのと同時に、開発者体験の暗い背景へ変わります。');
+  rows.push(slider('消え始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
+    'このセクションを何割スクロールしたら消え始めるか。小さいほど早く暗くなる。'));
+  rows.push(slider('暗くなりきる', 0.2, 1, 0.02, () => sv().results.outTo, v => sv().results.outTo = v, v => Math.round(v * 100) + '%',
+    'ここで完全に暗い背景になる。'));
+  rows.push(slider('消える時のぼかし', 0, 40, 1, () => sv().results.outBlur, v => sv().results.outBlur = v, v => v + 'px',
+    '大きいほど強くぼけながら消える。'));
 
   /* ========== 🖥 開発者体験 ========== */
   const catDev = category('🖥 開発者体験', false);
