@@ -406,10 +406,29 @@
   .res-nums { display: flex; align-items: center; gap: 44px; width: 100%; }
   .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .res-nums .rn b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
+  /* ===== 数字のカウンター (スロット式・2026-08-15) =====
+     0〜9 を縦に並べた帯を、1文字ぶんの窓(overflow:hidden)で切り取って上へ流す。
+     ⚠️ 「.res-nums .rn span」は中の <span> にも全部当たってしまうので、
+        帯や窓には .cnt 側の指定が効くよう、下で個別に上書きしている */
   .res-nums .rn span {
     display: block; width: 100%;
     font-family: var(--font-en); font-weight: 100; font-size: 80px; line-height: 1;
-    text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
+    text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .res-nums .rn span .cnt, .res-stats .st span .cnt { display: inline-flex; align-items: flex-start; width: auto; }
+  .res-nums .rn span .cd, .res-stats .st span .cd {
+    display: inline-block !important;
+    width: auto !important;
+    overflow: hidden;          /* ← これが「マスク」。1文字ぶんだけ見せる */
+    height: 1em;
+    line-height: 1;
+  }
+  .res-nums .rn span .cd .reel, .res-stats .st span .cd .reel {
+    display: block !important; width: auto !important; will-change: transform;
+  }
+  .cnt .cd .reel i { display: block; height: 1em; line-height: 1; font-style: normal; }
+  .res-nums .rn span .cs, .res-stats .st span .cs {
+    display: inline-block !important; width: auto !important; height: 1em; line-height: 1;
   }
   .res-main { display: flex; flex-direction: column; gap: 34px; color: #000; }
   .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
@@ -423,7 +442,7 @@
   .res-stats .st span {
     display: block; width: 100%;
     font-family: var(--font-en); font-weight: 200; font-size: 50px; line-height: 1;
-    text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
+    text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
   /* 実績 → 開発者体験 のつなぎ。暗いグラデーションが下から覆っていく */
   /* ⚠️ ここが absolute だと、実績セクションの固定が外れた瞬間に
@@ -2212,7 +2231,9 @@ const DEFAULTS = {
              / 開発者体験の日本語見出しを4px下げ / モックの会話をスピーディーに */
 /* v51→v52: ドットはきっちり1周して止まる / 実績はタイピング廃止＆カウントアップ
              / ラベルと数字を右端そろえ / パネルをいじったらその場でリプレイ */
-const STORAGE_KEY = 'anyflow-embed-anim-v52';
+/* v52→v53: 数字のカウンターをスロット式(縦帯をマスクで切り取って回す)に */
+/* v53→v54: 上に戻る時のスクロールリプレイをきれいに (奥にいる間は完成状態を見せる) */
+const STORAGE_KEY = 'anyflow-embed-anim-v54';
 
 let params = load();
 function load() {
@@ -2512,6 +2533,8 @@ let scrollLocked = false, lockPush = 0;
    ⚠️ 章と章の間はロックを外す。ここでスクロールできないと「進めない」体験になる。 */
 function chapterP(key, chapters, pScroll, canStart, sec) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false, ch: 0 });
+  /* 上から戻ってきた時、セクションの奥にいる間は完成した状態を見せる (playT と同じ考え方) */
+  if (!st.started && pScroll > 0.45) return chapters[chapters.length - 1].to;
   if (!st.started) {
     if (!canStart && !st.snapTried) return 0;
     const off = sec ? sec.getBoundingClientRect().top : 0;
@@ -2554,9 +2577,16 @@ function canPlay(p) { return p > 0.0005 && p < 0.35; }
    ⚠️ 勢いよくスクロールすると、セクションが行き過ぎた位置でロックされて
       「そこで固まった」ように見えていた。所定の位置(上端0)から6px以上ずれていたら、
       まずそこへ寄せてから再生を始める。 */
-function playT(key, total, canStart, sec) {
+function playT(key, total, canStart, sec, pNow) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
+  /* ⚠️ 下までスクロールしてから戻ってくると、時計は巻き戻っているのに
+     まだ再生開始位置に着いていない＝「何も出ていない空のセクション」が見えてしまう。
+     セクションの奥にいる間は【完成した状態】を見せておき、頭に着いたら流し直す */
+  if (!st.done && st.t0 === null && pNow != null && pNow > 0.35) return total;
   if (!st.done && st.t0 === null && (canStart || st.snapTried)) {
+    /* もう頭の近くにいる時は、寄せずにその場で流し始める。
+       （上から戻ってきた時に寄せ直すと、引っぱられて気持ち悪いため） */
+    if (pNow != null && pNow < 0.12) { st.t0 = elapsed; return 0; }
     const off = sec ? sec.getBoundingClientRect().top : 0;
     if (Math.abs(off) > innerHeight) return -1;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
     if (Math.abs(off) > 6) {
@@ -2824,7 +2854,7 @@ function updateVision(p) {
 
   if (pre >= 0.5 && visAutoT0 === null) visAutoT0 = elapsed;
   const approach = visAutoT0 === null ? -1 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
-  const main = playT('vision', visTotal, canPlay(p), SECS.vision);
+  const main = playT('vision', visTotal, canPlay(p), SECS.vision, p);
   /* ⚠️ 以前は本編が始まった瞬間に A が 0 → VIS_AUTO_HEAD(1.35秒) へ飛んでいて、
      助走を見ていない時（勢いよくスクロールした時）に1行目が一瞬で出てカクついた。
      助走で進んだ分と本編の大きい方を採ると、どちらの入り方でも時間が飛ばない */
@@ -3041,15 +3071,62 @@ let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
 /* ランダム数字 → 左の桁から順に確定するカウンター */
-/* 数字は 0 から目標値まで【下から上へ】上がっていき、徐々に減速して止まる。
-   ⚠️ 以前はランダムな数字がパラパラ変わる演出だったが、2026-08-15 にこちらへ変更。
-   桁数は最初からそろえておく（数字の幅が動くとガタつくため）*/
+/* ===== 数字のカウンター (スロット式) =====
+   0〜9 を縦に並べた帯を、1文字ぶんの窓で切り取って上へ流す。
+   桁ごとに「その桁の連続値」で位置を決めるので、下の桁ほど速く回り、
+   上の桁はゆっくり回る＝走行距離計のような見え方になる。
+   ⚠️ 2026-08-15 に「ランダムな数字がパラパラ変わる」演出から作り替えた。 */
+function buildCounter(el, finalStr, suffix) {
+  if (el._cnt) return el._cnt;
+  el.textContent = '';
+  const wrap = document.createElement('span');
+  wrap.className = 'cnt';
+  const cells = [];
+  /* 小数点より上を place 0,1,2... 下を -1,-2... として桁を割り当てる */
+  const dot = finalStr.indexOf('.');
+  const intLen = dot < 0 ? finalStr.length : dot;
+  [...finalStr].forEach((ch, i) => {
+    if (!/\d/.test(ch)) {
+      const st = document.createElement('span');
+      st.className = 'cs'; st.textContent = ch;
+      wrap.appendChild(st);
+      return;
+    }
+    const place = (i < intLen) ? (intLen - 1 - i) : (intLen - i);
+    const cd = document.createElement('span');
+    cd.className = 'cd';
+    const reel = document.createElement('span');
+    reel.className = 'reel';
+    for (let n = 0; n <= 10; n++) {          /* 0〜9 + 折り返し用の 0 */
+      const d = document.createElement('i');
+      d.textContent = String(n % 10);
+      reel.appendChild(d);
+    }
+    cd.appendChild(reel);
+    wrap.appendChild(cd);
+    cells.push({ reel, place });
+  });
+  if (suffix) {
+    const sf = document.createElement('span');
+    sf.className = 'cs'; sf.textContent = suffix;
+    wrap.appendChild(sf);
+  }
+  el.appendChild(wrap);
+  el._cnt = { cells };
+  return el._cnt;
+}
+
 function setCounter(el, finalStr, suffix, t, dur) {
+  const c = buildCounter(el, finalStr, suffix);
   const target = parseFloat(finalStr);
-  const dec = (finalStr.split('.')[1] || '').length;
   const k = t <= 0 ? 0 : easeOutQ(clamp01(t / Math.max(0.1, dur)));
   const now = target * k;
-  el.textContent = now.toFixed(dec) + suffix;
+  c.cells.forEach(({ reel, place }) => {
+    /* その桁の「連続した値」。小数を含むので帯がなめらかに動く */
+    const v = (now / Math.pow(10, place)) % 10;
+    const pos = ((v % 10) + 10) % 10;
+    reel.style.transform = `translateY(${(-pos * 100).toFixed(3)}%)`;
+  });
 }
 
 /* 全部出そろうまでの秒数 (下段カウンターの終わり = 2.9 + countDur 2.2) */
@@ -3071,7 +3148,7 @@ function updateResults(p) {
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   /* 【2026-08-15】ビューポート中央(＝固定が始まった瞬間)に来たら再生し、
      再生が終わるまでスクロールを止める（他のセクションと同じ playT の仕組み） */
-  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results);
+  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results, p);
 
   /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
   const r = SECS.results.getBoundingClientRect();
@@ -3679,7 +3756,7 @@ const caseTop = () => (isMobile ? 118 : 172);
 function updateCases(pRaw) {
   const c = params.sections.cases;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases);
+  const tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases, pRaw);
   const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
