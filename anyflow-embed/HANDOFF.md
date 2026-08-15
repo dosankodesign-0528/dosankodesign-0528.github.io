@@ -128,7 +128,7 @@ SVG属性（cx/cy/rx/ry/transform、クリップ矩形、グラデ座標）を�
 スイッチャーの「設定をコピー」で得た JSON が貼られたら、その値を `index.html` の
 `DEFAULTS`（および `DOTS` 初期角度はそのまま）へ反映する。
 **パラメーターの「意味」を変えた時は `STORAGE_KEY` のバージョンも上げること**
-（現在 **v20**。上げないと利用者のブラウザに残った旧値が新デフォルトを上書きして壊れる）。
+（現在 **v21**。上げないと利用者のブラウザに残った旧値が新デフォルトを上書きして壊れる）。
 
 ## 7. スクロールセクション（KV以降・2026-08-13 実装）
 
@@ -404,6 +404,41 @@ const yPre=(s,q)=>s.offsetTop-innerHeight+q*innerHeight;
   → `prevent: node => !!node.closest('.tools')`
 - ヘッダーを掴んでドラッグで移動（`.tools` を left/top 指定に切り替える）。
   右下つまみでリサイズ（`resize: both`）。ドラッグした時は開閉トグルを発火させない
+
+
+### フォントウェイト一覧（カンプ `14693:28238` と全件突き合わせ済み・2026-08-14）
+
+Figma の指定を `get_design_context` で取って実測と照合した。**新しく文字を足す時はこの表に合わせる。**
+
+| 箇所 | 書体 | ウェイト | サイズ |
+|---|---|---|---|
+| KV 小ラベル | Noto Sans JP Regular | 400 | 14px |
+| KV 見出し | Noto Sans JP Thin | 100 | 70px / lh1.4 |
+| Our Vison | SF Pro Text Light | 300 | 40px |
+| つなぐことが、 | Noto Sans JP Thin | 100 | 100px / lh1.7 |
+| 連携が生む、 | Noto Sans JP Regular | 400 | 20px |
+| 2つの価値 | Noto Sans JP Thin | 100 | 60px |
+| Point 01 | SF Pro Text Light | 300 | 20px |
+| 賢いAIの土台をつくる | Noto Sans JP Light | 300 | 26px |
+| Point 本文 | Noto Sans JP Light | 300 | 14px |
+| 事業の推進力を生み出す | Noto Sans JP **ExtraLight** | **200** | 40px |
+| 導入企業 | Noto Sans JP Regular | 400 | 16px / lh24 |
+| 200+ | SF Pro Text **Ultralight** | **100** | 120px |
+| 連携実績 / 稼働率 / 最短リリース | Noto Sans JP Light | 300 | 16px / lh24 |
+| 500+ / 99.9% / 1week | SF Pro Text **Thin** | **200** | 50px |
+| 導入事例 | Noto Sans JP **ExtraLight** | **200** | 44px |
+| カードの引用文 | Noto Sans JP Light | 300 | **22px** |
+| カードのタグ | Noto Sans JP Light | 300 | **10px**（枠 **0.5px 黒**） |
+| カードの会社名 | Noto Sans JP Light | 300 | **24px** |
+| Strength 01 | SF Pro Text **Thin** | **200** | 20px / 字間 **-1px** / **#0EBBFF** |
+| SDKへの対応 など | Noto Sans JP Light | 300 | **34px** |
+
+**2026-08-14 に直した8箇所**（太字が修正後）:
+事業の推進力(300→**200**) / 導入事例(100→**200**) / カード引用文(400・24px→**300・22px**) /
+カードタグ(12px・1px#c9c9c9・#555→**10px・0.5px黒・黒**) / カード社名(26→**24px**) /
+Strength 01(Noto300・16px・#00ABEB→**SF Pro Thin200・20px・字間-1px・#0EBBFF**) /
+訴求文(200・36px→**300・34px**) / 大見出し側の Strength ラベルも同書式にそろえた。
+カード間隔も 40 → **44px**（カンプ `14708:37827` の gap）。
 
 ## 8. 既知の注意点
 

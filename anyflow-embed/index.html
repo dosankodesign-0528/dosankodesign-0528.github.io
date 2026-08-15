@@ -379,7 +379,7 @@
     position: absolute;
     right: 121.81px;
     top: 207.56px;
-    font-weight: 300;          /* カンプ: Noto Sans JP Light 40px */
+    font-weight: 200;          /* カンプ 14693:28382: Noto Sans JP ExtraLight 40px */
     font-size: 40px;
     line-height: 59px;
     color: #000;
@@ -479,10 +479,13 @@
   }
   .dev-center .dc-label {
     display: block;
-    font-weight: 300;
-    font-size: 16px;
+    /* ドック後の Strength ラベルと同じ書式にそろえる (カンプ 14708:37857 準拠) */
+    font-family: var(--font-en);
+    font-weight: 200;
+    font-size: 20px;
+    letter-spacing: -1px;
     line-height: 1;
-    color: #00ABEB;
+    color: #0EBBFF;
     margin-bottom: 16px;
   }
   .dev-center .dc-a, .dev-center .dc-b, .dev-center .dc-one {
@@ -714,13 +717,17 @@
   }
   .dev-strength .ds-label {
     display: block;
-    font-weight: 300;
-    font-size: 16px;
-    line-height: 20px;
-    color: #00ABEB;
+    /* カンプ 14708:37857: SF Pro Text Thin 20px / 字間 -1px / #0EBBFF */
+    font-family: var(--font-en);
+    font-weight: 200;
+    font-size: 20px;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: #0EBBFF;
     margin-bottom: 10px;
   }
-  .dev-strength .ds-title { font-weight: 200; font-size: 36px; line-height: 49px; }
+  /* カンプ 14708:37858: Noto Sans JP Light 34px */
+  .dev-strength .ds-title { font-weight: 300; font-size: 34px; line-height: 49px; }
 
   /* ---- 導入事例 ---- */
   /* カンプ: 「導入事例」とカード1枚目が上揃え。カードは880幅で388.78px間隔 */
@@ -728,7 +735,7 @@
     position: absolute;
     left: 120px;
     top: 172px;
-    font-weight: 100;
+    font-weight: 200;          /* カンプ 14708:37826: Noto Sans JP ExtraLight 44px */
     font-size: 44px;
     line-height: 64px;
     color: #101828;
@@ -768,25 +775,25 @@
     width: 347px;
   }
   .case-card .cc-quote {
-    font-weight: 400;
-    font-size: 24px;
-    line-height: 32px;
-    color: #101828;
+    font-weight: 300;          /* カンプ 14708:37831: Noto Sans JP Light 22px */
+    font-size: 22px;
+    line-height: normal;
+    color: #000;
   }
   .case-card .cc-tag {
     display: inline-block;
     margin-top: 26px;
-    padding: 2px 10px;
-    border: 1px solid #c9c9c9;
+    padding: 1px 10px;
+    border: 0.5px solid #000;  /* カンプ 14708:37833: 0.5px 黒 */
     font-weight: 300;
-    font-size: 12px;
-    color: #555;
+    font-size: 10px;           /* カンプ 14708:37834: Light 10px */
+    color: #000;
   }
   .case-card .cc-company {
     margin-top: 8px;
-    font-weight: 300;
-    font-size: 26px;
-    color: #101828;
+    font-weight: 300;          /* カンプ 14708:37835: Noto Sans JP Light 24px */
+    font-size: 24px;
+    color: #000;
   }
 
   /* ================= スマホ (設計フレーム 390×780) =================
@@ -1803,7 +1810,7 @@ const DEFAULTS = {
     results: { lenVh: 220, countDur: 2.8, imgBlur: 24 },
     dev:     { lenVh: 850, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
-    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 40 },
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44 },
   },
   patterns: { dev: 'A', cases: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1826,8 +1833,9 @@ const DEFAULTS = {
    / v17→v18: 惑星に「波が流れる」F/G/H を追加
    / v18→v19: 導入事例を「縦に並んでスクロールで重なる」形に変更 (step → gap)、
               ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ
-   / v19→v20: ビジョンを「出だしだけ自動・あとは全部スクロール」に変更) */
-const STORAGE_KEY = 'anyflow-embed-anim-v20';
+   / v19→v20: ビジョンを「出だしだけ自動・あとは全部スクロール」に変更
+   / v20→v21: フォントウェイトをカンプと突き合わせて修正、カード間隔 40→44px) */
+const STORAGE_KEY = 'anyflow-embed-anim-v21';
 
 let params = load();
 function load() {
