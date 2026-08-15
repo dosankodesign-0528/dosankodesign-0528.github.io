@@ -250,6 +250,9 @@
   Panel.prototype._saveUI = function () {
     if (!this.storageKey) return;
     var r = this.el.getBoundingClientRect();
+    /* 画面サイズが取れない瞬間（タブが裏／最小化など）に潰れた値を保存しない。
+       これを保存すると次回から左上に小さく貼りついたまま復元されてしまう */
+    if (!innerWidth || !innerHeight || r.width < 120 || (!this.el.classList.contains('closed') && r.height < 80)) return;
     try {
       localStorage.setItem(this._uKey(), JSON.stringify({
         x: r.left, y: r.top,
@@ -268,8 +271,9 @@
       try { ui = JSON.parse(localStorage.getItem(this._uKey())); } catch (e) {}
     }
     var size = this.cfg.size || {};
-    var w = (ui && ui.w) || size.w || 360;
-    var h = (ui && ui.h) || size.h || 520;
+    /* 潰れた保存値（過去バージョンで入り込んだもの）は無視して既定サイズに戻す */
+    var w = (ui && ui.w > 120 ? ui.w : 0) || size.w || 360;
+    var h = (ui && ui.h > 80 ? ui.h : 0) || size.h || 520;
     this._openW = w; this._openH = h;
     this.el.style.width = w + 'px';
     this.el.style.height = h + 'px';
@@ -293,8 +297,11 @@
 
   Panel.prototype._place = function (x, y) {
     var w = this.el.offsetWidth, h = this.el.offsetHeight;
-    x = Math.min(Math.max(0, x), Math.max(0, innerWidth - w));
-    y = Math.min(Math.max(0, y), Math.max(0, innerHeight - h));
+    /* 画面サイズが取れない時（幅0で返ってくる瞬間がある）は、はみ出し補正をしない */
+    if (innerWidth > 0 && innerHeight > 0) {
+      x = Math.min(Math.max(0, x), Math.max(0, innerWidth - w));
+      y = Math.min(Math.max(0, y), Math.max(0, innerHeight - h));
+    }
     this.el.style.left = x + 'px';
     this.el.style.top = y + 'px';
     this.el.style.right = 'auto';
@@ -350,6 +357,7 @@
     if (window.ResizeObserver) {
       var ro = new ResizeObserver(function () {
         if (el.classList.contains('closed')) return;
+        if (el.offsetWidth < 120 || el.offsetHeight < 80) return;   /* 潰れた瞬間は無視 */
         self._openW = el.offsetWidth; self._openH = el.offsetHeight;
         clearTimeout(self._roT);
         self._roT = setTimeout(function () { self._saveUI(); }, 300);
