@@ -11,7 +11,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
     /* カンプの英字は SF Pro (Apple システムフォント)。Mac では -apple-system で実物が出る */
-    --font-en: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    /* ⚠️ カンプの英字はすべて【SF Pro Text】指定 (Our Vison / Point 01 / Platform /
+       Strength 01 / 200+ / 500+ すべて)。SF Pro には Text と Display の2つの
+       光学サイズがあり、Display の方が字幅が狭く線も細い。
+       以前は Display を先に書いていたため macOS が Display を選び、
+       実測で「200+」が 277.4px（カンプの Text は 290.6px）と約5%細く詰まっていた。
+       Text を先頭に置くこと。未インストール環境は -apple-system に落ちる */
+    --font-en: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
     --font-jp: 'Noto Sans JP', sans-serif;
   }
   html, body {

@@ -471,6 +471,25 @@ Strength 01(Noto300・16px・#00ABEB→**SF Pro Thin200・20px・字間-1px・#0
 コネクタ(226.03, 226.82) / 認証基盤(707.19, 59.10・**中央そろえ**) /
 ワークフロー(700.37, 329.84) / 権限(548.87, 430.34) / 監査(202.16, 560.82)
 
+
+### 🚨 英字は「SF Pro **Text**」。Display と間違えないこと（2026-08-14）
+
+カンプの英字は **全部 SF Pro Text** 指定（Our Vison / Point 01 / Platform / Strength 01 /
+200+ / 500+ / 99.9% / 1week）。SF Pro には **Text と Display の2つの光学サイズ**があり、
+**Display は字幅が狭く線も細い**。`--font-en` に Display を先に書いていたため macOS が
+Display を選んでいて、実測で「200+」が **277.4px（正しくは 290.6px）と約5%詰まっていた**。
+
+`--font-en` は **`'SF Pro Text'` を先頭**に置く。未インストール環境は `-apple-system` に落ちる。
+
+**書体が合っているかの確かめ方**（目視で判断しないこと）:
+```js
+const cv = document.createElement('canvas').getContext('2d');
+const w = (fam) => { cv.font = `100 120px ${fam}`; return cv.measureText('200+').width; };
+w(getComputedStyle(document.documentElement).getPropertyValue('--font-en'))  // 実際に使われる書体
+w("'SF Pro Text'")     // カンプの指定 → この値と一致すれば正しい
+w("'SF Pro Display'")  // 間違い側
+```
+
 ## 8. 既知の注意点
 
 - Claude の Browser プレビューでは rAF が止まる（実ブラウザでは動く）。過去に何度も混乱したので注意
