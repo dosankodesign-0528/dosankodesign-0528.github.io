@@ -3,13 +3,9 @@
 人物イラスト「たまんねーっ」(public/img/illust-main.png) を
 ベクター化して components/illustMainPaths.ts を作り直すスクリプト。
 
-眉毛と黒目だけ動かしたいのに 1枚のPNGでは動かせなかったので、色ごとのレイヤーに
-分けてトレースし、眉毛と黒目を別データに切り出している。
-- 眉が上にずれても、下から肌色レイヤーが出るので抜けた跡は残らない
-- 黒目がずれても、下から白目レイヤーが出るので跡は白いまま
-
-黒目は上まぶたの線とくっついているが、線が細く黒目が太いので
-オープニング（縮めてから戻す）で機械的に切り離せる。
+眉毛だけ動かしたいのに 1枚のPNGでは動かせなかったので、色ごとのレイヤーに
+分けてトレースし、眉毛だけ別データに切り出している。眉が上にずれても
+下から肌色レイヤーが出るので、抜けた跡は残らない。
 
 使い方（potrace と Pillow/numpy/scipy が要る）:
     brew install potrace
@@ -64,63 +60,24 @@ brow_left, brow_right = (lab == BROW_IDS[0]), (lab == BROW_IDS[1])
 brows = brow_left | brow_right
 print("brow components L/R:", BROW_IDS, "px:", brow_left.sum(), brow_right.sum())
 
-# --- 黒目: 上まぶたの線とくっついているのでオープニングで切り離す -------------
-# 線は細いので縮めると消える。太い黒目だけが芯として残るので、それを元の
-# 成分の中で膨らませ直すと黒目だけが取れる。
-EYE_ERODE = 4
-D4 = ndi.generate_binary_structure(2, 1)   # 4近傍。斜めを削りすぎない
-found = []
-for i, sl in enumerate(ndi.find_objects(lab), 1):
-    ys, xs = sl
-    if not (240 <= ys.start <= 300 and 180 <= xs.start <= 400):
-        continue
-    comp = lab == i
-    core = ndi.binary_erosion(comp, D4, iterations=EYE_ERODE)
-    cl, cn = ndi.label(core, structure=S8)
-    if cn == 0:
-        continue
-    keep = np.flatnonzero(ndi.sum(core, cl, range(1, cn + 1)) >= 40) + 1
-    if len(keep) != 1:          # 芯が1個だけ残る成分＝黒目付きのまぶた
-        continue
-    core = np.isin(cl, keep)
-    found.append((xs.start, ndi.binary_dilation(core, D4, iterations=EYE_ERODE) & comp))
-assert len(found) == 2, [f[0] for f in found]
-found.sort(key=lambda t: t[0])                                    # 左→右
-pupil_left, pupil_right = found[0][1], found[1][1]
-pupils = pupil_left | pupil_right
-print("pupil px L/R:", pupil_left.sum(), pupil_right.sum())
-# 目の中心（イラスト全体に対する割合）。カーソルの向きを測る基準に使う
-_py, _px = np.nonzero(pupils)
-EYE_CX, EYE_CY = _px.mean() / W, _py.mean() / H
-print(f"eye center: {EYE_CX:.4f}, {EYE_CY:.4f}")
-
 # eye whites = white blobs that are not the outer sticker halo
 wl, _ = ndi.label(M["white"], structure=S8)
 sizes = ndi.sum(M["white"], wl, range(1, wl.max() + 1))
 halo = int(np.argmax(sizes)) + 1
-# 黒目を白目に足しておく。黒目がずれても下は白いまま
-eyewhite = ((wl > 0) & (wl != halo)) | pupils
-
-MOVING = brows | pupils        # 動かすものは下の固定レイヤーから抜く
+eyewhite = (wl > 0) & (wl != halo)
 
 # --- layer stack, bottom → top ---------------------------------------------
-# UNDER = 黒目より下、OVER = 黒目より上（黒目が下まぶたの線を覆わないように）
-eyes_mask = dil(despeckle(eyewhite, 100))   # 白目。黒目のクリップ形にも使う
-LAYERS_UNDER = [
+LAYERS = [
     ("halo",  fill(opaque),                                  "#FFFFFF", 40),
     ("gray",  dil(fill(despeckle(M["gray"],  400))),         "#CDCCCC", 40),
     ("skin",  dil(fill(despeckle(M["skin"],  400))),         "#FCE4D3", 40),
-    ("eyes",  eyes_mask,                                     "#FFFFFF", 20),
-]
-LAYERS_OVER = [
+    ("eyes",  dil(despeckle(eyewhite, 100)),                 "#FFFFFF", 20),
     ("cheek", dil(fill(despeckle(M["cheek"], 250))),         "#FCD0BD", 40),
-    ("hair",  despeckle(M["dark"]  & ~MOVING, 40),           "#232222",  8),
-    ("line",  despeckle(M["black"] & ~MOVING, 40),           "#000000",  8),
+    ("hair",  despeckle(M["dark"]  & ~brows, 40),            "#232222",  8),
+    ("line",  despeckle(M["black"] & ~brows, 40),            "#000000",  8),
 ]
-LAYERS = LAYERS_UNDER + LAYERS_OVER
-BROW_LAYERS  = [("browL",  brow_left,   "#232222", 4), ("browR",  brow_right,  "#232222", 4)]
-PUPIL_LAYERS = [("pupilL", pupil_left,  "#232222", 4), ("pupilR", pupil_right, "#232222", 4)]
-BROW_FILL = PUPIL_FILL = "#232222"
+BROW_LAYERS = [("browL", brow_left, "#232222", 4), ("browR", brow_right, "#232222", 4)]
+BROW_FILL = "#232222"
 
 PATH_RE = re.compile(r'<path d="([^"]+)"')
 def trace(mask, name, turd=8):
@@ -140,32 +97,21 @@ for name, mask, color, turd in LAYERS:
     groups.append(f'<g fill="{color}">' + "".join(f'<path d="{d}"/>' for d in ds) + "</g>")
     print(f"{name:6s} paths={len(ds):3d} chars={sum(map(len, ds)):7d}")
 
-mcache = {}
-for mn, mm, _, mt in BROW_LAYERS + PUPIL_LAYERS:
-    mcache[mn] = trace(mm, mn, mt)
-    print(f"{mn:6s} paths={len(mcache[mn]):3d} chars={sum(map(len, mcache[mn])):7d}")
+bcache = {}
+for bn, bm, _, bt in BROW_LAYERS:
+    bcache[bn] = trace(bm, bn, bt)
+    print(f"{bn:6s} paths={len(bcache[bn]):3d} chars={sum(map(len, bcache[bn])):7d}")
+bds = bcache["browL"] + bcache["browR"]
+bcolor = BROW_FILL
 
 FLIP = f'transform="translate(0,{H}) scale(0.1,-0.1)"'
-def svg_group(cls, ds, color, clip=""):
-    return (f'<g {clip}><g class="{cls}"><g {FLIP} stroke="none"><g fill="{color}">'
-            + "".join(f'<path d="{d}"/>' for d in ds) + "</g></g></g></g>")
-
-# 黒目は白目の形で切り抜く。どこまで動かしても目の外に黒がはみ出さない
-# clipPath の中に <g> は置けない（無視される）。変換は clipPath 自身に付ける
-eye_clip = (f'<defs><clipPath id="eyeclip" {FLIP}>'
-            + "".join(f'<path d="{d}"/>' for d in trace_cache["eyes"]) + "</clipPath></defs>")
-
-# 動作確認用の1枚SVG（本番は components/illustMainPaths.ts の方を使う）
-n_under = len(LAYERS_UNDER)
 svg = (
  f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" '
  f'width="{W}" height="{H}" shape-rendering="geometricPrecision">'
- f'<g {FLIP} stroke="none">' + "".join(groups[:n_under]) + "</g>"
- + eye_clip + svg_group("pupil", mcache["pupilL"] + mcache["pupilR"], PUPIL_FILL,
-                        'clip-path="url(#eyeclip)"') +
- f'<g {FLIP} stroke="none">' + "".join(groups[n_under:]) + "</g>"
- + svg_group("brow", mcache["browL"] + mcache["browR"], BROW_FILL) +
- "</svg>"
+ f'<g {FLIP} stroke="none">' + "".join(groups) + "</g>"
+ f'<g class="brow"><g {FLIP} stroke="none"><g fill="{bcolor}">'
+ + "".join(f'<path d="{d}"/>' for d in bds) +
+ "</g></g></g></svg>"
 )
 open("illust-main.svg", "w").write(svg)
 print("SVG bytes:", len(svg), " (PNG was", os.path.getsize(SRC), ")")
@@ -177,9 +123,8 @@ def ts_layer(name, color, ds):
     body = ",\n      ".join(f'"{d}"' for d in ds)
     return f'  {{\n    name: "{name}",\n    fill: "{color}",\n    d: [\n      {body},\n    ],\n  }},'
 
-under_ts = "\n".join(ts_layer(n, c, trace_cache[n]) for n, _, c, _ in LAYERS_UNDER)
-over_ts  = "\n".join(ts_layer(n, c, trace_cache[n]) for n, _, c, _ in LAYERS_OVER)
-ts_d = lambda ds: ",\n    ".join(f'"{d}"' for d in ds)
+base_ts = "\n".join(ts_layer(n, c, trace_cache[n]) for n, _, c, _ in LAYERS)
+ts_d = lambda ds: ",\n  ".join(f'"{d}"' for d in ds)
 
 ts = f'''/*
  * 人物イラスト「たまんねーっ」のベクターデータ。
@@ -187,13 +132,8 @@ ts = f'''/*
  * もの（生成スクリプトは scripts/illust-trace.py）。手で書き換えないこと。
  *
  * 座標系: 元PNGと同じ {W}x{H}。FLIP を掛けた内側で使う（potrace のY反転ぶん）。
- *
- * 重ねる順（下 → 上）:
- *   ILLUST_LAYERS_UNDER → 黒目(PUPIL_D) → ILLUST_LAYERS_OVER → 眉毛(BROW_D)
- *
- * 眉毛と黒目は動かすので別データにしてある。眉の下には肌色、黒目の下には
- * 白目が敷いてあるので、ずらしても抜けた跡は出ない。黒目はまぶたの線
- * （OVER の line/hair）より下に描く。下まぶたを覆ってしまわないため。
+ * レイヤーは配列の順に下から重ねる。眉毛だけは BROW_D に分けてあり、
+ * 上にずらしても下から肌色レイヤーが出るようになっている。
  */
 
 /** potrace 出力（10倍・Y反転）を元PNGの座標系に戻す変換 */
@@ -203,42 +143,19 @@ export const ILLUST_VIEWBOX = {{ w: {W}, h: {H} }} as const;
 
 export type IllustLayer = {{ name: string; fill: string; d: string[] }};
 
-/** 黒目より下（白目まで） */
-export const ILLUST_LAYERS_UNDER: IllustLayer[] = [
-{under_ts}
+/** 下 → 上 の順。眉毛はここには含まれない */
+export const ILLUST_LAYERS: IllustLayer[] = [
+{base_ts}
 ];
 
-/** 黒目より上（ほお・髪・線） */
-export const ILLUST_LAYERS_OVER: IllustLayer[] = [
-{over_ts}
-];
-
-/** 目の中心。イラスト全体に対する割合。カーソルの向きを測る基準 */
-export const EYE_CENTER = {{ x: {EYE_CX:.4f}, y: {EYE_CY:.4f} }} as const;
-
-/** 黒目を切り抜く形（白目そのもの）。これで目の外に黒がはみ出さない */
-export const EYE_CLIP_D: string[] = [
-    {ts_d(trace_cache["eyes"])},
-];
-
-/** 動かすパーツの色。left = 向かって左 */
-export const MOVING_FILL = "{BROW_FILL}";
-
+/** 眉毛。これだけ独立して動かす（left = 向かって左） */
+export const BROW_FILL = "{bcolor}";
 export const BROW_D = {{
   left: [
-    {ts_d(mcache["browL"])},
+  {ts_d(bcache["browL"])},
   ],
   right: [
-    {ts_d(mcache["browR"])},
-  ],
-}} as const;
-
-export const PUPIL_D = {{
-  left: [
-    {ts_d(mcache["pupilL"])},
-  ],
-  right: [
-    {ts_d(mcache["pupilR"])},
+  {ts_d(bcache["browR"])},
   ],
 }} as const;
 '''
