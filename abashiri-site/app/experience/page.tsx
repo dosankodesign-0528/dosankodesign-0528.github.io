@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Stage from "@/components/Stage";
-import ExperienceMock, { type Step } from "@/components/ExperienceMock";
+import ExperienceFlow, { type Step } from "@/components/ExperienceFlow";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
@@ -15,7 +15,7 @@ export default function ExperiencePage() {
   return (
     <>
       <Stage illustration={step === 3 ? "bo" : "tamannee"}>
-        <ExperienceMock step={step} setStep={setStep} />
+        <ExperienceFlow step={step} setStep={setStep} />
       </Stage>
     </>
   );

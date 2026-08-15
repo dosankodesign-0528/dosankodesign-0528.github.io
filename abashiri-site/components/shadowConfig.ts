@@ -11,7 +11,7 @@ export type ShadowTune = {
   blur: number;
   /** 広がり(px)。マイナスで影が締まる */
   spread: number;
-  /** 影の色（HEX）。トンマナに合わせた深い海色が基本 */
+  /** 影の色（HEX）。globals.css の --color-shadow と同じ値にすること */
   color: string;
   /** 濃さ(0〜100%) */
   opacity: number;

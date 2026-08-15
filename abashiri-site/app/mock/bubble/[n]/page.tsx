@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 
 const TITLES: Record<string, string> = {
   "1": "案1:ぷにぷに呼吸",
@@ -22,7 +22,7 @@ export default async function BubbleMockPage({
   return (
     <>
       <Stage illustration="tamannee" illustEntrance>
-        <TopMock intro={2} blurSeq bubbleAnim={num} />
+        <TopPage intro={2} blurSeq bubbleAnim={num} />
       </Stage>
       <div className="fixed left-3 top-3 z-[70] flex items-center gap-2">
         <Link

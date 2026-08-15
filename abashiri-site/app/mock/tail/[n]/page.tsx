@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import { DEFAULT_BUBBLE } from "@/components/bubbleConfig";
 import { TAIL_PRESETS } from "../presets";
 
@@ -19,7 +19,7 @@ export default async function TailMockPage({
     <>
       <Stage illustration="tamannee" illustEntrance>
         {/* 本番と同じく、環境音のON/OFFに答えてから再生する */}
-        <TopMock
+        <TopPage
           intro={2}
           blurSeq
           waitConsent

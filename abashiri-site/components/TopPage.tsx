@@ -11,7 +11,7 @@ import {
   type Variants,
 } from "framer-motion";
 import Bird from "./Bird";
-import MockNav from "./MockNav";
+import GlobalNav from "./GlobalNav";
 
 /* ビューポートに入った時の「上品なブラー解除」共通アニメーション */
 const reveal: Variants = {
@@ -78,13 +78,13 @@ const CARD_OVERLAY: Record<number, { overlay: string; title: string }> = {
     overlay:
       "opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100",
     title:
-      "opacity-0 [filter:blur(6px)] transition-all duration-700 ease-out group-hover:opacity-100 group-hover:[filter:blur(0px)]",
+      "opacity-0 blur-hover transition-all duration-700 ease-out group-hover:opacity-100 group-hover:blur-none",
   },
   3: {
     overlay:
-      "translate-y-full transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.35,1)] group-hover:translate-y-0",
+      "translate-y-full transition-transform duration-500 ease-standard group-hover:translate-y-0",
     title:
-      "translate-y-[24px] opacity-0 transition-all delay-100 duration-500 ease-[cubic-bezier(0.3,1.4,0.5,1)] group-hover:translate-y-0 group-hover:opacity-100",
+      "translate-y-[24px] opacity-0 transition-all delay-100 duration-500 ease-bounce group-hover:translate-y-0 group-hover:opacity-100",
   },
 };
 
@@ -104,7 +104,7 @@ function Card({
       custom={index}
       className="relative h-[410px] w-[730px] shrink-0"
     >
-      <div className="group h-full w-full overflow-hidden rounded-[290px] border-8 border-white/70">
+      <div className="group h-full w-full overflow-hidden rounded-card border-8 border-white/70">
         <img
           src={card.src}
           alt={card.alt}
@@ -112,14 +112,14 @@ function Card({
         />
         {/* ホバー：下から黒グラデ+ブラーの上にスポット名 */}
         <div
-          className={`absolute inset-0 flex items-end justify-center rounded-[290px] bg-gradient-to-b from-transparent to-black/60 pb-[40px] backdrop-blur-[6px] ${ov.overlay}`}
+          className={`absolute inset-0 flex items-end justify-center rounded-card bg-gradient-to-b from-transparent to-black/60 pb-10 backdrop-blur-hover ${ov.overlay}`}
         >
-          <p className={`text-[32px] leading-[1.2] text-white ${ov.title}`}>
+          <p className={`text-title font-medium leading-[1.2] text-white ${ov.title}`}>
             {card.title}
           </p>
         </div>
       </div>
-      <p className="font-rounded pointer-events-none absolute left-[-16px] top-[-65px] text-[140px] font-thin leading-none text-white opacity-80">
+      <p className="font-num pointer-events-none absolute left-[-16px] top-[-65px] text-number font-thin leading-none text-white opacity-80">
         No.{index + 1}
       </p>
     </motion.div>
@@ -143,9 +143,9 @@ function CardRow({
   return (
     <div
       ref={(el) => registerRow(rowIndex, el)}
-      className="no-scrollbar -mt-[80px] ml-[calc((980px-100cqw)/2)] w-[100cqw] overflow-x-auto pt-[80px]"
+      className="no-scrollbar -mt-20 ml-[calc((980px-100cqw)/2)] w-[100cqw] overflow-x-auto pt-20"
     >
-      <div className="flex w-max gap-[80px] pl-[120px] pr-[60px]">
+      <div className="flex w-max gap-20 pl-30 pr-15">
         {cards.map((c, i) => (
           <Card key={c.src} card={c} index={i} hoverStyle={hoverStyle} />
         ))}
@@ -165,7 +165,7 @@ const MORE_ANIM: Record<number, { text: string; icon: string }> = {
   },
   2: {
     text: "",
-    icon: "transition-transform duration-500 ease-[cubic-bezier(0.3,1.2,0.4,1)] group-hover:rotate-[360deg] group-hover:scale-110",
+    icon: "transition-transform duration-500 ease-bounce group-hover:rotate-[360deg] group-hover:scale-110",
   },
   3: {
     text: "transition-transform duration-300 ease-out group-hover:-translate-x-[6px]",
@@ -179,7 +179,7 @@ function ViewMore({ anim = 1 }: { anim?: number }) {
     <a
       href="#"
       onClick={(e) => e.preventDefault()}
-      className="group flex cursor-pointer items-center gap-[24px] text-[20px] font-medium text-white"
+      className="group flex cursor-pointer items-center gap-6 text-action font-medium text-white"
     >
       <span className={a.text}>もっと見る</span>
       <img
@@ -207,22 +207,7 @@ import { waitForConsent } from "./consentGate";
 /** イラスト出現の合図（Stage が拾う） */
 export const ILLUST_IN_EVENT = "abashiri:illust-in";
 
-/*
- * タブレットの浮遊シャドウ（/mock/shadow で比較）
- * 採用は案3「斜め光」。デフォルト(0)は shadowConfig.ts のパラメーター基準で、
- * /mock/shadow/tune から強さ・色などを細かく調整できる。
- * 1=ふんわりハロー / 2=二層リアル / 3=斜め光（比較mock用に残置）
- */
-const MOCK_SHADOWS: Record<number, { frame: string }> = {
-  1: { frame: "shadow-[0_0_80px_12px_rgba(3,52,102,0.35)]" },
-  2: {
-    frame:
-      "shadow-[0_18px_35px_rgba(3,52,102,0.28),0_0_120px_24px_rgba(3,52,102,0.24)]",
-  },
-  3: { frame: "shadow-[-45px_55px_80px_-12px_rgba(3,52,102,0.45)]" },
-};
-
-export default function TopMock({
+export default function TopPage({
   intro = 2,
   kv = 1,
   write = 0,
@@ -239,7 +224,7 @@ export default function TopMock({
   moreAnim = 1,
   bubbleAnim = 0,
   bubbleTune,
-  mockShadow = 0,
+  frameShadow,
   shadowTune,
   layout,
 }: {
@@ -273,9 +258,9 @@ export default function TopMock({
   bubbleAnim?: number;
   /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
   bubbleTune?: BubbleTune;
-  /** 1〜3: 浮遊シャドウの比較mock用（0で採用版=パラメーター基準） */
-  mockShadow?: number;
-  /** 浮遊シャドウの細かい調整（shadowConfig.ts。mockShadow=0の時に有効） */
+  /** 比較mock専用：影のクラスを外から丸ごと差し替える（通常は指定しない） */
+  frameShadow?: string;
+  /** 浮遊シャドウの細かい調整（shadowConfig.ts。frameShadow 未指定の時に有効） */
   shadowTune?: Partial<ShadowTune>;
   /** タブレットの位置ずらし（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
@@ -335,7 +320,7 @@ export default function TopMock({
 
   /* 背景写真：スクロールすると早めに濃いめのブラーがかかっていく。
      ボケた時に端が透けないよう、ブラー量に応じて少しだけ拡大して補正 */
-  const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 9, 16]);
+  const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 8, 16]);
   const bgFilter = useMotionTemplate`blur(${bgBlur}px)`;
   const bgZoom = kp.bgZoom ?? [1, 1];
   /* ブラー時に端が透けないよう、ズームに少し上乗せ（+0.08まで） */
@@ -344,7 +329,7 @@ export default function TopMock({
     [0, 160, 400, kp.range],
     [
       bgZoom[0],
-      bgZoom[0] + 0.045,
+      bgZoom[0] + 0.04,
       Math.max(bgZoom[0], bgZoom[1]) + 0.08,
       bgZoom[1] + 0.08,
     ]
@@ -536,25 +521,24 @@ export default function TopMock({
     };
   }, []);
 
-  const sh = MOCK_SHADOWS[mockShadow];
   const L = mergeLayout(layout);
 
   return (
     <div
-      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-[60px] border-[30px] border-white ${sh ? sh.frame : ""}`}
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-device border-[30px] border-white ${frameShadow ?? ""}`}
       style={{
-        ...(sh ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
+        ...(frameShadow ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
         transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
       }}
     >
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-[30px] bg-[#8ec6ea] [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-device-inner bg-scroller [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
             下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
-        <div className="pointer-events-none sticky top-0 h-[945px] w-full overflow-hidden bg-[#0160c4]">
+        <div className="pointer-events-none sticky top-0 h-[945px] w-full overflow-hidden bg-brand">
           {/* Figmaのトリミング・色加工を焼き込み、角丸の縁を切り落とした四角い書き出し画像。
               角丸はCSS側だけで付けるので、継ぎ目やズレが出ない */}
           <motion.img
@@ -569,7 +553,7 @@ export default function TopMock({
             スクロールでその場から奥へ引いて消える */}
         <div className="pointer-events-none sticky top-0 -mt-[945px] h-[865px]">
           <motion.div
-            className="flex h-full flex-col items-center pt-[130px]"
+            className="flex h-full flex-col items-center pt-30"
             initial={
               animated
                 ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
@@ -584,7 +568,7 @@ export default function TopMock({
             transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
           >
             <motion.div
-              className="flex flex-col items-center gap-[24px]"
+              className="flex flex-col items-center gap-6"
               style={{
                 filter: heroFilter,
                 opacity: heroOpacity,
@@ -638,12 +622,12 @@ export default function TopMock({
                   animate={buttonIn ? { opacity: 1, filter: "blur(0px)", y: 0 } : undefined}
                   transition={{
                     duration: timing.button.duration / 1000,
-                    ease: [0.33, 1, 0.68, 1],
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                 >
                   <Link
                     href="/experience"
-                    className="rounded-full bg-white/90 px-[44px] py-[16px] text-[20px] font-black text-[#0070c9] backdrop-blur-[3px] transition-transform hover:scale-105"
+                    className="rounded-full bg-white/90 px-11 py-4 text-action font-black text-brand backdrop-blur-hover transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
@@ -658,13 +642,13 @@ export default function TopMock({
             KV より後ろのDOM順なので、relative だけで手前に描画される */}
         <div className="pointer-events-none relative -mt-[865px]">
 
-          <div className="mx-auto flex w-[980px] flex-col items-center pb-[200px] pt-[1005px]">
-            <div className="pointer-events-auto relative flex w-full flex-col gap-[300px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-50 pt-[1005px]">
+            <div className="pointer-events-auto relative flex w-full flex-col gap-75">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
-              <div className="flex w-full flex-col gap-[80px]">
+              <div className="flex w-full flex-col gap-20">
                 <motion.section
                   id="spot"
-                  className="flex w-full flex-col gap-[120px]"
+                  className="flex w-full flex-col gap-30"
                   initial="hidden"
                   whileInView="show"
                   viewport={viewport}
@@ -693,7 +677,7 @@ export default function TopMock({
                           className="w-[140px] -rotate-[0.42deg]"
                         />
                       </div>
-                      <p className="ml-[3px] mt-[8px] text-[48px] font-medium leading-[1.2] text-white">
+                      <p className="ml-[3px] mt-2 text-section font-medium leading-[1.2] text-white">
                         と過ごせるスポット
                       </p>
                     </div>
@@ -711,24 +695,24 @@ export default function TopMock({
                 >
                   <Link
                     href="/experience"
-                    className="relative flex w-full flex-col items-center justify-center gap-[32px] overflow-clip rounded-[24px] bg-[rgba(0,123,221,0.9)] px-[16px] py-[60px] backdrop-blur-[40px] transition-transform duration-500 hover:scale-[1.01]"
+                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-panel bg-brand/90 px-4 py-15 backdrop-blur-glass-strong transition-transform duration-500 hover:scale-[1.01]"
                   >
-                    <div className="flex flex-col items-center gap-[4px]">
-                      <p className="text-[18px] font-bold leading-[1.4] text-white">
+                    <div className="flex flex-col items-center gap-1">
+                      <p className="text-lead font-bold leading-[1.4] text-white">
                         旅行する前に
                       </p>
-                      <div className="flex items-end justify-center gap-[4px]">
+                      <div className="flex items-end justify-center gap-1">
                         <img
                           src="/img/header-botto-sm.svg"
                           alt="ぼーっ"
                           className="w-[103px] -rotate-[0.42deg]"
                         />
-                        <p className="text-[34px] font-bold leading-[1.4] text-white">
+                        <p className="text-promo font-bold leading-[1.4] text-white">
                           とする、やってみない？
                         </p>
                       </div>
                     </div>
-                    <span className="flex w-[200px] items-center justify-center rounded-[38px] bg-white px-[24px] py-[10px] text-[14px] font-black text-[#0070c9]">
+                    <span className="flex w-[200px] items-center justify-center rounded-full bg-white px-6 py-3 text-label-sm font-black text-brand">
                       さっそく体験する
                     </span>
                     <div
@@ -786,7 +770,7 @@ export default function TopMock({
               {/* 素朴なグルメ */}
               <motion.section
                 id="gourmet"
-                className="flex w-full flex-col gap-[120px]"
+                className="flex w-full flex-col gap-30"
                 initial="hidden"
                 whileInView="show"
                 viewport={viewport}
@@ -796,13 +780,13 @@ export default function TopMock({
                   variants={reveal}
                   className="flex w-full items-end justify-between"
                 >
-                  <div className="flex flex-col items-start gap-[16px]">
+                  <div className="flex flex-col items-start gap-4">
                     <img
                       src="/img/bubble-gourmet.svg"
                       alt="地味だけど、美味い"
                       className="w-[304px]"
                     />
-                    <p className="text-[48px] font-medium leading-[1.2] text-white">
+                    <p className="text-section font-medium leading-[1.2] text-white">
                       素朴なグルメ
                     </p>
                   </div>
@@ -814,7 +798,7 @@ export default function TopMock({
               {/* 体験・イベント */}
               <motion.section
                 id="event"
-                className="flex w-full flex-col gap-[120px]"
+                className="flex w-full flex-col gap-30"
                 initial="hidden"
                 whileInView="show"
                 viewport={viewport}
@@ -824,13 +808,13 @@ export default function TopMock({
                   variants={reveal}
                   className="flex w-full items-end justify-between"
                 >
-                  <div className="flex flex-col items-start gap-[16px]">
+                  <div className="flex flex-col items-start gap-4">
                     <img
                       src="/img/bubble-event.svg"
                       alt="気が向いたら、これ"
                       className="w-[287px]"
                     />
-                    <p className="text-[48px] font-medium leading-[1.2] text-white">
+                    <p className="text-section font-medium leading-[1.2] text-white">
                       体験・イベント
                     </p>
                   </div>
@@ -856,7 +840,7 @@ export default function TopMock({
             delay: animated ? (timing.start + timing.header.extraDelay) / 1000 : 0,
           }}
         >
-          <MockNav theme="light" />
+          <GlobalNav theme="light" />
         </motion.div>
       </div>
 

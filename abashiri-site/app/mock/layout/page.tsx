@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import {
   DEFAULT_LAYOUT,
@@ -124,7 +124,7 @@ export default function LayoutTunePage() {
     <>
       {loaded && (
         <Stage illustration="tamannee" illustEntrance layout={layout}>
-          <TopMock intro={2} blurSeq layout={layout} />
+          <TopPage intro={2} blurSeq layout={layout} />
         </Stage>
       )}
 

@@ -23,8 +23,8 @@ export const INTRO_PATTERNS: Record<number, IntroPattern> = {
   2: {
     name: "じんわり深め（強いブラーがゆっくり晴れる）",
     headerDur: 1.3, headerBlur: 22, headerY: 0,
-    heroDelay: 0.8, heroDur: 1.8, heroBlur: 26, heroY: 0, heroScale: 1,
-    ease: [0.33, 1, 0.68, 1],
+    heroDelay: 0.8, heroDur: 1.8, heroBlur: 22, heroY: 0, heroScale: 1,
+    ease: [0.22, 1, 0.36, 1],
   },
   3: {
     name: "テンポよく（軽いブラーで小気味よく）",

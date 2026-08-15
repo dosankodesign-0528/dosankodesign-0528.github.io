@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import {
   DEFAULT_HERO_TIMING,
@@ -101,7 +101,7 @@ export default function TunePage() {
     <>
       {loaded && (
         <Stage illustration="tamannee" illustEntrance timing={timing}>
-          <TopMock intro={2} blurSeq timing={timing} />
+          <TopPage intro={2} blurSeq timing={timing} />
         </Stage>
       )}
 

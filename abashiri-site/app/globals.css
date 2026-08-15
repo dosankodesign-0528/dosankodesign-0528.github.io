@@ -1,9 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --brand-blue: #0070c9;
-  --sky-top: #35c3ea;
-  --sky-bottom: #b5d7ff;
+/* ============================================================
+   網走サイト デザイントークン
+   ここが唯一の出どころ。コンポーネント側では生の数値を書かない。
+   詳細は DESIGN-SYSTEM.md / Figma「デザインシステム」セクション参照。
+   ============================================================ */
+@theme inline {
+  /* ---------- 書体 ----------
+     実体は next/font が html に注入する --font-zen / --font-rounded。
+     inline にしているのは、その実行時変数を展開して埋め込むため。 */
+  --font-body: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN",
+    sans-serif;
+  --font-num: var(--font-rounded), "M PLUS Rounded 1c", "SF Pro Rounded", sans-serif;
+}
+
+@theme {
+  /* ---------- 色：ブランド ---------- */
+  --color-brand: #0070c9; /* 押せるもの全部 */
+  --color-brand-hover: #0080e4; /* 押せるものに触れた時 */
+
+  /* ---------- 色：空（全ページ共通の地） ---------- */
+  --color-sky-top: #35c3ea;
+  --color-sky-bottom: #b5d7ff;
+
+  /* ---------- 色：面 ---------- */
+  --color-canvas: #e6f3ff; /* 体験フローの地 */
+  --color-scroller: #8ec6ea; /* TOP スクロール領域の地 */
+  --color-track: #cce4fa; /* STEP の線・丸 */
+  --color-sky-pale: #b6dafc; /* 装飾カモメ・弱い枠線・未到達ラベル */
+
+  /* ---------- 色：文字 ---------- */
+  --color-ink: #1e1e1e; /* 白地の上の文字 */
+  --color-ink-muted: #7ba7cc; /* 補助・OFF 状態 */
+
+  /* ---------- 色：さし色 ---------- */
+  --color-accent: #87d500; /* 「選んだ」を伝える唯一の非・青 */
+
+  /* ---------- 色：影とスクリム ----------
+     このサイトの影は黒ではなく深い海の青。右上から陽が差している設定。 */
+  --color-shadow: #005fb3;
+  --color-scrim: #0b3c69;
+
+  /* ---------- 色：場面の色かぶせ（STEP02。写真の上に 40%） ---------- */
+  --color-tint-tento: #031fac;
+  --color-tint-sango: #ac3303;
+  --color-tint-himawari: #5dc000;
+  --color-tint-ryuhyo: #0368ac;
+
+  /* ---------- 角丸 ---------- */
+  --radius-thumb: 12px; /* 場面サムネイル */
+  --radius-panel: 24px; /* プロモカード・ダイアログ */
+  --radius-device-inner: 30px; /* タブレット内側 */
+  --radius-device: 60px; /* タブレット外枠 */
+  --radius-card: 290px; /* 楕円カード */
+
+  /* ---------- 文字サイズ（実装で実際に使う11段） ---------- */
+  --text-label-sm: 14px;
+  --text-body: 15px;
+  --text-label: 16px;
+  --text-lead: 18px;
+  --text-action: 20px;
+  --text-step: 28px;
+  --text-title: 32px;
+  --text-promo: 34px;
+  --text-section: 48px;
+  --text-timer: 80px;
+  --text-number: 140px;
+
+  /* ---------- ブラー ---------- */
+  --blur-hover: 6px; /* カードホバーの幕 */
+  --blur-enter: 10px; /* 登場時にピントが合う */
+  --blur-reveal: 16px; /* スクロールで現れる */
+  --blur-scrim: 18px; /* ダイアログ背面 */
+  --blur-scroll: 22px; /* KV が奥へ引く時の最大 */
+  --blur-glass: 30px; /* 環境音ボタン */
+  --blur-glass-strong: 40px; /* プロモカード */
+
+  /* ---------- 影（色はすべて --color-shadow 系） ---------- */
+  --shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.25); /* 押せるチップ */
+  --shadow-floating: 0 8px 20px -6px rgba(0, 95, 179, 0.35); /* 浮いた小物 */
+  --shadow-modal: 0 25px 50px -12px rgba(0, 95, 179, 0.35); /* ダイアログ */
+  --drop-shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.4); /* 写真サムネイル */
+  --drop-shadow-illust: -8px 1px 2px rgba(0, 95, 179, 0.25); /* 切り抜きイラスト */
+
+  /* ---------- イージング（3本だけ） ---------- */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* ほぼ全部これ */
+  --ease-bounce: cubic-bezier(0.3, 1.4, 0.5, 1); /* ぽよんと弾ませる時だけ */
+  /* コマ送り（カモメ・キラキラ）は linear */
 }
 
 html,
@@ -12,15 +95,15 @@ body {
   overflow: hidden;
   /* 上に引っ張った時のバウンドでステージが見切れないように */
   overscroll-behavior: none;
-  background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
+  background: linear-gradient(
+    to bottom,
+    var(--color-sky-top),
+    var(--color-sky-bottom)
+  );
 }
 
 body {
-  font-family: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", sans-serif;
-}
-
-.font-rounded {
-  font-family: var(--font-rounded), "M PLUS Rounded 1c", "SF Pro Rounded", sans-serif;
+  font-family: var(--font-body);
 }
 
 /* スクロールバー非表示 */
@@ -97,7 +180,7 @@ body {
     transform: translate(24px, 4px);
   }
   75% {
-    transform: translate(8px, 9px);
+    transform: translate(8px, 8px);
   }
 }
 .bird-drift {
@@ -111,7 +194,7 @@ body {
     transform: translate(0, 0) scale(1) rotate(0deg);
   }
   50%, 100% {
-    transform: translate(22px, -34px) scale(0.82) rotate(18deg);
+    transform: translate(24px, -32px) scale(0.82) rotate(18deg);
   }
 }
 .sparkle-hop {

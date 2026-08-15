@@ -50,10 +50,10 @@ export type HeroTiming = {
 export const DEFAULT_HERO_TIMING: HeroTiming = {
   start: 500,
   header: { extraDelay: 0 },
-  kotoba: { delay: 300, duration: 1450, blur: 9 },
+  kotoba: { delay: 300, duration: 1450, blur: 10 },
   tamaranai: { delay: 950 },
   flourish: { offset: 0 },
-  button: { gap: 150, duration: 1000, blur: 10 },
+  button: { gap: 150, duration: 1100, blur: 10 },
   illust: { gap: 250, duration: 1100, blur: 10 },
 };
 

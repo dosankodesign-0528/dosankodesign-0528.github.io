@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import { KV_PATTERNS } from "@/components/kvPatterns";
 
 /* キービジュアル交代演出 比較：本物のTOPページに各パターンを適用 */
@@ -19,7 +19,7 @@ export default async function KvMockPage({
   return (
     <>
       <Stage illustration="tamannee">
-        <TopMock intro={2} kv={num} />
+        <TopPage intro={2} kv={num} />
       </Stage>
       <div className="fixed left-3 top-3 z-50 flex items-center gap-2">
         <Link

@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import {
   DEFAULT_SHADOW,
@@ -97,7 +97,7 @@ export default function ShadowTunePage() {
     <>
       {loaded && (
         <Stage illustration="tamannee" illustEntrance>
-          <TopMock intro={2} blurSeq bubbleAnim={4} shadowTune={tune} />
+          <TopPage intro={2} blurSeq bubbleAnim={4} shadowTune={tune} />
         </Stage>
       )}
 
