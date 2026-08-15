@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>案1 横に回る — 開発者体験②のカード入れ替え</title>
+<link rel="stylesheet" href="../_stack.css">
+</head><body>
+<div class="wrap" id="wrap">
+  <div class="head"><span class="lab">Strength 02</span><span class="ttl">開発環境に柔軟に適応</span></div>
+  <div class="group">
+      <div class="card" data-screen="api"><div class="panel"><div class="side"><i></i><i class="on"></i><i></i><i></i><i></i></div><div class="code"><i style="width:200px;background:#FF5D97"></i><i style="width:300px;background:#0EBBFF"></i><i style="width:240px;background:rgba(255,255,255,.55)"></i><i style="width:170px;background:#9BE8A4"></i><i style="width:320px;background:rgba(255,255,255,.4)"></i><i style="width:190px;background:#0EBBFF"></i></div><div class="chat"><div class="row"><span class="av"></span><span class="bar"></span></div><div class="row"><span class="av pk"></span><span class="bar"></span></div><div class="row"><span class="av"></span><span class="bar"></span></div></div></div><div class="tag">API — リクエストとレスポンス</div></div>
+      <div class="card" data-screen="cli"><div class="panel" style="background:rgba(8,10,14,.92)"><div class="code" style="padding:36px"><i style="width:220px;background:#7CE7A6"></i><i style="width:300px;background:rgba(255,255,255,.5)"></i><i style="width:160px;background:#0EBBFF"></i><i style="width:260px;background:rgba(255,255,255,.35)"></i><i style="width:200px;background:#7CE7A6"></i><i style="width:320px;background:rgba(255,255,255,.5)"></i></div></div><div class="tag">CLI — ターミナル</div></div>
+      <div class="card" data-screen="sdk"><div class="panel"><div class="side"><i></i><i class="on"></i><i></i><i></i><i></i></div><div class="code"><i style="width:240px;background:#FF5D97"></i><i style="width:320px;background:rgba(255,255,255,.55)"></i><i style="width:180px;background:#0EBBFF"></i><i style="width:280px;background:rgba(255,255,255,.4)"></i><i style="width:210px;background:#9BE8A4"></i><i style="width:150px;background:rgba(255,255,255,.4)"></i></div><div class="chat"><div class="row"><span class="av"></span><span class="bar"></span></div><div class="row"><span class="av"></span><span class="bar"></span></div><div class="row"><span class="av"></span><span class="bar"></span></div><div class="row"><span class="av"></span><span class="bar"></span></div></div></div><div class="tag">SDK — リファレンス</div></div>
+      <div class="list" id="list">
+        <div class="item" data-screen="api">
+          <div class="bar-l"></div>
+          <div class="body">
+            <div class="hd"><b>API</b><span>の場合</span></div>
+            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+          </div>
+        </div>
+        <div class="item" data-screen="cli">
+          <div class="bar-l"></div>
+          <div class="body">
+            <div class="hd"><b>CLI</b><span>の場合</span></div>
+            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+          </div>
+        </div>
+        <div class="item" data-screen="sdk">
+          <div class="bar-l"></div>
+          <div class="body">
+            <div class="hd"><b>SDK</b><span>の場合</span></div>
+            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+<div class="note"><b>案1｜横に回る</b>　3枚が輪の上を横に回り、選んだカードが手前へ回り込みます。動きが分かりやすい。　／　右の <b>API・CLI・SDK</b> にマウスを乗せて（スマホはタップして）切り替えてください。　<a href="../stack/">← 3案の一覧へ</a></div>
+<script>
+/* 画面幅にあわせて 1440 の設計を縮める */
+function fit() {
+  const w = document.getElementById('wrap');
+  const k = Math.min(1, innerWidth / 1440);
+  w.style.transform = 'scale(' + k + ')';
+  w.style.marginBottom = (920 * k - 920) + 'px';
+}
+addEventListener('resize', fit); fit();
+
+const cards = [...document.querySelectorAll('.card')];
+const items = [...document.querySelectorAll('.item')];
+const ORDER = ['api', 'cli', 'sdk'];
+let sel = 'api';
+
+/* 案1: 3枚が横一列の輪の上を回る。選んだカードが手前へ回り込んでくる。
+   Y軸まわりの回転＋左右移動で、観覧車が横に回るような動き。 */
+const SEATS1 = [
+  { x:    0, z:   0, ry:   0, sc: 0.905, op: 1.00, zi: 3 },  /* 手前 */
+  { x: -300, z: -260, ry:  22, sc: 0.814, op: 0.55, zi: 2 },  /* 左後ろ */
+  { x:  300, z: -260, ry: -22, sc: 0.733, op: 0.38, zi: 1 },  /* 右後ろ */
+];
+function place(el, seat) {
+  const s = SEATS1[seat];
+  el.style.transition = 'transform var(--t-big) var(--e-out), opacity var(--t-big) var(--e-out)';
+  el.style.transform = `translate3d(${s.x}px,0,${s.z}px) rotateY(${s.ry}deg) scale(${s.sc})`;
+  el.style.opacity = s.op; el.style.zIndex = s.zi;
+}
+
+function apply() {
+  const si = ORDER.indexOf(sel);
+  cards.forEach(c => {
+    /* 選択中を0(手前)として、何番目の席かを出す */
+    const seat = (ORDER.indexOf(c.dataset.screen) - si + 3) % 3;
+    place(c, seat);
+  });
+  items.forEach(it => it.classList.toggle('on', it.dataset.screen === sel));
+}
+items.forEach(it => {
+  const pick = () => { if (sel === it.dataset.screen) return; sel = it.dataset.screen; apply(); };
+  it.addEventListener('pointerenter', pick);
+  it.addEventListener('click', pick);
+});
+apply();
+</script>
+</body></html>

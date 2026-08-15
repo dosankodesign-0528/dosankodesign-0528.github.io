@@ -417,8 +417,11 @@
     text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
   /* 実績 → 開発者体験 のつなぎ。暗いグラデーションが下から覆っていく */
+  /* ⚠️ ここが absolute だと、実績セクションの固定が外れた瞬間に
+     暗幕が一緒に上へ流れ、下から来る開発者体験の暗い板とすれ違って
+     「黒い画面が動いている」ように見えていた。fixed にして動かさない */
   .res-dark {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
     opacity: 0;
@@ -1417,10 +1420,12 @@
 <!-- ================= 実績 (中央でピン留めしてから次へ) ================= -->
 <section class="pin" id="results">
   <div class="pin-vp">
+    <!-- ⚠️ 暗幕は .pin-stage の【外】に置くこと。
+         .pin-stage は transform を持つので、その中に入れると position:fixed が
+         ステージ基準になってしまい、スクロールで一緒に流れてしまう -->
+    <div class="res-dark" id="resDark"></div>
     <div class="pin-stage">
     <!-- 案A: カンプ 14824:22160 / 案B: カンプ 14831:22066 (既定) -->
-    <!-- 案B: 全部出そろったあと、ブラーで消えながら開発者体験の暗い背景へつなぐ板 -->
-    <div class="res-dark" id="resDark"></div>
     <div class="res-img-frame rv" id="resImg">
       <img src="assets/results-image.png" alt="">
     </div>
@@ -2057,10 +2062,11 @@ const DEFAULTS = {
       spinHold: 1.9,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
       spinBrake: 1.2,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
-      /* 「2つの価値」まわりの位置ずらし(px)。カンプ位置からの相対 */
-      headX: 0, headY: 0,   // 連携が生む、2つの価値
-      p1X: 0,   p1Y: 0,     // Point 01
-      p2X: 0,   p2Y: 0,     // Point 02
+      /* 「2つの価値」まわりの位置ずらし(px)。カンプ位置からの相対。
+         2026-08-15 にヒデさんが調整パネルで詰めた値を既定にした */
+      headX: -78, headY: 0,   // 連携が生む、2つの価値
+      p1X: -34,   p1Y: 0,     // Point 01
+      p2X: 0,     p2Y: 0,     // Point 02
       charLag: 0,        // 1文字ずつの遅れ (0=行まるごと ← 2026-08-15 指定)
       driftAmt: 130,     // 分かれたあと、慣性でさらに流れていく量(px・片側)
       vanishDur: 0.85,   // 流れながら消えきるまでの秒数
@@ -2146,7 +2152,9 @@ const DEFAULTS = {
              / 実績(案B)の終わりで暗い背景へトランジション */
 /* v44→v45: ビジョンと実績のフォントをカンプ再取得値へ / 実績→開発者体験を1スクロールで切替
              / 章②を短縮しリストは一括 / ホバーは下線＋白文字 / 開発者体験②を3枚スタックに */
-const STORAGE_KEY = 'anyflow-embed-anim-v45';
+/* v45→v46: 実績→開発者体験の暗幕を fixed にして流れないように / つなぎの1画面をモックと見出しで埋める
+             / 2つの価値の位置を調整値で既定化 / ホバー切替のブラーを廃止 */
+const STORAGE_KEY = 'anyflow-embed-anim-v46';
 
 let params = load();
 function load() {
@@ -3024,7 +3032,10 @@ function updateResults(p) {
   /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
      中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
   const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
-  resEls.dark.style.opacity = outK.toFixed(3);
+  /* 実績が画面から出たら暗幕は役目を終える。ここから先は開発者体験の
+     暗い背景が引き継ぐ（同じグラデーションなので継ぎ目は見えない） */
+  const stay = clamp01((r.bottom - innerHeight * 0.1) / (innerHeight * 0.5));
+  resEls.dark.style.opacity = (outK * stay).toFixed(3);
   if (outK > 0) {
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
       el.style.opacity = ((+el.style.opacity || 0) * (1 - outK)).toFixed(3);
@@ -3392,10 +3403,15 @@ function updateDev(pRaw) {
 
   /* 【2026-08-15】実績が暗転しはじめるのと同時にモックが下から出てくるようにする。
      章の再生を待つと「黒いだけの画面」を挟んでしまうので、助走(preP)でも上げ始める */
+  /* ⚠️ 実績が暗転しきってから開発者体験が固定されるまで、構造上どうしても
+     「1画面ぶんスクロールする区間」ができる（sticky が下から上がってくる距離）。
+     ここを空にすると「黒い画面を挟んでまた進む」に見えるので、
+     モックのせり上がりと見出し①をこの1画面に割り当てて埋める */
   const devPre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
-  const introK = easeSlick(clamp01((devPre - 0.20) / 0.55));
+  const introK  = easeSlick(clamp01((devPre - 0.18) / 0.62));   // モックがせり上がる
+  const introH1 = easeOutQ(clamp01((devPre - 0.42) / 0.34));    // 見出し①が出る
   const inM1 = Math.max(introK, seg(p, ...DEV_P.mock1, easeSlick));
-  const in1  = seg(p, ...DEV_P.h1,    easeOutQ);
+  const in1  = Math.max(introH1, seg(p, ...DEV_P.h1, easeOutQ));
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
   const mv   = seg(p, ...DEV_P.move,  easeSlick);
   const in2  = seg(p, ...DEV_P.h2,    easeOutQ);
@@ -3434,7 +3450,7 @@ function updateDev(pRaw) {
   const sc = (0.82 + 0.18 * inM1) * mk;
   const tx = cx * (1 - mv);
   const ty = (1 - inM1) * 120;
-  let bl = (1 - inM1) * 10 + swapDipK * c.swapBlur * 0.6 + fin * 16;
+  let bl = (1 - inM1) * 10 + fin * 16;   /* ホバー切替のブラーは廃止 (2026-08-15) */
   /* ---- ②では後ろに2枚控えるスタックにする (カンプ 14924:21985) ----
      ホバーで選択が変わると席が回り、3Dっぽく入れ替わって見える */
   const stackK = patStack ? mv : 0;                 // 左へ着くにつれてスタックが開く
