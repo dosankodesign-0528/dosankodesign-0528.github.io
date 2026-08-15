@@ -472,12 +472,31 @@
     white-space: nowrap;
   }
 
+  /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
+     「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
+  .dev-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+  }
+  /* 最後にスクロールで白へ戻すための、上にかぶせる板 */
+  .dev-bg2 {
+    position: absolute;
+    inset: 0;
+    background: #f3f3f3;
+    opacity: 0;
+  }
+  #dev .pin-stage { background: transparent; }
+
+  /* ===== 見出し (カンプ 14791:29576) =====
+     ラベル : SF Pro Text Thin 20px / 字間 -1px / 行間 1 / #0EBBFF
+     見出し : Noto Sans JP ExtraLight(200) 44px / 行間 normal / #fff */
   .dev-center {
     position: absolute;
     left: 0;
     right: 0;                 /* ステージ幅いっぱいに広げて本当の中央に置く */
     /* カンプは 143.8px。ヒデさん指定でコピーとモックの間を40px詰めるため下げてある */
-    top: 183.8px;
+    top: 142.8px;
     text-align: center;
     color: #fff;
     will-change: transform, opacity, filter;
@@ -505,7 +524,7 @@
   .dev-mock {
     position: absolute;
     left: 105px;
-    top: 315px;
+    top: 274px;
     width: 840.6px;
     height: 504.37px;
     z-index: 3;                 /* 文字より前に重ねる */
@@ -519,7 +538,7 @@
   .dev-list {
     position: absolute;
     left: 1005.6px;
-    top: 315px;
+    top: 274px;
     width: 329.383px;
     padding-top: 20px;
     display: flex;
@@ -581,7 +600,7 @@
     transition: color var(--t-fast) var(--e-fast);
   }
   .dev-skip button:hover { color: #fff; text-decoration-color: rgba(255,255,255,.6); }
-  #devSkipTop { top: 276px; }
+  #devSkipTop { top: 235px; }
   /* ===== モック本体: カンプ 14708:37855 を忠実に再現 (840.6×504.37) ===== */
   .dm-panel {
     position: absolute;
@@ -2040,8 +2059,9 @@ const DEFAULTS = {
    / v36→v37: 軌道ライト廃止 / 惑星デザインのキーを A1..C3 に振り直し / ゆらぎ既定=クロス
               / パネルを階層化＋全項目に補足 / 実績を中央寄せ＋画像レスポンシブ＋パララックス
    / v37→v38: 軌道グラデの白をカンプ通りに戻した
-   / v38→v39: キーメッセージを行ごと×ブラーのみに / スライダーの既定値がツマミ中央に来るように) */
-const STORAGE_KEY = 'anyflow-embed-anim-v39';
+   / v38→v39: キーメッセージを行ごと×ブラーのみに / スライダーの既定値がツマミ中央に来るように
+   / v39→v40: 消えていた .dev-bg / .dev-bg2 を復活 (真っ白の原因) ＋ 開発者体験を上下中央そろえ) */
+const STORAGE_KEY = 'anyflow-embed-anim-v40';
 
 let params = load();
 function load() {
