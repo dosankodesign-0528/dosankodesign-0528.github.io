@@ -212,6 +212,13 @@
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
+  /* ⚠️ 実績 → 開発者体験 は【1画面ぶん重ねる】。
+     こうすると、実績の固定が外れるのと同時に開発者体験がもう定位置(top:0)にいるので、
+     画面が上下にスライドせず「その場で切り替わる」ようになる。
+     重なっている間は #dev の板を JS で透明にしておき、実績を隠さないようにする */
+  #dev { margin-top: -100vh; }
+  #dev .pin-vp { will-change: opacity; }
+
   .pin-vp {
     position: sticky;
     top: 0;
@@ -637,7 +644,11 @@
     align-items: stretch;
     border: 1px solid rgba(255,255,255,.1);
     border-radius: 24px;
-    background: rgba(255,255,255,.1);
+    /* ⚠️ backdrop-filter だけだと後ろのカードが透けて見えてしまう。
+       濃い下地を敷いた上に、カンプの白10%を重ねる（見た目はほぼ同じで、後ろは透けない） */
+    background:
+      linear-gradient(rgba(255,255,255,.10), rgba(255,255,255,.10)),
+      linear-gradient(160deg, #2b2b2b 0%, #232323 55%, #1b1b1b 100%);
     backdrop-filter: blur(75px);
     -webkit-backdrop-filter: blur(75px);
     box-shadow: 0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
@@ -864,7 +875,7 @@
   .dm-panel.is-term .dm-side,
   .dm-panel.is-term .dm-chat,
   .dm-panel.is-term .dm-sdk { display: none; }
-  .dm-panel.is-term { background: rgba(8,10,14,.92); }
+  .dm-panel.is-term { background: #080a0e; }
   .dm-panel.is-term .dm-code { padding: 28px 36px; }
   .dm-term-bar {
     display: none;
@@ -1641,7 +1652,7 @@ const DOT_R = 5.606;
 const SWAYS = [
   { id: 'none',   name: '①固定', desc: 'ゆらぎなし。カンプの構図のまま。' },
   { id: 'seesaw', name: '②シーソー', desc: '全体が±3°ほどでゆっくり傾く。' },
-  { id: 'cross',  name: '③クロス', desc: '2本の軌道が逆方向に傾いて、たまに交差する。（軌道ごとの「ゆれ」設定でも自作できます）' },
+  { id: 'cross',  name: '③クロス', desc: '最初はカンプ通り平行。少し経つと2本が逆方向に傾いて交差しはじめる。' },
 ];
 
 /* ================= ディザ演出 (惑星B ハーフトーン専用) ================= */
@@ -2010,7 +2021,9 @@ void main(){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  sway: 3,   // 既定はクロス           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
+  sway: 3,   // 既定はクロス
+  crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
+  crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
   dither: 2,         // ディザ演出 1〜4 (惑星E専用)
   light: 1,          // ライティング 1=なし / 2=右上光源
@@ -2050,9 +2063,9 @@ const DEFAULTS = {
     inner: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
-  visReveal: 2,        // ビジョンのキーメッセージの出方 (VIS_REVEALS)。2=その場でブラー出現
-  visSpin: 2,          // ドットの回り方 (VIS_SPINS)。既定=②速く回って減速
-  visMove: 1,          // 軌道の出方 (VIS_MOVES)。既定=①動きと拡大を同時に
+  visReveal: 2,        // キーメッセージは「その場でブラー出現」で確定（パネルからは外した）
+  visSpin: 2,          // ドットの回り方は「②速く回って減速」で確定（パネルからは外した）
+  visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
     gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
@@ -2063,7 +2076,7 @@ const DEFAULTS = {
   /* スクロールセクションの調整値 */
   sections: {
     common: {
-      smooth: 5,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
+      smooth: 3,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2107,7 +2120,7 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
-      lenVh: 130,
+      lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       countDur: 2.2,   // 数字がランダムから確定するまで
       countAt: 0.45,   // 数字が回り始めるまで
       imgBlur: 24,     // 画像が出る時のぼかし量
@@ -2116,8 +2129,8 @@ const DEFAULTS = {
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
-      outFrom: 0.55,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
-      outTo: 0.86,     // 案B: ここで完全に暗い背景になる (短くして一気に切り替える)
+      outFrom: 0.48,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
+      outTo: 0.84,     // 案B: ここで完全に暗い背景になる (着地より前に真っ黒にする)
       outBlur: 22,     // 消える時のぼかし量
     },
     dev:     { lenVh: 200, swapBlur: 14, stackDur: 1.3 },   // stackDur=カードが回って入れ替わる秒数   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
@@ -2190,7 +2203,9 @@ const DEFAULTS = {
              / 実績の開始をビューポート中央に戻す */
 /* v47→v48: 開発者体験②のレイアウトをカンプ 14927:22549 の実測へ (カードの重なり位置とリストの余白) */
 /* v48→v49: ドットの回り方と軌道の出方を3パターンずつに (visSpin / visMove) */
-const STORAGE_KEY = 'anyflow-embed-anim-v49';
+/* v49→v50: 実績→開発者体験を1画面重ねて「その場で切り替わる」形に / モックの下地を不透明に
+             / ゆらぎクロスは平行から始める / パネルの確定項目を整理 / 滑らかさ既定3 */
+const STORAGE_KEY = 'anyflow-embed-anim-v50';
 
 let params = load();
 function load() {
@@ -2212,6 +2227,8 @@ function load() {
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
+  if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
+  if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
   merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
   merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.sections = {
@@ -2280,8 +2297,12 @@ function orbitGeom(key) {
   if (p.wobbleAmp > 0 && p.wobblePeriod > 0) {
     wobble = p.wobbleAmp * Math.sin(2 * Math.PI * elapsed / p.wobblePeriod + p.wobblePhase * Math.PI / 180);
   }
-  if (SWAYS[(params.sway || 1) - 1].id === 'cross') { /* クロス: 2本が逆方向に傾く */
-    wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10);
+  if (SWAYS[(params.sway || 1) - 1].id === 'cross') {
+    /* クロス: 2本が逆方向に傾く。
+       ⚠️ 最初からクロスしているとカンプと違うので、はじめは平行(傾き0)にしておき、
+          crossLead 秒かけてじわじわ交差しはじめる */
+    const lead = clamp01((elapsed - params.crossDelay) / Math.max(0.1, params.crossLead));
+    wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10) * easeIO(lead);
   }
   return {
     cx: b.cx + p.dx, cy: b.cy + p.dy,
@@ -3100,10 +3121,11 @@ function updateResults(p) {
   /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
      中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
   const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
-  /* 実績が画面から出たら暗幕は役目を終える。ここから先は開発者体験の
-     暗い背景が引き継ぐ（同じグラデーションなので継ぎ目は見えない） */
-  const stay = clamp01((r.bottom - innerHeight * 0.1) / (innerHeight * 0.5));
-  resEls.dark.style.opacity = (outK * stay).toFixed(3);
+  /* 暗幕は【開発者体験が定位置(top:0)に着いてから】そっと消す。
+     着くまで出しっぱなしにしておくことで、下で起きている入れ替わりが一切見えない */
+  const devTop = SECS.dev.getBoundingClientRect().top;
+  const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=着いて少し進んだ */
+  resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
   if (outK > 0) {
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
       el.style.opacity = ((+el.style.opacity || 0) * (1 - outK)).toFixed(3);
@@ -3119,6 +3141,7 @@ const devEls = {
   h2: document.getElementById('devH2'),
   mock: document.getElementById('devMock'),
   panel: document.getElementById('dmPanel'),
+  vp: document.querySelector('#dev .pin-vp'),
   list: document.getElementById('devList'),
   listItems: [...document.querySelectorAll('#devList .dl-item')],
   ghosts: [document.getElementById('dmGhost0'), document.getElementById('dmGhost1')],
@@ -3511,15 +3534,13 @@ function updateDev(pRaw) {
 
   /* 【2026-08-15】実績が暗転しはじめるのと同時にモックが下から出てくるようにする。
      章の再生を待つと「黒いだけの画面」を挟んでしまうので、助走(preP)でも上げ始める */
-  /* ⚠️ 実績が暗転しきってから開発者体験が固定されるまで、構造上どうしても
-     「1画面ぶんスクロールする区間」ができる（sticky が下から上がってくる距離）。
-     ここを空にすると「黒い画面を挟んでまた進む」に見えるので、
-     モックのせり上がりと見出し①をこの1画面に割り当てて埋める */
-  const devPre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
-  const introK  = easeSlick(clamp01((devPre - 0.18) / 0.62));   // モックがせり上がる
-  const introH1 = easeOutQ(clamp01((devPre - 0.42) / 0.34));    // 見出し①が出る
-  const inM1 = Math.max(introK, seg(p, ...DEV_P.mock1, easeSlick));
-  const in1  = Math.max(introH1, seg(p, ...DEV_P.h1, easeOutQ));
+  /* 【2026-08-15】実績と1画面ぶん重ねてあるので、重なっている間は板ごと隠しておく。
+     こうしないと、上がってくる途中の開発者体験が実績を下から覆ってしまう。
+     定位置(top:0)に着いた時にはもう実績側の暗幕が真っ黒なので、切り替わりは見えない */
+  const devTop = SECS.dev.getBoundingClientRect().top;
+  devEls.vp.style.opacity = devTop > 2 ? '0' : '1';
+  const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
+  const in1  = seg(p, ...DEV_P.h1, easeOutQ);
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
   const mv   = seg(p, ...DEV_P.move,  easeSlick);
   const in2  = seg(p, ...DEV_P.h2,    easeOutQ);
@@ -4400,8 +4421,6 @@ function buildPanel() {
     '1行が出きるまでの時間。大きいほどゆったり。'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px',
     '大きいほど、出入りのぼけが強くなる。'));
-  sub(catVis, 'キーメッセージの出方');
-  pillRow(VIS_REVEALS, (_, i) => params.visReveal === i + 1, (_, i) => params.visReveal = i + 1);
   rows.push(slider('慣性で流れる量', 0, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
     '上下に分かれたあと、止まらずどこまで流れ続けるか。大きいほど遠くへ流れる。'));
   rows.push(slider('消えきるまで', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + 's',
@@ -4432,12 +4451,6 @@ function buildPanel() {
     '小さい軌道が左下の定位置まで移動するのにかける時間。大きいほどゆったり。'));
   rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
     '楕円の線の太さ。'));
-  sub(catVis, 'ドットの回り方');
-  note(VIS_SPINS[(params.visSpin || 1) - 1].desc);
-  pillRow(VIS_SPINS, (_, i) => params.visSpin === i + 1, (_, i) => params.visSpin = i + 1);
-  sub(catVis, '軌道の出方（動きと拡大）');
-  note(VIS_MOVES[(params.visMove || 1) - 1].desc);
-  pillRow(VIS_MOVES, (_, i) => params.visMove === i + 1, (_, i) => params.visMove = i + 1);
   sub(catVis, 'ドットの周回');
   rows.push(slider('速さ(×KV)', 0.5, 5, 0.1, () => sv().vision.spinSpeed, v => sv().vision.spinSpeed = v, v => '×' + v.toFixed(1),
     'キービジュアルのドットの何倍の速さで回るか。'));
