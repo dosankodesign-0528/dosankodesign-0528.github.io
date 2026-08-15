@@ -205,7 +205,7 @@ export default function SoundUi({
 
       {/* 初回のON/OFF確認（白カードのモーダル） */}
       {showDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-scrim/30 backdrop-blur-scrim">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-shadow/30 backdrop-blur-veil">
           <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-panel bg-white/90 p-8 text-center shadow-modal">
             <p className="mb-6 text-body font-bold leading-[1.6] text-ink">
               網走の環境音を楽しむことができます。
@@ -221,7 +221,7 @@ export default function SoundUi({
               </button>
               <button
                 onClick={() => answer(false)}
-                className="flex-1 cursor-pointer rounded-full border-2 border-sky-pale bg-white py-3 text-body font-black text-ink-muted transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full bg-canvas py-3 text-body font-black text-ink-muted transition-transform hover:scale-105"
               >
                 OFF
               </button>

@@ -63,41 +63,25 @@ const cardReveal: Variants = {
   }),
 };
 
-/* ホバー時のオーバーレイ表現（3パターン）
-   1: 下からすっと …… グラデが現れて文字が下からスライドイン（カンプ基準）
-   2: じんわりフォーカス …… グラデがゆっくり現れ、文字はブラーが晴れてピントが合う
-   3: せり上がりワイプ …… グラデの幕が下からせり上がり、文字がぽんと乗る */
-const CARD_OVERLAY: Record<number, { overlay: string; title: string }> = {
-  1: {
-    overlay:
-      "opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100",
-    title:
-      "translate-y-[18px] opacity-0 transition-all delay-75 duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100",
-  },
-  2: {
-    overlay:
-      "opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100",
-    title:
-      "opacity-0 blur-hover transition-all duration-700 ease-out group-hover:opacity-100 group-hover:blur-none",
-  },
-  3: {
-    overlay:
-      "translate-y-full transition-transform duration-500 ease-standard group-hover:translate-y-0",
-    title:
-      "translate-y-[24px] opacity-0 transition-all delay-100 duration-500 ease-bounce group-hover:translate-y-0 group-hover:opacity-100",
-  },
+/* カードホバー（採用案：グラデが現れて、スポット名が下からすっと上がる） */
+export type CardHover = { overlay: string; title: string };
+const CARD_HOVER: CardHover = {
+  overlay:
+    "opacity-0 transition-opacity duration-500 ease-standard group-hover:opacity-100",
+  title:
+    "translate-y-[18px] opacity-0 transition-all delay-75 duration-500 ease-standard group-hover:translate-y-0 group-hover:opacity-100",
 };
 
 function Card({
   card,
   index,
-  hoverStyle = 1,
+  hover = CARD_HOVER,
 }: {
   card: CardData;
   index: number;
-  hoverStyle?: number;
+  hover?: CardHover;
 }) {
-  const ov = CARD_OVERLAY[hoverStyle] ?? CARD_OVERLAY[1];
+  const ov = hover;
   return (
     <motion.div
       variants={cardReveal}
@@ -112,14 +96,14 @@ function Card({
         />
         {/* ホバー：下から黒グラデ+ブラーの上にスポット名 */}
         <div
-          className={`absolute inset-0 flex items-end justify-center rounded-card bg-gradient-to-b from-transparent to-black/60 pb-10 backdrop-blur-hover ${ov.overlay}`}
+          className={`absolute inset-0 flex items-end justify-center rounded-card bg-gradient-to-b from-transparent to-black/70 pb-10 backdrop-blur-soft ${ov.overlay}`}
         >
           <p className={`text-title font-medium leading-[1.2] text-white ${ov.title}`}>
             {card.title}
           </p>
         </div>
       </div>
-      <p className="font-num pointer-events-none absolute left-[-16px] top-[-65px] text-number font-thin leading-none text-white opacity-80">
+      <p className="font-num pointer-events-none absolute left-[-16px] top-[-65px] text-number font-thin leading-none text-white opacity-70">
         No.{index + 1}
       </p>
     </motion.div>
@@ -133,12 +117,12 @@ function CardRow({
   cards,
   rowIndex,
   registerRow,
-  hoverStyle = 1,
+  hover,
 }: {
   cards: CardData[];
   rowIndex: number;
   registerRow: (i: number, el: HTMLDivElement | null) => void;
-  hoverStyle?: number;
+  hover?: CardHover;
 }) {
   return (
     <div
@@ -147,34 +131,22 @@ function CardRow({
     >
       <div className="flex w-max gap-20 pl-30 pr-15">
         {cards.map((c, i) => (
-          <Card key={c.src} card={c} index={i} hoverStyle={hoverStyle} />
+          <Card key={c.src} card={c} index={i} hover={hover} />
         ))}
       </div>
     </div>
   );
 }
 
-/* もっと見る（新デザイン：テキスト+62pxの丸アイコン）のホバーアニメ3パターン
-   1: 矢印スライド …… アイコンが右へ10pxスッと動いて戻る
-   2: くるっと回転 …… アイコンが一回転しながら少し大きくなる
-   3: ふわっと開く …… テキストとアイコンの間がふわっと広がる */
-const MORE_ANIM: Record<number, { text: string; icon: string }> = {
-  1: {
-    text: "",
-    icon: "transition-transform duration-300 ease-out group-hover:translate-x-[10px]",
-  },
-  2: {
-    text: "",
-    icon: "transition-transform duration-500 ease-bounce group-hover:rotate-[360deg] group-hover:scale-110",
-  },
-  3: {
-    text: "transition-transform duration-300 ease-out group-hover:-translate-x-[6px]",
-    icon: "transition-transform duration-300 ease-out group-hover:translate-x-[8px] group-hover:scale-105",
-  },
+/* もっと見る（採用案：アイコンが右へ 10px スッと動いて戻る） */
+export type MoreAnim = { text: string; icon: string };
+const MORE_ANIM: MoreAnim = {
+  text: "",
+  icon: "transition-transform duration-300 ease-standard group-hover:translate-x-[10px]",
 };
 
-function ViewMore({ anim = 1 }: { anim?: number }) {
-  const a = MORE_ANIM[anim] ?? MORE_ANIM[1];
+function ViewMore({ anim = MORE_ANIM }: { anim?: MoreAnim }) {
+  const a = anim;
   return (
     <a
       href="#"
@@ -220,8 +192,8 @@ export default function TopPage({
   birdsEditable = false,
   onBirdMove,
   waitConsent = false,
-  cardHover = 1,
-  moreAnim = 1,
+  cardHover,
+  moreAnim,
   bubbleAnim = 0,
   bubbleTune,
   frameShadow,
@@ -250,10 +222,10 @@ export default function TopPage({
   onBirdMove?: (key: "promo1" | "promo2", patch: { x: number; y: number }) => void;
   /** true: 環境音のON/OFF確認が済むまで登場演出を待つ */
   waitConsent?: boolean;
-  /** 1〜3: カードホバーのオーバーレイ表現 */
-  cardHover?: number;
-  /** 1〜3: もっと見るボタンのホバーアニメ */
-  moreAnim?: number;
+  /** 比較mock専用：カードホバーの見せ方を差し替える（通常は指定しない） */
+  cardHover?: CardHover;
+  /** 比較mock専用：もっと見るのホバーを差し替える（通常は指定しない） */
+  moreAnim?: MoreAnim;
   /** 1〜3: 吹き出しのムニムニアニメ（0でなし） */
   bubbleAnim?: number;
   /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
@@ -533,7 +505,7 @@ export default function TopPage({
     >
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-device-inner bg-scroller [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-panel bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
@@ -627,7 +599,7 @@ export default function TopPage({
                 >
                   <Link
                     href="/experience"
-                    className="rounded-full bg-white/90 px-11 py-4 text-action font-black text-brand backdrop-blur-hover transition-transform hover:scale-105"
+                    className="rounded-full bg-white/90 px-11 py-4 text-action font-black text-brand backdrop-blur-soft transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
@@ -683,7 +655,7 @@ export default function TopPage({
                     </div>
                     <ViewMore anim={moreAnim} />
                   </motion.div>
-                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} hoverStyle={cardHover} />
+                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} hover={cardHover} />
                 </motion.section>
 
                 {/* ぼーっとする、やってみない？ */}
@@ -695,7 +667,7 @@ export default function TopPage({
                 >
                   <Link
                     href="/experience"
-                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-panel bg-brand/90 px-4 py-15 backdrop-blur-glass-strong transition-transform duration-500 hover:scale-[1.01]"
+                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-panel bg-brand/90 px-4 py-15 backdrop-blur-glass transition-transform duration-500 hover:scale-[1.01]"
                   >
                     <div className="flex flex-col items-center gap-1">
                       <p className="text-lead font-bold leading-[1.4] text-white">
@@ -792,7 +764,7 @@ export default function TopPage({
                   </div>
                   <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} hoverStyle={cardHover} />
+                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} hover={cardHover} />
               </motion.section>
 
               {/* 体験・イベント */}
@@ -820,7 +792,7 @@ export default function TopPage({
                   </div>
                   <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} hoverStyle={cardHover} />
+                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} hover={cardHover} />
               </motion.section>
             </div>
           </div>

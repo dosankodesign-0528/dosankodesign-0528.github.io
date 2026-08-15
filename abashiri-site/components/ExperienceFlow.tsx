@@ -26,7 +26,7 @@ const SCENES = [
     { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", tint: TINT("--color-tint-sango") },
   ],
   [
-    { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", tint: TINT("--color-tint-himawari") },
+    { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", tint: TINT("--color-accent") },
     { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", tint: TINT("--color-tint-ryuhyo") },
   ],
 ];
@@ -40,7 +40,7 @@ function StepIndicator({ step }: { step: Step }) {
   });
   return (
     <div className="absolute left-1/2 top-[120px] h-[104px] w-[666px] -translate-x-1/2">
-      <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-track" />
+      <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-sky-pale" />
       {states.map((state, i) => (
         <div
           key={i}
@@ -49,7 +49,7 @@ function StepIndicator({ step }: { step: Step }) {
         >
           <div
             className={`font-num flex flex-col items-center text-center font-extrabold leading-none ${
-              state === "idle" ? "text-sky-pale opacity-60" : "text-brand"
+              state === "idle" ? "text-sky-pale opacity-70" : "text-brand"
             }`}
           >
             <p className="text-label-sm leading-[1.2]">STEP</p>
@@ -89,7 +89,7 @@ function StepButtons({
         disabled={!canProceed}
         className={`w-full rounded-full bg-brand px-11 py-4 text-action font-black text-white transition-all duration-300 ${
           canProceed
-            ? "cursor-pointer hover:scale-105 hover:bg-brand-hover"
+            ? "cursor-pointer hover:scale-105 hover:brightness-110"
             : "cursor-default opacity-30"
         }`}
       >
@@ -97,7 +97,7 @@ function StepButtons({
       </button>
       <button
         onClick={onBack}
-        className="cursor-pointer text-action font-bold text-ink transition-opacity hover:opacity-60"
+        className="cursor-pointer text-action font-bold text-ink transition-opacity hover:opacity-70"
       >
         もどる
       </button>
@@ -106,9 +106,9 @@ function StepButtons({
 }
 
 const stepTransition = {
-  initial: { opacity: 0, y: 24, filter: "blur(10px)" },
+  initial: { opacity: 0, y: 24, filter: "blur(16px)" },
   animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit: { opacity: 0, y: -16, filter: "blur(10px)" },
+  exit: { opacity: 0, y: -16, filter: "blur(16px)" },
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
 };
 
@@ -211,7 +211,7 @@ export default function ExperienceFlow({
     >
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
-      <div className="relative h-full w-full overflow-hidden rounded-t-device-inner bg-canvas">
+      <div className="relative h-full w-full overflow-hidden rounded-t-panel bg-canvas">
         <AnimatePresence mode="wait">
           {step !== 3 ? (
             <motion.div key="select" className="absolute inset-0" {...stepTransition}>
@@ -367,7 +367,7 @@ export default function ExperienceFlow({
                   controlsShown ? "opacity-100" : "opacity-0"
                 }`}
               >
-                <span className="rounded-full bg-white px-4 py-2 text-label-sm font-black text-brand backdrop-blur-hover">
+                <span className="rounded-full bg-white px-4 py-2 text-label-sm font-black text-brand backdrop-blur-soft">
                   ぼーっとタイマー
                 </span>
                 <p className="font-num text-timer font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
