@@ -511,6 +511,11 @@
     color: #fff;
     will-change: transform, opacity, filter;
   }
+  /* ===== 見出し (カンプ 14937:23888・2026-08-15 再取得) =====
+     ラベル : SF Pro Text Thin 20px / 字間 -1px / 行間1 / #0EBBFF / 中央
+     見出し : Noto Sans JP Thin(100) 40px / 行間 normal / 白 / 中央
+     枠の gap = 12px
+     ⚠️ サイズが 44px → 40px に、gap が 20px → 12px に変わっている */
   .dev-center .dc-label {
     display: block;
     font-family: var(--font-en);
@@ -521,13 +526,12 @@
     letter-spacing: -1px;
     line-height: 1;
     color: #0EBBFF;
-    margin-bottom: 20px;   /* カンプ12px + 指定の4px下げ ×2 = 8px下げ */
+    margin-bottom: 12px;   /* カンプ 14937:23888 の gap */
   }
   .dev-center .dc-one {
     display: block;
-    /* 2026-08-15: ウェイトを1段階下げる指定 (ExtraLight 200 → Thin 100) */
-    font-weight: 100;
-    font-size: 44px;
+    font-weight: 100;      /* カンプ: Noto Sans JP Thin */
+    font-size: 40px;       /* カンプ 14937:23888 で 44px → 40px に変更 */
     line-height: normal;
   }
   /* カンプ 14791:29706 はモック左79.7 + リスト右端1309.7 = 幅1230 で 25.3px 左寄りだった。
@@ -2219,7 +2223,8 @@ const DEFAULTS = {
 /* v53→v54: 上に戻る時のスクロールリプレイをきれいに (奥にいる間は完成状態を見せる) */
 /* v54→v55: 開発者体験の見出しをさらに4px下げ＋Thinへ / API・CLI・SDK のウェイトをカンプ 14937:23895 へ */
 /* v55→v56: 実績の数字はスロットをやめて単純なブラー出現に（見出し→数字の順） */
-const STORAGE_KEY = 'anyflow-embed-anim-v56';
+/* v56→v57: 開発者体験の見出しをカンプ 14937:23888 へ (40px / gap12px) */
+const STORAGE_KEY = 'anyflow-embed-anim-v57';
 
 let params = load();
 function load() {
