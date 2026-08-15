@@ -3,6 +3,8 @@
 /* ============================================================
    網走サイト デザイントークン
    ここが唯一の出どころ。コンポーネント側では生の数値を書かない。
+   載せているのは「本番の画面で実際に使っている値」だけ。
+   比較検討用（/mock/ 配下）でしか使わない値はここに入れない。
    詳細は DESIGN-SYSTEM.md / Figma「デザインシステム」セクション参照。
    ============================================================ */
 @theme inline {
@@ -15,78 +17,71 @@
 }
 
 @theme {
-  /* ---------- 色：ブランド ---------- */
-  --color-brand: #0070c9; /* 押せるもの全部 */
-  --color-brand-hover: #0080e4; /* 押せるものに触れた時 */
+  /* ══════════ ブランドカラー ══════════
+     サイト全体の印象を決める色。網走の空そのもの。 */
+  --color-brand: #0070c9; /* 押せるもの全部・アクティブな状態 */
+  --color-sky-top: #35c3ea; /* 空グラデの上端 */
+  --color-sky-bottom: #b5d7ff; /* 空グラデの下端 */
 
-  /* ---------- 色：空（全ページ共通の地） ---------- */
-  --color-sky-top: #35c3ea;
-  --color-sky-bottom: #b5d7ff;
-
-  /* ---------- 色：面 ---------- */
-  --color-canvas: #e6f3ff; /* 体験フローの地 */
-  --color-scroller: #8ec6ea; /* TOP スクロール領域の地 */
-  --color-track: #cce4fa; /* STEP の線・丸 */
-  --color-sky-pale: #b6dafc; /* 装飾カモメ・弱い枠線・未到達ラベル */
-
-  /* ---------- 色：文字 ---------- */
+  /* ══════════ ベースカラー ══════════ */
+  /* ── テキスト ── */
   --color-ink: #1e1e1e; /* 白地の上の文字 */
-  --color-ink-muted: #7ba7cc; /* 補助・OFF 状態 */
+  --color-ink-muted: #7ba7cc; /* 補助・OFF 状態の文字とアイコン */
+  /* ── バックグラウンド ── */
+  --color-canvas: #e6f3ff; /* 白い板の中の地 */
+  /* ── コントロール ── */
+  --color-sky-pale: #b6dafc; /* 未選択・未到達・装飾。押せない状態の色 */
+  /* ── 影 ── */
+  --color-shadow: #005fb3; /* 影とスクリム。黒ではなく深い海の青 */
 
-  /* ---------- 色：さし色 ---------- */
-  --color-accent: #87d500; /* 「選んだ」を伝える唯一の非・青 */
+  /* ══════════ アクセントカラー ══════════
+     青の世界に対して差す色。似た値は 1 つにまとめてある。 */
+  --color-accent: #87d500; /* 「選んだ」を伝える緑。ひまわり畑の色かぶせにも使う */
+  --color-tint-tento: #031fac; /* 天都山展望台の色かぶせ */
+  --color-tint-sango: #ac3303; /* さんご草の色かぶせ */
+  --color-tint-ryuhyo: #0368ac; /* 流氷クルーズの色かぶせ */
 
-  /* ---------- 色：影とスクリム ----------
-     このサイトの影は黒ではなく深い海の青。右上から陽が差している設定。 */
-  --color-shadow: #005fb3;
-  --color-scrim: #0b3c69;
-
-  /* ---------- 色：場面の色かぶせ（STEP02。写真の上に 40%） ---------- */
-  --color-tint-tento: #031fac;
-  --color-tint-sango: #ac3303;
-  --color-tint-himawari: #5dc000;
-  --color-tint-ryuhyo: #0368ac;
-
-  /* ---------- 角丸 ---------- */
+  /* ══════════ 角丸（4 段） ══════════ */
   --radius-thumb: 12px; /* 場面サムネイル */
-  --radius-panel: 24px; /* プロモカード・ダイアログ */
-  --radius-device-inner: 30px; /* タブレット内側 */
+  --radius-panel: 30px; /* 板の中の面：タブレット内側・プロモカード・ダイアログ */
   --radius-device: 60px; /* タブレット外枠 */
   --radius-card: 290px; /* 楕円カード */
 
-  /* ---------- 文字サイズ（実装で実際に使う11段） ---------- */
-  --text-label-sm: 14px;
-  --text-body: 15px;
-  --text-label: 16px;
-  --text-lead: 18px;
-  --text-action: 20px;
-  --text-step: 28px;
-  --text-title: 32px;
-  --text-promo: 34px;
+  /* ══════════ テキストサイズ（11 段） ══════════ */
+  /* タイトル */
   --text-section: 48px;
-  --text-timer: 80px;
+  --text-promo: 34px;
+  --text-title: 32px;
+  /* テキスト */
+  --text-lead: 18px;
+  --text-label: 16px;
+  --text-body: 15px;
+  /* コントロール */
+  --text-action: 20px;
+  --text-label-sm: 14px;
+  /* 数字（font-num） */
   --text-number: 140px;
+  --text-timer: 80px;
+  --text-step: 28px;
 
-  /* ---------- ブラー ---------- */
-  --blur-hover: 6px; /* カードホバーの幕 */
-  --blur-enter: 10px; /* 登場時にピントが合う */
-  --blur-reveal: 16px; /* スクロールで現れる */
-  --blur-scrim: 18px; /* ダイアログ背面 */
-  --blur-scroll: 22px; /* KV が奥へ引く時の最大 */
-  --blur-glass: 30px; /* 環境音ボタン */
-  --blur-glass-strong: 40px; /* プロモカード */
+  /* ══════════ ブラー（4 段） ══════════ */
+  --blur-soft: 6px; /* 触れた時のうっすら。ボタン・カードの幕・タイマー札 */
+  --blur-enter: 16px; /* 登場時にピントが合う。KV・カード・STEP 切り替え */
+  --blur-veil: 22px; /* 奥へ引く／背面を隠す。KVスクロール・ダイアログ背面 */
+  --blur-glass: 30px; /* すりガラスの面。環境音ボタン・プロモカード */
 
-  /* ---------- 影（色はすべて --color-shadow 系） ---------- */
+  /* ══════════ シャドウ（5 種） ══════════
+     色はすべて --color-shadow(#005fb3)。濃さだけ用途で変える。
+     Tailwind が値を解析できるよう rgba で書いてあるが、中身は同じ色。 */
   --shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.25); /* 押せるチップ */
+  --drop-shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.25); /* 写真サムネイル */
+  --drop-shadow-illust: -8px 1px 2px rgba(0, 95, 179, 0.25); /* 切り抜きイラスト */
   --shadow-floating: 0 8px 20px -6px rgba(0, 95, 179, 0.35); /* 浮いた小物 */
   --shadow-modal: 0 25px 50px -12px rgba(0, 95, 179, 0.35); /* ダイアログ */
-  --drop-shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.4); /* 写真サムネイル */
-  --drop-shadow-illust: -8px 1px 2px rgba(0, 95, 179, 0.25); /* 切り抜きイラスト */
 
-  /* ---------- イージング（3本だけ） ---------- */
-  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* ほぼ全部これ */
-  --ease-bounce: cubic-bezier(0.3, 1.4, 0.5, 1); /* ぽよんと弾ませる時だけ */
-  /* コマ送り（カモメ・キラキラ）は linear */
+  /* ══════════ イージング ══════════ */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* 動くものは全部これ */
+  /* コマ送り（カモメ・キラキラ）だけ linear */
 }
 
 html,
