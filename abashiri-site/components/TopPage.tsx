@@ -88,7 +88,7 @@ function Card({
       custom={index}
       className="relative h-[410px] w-[730px] shrink-0"
     >
-      <div className="group h-full w-full overflow-hidden rounded-card border-8 border-white/70">
+      <div className="group h-full w-full overflow-hidden rounded-290 border-8 border-white/70">
         <img
           src={card.src}
           alt={card.alt}
@@ -96,14 +96,14 @@ function Card({
         />
         {/* ホバー：下から黒グラデ+ブラーの上にスポット名 */}
         <div
-          className={`absolute inset-0 flex items-end justify-center rounded-card bg-gradient-to-b from-transparent to-black/70 pb-10 backdrop-blur-soft ${ov.overlay}`}
+          className={`absolute inset-0 flex items-end justify-center rounded-290 bg-gradient-to-b from-transparent to-black/70 pb-10 backdrop-blur-6 ${ov.overlay}`}
         >
-          <p className={`text-title font-medium leading-[1.2] text-white ${ov.title}`}>
+          <p className={`text-title-32 font-medium leading-[1.2] text-white ${ov.title}`}>
             {card.title}
           </p>
         </div>
       </div>
-      <p className="font-num pointer-events-none absolute left-[-16px] top-[-65px] text-number font-thin leading-none text-white opacity-70">
+      <p className="font-num pointer-events-none absolute left-[-16px] top-[-65px] text-number-140 font-thin leading-none text-white opacity-70">
         No.{index + 1}
       </p>
     </motion.div>
@@ -151,7 +151,7 @@ function ViewMore({ anim = MORE_ANIM }: { anim?: MoreAnim }) {
     <a
       href="#"
       onClick={(e) => e.preventDefault()}
-      className="group flex cursor-pointer items-center gap-6 text-action font-medium text-white"
+      className="group flex cursor-pointer items-center gap-6 text-control-20 font-medium text-white"
     >
       <span className={a.text}>もっと見る</span>
       <img
@@ -497,7 +497,7 @@ export default function TopPage({
 
   return (
     <div
-      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-device border-[30px] border-white ${frameShadow ?? ""}`}
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-60 border-[30px] border-white ${frameShadow ?? ""}`}
       style={{
         ...(frameShadow ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
         transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
@@ -505,7 +505,7 @@ export default function TopPage({
     >
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-panel bg-sky-bottom [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-30 bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
@@ -599,7 +599,7 @@ export default function TopPage({
                 >
                   <Link
                     href="/experience"
-                    className="rounded-full bg-white/90 px-11 py-4 text-action font-black text-brand backdrop-blur-soft transition-transform hover:scale-105"
+                    className="rounded-full bg-white/90 px-11 py-4 text-control-20 font-black text-brand backdrop-blur-6 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
@@ -649,7 +649,7 @@ export default function TopPage({
                           className="w-[140px] -rotate-[0.42deg]"
                         />
                       </div>
-                      <p className="ml-[3px] mt-2 text-section font-medium leading-[1.2] text-white">
+                      <p className="ml-[3px] mt-2 text-title-48 font-medium leading-[1.2] text-white">
                         と過ごせるスポット
                       </p>
                     </div>
@@ -667,10 +667,10 @@ export default function TopPage({
                 >
                   <Link
                     href="/experience"
-                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-panel bg-brand/90 px-4 py-15 backdrop-blur-glass transition-transform duration-500 hover:scale-[1.01]"
+                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-30 bg-brand/90 px-4 py-15 backdrop-blur-30 transition-transform duration-500 hover:scale-[1.01]"
                   >
                     <div className="flex flex-col items-center gap-1">
-                      <p className="text-lead font-bold leading-[1.4] text-white">
+                      <p className="text-body-18 font-bold leading-[1.4] text-white">
                         旅行する前に
                       </p>
                       <div className="flex items-end justify-center gap-1">
@@ -679,12 +679,12 @@ export default function TopPage({
                           alt="ぼーっ"
                           className="w-[103px] -rotate-[0.42deg]"
                         />
-                        <p className="text-promo font-bold leading-[1.4] text-white">
+                        <p className="text-title-34 font-bold leading-[1.4] text-white">
                           とする、やってみない？
                         </p>
                       </div>
                     </div>
-                    <span className="flex w-[200px] items-center justify-center rounded-full bg-white px-6 py-3 text-label-sm font-black text-brand">
+                    <span className="flex w-[200px] items-center justify-center rounded-full bg-white px-6 py-3 text-control-14 font-black text-brand">
                       さっそく体験する
                     </span>
                     <div
@@ -758,7 +758,7 @@ export default function TopPage({
                       alt="地味だけど、美味い"
                       className="w-[304px]"
                     />
-                    <p className="text-section font-medium leading-[1.2] text-white">
+                    <p className="text-title-48 font-medium leading-[1.2] text-white">
                       素朴なグルメ
                     </p>
                   </div>
@@ -786,7 +786,7 @@ export default function TopPage({
                       alt="気が向いたら、これ"
                       className="w-[287px]"
                     />
-                    <p className="text-section font-medium leading-[1.2] text-white">
+                    <p className="text-title-48 font-medium leading-[1.2] text-white">
                       体験・イベント
                     </p>
                   </div>

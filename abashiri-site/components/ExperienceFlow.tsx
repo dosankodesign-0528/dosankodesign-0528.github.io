@@ -52,8 +52,8 @@ function StepIndicator({ step }: { step: Step }) {
               state === "idle" ? "text-sky-pale opacity-70" : "text-brand"
             }`}
           >
-            <p className="text-label-sm leading-[1.2]">STEP</p>
-            <p className="text-step">0{i + 1}</p>
+            <p className="text-control-14 leading-[1.2]">STEP</p>
+            <p className="text-number-28">0{i + 1}</p>
           </div>
           <img
             src={
@@ -87,7 +87,7 @@ function StepButtons({
       <button
         onClick={onNext}
         disabled={!canProceed}
-        className={`w-full rounded-full bg-brand px-11 py-4 text-action font-bold text-white transition-all duration-300 ${
+        className={`w-full rounded-full bg-brand px-11 py-4 text-control-20 font-bold text-white transition-all duration-300 ${
           canProceed
             ? "cursor-pointer hover:scale-105 hover:brightness-110"
             : "cursor-default opacity-30"
@@ -97,7 +97,7 @@ function StepButtons({
       </button>
       <button
         onClick={onBack}
-        className="cursor-pointer text-action font-medium text-ink transition-opacity hover:opacity-70"
+        className="cursor-pointer text-control-20 font-medium text-ink transition-opacity hover:opacity-70"
       >
         もどる
       </button>
@@ -203,7 +203,7 @@ export default function ExperienceFlow({
 
   return (
     <div
-      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-device border-[30px] border-white"
+      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-60 border-[30px] border-white"
       style={{
         boxShadow: buildShadow(mergeShadow(null)),
         transform: `translate(${mergeLayout(null).tabletX}px, ${mergeLayout(null).tabletY}px)`,
@@ -211,7 +211,7 @@ export default function ExperienceFlow({
     >
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
-      <div className="relative h-full w-full overflow-hidden rounded-t-panel bg-canvas">
+      <div className="relative h-full w-full overflow-hidden rounded-t-30 bg-canvas">
         <AnimatePresence mode="wait">
           {step !== 3 ? (
             <motion.div key="select" className="absolute inset-0" {...stepTransition}>
@@ -234,7 +234,7 @@ export default function ExperienceFlow({
                     className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-title font-bold leading-[1.6] text-ink">
+                    <p className="text-title-32 font-bold leading-[1.6] text-ink">
                       今、どんな気持ち？
                     </p>
                     <div className="flex flex-col items-center gap-4">
@@ -246,7 +246,7 @@ export default function ExperienceFlow({
                               <button
                                 key={f}
                                 onClick={() => toggleFeeling(f)}
-                                className={`cursor-pointer rounded-full px-6 py-2 text-action font-bold transition-all duration-300 hover:scale-105 ${
+                                className={`cursor-pointer rounded-full px-6 py-2 text-control-20 font-bold transition-all duration-300 hover:scale-105 ${
                                   active ? "bg-accent text-white" : "bg-white/90 text-brand"
                                 }`}
                               >
@@ -265,7 +265,7 @@ export default function ExperienceFlow({
                     className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-title font-bold leading-[1.6] text-ink whitespace-pre-line text-center">
+                    <p className="text-title-32 font-bold leading-[1.6] text-ink whitespace-pre-line text-center">
                       {"お疲れさま。頭を空っぽにしてみよう。\nどこでぼーっとする？"}
                     </p>
                     <div className="flex flex-col gap-8">
@@ -280,7 +280,7 @@ export default function ExperienceFlow({
                               <button
                                 key={s.id}
                                 onClick={() => setScene(s.id)}
-                                className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-thumb border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
+                                className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-12 border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
                                   dimmed ? "opacity-10" : "opacity-100"
                                 }`}
                               >
@@ -293,7 +293,7 @@ export default function ExperienceFlow({
                                   className="absolute inset-0"
                                   style={{ background: s.tint }}
                                 />
-                                <span className="relative z-10 flex h-full w-full items-center justify-center text-action font-black leading-[1.6] text-white">
+                                <span className="relative z-10 flex h-full w-full items-center justify-center text-control-20 font-black leading-[1.6] text-white">
                                   {s.label}
                                 </span>
                               </button>
@@ -365,10 +365,10 @@ export default function ExperienceFlow({
                   controlsShown ? "opacity-100" : "opacity-0"
                 }`}
               >
-                <span className="rounded-full bg-white px-4 py-2 text-label-sm font-black text-brand backdrop-blur-soft">
+                <span className="rounded-full bg-white px-4 py-2 text-control-14 font-black text-brand backdrop-blur-6">
                   ぼーっとタイマー
                 </span>
-                <p className="font-num text-timer font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
+                <p className="font-num text-number-80 font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
                   {mm}:{ss}
                 </p>
               </div>

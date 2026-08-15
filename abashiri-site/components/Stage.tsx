@@ -327,7 +327,7 @@ export default function Stage({
               </a>
             </div>
           </div>
-          <p className="text-center text-lead font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
+          <p className="text-center text-body-18 font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
             観光サイト
           </p>
         </div>

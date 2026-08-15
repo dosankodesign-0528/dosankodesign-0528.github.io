@@ -19,7 +19,7 @@ const ITEMS: { label: string; href?: string; anchor?: string }[] = [
 
 export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
   const color = theme === "light" ? "text-white" : "text-ink";
-  const fontSize = size === "sm" ? "text-label-sm" : "text-label";
+  const fontSize = size === "sm" ? "text-control-14" : "text-body-16";
   return (
     <nav
       className={`absolute left-1/2 top-[43px] z-20 flex -translate-x-1/2 items-center gap-10 whitespace-nowrap font-bold leading-[1.2] ${color} ${fontSize}`}

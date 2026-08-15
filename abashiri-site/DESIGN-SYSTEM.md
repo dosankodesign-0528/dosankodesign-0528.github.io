@@ -1,6 +1,6 @@
 # 網走サイト デザインシステム
 
-最終更新: 2026-08-15（カンプ 14530:3818 / 14530:4032 反映） ／ 対象: `abashiri-site`（Next.js 16 / Tailwind CSS v4 / framer-motion）
+最終更新: 2026-08-15（命名を `Category_値` / `Category_役割` に統一） ／ 対象: `abashiri-site`（Next.js 16 / Tailwind CSS v4 / framer-motion）
 
 Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEubHMoy3Hxgcw1AZuR/works?node-id=14829-23769)
 
@@ -14,84 +14,68 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ### 命名の考え方
 
-| 原則 | 中身 |
-|---|---|
-| 見た目でなく役割で名付ける | `--color-blue-500` ではなく `--color-brand`。色を変えても名前が生き残る |
-| Tailwind の名前空間に乗せる | `--color-*` → `bg-* / text-*`、`--radius-*` → `rounded-*`、`--ease-*` → `ease-*` |
-| 網走ならではの言葉は英語にしない | `botto` / `tamannee` はアセット名・コンポーネント名にそのまま残す |
+名前は **`カテゴリ_なにか`**。頭は大文字、`--` は付けない。「なにか」の決め方は 2 通りだけ。
 
-> Figma のカラースタイル・テキストスタイル・変数としては**登録していない**。Figma 側は一覧として読む板であって、定義の出どころではない。
+| 決め方 | 対象 | 例 |
+|---|---|---|
+| **カテゴリ + 値** | 大きさで決まるもの（テキスト・角丸・ブラー・余白・線・不透明度） | `Title_48px` `Radius_30px` `Blur_16px` |
+| **カテゴリ + 役割** | 意味で決まるもの（色・シャドウ・イージング） | `Brand_Primary` `Shadow_Modal` `Ease_Standard` |
+
+- 色を「見た目」で名付けない（`Blue_500` ではなく `Brand_Primary`）。色を変えても名前が生き残る。
+- CSS 側の変数名は Tailwind の名前空間に乗せる（`--color-*` → `bg-*`、`--radius-*` → `rounded-*`）。**ドキュメント上の名前と 1 対 1 で対応**する。
+- 網走ならではの言葉（`botto` / `tamannee`）はアセット名・コンポーネント名にそのまま残す。
+
+> Figma のスタイル・変数としては**登録していない**。Figma 側は一覧として読む板であって、定義の出どころではない。
 
 ---
 
 ## 1. カラー
 
-**12 トークン。** 白と黒はトークンを持たせず Tailwind 既定の透過（`bg-white/90` など）で使う。
+**12 色。** 白と黒は名前を持たせず、Tailwind 既定の透過（`bg-white/90` など）で使う。
 
-### ブランドカラー
+### ブランドカラー — サイトの印象を決める色。網走の空そのもの
 
-サイト全体の印象を決める色。網走の空そのもの。
-
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| `--color-brand` | `#0070C9` | `bg-brand` / `text-brand` | 押せるもの全部。ボタン・アクティブな STEP・音 ON |
-| `--color-sky-top` | `#35C3EA` | `from-sky-top` | 空グラデの上端 |
-| `--color-sky-bottom` | `#B5D7FF` | `to-sky-bottom` | 空グラデの下端 |
+| `Brand_Primary` | `#0070C9` | `bg-brand` `text-brand` | 押せるもの全部。ボタン・アクティブな STEP・音 ON |
+| `Brand_SkyTop` | `#35C3EA` | `from-sky-top` | 空グラデの上端 |
+| `Brand_SkyBottom` | `#B5D7FF` | `to-sky-bottom` | 空グラデの下端 |
 
-`html/body` の背景と `Stage.tsx` のグラデーションが、どちらもこの 2 つを参照する。
+`html/body` の背景と `Stage.tsx` のグラデーションが、どちらも同じ 2 色を参照する。
 
 ### ベースカラー
 
-#### テキスト
-
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
+| **テキスト** | | | |
 | （Tailwind 既定） | `#FFFFFF` | `text-white` | 写真・空の上の文字。最頻出 |
-| `--color-ink` | `#1E1E1E` | `text-ink` | 白地の上の文字・見出し・ナビ(dark) |
-| `--color-ink-muted` | `#7BA7CC` | `text-ink-muted` | 補助の文字。OFF 状態のアイコンにも使う |
-
-#### バックグラウンド
-
-| トークン | 値 | クラス | 役割 |
-|---|---|---|---|
-| `--color-canvas` | `#E6F3FF` | `bg-canvas` | 白い板の中の地。体験フローの背景・OFF ボタンの地 |
+| `Text_Default` | `#1E1E1E` | `text-ink` | 白地の上の文字・見出し・ナビ(dark)・ダイアログの OFF |
+| `Text_Muted` | `#7BA7CC` | `text-ink-muted` | 補助の文字。OFF 状態のアイコンにも使う |
+| **バックグラウンド** | | | |
+| `Background_Canvas` | `#E6F3FF` | `bg-canvas` | 白い板の中の地（体験フローの背景） |
 | （Tailwind 既定） | `#FFFFFF` 90% | `bg-white/90` | 写真の上に浮かぶ面。ボタン・チップ・ダイアログ |
-
-#### コントロール
-
-ラベル・アイコン・押せないボタンの色。
-
-| トークン | 値 | クラス | 役割 |
-|---|---|---|---|
-| `--color-sky-pale` | `#B6DAFC` | `bg-sky-pale` / `text-sky-pale` | 未選択・未到達・装飾。「まだ押されていない」を表す |
-
-#### 影
-
-| トークン | 値 | クラス | 役割 |
-|---|---|---|---|
-| `--color-shadow` | `#005FB3` | `shadow-*` / `bg-shadow/30` | すべての影とスクリム。黒ではなく深い海の青 |
+| **コントロール** | | | |
+| `Control_Pale` | `#B6DAFC` | `bg-sky-pale` `text-sky-pale` | 未選択・未到達・装飾。「まだ押されていない」を表す |
+| **シャドウ** | | | |
+| `Shadow_Base` | `#005FB3` | `shadow-*` `bg-shadow/30` | すべての影とスクリム。黒ではなく深い海の青 |
 
 > 影に黒を使わないのが、このサイトがいつまでも「晴れた日」に見える理由。
 
-### アクセントカラー
+### アクセントカラー — 青の世界に差す色
 
-青の世界に差す色。**似た値のものは 1 つにまとめてある。**
-
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| `--color-accent` | `#87D500` | `bg-accent` | 「選んだ」を伝える緑。ひまわり畑の色かぶせも同じ緑なので共用 |
-| `--color-tint-tento` | `#031FAC` | `color-mix(… 40%)` | 天都山展望台の色かぶせ |
-| `--color-tint-sango` | `#AC3303` | `color-mix(… 40%)` | さんご草の色かぶせ |
-| `--color-tint-ryuhyo` | `#0368AC` | `color-mix(… 40%)` | 流氷クルーズの色かぶせ |
+| `Accent_Green` | `#87D500` | `bg-accent` | 「選んだ」を伝える緑。ひまわり畑の色かぶせも同じ緑なので共用 |
+| `Accent_Tento` | `#031FAC` | `color-mix(… 40%)` | 天都山展望台の色かぶせ |
+| `Accent_Sango` | `#AC3303` | `color-mix(… 40%)` | さんご草の色かぶせ |
+| `Accent_Ryuhyo` | `#0368AC` | `color-mix(… 40%)` | 流氷クルーズの色かぶせ |
 
-色かぶせは写真の上に 40% でのせる。`ExperienceFlow.tsx` の `TINT()` が
-`color-mix(in srgb, var(…) 40%, transparent)` を組み立てる。
+色かぶせは写真の上に 40% でのせる（`ExperienceFlow.tsx` の `TINT()`）。
+**4 つは同じ画面に同時に出るので、色相が違うこと自体が役割**。似ていないものは統合しない。
 
-> 4 つの色かぶせは同じ画面に同時に出るので、**色相が違うこと自体が役割**。似ていないものは統合しない。
+### 名前を持たせない色
 
-### トークンに含めない色
-
-イラストとロゴの中の色（線 `#232222` / 肌 `#FCE4D3` / 肌の影 `#FCD0BD` / グレー `#CDCCCC` / キラキラ `#FCDF5A`）はアートワークの一部。UI から参照することも無いのでトークン化していない。
+イラストとロゴの中の色（線 `#232222` / 肌 `#FCE4D3` / 肌の影 `#FCD0BD` / グレー `#CDCCCC` / キラキラ `#FCDF5A`）はアートワークの一部。UI から参照しないので対象外。
 
 ---
 
@@ -99,52 +83,41 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ### 書体は 2 つだけ
 
-| トークン | 実体 | クラス | 読み込むウェイト |
+| 名前 | 実体 | クラス | 読み込むウェイト |
 |---|---|---|---|
-| `--font-body` | Zen Kaku Gothic New | `font-body`（`body` に既定で当たる） | 500 / 700 / 900 |
-| `--font-num` | M PLUS Rounded 1c | `font-num` | 100 / 700 / 800 |
+| `Font_Body` | Zen Kaku Gothic New | `font-body`（`body` に既定） | 500 / 700 / 900 |
+| `Font_Num` | M PLUS Rounded 1c | `font-num` | 100 / 700 / 800 |
 
-- **400 は読み込んでいない。** ウェイト指定を書き忘れると 400 を要求して落ちるので、必ず `font-medium` 以上を明示する。
+**400 は読み込んでいない。** ウェイトを書き忘れると 400 を要求して落ちるので、必ず `font-medium` 以上を明示する。
 
-### タイトル
+### サイズ（11 段）
 
-| トークン | 値 | よく使う組み合わせ | 役割 |
+| 名前 | 値 | よく使う組み合わせ | 役割 |
 |---|---|---|---|
-| `--text-section` | 48px | `text-section font-medium leading-[1.2]` | セクション見出し（ぼーっと過ごせるスポット／素朴なグルメ） |
-| `--text-promo` | 34px | `text-promo font-bold leading-[1.4]` | プロモカードの見出し |
-| `--text-title` | 32px | `text-title font-bold leading-[1.6]` | 体験フローの問いかけ（2行のこともある） |
-| `--text-title` | 32px | `text-title font-medium leading-[1.2]` | カードホバー時のスポット名（白） |
-
-### テキスト
-
-| トークン | 値 | よく使う組み合わせ | 役割 |
-|---|---|---|---|
-| `--text-lead` | 18px | `text-lead font-bold leading-[1.4]` | プロモの小見出し |
-| `--text-lead` | 18px | `text-lead font-black leading-[1.3] tracking-[2.3px]` | 縦書き「観光サイト」 |
-| `--text-label` | 16px | `text-label font-bold leading-[1.2]` | グローバルナビ |
-| `--text-body` | 15px | `text-body font-bold leading-[1.6]` | ダイアログ本文 |
-
-### コントロール
-
-| トークン | 値 | よく使う組み合わせ | 役割 |
-|---|---|---|---|
-| `--text-action` | 20px | `text-action font-bold` | 主要ボタン（次へ・ぼーっとしてみる）・気持ちチップ |
-| `--text-action` | 20px | `text-action font-black leading-[1.6]` | 場面ラベル（写真の上） |
-| `--text-action` | 20px | `text-action font-medium` | 「もどる」／「もっと見る」 |
-| `--text-label-sm` | 14px | `text-label-sm font-black` | 小さいボタン・タイマーのラベル |
-| `--text-label-sm` | 14px | `text-label-sm font-bold` | 動画再生中のナビ |
-
-### 数字（`font-num` 専用）
-
-| トークン | 値 | よく使う組み合わせ | 役割 |
-|---|---|---|---|
-| `--text-number` | 140px | `font-num text-number font-thin leading-none` + `opacity-70` | 楕円カードの通し番号 |
-| `--text-timer` | 80px | `font-num text-timer font-bold` + `tabular-nums` | ぼーっとタイマー |
-| `--text-step` | 28px | `font-num text-step font-extrabold leading-none` | STEP の番号 |
+| **Title — 見出し** | | | |
+| `Title_48px` | 48px | `text-title-48 font-medium leading-[1.2]` | セクション見出し |
+| `Title_34px` | 34px | `text-title-34 font-bold leading-[1.4]` | プロモカードの見出し |
+| `Title_32px` | 32px | `text-title-32 font-bold leading-[1.6]` | 体験フローの問いかけ |
+| `Title_32px` | 32px | `text-title-32 font-medium leading-[1.2]` | カードホバー時のスポット名（白） |
+| **Body — 読ませる文字** | | | |
+| `Body_18px` | 18px | `text-body-18 font-bold leading-[1.4]` | プロモの小見出し |
+| `Body_18px` | 18px | `text-body-18 font-black leading-[1.3] tracking-[2.3px]` | 縦書き「観光サイト」 |
+| `Body_16px` | 16px | `text-body-16 font-bold leading-[1.2]` | グローバルナビ |
+| `Body_15px` | 15px | `text-body-15 font-bold leading-[1.6]` | ダイアログ本文・ON/OFF ボタン |
+| **Control — ボタン・チップ・ラベル** | | | |
+| `Control_20px` | 20px | `text-control-20 font-bold` | 主要ボタン・気持ちチップ |
+| `Control_20px` | 20px | `text-control-20 font-black leading-[1.6]` | 場面ラベル（写真の上） |
+| `Control_20px` | 20px | `text-control-20 font-medium` | 「もどる」「もっと見る」 |
+| `Control_14px` | 14px | `text-control-14 font-black` | 小さいボタン・タイマーのラベル |
+| `Control_14px` | 14px | `text-control-14 font-bold` | 動画再生中のナビ |
+| **Number — `font-num` 専用** | | | |
+| `Number_140px` | 140px | `font-num text-number-140 font-thin leading-none` + `opacity-70` | 楕円カードの通し番号 |
+| `Number_80px` | 80px | `font-num text-number-80 font-bold tabular-nums` | ぼーっとタイマー |
+| `Number_28px` | 28px | `font-num text-number-28 font-extrabold leading-none` | STEP の番号 |
 
 ### 行間と字間
 
-- 行間は **1.0 / 1.2 / 1.3 / 1.4 / 1.6** の 5 種類だけ。Tailwind の `leading-relaxed` のような既定値は使わない。
+- 行間は **1.0 / 1.2 / 1.3 / 1.4 / 1.6** の 5 種類だけ。`leading-relaxed` のような既定値は使わない。
 - 字間を触っているのは縦書き「観光サイト」の `tracking-[2.3px]` **1 か所だけ**。
 
 ### 3 層のルール（世界観を壊さないための一番のルール）
@@ -161,16 +134,15 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ## 3. 角丸（4 段）
 
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| `--radius-card` | 290px | `rounded-card` | 楕円カード（730×410）。高さの 7 割超なので実質スタジアム型 |
-| `--radius-device` | 60px | `rounded-t-device` | タブレット外枠の上端 |
-| `--radius-panel` | 30px | `rounded-t-panel` / `rounded-panel` | 板の中の面：タブレット内側・プロモカード・ダイアログ |
-| `--radius-thumb` | 12px | `rounded-thumb` | 場面サムネイル |
-| （Tailwind 既定） | 9999px | `rounded-full` | ボタン・チップ・環境音ボタン・STEP の線 |
+| `Radius_290px` | 290px | `rounded-290` | 楕円カード（730×410）。高さの 7 割超なので実質スタジアム型 |
+| `Radius_60px` | 60px | `rounded-t-60` | タブレット外枠の上端 |
+| `Radius_30px` | 30px | `rounded-30` `rounded-t-30` | 板の中の面：タブレット内側・プロモカード・ダイアログ |
+| `Radius_12px` | 12px | `rounded-12` | 場面サムネイル |
+| `Radius_Full` | 9999px | `rounded-full` | ボタン・チップ・環境音ボタン・STEP の線 |
 
-> 30px はタブレットの内側半径（外枠 60 − ベゼル 30）として数学的に決まっている値。
-> プロモカードとダイアログの 24px をこちらに寄せた。
+> 30px はタブレットの内側半径（外枠 60 − ベゼル 30）として数学的に決まっている値。プロモカードとダイアログの 24px をこちらに寄せた。
 
 ---
 
@@ -178,48 +150,46 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 すべて 4 の倍数。**Tailwind の spacing スケールで書く。`gap-[80px]` のような任意値は使わない。**
 
-| クラス | px | 役割 |
+| 名前 | クラス | 役割 |
 |---|---|---|
-| `-1` | 4 | プロモの小見出しと見出しの間 |
-| `-2` | 8 | タイマーのラベルと数字／チップの上下 |
-| `-3` | 12 | 気持ちチップの横並び／ロゴと SNS の間 |
-| `-4` | 16 | 見出しと吹き出し／チップの縦並び／SNS の縦 |
-| `-5` | 20 | 「次へ」と「もどる」の間 |
-| `-6` | 24 | もっと見るの文字とアイコン／KV 内／チップ左右 |
-| `-8` | 32 | プロモカードの中／問いかけとチップ／サムネイル間 |
-| `-10` | 40 | カードホバーの文字下／グローバルナビの項目間 |
-| `-11` | 44 | ボタンの左右パディング |
-| `-15` | 60 | カード列の右余白／ロゴと SNS 群／プロモの上下 |
-| `-20` | 80 | カード同士の間隔 |
-| `-30` | 120 | 見出しとカード列／カード列の左余白／KV の上 |
-| `-50` | 200 | ページ下端の余白 |
-| `-75` | 300 | セクション同士の間隔 |
+| `Space_4px` | `-1` | プロモの小見出しと見出しの間 |
+| `Space_8px` | `-2` | タイマーのラベルと数字／チップの上下 |
+| `Space_12px` | `-3` | 気持ちチップの横並び／ロゴと SNS の間 |
+| `Space_16px` | `-4` | 見出しと吹き出し／チップの縦並び |
+| `Space_20px` | `-5` | 「次へ」と「もどる」の間 |
+| `Space_24px` | `-6` | もっと見るの文字とアイコン／KV 内／チップ左右 |
+| `Space_32px` | `-8` | プロモカードの中／問いかけとチップ／サムネイル間 |
+| `Space_40px` | `-10` | カードホバーの文字下／ナビの項目間 |
+| `Space_44px` | `-11` | ボタンの左右パディング |
+| `Space_60px` | `-15` | カード列の右余白／ロゴと SNS 群／プロモの上下 |
+| `Space_80px` | `-20` | カード同士の間隔 |
+| `Space_120px` | `-30` | 見出しとカード列／カード列の左余白／KV の上 |
+| `Space_200px` | `-50` | ページ下端の余白 |
+| `Space_300px` | `-75` | セクション同士の間隔 |
 
 ---
 
 ## 5. シャドウ（4 種・色は 1 色）
 
-色はすべて `--color-shadow`（`#005FB3`）。**濃さと落ち方だけを用途で変える。黒い影は 1 つも無い。**
+色はすべて `Shadow_Base`（`#005FB3`）。**濃さと落ち方だけを用途で変える。黒い影は 1 つも無い。**
 
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| （`shadowConfig.ts`） | `-45px 55px 80px -12px` / 70% | `style={{ boxShadow: buildShadow(...) }}` | タブレットの浮遊感。右上から陽が差す設定 |
-| `--drop-shadow-illust` | `-8px 1px 2px` / 25% | `drop-shadow-illust` | 切り抜きイラスト。紙を貼った感じ |
-| `--shadow-floating` | `0 8px 20px -6px` / 35% | `shadow-floating` | 浮いた小物（環境音ボタン） |
-| `--shadow-modal` | `0 25px 50px -12px` / 35% | `shadow-modal` | ダイアログ |
-
-> 気持ちチップと場面サムネイルに付けていた `shadow-press` / `drop-shadow-press` は、カンプ更新（2026-08-15）で影が外れたため削除した。
+| `Shadow_Device` | `-45px 55px 80px -12px` / 70% | `style={{ boxShadow: buildShadow(…) }}` | タブレットの浮遊感。右上から陽が差す設定（`shadowConfig.ts`） |
+| `Shadow_Illust` | `-8px 1px 2px` / 25% | `drop-shadow-illust` | 切り抜きイラスト。紙を貼った感じ |
+| `Shadow_Floating` | `0 8px 20px -6px` / 35% | `shadow-floating` | 浮いた小物（環境音ボタン） |
+| `Shadow_Modal` | `0 25px 50px -12px` / 35% | `shadow-modal` | ダイアログ |
 
 ---
 
 ## 6. ブラー（4 段）
 
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| `--blur-soft` | 6px | `backdrop-blur-soft` | 触れた時のうっすら。ボタン・カードの幕・タイマー札 |
-| `--blur-enter` | 16px | （framer / WAAPI の値として） | 登場時にピントが合う。KV・カード・STEP 切り替え |
-| `--blur-veil` | 22px | `backdrop-blur-veil` | 奥へ引く／背面を隠す。KV スクロール・ダイアログ背面 |
-| `--blur-glass` | 30px | `backdrop-blur-glass` | すりガラスの面。環境音ボタン・プロモカード |
+| `Blur_6px` | 6px | `backdrop-blur-6` | 触れた時のうっすら。ボタン・カードの幕・タイマー札 |
+| `Blur_16px` | 16px | （framer / WAAPI の値として） | 登場時にピントが合う。KV・カード・STEP 切り替え |
+| `Blur_22px` | 22px | `backdrop-blur-22` | 奥へ引く／背面を隠す。KV スクロール・ダイアログ背面 |
+| `Blur_30px` | 30px | `backdrop-blur-30` | すりガラスの面。環境音ボタン・プロモカード |
 
 ---
 
@@ -231,24 +201,24 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 | # | 決めごと | 中身 |
 |---|---|---|
-| 1 | **のんびりを優先する** | 秒数の正確さより、印象とゆったりした空気。開いてから全部そろうまで 4.55 秒かける |
-| 2 | **出すときは必ずボケから** | 文字もボタンもイラストも、透明度と一緒にブラーが晴れて出てくる。パキッとは出さない |
+| 1 | **のんびりを優先する** | 秒数の正確さより印象。開いてから全部そろうまで 4.55 秒かける |
+| 2 | **出すときは必ずボケから** | 文字もボタンもイラストも、透明度と一緒にブラーが晴れて出る。パキッとは出さない |
 | 3 | **カクつきは味として残す** | カモメとキラキラだけ `linear` の 2〜3 コマ。GIF のような軽さをわざと残す |
 
 ### ① 速さ — どう動かすか
 
 **イージングは 1 本だけ。**
 
-| トークン | 値 | クラス | 役割 |
+| 名前 | 値 | クラス | 役割 |
 |---|---|---|---|
-| `--ease-standard` | `cubic-bezier(0.22, 1, 0.36, 1)` | `ease-standard` | 動くものは全部これ。出だしが速く、最後をたっぷり伸ばす＝「ゆとり」の正体 |
-| （トークン無し） | `linear` | `ease-linear` | カモメ・キラキラのコマ送りだけ |
+| `Ease_Standard` | `cubic-bezier(0.22, 1, 0.36, 1)` | `ease-standard` | 動くものは全部これ。出だしが速く最後をたっぷり伸ばす＝「ゆとり」の正体 |
+| `Ease_Linear` | `linear` | `ease-linear` | カモメ・キラキラのコマ送りだけ（Tailwind 既定） |
 
 **デュレーション**
 
 | 値 | いつ | 例 |
 |---|---|---|
-| 300ms | 触れた時 | ボタン拡大・チップ・サムネイル |
+| 300ms | 触れた時 | ボタン拡大・チップ・サムネイル・眉 |
 | 500ms | 切り替わる時 | カードのオーバーレイ・プロモカードの拡大・STEP 切り替え |
 | 700ms | 写真が動く時 | カード写真のズーム・再生ボタンの出入り |
 | 900ms | 現れる時 | スクロールで現れるセクション・カード・吹き出し |
@@ -262,7 +232,7 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 |---|---|---|
 | （何も起きない） | 0ms | 500ms |
 | ヘッダー（ナビ） | 500ms | 1,300ms |
-| 白い吹き出し（しっぽ無しの丸い形） | 500ms | 900ms |
+| 白い吹き出し | 500ms | 900ms |
 | しっぽが下へ伸びる | 1,100ms | 1,378ms |
 | な〜んにもない | 1,150ms | 1,450ms |
 | たまらない | 1,948ms | 1,100ms |
@@ -272,7 +242,7 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 最初の 0.5 秒は**何も起きない**。空と海だけを見せる時間で、これが「ぼーっ」の入口になっている。
 
-> ⚠️ `heroTiming.ts` の `kotoba.delay` / `tamaranai.delay` / `flourish.offset` は、本番の演出（`blurSeq`）では読まれていない。`HeroBlurSeq.tsx` が `t1 = start + 650` / `t2 = t1 + kotoba.duration × 0.55` と自前で計算しているため。調整パネルで触っても TOP は変わらない。
+> ⚠️ `heroTiming.ts` の `kotoba.delay` / `tamaranai.delay` / `flourish.offset` は、本番の演出（`blurSeq`）では読まれていない。`HeroBlurSeq.tsx` が `t1 = start + 650` / `t2 = t1 + kotoba.duration × 0.55` と自前で計算しているため。
 
 ### ③ 繰り返し — ずっと動くもの
 
@@ -289,9 +259,8 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ### 眉が動く（唯一のインタラクション）
 
-人物イラストにカーソルが乗っている間だけ、眉が 5px 持ち上がる（300ms・`--ease-standard`）。
-イラストは `pointer-events-none` のままにしたいので `:hover` は使わず、`useFaceReaction.ts` が
-カーソル座標で当たり判定している。
+人物イラストにカーソルが乗っている間だけ、眉が 5px 持ち上がる（300ms・`Ease_Standard`）。
+イラストは `pointer-events-none` のままにしたいので `:hover` は使わず、`useFaceReaction.ts` がカーソル座標で当たり判定している。
 
 ---
 
@@ -299,23 +268,23 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ### 白フチ（3 種）
 
-| 太さ | クラス | 役割 |
+| 名前 | クラス | 役割 |
 |---|---|---|
-| 30px | `border-[30px] border-white` | タブレットのベゼル。この太さが「板が浮いている」感じを作る |
-| 10px | `border-[10px] border-white` | 場面サムネイルのフチ |
-| 8px | `border-8 border-white/70` | 楕円カードのフチ。ここだけ 70% で後ろの空が透ける |
+| `Stroke_30px` | `border-[30px] border-white` | タブレットのベゼル。この太さが「板が浮いている」感じを作る |
+| `Stroke_10px` | `border-[10px] border-white` | 場面サムネイルのフチ |
+| `Stroke_8px` | `border-8 border-white/70` | 楕円カードのフチ。ここだけ 70% で後ろの空が透ける |
 
 カモメの線だけは SVG 座標（viewBox 120）で 2.5〜8 の 5 段階あり、px ではないので `birdConfig.ts` の別管理。
 
 ### 不透明度（5 段）
 
-| 値 | 役割 |
+| 名前 | 役割 |
 |---|---|
-| 10% | 選ばれなかった場面の写真。ほとんど見えないところまで落とす |
-| 30% | スクリム・押せないボタン |
-| 70% | 未到達 STEP・カードの黒幕・ナビ hover・SNS・カードのフチ・環境音ボタンの地・No. の数字 |
-| 90% | ボタン・チップ・ダイアログ・プロモカード |
-| 100% | ベゼル・サムネイル |
+| `Opacity_10` | 選ばれなかった場面の写真。ほとんど見えないところまで落とす |
+| `Opacity_30` | スクリム・押せないボタン |
+| `Opacity_70` | 未到達 STEP・カードの黒幕・ナビ hover・SNS・カードのフチ・No. の数字 |
+| `Opacity_90` | ボタン・チップ・ダイアログ・プロモカード |
+| `Opacity_100` | ベゼル・サムネイル |
 
 ---
 
@@ -337,34 +306,35 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ---
 
-## 10. 統合の記録
+## 10. 整理の記録
 
 ### カラー（17 → 12）
 
 | 統合前 | → | 統合先 | 理由 |
 |---|---|---|---|
-| `--color-brand-hover` `#0080E4` | → | `hover:brightness-110` | 使用 1 か所。トークンを持たずフィルタで足りる |
-| `--color-scroller` `#8EC6EA` | → | `--color-sky-bottom` | 使用 1 か所。しかも固定背景写真に隠れて実質見えない |
-| `--color-track` `#CCE4FA` | → | `--color-sky-pale` | 使用 1 か所（`#B6DAFC` は 4 か所）。淡い青は 1 つで足りる |
-| `--color-scrim` `#0B3C69` | → | `--color-shadow` | 使用 1 か所。奥行きを作る青は 1 つに |
-| `--color-tint-himawari` `#5DC000` | → | `--color-accent` `#87D500` | ほぼ同じ緑。40% でのせると見分けがつかない |
+| `#0080E4`（ホバー） | → | `hover:brightness-110` | 使用 1 か所。名前を持たずフィルタで足りる |
+| `#8EC6EA`（スクローラー） | → | `Brand_SkyBottom` | 使用 1 か所。しかも固定背景写真に隠れて実質見えない |
+| `#CCE4FA`（トラック） | → | `Control_Pale` | 使用 1 か所（`#B6DAFC` は 4 か所）。淡い青は 1 つで足りる |
+| `#0B3C69`（スクリム） | → | `Shadow_Base` | 使用 1 か所。奥行きを作る青は 1 つに |
+| `#5DC000`（ひまわり） | → | `Accent_Green` | ほぼ同じ緑。40% でのせると見分けがつかない |
 
 ### そのほか
 
 | 項目 | 統合前 | 統合後 | 何をしたか |
 |---|---|---|---|
 | 角丸 | 6 段 | 5 段 | 24px → 30px（画面に出る回数が多い方に寄せた） |
-| シャドウ | 6 種 | 5 種 | チップ 25% と写真 40% を 25% に統一 |
+| シャドウ | 6 種 | 4 種 | チップ 25% と写真 40% を統合、カンプ更新で 2 種が不要に |
 | ブラー | 7 段 | 4 段 | 40 → 30、登場ブラー 10 → 16 |
-| 不透明度 | 6 段 | 4 段 | 60% と 80% を 70% に統一 |
-| 白フチ | 4 種 | 3 種 | OFF ボタンの 2px 枠線を廃止（地を `bg-canvas` にして押せる見た目を確保） |
-| イージング | 3 本 | 2 本 | `--ease-bounce` は比較検討でしか使っていなかったので削除 |
+| 不透明度 | 6 段 | 5 段 | 60% と 80% を 70% に統一 |
+| 白フチ | 4 種 | 3 種 | OFF ボタンの 2px 枠線を廃止（地を白にして押せる見た目を確保） |
+| イージング | 3 本 | 2 本 | バウンドは比較検討でしか使っていなかったので削除 |
 | 比較専用の値 | 本番に混在 | mock へ移動 | カードホバー 3 案・もっと見る 3 案を mock ページへ |
+| 命名 | `--text-section` など | `Title_48px` など | `--` を外し、カテゴリ + 値／役割の 2 パターンに統一 |
 
 ### 過去に直した不具合
 
 - **カードのフォントウェイト抜け**: ホバー時のスポット名（32px）だけ `font-weight` 未指定で、読み込んでいない 400 を要求していた → `font-medium` を明示。
-- **空グラデの二重管理**: `globals.css` に変数があるのに `Stage.tsx` が同じ値を直書きしていた → トークン 1 か所に集約。
+- **空グラデの二重管理**: `globals.css` に変数があるのに `Stage.tsx` が同じ値を直書きしていた → 1 か所に集約。
 
 ---
 
@@ -385,5 +355,5 @@ git checkout restore-abashiri-before-design-system   # cea27f7
 2. コンポーネントではその名前（クラス）だけを使う。
 3. このドキュメントと Figma の板を同じタイミングで更新する。
 
-コンポーネントに px や HEX を直接書きたくなったら、それは「トークンが足りない」というサイン。
-比較検討のための値なら、トークンにせず `/mock/` 側に置く。
+コンポーネントに px や HEX を直接書きたくなったら、それは「名前が足りない」というサイン。
+比較検討のための値なら、名前を付けず `/mock/` 側に置く。
