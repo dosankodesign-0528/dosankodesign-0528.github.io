@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tune-panel デモ</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #0b0b0e;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .lead {
+    position: relative; z-index: 2; text-align: center; pointer-events: none;
+  }
+  .lead h1 { font-size: 28px; font-weight: 200; letter-spacing: .04em; margin: 0 0 10px; }
+  .lead p  { font-size: 13px; color: #9aa; margin: 0; line-height: 1.9; }
+  .lead code { background: rgba(255,255,255,.1); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<canvas id="cv"></canvas>
+<div class="lead">
+  <h1>tune-panel</h1>
+  <p>右下のパネルを触ると、その場で反映されます。<br>
+     ヘッダーを掴んで移動 / 右下つまみでリサイズ / <code>.</code> キーで隠す</p>
+</div>
+
+<script src="../tune-panel.js"></script>
+<script>
+/* ========== 1. 触りたい値を1か所にまとめる ========== */
+const DEFAULTS = {
+  common:  { speed: 1, trail: 0.12 },
+  orbit:   { count: 6, radius: 190, squash: 0.42, tilt: -12, wobble: 0.18, period: 9 },
+  dot:     { size: 7, glow: 26, style: 'gradient' },
+  core:    { size: 96, pulse: 0.25, show: true },
+  motion:  { dir: 1, ease: 'linear' }
+};
+const params = JSON.parse(JSON.stringify(DEFAULTS));
+
+/* ========== 2. 描画（params を毎フレーム読むだけ） ========== */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let t0 = performance.now();
+
+function fit() {
+  const d = Math.min(devicePixelRatio || 1, 2);
+  cv.width = innerWidth * d; cv.height = innerHeight * d;
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener('resize', fit); fit();
+
+const PALETTE = {
+  gradient: (i, n) => `hsl(${200 + (i / n) * 130}, 90%, 62%)`,
+  brand:    (i, n) => (i % 2 ? '#FF5D97' : '#00ABEB'),
+  mono:     () => '#ffffff'
+};
+
+function frame(now) {
+  const T = (now - t0) / 1000 * params.common.speed;
+
+  ctx.fillStyle = `rgba(11,11,14,${params.common.trail})`;
+  ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+  const cx = innerWidth / 2, cy = innerHeight / 2;
+  const o = params.orbit;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(o.tilt * Math.PI / 180);
+
+  /* 軌道の線 */
+  ctx.beginPath();
+  ctx.ellipse(0, 0, o.radius, o.radius * o.squash, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  /* 中心 */
+  if (params.core.show) {
+    const r = params.core.size * (1 + Math.sin(T * 1.6) * params.core.pulse);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, 'rgba(255,255,255,.9)');
+    g.addColorStop(.5, 'rgba(0,171,235,.35)');
+    g.addColorStop(1, 'rgba(255,93,151,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* 周回するドット */
+  const n = Math.round(o.count);
+  const ease = params.motion.ease === 'inout';
+  for (let i = 0; i < n; i++) {
+    let p = (T / o.period) * params.motion.dir + i / n;
+    p -= Math.floor(p);
+    const a = (ease ? (p - Math.sin(p * Math.PI * 2) / (Math.PI * 2)) : p) * Math.PI * 2;
+    const wob = 1 + Math.sin(T * 1.2 + i) * o.wobble;
+    const x = Math.cos(a) * o.radius * wob;
+    const y = Math.sin(a) * o.radius * o.squash * wob;
+    const col = PALETTE[params.dot.style](i, n);
+    ctx.shadowColor = col;
+    ctx.shadowBlur = params.dot.glow;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, params.dot.size, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ========== 3. パネルを組み立てる（ここが本題） ========== */
+const panel = TunePanel.create({
+  title: '⚙️ デモの調整パネル',
+  storageKey: 'tune-panel-demo',
+  version: 1,
+  params, defaults: DEFAULTS,
+  theme: 'dark',
+  /* 手が止まった時（0.25秒）に呼ばれる。重い作り直しはここでやる */
+  onSettle: () => { /* このデモは毎フレーム params を読むので何も要らない */ },
+  footer: [{ label: '↺ 最初から', primary: true, onClick: () => { t0 = performance.now(); } }],
+
+  schema: [
+    { cat: '🌊 全体', open: true, items: [
+      { slider: '再生スピード', path: 'common.speed', min: 0.1, max: 3, step: 0.05, fmt: 'x',
+        hint: '全部の動きが同じ倍率で速くなります。' },
+      { slider: '残像の強さ', path: 'common.trail', min: 0.02, max: 1, step: 0.01, fmt: '%',
+        hint: '小さいほど尾を引きます。1 で残像なし。' }
+    ]},
+
+    { cat: '🛰 軌道', open: true, items: [
+      { sub: '形' },
+      { slider: '大きさ', path: 'orbit.radius', min: 60, max: 420, step: 1, fmt: 'px' },
+      { slider: '楕円のつぶれ', path: 'orbit.squash', min: 0.05, max: 1, step: 0.01, fmt: '%',
+        hint: '100% で真円になります。' },
+      { slider: '傾き', path: 'orbit.tilt', min: -90, max: 90, step: 1, fmt: 'deg', autoCenter: false },
+
+      { sub: '回り方', deep: true },
+      { slider: '1周の秒数', path: 'orbit.period', min: 2, max: 30, step: 0.5, fmt: 's' },
+      { slider: 'ドットの数', path: 'orbit.count', min: 1, max: 24, step: 1, fmt: 'int' },
+      { slider: 'ゆらぎ', path: 'orbit.wobble', min: 0, max: 0.6, step: 0.01, fmt: '%',
+        hint: '軌道からの離れ具合が波打ちます。' },
+      { seg: '回転方向', path: 'motion.dir', options: [['右回り', 1], ['左回り', -1]] },
+      { seg: '緩急', path: 'motion.ease', options: [['等速', 'linear'], ['なめらか', 'inout']] }
+    ]},
+
+    { cat: '⚪️ ドット', open: false, items: [
+      { pills: '配色', path: 'dot.style', options: [
+        { name: 'グラデ', value: 'gradient', swatch: '#3fb7ff', desc: '青→ピンクへ連続的に変化。' },
+        { name: 'ブランド2色', value: 'brand', swatch: '#FF5D97', desc: '交互に2色。ブランドカラー向け。' },
+        { name: '白', value: 'mono', swatch: '#ffffff', desc: '色を使わない検証用。' }
+      ]},
+      { slider: '大きさ', path: 'dot.size', min: 2, max: 20, step: 0.5, fmt: 'px' },
+      { slider: '光り方', path: 'dot.glow', min: 0, max: 60, step: 1, fmt: 'px',
+        hint: 'にじみの半径。0 で光らない。' }
+    ]},
+
+    { cat: '☀️ 中心', open: false, items: [
+      { toggle: '表示する', path: 'core.show', rebuild: true },
+      { slider: '大きさ', path: 'core.size', min: 20, max: 260, step: 2, fmt: 'px', when: p => p.core.show },
+      { slider: '脈打ち', path: 'core.pulse', min: 0, max: 0.8, step: 0.01, fmt: '%', when: p => p.core.show },
+      { note: '「表示する」を切ると、下の2つは消えます（when 条件の例）。' }
+    ]}
+  ]
+});
+
+/* 「表示する」の ON/OFF で schema の when を効かせるため、関数で渡す使い方もできる。
+   ここでは toggle 側の rebuild:true で作り直している */
+window.panel = panel;
+</script>
+</body>
+</html>

@@ -4,67 +4,118 @@
     {
       "name": "static-root",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /tmp/portal_preview && exec python3 -m http.server 8765"],
+      "runtimeArgs": [
+        "-c",
+        "cd /tmp/portal_preview && exec python3 -m http.server 8765"
+      ],
       "port": 8765
     },
     {
       "name": "abashiri",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3096"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3096"
+      ],
       "port": 3096,
       "cwd": "abashiri-site"
     },
     {
       "name": "design-gallery",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3099"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3099"
+      ],
       "port": 3099,
       "cwd": "design-gallery"
     },
     {
       "name": "akijikan",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /tmp/akijikan_preview && exec python3 -m http.server 8766"],
+      "runtimeArgs": [
+        "-c",
+        "cd /tmp/akijikan_preview && exec python3 -m http.server 8766"
+      ],
       "port": 8766
     },
     {
       "name": "houmon-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3098"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3098"
+      ],
       "port": 3098,
       "cwd": "houmon-app"
     },
     {
       "name": "inzone-works",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3097"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3097"
+      ],
       "port": 3097,
       "cwd": "inzone-works"
     },
     {
       "name": "glass-gen",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/glass-generator' && exec python3 -m http.server 8771"],
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/glass-generator' && exec python3 -m http.server 8771"
+      ],
       "port": 8771
     },
     {
       "name": "liquid-gen",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/liquid-gradient-generator' && exec python3 -m http.server 8772"],
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/liquid-gradient-generator' && exec python3 -m http.server 8772"
+      ],
       "port": 8772
     },
     {
       "name": "anyflow-embed",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed' && exec python3 -m http.server ${PORT:-8773}"],
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed' && exec python3 -m http.server ${PORT:-8773}"
+      ],
       "port": 8773,
       "autoPort": true
     },
     {
       "name": "halftone-gen",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd '/Users/hideyuki/Developer/Claude Code/halftone-generator' && exec python3 -m http.server 8770"],
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/halftone-generator' && exec python3 -m http.server 8770"
+      ],
       "port": 8770
+    },
+    {
+      "name": "tune-panel",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/tune-panel' && exec python3 -m http.server 8774"
+      ],
+      "port": 8774
     }
   ]
 }
