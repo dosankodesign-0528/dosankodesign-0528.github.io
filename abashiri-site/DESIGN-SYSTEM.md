@@ -1,6 +1,6 @@
 # 網走サイト デザインシステム
 
-最終更新: 2026-08-15 ／ 対象: `abashiri-site`（Next.js 16 / Tailwind CSS v4 / framer-motion）
+最終更新: 2026-08-15（カンプ 14530:3818 / 14530:4032 反映） ／ 対象: `abashiri-site`（Next.js 16 / Tailwind CSS v4 / framer-motion）
 
 Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEubHMoy3Hxgcw1AZuR/works?node-id=14829-23769)
 
@@ -112,7 +112,7 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 |---|---|---|---|
 | `--text-section` | 48px | `text-section font-medium leading-[1.2]` | セクション見出し（ぼーっと過ごせるスポット／素朴なグルメ） |
 | `--text-promo` | 34px | `text-promo font-bold leading-[1.4]` | プロモカードの見出し |
-| `--text-title` | 32px | `text-title font-black leading-[1.2]` | 体験フローの問いかけ |
+| `--text-title` | 32px | `text-title font-bold leading-[1.6]` | 体験フローの問いかけ（2行のこともある） |
 | `--text-title` | 32px | `text-title font-medium leading-[1.2]` | カードホバー時のスポット名（白） |
 
 ### テキスト
@@ -128,8 +128,9 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 | トークン | 値 | よく使う組み合わせ | 役割 |
 |---|---|---|---|
-| `--text-action` | 20px | `text-action font-black` | 主要ボタン・気持ちチップ・場面ラベル |
-| `--text-action` | 20px | `text-action font-bold` / `font-medium` | 「もどる」／「もっと見る」 |
+| `--text-action` | 20px | `text-action font-bold` | 主要ボタン（次へ・ぼーっとしてみる）・気持ちチップ |
+| `--text-action` | 20px | `text-action font-black leading-[1.6]` | 場面ラベル（写真の上） |
+| `--text-action` | 20px | `text-action font-medium` | 「もどる」／「もっと見る」 |
 | `--text-label-sm` | 14px | `text-label-sm font-black` | 小さいボタン・タイマーのラベル |
 | `--text-label-sm` | 14px | `text-label-sm font-bold` | 動画再生中のナビ |
 
@@ -196,20 +197,18 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ---
 
-## 5. シャドウ（5 種・色は 1 色）
+## 5. シャドウ（4 種・色は 1 色）
 
 色はすべて `--color-shadow`（`#005FB3`）。**濃さと落ち方だけを用途で変える。黒い影は 1 つも無い。**
 
 | トークン | 値 | クラス | 役割 |
 |---|---|---|---|
 | （`shadowConfig.ts`） | `-45px 55px 80px -12px` / 70% | `style={{ boxShadow: buildShadow(...) }}` | タブレットの浮遊感。右上から陽が差す設定 |
-| `--shadow-press` | `2px 3px 0.5px` / 25% | `shadow-press` | 押せるチップ。シールを貼ったような硬い影 |
-| `--drop-shadow-press` | `2px 3px 0.5px` / 25% | `drop-shadow-press` | 写真サムネイル（上と同じ値の `filter` 版） |
 | `--drop-shadow-illust` | `-8px 1px 2px` / 25% | `drop-shadow-illust` | 切り抜きイラスト。紙を貼った感じ |
 | `--shadow-floating` | `0 8px 20px -6px` / 35% | `shadow-floating` | 浮いた小物（環境音ボタン） |
 | `--shadow-modal` | `0 25px 50px -12px` / 35% | `shadow-modal` | ダイアログ |
 
-> `shadow-press` と `drop-shadow-press` は**同じ値**。`box-shadow` で当てるか `filter` で当てるかの違いだけなので、Tailwind の名前空間の都合で 2 つに分かれている。
+> 気持ちチップと場面サムネイルに付けていた `shadow-press` / `drop-shadow-press` は、カンプ更新（2026-08-15）で影が外れたため削除した。
 
 ---
 
@@ -308,11 +307,12 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 カモメの線だけは SVG 座標（viewBox 120）で 2.5〜8 の 5 段階あり、px ではないので `birdConfig.ts` の別管理。
 
-### 不透明度（4 段）
+### 不透明度（5 段）
 
 | 値 | 役割 |
 |---|---|
-| 30% | スクリム・押せないボタン・選ばれなかった写真 |
+| 10% | 選ばれなかった場面の写真。ほとんど見えないところまで落とす |
+| 30% | スクリム・押せないボタン |
 | 70% | 未到達 STEP・カードの黒幕・ナビ hover・SNS・カードのフチ・環境音ボタンの地・No. の数字 |
 | 90% | ボタン・チップ・ダイアログ・プロモカード |
 | 100% | ベゼル・サムネイル |

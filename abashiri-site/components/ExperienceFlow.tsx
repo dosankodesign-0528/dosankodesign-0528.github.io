@@ -83,11 +83,11 @@ function StepButtons({
   onBack: () => void;
 }) {
   return (
-    <div className="absolute left-1/2 top-[690px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-5">
+    <div className="absolute left-1/2 top-[720px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-5">
       <button
         onClick={onNext}
         disabled={!canProceed}
-        className={`w-full rounded-full bg-brand px-11 py-4 text-action font-black text-white transition-all duration-300 ${
+        className={`w-full rounded-full bg-brand px-11 py-4 text-action font-bold text-white transition-all duration-300 ${
           canProceed
             ? "cursor-pointer hover:scale-105 hover:brightness-110"
             : "cursor-default opacity-30"
@@ -97,7 +97,7 @@ function StepButtons({
       </button>
       <button
         onClick={onBack}
-        className="cursor-pointer text-action font-bold text-ink transition-opacity hover:opacity-70"
+        className="cursor-pointer text-action font-medium text-ink transition-opacity hover:opacity-70"
       >
         もどる
       </button>
@@ -231,10 +231,10 @@ export default function ExperienceFlow({
                   /* STEP01：気持ちの複数選択 */
                   <motion.div
                     key="step1"
-                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-8"
+                    className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-title font-black leading-[1.2] text-ink">
+                    <p className="text-title font-bold leading-[1.6] text-ink">
                       今、どんな気持ち？
                     </p>
                     <div className="flex flex-col items-center gap-4">
@@ -246,10 +246,8 @@ export default function ExperienceFlow({
                               <button
                                 key={f}
                                 onClick={() => toggleFeeling(f)}
-                                className={`cursor-pointer rounded-full px-6 py-2 text-action font-black transition-all duration-300 hover:scale-105 ${
-                                  active
-                                    ? "bg-accent text-white shadow-press"
-                                    : "bg-white/90 text-brand"
+                                className={`cursor-pointer rounded-full px-6 py-2 text-action font-bold transition-all duration-300 hover:scale-105 ${
+                                  active ? "bg-accent text-white" : "bg-white/90 text-brand"
                                 }`}
                               >
                                 {f}
@@ -264,17 +262,17 @@ export default function ExperienceFlow({
                   /* STEP02：場面の選択 */
                   <motion.div
                     key="step2"
-                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-8"
+                    className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-title font-black leading-[1.2] text-ink">
-                      どこで、ぼーっとする？
+                    <p className="text-title font-bold leading-[1.6] text-ink whitespace-pre-line text-center">
+                      {"お疲れさま。頭を空っぽにしてみよう。\nどこでぼーっとする？"}
                     </p>
                     <div className="flex flex-col gap-8">
                       {SCENES.map((row, ri) => (
                         <div
                           key={ri}
-                          className="flex items-center justify-center gap-8 drop-shadow-press"
+                          className="flex items-center justify-center gap-8"
                         >
                           {row.map((s) => {
                             const dimmed = scene !== null && scene !== s.id;
@@ -283,7 +281,7 @@ export default function ExperienceFlow({
                                 key={s.id}
                                 onClick={() => setScene(s.id)}
                                 className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-thumb border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
-                                  dimmed ? "opacity-30" : "opacity-100"
+                                  dimmed ? "opacity-10" : "opacity-100"
                                 }`}
                               >
                                 <img
@@ -295,7 +293,7 @@ export default function ExperienceFlow({
                                   className="absolute inset-0"
                                   style={{ background: s.tint }}
                                 />
-                                <span className="relative z-10 flex h-full w-full items-center justify-center text-action font-black text-white">
+                                <span className="relative z-10 flex h-full w-full items-center justify-center text-action font-black leading-[1.6] text-white">
                                   {s.label}
                                 </span>
                               </button>

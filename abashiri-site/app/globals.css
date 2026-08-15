@@ -70,11 +70,9 @@
   --blur-veil: 22px; /* 奥へ引く／背面を隠す。KVスクロール・ダイアログ背面 */
   --blur-glass: 30px; /* すりガラスの面。環境音ボタン・プロモカード */
 
-  /* ══════════ シャドウ（5 種） ══════════
+  /* ══════════ シャドウ（4 種） ══════════
      色はすべて --color-shadow(#005fb3)。濃さだけ用途で変える。
      Tailwind が値を解析できるよう rgba で書いてあるが、中身は同じ色。 */
-  --shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.25); /* 押せるチップ */
-  --drop-shadow-press: 2px 3px 0.5px rgba(0, 95, 179, 0.25); /* 写真サムネイル */
   --drop-shadow-illust: -8px 1px 2px rgba(0, 95, 179, 0.25); /* 切り抜きイラスト */
   --shadow-floating: 0 8px 20px -6px rgba(0, 95, 179, 0.35); /* 浮いた小物 */
   --shadow-modal: 0 25px 50px -12px rgba(0, 95, 179, 0.35); /* ダイアログ */
