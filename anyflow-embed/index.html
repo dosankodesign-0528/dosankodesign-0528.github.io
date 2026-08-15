@@ -284,26 +284,26 @@
     border-radius: 50%;
     margin: -6.689px 0 0 -6.689px;
   }
-  /* カンプの文字幅から逆算した字間。コネクタ=65.98px / プラットフォーム=150.8px /
-     Platform=192px になる (カンプは字間を広めに空けている) */
+  /* カンプ 14693:28351 の実測: 役割ラベルは Noto Sans JP Light 14px / 字間の指定なし。
+     ⚠️ 以前「カンプのテキスト枠の幅」から字間を逆算して 0.178em を入れていたが、
+     あの幅はデザイナーが枠を手で広げた値で、文字送りとは無関係だった。字間は入れない */
   .pf-name {
     position: absolute;
     font-weight: 300;
     font-size: 14px;
-    letter-spacing: 0.178em;
-    line-height: 24.741px;   /* カンプのテキスト枠の高さ。上端 top を合わせると字も揃う */
+    line-height: normal;
     color: #000;
     white-space: nowrap;
   }
+  .pf-name.is-center { transform: translateX(-50%); }
   .pf-title {
     position: absolute;
     left: 363.13px;
     top: 277px;
     transform: translateX(-50%);
     font-family: var(--font-en);
-    font-weight: 200;
+    font-weight: 200;          /* カンプ 14693:28354: SF Pro Text Thin 50px / 字間なし */
     font-size: 50px;
-    letter-spacing: 0.0588em;
     line-height: 1;
     color: #000;
     white-space: nowrap;
@@ -311,11 +311,10 @@
   .pf-sub {
     position: absolute;
     left: 287.73px;
-    top: 335.58px;
-    font-weight: 300;
+    top: 336px;                /* カンプ: Platform(50px) の 9px 下 */
+    font-weight: 300;          /* カンプ 14693:28355: Noto Sans JP Light 16px / 字間なし */
     font-size: 16px;
-    letter-spacing: 0.178em;
-    line-height: 28.276px;   /* カンプのテキスト枠の高さ */
+    line-height: normal;
     color: #000;
     white-space: nowrap;
   }
@@ -414,9 +413,9 @@
     left: 120px;
     top: 691.44px;
     width: 491px;
-    font-weight: 300;
+    font-weight: 300;          /* カンプ 14693:28350: Noto Sans JP Light 14px / 行間1.9 */
     font-size: 14px;
-    line-height: 27px;
+    line-height: 1.9;
     color: #000;
   }
   .res-stats {
@@ -1834,8 +1833,9 @@ const DEFAULTS = {
    / v18→v19: 導入事例を「縦に並んでスクロールで重なる」形に変更 (step → gap)、
               ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ
    / v19→v20: ビジョンを「出だしだけ自動・あとは全部スクロール」に変更
-   / v20→v21: フォントウェイトをカンプと突き合わせて修正、カード間隔 40→44px) */
-const STORAGE_KEY = 'anyflow-embed-anim-v21';
+   / v20→v21: フォントウェイトをカンプと突き合わせて修正、カード間隔 40→44px
+   / v21→v22: Platform図の字間を撤去、「認証基盤」ラベル追加、コネクタの位置を更新) */
+const STORAGE_KEY = 'anyflow-embed-anim-v22';
 
 let params = load();
 function load() {
@@ -2119,10 +2119,14 @@ const PF_DOTS = [
   { ell: 1, deg: 205.4, color: '#FF5D97' },
 ];
 /* 役割名: カンプの実座標 (TOP座標の y から 1851.98 を引いた値) */
+/* カンプ 14693:28351 の実測 (frame座標 y − 1851.98)。
+   ⚠️ 2026-08-14: カンプ側が更新されており「認証基盤」が追加、コネクタも移動していた。
+   center:true は中央そろえ (カンプが -translate-x-1/2 になっている) */
 const PF_LABELS = [
-  { text: 'コネクタ',     x: 202.16, y: 159.44 },
-  { text: 'ワークフロー', x: 700.37, y: 329.85 },
-  { text: '権限',         x: 548.87, y: 430.35 },
+  { text: 'コネクタ',     x: 226.03, y: 226.82 },
+  { text: '認証基盤',     x: 707.19, y: 59.10, center: true },
+  { text: 'ワークフロー', x: 700.37, y: 329.84 },
+  { text: '権限',         x: 548.87, y: 430.34 },
   { text: '監査',         x: 202.16, y: 560.82 },
 ];
 const pfEllEls = [...document.querySelectorAll('.pf-wrap svg ellipse')];
@@ -2163,6 +2167,7 @@ const visEls = {
     nm.textContent = l.text;
     nm.style.left = l.x + 'px';
     nm.style.top = l.y + 'px';
+    if (l.center) nm.classList.add('is-center');
     textRoot.appendChild(nm);
     visEls.names.push(nm);
   });
