@@ -1781,7 +1781,7 @@ const DEFAULTS = {
       labelAt: 0.35,     // Our Vison がブラーで出る
       labelDur: 1.4,     // その所要時間
       line1At: 0.9,      // 1行目 (Our Vison に続けてすぐ)
-      line2Gap: 0.7,     // 2行目までの間
+      line2Gap: 1.15,    // 2行目までの間 (1行目が出きってからスクロールで出す)
       revealDur: 1.1,    // 1行の出現時間
       splitGap: 0.35,    // 2行そろってから上下に分かれ始めるまで
       splitDur: 1.5,     // 上下に分かれる時間
@@ -1825,8 +1825,9 @@ const DEFAULTS = {
               間から軌道が出る形に変更 (slide* を split* に差し替え)
    / v17→v18: 惑星に「波が流れる」F/G/H を追加
    / v18→v19: 導入事例を「縦に並んでスクロールで重なる」形に変更 (step → gap)、
-              ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ) */
-const STORAGE_KEY = 'anyflow-embed-anim-v19';
+              ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ
+   / v19→v20: ビジョンを「出だしだけ自動・あとは全部スクロール」に変更) */
+const STORAGE_KEY = 'anyflow-embed-anim-v20';
 
 let params = load();
 function load() {
@@ -2186,7 +2187,8 @@ const visEls = {
    そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
 let visAutoT0 = null;    // 自動シーケンスの開始時刻
 let visT = -1;           // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
-const VIS_TOTAL = 9.6;   // 「2つの価値」まで全部出そろうまでの秒数
+const VIS_TOTAL = 10.0;      // 「2つの価値」まで全部出そろうまでの秒数
+const VIS_AUTO_HEAD = 2.05;  // ここまでは自動 (「Our Vison」と1行目が出るところまで)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
 
@@ -2201,9 +2203,15 @@ function updateVision(p) {
      止まっていても勝手に再生され、スクロールした分はちゃんと先へ進む。
      max で持つので巻き戻りもしない (リプレイなし) */
   const pre = progOverride.visionPre != null ? progOverride.visionPre : preP(SECS.vision);
-  const q = pre < 1 ? pre * 0.25 : 0.25 + p * 0.75;    // 助走で2.5割、固定中に7.5割
-  if (visAutoT0 === null && q > 0.002) visAutoT0 = elapsed;
-  if (visAutoT0 !== null) visT = Math.max(visT, elapsed - visAutoT0, (q / 0.88) * VIS_TOTAL);
+  /* 【出だしだけ自動、あとは全部スクロール】(2026-08-14 ヒデさん選択)
+       ・セクションが画面に入ったら、まず「Our Vison」と1行目までを時間で出す (VIS_AUTO_HEAD 秒)
+       ・そこから先 (2行目 → 上下に分かれる → 軌道が出る → 左下へ → 2つの価値) は
+         ピン中のスクロール量だけで進む。手を止めれば絵も止まる
+       ・max で持つので巻き戻らない (スクロールで戻っても終わった状態のまま) */
+  if (visAutoT0 === null && pre > 0.002) visAutoT0 = elapsed;
+  const head = visAutoT0 === null ? 0 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
+  const body = clamp01(p / 0.88) * (VIS_TOTAL - VIS_AUTO_HEAD);
+  if (visAutoT0 !== null) visT = Math.max(visT, head + body);
   const A = visAutoT0 === null ? -1 : visT;
 
   /* --- 自動パートの時間割 (秒) --- */
