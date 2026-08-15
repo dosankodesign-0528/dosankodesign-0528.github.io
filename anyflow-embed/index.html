@@ -1763,8 +1763,8 @@ const DEFAULTS = {
   kv: {
     gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
     headerAt: 0.25,   // ヘッダーがブラーで出る
-    eyebrowAt: 1.15,  // 「APIでデータを繋ぐプラットフォーム」
-    typeAt: 2.1,      // タイピング開始
+    eyebrowGap: 0.25, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
+    typeAt: 1.0,      // タイピング開始
     charDur: 0.09,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
     charDur2: 0.20,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
     typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
@@ -1785,6 +1785,7 @@ const DEFAULTS = {
   sections: {
     common: {
       smooth: 5,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
+      maxRate: 0.35,     // 1秒あたりに進める進捗の上限。強くスクロールしても早送りにならない
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -1840,8 +1841,10 @@ const DEFAULTS = {
               ビジョン/開発者体験も時間駆動から時間＋スクロール併用へ
    / v19→v20: ビジョンを「出だしだけ自動・あとは全部スクロール」に変更
    / v20→v21: フォントウェイトをカンプと突き合わせて修正、カード間隔 40→44px
-   / v21→v22: Platform図の字間を撤去、「認証基盤」ラベル追加、コネクタの位置を更新) */
-const STORAGE_KEY = 'anyflow-embed-anim-v22';
+   / v21→v22: Platform図の字間を撤去、「認証基盤」ラベル追加、コネクタの位置を更新
+   / v22→v23: KVは打ち終わってから小ラベル、スクロール速度の上限(maxRate)を全体に、
+              ビジョンは画面中央に来てから開始) */
+const STORAGE_KEY = 'anyflow-embed-anim-v23';
 
 let params = load();
 function load() {
@@ -2221,13 +2224,15 @@ function updateVision(p) {
      いまは実績と同じく【時間でも進む／スクロールでも進む、速い方を採用】。
      止まっていても勝手に再生され、スクロールした分はちゃんと先へ進む。
      max で持つので巻き戻りもしない (リプレイなし) */
-  const pre = progOverride.visionPre != null ? progOverride.visionPre : preP(SECS.vision);
+  const pre = progOverride.visionPre != null ? progOverride.visionPre : smoothTo('visionPre', preP(SECS.vision));
   /* 【出だしだけ自動、あとは全部スクロール】(2026-08-14 ヒデさん選択)
        ・セクションが画面に入ったら、まず「Our Vison」と1行目までを時間で出す (VIS_AUTO_HEAD 秒)
        ・そこから先 (2行目 → 上下に分かれる → 軌道が出る → 左下へ → 2つの価値) は
          ピン中のスクロール量だけで進む。手を止めれば絵も止まる
        ・max で持つので巻き戻らない (スクロールで戻っても終わった状態のまま) */
-  if (visAutoT0 === null && pre > 0.002) visAutoT0 = elapsed;
+  /* 2026-08-14: 画面に顔を出した瞬間だと早すぎるとの指摘。
+     セクションがビューポートの中央まで来てから開始する (pre = 0.5) */
+  if (visAutoT0 === null && pre >= 0.5) visAutoT0 = elapsed;
   const head = visAutoT0 === null ? 0 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
   const body = clamp01(p / 0.88) * (VIS_TOTAL - VIS_AUTO_HEAD);
   if (visAutoT0 !== null) visT = Math.max(visT, head + body);
@@ -2410,7 +2415,7 @@ function updateResults(p) {
   /* 前のセクションが抜けてから固定が始まるまでの1画面(乗り換え区間)も物語に使う。
      ここを空けておくと「何回もスクロールしないと進まない」に見えるため、
      助走のうちに画像が出はじめるようにしてある */
-  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
+  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : smoothTo('resultsPre', preP(SECS.results));
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
   if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (q / 0.92) * RES_TOTAL);
@@ -2699,7 +2704,7 @@ function updateDev(pRaw) {
   /* ⚠️ 前のセクションが抜けてから固定が始まるまでの1画面は、
      このままだと「黒い画面がせり上がってくるだけで何も起きない」空スクロールになる。
      助走ぶんを進捗の頭 12% として繰り込み、1つめの訴求文が助走のうちに出るようにする */
-  const pre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
+  const pre = progOverride.devPre != null ? progOverride.devPre : smoothTo('devPre', preP(SECS.dev));
   const PRE = 0.12;
   const p = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
 
@@ -2793,7 +2798,7 @@ function updateCases(p) {
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
      こうしないと、前の開発者体験セクションの固定が外れてから
      ここが固定され始めるまでの1画面ぶんが、まるまる何も起きない空スクロールになる */
-  const pre = progOverride.casesPre != null ? progOverride.casesPre : preP(SECS.cases);
+  const pre = progOverride.casesPre != null ? progOverride.casesPre : smoothTo('casesPre', preP(SECS.cases));
   /* 「導入事例」の文字は乗り換え区間に入った直後から出す。
      こうすると黒いセクションを抜けた瞬間にもう文字が見えていて、
      真っさらな画面を挟まずに次の話へ移れる */
@@ -2835,12 +2840,25 @@ function resetSectionClocks() {
 }
 
 /* スクロール慣性補間: 生のスクロール進捗を毎フレーム少しずつ追いかける (lenis風のぬるっと感) */
-const smoothP = { vision: -1, dev: -1, cases: -1, results: -1 };   // -1 = 未初期化
+/* 助走(Pre)も同じ上限をかけるので、セクションごとに2つずつ持つ */
+const smoothP = { vision: -1, dev: -1, cases: -1, results: -1,
+                  visionPre: -1, devPre: -1, casesPre: -1, resultsPre: -1 };   // -1 = 未初期化
 function smoothTo(key, target) {
-  const k = params.sections.common.smooth;
-  if (k <= 0 || smoothP[key] < 0) { smoothP[key] = target; return target; }
-  const a = 1 - Math.exp(-frameDt * k);
-  smoothP[key] += (target - smoothP[key]) * a;
+  const c = params.sections.common;
+  if (smoothP[key] < 0) { smoothP[key] = target; return target; }
+  let next = c.smooth > 0
+    ? smoothP[key] + (target - smoothP[key]) * (1 - Math.exp(-frameDt * c.smooth))
+    : target;
+  /* ⚠️ ページ全体共通ルール (2026-08-14):
+     ホイールを強く回しても、アニメの再生スピードは変えない。
+     1秒あたりに進める進捗の上限を決めて、それ以上は速くならないようにする。
+     こうしないと勢いよくスクロールした時だけ演出が早送りになり、
+     ゆったりした体験が壊れる。上限は「1セクションを渡り切るのに最低何秒か」で決まる
+     (maxRate 0.35 なら約2.9秒) */
+  const cap = c.maxRate * frameDt;
+  const d = next - smoothP[key];
+  if (Math.abs(d) > cap) next = smoothP[key] + (d > 0 ? cap : -cap);
+  smoothP[key] = next;
   if (Math.abs(target - smoothP[key]) < 0.0004) smoothP[key] = target;
   return smoothP[key];
 }
@@ -2874,7 +2892,6 @@ const kvEls = {
 function updateKV() {
   const c = params.kv, t = elapsed;
   rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
-  rv(kvEls.eyebrow, easeOutQ(clamp01((t - c.eyebrowAt) / T_IN)), 8, 8);
 
   /* 1文字ずつ打ち込む */
   const tt = t - c.typeAt;
@@ -2902,8 +2919,11 @@ function updateKV() {
   kvEls.carets[0].style.opacity = (typing && tt < line2At - c.lineGap * 0.4) ? blink : 0;
   kvEls.carets[1].style.opacity = (typing && tt >= line2At - c.lineGap * 0.4) ? blink : 0;
 
-  /* 打ち終わってからグラフィック → ロゴ */
-  const gAt = c.typeAt + typeEnd + c.graphicGap;
+  /* 打ち終わってから小ラベル(罫線ごと) → グラフィック → ロゴ の順で出す
+     (2026-08-14: 以前は小ラベルが先に出ていたが、タイピングの後に変更) */
+  const eyeAt = c.typeAt + typeEnd + c.eyebrowGap;
+  rv(kvEls.eyebrow, easeOutQ(clamp01((t - eyeAt) / T_IN)), 8, 8);
+  const gAt = eyeAt + c.graphicGap;
   rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / T_BIG)), 12);
   rv(kvEls.logos, easeOutQ(clamp01((t - gAt - 0.6) / T_IN)), 8);
 }
@@ -3324,12 +3344,15 @@ function buildPanel() {
   sub(catAll, 'スクロール');
   rows.push(slider('滑らかさ', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v));
+  /* 強くスクロールしても再生が早送りにならないようにする上限 */
+  rows.push(slider('再生スピードの上限', 0.1, 1.5, 0.05, () => sv().common.maxRate, v => sv().common.maxRate = v,
+    v => '1周 ' + (1 / v).toFixed(1) + '秒'));
 
   /* ========== 🖼 キービジュアル ========== */
   const catKv = category('🖼 キービジュアル', false);
   sub(catKv, '登場の順番');
   rows.push(slider('ヘッダー', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + 's'));
-  rows.push(slider('小見出し', 0, 4, 0.05, () => params.kv.eyebrowAt, v => params.kv.eyebrowAt = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('打ち終わり→小ラベル', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('タイピング開始', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + 's'));
   rows.push(slider('1行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's'));
   rows.push(slider('2行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's'));
