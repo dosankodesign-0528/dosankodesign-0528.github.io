@@ -524,12 +524,19 @@
      ヒデさん指定で「モックとAPI/CLI/SDKのまとまりを中央揃え」にするため両方 +25.3px */
   /* ⚠️ モックと右リストを固定の left で置くと、画面幅が広がった時に左へ寄ってしまう
      （実測 1637px幅で 左105 / 右302 とズレた）。1230px の枠ごと画面中央に置くこと */
+  /* ===== カンプ 14927:22549 の実測 =====
+       手前カード  左119.9 / 幅760.4   (840.6 × 0.9046)
+       中(左後ろ)  左63.5  / 幅684.3   中心は手前から -94.5, +3.0
+       奥(右後ろ)  左320.6 / 幅615.9   中心は手前から +128.5, -16.4
+       右リスト    左990.2 / 幅329.4   → 画面右から 120.4px
+     「手前カードの見た目の左端 〜 リストの右端」= 1199.7px を画面中央に置くと、
+     カンプの左余白79.8 / 右余白120.4 がそのまま再現できる（幅が変わっても同じ見え方） */
   .dev-group {
     perspective: 1600px;
     position: absolute;
     left: 50%;
-    margin-left: -615px;      /* 1230 / 2 */
-    width: 1230px;
+    margin-left: -600px;      /* 1199.7 ≒ 1200 の半分 */
+    width: 1200px;
     top: 274px;
     height: 504.37px;
   }
@@ -538,7 +545,7 @@
      → 840.6 基準で 0.905 / 0.814 / 0.733 倍。左右にずらして端をのぞかせる */
   .dm-ghost {
     position: absolute;
-    left: 0;
+    left: -40.35px;
     top: 0;
     width: 840.6px;
     height: 504.37px;
@@ -551,7 +558,8 @@
   /* 中身は本物と同じ .dm-panel をそのまま使う (手前に回ってきた時に見た目が変わらないように) */
   .dev-mock {
     position: absolute;
-    left: 0;
+    /* 0.9046 倍で描くと左右に 40.1px ずつ余るので、その分を戻してカンプの左119.9に合わせる */
+    left: -40.35px;
     top: 0;
     width: 840.6px;
     height: 504.37px;
@@ -565,7 +573,7 @@
      それ以外: 縦線なし / 不透明度 0.2  ← カンプ実測値 */
   .dev-list {
     position: absolute;
-    left: 900.617px;   /* 1230 - 329.383 */
+    left: 870.08px;    /* カンプのリスト左990.2 に合わせる */
     top: 0;
     width: 329.383px;
     padding-top: 20px;
@@ -1032,6 +1040,7 @@
     .dev-center .dc-one { font-size: 24px; line-height: 36px; }
     /* モックは JS 側で 0.40 倍。中央に置いて左右の余白を揃える */
     .dev-group { left: 0; margin-left: 0; width: 390px; top: 0; height: auto; }
+    .dev-mock { left: 50%; }
     .dm-ghost { display: none; }   /* スマホでは重ねない */
     .dev-mock { left: 50%; top: 190px; margin-left: -420.3px; }
     .dev-list { left: 24px; top: 470px; width: 342px; padding-top: 0; gap: 22px; align-items: flex-start; }
@@ -2042,6 +2051,8 @@ const DEFAULTS = {
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   visReveal: 2,        // ビジョンのキーメッセージの出方 (VIS_REVEALS)。2=その場でブラー出現
+  visSpin: 2,          // ドットの回り方 (VIS_SPINS)。既定=②速く回って減速
+  visMove: 1,          // 軌道の出方 (VIS_MOVES)。既定=①動きと拡大を同時に
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
     gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
@@ -2177,7 +2188,9 @@ const DEFAULTS = {
              / 2つの価値の位置を調整値で既定化 / ホバー切替のブラーを廃止 */
 /* v46→v47: 軌道の出はじめを小さく / 役割名を Point02 と同時に / カード入れ替えを案1(横に回る)で本実装
              / 実績の開始をビューポート中央に戻す */
-const STORAGE_KEY = 'anyflow-embed-anim-v47';
+/* v47→v48: 開発者体験②のレイアウトをカンプ 14927:22549 の実測へ (カードの重なり位置とリストの余白) */
+/* v48→v49: ドットの回り方と軌道の出方を3パターンずつに (visSpin / visMove) */
+const STORAGE_KEY = 'anyflow-embed-anim-v49';
 
 let params = load();
 function load() {
@@ -2197,6 +2210,8 @@ function load() {
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
+  merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
+  merged.visMove = merged.visMove || DEFAULTS.visMove;
   merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
   merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.sections = {
@@ -2724,6 +2739,23 @@ const VIS_REVEALS = [
   { id: 'rise', name: '下から立ち上がる' },
   { id: 'blur', name: 'その場でブラー出現' },   /* 最終位置のまま、ブラーだけで出る */
 ];
+/* ===== ドットの回り方 (2026-08-15) =====
+   「最初はスピーディーに回って、止まる頃に徐々に減速して止まる」
+   減速中の角速度を v0×(1-u)^n としている。n が大きいほど
+   「はじめにグッと落ちて、最後は長く尾を引く」止まり方になる。
+   fast = 回っている間の速さの倍率。 */
+const VIS_SPINS = [
+  { id: 'even',  name: '①一定→すっと止まる', fast: 1.0, n: 1.0, desc: '一定の速さで回り、最後にまっすぐ減速して止まる。' },
+  { id: 'quick', name: '②速く回って減速',     fast: 1.7, n: 2.2, desc: '速めに回り、止まる手前でじわっと減速する。いちばん気持ちいい。' },
+  { id: 'rush',  name: '③勢いよく→長く残る', fast: 2.3, n: 3.4, desc: '勢いよく回り、最後がとても長く尾を引いて止まる。' },
+];
+/* ===== 軌道が出て左下へ動く時の見せ方 =====
+   pos = 位置のカーブ / scl = 大きさのカーブ / durK = 移動時間の倍率 */
+const VIS_MOVES = [
+  { id: 'sync',  name: '①動きと拡大を同時に', durK: 1.00, posE: 'slick', sclE: 'io',    desc: '動き出すのと同時に、じわじわ大きくなる。' },
+  { id: 'late',  name: '②先に動いて後で拡大', durK: 1.15, posE: 'slick', sclE: 'late',  desc: 'まず位置が決まり、着く頃に大きくなる。文字が読みやすい。' },
+  { id: 'early', name: '③先に拡大して後で動く', durK: 1.15, posE: 'late', sclE: 'early', desc: '先に大きくなってから、ゆっくり定位置へ流れていく。' },
+];
 const VIS_AUTO_HEAD = 1.35;  // 近づいてくる間に出す分 (「Our Vison」と1行目)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
@@ -2777,11 +2809,17 @@ function updateVision(p) {
   const S = A < 0 ? -1 : A - miniAt;   /* ドットの時計 */
   /* ⚠️ easeIO は出だしが遅いので、濃くなり終わってからやっと動き出すように見えていた。
      easeSlick はすっと動き出して最後だけ静かに止まるので「濃くなりながら同時に移動」になる */
-  const mv = mvT < 0 ? 0 : easeSlick(clamp01(mvT / c.moveDur));
-  /* 【2026-08-15】拡大だけは別のカーブにする。
-     位置と同じ easeSlick だと出だしで一気に大きくなってしまうため、
-     S字(easeIO)にして「左下へ動いていく“途中で”じわじわ大きくなる」ようにした */
-  const mvS = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
+  /* 位置と拡大は別のカーブにする。同じにすると出だしで一気に大きくなってしまう。
+     カーブの組み合わせは調整パネル「軌道の出方」で3パターンから選べる */
+  const MP = VIS_MOVES[(params.visMove || 1) - 1];
+  const mvRaw = mvT < 0 ? 0 : clamp01(mvT / (c.moveDur * MP.durK));
+  const curve = (id, x) => id === 'slick' ? easeSlick(x)
+    : id === 'io'   ? easeIO(x)
+    : id === 'late' ? easeIO(clamp01((x - 0.28) / 0.72))       /* 後半で動く */
+    : id === 'early'? easeOutQ(clamp01(x / 0.62))              /* 前半で終わる */
+    : x;
+  const mv  = curve(MP.posE, mvRaw);
+  const mvS = curve(MP.sclE, mvRaw);
   const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
   /* 【2026-08-15】上下に分かれたあと、その場で静止せずに
      「慣性が効いたようにふわーっと」流れ続けながら消える。
@@ -2893,14 +2931,19 @@ function updateVision(p) {
   /* 【2026-08-14 変更】ドットは「軌道がブラーで出た時点でもう回っている」。
      そこから移動 → Platform → 2つの価値 を見せている間ずっと等速で回り続け、
      最後に減速して止まる。止まってから役割名(コネクタ等)が出る (ヒデさん指定) */
-  const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed;
-  const totalRot = v * brakeStart + v * brake / 2;
+  /* 減速中の角速度は v×(1-u)^n。積分すると回転量は
+       v·brake·(1-(1-u)^(n+1))/(n+1)
+     n が大きいほど「はじめにグッと落ちて、最後は長く尾を引く」止まり方になる */
+  const SP = VIS_SPINS[(params.visSpin || 1) - 1];
+  const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed * SP.fast;
+  const n1 = SP.n + 1;
+  const totalRot = v * brakeStart + v * brake / n1;
   let rot = 0;
   if (S > 0) {
     if (S < brakeStart) rot = v * S;
     else {
       const u = clamp01((S - brakeStart) / brake);
-      rot = v * brakeStart + v * brake * (u - u * u / 2);
+      rot = v * brakeStart + v * brake * (1 - Math.pow(1 - u, n1)) / n1;
     }
   }
   const dotIn = S < 0 ? 0 : clamp01(S / 0.9);
@@ -3120,10 +3163,15 @@ const DEV_P = {
    席は カンプ 14924:21985 の実測（手前0.905 / 中0.814 / 奥0.733 倍）を土台に、
    Y軸まわりの回転と奥行き(Z)を足して輪に見せている。
    動きの速さはサイト共通の「大きい移動 1.3秒 + ぬるっと止まるカーブ」。 */
+/* ⚠️ perspective は枠の中心(x=720)を基準に効くので、奥へ引いた(dz)カードは
+   【横方向にも中心へ寄る】。カンプの位置に着地させるには、その分を見込んで
+   dx を外側へ大きめに取っておく必要がある（縮み係数 f = 1600/(1600+120) = 0.930）。
+     必要な dx = (カンプの中心 - 720) / f - (手前の中心 - 720)
+   sc も同じ f で縮むぶんを割り戻してある。 */
 const DEV_STACK = [
-  { sc: 0.905, dx:    0, dy:   0, dz:    0, ry:   0, op: 1.00, z: 3 },   /* 手前 */
-  { sc: 0.870, dx: -150, dy:   6, dz: -120, ry:  16, op: 0.55, z: 2 },   /* 左後ろ */
-  { sc: 0.790, dx:  150, dy: -12, dz: -120, ry: -16, op: 0.38, z: 1 },   /* 右後ろ */
+  { sc: 0.905, dx:      0, dy:     0, dz:    0, ry:   0, op: 1.00, z: 3 },   /* 手前 */
+  { sc: 0.875, dx: -118.1, dy:   3.2, dz: -120, ry:  22, op: 0.55, z: 2 },   /* 左後ろ */
+  { sc: 0.788, dx:  121.7, dy: -17.6, dz: -120, ry: -22, op: 0.38, z: 1 },   /* 右後ろ */
 ];
 const DEV_SCREENS = ['api', 'cli', 'sdk'];
 
@@ -3141,7 +3189,9 @@ const mockK = () => (isMobile ? 0.40 : 1);   // スマホでのモックの縮�
    ①では中央、②でここから 0 へ動かすとカンプの位置に着く */
 /* モックは 1230px の枠の左端にいる。枠は画面中央にあるので、
    モック単体を画面中央に見せるためのズラし量は (1230 - 840.6) / 2 で【画面幅によらず一定】 */
-function mockCenterX() { return isMobile ? 0 : (1230 - MOCK_W) / 2; }
+/* 章①: モックの箱は画面左から 79.8px にある。単体で画面中央に見せるためのズラし量。
+   (1440-840.6)/2 - 79.8 = 219.9。枠が中央基準なので画面幅によらず一定 */
+function mockCenterX() { return isMobile ? 0 : 219.9; }
 
 /* 見出し: ブラーで出て、ブラーで退場するだけ (上下分割はカンプ変更で廃止) */
 function devHeading(el, inK, outK) {
@@ -3543,9 +3593,12 @@ function updateDev(pRaw) {
     el.style.opacity = (op * (seatI === 0 ? 1 : cur.op * stackK)).toFixed(3);
     /* 重なり順は今の大きさで決める。回っている途中でも前後が破綻しない */
     el.style.zIndex = Math.round(cur.sc * 1000);
+    /* 傾きは【回っている最中だけ】掛ける。止まっている時は傾き0＝カンプの見た目そのまま。
+       sin(πk) なので、動き出して真ん中でいちばん傾き、着いたら0に戻る */
+    const swing = Math.sin(Math.PI * clamp01(kk));
     el.style.transform =
       `translate3d(${cx2.toFixed(2)}px, ${cy2.toFixed(2)}px, ${(cur.dz * stackK).toFixed(1)}px)` +
-      ` rotateY(${(cur.ry * stackK).toFixed(2)}deg) scale(${cs.toFixed(4)})`;
+      ` rotateY(${(cur.ry * swing * stackK).toFixed(2)}deg) scale(${cs.toFixed(4)})`;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
   });
 
@@ -4379,6 +4432,12 @@ function buildPanel() {
     '小さい軌道が左下の定位置まで移動するのにかける時間。大きいほどゆったり。'));
   rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
     '楕円の線の太さ。'));
+  sub(catVis, 'ドットの回り方');
+  note(VIS_SPINS[(params.visSpin || 1) - 1].desc);
+  pillRow(VIS_SPINS, (_, i) => params.visSpin === i + 1, (_, i) => params.visSpin = i + 1);
+  sub(catVis, '軌道の出方（動きと拡大）');
+  note(VIS_MOVES[(params.visMove || 1) - 1].desc);
+  pillRow(VIS_MOVES, (_, i) => params.visMove === i + 1, (_, i) => params.visMove = i + 1);
   sub(catVis, 'ドットの周回');
   rows.push(slider('速さ(×KV)', 0.5, 5, 0.1, () => sv().vision.spinSpeed, v => sv().vision.spinSpeed = v, v => '×' + v.toFixed(1),
     'キービジュアルのドットの何倍の速さで回るか。'));
