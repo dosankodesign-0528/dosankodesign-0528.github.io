@@ -328,6 +328,10 @@
 
     var body = this.body = document.createElement('div');
     body.className = 'tp-body';
+    /* 慣性スクロール(Lenis)を使っているページで、パネル内のホイールを
+       ページに持っていかれないようにする。Lenis が公式に見る属性 */
+    body.setAttribute('data-lenis-prevent', '');
+    el.setAttribute('data-lenis-prevent', '');
     var foot = this.foot = document.createElement('div');
     foot.className = 'tp-foot';
     var toast = this.toast = document.createElement('div');
@@ -426,6 +430,22 @@
       finally { this.params = keep; }
     }
     return getPath(this.defaults, item.path);
+  };
+
+  /* 廃止した選択肢が localStorage に残っていると、どれも選ばれていない状態になる。
+     options に無い値だったら初期値へ戻す（anyflow-embed で実際に起きた） */
+  Panel.prototype._validateEnum = function (item) {
+    if (!item.options || !item.options.length) return;
+    var cur = this._get(item);
+    var ok = item.options.some(function (o) {
+      var v = Array.isArray(o) ? o[1] : (o.value !== undefined ? o.value : o);
+      return String(v) === String(cur);
+    });
+    if (!ok) {
+      var d = this._default(item);
+      this._set(item, d);
+      this.save();
+    }
   };
 
   /* ---------- 描画 ---------- */
@@ -583,6 +603,7 @@
   /* --- 2〜3択のセグメント --- */
   Panel.prototype._seg = function (item, mount) {
     var self = this;
+    this._validateEnum(item);
     var row = document.createElement('div');
     row.className = 'tp-row';
     if (item.seg) { var lab = document.createElement('label'); lab.textContent = item.seg; row.appendChild(lab); }
@@ -618,6 +639,7 @@
   /* --- ピル（案の切替） --- */
   Panel.prototype._pills = function (item, mount) {
     var self = this;
+    this._validateEnum(item);
     var wrap = document.createElement('div');
     if (item.pills) {
       var t = document.createElement('div');
@@ -700,6 +722,7 @@
   /* --- プルダウン --- */
   Panel.prototype._select = function (item, mount) {
     var self = this;
+    this._validateEnum(item);
     var row = document.createElement('div');
     row.className = 'tp-row';
     var lab = document.createElement('label');

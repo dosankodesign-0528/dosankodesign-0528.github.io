@@ -65,6 +65,9 @@ URL を一緒に渡すこと**。
 ## 📐 Figma カンプ参照ルール（必須・違反したら作り直し）
 
 > **📄 詳細は [DESIGN-SYSTEM-RULES.md](DESIGN-SYSTEM-RULES.md) に全文がある。**
+> **📄 既存サイトのスタイルを棚卸ししてデザインシステムに整える手順は
+> [DESIGN-SYSTEM-WORKFLOW.md](DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
+> abashiri-site で実際に通した工程。完成物の実例は [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md)）。
 > フォントだけでなく **角丸・padding・margin・gap・レイアウト・制約・影・ブラー・
 > グラデ・不透明度・線** など、デザインシステムと呼ばれるもの全般が対象。
 > 他の Claude アカウント／他プロジェクトで使う時は、あのファイルを持っていけばよい。
