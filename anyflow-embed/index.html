@@ -1475,19 +1475,25 @@ float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); 
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
 
+/* ===== カンプ実測の配色ランプ =====
+   assets/planet-e.png（カンプの惑星）のピクセルを数えた面積比:
+     水色/シアン 55.7% / 青 24.2% / 白に近い 8.3% / マゼンタ 7.5% / 紫 4.1%
+   ストップの幅をこの比率に合わせてあるので、どこを流れても
+   「水色が主役・ピンクは端に少しだけ」というカンプの色バランスが崩れない。
+   ⚠️ 等間隔のストップにすると、ピンクと紫が出過ぎて色が汚くなる（実際にそうなった） */
 vec3 ramp(float x){
-  x = clamp(x, -0.6, 1.0);
-  vec3 magenta = vec3(1.0, 0.27, 0.78);
-  vec3 purple = vec3(0.58, 0.26, 0.94);
-  vec3 deep = vec3(0.04, 0.36, 0.86);
-  vec3 blue = vec3(0.05, 0.62, 0.98);
-  vec3 cyan = vec3(0.56, 0.88, 1.0);
-  vec3 white = vec3(1.0);
-  if (x < -0.3) return mix(magenta, purple, (x + 0.6) / 0.3);
-  if (x < 0.0) return mix(purple, deep, (x + 0.3) / 0.3);
-  if (x < 0.34) return mix(deep, blue, x / 0.34);
-  if (x < 0.67) return mix(blue, cyan, (x - 0.34) / 0.33);
-  return mix(cyan, white, (x - 0.67) / 0.33);
+  x = clamp(x, 0.0, 1.0);
+  vec3 mg = vec3(1.000, 0.365, 0.592);   /* #FF5D97 ブランドのピンク */
+  vec3 pu = vec3(0.502, 0.459, 0.863);   /* #8075DC カンプ実測の紫 */
+  vec3 bl = vec3(0.102, 0.659, 0.984);   /* #1AA8FB カンプ実測の青 */
+  vec3 cy = vec3(0.043, 0.867, 1.000);   /* #0BDDFF カンプ実測の水色 */
+  vec3 wh = vec3(0.918, 1.000, 1.000);   /* #EAFFFF カンプ実測の白 */
+  if (x < 0.075) return mix(mg, pu, x / 0.075);                    /* ピンク 7.5% */
+  if (x < 0.115) return mix(pu, bl, (x - 0.075) / 0.040);          /* 紫 4.1% */
+  if (x < 0.355) return mix(bl, cy, (x - 0.115) / 0.240);          /* 青 24.2% */
+  /* 水色が過半(55.7%)。中でわずかに明暗が動く程度にして帯っぽくしない */
+  if (x < 0.915) return mix(cy, mix(cy, wh, 0.22), (x - 0.355) / 0.560);
+  return mix(mix(cy, wh, 0.22), wh, (x - 0.915) / 0.085);          /* 白 8.3% */
 }
 
 void main(){
@@ -1523,21 +1529,21 @@ void main(){
   /* 帯の位置。v(帯と直交する向き)で位相をずらすと、まっすぐでなくS字にうねる */
   float wave = u * ${bands} + sin(v * 2.1 + uTime * 0.5) * (${warp} + swell) - uTime * spd;
   float band = sin(wave * 3.14159265);
-  /* -0.6〜1.0 に写すと マゼンタ→紫→青→シアン→白 のランプを端から端まで使える */
-  float lum = -0.6 + 1.6 * (0.5 + 0.5 * band);
-  lum += (fbm(d * 2.4) - 0.5) * 0.16;         /* わずかなゆらぎ */
-  lum += pow(clamp(dot(n, normalize(vec3(0.55, 0.52, 0.62))), 0.0, 1.0), 7.0) * 0.30;
+  /* 0〜1 に写す。ランプ側が面積比を持っているので、ここは素直に均等でよい */
+  float lum = 0.5 + 0.5 * band;
+  lum += (fbm(d * 2.4) - 0.5) * 0.12;         /* わずかなゆらぎ */
+  lum += pow(clamp(dot(n, normalize(vec3(0.55, 0.52, 0.62))), 0.0, 1.0), 7.0) * 0.22;
 
   float dith = bayer8(cellId);
   float spread = 0.8 + uNoise * 1.2;
   float levels = 6.0;
-  float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, -0.6, 1.0);
+  float q = clamp(floor(lum * levels + (dith - 0.5) * spread + 0.5) / levels, 0.0, 1.0);
   vec3 col = ramp(q);
 
-  /* 左下のマゼンタリム (E と同じ処理で全体の統一感を保つ) */
+  /* 左下のマゼンタリム (カンプもピンクは端だけ。面積を増やさないよう控えめに) */
   float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
   float mg = clamp(floor(rim * 1.5 * 3.0 + (dith - 0.5) * 1.3 + 0.5) / 3.0, 0.0, 1.0);
-  col = mix(col, vec3(1.0, 0.27, 0.78), mg * 0.85);
+  col = mix(col, vec3(1.0, 0.365, 0.592), mg * 0.70);
 
   if (uLight > 1.5) {
     vec3 Ldir = normalize(vec3(0.62, 0.62, 0.48));
@@ -1719,22 +1725,22 @@ void main(){
 }`,
   },
   F: {
-    name: 'F 波・一方向',
+    name: 'F カンプ比・流れる',
     swatch: 'linear-gradient(135deg, #ffffff 0%, #56d0ff 38%, #2f6dff 66%, #ff4fd8 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('0.55', '0.06'),
   },
   G: {
-    name: 'G 波・1本',
+    name: 'G カンプ比・白帯',
     swatch: 'linear-gradient(135deg, #ff6fd8 0%, #ffffff 32%, #56d0ff 62%, #2f6dff 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('1.05', '0.30'),
   },
   H: {
-    name: 'H 波・2本',
+    name: 'H カンプ比・呼吸',
     swatch: 'linear-gradient(140deg, #ff4fd8 0%, #ffffff 22%, #56d0ff 46%, #ffffff 68%, #2f6dff 100%)',
     src: 'assets/planet-e.png',
-    fragment: waveFragment('1.75', '0.42'),
+    fragment: waveFragment('0.85', '0.14'),
   },
 };
 
@@ -1843,8 +1849,9 @@ const DEFAULTS = {
    / v20→v21: フォントウェイトをカンプと突き合わせて修正、カード間隔 40→44px
    / v21→v22: Platform図の字間を撤去、「認証基盤」ラベル追加、コネクタの位置を更新
    / v22→v23: KVは打ち終わってから小ラベル、スクロール速度の上限(maxRate)を全体に、
-              ビジョンは画面中央に来てから開始) */
-const STORAGE_KEY = 'anyflow-embed-anim-v23';
+              ビジョンは画面中央に来てから開始
+   / v23→v24: 波の惑星の配色をカンプ実測の面積比ランプに差し替え) */
+const STORAGE_KEY = 'anyflow-embed-anim-v24';
 
 let params = load();
 function load() {
