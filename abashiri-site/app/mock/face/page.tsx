@@ -1,7 +1,7 @@
 "use client";
 
 /*
- * 人物イラストがマウスに反応する動きの調整パネル
+ * 人物イラストの眉がマウスに反応する動きの調整パネル
  * - 本物のTOPページを表示したまま、動く量をスライダーで調整できる
  * - 動きが細かくて実機だと見づらいので、顔を拡大した「のぞき窓」を付けてある
  * - 値はその場で反映される（保存して再生は不要）
@@ -52,8 +52,7 @@ export default function FaceTunePage() {
 
   /* のぞき窓のイラストも、本番と同じようにカーソルへ反応させる */
   const loupeRef = useRef<HTMLDivElement>(null);
-  const loupeFace = useFaceReaction(loupeRef, face);
-  const isFront = face.eyeMode === "front";
+  const loupeLift = useFaceReaction(loupeRef, face);
 
   return (
     <>
@@ -76,38 +75,11 @@ export default function FaceTunePage() {
                 transform: `translate(${-LOUPE.x}px, ${-LOUPE.y}px) scale(${LOUPE.zoom})`,
               }}
             >
-              <IllustTamannee face={loupeFace} className="size-full" />
+              <IllustTamannee lift={loupeLift} className="size-full" />
             </div>
           </div>
           <p className="bg-[#e6f3ff] px-2 py-1 text-[10px] font-bold text-[#0070c9]">
-            ↑ 顔を{LOUPE.zoom}倍にした確認用。この窓にもカーソルを乗せると反応します
-          </p>
-        </div>
-
-        <div className="py-1.5 pl-1">
-          <span className="text-[12px] font-bold text-[#1e1e1e]">目の動き方</span>
-          <div className="mt-1 flex gap-1.5">
-            {(
-              [
-                { v: "follow", label: "マウスを追う" },
-                { v: "front", label: "正面を見る" },
-              ] as const
-            ).map((m) => (
-              <button
-                key={m.v}
-                onClick={() => upd({ eyeMode: m.v })}
-                className={`flex-1 cursor-pointer rounded-full py-1.5 text-[12px] font-black transition-colors ${
-                  face.eyeMode === m.v ? "bg-[#0070c9] text-white" : "bg-[#e6f3ff] text-[#0070c9]"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
-            {isFront
-              ? "イラストにカーソルが乗った時だけ、こっちを見ます"
-              : "ページのどこにカーソルがあっても、その方向を見続けます"}
+            ↑ 顔を{LOUPE.zoom}倍にした確認用。この窓にもカーソルを乗せると眉が動きます
           </p>
         </div>
 
@@ -116,34 +88,6 @@ export default function FaceTunePage() {
           value={face.browLift} min={0} max={20} step={0.5} unit="px"
           onChange={(v) => upd({ browLift: v })}
         />
-
-        {isFront ? (
-          <>
-            <Slider
-              label="正面を見た時の黒目・左右"
-              value={face.eyeFrontX} min={-8} max={8} step={0.5} unit="px"
-              onChange={(v) => upd({ eyeFrontX: v })}
-            />
-            <Slider
-              label="正面を見た時の黒目・上下"
-              value={face.eyeFrontY} min={-5} max={5} step={0.5} unit="px"
-              onChange={(v) => upd({ eyeFrontY: v })}
-            />
-          </>
-        ) : (
-          <>
-            <Slider
-              label="黒目が動く量・左右"
-              value={face.eyeRangeX} min={0} max={10} step={0.5} unit="px"
-              onChange={(v) => upd({ eyeRangeX: v })}
-            />
-            <Slider
-              label="黒目が動く量・上下"
-              value={face.eyeRangeY} min={0} max={6} step={0.5} unit="px"
-              onChange={(v) => upd({ eyeRangeY: v })}
-            />
-          </>
-        )}
 
         <Slider
           label="反応する範囲の広げ幅"
@@ -154,11 +98,7 @@ export default function FaceTunePage() {
         <div className="mt-3 rounded-lg bg-[#f4f9ff] p-2">
           <p className="text-[10px] font-bold text-[#7ba7cc]">いまの設定</p>
           <code className="block text-[11px] font-black leading-relaxed text-[#0070c9]">
-            eyeMode: &quot;{face.eyeMode}&quot;, browLift: {face.browLift},{" "}
-            {isFront
-              ? `eyeFrontX: ${face.eyeFrontX}, eyeFrontY: ${face.eyeFrontY}`
-              : `eyeRangeX: ${face.eyeRangeX}, eyeRangeY: ${face.eyeRangeY}`}
-            , hoverPad: {face.hoverPad}
+            browLift: {face.browLift}, hoverPad: {face.hoverPad}
           </code>
         </div>
 

@@ -327,7 +327,7 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 | `SoundUi.tsx` | 環境音の ON/OFF 確認ダイアログとトグル |
 | `Bird.tsx` | カモメ（`variant: flap / soft / smooth3`） |
 | `HeroBlurSeq.tsx` | キービジュアルの登場演出（採用版） |
-| `IllustTamannee.tsx` | 人物イラスト（マウスに反応する目と眉） |
+| `IllustTamannee.tsx` | 人物イラスト（元PNG＋眉だけカーソルに反応） |
 
 `/mock/` 配下は比較検討用のページで、本番の対象外。比較専用の値（浮遊シャドウ 3 案など）は本番コンポーネントに置かず、mock ページ側に持たせる。
 

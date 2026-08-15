@@ -107,7 +107,7 @@ type StageProps = {
   onBirdMove?: (key: "skyTopLeft" | "skyRight", patch: { x: number; y: number }) => void;
   /** 1〜5: 人物イラストのスイングパターン（既定は採用版の案4） */
   illustAnim?: number;
-  /** マウスに反応する顔の動き（faceConfig.ts） */
+  /** カーソルに反応する眉の動き（faceConfig.ts） */
   face?: Partial<FaceConfig> | null;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
@@ -134,7 +134,7 @@ export default function Stage({
   /* イラストは pointer-events-none のままにしたいので、:hover ではなく
      カーソルの座標を見て自前で判定する（詳細は useFaceReaction.ts） */
   const illustRef = useRef<HTMLDivElement>(null);
-  const faceState = useFaceReaction(illustRef, fc);
+  const browLift = useFaceReaction(illustRef, fc);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
@@ -275,7 +275,7 @@ export default function Stage({
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
               >
-                <IllustTamannee face={faceState} className="size-full" />
+                <IllustTamannee lift={browLift} className="size-full" />
               </motion.div>
               {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
               <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">

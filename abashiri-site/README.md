@@ -37,17 +37,25 @@ npx vercel redeploy abashiri-site.vercel.app
 | [components/bubbleConfig.ts](components/bubbleConfig.ts) | 吹き出しの形の補正、しっぽが伸びる演出、ムニムニ |
 | [components/layoutConfig.ts](components/layoutConfig.ts) | キービジュアルの配置 |
 | [components/birdConfig.ts](components/birdConfig.ts) | カモメの位置とふわふわ |
-| [components/faceConfig.ts](components/faceConfig.ts) | 人物イラストがマウスに反応する動き（眉・黒目） |
+| [components/faceConfig.ts](components/faceConfig.ts) | 人物イラストの眉がマウスに反応する動き |
 
-## 人物イラストがマウスに反応する仕組み
+## 人物イラストの眉がマウスに反応する仕組み
 
-右下の「たまんねーっ」の人物は、もとは 1枚のPNGだったので眉毛も黒目も動かせなかった。
-いまは [components/illustMainPaths.ts](components/illustMainPaths.ts) にベクター化して
-持っていて、**眉毛と黒目が別レイヤー**になっている。
+右下の「たまんねーっ」の人物は、**元の PNG（`public/img/illust-main.png`）をそのまま出している**。
+動かしたいのは眉だけなので、眉の形だけ [components/illustMainPaths.ts](components/illustMainPaths.ts) に
+ベクターで持っていて、PNG の上に重ねてある。
 
-- 眉が上にずれても、下から**肌色**レイヤーが出るので跡は残らない
-- 黒目がずれても、下から**白目**レイヤーが出るので跡は白いまま
-- 黒目は**白目の形でクリップ**してあるので、動かしても目の外へはみ出さない
+重ね方（下 → 上）:
+
+1. `illust-main.png`
+2. 元の眉を隠す**肌色のパッチ**（動かない。眉の形を少し太らせたもの）
+3. **動く眉**
+
+止まっている時はパッチの上にぴったり眉が乗るので、見た目は元の PNG と変わらない。
+眉が上がった時だけ、元の眉があった所がパッチの肌色で埋まって跡が残らない。
+
+> 以前は全体をトレースして黒目も動かしていたが、元絵より線が甘くなるので取りやめた。
+> その時のフルデータは git 履歴（`db5fcd1`）に残っている。
 
 反応のさせ方は [components/useFaceReaction.ts](components/useFaceReaction.ts)。
 ⚠️ イラストは `pointer-events-none`（クリックがすり抜ける）のままにしたいので、
@@ -55,18 +63,16 @@ npx vercel redeploy abashiri-site.vercel.app
 覆ってしまう。なので window でカーソルを監視して、イラストの矩形に入ったかを
 自前で判定している。
 
-- **眉**: カーソルがイラストに乗っている間だけ持ち上がる
-- **目**: `follow` ならページのどこにいてもその方向を見る／`front` なら乗った時だけ正面
+- **眉**: カーソルがイラストに乗っている間だけ、少し持ち上がる（既定 5px）
+- 動きは 300ms・`--ease-standard` でふわっと。パキッとは切り替えない
 - **スマホ**: 指で触っている間だけ反応する（離すと戻る）
-- 動きは全部「パキッと1コマ」。トランジションは掛けていない
 - `prefers-reduced-motion` の時は動かさない
 
-量やモードは [components/faceConfig.ts](components/faceConfig.ts) で、
+持ち上げ量と反応範囲は [components/faceConfig.ts](components/faceConfig.ts) で、
 `/mock/face` の調整パネルから触りながら決められる。
 
 イラストを描き直した時は [scripts/illust-trace.py](scripts/illust-trace.py) で
-`illustMainPaths.ts` を作り直す（手で書き換えない）。もとのPNGは
-`public/img/illust-main.png` に残してある。横顔の「ぼーっ」はPNGのまま。
+眉のパスを作り直す（手で書き換えない）。横顔の「ぼーっ」もPNGのまま。
 
 ## 比較用モックページ
 
@@ -80,5 +86,5 @@ npx vercel redeploy abashiri-site.vercel.app
 | `/mock/bubble/tune` | 吹き出しの数値を触りながら確認する調整パネル |
 | `/mock/tune` | 登場タイミングの調整パネル |
 | `/mock/illust` | 人物イラストのスイング |
-| `/mock/face` | 顔の反応（眉・黒目）の調整パネル（顔を拡大した確認窓つき） |
+| `/mock/face` | 眉の反応の調整パネル（顔を拡大した確認窓つき） |
 | `/mock/kv` / `/mock/layout` / `/mock/shadow` / `/mock/bird` | キービジュアル各種 |
