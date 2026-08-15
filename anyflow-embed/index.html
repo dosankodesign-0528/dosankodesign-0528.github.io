@@ -2224,7 +2224,8 @@ const DEFAULTS = {
    / v59→v60: デザイントークン整理(サイズ偶数化・角丸4段階・色統合) と
               描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
               ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
-const STORAGE_KEY = 'anyflow-embed-anim-v60';
+/* v60→v61: ビジョンの開始をビューポート中央（ピン開始）にそろえた */
+const STORAGE_KEY = 'anyflow-embed-anim-v61';
 
 let params = load();
 function load() {
@@ -2864,13 +2865,12 @@ function updateVision(p) {
   const namesEnd = brakeStart + brake + 0.1 + (PF_LABELS.length - 1) * 0.14 + T_IN;
   const visTotal = miniAt + namesEnd + 0.2;
 
-  if (pre >= 0.5 && visAutoT0 === null) visAutoT0 = elapsed;
-  const approach = visAutoT0 === null ? -1 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
-  const main = playT('vision', visTotal, canPlay(p), SECS.vision, p);
-  /* ⚠️ 以前は本編が始まった瞬間に A が 0 → VIS_AUTO_HEAD(1.35秒) へ飛んでいて、
-     助走を見ていない時（勢いよくスクロールした時）に1行目が一瞬で出てカクついた。
-     助走で進んだ分と本編の大きい方を採ると、どちらの入り方でも時間が飛ばない */
-  const A = main >= 0 ? Math.max(main, Math.max(0, approach)) : approach;
+  /* 【2026-08-15】開始は「セクションがビューポート中央に来てから」。
+     ⚠️ 以前は近づいてくる途中(preP >= 0.5 = 画面に半分入った時点)から
+        「Our Vision」と1行目を先出ししていたため、中央に来る前に始まって早く感じた。
+        いまは他のセクションと同じく【固定(ピン)された瞬間＝ステージが画面の上下中央に
+        収まった瞬間】に再生を始める */
+  const A = playT('vision', visTotal, canPlay(p), SECS.vision, p);
 
   if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
