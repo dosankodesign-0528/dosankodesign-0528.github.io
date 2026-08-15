@@ -9,7 +9,7 @@
 }
 body {
   min-height: 100vh;
-  background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+  background: linear-gradient(180deg, #161616 0%, #454545 100%);
   font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
   color: #fff;
   overflow-x: hidden;

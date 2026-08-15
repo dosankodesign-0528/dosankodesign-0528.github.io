@@ -432,7 +432,7 @@
   .res-dark {
     position: fixed;
     inset: 0;
-    background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+    background: linear-gradient(180deg, #161616 0%, #454545 100%);
     opacity: 0;
     pointer-events: none;
     z-index: 5;
@@ -484,10 +484,11 @@
 
   /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
      「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
+  /* カンプ 14937:23887: 上から下へ #161616 → #454545 (2026-08-15 更新) */
   .dev-bg {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #070707 0%, #191919 30%, #4a4a4a 70%, #8b8b8b 100%);
+    background: linear-gradient(180deg, #161616 0%, #454545 100%);
   }
   /* 最後にスクロールで白へ戻すための、上にかぶせる板 */
   .dev-bg2 {
@@ -2225,7 +2226,8 @@ const DEFAULTS = {
 /* v55→v56: 実績の数字はスロットをやめて単純なブラー出現に（見出し→数字の順） */
 /* v56→v57: 開発者体験の見出しをカンプ 14937:23888 へ (40px / gap12px) */
 /* v57→v58: 透明な要素があたり判定を持っていて、下の文字を選べなくしていたのを修正 */
-const STORAGE_KEY = 'anyflow-embed-anim-v58';
+/* v58→v59: 開発者体験の背景グラデをカンプ 14937:23887 へ (#161616 → #454545) */
+const STORAGE_KEY = 'anyflow-embed-anim-v59';
 
 let params = load();
 function load() {
