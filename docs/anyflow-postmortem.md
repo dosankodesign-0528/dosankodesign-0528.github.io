@@ -161,3 +161,5 @@ anyflow-embed は単一HTMLという性質上こうなったが、
 | カンプ実装ルール（推測禁止・全項目照合・表で報告） | [DESIGN-SYSTEM-RULES.md](../DESIGN-SYSTEM-RULES.md) | ✅ 2026-08-14 制定 |
 | 調整パネルの共通ライブラリ化 | [tune-panel/](../tune-panel/) | ✅ 2026-08-15 |
 | ルール1〜6 の常時適用 | [CLAUDE.md](../CLAUDE.md) / [AGENTS.md](../AGENTS.md) | ✅ 2026-08-15 追記 |
+| 推測・質問・報告の共通ルール（汎用化） | [WORKING-RULES.md](../WORKING-RULES.md) | ✅ 2026-08-16 制定 |
+| デザインシステム整備の手順（汎用化） | [DESIGN-SYSTEM-WORKFLOW.md](../DESIGN-SYSTEM-WORKFLOW.md) | ✅ 2026-08-15 制定 |
