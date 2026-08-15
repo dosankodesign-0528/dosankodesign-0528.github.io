@@ -15,7 +15,7 @@ import { usePathname } from "next/navigation";
 import { markConsentDone } from "./consentGate";
 import { devSilent } from "./devSound";
 
-/** 白モック内のボタン置き場（TopMock / ExperienceMock が用意する） */
+/** 白モック内のボタン置き場（TopPage / ExperienceFlow が用意する） */
 const SLOT_ID = "abashiri-sound-slot";
 
 import {
@@ -205,9 +205,9 @@ export default function SoundUi({
 
       {/* 初回のON/OFF確認（白カードのモーダル） */}
       {showDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0b3c69]/30 backdrop-blur-[18px]">
-          <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-[28px] bg-white/95 p-8 text-center shadow-2xl">
-            <p className="mb-6 text-[15px] font-bold leading-relaxed text-[#1e1e1e]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-scrim/30 backdrop-blur-scrim">
+          <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-panel bg-white/90 p-8 text-center shadow-modal">
+            <p className="mb-6 text-body font-bold leading-[1.6] text-ink">
               網走の環境音を楽しむことができます。
               <br />
               再生しますか？
@@ -215,13 +215,13 @@ export default function SoundUi({
             <div className="flex w-full items-center gap-3">
               <button
                 onClick={() => answer(true)}
-                className="flex-1 cursor-pointer rounded-full bg-[#0070c9] py-3 text-[15px] font-black text-white transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full bg-brand py-3 text-body font-black text-white transition-transform hover:scale-105"
               >
                 ON
               </button>
               <button
                 onClick={() => answer(false)}
-                className="flex-1 cursor-pointer rounded-full border-2 border-[#bcd6ea] bg-white py-3 text-[15px] font-black text-[#7ba7cc] transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full border-2 border-sky-pale bg-white py-3 text-body font-black text-ink-muted transition-transform hover:scale-105"
               >
                 OFF
               </button>
@@ -245,8 +245,8 @@ export default function SoundUi({
               }}
               className={`${
                 slot ? "" : "fixed bottom-4 left-4 z-50 "
-              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110 ${
-                audible ? "text-[#0070c9]" : "text-[#9db9d1]"
+              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full shadow-floating transition-transform hover:scale-110 ${
+                audible ? "text-brand" : "text-ink-muted"
               }`}
             >
               <SpeakerIcon on={audible} />

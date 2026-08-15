@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 
 const TITLES: Record<string, string> = {
   "1": "案1:タメて→スナップ",
@@ -24,7 +24,7 @@ export default async function IllustMockPage({
   return (
     <>
       <Stage illustration="tamannee" illustEntrance illustAnim={num}>
-        <TopMock intro={2} blurSeq />
+        <TopPage intro={2} blurSeq />
       </Stage>
       <div className="fixed left-3 top-3 z-[70] flex items-center gap-2">
         <Link

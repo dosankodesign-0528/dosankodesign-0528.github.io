@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import Bird from "./Bird";
-import MockNav from "./MockNav";
+import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
 import { buildShadow, mergeShadow } from "./shadowConfig";
 import { mergeLayout } from "./layoutConfig";
@@ -17,14 +17,17 @@ const FEELINGS = [
   ["忙しすぎる", "眠い", "ちょっと不安"],
 ];
 
+/* 写真の上に 40% でのせる色。値は globals.css のトークンが唯一の出どころ */
+const TINT = (v: string) => `color-mix(in srgb, var(${v}) 40%, transparent)`;
+
 const SCENES = [
   [
-    { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", tint: "rgba(3,31,172,0.4)" },
-    { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", tint: "rgba(172,51,3,0.4)" },
+    { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", tint: TINT("--color-tint-tento") },
+    { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", tint: TINT("--color-tint-sango") },
   ],
   [
-    { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", tint: "rgba(93,192,0,0.4)" },
-    { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", tint: "rgba(3,104,172,0.4)" },
+    { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", tint: TINT("--color-tint-himawari") },
+    { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", tint: TINT("--color-tint-ryuhyo") },
   ],
 ];
 
@@ -37,7 +40,7 @@ function StepIndicator({ step }: { step: Step }) {
   });
   return (
     <div className="absolute left-1/2 top-[120px] h-[104px] w-[666px] -translate-x-1/2">
-      <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-[#cce4fa]" />
+      <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-track" />
       {states.map((state, i) => (
         <div
           key={i}
@@ -45,12 +48,12 @@ function StepIndicator({ step }: { step: Step }) {
           style={{ left: i * 305 }}
         >
           <div
-            className={`font-rounded flex flex-col items-center text-center font-extrabold leading-none ${
-              state === "idle" ? "text-[#adcdea] opacity-60" : "text-[#0070c9]"
+            className={`font-num flex flex-col items-center text-center font-extrabold leading-none ${
+              state === "idle" ? "text-sky-pale opacity-60" : "text-brand"
             }`}
           >
-            <p className="text-[14px] leading-[1.2]">STEP</p>
-            <p className="text-[28px]">0{i + 1}</p>
+            <p className="text-label-sm leading-[1.2]">STEP</p>
+            <p className="text-step">0{i + 1}</p>
           </div>
           <img
             src={
@@ -80,13 +83,13 @@ function StepButtons({
   onBack: () => void;
 }) {
   return (
-    <div className="absolute left-1/2 top-[690px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-[20px]">
+    <div className="absolute left-1/2 top-[690px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-5">
       <button
         onClick={onNext}
         disabled={!canProceed}
-        className={`w-full rounded-full bg-[#0070c9] px-[44px] py-[16px] text-[20px] font-black text-white transition-all duration-300 ${
+        className={`w-full rounded-full bg-brand px-11 py-4 text-action font-black text-white transition-all duration-300 ${
           canProceed
-            ? "cursor-pointer hover:scale-105 hover:bg-[#0080e4]"
+            ? "cursor-pointer hover:scale-105 hover:bg-brand-hover"
             : "cursor-default opacity-30"
         }`}
       >
@@ -94,7 +97,7 @@ function StepButtons({
       </button>
       <button
         onClick={onBack}
-        className="cursor-pointer text-[20px] font-bold text-[#1e1e1e] transition-opacity hover:opacity-60"
+        className="cursor-pointer text-action font-bold text-ink transition-opacity hover:opacity-60"
       >
         もどる
       </button>
@@ -103,13 +106,13 @@ function StepButtons({
 }
 
 const stepTransition = {
-  initial: { opacity: 0, y: 24, filter: "blur(12px)" },
+  initial: { opacity: 0, y: 24, filter: "blur(10px)" },
   animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit: { opacity: 0, y: -16, filter: "blur(12px)" },
+  exit: { opacity: 0, y: -16, filter: "blur(10px)" },
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-export default function ExperienceMock({
+export default function ExperienceFlow({
   step,
   setStep,
 }: {
@@ -200,7 +203,7 @@ export default function ExperienceMock({
 
   return (
     <div
-      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-[60px] border-[30px] border-white"
+      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-device border-[30px] border-white"
       style={{
         boxShadow: buildShadow(mergeShadow(null)),
         transform: `translate(${mergeLayout(null).tabletX}px, ${mergeLayout(null).tabletY}px)`,
@@ -208,19 +211,19 @@ export default function ExperienceMock({
     >
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
-      <div className="relative h-full w-full overflow-hidden rounded-t-[30px] bg-[#e6f3ff]">
+      <div className="relative h-full w-full overflow-hidden rounded-t-device-inner bg-canvas">
         <AnimatePresence mode="wait">
           {step !== 3 ? (
             <motion.div key="select" className="absolute inset-0" {...stepTransition}>
-              <MockNav theme="dark" size="md" />
+              <GlobalNav theme="dark" size="md" />
               <StepIndicator step={step} />
 
               {/* 装飾の青カモメ */}
               <div className="absolute left-[134px] top-[362px] h-[64px] w-[110px]">
-                <Bird color="#b6dafc" flapDuration={0.62} driftDuration={9} strokeWidth={4.2} />
+                <Bird color="var(--color-sky-pale)" flapDuration={0.62} driftDuration={9} strokeWidth={4.2} />
               </div>
               <div className="absolute right-[83px] top-[229px] h-[86px] w-[189px]">
-                <Bird color="#b6dafc" flapDuration={0.75} driftDuration={11} delay={0.6} strokeWidth={2.5} />
+                <Bird color="var(--color-sky-pale)" flapDuration={0.75} driftDuration={11} delay={0.6} strokeWidth={2.5} />
               </div>
 
               <AnimatePresence mode="wait">
@@ -228,25 +231,25 @@ export default function ExperienceMock({
                   /* STEP01：気持ちの複数選択 */
                   <motion.div
                     key="step1"
-                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-[34px]"
+                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-[32px] font-black leading-[1.2] text-[#1e1e1e]">
+                    <p className="text-title font-black leading-[1.2] text-ink">
                       今、どんな気持ち？
                     </p>
-                    <div className="flex flex-col items-center gap-[16px]">
+                    <div className="flex flex-col items-center gap-4">
                       {FEELINGS.map((row, ri) => (
-                        <div key={ri} className="flex items-center gap-[12px]">
+                        <div key={ri} className="flex items-center gap-3">
                           {row.map((f) => {
                             const active = feelings.includes(f);
                             return (
                               <button
                                 key={f}
                                 onClick={() => toggleFeeling(f)}
-                                className={`cursor-pointer rounded-full px-[24px] py-[8px] text-[20px] font-black transition-all duration-300 hover:scale-105 ${
+                                className={`cursor-pointer rounded-full px-6 py-2 text-action font-black transition-all duration-300 hover:scale-105 ${
                                   active
-                                    ? "bg-[#87d500] text-white shadow-[2px_3px_0.5px_rgba(0,96,189,0.25)]"
-                                    : "bg-white/90 text-[#0070c9]"
+                                    ? "bg-accent text-white shadow-press"
+                                    : "bg-white/90 text-brand"
                                 }`}
                               >
                                 {f}
@@ -261,17 +264,17 @@ export default function ExperienceMock({
                   /* STEP02：場面の選択 */
                   <motion.div
                     key="step2"
-                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-[34px]"
+                    className="absolute inset-x-0 top-[270px] flex flex-col items-center gap-8"
                     {...stepTransition}
                   >
-                    <p className="text-[32px] font-black leading-[1.2] text-[#1e1e1e]">
+                    <p className="text-title font-black leading-[1.2] text-ink">
                       どこで、ぼーっとする？
                     </p>
-                    <div className="flex flex-col gap-[30px]">
+                    <div className="flex flex-col gap-8">
                       {SCENES.map((row, ri) => (
                         <div
                           key={ri}
-                          className="flex items-center justify-center gap-[34px] drop-shadow-[2px_3px_0.5px_rgba(0,96,189,0.4)]"
+                          className="flex items-center justify-center gap-8 drop-shadow-press"
                         >
                           {row.map((s) => {
                             const dimmed = scene !== null && scene !== s.id;
@@ -279,8 +282,8 @@ export default function ExperienceMock({
                               <button
                                 key={s.id}
                                 onClick={() => setScene(s.id)}
-                                className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-[12px] border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
-                                  dimmed ? "opacity-35" : "opacity-100"
+                                className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-thumb border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
+                                  dimmed ? "opacity-30" : "opacity-100"
                                 }`}
                               >
                                 <img
@@ -292,7 +295,7 @@ export default function ExperienceMock({
                                   className="absolute inset-0"
                                   style={{ background: s.tint }}
                                 />
-                                <span className="relative z-10 flex h-full w-full items-center justify-center text-[20px] font-black text-white">
+                                <span className="relative z-10 flex h-full w-full items-center justify-center text-action font-black text-white">
                                   {s.label}
                                 </span>
                               </button>
@@ -331,7 +334,7 @@ export default function ExperienceMock({
                 />
               </div>
 
-              <MockNav theme="light" size="sm" />
+              <GlobalNav theme="light" size="sm" />
 
               {/* 再生／一時停止 */}
               <button
@@ -360,14 +363,14 @@ export default function ExperienceMock({
 
               {/* ぼーっとタイマー */}
               <div
-                className={`absolute bottom-[76px] left-[52px] flex flex-col items-start gap-[8px] transition-opacity duration-700 ${
+                className={`absolute bottom-[76px] left-[52px] flex flex-col items-start gap-2 transition-opacity duration-700 ${
                   controlsShown ? "opacity-100" : "opacity-0"
                 }`}
               >
-                <span className="rounded-full bg-white px-[16px] py-[6px] text-[14px] font-black text-[#0070c9] backdrop-blur-[6px]">
+                <span className="rounded-full bg-white px-4 py-2 text-label-sm font-black text-brand backdrop-blur-hover">
                   ぼーっとタイマー
                 </span>
-                <p className="font-rounded text-[80px] font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
+                <p className="font-num text-timer font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
                   {mm}:{ss}
                 </p>
               </div>

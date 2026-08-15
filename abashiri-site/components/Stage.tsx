@@ -181,7 +181,7 @@ export default function Stage({
     return () => window.removeEventListener("resize", calc);
   }, []);
 
-  /* TopMock からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
+  /* TopPage からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
   useEffect(() => {
     if (!illustEntrance) return;
     const show = () => setIllustIn(true);
@@ -196,7 +196,7 @@ export default function Stage({
   return (
     <div className="fixed inset-0 overflow-hidden">
       <div
-        className="absolute left-0 overflow-hidden bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] transition-opacity duration-300"
+        className="absolute left-0 overflow-hidden bg-gradient-to-b from-sky-top to-sky-bottom transition-opacity duration-300"
         style={{
           width: fit?.stageW ?? 1512,
           height: 982,
@@ -258,7 +258,7 @@ export default function Stage({
           animate={illustIn ? { opacity: 1, filter: "blur(0px)" } : undefined}
           transition={{
             duration: timing.illust.duration / 1000,
-            ease: [0.33, 1, 0.68, 1],
+            ease: [0.22, 1, 0.36, 1],
           }}
           onAnimationComplete={() => {
             if (illustEntrance && illustIn) setSpin(true);
@@ -270,7 +270,7 @@ export default function Stage({
               {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.div
                 ref={illustRef}
-                className="absolute left-[1px] top-[44px] h-[357px] w-[284px] [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.15))]"
+                className="absolute left-[1px] top-[44px] h-[357px] w-[284px] drop-shadow-illust"
                 style={ia.style}
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
@@ -292,7 +292,7 @@ export default function Stage({
               <img
                 src="/img/illust-video.png"
                 alt=""
-                className="absolute left-[-9px] top-[34px] h-[387px] w-[268px] object-cover [filter:drop-shadow(-8px_1px_2px_rgba(0,0,0,0.25))]"
+                className="absolute left-[-9px] top-[34px] h-[387px] w-[268px] object-cover drop-shadow-illust"
               />
               <img
                 src="/img/text-bo.svg"
@@ -306,14 +306,14 @@ export default function Stage({
 
         {/* 右レール：ロゴ・SNS・縦書き「観光サイト」。位置は layoutConfig で調整できる */}
         <div
-          className="absolute flex items-start gap-[12px]"
+          className="absolute flex items-start gap-3"
           style={{ right: L.railX, top: L.railY }}
         >
-          <div className="flex flex-col items-center gap-[63px]">
+          <div className="flex flex-col items-center gap-15">
             <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
               <img src="/img/logo-abashiri.svg" alt="網走" className="h-[159px] w-[75px]" />
             </Link>
-            <div className="flex flex-col gap-[18px] opacity-70">
+            <div className="flex flex-col gap-4 opacity-70">
               <a href="#" aria-label="Instagram" className="relative block size-[44px] transition-transform hover:scale-110">
                 <img src="/img/sns-ig-frame.svg" alt="" className="absolute inset-0 size-full" />
                 <img src="/img/sns-ig-circle.svg" alt="" className="absolute inset-[24.32%]" />
@@ -327,7 +327,7 @@ export default function Stage({
               </a>
             </div>
           </div>
-          <p className="text-center text-[18px] font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
+          <p className="text-center text-lead font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
             観光サイト
           </p>
         </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 
 const TITLES: Record<string, string> = {
   "1": "案1:下からすっと + 矢印スライド",
@@ -22,7 +22,7 @@ export default async function HoverMockPage({
   return (
     <>
       <Stage illustration="tamannee" illustEntrance>
-        <TopMock intro={2} blurSeq cardHover={num} moreAnim={num} />
+        <TopPage intro={2} blurSeq cardHover={num} moreAnim={num} />
       </Stage>
       <div className="fixed left-3 top-3 z-[70] flex items-center gap-2">
         <Link

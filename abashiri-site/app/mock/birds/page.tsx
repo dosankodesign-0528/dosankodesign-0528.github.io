@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import {
   BIRDS_STORAGE_KEY,
@@ -104,7 +104,7 @@ export default function BirdsTunePage() {
           birdsEditable
           onBirdMove={(key, patch) => upd(key, patch)}
         >
-          <TopMock
+          <TopPage
             intro={2}
             blurSeq
             birds={birds}

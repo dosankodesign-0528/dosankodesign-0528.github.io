@@ -1,5 +1,5 @@
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 
 export default function Home() {
   return (
@@ -7,7 +7,7 @@ export default function Home() {
       <Stage illustration="tamannee" illustEntrance>
         {/* 決定版：吹き出し→な〜んにもない→たまらない を順にブラー
             →ボタン→イラスト（ブラー後にクルンと一回転） */}
-        <TopMock intro={2} blurSeq waitConsent />
+        <TopPage intro={2} blurSeq waitConsent />
       </Stage>
     </>
   );

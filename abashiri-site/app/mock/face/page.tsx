@@ -9,7 +9,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Stage from "@/components/Stage";
-import TopMock from "@/components/TopMock";
+import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import IllustTamannee, { ILLUST_RENDER } from "@/components/IllustTamannee";
 import { DEFAULT_FACE, type FaceConfig } from "@/components/faceConfig";
@@ -58,7 +58,7 @@ export default function FaceTunePage() {
   return (
     <>
       <Stage illustration="tamannee" face={face}>
-        <TopMock intro={2} />
+        <TopPage intro={2} />
       </Stage>
 
       <TunePanel title="🤨 顔の反応 調整">

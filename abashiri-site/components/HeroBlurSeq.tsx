@@ -9,7 +9,7 @@
  * 3. しっぽが伸びきってぷるんと落ち着くのに合わせて
  *    「たまらない」（下の曲線あしらい込み）がブラーで出現
  *    ＝吹き出しが「たまらない」としゃべったように見える
- * 4. （TopMock経由で）「ぼーっとしてみる」ボタン → 最後にイラスト
+ * 4. （TopPage経由で）「ぼーっとしてみる」ボタン → 最後にイラスト
  *
  * タイミングは heroTiming.ts の共通パラメーターに追従する。
  * しっぽの伸びは bubbleConfig.ts の tail で調整する。
@@ -394,7 +394,7 @@ export default function HeroBlurSeq({
               duration: dur,
               delay,
               fill: "forwards",
-              easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)",
             }
           );
         });
