@@ -1854,8 +1854,9 @@ const DEFAULTS = {
    / v25→v26: Platform図の役割ラベルをドット基準の相対配置に変更、
               スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長
    / v26→v27: 全セクションを「所定の位置で止めて1本の映像として自動再生」方式に
-   / v27→v28: ビジョンの出だし・行間・上下分割と、実績のテキスト出現を詰めた) */
-const STORAGE_KEY = 'anyflow-embed-anim-v28';
+   / v27→v28: ビジョンの出だし・行間・上下分割と、実績のテキスト出現を詰めた
+   / v28→v29: 描画ループを例外で止まらないようにし、所定の位置へ寄せてから再生開始) */
+const STORAGE_KEY = 'anyflow-embed-anim-v29';
 
 let params = load();
 function load() {
@@ -2116,10 +2117,25 @@ function pinP(sec) {
 const secPlay = {};
 let scrollLocked = false, lockPush = 0;
 
-/* canStart になったら再生開始。戻り値は再生位置(秒)。-1 = まだ始まっていない */
-function playT(key, total, canStart) {
-  const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0 });
-  if (!st.done && st.t0 === null && canStart) st.t0 = elapsed;
+/* canStart になったら再生開始。戻り値は再生位置(秒)。-1 = まだ始まっていない。
+   ⚠️ 勢いよくスクロールすると、セクションが行き過ぎた位置でロックされて
+      「そこで固まった」ように見えていた。所定の位置(上端0)から6px以上ずれていたら、
+      まずそこへ寄せてから再生を始める。 */
+function playT(key, total, canStart, sec) {
+  const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapping: false });
+  if (!st.done && st.t0 === null && canStart) {
+    const off = sec ? sec.getBoundingClientRect().top : 0;
+    if (Math.abs(off) > 6) {
+      if (!st.snapping) {
+        st.snapping = true;
+        if (lenis) lenis.scrollTo(sec.offsetTop, { duration: 0.45, lock: true, force: true,
+                                                   onComplete: () => { st.snapping = false; } });
+        else { window.scrollTo(0, sec.offsetTop); st.snapping = false; }
+      }
+      return -1;
+    }
+    st.t0 = elapsed;
+  }
   if (st.t0 === null) return -1;
   const t = elapsed - st.t0 + st.skip;
   if (t >= total) st.done = true;
@@ -2317,7 +2333,7 @@ function updateVision(p) {
   /* 近づいてくる間に「Our Vison」と1行目だけ出す(乗り換え区間を空にしないため)。
      本編はセクションが所定の位置(固定)に着いてから、1本の映像として自動再生 */
   const approach = pre >= 0.5 ? Math.min(VIS_AUTO_HEAD, elapsed - (visAutoT0 || (visAutoT0 = elapsed))) : -1;
-  const main = playT('vision', VIS_TOTAL, p > 0.002);
+  const main = playT('vision', VIS_TOTAL, p > 0.002, SECS.vision);
   const A = main >= 0 ? Math.max(main, VIS_AUTO_HEAD) : approach;
 
   /* --- 自動パートの時間割 (秒) --- */
@@ -2503,7 +2519,7 @@ function updateResults(p) {
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const t = playT('results', RES_TOTAL, p > 0.002);
+  const t = playT('results', RES_TOTAL, p > 0.002, SECS.results);
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
@@ -2793,7 +2809,7 @@ function updateDev(pRaw) {
   /* 所定の位置(固定)に着いたら1本の映像として自動再生。
      ⚠️ 以前は「スクロールが上限を決めて時間で追う」方式だったが、
         手を止めると絵も止まるため“のっそり”すると指摘があり、こちらへ切り替えた */
-  const t = playT('dev', c.playSec, pRaw > 0.002);
+  const t = playT('dev', c.playSec, pRaw > 0.002, SECS.dev);
   const p = t < 0 ? 0 : clamp01(t / c.playSec);
 
   const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
@@ -2883,7 +2899,7 @@ const caseTop = () => (isMobile ? 118 : 172);
 function updateCases(pRaw) {
   const c = params.sections.cases;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const tc = playT('cases', c.playSec, pRaw > 0.002);
+  const tc = playT('cases', c.playSec, pRaw > 0.002, SECS.cases);
   const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
@@ -3234,15 +3250,23 @@ if (window.Lenis && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
   });
 }
 
+/* ⚠️ 描画中に例外が1回でも出ると、以前は requestAnimationFrame の再予約に
+   到達できず【全アニメーションが永久に止まった】。画面が途中で固まる症状の原因。
+   次フレームの予約は try の外に置き、何があっても回り続けるようにする。 */
+let frameErrLogged = false;
 function frame(ts) {
-  if (lenis) lenis.raf(ts);
-  if (lastTs !== null) {
-    frameDt = Math.min(0.1, (ts - lastTs) / 1000);
-    if (params.running) elapsed += frameDt;
+  try {
+    if (lenis) lenis.raf(ts);
+    if (lastTs !== null) {
+      frameDt = Math.min(0.1, (ts - lastTs) / 1000);
+      if (params.running) elapsed += frameDt;
+    }
+    lastTs = ts;
+    renderFrame();
+  } catch (e) {
+    if (!frameErrLogged) { frameErrLogged = true; console.error('[anyflow] 描画中の例外:', e); }
   }
-  lastTs = ts;
-  renderFrame();
-  requestAnimationFrame(frame);
+  requestAnimationFrame(frame);   /* ← try の外。絶対に止めない */
 }
 requestAnimationFrame(frame);
 renderFrame();
