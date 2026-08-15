@@ -383,106 +383,81 @@
      921pxのステージの中で上下 148.5px ずつの均等な余白になるよう中央に置いている */
   /* ===== 実績 (カンプ 14801:31557) =====
      画像は画面左からはみ出す 749.13×430 / 右に見出しと大きい数字 / 下段に本文と小さい数字 */
-  /* ===== 実績 (カンプ 14824:22160 / 幅が伸びた時 14824:22732) =====
-     ■ 横方向のルール（カンプ2枚の実測から）
-       ・本文       … 画面左から 104px 固定
-       ・見出しと数字 … 画面右から 120px 固定
-       ・画像フレーム … 右端が画面右から 683px 固定 / 左端は画面外へ -183px
-         → 画面幅が伸びるとフレームだけが横に伸び、中の画像は cover で拡大される
-     ⚠️ カンプの2000幅フレームでは画像の左端が -16px になっており、1440幅の -183px と
-        規則が食い違う（幅も 1333 で、右端固定の計算値 1500 と合わない）。
-        右端 683px 固定・左端 -183px 固定という一貫した規則を採用した。
-     ■ 縦は 626px ぶんのかたまりを 921px のステージの上下中央に置いている */
-  .res-img-frame {
-    position: absolute;
-    left: -183px;
-    right: 683px;
-    top: 147.5px;
-    height: 480px;
-    overflow: hidden;
-  }
-  .res-img-frame img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* 縦位置は JS が毎フレーム入れる（スクロールでずらしてパララックスにする） */
-    object-position: 50% 62%;
-  }
-  .res-main {
-    position: absolute;
-    right: 120px;
-    top: 229.5px;
-    width: 483px;
-    display: flex;
-    flex-direction: column;
-    gap: 34px;
-    color: #000;
-  }
-  /* カンプ 14824:22326: Noto Sans JP Light(300) 34px / 行間1.7 / 右寄せ */
+  /* ===== 実績 =====
+     案A: カンプ 14824:22160（画像が左に横長・本文は左下）
+     案B: カンプ 14831:22066（画像が左端の縦帯・テキストは全部右に1カラム）★既定
+     切り替えは調整パネル「📈 実績 > レイアウト」→ #results に .pat-a / .pat-b が付く */
+
+  /* ---- 共通の見た目 ---- */
   .res-head { width: 100%; font-weight: 300; font-size: 34px; line-height: 1.7; text-align: right; }
-  /* カンプ 14824:22327: 1px の罫線 #D1D5DC */
+  .res-head .rh-ch { display: inline-block; white-space: pre; }
   .res-line { width: 100%; height: 1px; background: #D1D5DC; }
   .res-nums { display: flex; align-items: center; gap: 44px; width: 100%; }
   .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .res-nums .rn b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
-  /* カンプ: SF Pro Text Ultralight 80px / 行間1 / 中央 */
   .res-nums .rn span {
-    display: block;
-    width: 100%;
-    font-family: var(--font-en);
-    font-weight: 100;
-    font-size: 80px;
-    line-height: 1;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
+    display: block; width: 100%;
+    font-family: var(--font-en); font-weight: 100; font-size: 80px; line-height: 1;
+    text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
-  /* カンプ 14824:22335: Noto Sans JP Light(300) 14px / 行間1.9 / #101828 */
-  .res-text {
-    position: absolute;
-    left: 104px;
-    top: 703.5px;
-    width: 653.086px;
-    font-weight: 300;
-    font-size: 14px;
-    line-height: 1.9;
-    color: #101828;
-  }
-  /* カンプ 14824:22336: 右から120px / 385×86 */
-  .res-stats {
-    position: absolute;
-    right: 120px;
-    top: 687.5px;
-    display: flex;
-    align-items: center;
-    color: #000;
-  }
+  .res-main { display: flex; flex-direction: column; gap: 34px; color: #000; }
+  .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
+  .res-stats { display: flex; align-items: center; color: #000; }
   .res-stats .st {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 12px;
-    padding-left: 32px;
-    padding-right: 33px;
-    border-right: 1px solid #d1d5dc;
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+    gap: 12px; padding-left: 32px; padding-right: 33px; border-right: 1px solid #d1d5dc;
   }
   .res-stats .st:last-child { border-right: none; padding-right: 0; }
   .res-stats .st b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
-  /* カンプ: SF Pro Text Thin 50px / 行間1 */
   .res-stats .st span {
-    display: block;
-    width: 100%;
-    font-family: var(--font-en);
-    font-weight: 200;
-    font-size: 50px;
-    line-height: 1;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
+    display: block; width: 100%;
+    font-family: var(--font-en); font-weight: 200; font-size: 50px; line-height: 1;
+    text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
+  .res-img-frame { overflow: hidden; }
+  .res-img-frame img { display: block; }
 
+  /* ---- 案A: 画像が左に横長 ----
+     右端が画面右から683px固定 / 左端-183px → 画面幅ぶん横に伸びる */
+  #results.pat-a .res-img-frame { position: absolute; left: -183px; right: 683px; top: 147.5px; height: 480px; }
+  #results.pat-a .res-img-frame img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+  #results.pat-a .res-main  { position: absolute; right: 120px; top: 229.5px; width: 483px; }
+  #results.pat-a .res-stats { position: absolute; right: 120px; top: 687.5px; }
+  #results.pat-a .res-text  { position: absolute; left: 104px; top: 703.5px; width: 653.086px; }
+
+  /* ---- 案B: 画像が左端の縦帯 (カンプ 14831:22066) ----
+     カンプ2枚の実測: 画像の右端 = 画面中央 − 384px（1440で336 / 2000で616）。
+     画像は 941×1672 の実寸のまま置き、はみ出した分は枠でトリミングする */
+  #results.pat-b .res-img-frame {
+    position: absolute;
+    left: 0;
+    right: calc(50% + 384px);
+    top: 0;
+    bottom: 0;
+    height: auto;
+  }
+  #results.pat-b .res-img-frame img {
+    position: absolute;
+    right: 0;
+    top: -625.6px;     /* JS がパララックスでここを動かす */
+    width: 941px;
+    height: 1672px;
+    max-width: none;
+  }
+  /* テキストは全部まとめて右に1カラム。gap 59px・右寄せ */
+  #results.pat-b .res-col {
+    position: absolute;
+    right: 121px;
+    top: 183.5px;
+    width: 568.93px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 59px;
+  }
+  #results.pat-b .res-main  { position: static; width: 483px; }
+  #results.pat-b .res-stats { position: static; }
+  #results.pat-b .res-text  { position: static; width: 100%; }
 
   /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
      「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
@@ -973,14 +948,22 @@
     .val-point p { font-size: 12px; line-height: 20px; margin-top: 12px; }
 
     /* --- 実績 --- */
-    .res-img-frame { left: -24px; right: 24px; top: 84px; height: 210px; }
-    .res-main { left: 24px; right: 24px; width: auto; top: 322px; gap: 18px; }
+    /* スマホは案A/案Bとも同じ縦積みにする */
+    #results.pat-a .res-img-frame, #results.pat-b .res-img-frame {
+      position: absolute; left: -24px; right: 24px; top: 76px; bottom: auto; height: 200px;
+    }
+    #results.pat-b .res-img-frame img { position: static; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
+    #results.pat-a .res-col, #results.pat-b .res-col {
+      position: absolute; left: 24px; right: 24px; top: 304px; width: auto;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 26px;
+    }
+    #results.pat-a .res-main, #results.pat-b .res-main { position: static; width: 100%; gap: 18px; }
+    #results.pat-a .res-stats, #results.pat-b .res-stats { position: static; width: 100%; }
+    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 11px; }
     .res-head { font-size: 22px; line-height: 1.7; }
     .res-nums { gap: 16px; }
     .res-nums .rn b { font-size: 12px; line-height: 18px; }
     .res-nums .rn span { font-size: 46px; }
-    .res-text { left: 24px; top: 560px; width: 342px; font-size: 11px; }
-    .res-stats { left: 24px; right: auto; top: 656px; width: 342px; }
     .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
     .res-stats .st b { font-size: 11px; line-height: 16px; }
     .res-stats .st span { font-size: 28px; }
@@ -1373,25 +1356,24 @@
 <section class="pin" id="results">
   <div class="pin-vp">
     <div class="pin-stage">
-    <!-- カンプ 14824:22160 / 幅が伸びた時 14824:22732 -->
-    <!-- 画像はフレームでトリミングし、中身をスクロールでずらしてパララックスにする -->
+    <!-- 案A: カンプ 14824:22160 / 案B: カンプ 14831:22066 (既定) -->
     <div class="res-img-frame rv" id="resImg">
       <img src="assets/results-image.png" alt="">
     </div>
-    <div class="res-main rv" id="resMain">
-      <div class="res-head">事業の推進力を、<br>Anyflowが支えます。</div>
-      <div class="res-line"></div>
-      <div class="res-nums">
-        <div class="rn"><b>導入企業</b><span id="cntMain">200+</span></div>
-        <div class="rn"><b>連携実績</b><span id="cntSub1">500+</span></div>
+    <div class="res-col">
+      <div class="res-main rv" id="resMain">
+        <div class="res-head" id="resHead"></div>
+        <div class="res-line"></div>
+        <div class="res-nums">
+          <div class="rn"><b>導入企業</b><span id="cntMain">200+</span></div>
+          <div class="rn"><b>連携実績</b><span id="cntSub1">500+</span></div>
+        </div>
       </div>
-    </div>
-    <div class="res-bottom rv" id="resBottom">
-      <div class="res-text">テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</div>
-      <div class="res-stats">
+      <div class="res-stats rv" id="resStats">
         <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
         <div class="st"><b>最短リリース</b><span>1week</span></div>
       </div>
+      <div class="res-text rv" id="resText">テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</div>
     </div>
     </div>
   </div>
@@ -2024,12 +2006,25 @@ const DEFAULTS = {
     },
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
-    results: { lenVh: 150, countDur: 2.2, imgBlur: 24, parallax: 16 },
+    results: {
+      lenVh: 150,
+      countDur: 2.2,   // 数字がランダムから確定するまで
+      countAt: 0.45,   // 数字が回り始めるまで
+      imgBlur: 24,     // 画像が出る時のぼかし量
+      parallax: 16,    // スクロールで画像の中身がずれる量
+      typeAt: 0.15,    // タイピングが始まるまで(案B)
+      charDur: 0.055,  // 1文字あたりの秒数(案B)
+      softDur: 1.6,    // まわりの要素がブラーから出そろうまで
+      imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
+    },
     dev:     { lenVh: 220, swapBlur: 14 },   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 200, depth: 1, inBlur: 20, gap: 44, playSec: 5.4 },
   },
-  patterns: { dev: 'A', cases: 'A', mock: 'B' },   // セクション演出の採用案
+  patterns: {
+    results: 'B',   // 実績のレイアウト A=横長画像 / B=左端の縦帯(カンプ 14831:22066)
+    dev: 'A', cases: 'A', mock: 'B',
+  },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
    上げないと、利用者のブラウザに残った旧値が新しいデフォルトを上書きして
@@ -2080,7 +2075,8 @@ const DEFAULTS = {
    / v39→v40: 消えていた .dev-bg / .dev-bg2 を復活 (真っ白の原因) ＋ 開発者体験を上下中央そろえ) */
 /* v40→v41: 実績をカンプ 14824:22160 へ (見出し変更・罫線追加・数字80px・画像はフレームでトリミング) */
 /* v41→v42: 軌道の拡大を移動の“途中で”じわじわに / 2つの価値の位置をパネルで動かせるように */
-const STORAGE_KEY = 'anyflow-embed-anim-v42';
+/* v42→v43: 実績に案B(カンプ 14831:22066)を追加して既定に。案Aは「テキスト→画像」の順へ */
+const STORAGE_KEY = 'anyflow-embed-anim-v43';
 
 let params = load();
 function load() {
@@ -2840,11 +2836,31 @@ const resEls = {
   img: document.getElementById('resImg'),
   imgInner: document.querySelector('#resImg img'),
   main: document.getElementById('resMain'),
-  bottom: document.getElementById('resBottom'),
+  head: document.getElementById('resHead'),
+  stats: document.getElementById('resStats'),
+  text: document.getElementById('resText'),
   cntMain: document.getElementById('cntMain'),
   cntSub1: document.getElementById('cntSub1'),
   cntSub2: document.getElementById('cntSub2'),
 };
+/* 見出しは1文字ずつの箱に分けて、キービジュアルと同じようにタイピングさせる */
+const RES_HEAD_LINES = ['事業の推進力を、', 'Anyflowが支えます。'];
+const resHeadChars = (() => {
+  const root = resEls.head;
+  root.innerHTML = '';
+  const out = [];
+  RES_HEAD_LINES.forEach((line, li) => {
+    if (li) root.appendChild(document.createElement('br'));
+    for (const ch of line) {
+      const sp = document.createElement('span');
+      sp.className = 'rh-ch';
+      sp.textContent = ch;
+      root.appendChild(sp);
+      out.push(sp);
+    }
+  });
+  return out;
+})();
 let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
@@ -2872,39 +2888,67 @@ const RES_TOTAL = 4.2;
       max で持つので巻き戻りもしない (リプレイなし) */
 function updateResults(p) {
   const c = params.sections.results;
-  /* 前のセクションが抜けてから固定が始まるまでの1画面(乗り換え区間)も物語に使う。
-     ここを空けておくと「何回もスクロールしないと進まない」に見えるため、
-     助走のうちに画像が出はじめるようにしてある */
-  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
-  const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
-  if (resT0 === null && q > 0.002) resT0 = elapsed;
-  /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results);
+  const patB = params.patterns.results !== 'A';
+  SECS.results.classList.toggle('pat-b', patB);
+  SECS.results.classList.toggle('pat-a', !patB);
 
-  /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
-  /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
-     ④見出しが出る ⑤導入企業200+ がランダム→確定 ⑥下段の 500+ / 99.9% も同様 */
-  /* パララックス: セクションが画面を通り過ぎる間に、画像の中身だけをゆっくりずらす。
-     枠は動かさず object-position を動かすので、レイアウトはまったく崩れない */
-  if (resEls.imgInner) {
-    const r = SECS.results.getBoundingClientRect();
-    const q = clamp01((innerHeight - r.top) / (innerHeight + r.height));
-    /* 62% がカンプの切り出し位置。そこを中心にスクロールで上下へずらす */
+  /* 【2026-08-15】「ビューポートに入った段階で始めてよい（中央でなくてよい）」指定。
+     ピンで固定して止めるのはやめ、セクションが画面に入った時刻を起点に時間で再生する */
+  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
+  if (resT0 === null && (pre > 0.12 || p > 0.002)) resT0 = elapsed;
+  const t = resT0 === null ? -1 : elapsed - resT0;
+
+  /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
+  const r = SECS.results.getBoundingClientRect();
+  const q = clamp01((innerHeight - r.top) / (innerHeight + r.height));
+  if (patB) {
+    /* 案B は実寸の画像を縦にずらす */
+    resEls.imgInner.style.objectPosition = '';
+    resEls.imgInner.style.top = (-625.6 + (q - 0.5) * c.parallax * 3).toFixed(2) + 'px';
+  } else {
+    resEls.imgInner.style.top = '';
     resEls.imgInner.style.objectPosition = `50% ${(62 + (q - 0.5) * c.parallax).toFixed(2)}%`;
   }
-  const kImg = easeOutQ(clamp01((t - 0.15) / 1.4));
-  resEls.img.style.opacity = clamp01(t / 0.8).toFixed(3);
-  resEls.img.style.filter = kImg >= 1 ? '' : `blur(${((1 - kImg) * c.imgBlur).toFixed(2)}px)`;
 
-  /* 【2026-08-15】テキストは分けずに一括でブラー出現 → そのままランダム数字が回る */
-  const kTx = easeOutQ(clamp01((t - 1.2) / T_IN));
-  rv(resEls.main,   kTx, 8, 14);
-  rv(resEls.bottom, kTx, 8, 12);
+  if (t < 0) {
+    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { el.style.opacity = 0; });
+    resHeadChars.forEach(sp => { sp.style.opacity = 0; });
+    return;
+  }
 
-  /* 3つの数字も同時に回しはじめる (1week だけカウント演出なし: 絵コンテ準拠) */
-  setCounter(resEls.cntMain, '200', '+', t - 1.5, c.countDur);
-  setCounter(resEls.cntSub1, '500', '+', t - 1.5, c.countDur);
-  setCounter(resEls.cntSub2, '99.9', '%', t - 1.5, c.countDur);
+  if (patB) {
+    /* ---- 案B: 見出しをタイピング。始まると同時に、他は全部ブラーでゆったり出る ---- */
+    const n = resHeadChars.length;
+    resHeadChars.forEach((sp, i) => {
+      sp.style.opacity = (t >= c.typeAt + i * c.charDur) ? 1 : 0;
+    });
+    const soft = easeOutQ(clamp01((t - c.typeAt) / c.softDur));   // ゆったり出す
+    rv(resEls.main,  1, 0);                     // 箱は出したまま(中の文字で見せる)
+    resEls.main.style.filter = '';
+    resEls.main.querySelector('.res-line').style.opacity = soft.toFixed(3);
+    resEls.main.querySelector('.res-nums').style.opacity = soft.toFixed(3);
+    resEls.main.querySelector('.res-nums').style.filter = soft >= 1 ? '' : `blur(${((1 - soft) * 10).toFixed(2)}px)`;
+    rv(resEls.stats, soft, 10);
+    rv(resEls.text,  soft, 8);
+    /* タイピング開始と同時に左の画像もブラーで出る */
+    rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
+  } else {
+    /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
+    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
+    const kTx = easeOutQ(clamp01((t - 0.1) / c.softDur));
+    rv(resEls.main,  kTx, 8, 14);
+    resEls.main.querySelector('.res-line').style.opacity = 1;
+    resEls.main.querySelector('.res-nums').style.opacity = 1;
+    resEls.main.querySelector('.res-nums').style.filter = '';
+    rv(resEls.stats, kTx, 8, 12);
+    rv(resEls.text,  kTx, 8, 12);
+    rv(resEls.img,   easeOutQ(clamp01((t - c.imgAt) / (c.softDur * 1.4))), c.imgBlur);
+  }
+
+  /* 3つの数字は同時にランダム → 確定 (1week だけ演出なし: 絵コンテ準拠) */
+  setCounter(resEls.cntMain, '200', '+', t - c.countAt, c.countDur);
+  setCounter(resEls.cntSub1, '500', '+', t - c.countAt, c.countDur);
+  setCounter(resEls.cntSub2, '99.9', '%', t - c.countAt, c.countDur);
 }
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
@@ -4168,7 +4212,13 @@ function buildPanel() {
   const catRes = category('📈 実績', false);
   sub(catRes, 'スクロール尺');
   rows.push(slider('尺', 110, 600, 10, () => sv().results.lenVh, v => { sv().results.lenVh = v; fit(); }, v => v + 'vh',
-    '大きいほど、再生が終わってから次へ抜けるまでのスクロールが長くなる。'));
+    '大きいほど、このセクションに留まるスクロールが長くなる。'));
+  sub(catRes, 'レイアウト');
+  note(params.patterns.results === 'A'
+    ? '案A: 画像が左に横長。本文は左下。先にテキスト群 → あとから画像がブラーで出ます。'
+    : '案B: 画像が左端の縦帯。テキストは全部右に1カラム。見出しがタイピングし、同時に他がブラーで出ます。');
+  pillRow([{ key: 'B', name: '案B 縦帯（カンプ）' }, { key: 'A', name: '案A 横長' }],
+    it => params.patterns.results === it.key, it => params.patterns.results = it.key);
   sub(catRes, '演出');
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
     '大きいほど、画像がぼんやりした状態から現れる。'));
@@ -4176,6 +4226,16 @@ function buildPanel() {
     '数字がランダムから確定するまでの時間。大きいほど長く回る。'));
   rows.push(slider('パララックス', 0, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
     'スクロールに合わせて画像の中身だけがずれる量。大きいほど奥行きが出る。0=なし。'));
+  rows.push(slider('タイピング開始', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + 's',
+    '案B。大きいほど、見出しを打ち始めるのが遅くなる。'));
+  rows.push(slider('1文字の速さ', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's',
+    '案B。小さいほど速く打つ。'));
+  rows.push(slider('まわりが出そろうまで', 0.4, 4, 0.1, () => sv().results.softDur, v => sv().results.softDur = v, v => v.toFixed(1) + 's',
+    '罫線・数字・本文がブラーから現れるのにかける時間。大きいほどゆったり。'));
+  rows.push(slider('数字が回り始める', 0, 2, 0.05, () => sv().results.countAt, v => sv().results.countAt = v, v => v.toFixed(2) + 's',
+    '大きいほど、ランダム数字が始まるのが遅くなる。'));
+  rows.push(slider('画像が出るまで(案A)', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + 's',
+    '案Aで、テキスト群のあと何秒で画像がブラーから出るか。'));
 
   /* ========== 🖥 開発者体験 ========== */
   const catDev = category('🖥 開発者体験', false);
