@@ -138,9 +138,9 @@
   .orbit-light {
     fill: none;
     stroke: #fff;
-    stroke-width: 3.4;
+    stroke-width: 2.5;   /* JS で params.orbitLightW を毎フレーム入れる */
     stroke-linecap: round;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,.95)) drop-shadow(0 0 14px rgba(150,225,255,.7));
+    filter: drop-shadow(0 0 4px rgba(255,255,255,.95)) drop-shadow(0 0 11px rgba(150,225,255,.7));
     opacity: 0;
     pointer-events: none;
   }
@@ -1938,6 +1938,7 @@ const DEFAULTS = {
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   orbitLight: 2,       // 軌道を流れるライト (ORBIT_LIGHTS)
+  orbitLightW: 2.5,    // ライトの線の太さ(px)
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
     gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
@@ -2025,8 +2026,9 @@ const DEFAULTS = {
               ロゴティッカーを1枚ずつに切り出して等間隔化 (marquee.gap 追加)
    / v32→v33: 開発者体験をカンプ 14791:29575 の新レイアウトへ (DEV_P を総入れ替え)
    / v33→v34: 実績をカンプ 14801:31557 へ / スクロールリプレイ復活 / 軌道の緩急とライト追加
-              / 惑星の回転に向き・傾き・ランダムを追加 / 各セクションの尺を短縮) */
-const STORAGE_KEY = 'anyflow-embed-anim-v34';
+              / 惑星の回転に向き・傾き・ランダムを追加 / 各セクションの尺を短縮
+   / v34→v35: 軌道ライトを細く(orbitLightW)＋グラデの継ぎ目がライトと一緒に動くように) */
+const STORAGE_KEY = 'anyflow-embed-anim-v35';
 
 let params = load();
 function load() {
@@ -2046,6 +2048,7 @@ function load() {
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.orbitLight = merged.orbitLight || DEFAULTS.orbitLight;
+  merged.orbitLightW = merged.orbitLightW || DEFAULTS.orbitLightW;
   merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.sections = {
         common:  { ...DEFAULTS.sections.common,  ...((s.sections && s.sections.common) || {}) },
@@ -2109,14 +2112,77 @@ function ellipseLen(rx, ry) {
   const h = Math.pow(rx - ry, 2) / Math.pow(rx + ry, 2);
   return Math.PI * (rx + ry) * (1 + (3 * h) / (10 + Math.sqrt(4 - 3 * h)));
 }
+/* 楕円は歪んでいるので「1周の何%進んだか(弧長)」と「媒介変数の角度」は比例しない。
+   ここを比例で済ませると、光の位置とグラデの継ぎ目が最大20°近くズレる。
+   弧長の対応表を作って正しく引き当てる */
+function arcTable(rx, ry, n) {
+  const tbl = [0];
+  let acc = 0, px = rx, py = 0;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n * Math.PI * 2;
+    const x = rx * Math.cos(t), y = ry * Math.sin(t);
+    acc += Math.hypot(x - px, y - py); px = x; py = y;
+    tbl.push(acc);
+  }
+  return tbl;
+}
+function angleAtArc(tbl, s) {
+  const n = tbl.length - 1, L = tbl[n];
+  s = ((s % L) + L) % L;
+  let lo = 0, hi = n;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (tbl[m] <= s) lo = m; else hi = m; }
+  const f = (s - tbl[lo]) / Math.max(1e-6, tbl[hi] - tbl[lo]);
+  return (lo + f) / n * Math.PI * 2;
+}
+/* グラデの継ぎ目(ピンク⇄水色の境目)を、指定した角度の点にぴったり合わせる。
+   軸を「中心→その点」に対して直角に取ると、その点がちょうど50%＝継ぎ目になる */
+function setGradSeam(grads, cx, cy, rx, ry, t) {
+  let dx = -ry * Math.sin(t), dy = rx * Math.cos(t);
+  const len = Math.hypot(dx, dy) || 1, R = Math.max(rx, ry);
+  dx = dx / len * R; dy = dy / len * R;
+  for (const g of grads) {
+    if (!g) continue;
+    g.setAttribute('x1', (cx - dx).toFixed(2)); g.setAttribute('y1', (cy - dy).toFixed(2));
+    g.setAttribute('x2', (cx + dx).toFixed(2)); g.setAttribute('y2', (cy + dy).toFixed(2));
+  }
+}
+
+/* 軌道1本ぶん = 光の要素(奥/手前) と グラデ(奥/手前) の組 */
+const LIGHT_GROUPS = [
+  { l: ['lgtOuterB', 'lgtOuterF'], g: ['gOuterB', 'gOuterF'] },
+  { l: ['lgtInnerB', 'lgtInnerF'], g: ['gInnerB', 'gInnerF'] },
+  { l: ['pfLgt0'], g: ['pfG0'] },
+  { l: ['pfLgt1'], g: ['pfG1'] },
+].map(x => ({
+  lights: x.l.map(id => document.getElementById(id)).filter(Boolean),
+  grads:  x.g.map(id => document.getElementById(id)).filter(Boolean),
+}));
+
 function updateOrbitLights() {
   const L = ORBIT_LIGHTS[(params.orbitLight || 1) - 1];
-  for (const el of lightEls) {
-    if (L.id === 'off') { el.style.opacity = 0; continue; }
-    const len = ellipseLen(+el.getAttribute('rx'), +el.getAttribute('ry'));
-    el.style.opacity = L.op;
-    el.setAttribute('stroke-dasharray', `${(len * L.dash).toFixed(2)} ${(len * L.gap).toFixed(2)}`);
-    el.setAttribute('stroke-dashoffset', (-((elapsed / L.lap) % 1) * len * params.direction).toFixed(2));
+  const w = params.orbitLightW;
+  for (const grp of LIGHT_GROUPS) {
+    const head = grp.lights[0];
+    if (!head) continue;
+    const cx = +head.getAttribute('cx'), cy = +head.getAttribute('cy');
+    const rx = +head.getAttribute('rx'), ry = +head.getAttribute('ry');
+    if (L.id === 'off') {
+      for (const el of grp.lights) el.style.opacity = 0;
+      /* 光を切ったら、グラデの継ぎ目は元の位置(上下の軸)に戻す */
+      setGradSeam(grp.grads, cx, cy, rx, ry, 0);
+      continue;
+    }
+    const len = ellipseLen(rx, ry);
+    const s = ((elapsed / L.lap) % 1) * len * params.direction;   /* 光の先頭の弧長 */
+    for (const el of grp.lights) {
+      el.style.opacity = L.op;
+      el.setAttribute('stroke-width', w);
+      el.setAttribute('stroke-dasharray', `${(len * L.dash).toFixed(2)} ${(len * L.gap).toFixed(2)}`);
+      el.setAttribute('stroke-dashoffset', (-s).toFixed(2));
+    }
+    /* 光の真ん中にグラデの継ぎ目を合わせて、一緒に動かす */
+    const t = angleAtArc(arcTable(rx, ry, 96), s + len * L.dash / 2);
+    setGradSeam(grp.grads, cx, cy, rx, ry, t);
   }
 }
 
@@ -2191,10 +2257,7 @@ function updateOrbitSvg(geoms) {
     els.clip.setAttribute('width', (g.rx + 24) * 2);
     els.clip.setAttribute('height', g.ry + 26);
     els.clip.setAttribute('transform', `translate(${g.cx} ${g.cy}) rotate(${g.rot})`);
-    for (const gr of els.grads) {
-      gr.setAttribute('x1', g.cx); gr.setAttribute('x2', g.cx);
-      gr.setAttribute('y1', g.cy - g.ry); gr.setAttribute('y2', g.cy + g.ry);
-    }
+    /* グラデの向きは updateOrbitLights() が光に合わせて毎フレーム決めるので、ここでは触らない */
   }
 }
 
@@ -3933,6 +3996,7 @@ function buildPanel() {
   pillRow(ORBIT_EASES, (_, i) => params.orbitEase === i + 1, (_, i) => params.orbitEase = i + 1);
   sub(catKv, '軌道を流れるライト');
   pillRow(ORBIT_LIGHTS, (_, i) => params.orbitLight === i + 1, (_, i) => params.orbitLight = i + 1);
+  rows.push(slider('ライトの太さ', 1, 6, 0.1, () => params.orbitLightW, v => params.orbitLightW = v, v => v.toFixed(1) + 'px'));
   sub(catKv, 'ドットの周回');
   rows.push(slider('1周の秒数', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + 's'));
   rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2)));
