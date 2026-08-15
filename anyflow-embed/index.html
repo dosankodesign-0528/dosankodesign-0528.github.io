@@ -1943,7 +1943,7 @@ const DEFAULTS = {
     inner: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
-  visReveal: 1,        // ビジョンのキーメッセージの出方 (VIS_REVEALS)
+  visReveal: 2,        // ビジョンのキーメッセージの出方 (VIS_REVEALS)。2=その場でブラー出現
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
     gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
@@ -1981,7 +1981,7 @@ const DEFAULTS = {
       spinHold: 1.9,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
       spinBrake: 1.2,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
-      charLag: 0.5,      // 1文字ずつの遅れ (0=行まるごと)
+      charLag: 0,        // 1文字ずつの遅れ (0=行まるごと ← 2026-08-15 指定)
       driftAmt: 130,     // 分かれたあと、慣性でさらに流れていく量(px・片側)
       vanishDur: 0.85,   // 流れながら消えきるまでの秒数
       vanishAt: 0.15,    // 分かれ始めてから消え出すまで (splitDur に対する割合)
@@ -2039,8 +2039,9 @@ const DEFAULTS = {
               / 軌道の出現と移動を同時に(moveLead) / 待ちを全体的に短縮
    / v36→v37: 軌道ライト廃止 / 惑星デザインのキーを A1..C3 に振り直し / ゆらぎ既定=クロス
               / パネルを階層化＋全項目に補足 / 実績を中央寄せ＋画像レスポンシブ＋パララックス
-   / v37→v38: 軌道グラデの白をカンプ通りに戻した) */
-const STORAGE_KEY = 'anyflow-embed-anim-v38';
+   / v37→v38: 軌道グラデの白をカンプ通りに戻した
+   / v38→v39: キーメッセージを行ごと×ブラーのみに / スライダーの既定値がツマミ中央に来るように) */
+const STORAGE_KEY = 'anyflow-embed-anim-v39';
 
 let params = load();
 function load() {
@@ -3788,7 +3789,22 @@ fit();
 /* ================= 調整パネル UI ================= */
 const body = document.getElementById('panelBody');
 
+/* 既定値をそのまま読むためのヘルパー。
+   スライダーの get は params を参照する閉包なので、一瞬だけ params を初期値に差し替えて呼ぶ */
+function defaultOf(get) {
+  const keep = params;
+  try { params = DEFAULTS; return get(); }
+  catch (e) { return null; }
+  finally { params = keep; }
+}
 function slider(label, min, max, step, get, set, fmt, hint) {
+  /* ⚠️ 既定値が左端だと、そこから下げられない。既定がツマミの真ん中に来るよう上限を取り直す
+     (2026-08-15 指定)。既定が最小と同じもの(0など)は中央に置けないのでそのまま */
+  const d = defaultOf(get);
+  if (typeof d === 'number' && isFinite(d) && d > min) {
+    const wanted = 2 * d - min;
+    max = Math.round(wanted / step) * step;
+  }
   const row = document.createElement('div');
   row.className = 'row';
   const lab = document.createElement('label');
@@ -4023,7 +4039,7 @@ function buildPanel() {
   /* ========== 📖 ビジョン ========== */
   const catVis = category('📖 ビジョン', false);
   sub(catVis, 'スクロール尺');
-  rows.push(slider('尺', 150, 800, 10, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh',
+  rows.push(slider('尺', 110, 800, 10, () => sv().vision.lenVh, v => { sv().vision.lenVh = v; fit(); }, v => v + 'vh',
     '大きいほど、再生が終わってから次へ抜けるまでのスクロールが長くなる。短いと『終わってすぐ次』。'));
   sub(catVis, '文字（自動再生）');
   rows.push(slider('OurVisonが出る', 0, 3, 0.05, () => sv().vision.labelAt, v => sv().vision.labelAt = v, v => v.toFixed(2) + 's',
@@ -4081,7 +4097,7 @@ function buildPanel() {
   /* ========== 📈 実績 ========== */
   const catRes = category('📈 実績', false);
   sub(catRes, 'スクロール尺');
-  rows.push(slider('尺', 120, 600, 10, () => sv().results.lenVh, v => { sv().results.lenVh = v; fit(); }, v => v + 'vh',
+  rows.push(slider('尺', 110, 600, 10, () => sv().results.lenVh, v => { sv().results.lenVh = v; fit(); }, v => v + 'vh',
     '大きいほど、再生が終わってから次へ抜けるまでのスクロールが長くなる。'));
   sub(catRes, '演出');
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
@@ -4094,7 +4110,7 @@ function buildPanel() {
   /* ========== 🖥 開発者体験 ========== */
   const catDev = category('🖥 開発者体験', false);
   sub(catDev, 'スクロール尺');
-  rows.push(slider('尺', 200, 1600, 20, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh',
+  rows.push(slider('尺', 110, 1600, 10, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh',
     '大きいほど、章から章へ送るのに必要なスクロール量が増える。小さいと軽いひと振りで次の章へ。'));
   sub(catDev, '演出');
   rows.push(slider('切替ブラー量', 0, 24, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
@@ -4103,7 +4119,7 @@ function buildPanel() {
   /* ========== 🗂 導入事例 ========== */
   const catCase = category('🗂 導入事例', false);
   sub(catCase, 'スクロール尺');
-  rows.push(slider('尺', 150, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh',
+  rows.push(slider('尺', 110, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh',
     '大きいほど、再生が終わってから次へ抜けるまでのスクロールが長くなる。'));
   rows.push(slider('再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
     'カードが重なりきるまでの時間。小さいほどキビキビ動く。'));
