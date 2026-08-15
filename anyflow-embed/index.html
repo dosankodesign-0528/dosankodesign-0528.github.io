@@ -1939,6 +1939,7 @@ const DEFAULTS = {
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   orbitLight: 2,       // 軌道を流れるライト (ORBIT_LIGHTS)
   orbitLightW: 2.5,    // ライトの線の太さ(px)
+  visReveal: 1,        // ビジョンのキーメッセージの出方 (VIS_REVEALS)
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
     gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
@@ -1962,22 +1963,24 @@ const DEFAULTS = {
       line1At: 0.45,     // 1行目 (Our Vison に続けてすぐ)
       line2Gap: 0.55,    // 2行目までの間 (1行目が出きる前に始まってよい＝絵コンテ指定)
       revealDur: 0.9,    // 1行の出現時間
-      splitGap: 0.25,    // 2行そろってから上下に分かれ始めるまで
+      splitGap: 0,       // 2行そろってから上下に分かれ始めるまで (0=止まらずそのまま開く)
       splitDur: 0.9,     // 上下に分かれる時間
       splitAmt: 92,      // 上下に開く量(px・片側)
       miniGap: 0.45,     // 分かれ始めてから軌道が出るまで (splitDur に対する割合)
       miniDur: 1.1,      // 軌道グラフィックの出現時間
+      moveLead: 0,       // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
       moveDur: 2.0,      // ワンスクロールで左下へ移動する時間(秒)
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
       miniScale: 0.26,   // ミニ楕円の縮小率
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       spinSpeed: 1,      // ドット周回速度 (×KVの角速度)
-      spinHold: 2.6,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
+      spinHold: 1.9,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
       spinBrake: 1.2,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
-      charLag: 0,        // 1文字ずつの遅れ (0=行まるごと ← 2026-08-15 指定でこちら)
+      charLag: 0.5,      // 1文字ずつの遅れ (0=行まるごと)
       driftAmt: 130,     // 分かれたあと、慣性でさらに流れていく量(px・片側)
-      vanishDur: 1.3,    // 流れながら消えきるまでの秒数
+      vanishDur: 0.85,   // 流れながら消えきるまでの秒数
+      vanishAt: 0.15,    // 分かれ始めてから消え出すまで (splitDur に対する割合)
     },
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
@@ -2027,8 +2030,10 @@ const DEFAULTS = {
    / v32→v33: 開発者体験をカンプ 14791:29575 の新レイアウトへ (DEV_P を総入れ替え)
    / v33→v34: 実績をカンプ 14801:31557 へ / スクロールリプレイ復活 / 軌道の緩急とライト追加
               / 惑星の回転に向き・傾き・ランダムを追加 / 各セクションの尺を短縮
-   / v34→v35: 軌道ライトを細く(orbitLightW)＋グラデの継ぎ目がライトと一緒に動くように) */
-const STORAGE_KEY = 'anyflow-embed-anim-v35';
+   / v34→v35: 軌道ライトを細く(orbitLightW)＋グラデの継ぎ目がライトと一緒に動くように
+   / v35→v36: 通り過ぎた後に頭へ引き戻されるループを修正 / キーメッセージの出方を2種類に
+              / 軌道の出現と移動を同時に(moveLead) / 待ちを全体的に短縮) */
+const STORAGE_KEY = 'anyflow-embed-anim-v36';
 
 let params = load();
 function load() {
@@ -2049,6 +2054,7 @@ function load() {
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.orbitLight = merged.orbitLight || DEFAULTS.orbitLight;
   merged.orbitLightW = merged.orbitLightW || DEFAULTS.orbitLightW;
+  merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
       merged.sections = {
         common:  { ...DEFAULTS.sections.common,  ...((s.sections && s.sections.common) || {}) },
@@ -2412,8 +2418,9 @@ let scrollLocked = false, lockPush = 0;
 function chapterP(key, chapters, pScroll, canStart, sec) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false, ch: 0 });
   if (!st.started) {
-    if (!canStart) return 0;
+    if (!canStart && !st.snapTried) return 0;
     const off = sec ? sec.getBoundingClientRect().top : 0;
+    if (Math.abs(off) > innerHeight) return 0;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
     if (Math.abs(off) > 6) {
       /* ⚠️ 目印に elapsed をそのまま入れると elapsed=0 のとき falsy になって毎フレーム
          寄せ直してしまう。null かどうかで判定すること */
@@ -2441,14 +2448,22 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
   return ch.from + (ch.to - ch.from) * k;
 }
 
+/* 【2026-08-15 バグ修正】再生を始めてよいか。
+   ⚠️ 以前は「進捗 > 0.002」だけだった。スクロールで通り過ぎたあとリプレイで時計が巻き戻ると、
+      進捗が 1 に近いままなのに「開始できる」と判定され、位置合わせの scrollTo が
+      ユーザーをセクションの頭へ引き戻していた（＝2つの価値の後にまたビジョンへ戻るループ）。
+      固定区間の頭の方にいる時だけ開始する。 */
+function canPlay(p) { return p > 0.0005 && p < 0.35; }
+
 /* canStart になったら再生開始。戻り値は再生位置(秒)。-1 = まだ始まっていない。
    ⚠️ 勢いよくスクロールすると、セクションが行き過ぎた位置でロックされて
       「そこで固まった」ように見えていた。所定の位置(上端0)から6px以上ずれていたら、
       まずそこへ寄せてから再生を始める。 */
 function playT(key, total, canStart, sec) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
-  if (!st.done && st.t0 === null && canStart) {
+  if (!st.done && st.t0 === null && (canStart || st.snapTried)) {
     const off = sec ? sec.getBoundingClientRect().top : 0;
+    if (Math.abs(off) > innerHeight) return -1;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
     if (Math.abs(off) > 6) {
       /* ⚠️ 寄せている途中でユーザーが操作すると onComplete が来ないことがある。
          1.2秒経っても着かなければ諦めてその場で再生を始める（無限に止まらないため） */
@@ -2645,6 +2660,11 @@ let visT = -1;           // 実際に進んだ再生位置(秒)。時間とス�
    + そこから Platform〜2つの価値のチェーン(約3.5) をぜんぶ含む長さ。
    ⚠️ 短いとドットが回りっぱなしになったり、文字が出切らない（両方踏んだ） */
 /* 尺は updateVision 内で時間割から自動計算する (visTotal) */
+/* キーメッセージと見出しの出方 (調整パネルで切り替え) */
+const VIS_REVEALS = [
+  { id: 'rise', name: '下から立ち上がる' },
+  { id: 'blur', name: 'その場でブラー出現' },   /* 最終位置のまま、ブラーだけで出る */
+];
 const VIS_AUTO_HEAD = 1.35;  // 近づいてくる間に出す分 (「Our Vison」と1行目)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
@@ -2674,7 +2694,9 @@ function updateVision(p) {
   const l2At = c.line1At + c.line2Gap;
   const splitAt = l2At + c.revealDur + c.splitGap;
   const miniAt = splitAt + c.splitDur * c.miniGap;   /* 軌道がブラーで出る = ドットも回りはじめる */
-  const autoEnd = miniAt + c.miniDur;                /* ここから左下へ移動 */
+  /* 【2026-08-15】以前は「軌道が出きってから左下へ移動」だったので待ちが長かった。
+     いま は 出はじめ(moveLead 割)で もう動き出す ＝ 濃くなりながら同時に左下へ流れる */
+  const autoEnd = miniAt + c.miniDur * c.moveLead;
   const brake = Math.max(0.3, c.spinBrake);
   /* ドットの時計 S は miniAt 起点。移動が終わってからさらに spinHold 秒たっぷり回してから減速 */
   const brakeStart = (autoEnd - miniAt) + c.moveDur + c.spinHold;
@@ -2683,7 +2705,7 @@ function updateVision(p) {
 
   if (pre >= 0.5 && visAutoT0 === null) visAutoT0 = elapsed;
   const approach = visAutoT0 === null ? -1 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
-  const main = playT('vision', visTotal, p > 0.002, SECS.vision);
+  const main = playT('vision', visTotal, canPlay(p), SECS.vision);
   /* ⚠️ 以前は本編が始まった瞬間に A が 0 → VIS_AUTO_HEAD(1.35秒) へ飛んでいて、
      助走を見ていない時（勢いよくスクロールした時）に1行目が一瞬で出てカクついた。
      助走で進んだ分と本編の大きい方を採ると、どちらの入り方でも時間が飛ばない */
@@ -2694,18 +2716,22 @@ function updateVision(p) {
   /* --- 自動パートが終わったら、続けて軌道が左下へ (同じ時計で動かす) --- */
   const mvT = A < 0 ? -1 : A - autoEnd;
   const S = A < 0 ? -1 : A - miniAt;   /* ドットの時計 */
-  const mv = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
+  /* ⚠️ easeIO は出だしが遅いので、濃くなり終わってからやっと動き出すように見えていた。
+     easeSlick はすっと動き出して最後だけ静かに止まるので「濃くなりながら同時に移動」になる */
+  const mv = mvT < 0 ? 0 : easeSlick(clamp01(mvT / c.moveDur));
   const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
   /* 【2026-08-15】上下に分かれたあと、その場で静止せずに
      「慣性が効いたようにふわーっと」流れ続けながら消える。
      spT = 分かれ始めてからの秒数。drift は指数で減速するので、離れるほど遅くなる */
   const spT = A < 0 ? -1 : A - splitAt;
   const drift = spT <= 0 ? 0 : (1 - Math.exp(-spT / 1.15)) * c.driftAmt;
-  const vanish = spT <= 0 ? 0 : easeIO(clamp01((spT - c.splitDur * 0.5) / c.vanishDur));
+  const vanish = spT <= 0 ? 0 : easeIO(clamp01((spT - c.splitDur * c.vanishAt) / c.vanishDur));
 
   /* 上下に分かれる進み具合。Our Vison はこれと入れ替わりで消える */
   const spK = easeOutQ(clamp01((A - splitAt) / c.splitDur));
-  rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - spK) * (1 - ex), B, 10);
+  const blurOnlyLbl = VIS_REVEALS[(params.visReveal || 1) - 1].id === 'blur';
+  rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - spK) * (1 - ex),
+     blurOnlyLbl ? 12 : B, blurOnlyLbl ? 0 : 10);
 
   /* 見出し2行: 中央で下からトリミング出現 → その場で上下に分かれる → ブラーで消える */
   [[visEls.l1, l1At, -1, 0], [visEls.l2, l2At, 1, 1]].forEach(([el, at, dir, idx]) => {
@@ -2720,19 +2746,25 @@ function updateVision(p) {
     const perChar = lag > 0 && n > 1;
 
     /* 行まるごと出す場合は内側の箱を動かす。1文字ずつの場合は下の forEach で文字を動かす */
+    /* 出方は2種類。rise=下から立ち上がる / blur=最終位置のままブラーだけで出る */
+    const blurOnly = VIS_REVEALS[(params.visReveal || 1) - 1].id === 'blur';
     if (perChar) {
-      inner.style.transform = ''; inner.style.filter = '';
+      inner.style.transform = ''; inner.style.filter = ''; inner.style.opacity = '';
       const spanIn = Math.max(0.2, 1 - lag);
       chars.forEach((sp, ci) => {
         const ki = easeOutQ(clamp01((raw0 - (ci / (n - 1)) * lag) / spanIn));
-        sp.style.transform = `translateY(${((1 - ki) * 108).toFixed(2)}%)`;
-        sp.style.filter = (ki > 0 && ki < 1) ? `blur(${((1 - ki) * 5).toFixed(2)}px)` : '';
+        sp.style.transform = blurOnly ? '' : `translateY(${((1 - ki) * 108).toFixed(2)}%)`;
+        sp.style.opacity = blurOnly ? ki.toFixed(3) : '';
+        sp.style.filter = (ki > 0 && ki < 1)
+          ? `blur(${((1 - ki) * (blurOnly ? 10 : 5)).toFixed(2)}px)` : '';
       });
     } else {
-      inner.style.transform = `translateY(${((1 - k) * 108).toFixed(2)}%)`;
-      inner.style.filter = (k > 0 && k < 1) ? `blur(${((1 - k) * 5).toFixed(2)}px)` : '';
-      if (chars[0] && chars[0].style.transform) {
-        chars.forEach(sp => { sp.style.transform = ''; sp.style.filter = ''; });
+      inner.style.transform = blurOnly ? '' : `translateY(${((1 - k) * 108).toFixed(2)}%)`;
+      inner.style.opacity = blurOnly ? k.toFixed(3) : '';
+      inner.style.filter = (k > 0 && k < 1)
+        ? `blur(${((1 - k) * (blurOnly ? 10 : 5)).toFixed(2)}px)` : '';
+      if (chars[0] && (chars[0].style.transform || chars[0].style.opacity)) {
+        chars.forEach(sp => { sp.style.transform = ''; sp.style.filter = ''; sp.style.opacity = ''; });
       }
     }
     const gone = Math.max(vanish, ex);
@@ -2828,9 +2860,9 @@ function updateVision(p) {
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
-  rv(visEls.valHead, easeOutQ(clamp01((C - 0.70) / T_IN)), B, 10);
-  rv(visEls.valP1,   easeOutQ(clamp01((C - 1.60) / T_IN)), B, 12);
-  rv(visEls.valP2,   easeOutQ(clamp01((C - 2.30) / T_IN)), B, 12);
+  rv(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10);
+  rv(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12);
+  rv(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = S < 0 ? -99 : S - (brakeStart + brake);
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - 0.1 - i * 0.14) / T_IN)), B));
@@ -2879,7 +2911,7 @@ function updateResults(p) {
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const t = playT('results', RES_TOTAL, p > 0.002, SECS.results);
+  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results);
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
@@ -3240,7 +3272,7 @@ function updateDev(pRaw) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
   /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
-  const p = chapterP('dev', DEV_CH, pRaw, pRaw > 0.002, SECS.dev);
+  const p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
   const skipDip = devSkipStep();   /* スキップ中だけ 0→1→0 に膨らむ */
 
   const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
@@ -3348,7 +3380,7 @@ const caseTop = () => (isMobile ? 118 : 172);
 function updateCases(pRaw) {
   const c = params.sections.cases;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const tc = playT('cases', c.playSec, pRaw > 0.002, SECS.cases);
+  const tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases);
   const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
@@ -4027,11 +4059,15 @@ function buildPanel() {
   rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('1行の出現時間', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + 's'));
   rows.push(slider('文字ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px'));
+  sub(catVis, 'キーメッセージの出方');
+  pillRow(VIS_REVEALS, (_, i) => params.visReveal === i + 1, (_, i) => params.visReveal = i + 1);
   rows.push(slider('慣性で流れる量', 0, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px'));
-  rows.push(slider('消えきるまで', 0.4, 3, 0.1, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(1) + 's'));
+  rows.push(slider('消えきるまで', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('消え出すまで', 0, 1, 0.05, () => sv().vision.vanishAt, v => sv().vision.vanishAt = v, v => '分割の' + Math.round(v * 100) + '%'));
+  rows.push(slider('軌道が動き出す', 0, 1, 0.05, () => sv().vision.moveLead, v => sv().vision.moveLead = v, v => '出現の' + Math.round(v * 100) + '%'));
   rows.push(slider('1文字ずつの遅れ', 0, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => v === 0 ? '行ごと' : Math.round(v * 100) + '%'));
   sub(catVis, '上下に分かれる');
-  rows.push(slider('分かれ始めるまで', 0, 2, 0.05, () => sv().vision.splitGap, v => sv().vision.splitGap = v, v => v.toFixed(2) + 's'));
+  rows.push(slider('分かれ始めるまで', -0.6, 2, 0.05, () => sv().vision.splitGap, v => sv().vision.splitGap = v, v => v.toFixed(2) + 's'));
   rows.push(slider('分かれる時間', 0.4, 4, 0.1, () => sv().vision.splitDur, v => sv().vision.splitDur = v, v => v.toFixed(1) + 's'));
   rows.push(slider('開く量', 0, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px'));
   sub(catVis, '軌道グラフィック');
