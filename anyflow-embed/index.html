@@ -383,70 +383,81 @@
      921pxのステージの中で上下 148.5px ずつの均等な余白になるよう中央に置いている */
   /* ===== 実績 (カンプ 14801:31557) =====
      画像は画面左からはみ出す 749.13×430 / 右に見出しと大きい数字 / 下段に本文と小さい数字 */
-  /* テキストの比率をカンプのまま保つため、1440幅の枠ごと画面中央に置く */
-  .res-wrap {
+  /* ===== 実績 (カンプ 14824:22160 / 幅が伸びた時 14824:22732) =====
+     ■ 横方向のルール（カンプ2枚の実測から）
+       ・本文       … 画面左から 104px 固定
+       ・見出しと数字 … 画面右から 120px 固定
+       ・画像フレーム … 右端が画面右から 683px 固定 / 左端は画面外へ -183px
+         → 画面幅が伸びるとフレームだけが横に伸び、中の画像は cover で拡大される
+     ⚠️ カンプの2000幅フレームでは画像の左端が -16px になっており、1440幅の -183px と
+        規則が食い違う（幅も 1333 で、右端固定の計算値 1500 と合わない）。
+        右端 683px 固定・左端 -183px 固定という一貫した規則を採用した。
+     ■ 縦は 626px ぶんのかたまりを 921px のステージの上下中央に置いている */
+  .res-img-frame {
     position: absolute;
-    left: 50%;
-    margin-left: -720px;
-    width: 1440px;
-    height: 100%;
+    left: -183px;
+    right: 683px;
+    top: 147.5px;
+    height: 480px;
+    overflow: hidden;
   }
-  /* 画像だけは画面の左端まで伸ばす。右端はカンプ通り 659.27px で止める。
-     画面を広げると画像だけが横に伸びる (--swp = ステージ幅) */
-  .res-img {
-    position: absolute;
-    /* ⚠️ img は置換要素なので left+right を指定しても伸びない (width が固有値のまま)。
-       幅を計算で出すこと */
-    left: calc((1440px - var(--swp, 1440px)) / 2 - 89.86px);
-    width: calc(749.13px + (var(--swp, 1440px) - 1440px) / 2);
-    top: 148.06px;
-    height: 430px;
+  .res-img-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    object-position: 50% 50%;   /* JS でここを動かしてパララックスにする */
+    /* 縦位置は JS が毎フレーム入れる（スクロールでずらしてパララックスにする） */
+    object-position: 50% 62%;
   }
   .res-main {
     position: absolute;
-    left: 748.7px;
-    top: 246.06px;
-    width: 593px;
+    right: 120px;
+    top: 229.5px;
+    width: 483px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 44px;
+    gap: 34px;
     color: #000;
-    text-align: center;
   }
-  /* カンプ 14801:31560: Noto Sans JP Light(300) 40px / 行間 normal */
-  .res-head { width: 100%; font-weight: 300; font-size: 40px; line-height: normal; }
-  .res-nums { display: flex; align-items: center; gap: 57px; width: 100%; }
-  .res-nums .rn { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-  .res-nums .rn1 { width: 291px; }
-  .res-nums .rn2 { width: 245px; }
-  /* カンプ: Noto Sans JP Light(300) 16px / 行間24px / 右寄せ */
+  /* カンプ 14824:22326: Noto Sans JP Light(300) 34px / 行間1.7 / 右寄せ */
+  .res-head { width: 100%; font-weight: 300; font-size: 34px; line-height: 1.7; text-align: right; }
+  /* カンプ 14824:22327: 1px の罫線 #D1D5DC */
+  .res-line { width: 100%; height: 1px; background: #D1D5DC; }
+  .res-nums { display: flex; align-items: center; gap: 44px; width: 100%; }
+  .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .res-nums .rn b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
-  /* カンプ: SF Pro Text Ultralight 100px / 行間1 / 中央。Ultralight は実測で 100 */
+  /* カンプ: SF Pro Text Ultralight 80px / 行間1 / 中央 */
   .res-nums .rn span {
     display: block;
     width: 100%;
     font-family: var(--font-en);
     font-weight: 100;
-    font-size: 100px;
+    font-size: 80px;
     line-height: 1;
     text-align: center;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .res-bottom {
+  /* カンプ 14824:22335: Noto Sans JP Light(300) 14px / 行間1.9 / #101828 */
+  .res-text {
     position: absolute;
-    left: 125.11px;
-    top: 677.94px;
+    left: 104px;
+    top: 703.5px;
+    width: 653.086px;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.9;
+    color: #101828;
+  }
+  /* カンプ 14824:22336: 右から120px / 385×86 */
+  .res-stats {
+    position: absolute;
+    right: 120px;
+    top: 687.5px;
     display: flex;
     align-items: center;
-    gap: 162px;
+    color: #000;
   }
-  /* カンプ 14801:31558: Noto Sans JP Light(300) 14px / 行間1.9 / #101828 */
-  .res-text { width: 653.086px; font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
-  .res-stats { display: flex; align-items: center; color: #000; }
   .res-stats .st {
     display: flex;
     flex-direction: column;
@@ -459,7 +470,7 @@
   }
   .res-stats .st:last-child { border-right: none; padding-right: 0; }
   .res-stats .st b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
-  /* カンプ: SF Pro Text Thin 50px / 行間1。Thin は実測で 200 */
+  /* カンプ: SF Pro Text Thin 50px / 行間1 */
   .res-stats .st span {
     display: block;
     width: 100%;
@@ -471,6 +482,7 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+
 
   /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
      「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
@@ -961,17 +973,14 @@
     .val-point p { font-size: 12px; line-height: 20px; margin-top: 12px; }
 
     /* --- 実績 --- */
-    .res-wrap { left: 0; margin-left: 0; width: 390px; }
-    .res-img { left: -24px; right: auto; top: 96px; width: 414px; height: 200px; }
-    .res-main { left: 24px; top: 320px; width: 342px; gap: 24px; }
-    .res-head { font-size: 24px; }
+    .res-img-frame { left: -24px; right: 24px; top: 84px; height: 210px; }
+    .res-main { left: 24px; right: 24px; width: auto; top: 322px; gap: 18px; }
+    .res-head { font-size: 22px; line-height: 1.7; }
     .res-nums { gap: 16px; }
-    .res-nums .rn1, .res-nums .rn2 { width: auto; flex: 1; }
     .res-nums .rn b { font-size: 12px; line-height: 18px; }
-    .res-nums .rn span { font-size: 54px; }
-    .res-bottom { left: 24px; top: 560px; width: 342px; flex-direction: column; align-items: flex-start; gap: 24px; }
-    .res-text { width: 342px; font-size: 11px; line-height: 1.9; }
-    .res-stats { width: 342px; }
+    .res-nums .rn span { font-size: 46px; }
+    .res-text { left: 24px; top: 560px; width: 342px; font-size: 11px; }
+    .res-stats { left: 24px; right: auto; top: 656px; width: 342px; }
     .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
     .res-stats .st b { font-size: 11px; line-height: 16px; }
     .res-stats .st span { font-size: 28px; }
@@ -1364,14 +1373,17 @@
 <section class="pin" id="results">
   <div class="pin-vp">
     <div class="pin-stage">
-    <div class="res-wrap">
-    <img class="res-img rv" id="resImg" src="assets/results-gradient.png" alt="">
-    <!-- カンプ 14801:31557 -->
+    <!-- カンプ 14824:22160 / 幅が伸びた時 14824:22732 -->
+    <!-- 画像はフレームでトリミングし、中身をスクロールでずらしてパララックスにする -->
+    <div class="res-img-frame rv" id="resImg">
+      <img src="assets/results-image.png" alt="">
+    </div>
     <div class="res-main rv" id="resMain">
-      <div class="res-head">Anyflowが事業を推進させます。</div>
+      <div class="res-head">事業の推進力を、<br>Anyflowが支えます。</div>
+      <div class="res-line"></div>
       <div class="res-nums">
-        <div class="rn rn1"><b>導入企業</b><span id="cntMain">200+</span></div>
-        <div class="rn rn2"><b>連携実績</b><span id="cntSub1">500+</span></div>
+        <div class="rn"><b>導入企業</b><span id="cntMain">200+</span></div>
+        <div class="rn"><b>連携実績</b><span id="cntSub1">500+</span></div>
       </div>
     </div>
     <div class="res-bottom rv" id="resBottom">
@@ -1380,7 +1392,6 @@
         <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
         <div class="st"><b>最短リリース</b><span>1week</span></div>
       </div>
-    </div>
     </div>
     </div>
   </div>
@@ -2802,6 +2813,7 @@ function updateVision(p) {
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
 const resEls = {
   img: document.getElementById('resImg'),
+  imgInner: document.querySelector('#resImg img'),
   main: document.getElementById('resMain'),
   bottom: document.getElementById('resBottom'),
   cntMain: document.getElementById('cntMain'),
@@ -2849,10 +2861,11 @@ function updateResults(p) {
      ④見出しが出る ⑤導入企業200+ がランダム→確定 ⑥下段の 500+ / 99.9% も同様 */
   /* パララックス: セクションが画面を通り過ぎる間に、画像の中身だけをゆっくりずらす。
      枠は動かさず object-position を動かすので、レイアウトはまったく崩れない */
-  if (c.parallax > 0) {
+  if (resEls.imgInner) {
     const r = SECS.results.getBoundingClientRect();
     const q = clamp01((innerHeight - r.top) / (innerHeight + r.height));
-    resEls.img.style.objectPosition = `50% ${(50 + (q - 0.5) * c.parallax).toFixed(2)}%`;
+    /* 62% がカンプの切り出し位置。そこを中心にスクロールで上下へずらす */
+    resEls.imgInner.style.objectPosition = `50% ${(62 + (q - 0.5) * c.parallax).toFixed(2)}%`;
   }
   const kImg = easeOutQ(clamp01((t - 0.15) / 1.4));
   resEls.img.style.opacity = clamp01(t / 0.8).toFixed(3);
