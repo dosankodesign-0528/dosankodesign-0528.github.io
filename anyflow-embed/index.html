@@ -21,7 +21,7 @@
     --font-jp: 'Noto Sans JP', sans-serif;
   }
   html, body {
-    background: #f3f3f3;
+    background: #f2f2f2;
     font-family: 'Noto Sans JP', sans-serif;
     /* overflow-x: hidden は position: sticky を殺すため clip を使う
        (clip はスクロールコンテナを作らないので sticky が生きる) */
@@ -102,7 +102,7 @@
   .hl-eyebrow i { display: block; width: 26px; height: 1px; background: #000; }
   .hl-main {
     display: block;
-    margin-top: 9px;
+    margin-top: 8px;
     font-weight: 100;
     font-size: 70px;
     line-height: 1.4;
@@ -224,7 +224,7 @@
     top: 0;
     height: 100vh;
     overflow: hidden;
-    background: #f3f3f3;
+    background: #f2f2f2;
   }
   .pin-stage {
     position: absolute;
@@ -494,7 +494,7 @@
   .dev-bg2 {
     position: absolute;
     inset: 0;
-    background: #f3f3f3;
+    background: #f2f2f2;
     opacity: 0;
   }
   #dev .pin-stage { background: transparent; }
@@ -570,7 +570,11 @@
     will-change: transform, opacity;
     pointer-events: none;
   }
-  /* 中身は本物と同じ .dm-panel をそのまま使う (手前に回ってきた時に見た目が変わらないように) */
+  /* 中身は本物と同じ .dm-panel をそのまま使う (手前に回ってきた時に見た目が変わらないように)
+     ⚠️ ただし backdrop-filter(背景ぼかし)は【手前の1枚だけ】。
+        背景ぼかしは合成コストがいちばん高い処理で、3枚同時だとカードの回転がカクつく。
+        下地を不透明にしてあるので、後ろの2枚は切っても見た目は変わらない */
+  .dm-ghost .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .dev-mock {
     position: absolute;
     /* 0.9046 倍で描くと左右に 40.1px ずつ余るので、その分を戻してカンプの左119.9に合わせる */
@@ -704,7 +708,7 @@
   .dm-line {
     height: 16px;
     line-height: 16px;
-    font-size: 11.5px;
+    font-size: 12px;
     white-space: pre;
     flex: 0 0 auto;
     color: rgba(255,255,255,.9);
@@ -730,16 +734,16 @@
   }
   .dm-load .sk {
     height: 6px;
-    border-radius: 3px;
+    border-radius: 4px;
     background: linear-gradient(100deg,
       rgba(255,255,255,.06) 30%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.06) 70%);
     background-size: 260% 100%;
   }
-  .dm-row .b { height: 6px; border-radius: 3px; flex: 0 0 auto; }
+  .dm-row .b { height: 6px; border-radius: 4px; flex: 0 0 auto; }
   .dm-row .sp { flex: 0 0 auto; height: 6px; }
   .b.cp { background: #FF5D97; }
   .b.cb { background: #0EBBFF; }
-  .b.cw { background: #ffffff; }
+  .b.cw { background: #fff; }
   .b.cf { background: rgba(255,255,255,.1); }
   .dm-gap { height: 8px; flex: 0 0 auto; }
   /* 案B/C: 生成中の行を光のグラデーションが走る (スケルトンローディング風) */
@@ -771,7 +775,7 @@
     gap: 8px;
     font-family: 'Inter', var(--font-en);
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     color: #fff;
   }
   .dm-chat-head img { width: 16px; height: 16px; display: block; }
@@ -804,7 +808,7 @@
     font-size: 12px;
     line-height: 1.85;
     color: rgba(255,255,255,.82);
-    padding-top: 3px;
+    padding-top: 4px;
   }
   .dm-msg .av {
     flex: 0 0 28px;
@@ -822,14 +826,14 @@
     min-width: 0;
     background: rgba(255,255,255,.1);
     border: 1px solid rgba(255,255,255,.1);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  .dm-msg .lines i { display: block; height: 6px; border-radius: 3px; background: #fff; }
+  .dm-msg .lines i { display: block; height: 6px; border-radius: 4px; background: #fff; }
   .dm-input-c {
     display: flex;
     align-items: center;
@@ -844,7 +848,7 @@
     min-width: 0;
     font-family: 'Inter', var(--font-en);
     font-weight: 400;
-    font-size: 13px;
+    font-size: 14px;
     color: rgba(255,255,255,.16);   /* カンプ: プレースホルダは 10% 相当 */
     white-space: nowrap;
     overflow: hidden;
@@ -892,7 +896,7 @@
     position: absolute; left: 0; right: 0; top: 0; height: 40px;
     align-items: center; gap: 8px; padding: 0 18px;
     border-bottom: 1px solid rgba(255,255,255,.08);
-    font-size: 11px; font-weight: 300; color: rgba(255,255,255,.4);
+    font-size: 12px; font-weight: 300; color: rgba(255,255,255,.4);
   }
   .dm-panel.is-term .dm-term-bar { display: flex; }
   .dm-panel.is-term .dm-code { padding-top: 62px; }
@@ -904,11 +908,11 @@
   .dm-sdk-list { flex: 1 0 0; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
   .dm-sdk-row {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 10px;
+    padding: 10px 12px; border-radius: 8px;
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.06);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 11px; color: rgba(255,255,255,.82);
+    font-size: 12px; color: rgba(255,255,255,.82);
     opacity: 0;
   }
   .dm-sdk-row .k { color: #0EBBFF; }
@@ -998,9 +1002,9 @@
 
     /* --- キービジュアル --- */
     .headline { left: 24px; top: 104px; }
-    .hl-eyebrow { font-size: 11px; gap: 8px; }
+    .hl-eyebrow { font-size: 12px; gap: 8px; }
     .hl-eyebrow i { width: 18px; }
-    .hl-main { font-size: 38px; line-height: 1.35; margin-top: 8px; }
+    .hl-main { font-size: 40px; line-height: 1.35; margin-top: 8px; }
     .hl-caret { height: 34px; vertical-align: -6px; }
     /* 軌道は JS 側で 0.40 倍。原点を左上にして左寄せで置く */
     .orbit { right: auto; left: -22px; top: 280px; transform-origin: 0 0; }
@@ -1008,7 +1012,7 @@
     .mq-set img { height: 26px; }
 
     /* --- ビジョン --- */
-    .vis-label { left: 24px; top: 74px; font-size: 15px; }
+    .vis-label { left: 24px; top: 74px; font-size: 16px; }
     .vis-line { left: 20px; font-size: 32px; line-height: 54px; }
     .vis-l1 { top: 116px; }
     .vis-l2 { top: 170px; }
@@ -1021,7 +1025,7 @@
     /* 右カラムはPCでは右アンカーだが、スマホは画面いっぱいの1カラムにする */
     .val-group { left: 0; right: auto; width: 390px; }
     .val-head { left: 24px; top: 372px; width: 342px; }
-    .val-head .vh-s { font-size: 13px; }
+    .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
     .val-point { width: 342px; }
     .val-p1 { left: 24px; top: 462px; }
@@ -1043,13 +1047,13 @@
     }
     #results.pat-a .res-main, #results.pat-b .res-main { position: static; width: 100%; gap: 18px; }
     #results.pat-a .res-stats, #results.pat-b .res-stats { position: static; width: 100%; }
-    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 11px; }
+    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 12px; }
     .res-head { font-size: 22px; line-height: 1.7; }
     .res-nums { gap: 16px; }
     .res-nums .rn b { font-size: 12px; line-height: 18px; }
-    .res-nums .rn span { font-size: 46px; }
+    .res-nums .rn span { font-size: 44px; }
     .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
-    .res-stats .st b { font-size: 11px; line-height: 16px; }
+    .res-stats .st b { font-size: 12px; line-height: 16px; }
     .res-stats .st span { font-size: 28px; }
 
     /* --- 開発者体験 --- */
@@ -1067,16 +1071,16 @@
     .dev-list { left: 24px; top: 470px; width: 342px; padding-top: 0; gap: 22px; align-items: flex-start; }
     .dl-body { width: 314px; }
     .dl-head b { font-size: 22px; }
-    .dl-head span { font-size: 15px; }
+    .dl-head span { font-size: 16px; }
 
     /* --- 導入事例: 写真が上・文章が下の縦組みに変える --- */
     .case-title { left: 24px; top: 60px; font-size: 28px; line-height: 40px; }
     .case-list { right: 24px; top: 0; width: 342px; height: var(--dh, 780px); }
-    .case-card { width: 342px; height: 372px; border-radius: 6px; }
-    .case-card img { left: 0; top: 0; width: 342px; height: 200px; border-radius: 6px 6px 0 0; }
+    .case-card { width: 342px; height: 372px; border-radius: 8px; }
+    .case-card img { left: 0; top: 0; width: 342px; height: 200px; border-radius: 8px 8px 0 0; }
     .case-card .cc-body { left: 18px; top: 222px; width: 306px; }
     .case-card .cc-quote { font-size: 16px; line-height: 24px; }
-    .case-card .cc-tag { margin-top: 16px; font-size: 11px; padding: 2px 8px; }
+    .case-card .cc-tag { margin-top: 16px; font-size: 12px; padding: 2px 8px; }
     .case-card .cc-company { margin-top: 6px; font-size: 18px; }
 
     /* --- 調整パネルは画面いっぱいに --- */
@@ -1099,8 +1103,8 @@
     max-height: 42vh;
     background: rgba(255,255,255,.95);
     backdrop-filter: blur(12px);
-    border: 1px solid #e2e2e2;
-    border-radius: 10px;
+    border: 1px solid #ececec;
+    border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0,0,0,.10);
     font-size: 12px;
     color: #101828;
@@ -1128,7 +1132,7 @@
   .switcher.closed .sw-body { display: none; }
   .switcher.closed { resize: none; height: auto !important; width: auto !important; min-width: 200px; }
   .sw-sec {
-    border: 1px solid #e8e8e8;
+    border: 1px solid #ececec;
     border-radius: 8px;
     margin-top: 8px;
     overflow: hidden;
@@ -1140,7 +1144,7 @@
     gap: 8px;
     padding: 8px 10px;
     font-weight: 500;
-    background: #fafafa;
+    background: #f2f2f2;
     cursor: pointer;
     user-select: none;
   }
@@ -1157,7 +1161,7 @@
     font-family: inherit;
     font-size: 12px;
     padding: 8px 0;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid #d8d8d8;
     background: #fff;
     cursor: pointer;
@@ -1166,7 +1170,7 @@
   .sw-copy:hover { background: #f2f2f2; }
   .sw-pill {
     font-family: inherit;
-    font-size: 11px;
+    font-size: 12px;
     padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid #d8d8d8;
@@ -1181,7 +1185,7 @@
   .sw-pill:hover { border-color: #999; }
   .sw-pill.on { background: #090909; color: #fff; border-color: #090909; }
   .sw-swatch { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.08); }
-  .sw-desc { margin-top: 8px; color: #777; font-weight: 300; font-size: 11px; }
+  .sw-desc { margin-top: 8px; color: #888; font-weight: 300; font-size: 12px; }
 
   /* ---- 調整パネル ---- */
   .panel {
@@ -1199,8 +1203,8 @@
     resize: both;            /* 右下つまみでサイズ変更 */
     background: rgba(255,255,255,.92);
     backdrop-filter: blur(12px);
-    border: 1px solid #e2e2e2;
-    border-radius: 10px;
+    border: 1px solid #ececec;
+    border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0,0,0,.10);
     font-size: 12px;
     color: #101828;
@@ -1233,7 +1237,7 @@
   .panel.closed .panel-body { display: none; }
   /* 大カテゴリ (アコーディオン) */
   .cat {
-    border: 1px solid #e8e8e8;
+    border: 1px solid #ececec;
     border-radius: 8px;
     margin-top: 10px;
     overflow: hidden;
@@ -1243,9 +1247,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 9px 12px;
+    padding: 8px 12px;
     font-weight: 500;
-    background: #fafafa;
+    background: #f2f2f2;
     cursor: pointer;
     user-select: none;
   }
@@ -1258,8 +1262,8 @@
   .cat-body .grp:first-child { border-top: none; margin-top: 6px; }
   .grp-title { font-weight: 400; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   /* 入れ子の小見出し (惑星のデザイン > 柄の動き など) */
-  .grp.sub2 { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee; padding-left: 10px; border-left: 2px solid #ececec; }
-  .grp.sub2 .grp-title { font-size: 11px; color: #666; }
+  .grp.sub2 { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ececec; padding-left: 10px; border-left: 2px solid #ececec; }
+  .grp.sub2 .grp-title { font-size: 12px; color: #555; }
   .row-hint { font-size: 10px; line-height: 1.55; color: #999; margin: -1px 0 6px 100px; }
   .grp-note { font-size: 10px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
   .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -1272,8 +1276,8 @@
     flex: 1;
     font-family: inherit;
     font-size: 12px;
-    padding: 7px 0;
-    border-radius: 6px;
+    padding: 8px 0;
+    border-radius: 8px;
     border: 1px solid #d8d8d8;
     background: #fff;
     cursor: pointer;
@@ -1282,10 +1286,10 @@
   .btns button:hover { background: #f2f2f2; }
   .btns button.primary { background: #090909; color: #fff; border-color: #090909; }
   .btns button.primary:hover { background: #333; }
-  .seg { display: flex; border: 1px solid #d8d8d8; border-radius: 6px; overflow: hidden; flex: 1; }
+  .seg { display: flex; border: 1px solid #d8d8d8; border-radius: 8px; overflow: hidden; flex: 1; }
   .seg button {
     flex: 1; border: none; background: #fff; font-family: inherit;
-    font-size: 11px; padding: 5px 0; cursor: pointer; color: #555;
+    font-size: 12px; padding: 5px 0; cursor: pointer; color: #555;
   }
   .seg button.on { background: #090909; color: #fff; }
 </style>
@@ -1691,16 +1695,8 @@ const LIGHTS = [
 /* ================= セクション演出の複数案 =================
    絵コンテで「Claude側で補完して」とされた箇所は案を出し分けられる */
 /* 見出しの左スライド4案は、2026-08-14 に「中央で上下に分かれる」形へ作り替えたため廃止 */
-const MOCK_PATTERNS = [
-  { key: 'A', name: '案A タイプ生成', desc: 'コードが左から書き出されていく。素直で読みやすい。' },
-  { key: 'B', name: '案B 光が走る', desc: 'スケルトンのまま光のグラデーションが横切って定着する。ローディング的でAIらしい。' },
-  { key: 'C', name: '案C 発光', desc: '行が青白く発光しながら現れ、光が引いて落ち着く。もっともハイテク寄り。' },
-];
-const DEV_PATTERNS = [
-  { key: 'A', name: '案A ブラースワップ', desc: 'モックは右に据え置き、訴求文がブラーで入れ替わる。切替の瞬間にモックが一瞬やわらかくぼける。' },
-  { key: 'B', name: '案B 縦送り', desc: '訴求文が上下にスライドして入れ替わり、モックもふわっと連動して浮く。' },
-  { key: 'C', name: '案C ズーム切替', desc: '切り替わるたびにモックへ一歩ずつ寄っていく。没入感重視。' },
-];
+
+
 const CASE_PATTERNS = [
   { key: 'A', name: '案A 奥行きスタック', desc: '絵コンテ準拠。新しいカードが手前に重なり、前のカードは奥に沈んでいく。' },
   { key: 'B', name: '案B 順番に表示', desc: 'カンプ準拠の縦並びレイアウトのまま、スクロールで1枚ずつブラー表示。' },
@@ -1845,7 +1841,7 @@ void main(){
 const DESIGNS = {
   A1: {
     name: 'A1 ビビッドブルー',
-    swatch: 'linear-gradient(140deg, #ff5d97 5%, #ffffff 30%, #1e9bff 65%, #0b6bff 100%)',
+    swatch: 'linear-gradient(140deg, #ff5d97 5%, #fff 30%, #1e9bff 65%, #0b6bff 100%)',
     src: 'assets/planet-b.png',
     grainScale: '120.0',
     /* ビビッド優先: 粒は乗算で粗く、白飛びさせない */
@@ -1857,7 +1853,7 @@ const DESIGNS = {
   },
   A2: {
     name: 'A2 ピンク×ブルー',
-    swatch: 'linear-gradient(160deg, #ff5d97 22%, #ffffff 50%, #26a9ff 78%)',
+    swatch: 'linear-gradient(160deg, #ff5d97 22%, #fff 50%, #26a9ff 78%)',
     src: 'assets/planet-c.png',
     grainScale: '150.0',
     /* 2色の境界を活かす: 中くらいの粒を加算で */
@@ -1869,7 +1865,7 @@ const DESIGNS = {
   },
   A3: {
     name: 'A3 ライトグレイン',
-    swatch: 'linear-gradient(200deg, #9fdcff 12%, #ffffff 45%, #ff9ac4 88%)',
+    swatch: 'linear-gradient(200deg, #9fdcff 12%, #fff 45%, #ff9ac4 88%)',
     src: 'assets/planet-d.png',
     grainScale: '260.0',
     /* 高密度の微粒が主役: 細かい粒を強めに */
@@ -1881,7 +1877,7 @@ const DESIGNS = {
   },
   B: {
     name: 'B ハーフトーン',
-    swatch: 'radial-gradient(circle at 68% 30%, #ffffff 8%, #5fd2ff 40%, #0e9bff 72%, #ff4fd8 100%)',
+    swatch: 'radial-gradient(circle at 68% 30%, #fff 8%, #5fd2ff 40%, #0e9bff 72%, #ff4fd8 100%)',
     src: 'assets/planet-e.png',   /* WebGL非対応時のフォールバック表示にのみ使用 */
     /* 完全生成のディザリング専用シェーダー:
        画像貼り付けだと網点が回転でにじみ継ぎ目も出るため、
@@ -2010,19 +2006,19 @@ void main(){
   },
   C1: {
     name: 'C1 波・流れる',
-    swatch: 'linear-gradient(135deg, #ffffff 0%, #56d0ff 38%, #2f6dff 66%, #ff4fd8 100%)',
+    swatch: 'linear-gradient(135deg, #fff 0%, #56d0ff 38%, #2f6dff 66%, #ff4fd8 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('0.55', '0.06'),
   },
   C2: {
     name: 'C2 波・白帯',
-    swatch: 'linear-gradient(135deg, #ff6fd8 0%, #ffffff 32%, #56d0ff 62%, #2f6dff 100%)',
+    swatch: 'linear-gradient(135deg, #ff6fd8 0%, #fff 32%, #56d0ff 62%, #2f6dff 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('1.05', '0.30'),
   },
   C3: {
     name: 'C3 波・呼吸',
-    swatch: 'linear-gradient(140deg, #ff4fd8 0%, #ffffff 22%, #56d0ff 46%, #ffffff 68%, #2f6dff 100%)',
+    swatch: 'linear-gradient(140deg, #ff4fd8 0%, #fff 22%, #56d0ff 46%, #fff 68%, #2f6dff 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('0.85', '0.14'),
   },
@@ -2111,7 +2107,6 @@ const DEFAULTS = {
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
       miniScale: 0.16,   // ミニ楕円の縮小率 (2026-08-15: もっと小さく始める指定)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
-      spinSpeed: 1,      // (未使用。周回数で決めるようになった)
       spinLaps: 1,       // 止まるまでに何周するか (2026-08-15: きっちり1周)
       spinHold: 0.5,     // 左下に着いてから止まり始めるまでの秒数
                          /* ⚠️ spinHold + spinBrake = 1.35 にすると、役割名(コネクタ等)が
@@ -2132,7 +2127,6 @@ const DEFAULTS = {
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
-      countDur: 2.2,   // 数字がランダムから確定するまで
       numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
       imgBlur: 24,     // 画像が出る時のぼかし量
       parallax: 16,    // スクロールで画像の中身がずれる量
@@ -2226,8 +2220,11 @@ const DEFAULTS = {
 /* v55→v56: 実績の数字はスロットをやめて単純なブラー出現に（見出し→数字の順） */
 /* v56→v57: 開発者体験の見出しをカンプ 14937:23888 へ (40px / gap12px) */
 /* v57→v58: 透明な要素があたり判定を持っていて、下の文字を選べなくしていたのを修正 */
-/* v58→v59: 開発者体験の背景グラデをカンプ 14937:23887 へ (#161616 → #454545) */
-const STORAGE_KEY = 'anyflow-embed-anim-v59';
+/* v58→v59: 開発者体験の背景グラデをカンプ 14937:23887 へ (#161616 → #454545)
+   / v59→v60: デザイントークン整理(サイズ偶数化・角丸4段階・色統合) と
+              描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
+              ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
+const STORAGE_KEY = 'anyflow-embed-anim-v60';
 
 let params = load();
 function load() {
@@ -2395,6 +2392,7 @@ function warpTime(t, amp, period, phaseDeg) {
 }
 
 let elapsed = 0;      // 再生中のみ進む累積時間
+let frameSeq = 0;     // フレーム番号。矩形キャッシュの寿命管理に使う
 let lastTs = null;
 let frameDt = 1 / 60; // 直近フレームの実時間 (スクロール慣性補間用・一時停止中も進む)
 
@@ -2408,6 +2406,7 @@ function patternDeg(d, i, p) {
 }
 
 function renderFrame() {
+  frameSeq++;   /* このフレームぶんの矩形キャッシュを新しくする */
   /* resize イベントを取りこぼす環境があるので、寸法が変わっていたら組み直す
      (fit() の準備が済むまでは呼ばない) */
   if (fitReady && window.innerWidth > 0 &&
@@ -2502,8 +2501,19 @@ const SECS = {
 
 /* ピン留めセクションのスクロール進捗 0〜1 */
 const progOverride = {};   // デバッグ用: __anim.setProgress で固定できる
+/* ⚠️ getBoundingClientRect は呼ぶたびにブラウザがレイアウトを計算し直す(reflow)。
+   同じフレーム内では結果が変わらないので、1フレーム1回だけ測って使い回す */
+let rectFrame = -1;
+const rectCache = new Map();
+function rectOf(el) {
+  if (rectFrame !== frameSeq) { rectCache.clear(); rectFrame = frameSeq; }
+  let r = rectCache.get(el);
+  if (!r) { r = el.getBoundingClientRect(); rectCache.set(el, r); }
+  return r;
+}
+
 function pinP(sec) {
-  const r = sec.getBoundingClientRect();
+  const r = rectOf(sec);
   const vh = window.innerHeight || 1;
   const total = r.height - vh;
   if (total <= 0) return 0;
@@ -2531,7 +2541,7 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
   if (!st.started && pScroll > 0.45) return chapters[chapters.length - 1].to;
   if (!st.started) {
     if (!canStart && !st.snapTried) return 0;
-    const off = sec ? sec.getBoundingClientRect().top : 0;
+    const off = sec ? rectOf(sec).top : 0;
     if (Math.abs(off) > innerHeight) return 0;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
     if (Math.abs(off) > 6) {
       /* ⚠️ 目印に elapsed をそのまま入れると elapsed=0 のとき falsy になって毎フレーム
@@ -2581,7 +2591,7 @@ function playT(key, total, canStart, sec, pNow) {
     /* もう頭の近くにいる時は、寄せずにその場で流し始める。
        （上から戻ってきた時に寄せ直すと、引っぱられて気持ち悪いため） */
     if (pNow != null && pNow < 0.12) { st.t0 = elapsed; return 0; }
-    const off = sec ? sec.getBoundingClientRect().top : 0;
+    const off = sec ? rectOf(sec).top : 0;
     if (Math.abs(off) > innerHeight) return -1;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
     if (Math.abs(off) > 6) {
       /* ⚠️ 寄せている途中でユーザーが操作すると onComplete が来ないことがある。
@@ -2638,19 +2648,13 @@ function fastForward() {
    ⚠️ 以前やった「進捗そのものに速度上限をかける」方式とは別物。
       あれはスクロールしても画面が動かず“のっそり”して不採用になった。 */
 const storyP = {};
-function gateP(key, target, rate) {
-  const prev = storyP[key] === undefined ? 0 : storyP[key];
-  /* 時間で進む量は rate(1秒あたり)。スクロールが許した target を超えない。戻りもしない */
-  storyP[key] = Math.max(prev, Math.min(target, prev + frameDt * rate));
-  return storyP[key];
-}
 
 /* セクションが画面下から入ってきた割合 0〜1（0=画面下端に到達 / 1=画面いっぱいに来て固定開始）。
    ⚠️ sticky の仕組み上、前のセクションの固定が外れてから次のセクションが固定され始めるまでに
    ちょうど1画面ぶんのスクロールが必ず挟まる。そこで何も起きないと「無駄なスクロール」に見えるので、
    この助走区間のうちに次のセクションの出だしを見せるために使う */
 function preP(sec) {
-  const r = sec.getBoundingClientRect();
+  const r = rectOf(sec);
   const vh = window.innerHeight || 1;
   return clamp01((vh - r.top) / vh);
 }
@@ -2659,22 +2663,31 @@ function preP(sec) {
 /* rv に「パネルで動かせる位置ずらし(ox, oy)」を足したもの。
    出現時の translateY(dy) と足し合わせて1つの transform にする */
 function rvAt(el, k, blur, dy, ox, oy) {
-  el.style.opacity = k.toFixed(3);
-  el.style.pointerEvents = k < 0.02 ? 'none' : '';
-  el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
+  setStyle(el, 'opacity', k.toFixed(3));
+  setStyle(el, 'pointerEvents', k < 0.02 ? 'none' : '');
+  setStyle(el, 'filter', k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`);
   const y = (k >= 1 ? 0 : (1 - k) * (dy || 0)) + (oy || 0);
-  el.style.transform = `translate(${(ox || 0).toFixed(2)}px, ${y.toFixed(2)}px)`;
+  setStyle(el, 'transform', `translate(${(ox || 0).toFixed(2)}px, ${y.toFixed(2)}px)`);
 }
+/* ⚠️ style への書き込みは、値が同じでも毎回「描き直し」の対象になる。
+   毎フレーム同じ値を入れ続けると無駄な再描画が積み上がるので、
+   前回と違う時だけ書き込む。 */
+function setStyle(el, prop, v) {
+  if (el['_s_' + prop] === v) return;
+  el['_s_' + prop] = v;
+  el.style[prop] = v;
+}
+
 function rv(el, k, blur, dy) {
-  el.style.opacity = k.toFixed(3);
+  setStyle(el, 'opacity', k.toFixed(3));
   /* ⚠️ 透明でも「クリック・文字選択」は受け取ってしまう。
      見えていない要素が上に重なると、下の文字がドラッグで選べなくなる。
      消えている間はあたり判定も切る */
-  el.style.pointerEvents = k < 0.02 ? 'none' : '';
-  el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
+  setStyle(el, 'pointerEvents', k < 0.02 ? 'none' : '');
+  setStyle(el, 'filter', k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`);
   /* dy を渡した時だけ transform を触る。0や未指定なら要素本来の transform
      (.pf-title の translateX(-50%) など) を壊さない */
-  if (dy) el.style.transform = k >= 1 ? '' : `translateY(${((1 - k) * dy).toFixed(2)}px)`;
+  if (dy) setStyle(el, 'transform', k >= 1 ? '' : `translateY(${((1 - k) * dy).toFixed(2)}px)`);
 }
 
 /* ---------- Vision: Platform図のジオメトリ (Figma SVG書き出しから) ---------- */
@@ -2686,7 +2699,7 @@ const PF_ELL = [
 const PF_DOTS = [
   { ell: 0, deg: 263.7, color: '#0E4497' },
   { ell: 0, deg: 117.8, color: '#0EBBFF' },
-  { ell: 0, deg: 72.9,  color: '#000000' },
+  { ell: 0, deg: 72.9,  color: '#000' },
   { ell: 0, deg: 47.1,  color: '#FF5D97' },
   { ell: 0, deg: -30.6, color: '#0EBBFF' },
   { ell: 1, deg: 205.4, color: '#FF5D97' },
@@ -3100,7 +3113,7 @@ function updateResults(p) {
   const t = playT('results', RES_TOTAL, canPlay(p), SECS.results, p);
 
   /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
-  const r = SECS.results.getBoundingClientRect();
+  const r = rectOf(SECS.results);
   const q = clamp01((innerHeight - r.top) / (innerHeight + r.height));
   if (patB) {
     /* 案B は実寸の画像を縦にずらす */
@@ -3165,7 +3178,7 @@ function updateResults(p) {
   const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
   /* 暗幕は【開発者体験が定位置(top:0)に着いてから】そっと消す。
      着くまで出しっぱなしにしておくことで、下で起きている入れ替わりが一切見えない */
-  const devTop = SECS.dev.getBoundingClientRect().top;
+  const devTop = rectOf(SECS.dev).top;
   const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=着いて少し進んだ */
   resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
   if (outK > 0) {
@@ -3261,13 +3274,13 @@ function mockCenterX() { return isMobile ? 0 : 219.9; }
 /* 見出し: ブラーで出て、ブラーで退場するだけ (上下分割はカンプ変更で廃止) */
 function devHeading(el, inK, outK) {
   const o = inK * (1 - outK);
-  el.style.opacity = o.toFixed(3);
+  setStyle(el, 'opacity', o.toFixed(3));
   /* ⚠️ 見出し①と②は同じ位置に重ねてある。透明な方があたり判定を持っていると、
      見えている方の文字をドラッグで選べなくなる（実際に発生した） */
-  el.style.pointerEvents = o < 0.02 ? 'none' : '';
-  el.style.filter = (inK < 1 || outK > 0)
-    ? `blur(${((1 - inK) * 12 + outK * 16).toFixed(2)}px)` : '';
-  el.style.transform = `translateY(${((1 - inK) * 14).toFixed(2)}px)`;
+  setStyle(el, 'pointerEvents', o < 0.02 ? 'none' : '');
+  setStyle(el, 'filter', (inK < 1 || outK > 0)
+    ? `blur(${((1 - inK) * 12 + outK * 16).toFixed(2)}px)` : '');
+  setStyle(el, 'transform', `translateY(${((1 - inK) * 14).toFixed(2)}px)`);
 }
 
 /* ===== モックの中身: 画面ごとの実コード (ダミー) =====
@@ -3584,7 +3597,7 @@ function updateDev(pRaw) {
   /* 【2026-08-15】実績と1画面ぶん重ねてあるので、重なっている間は板ごと隠しておく。
      こうしないと、上がってくる途中の開発者体験が実績を下から覆ってしまう。
      定位置(top:0)に着いた時にはもう実績側の暗幕が真っ黒なので、切り替わりは見えない */
-  const devTop = SECS.dev.getBoundingClientRect().top;
+  const devTop = rectOf(SECS.dev).top;
   devEls.vp.style.opacity = devTop > 2 ? '0' : '1';
   const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
   const in1  = seg(p, ...DEV_P.h1, easeOutQ);
@@ -3768,7 +3781,7 @@ function replayCheck() {
   for (const k in SECS) {
     if (!secPlay[k]) continue;
     if (progOverride[k] != null) continue;   /* 検証で進捗を固定している時は巻き戻さない */
-    const r = SECS[k].getBoundingClientRect();
+    const r = rectOf(SECS[k]);
     /* 完全に画面の外へ出たら巻き戻す。再生が始まるのは固定された時(top≒0)なので、
        これでも「見ている最中に頭へ戻る」ことはない */
     if (r.bottom <= 0 || r.top >= innerHeight) resetSectionClock(k);
@@ -4211,7 +4224,7 @@ function replayHere(now) {
   clearTimeout(replayTimer);
   const doIt = () => {
     for (const k in SECS) {
-      const r = SECS[k].getBoundingClientRect();
+      const r = rectOf(SECS[k]);
       if (r.top < innerHeight && r.bottom > 0) resetSectionClock(k);
     }
     /* キービジュアルは時計そのものを戻す */
