@@ -1994,6 +1994,8 @@ const DEFAULTS = {
       lenVh: 150,
       labelAt: 0.15,     // Our Vison がブラーで出る
       labelDur: 1.0,     // その所要時間
+      labelOutLead: 0.5, // 上下に分かれ始める何秒前から「Our Vison」を消し始めるか
+      labelOutDur: 0.6,  // 消えきるまでの秒数
       line1At: 0.45,     // 1行目 (Our Vison に続けてすぐ)
       line2Gap: 0.55,    // 2行目までの間 (1行目が出きる前に始まってよい＝絵コンテ指定)
       revealDur: 0.9,    // 1行の出現時間
@@ -2002,8 +2004,8 @@ const DEFAULTS = {
       splitAmt: 92,      // 上下に開く量(px・片側)
       miniGap: 0.45,     // 分かれ始めてから軌道が出るまで (splitDur に対する割合)
       miniDur: 1.1,      // 軌道グラフィックの出現時間
-      moveLead: 0,       // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
-      moveDur: 2.0,      // ワンスクロールで左下へ移動する時間(秒)
+      moveLead: 0.35,    // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
+      moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
       miniScale: 0.26,   // ミニ楕円の縮小率
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
@@ -2011,6 +2013,10 @@ const DEFAULTS = {
       spinHold: 1.9,     // 左下に着いてから「たっぷり回す」秒数 (この間に Platform と2つの価値が出る)
       spinBrake: 1.2,    // 減速して止まるまでの秒数
       blur: 8,           // 文字ブラー量
+      /* 「2つの価値」まわりの位置ずらし(px)。カンプ位置からの相対 */
+      headX: 0, headY: 0,   // 連携が生む、2つの価値
+      p1X: 0,   p1Y: 0,     // Point 01
+      p2X: 0,   p2Y: 0,     // Point 02
       charLag: 0,        // 1文字ずつの遅れ (0=行まるごと ← 2026-08-15 指定)
       driftAmt: 130,     // 分かれたあと、慣性でさらに流れていく量(px・片側)
       vanishDur: 0.85,   // 流れながら消えきるまでの秒数
@@ -2073,7 +2079,8 @@ const DEFAULTS = {
    / v38→v39: キーメッセージを行ごと×ブラーのみに / スライダーの既定値がツマミ中央に来るように
    / v39→v40: 消えていた .dev-bg / .dev-bg2 を復活 (真っ白の原因) ＋ 開発者体験を上下中央そろえ) */
 /* v40→v41: 実績をカンプ 14824:22160 へ (見出し変更・罫線追加・数字80px・画像はフレームでトリミング) */
-const STORAGE_KEY = 'anyflow-embed-anim-v41';
+/* v41→v42: 軌道の拡大を移動の“途中で”じわじわに / 2つの価値の位置をパネルで動かせるように */
+const STORAGE_KEY = 'anyflow-embed-anim-v42';
 
 let params = load();
 function load() {
@@ -2485,6 +2492,14 @@ function preP(sec) {
 }
 
 /* ブラー出現の共通適用 (KVの reveal と同じ質感: ブラー6-8px + 浮き上がり) */
+/* rv に「パネルで動かせる位置ずらし(ox, oy)」を足したもの。
+   出現時の translateY(dy) と足し合わせて1つの transform にする */
+function rvAt(el, k, blur, dy, ox, oy) {
+  el.style.opacity = k.toFixed(3);
+  el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
+  const y = (k >= 1 ? 0 : (1 - k) * (dy || 0)) + (oy || 0);
+  el.style.transform = `translate(${(ox || 0).toFixed(2)}px, ${y.toFixed(2)}px)`;
+}
 function rv(el, k, blur, dy) {
   el.style.opacity = k.toFixed(3);
   el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
@@ -2666,6 +2681,10 @@ function updateVision(p) {
   /* ⚠️ easeIO は出だしが遅いので、濃くなり終わってからやっと動き出すように見えていた。
      easeSlick はすっと動き出して最後だけ静かに止まるので「濃くなりながら同時に移動」になる */
   const mv = mvT < 0 ? 0 : easeSlick(clamp01(mvT / c.moveDur));
+  /* 【2026-08-15】拡大だけは別のカーブにする。
+     位置と同じ easeSlick だと出だしで一気に大きくなってしまうため、
+     S字(easeIO)にして「左下へ動いていく“途中で”じわじわ大きくなる」ようにした */
+  const mvS = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
   const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
   /* 【2026-08-15】上下に分かれたあと、その場で静止せずに
      「慣性が効いたようにふわーっと」流れ続けながら消える。
@@ -2677,7 +2696,11 @@ function updateVision(p) {
   /* 上下に分かれる進み具合。Our Vison はこれと入れ替わりで消える */
   const spK = easeOutQ(clamp01((A - splitAt) / c.splitDur));
   const blurOnlyLbl = VIS_REVEALS[(params.visReveal || 1) - 1].id === 'blur';
-  rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - spK) * (1 - ex),
+  /* 【2026-08-15】「Our Vison」は上の行が上下に分かれる時にぶつかるので、
+     分かれ始める labelOutLead 秒前からブラーで先に消しておく */
+  const lblOut = A < 0 ? 0
+    : easeIO(clamp01((A - (splitAt - c.labelOutLead)) / Math.max(0.1, c.labelOutDur)));
+  rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - lblOut) * (1 - ex),
      blurOnlyLbl ? 12 : B, blurOnlyLbl ? 0 : 10);
 
   /* 見出し2行: 中央で下からトリミング出現 → その場で上下に分かれる → ブラーで消える */
@@ -2740,7 +2763,7 @@ function updateVision(p) {
   /* 2026-08-14: 上下に分かれた2行のちょうど間・画面中央に置く。
      楕円の中心はローカル (363.5, 333.5) なので、そこが画面中央に来るよう逆算する */
   const txMini = stagePinW / 2 - 363.5 * scMini;
-  const sc = scMini + (scFinal - scMini) * mv;
+  const sc = scMini + (scFinal - scMini) * mvS;   /* 拡大は mvS (じわじわ) */
   const tx = txMini + (txFinal - txMini) * mv;
   /* 2行の間の中心(ステージ座標437)に楕円の中心を合わせる。
      ⚠️ .pf-wrap は top:127px なので、楕円中心のステージ座標は 127 + 333.5 + ty になる */
@@ -2803,9 +2826,10 @@ function updateVision(p) {
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
-  rv(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10);
-  rv(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12);
-  rv(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12);
+  /* 位置は調整パネルから動かせる (カンプ位置からの相対ずらし) */
+  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10, c.headX, c.headY);
+  rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X, c.p1Y);
+  rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = S < 0 ? -99 : S - (brakeStart + brake);
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - 0.1 - i * 0.14) / T_IN)), B));
@@ -4080,6 +4104,10 @@ function buildPanel() {
     '大きいほど、「Our Vison」が出るのが遅くなる。'));
   rows.push(slider('その所要時間', 0.4, 4, 0.1, () => sv().vision.labelDur, v => sv().vision.labelDur = v, v => v.toFixed(1) + 's',
     '「Our Vison」がブラーから現れるのにかける時間。大きいほどゆったり。'));
+  rows.push(slider('OurVisonが消え始める', 0, 2, 0.05, () => sv().vision.labelOutLead, v => sv().vision.labelOutLead = v, v => v.toFixed(2) + 's前',
+    '上下に分かれ始める何秒前から消し始めるか。大きいほど早く消える(文字とぶつからない)。'));
+  rows.push(slider('OurVisonが消えきる', 0.2, 2, 0.05, () => sv().vision.labelOutDur, v => sv().vision.labelOutDur = v, v => v.toFixed(2) + 's',
+    'ブラーで消えきるまでの時間。小さいほどサッと消える。'));
   rows.push(slider('1行目が出る', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + 's',
     '大きいほど、1行目が出るのが遅くなる。'));
   rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + 's',
@@ -4127,6 +4155,14 @@ function buildPanel() {
     '定位置に着いてから止まり始めるまで。この間に Platform と2つの価値が出る。'));
   rows.push(slider('止まるまで', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + 's',
     '減速して止まりきるまでの時間。大きいほどゆっくり止まる。'));
+  sub(catVis, '2つの価値の位置');
+  note('カンプの位置からどれだけずらすか。プラスで右／下へ動きます。');
+  [['連携が生む、2つの価値', 'headX', 'headY'], ['Point 01', 'p1X', 'p1Y'], ['Point 02', 'p2X', 'p2Y']]
+    .forEach(([label, kx, ky]) => {
+      sub(catVis, label, true);
+      rows.push(slider('X位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
+      rows.push(slider('Y位置', -400, 400, 2, () => sv().vision[ky], v => sv().vision[ky] = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
+    });
 
   /* ========== 📈 実績 ========== */
   const catRes = category('📈 実績', false);
