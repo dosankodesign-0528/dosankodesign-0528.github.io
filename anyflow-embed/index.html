@@ -2224,7 +2224,8 @@ const DEFAULTS = {
 /* v54→v55: 開発者体験の見出しをさらに4px下げ＋Thinへ / API・CLI・SDK のウェイトをカンプ 14937:23895 へ */
 /* v55→v56: 実績の数字はスロットをやめて単純なブラー出現に（見出し→数字の順） */
 /* v56→v57: 開発者体験の見出しをカンプ 14937:23888 へ (40px / gap12px) */
-const STORAGE_KEY = 'anyflow-embed-anim-v57';
+/* v57→v58: 透明な要素があたり判定を持っていて、下の文字を選べなくしていたのを修正 */
+const STORAGE_KEY = 'anyflow-embed-anim-v58';
 
 let params = load();
 function load() {
@@ -2657,12 +2658,17 @@ function preP(sec) {
    出現時の translateY(dy) と足し合わせて1つの transform にする */
 function rvAt(el, k, blur, dy, ox, oy) {
   el.style.opacity = k.toFixed(3);
+  el.style.pointerEvents = k < 0.02 ? 'none' : '';
   el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
   const y = (k >= 1 ? 0 : (1 - k) * (dy || 0)) + (oy || 0);
   el.style.transform = `translate(${(ox || 0).toFixed(2)}px, ${y.toFixed(2)}px)`;
 }
 function rv(el, k, blur, dy) {
   el.style.opacity = k.toFixed(3);
+  /* ⚠️ 透明でも「クリック・文字選択」は受け取ってしまう。
+     見えていない要素が上に重なると、下の文字がドラッグで選べなくなる。
+     消えている間はあたり判定も切る */
+  el.style.pointerEvents = k < 0.02 ? 'none' : '';
   el.style.filter = k >= 1 ? '' : `blur(${((1 - k) * (blur == null ? 8 : blur)).toFixed(2)}px)`;
   /* dy を渡した時だけ transform を触る。0や未指定なら要素本来の transform
      (.pf-title の translateX(-50%) など) を壊さない */
@@ -3252,7 +3258,11 @@ function mockCenterX() { return isMobile ? 0 : 219.9; }
 
 /* 見出し: ブラーで出て、ブラーで退場するだけ (上下分割はカンプ変更で廃止) */
 function devHeading(el, inK, outK) {
-  el.style.opacity = (inK * (1 - outK)).toFixed(3);
+  const o = inK * (1 - outK);
+  el.style.opacity = o.toFixed(3);
+  /* ⚠️ 見出し①と②は同じ位置に重ねてある。透明な方があたり判定を持っていると、
+     見えている方の文字をドラッグで選べなくなる（実際に発生した） */
+  el.style.pointerEvents = o < 0.02 ? 'none' : '';
   el.style.filter = (inK < 1 || outK > 0)
     ? `blur(${((1 - inK) * 12 + outK * 16).toFixed(2)}px)` : '';
   el.style.transform = `translateY(${((1 - inK) * 14).toFixed(2)}px)`;
