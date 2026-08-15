@@ -37,6 +37,21 @@ npx vercel redeploy abashiri-site.vercel.app
 | [components/bubbleConfig.ts](components/bubbleConfig.ts) | 吹き出しの形の補正、しっぽが伸びる演出、ムニムニ |
 | [components/layoutConfig.ts](components/layoutConfig.ts) | キービジュアルの配置 |
 | [components/birdConfig.ts](components/birdConfig.ts) | カモメの位置とふわふわ |
+| [components/browConfig.ts](components/browConfig.ts) | 人物イラストの眉毛ピクッ（動く量・テンポ・左右） |
+
+## 人物イラストがベクターになっている理由
+
+右下の「たまんねーっ」の人物は、もとは 1枚のPNGだったので眉毛だけ動かせなかった。
+いまは [components/illustMainPaths.ts](components/illustMainPaths.ts) にベクター化して
+持っていて、**眉毛だけ別レイヤー**になっている。眉が上にずれても下から肌色の
+レイヤーが出てくるので、眉があった跡は残らない。
+
+眉毛はキラキラ（`.sparkle-hop`）と `--hop-cycle` を共有していて、必ず同じ瞬間に
+パキッと切り替わる。動きの量は `browConfig.ts` の `lift`（画面上のpx）。
+
+イラストを描き直した時は [scripts/illust-trace.py](scripts/illust-trace.py) で
+`illustMainPaths.ts` を作り直す（手で書き換えない）。もとのPNGは
+`public/img/illust-main.png` に残してある。横顔の「ぼーっ」はPNGのまま。
 
 ## 比較用モックページ
 
@@ -50,4 +65,5 @@ npx vercel redeploy abashiri-site.vercel.app
 | `/mock/bubble/tune` | 吹き出しの数値を触りながら確認する調整パネル |
 | `/mock/tune` | 登場タイミングの調整パネル |
 | `/mock/illust` | 人物イラストのスイング |
+| `/mock/brow` | 眉毛ピクッの調整パネル（顔を拡大した確認窓つき） |
 | `/mock/kv` / `/mock/layout` / `/mock/shadow` / `/mock/bird` | キービジュアル各種 |

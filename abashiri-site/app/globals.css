@@ -115,7 +115,21 @@ body {
   }
 }
 .sparkle-hop {
-  animation: sparkle-hop 1.5s linear infinite;
+  animation: sparkle-hop var(--hop-cycle, 1.5s) linear infinite;
+}
+
+/* ===== 眉毛ピクッ（キラキラと同じ拍で上下する。--brow-lift は画面上のpx） ===== */
+@keyframes brow-hop {
+  0%, 49.9% {
+    transform: translateY(0);
+  }
+  50%, 100% {
+    transform: translateY(calc(var(--brow-lift, 0) * -1px));
+  }
+}
+.brow-hop {
+  animation: brow-hop var(--hop-cycle, 1.5s) linear infinite;
+  will-change: transform;
 }
 
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */
