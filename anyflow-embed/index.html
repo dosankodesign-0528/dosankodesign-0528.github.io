@@ -540,11 +540,12 @@
     letter-spacing: -1px;
     line-height: 1;
     color: #0EBBFF;
-    margin-bottom: 16px;   /* カンプ12px + 指定の4px下げ */
+    margin-bottom: 20px;   /* カンプ12px + 指定の4px下げ ×2 = 8px下げ */
   }
   .dev-center .dc-one {
     display: block;
-    font-weight: 200;
+    /* 2026-08-15: ウェイトを1段階下げる指定 (ExtraLight 200 → Thin 100) */
+    font-weight: 100;
     font-size: 44px;
     line-height: normal;
   }
@@ -652,10 +653,12 @@
   .dl-body { width: 301.383px; display: flex; flex-direction: column; gap: 13px; }
   .dl-head { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   /* カンプ: 「API」SF Pro Text Thin(100) 28px ／「の場合」Noto Sans JP Light(300) 18px */
-  .dl-head b { font-family: var(--font-en); font-weight: 200; font-size: 28px; line-height: normal; }
-  .dl-head span { font-weight: 300; font-size: 18px; line-height: normal; }
-  /* カンプ: Noto Sans JP Light(300) 12px / 行間 1.9 */
-  .dl-body p { font-weight: 300; font-size: 12px; line-height: 1.9; }
+  /* カンプ 14937:23895: 「API」= SF Pro Text Ultralight → 実測の対応で 100 */
+  .dl-head b { font-family: var(--font-en); font-weight: 100; font-size: 28px; line-height: normal; }
+  /* カンプ: 「の場合」= Noto Sans JP ExtraLight(200) */
+  .dl-head span { font-weight: 200; font-size: 18px; line-height: normal; }
+  /* カンプ 14937:23895: Noto Sans JP ExtraLight(200) 12px / 行間 1.9 */
+  .dl-body p { font-weight: 200; font-size: 12px; line-height: 1.9; }
 
   /* ===== モック本体: カンプ 14708:37855 を忠実に再現 (840.6×504.37) ===== */
   .dm-panel {
@@ -2233,7 +2236,8 @@ const DEFAULTS = {
              / ラベルと数字を右端そろえ / パネルをいじったらその場でリプレイ */
 /* v52→v53: 数字のカウンターをスロット式(縦帯をマスクで切り取って回す)に */
 /* v53→v54: 上に戻る時のスクロールリプレイをきれいに (奥にいる間は完成状態を見せる) */
-const STORAGE_KEY = 'anyflow-embed-anim-v54';
+/* v54→v55: 開発者体験の見出しをさらに4px下げ＋Thinへ / API・CLI・SDK のウェイトをカンプ 14937:23895 へ */
+const STORAGE_KEY = 'anyflow-embed-anim-v55';
 
 let params = load();
 function load() {
