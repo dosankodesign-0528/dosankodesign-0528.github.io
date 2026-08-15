@@ -1791,7 +1791,6 @@ const DEFAULTS = {
   sections: {
     common: {
       smooth: 5,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
-      maxRate: 0.35,     // 1秒あたりに進める進捗の上限。強くスクロールしても早送りにならない
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -1850,8 +1849,9 @@ const DEFAULTS = {
    / v21→v22: Platform図の字間を撤去、「認証基盤」ラベル追加、コネクタの位置を更新
    / v22→v23: KVは打ち終わってから小ラベル、スクロール速度の上限(maxRate)を全体に、
               ビジョンは画面中央に来てから開始
-   / v23→v24: 波の惑星の配色をカンプ実測の面積比ランプに差し替え) */
-const STORAGE_KEY = 'anyflow-embed-anim-v24';
+   / v23→v24: 波の惑星の配色をカンプ実測の面積比ランプに差し替え
+   / v24→v25: スクロール速度の上限(maxRate)は“のっそり”するため撤去。元の追従に戻した) */
+const STORAGE_KEY = 'anyflow-embed-anim-v25';
 
 let params = load();
 function load() {
@@ -2231,7 +2231,7 @@ function updateVision(p) {
      いまは実績と同じく【時間でも進む／スクロールでも進む、速い方を採用】。
      止まっていても勝手に再生され、スクロールした分はちゃんと先へ進む。
      max で持つので巻き戻りもしない (リプレイなし) */
-  const pre = progOverride.visionPre != null ? progOverride.visionPre : smoothTo('visionPre', preP(SECS.vision));
+  const pre = progOverride.visionPre != null ? progOverride.visionPre : preP(SECS.vision);
   /* 【出だしだけ自動、あとは全部スクロール】(2026-08-14 ヒデさん選択)
        ・セクションが画面に入ったら、まず「Our Vison」と1行目までを時間で出す (VIS_AUTO_HEAD 秒)
        ・そこから先 (2行目 → 上下に分かれる → 軌道が出る → 左下へ → 2つの価値) は
@@ -2422,7 +2422,7 @@ function updateResults(p) {
   /* 前のセクションが抜けてから固定が始まるまでの1画面(乗り換え区間)も物語に使う。
      ここを空けておくと「何回もスクロールしないと進まない」に見えるため、
      助走のうちに画像が出はじめるようにしてある */
-  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : smoothTo('resultsPre', preP(SECS.results));
+  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
   if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (q / 0.92) * RES_TOTAL);
@@ -2711,7 +2711,7 @@ function updateDev(pRaw) {
   /* ⚠️ 前のセクションが抜けてから固定が始まるまでの1画面は、
      このままだと「黒い画面がせり上がってくるだけで何も起きない」空スクロールになる。
      助走ぶんを進捗の頭 12% として繰り込み、1つめの訴求文が助走のうちに出るようにする */
-  const pre = progOverride.devPre != null ? progOverride.devPre : smoothTo('devPre', preP(SECS.dev));
+  const pre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
   const PRE = 0.12;
   const p = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
 
@@ -2805,7 +2805,7 @@ function updateCases(p) {
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
      こうしないと、前の開発者体験セクションの固定が外れてから
      ここが固定され始めるまでの1画面ぶんが、まるまる何も起きない空スクロールになる */
-  const pre = progOverride.casesPre != null ? progOverride.casesPre : smoothTo('casesPre', preP(SECS.cases));
+  const pre = progOverride.casesPre != null ? progOverride.casesPre : preP(SECS.cases);
   /* 「導入事例」の文字は乗り換え区間に入った直後から出す。
      こうすると黒いセクションを抜けた瞬間にもう文字が見えていて、
      真っさらな画面を挟まずに次の話へ移れる */
@@ -2847,25 +2847,15 @@ function resetSectionClocks() {
 }
 
 /* スクロール慣性補間: 生のスクロール進捗を毎フレーム少しずつ追いかける (lenis風のぬるっと感) */
-/* 助走(Pre)も同じ上限をかけるので、セクションごとに2つずつ持つ */
-const smoothP = { vision: -1, dev: -1, cases: -1, results: -1,
-                  visionPre: -1, devPre: -1, casesPre: -1, resultsPre: -1 };   // -1 = 未初期化
+const smoothP = { vision: -1, dev: -1, cases: -1, results: -1 };   // -1 = 未初期化
+/* ⚠️ 2026-08-14: 一度「1秒あたりの進捗上限(maxRate)」を入れたが、
+   スクロールしても画面が進まない“のっそり”した感じになり不採用。元の追従に戻した。
+   早送り対策は、進捗を鈍らせるのではなく【出現アニメを時間駆動にする】方向で解く。 */
 function smoothTo(key, target) {
-  const c = params.sections.common;
-  if (smoothP[key] < 0) { smoothP[key] = target; return target; }
-  let next = c.smooth > 0
-    ? smoothP[key] + (target - smoothP[key]) * (1 - Math.exp(-frameDt * c.smooth))
-    : target;
-  /* ⚠️ ページ全体共通ルール (2026-08-14):
-     ホイールを強く回しても、アニメの再生スピードは変えない。
-     1秒あたりに進める進捗の上限を決めて、それ以上は速くならないようにする。
-     こうしないと勢いよくスクロールした時だけ演出が早送りになり、
-     ゆったりした体験が壊れる。上限は「1セクションを渡り切るのに最低何秒か」で決まる
-     (maxRate 0.35 なら約2.9秒) */
-  const cap = c.maxRate * frameDt;
-  const d = next - smoothP[key];
-  if (Math.abs(d) > cap) next = smoothP[key] + (d > 0 ? cap : -cap);
-  smoothP[key] = next;
+  const k = params.sections.common.smooth;
+  if (k <= 0 || smoothP[key] < 0) { smoothP[key] = target; return target; }
+  const a = 1 - Math.exp(-frameDt * k);
+  smoothP[key] += (target - smoothP[key]) * a;
   if (Math.abs(target - smoothP[key]) < 0.0004) smoothP[key] = target;
   return smoothP[key];
 }
@@ -3270,15 +3260,21 @@ const rows = [];
 let mount = null;   // slider() などの追加先 (現在の小カテゴリの親)
 
 /* 大カテゴリ (開閉できる箱) */
+/* ⚠️ 惑星やライトのピルを押すと buildPanel() でパネルを作り直すため、
+   何もしないと【開いていたカテゴリが閉じ、見ていた位置も先頭に飛ぶ】。
+   開閉状態はここで覚えておき、スクロール位置は buildPanel() の前後で退避・復元する */
+const catOpen = {};
 function category(title, open) {
+  const isOpen = (catOpen[title] !== undefined) ? catOpen[title] : open;
+  catOpen[title] = isOpen;
   const cat = document.createElement('div');
-  cat.className = 'cat' + (open ? '' : ' closed');
+  cat.className = 'cat' + (isOpen ? '' : ' closed');
   const head = document.createElement('div');
   head.className = 'cat-head';
   head.innerHTML = `<span>${title}</span><span class="cat-chev">▾</span>`;
   const content = document.createElement('div');
   content.className = 'cat-body';
-  head.onclick = () => cat.classList.toggle('closed');
+  head.onclick = () => { catOpen[title] = !cat.classList.toggle('closed'); };
   cat.append(head, content);
   body.appendChild(cat);
   return content;
@@ -3342,6 +3338,7 @@ function pillRow(items, isOn, onPick) {
 /* ページの流れと同じ順番で並べる:
    全体 → キービジュアル → ビジョン → 実績 → 開発者体験 → 導入事例 */
 function buildPanel() {
+  const keepScroll = body.scrollTop;   // 作り直しでスクロール位置が飛ばないように退避
   body.innerHTML = '';
   rows.length = 0;
   const sv = () => params.sections;
@@ -3351,9 +3348,6 @@ function buildPanel() {
   sub(catAll, 'スクロール');
   rows.push(slider('滑らかさ', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v));
-  /* 強くスクロールしても再生が早送りにならないようにする上限 */
-  rows.push(slider('再生スピードの上限', 0.1, 1.5, 0.05, () => sv().common.maxRate, v => sv().common.maxRate = v,
-    v => '1周 ' + (1 / v).toFixed(1) + '秒'));
 
   /* ========== 🖼 キービジュアル ========== */
   const catKv = category('🖼 キービジュアル', false);
@@ -3503,6 +3497,7 @@ function buildPanel() {
     setTimeout(() => { copy.textContent = '📋 いまの設定をコピー（デフォルト化用）'; }, 3000);
   };
   body.appendChild(copy);
+  body.scrollTop = keepScroll;         // 見ていた位置に戻す
 }
 buildPanel();
 applyMarquee();
