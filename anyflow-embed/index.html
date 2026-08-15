@@ -1819,9 +1819,9 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: { lenVh: 220, countDur: 2.8, imgBlur: 24 },
-    dev:     { lenVh: 850, swapBlur: 14 },           // 尺 / CLI・API・SDK切替のブラー量
+    dev:     { lenVh: 850, swapBlur: 14, rate: 0.085 },           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
-    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44 },
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44, rate: 0.16 },
   },
   patterns: { dev: 'A', cases: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1850,8 +1850,10 @@ const DEFAULTS = {
    / v22→v23: KVは打ち終わってから小ラベル、スクロール速度の上限(maxRate)を全体に、
               ビジョンは画面中央に来てから開始
    / v23→v24: 波の惑星の配色をカンプ実測の面積比ランプに差し替え
-   / v24→v25: スクロール速度の上限(maxRate)は“のっそり”するため撤去。元の追従に戻した) */
-const STORAGE_KEY = 'anyflow-embed-anim-v25';
+   / v24→v25: スクロール速度の上限(maxRate)は“のっそり”するため撤去。元の追従に戻した
+   / v25→v26: Platform図の役割ラベルをドット基準の相対配置に変更、
+              スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長) */
+const STORAGE_KEY = 'anyflow-embed-anim-v26';
 
 let params = load();
 function load() {
@@ -2101,6 +2103,22 @@ function pinP(sec) {
   if (total <= 0) return 0;
   return clamp01(-r.top / total);
 }
+/* ===== スクロール＝きっかけ / 再生＝時間 (2026-08-14 採用) =====
+   スクロール位置は「ここまで再生してよい」という【上限】だけを決める。
+   実際に絵を進めるのは時間なので、手の速さで再生スピードが変わらない。
+     ・勢いよく回す → 上限だけ先に飛ぶ。絵は等速で追いかける = 早送りにならない
+     ・少し回す     → 上限が少し進む。そのぶんを再生して待つ = 見せたい所で見てもらえる
+     ・止める       → 上限まで再生して止まる。続きはスクロールで解放する
+   ⚠️ 以前やった「進捗そのものに速度上限をかける」方式とは別物。
+      あれはスクロールしても画面が動かず“のっそり”して不採用になった。 */
+const storyP = {};
+function gateP(key, target, rate) {
+  const prev = storyP[key] === undefined ? 0 : storyP[key];
+  /* 時間で進む量は rate(1秒あたり)。スクロールが許した target を超えない。戻りもしない */
+  storyP[key] = Math.max(prev, Math.min(target, prev + frameDt * rate));
+  return storyP[key];
+}
+
 /* セクションが画面下から入ってきた割合 0〜1（0=画面下端に到達 / 1=画面いっぱいに来て固定開始）。
    ⚠️ sticky の仕組み上、前のセクションの固定が外れてから次のセクションが固定され始めるまでに
    ちょうど1画面ぶんのスクロールが必ず挟まる。そこで何も起きないと「無駄なスクロール」に見えるので、
@@ -2134,16 +2152,23 @@ const PF_DOTS = [
   { ell: 0, deg: -30.6, color: '#0EBBFF' },
   { ell: 1, deg: 205.4, color: '#FF5D97' },
 ];
-/* 役割名: カンプの実座標 (TOP座標の y から 1851.98 を引いた値) */
-/* カンプ 14693:28351 の実測 (frame座標 y − 1851.98)。
-   ⚠️ 2026-08-14: カンプ側が更新されており「認証基盤」が追加、コネクタも移動していた。
-   center:true は中央そろえ (カンプが -translate-x-1/2 になっている) */
+/* 役割ラベルは【ドットからの相対位置】で持つ (カンプ 14693:28351 実測)。
+   dot = PF_DOTS の番号 / dx,dy = ドット中心からラベル枠左上までのズレ。
+   ⚠️ 以前はカンプの絶対座標を直接書いていたため、
+     ・ドットの停止角度を直す
+     ・カンプが更新される
+     ・軌道の拡大率が変わる
+   のどれが起きてもラベルだけ取り残されてズレた（実際に2回踏んだ）。
+   ドット基準にしておけば、ドットが動いてもラベルは必ず付いてくる。
+   ※ カンプのドットは楕円の線から最大7.5pxほど手でずらして置かれているが、
+      ラベルはドット基準なので、そのズレの影響を受けない。
+   center:true は中央そろえ (カンプが -translate-x-1/2)。 */
 const PF_LABELS = [
-  { text: 'コネクタ',     x: 226.03, y: 226.82 },
-  { text: '認証基盤',     x: 707.19, y: 59.10, center: true },
-  { text: 'ワークフロー', x: 700.37, y: 329.84 },
-  { text: '権限',         x: 548.87, y: 430.34 },
-  { text: '監査',         x: 202.16, y: 560.82 },
+  { text: 'コネクタ',     dot: 0, dx: -26.30, dy:  18.32 },
+  { text: '監査',         dot: 1, dx: -15.61, dy:  13.38 },
+  { text: '権限',         dot: 2, dx:  -0.01, dy:  13.38 },
+  { text: 'ワークフロー', dot: 3, dx:  -0.01, dy:  16.71 },
+  { text: '認証基盤',     dot: 4, dx:   0.00, dy: -37.90, center: true },
 ];
 const pfEllEls = [...document.querySelectorAll('.pf-wrap svg ellipse')];
 function pfDotPos(d, deg) {
@@ -2181,8 +2206,13 @@ const visEls = {
     const nm = document.createElement('div');
     nm.className = 'pf-name rv';
     nm.textContent = l.text;
-    nm.style.left = l.x + 'px';
-    nm.style.top = l.y + 'px';
+    /* 担当ドットの「停止位置」を計算して、そこからの相対で置く。
+       .pf-texts は軌道と同じ translate+scale が掛かるので、
+       ここはローカル座標のままでよい (拡大しても関係が崩れない) */
+    const d = PF_DOTS[l.dot];
+    const at = pfDotPos(d, d.deg);
+    nm.style.left = (at.x + l.dx).toFixed(2) + 'px';
+    nm.style.top = (at.y + l.dy).toFixed(2) + 'px';
     if (l.center) nm.classList.add('is-center');
     textRoot.appendChild(nm);
     visEls.names.push(nm);
@@ -2216,7 +2246,9 @@ const visEls = {
    そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
 let visAutoT0 = null;    // 自動シーケンスの開始時刻
 let visT = -1;           // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
-const VIS_TOTAL = 10.0;      // 「2つの価値」まで全部出そろうまでの秒数
+/* 自動パート(5.275) + 軌道が左下へ(2.0) + ドットが周回して停止(spinDur4 + spinBrake2.5) を
+   ぜんぶ含む長さ。⚠️ ここが短いとドットが回りっぱなしで止まらない（実際に踏んだ） */
+const VIS_TOTAL = 12.6;
 const VIS_AUTO_HEAD = 2.05;  // ここまでは自動 (「Our Vison」と1行目が出るところまで)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
@@ -2241,8 +2273,9 @@ function updateVision(p) {
      セクションがビューポートの中央まで来てから開始する (pre = 0.5) */
   if (visAutoT0 === null && pre >= 0.5) visAutoT0 = elapsed;
   const head = visAutoT0 === null ? 0 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
-  const body = clamp01(p / 0.88) * (VIS_TOTAL - VIS_AUTO_HEAD);
-  if (visAutoT0 !== null) visT = Math.max(visT, head + body);
+  /* スクロールが解放する上限。実際に進むのは gateP が時間で回す (1秒/秒) */
+  const limit = head + clamp01(p / 0.88) * (VIS_TOTAL - VIS_AUTO_HEAD);
+  if (visAutoT0 !== null) visT = gateP('vision', limit, 1);
   const A = visAutoT0 === null ? -1 : visT;
 
   /* --- 自動パートの時間割 (秒) --- */
@@ -2425,7 +2458,8 @@ function updateResults(p) {
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
-  if (resT0 !== null) resT = Math.max(resT, elapsed - resT0, (q / 0.92) * RES_TOTAL);
+  /* スクロールが上限を決め、時間が進める (1秒/秒) */
+  if (resT0 !== null) resT = gateP('results', (q / 0.92) * RES_TOTAL, 1);
   const t = resT;
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
@@ -2713,7 +2747,9 @@ function updateDev(pRaw) {
      助走ぶんを進捗の頭 12% として繰り込み、1つめの訴求文が助走のうちに出るようにする */
   const pre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
   const PRE = 0.12;
-  const p = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
+  const pLimit = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
+  /* 1つの見せ場(6〜14%)が 0.8〜1.7秒で流れる速さ */
+  const p = gateP('dev', pLimit, c.rate);
 
   const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
   const rise = seg(p, ...DEV_P.rise, easeSlick);   // せり上がりも「ぬるっと」で
@@ -2799,8 +2835,10 @@ const caseTop = () => (isMobile ? 118 : 172);
    奥へ送られたカードは 0.1 ずつ縮むので、手前のカードの内側に隠れる。
    ズラして重ねたい時は調整パネルの「重なりのズレ」を 0 より大きくする。 */
 
-function updateCases(p) {
+function updateCases(pRaw) {
   const c = params.sections.cases;
+  /* スクロールが上限を決め、時間が進める */
+  const p = gateP('cases', pRaw, c.rate);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
      こうしないと、前の開発者体験セクションの固定が外れてから
@@ -2843,6 +2881,7 @@ function updateCases(p) {
 function resetSectionClocks() {
   visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1;
   resT0 = null; resT = -1;
+  for (const k in storyP) delete storyP[k];
   devHoldT0 = null; devScreenT0 = null; devStarted = false;
 }
 
@@ -2850,7 +2889,7 @@ function resetSectionClocks() {
 const smoothP = { vision: -1, dev: -1, cases: -1, results: -1 };   // -1 = 未初期化
 /* ⚠️ 2026-08-14: 一度「1秒あたりの進捗上限(maxRate)」を入れたが、
    スクロールしても画面が進まない“のっそり”した感じになり不採用。元の追従に戻した。
-   早送り対策は、進捗を鈍らせるのではなく【出現アニメを時間駆動にする】方向で解く。 */
+   早送り対策は、進捗を鈍らせるのではなく【上限だけ決めて時間で進める】方向で解いた。 */
 function smoothTo(key, target) {
   const k = params.sections.common.smooth;
   if (k <= 0 || smoothP[key] < 0) { smoothP[key] = target; return target; }
@@ -3444,6 +3483,7 @@ function buildPanel() {
   const catDev = category('🖥 開発者体験', false);
   sub(catDev, 'スクロール尺');
   rows.push(slider('尺', 300, 1600, 20, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('再生スピード', 0.03, 0.3, 0.005, () => sv().dev.rate, v => sv().dev.rate = v, v => '全部で' + (1 / v).toFixed(1) + '秒'));
   sub(catDev, '演出');
   rows.push(slider('切替ブラー量', 0, 24, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px'));
 
@@ -3451,6 +3491,7 @@ function buildPanel() {
   const catCase = category('🗂 導入事例', false);
   sub(catCase, 'スクロール尺');
   rows.push(slider('尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
+  rows.push(slider('再生スピード', 0.05, 0.5, 0.01, () => sv().cases.rate, v => sv().cases.rate = v, v => '全部で' + (1 / v).toFixed(1) + '秒'));
   sub(catCase, '演出');
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
   sub(catCase, '重なり');
