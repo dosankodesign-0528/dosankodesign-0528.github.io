@@ -1224,10 +1224,10 @@
       <svg class="layer-back" viewBox="0 0 915.483 630" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="gInnerB" x1="475.283" y1="217.363" x2="475.283" y2="483.647" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#00ABEB"/><stop offset="1" stop-color="#FF5D97"/>
+            <stop stop-color="#00ABEB"/><stop offset="0.490385" stop-color="white"/><stop offset="1" stop-color="#FF5D97"/>
           </linearGradient>
           <linearGradient id="gOuterB" x1="457.741" y1="160.517" x2="457.741" y2="452.569" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FF5D97"/><stop offset="1" stop-color="#00ABEB"/>
+            <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
         </defs>
         <ellipse id="ellInnerB" cx="475.283" cy="350.505" rx="397.09" ry="133.142" transform="rotate(-23.3266 475.283 350.505)" stroke="url(#gInnerB)" stroke-width="3"/>
@@ -1242,10 +1242,10 @@
       <svg class="layer-front" viewBox="0 0 915.483 630" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="gInnerF" x1="475.283" y1="217.363" x2="475.283" y2="483.647" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#00ABEB"/><stop offset="1" stop-color="#FF5D97"/>
+            <stop stop-color="#00ABEB"/><stop offset="0.490385" stop-color="white"/><stop offset="1" stop-color="#FF5D97"/>
           </linearGradient>
           <linearGradient id="gOuterF" x1="457.741" y1="160.517" x2="457.741" y2="452.569" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#FF5D97"/><stop offset="1" stop-color="#00ABEB"/>
+            <stop stop-color="#FF5D97"/><stop offset="0.403846" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
           <clipPath id="clipInnerF">
             <rect id="clipInnerRect" x="-420" y="0" width="840" height="160" transform="translate(475.283 350.505) rotate(-23.3266)"/>
@@ -1302,11 +1302,11 @@
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="pfG0" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#FF5D97"/><stop offset="1" stop-color="#00ABEB"/>
-            </linearGradient>
+            <stop stop-color="#FF5D97"/><stop offset="0.370192" stop-color="#FFCFE0"/><stop offset="0.490385" stop-color="white"/><stop offset="0.600962" stop-color="#A2E6FF"/><stop offset="1" stop-color="#00ABEB"/>
+          </linearGradient>
             <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#00ABEB"/><stop offset="1" stop-color="#FF5D97"/>
-            </linearGradient>
+            <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
+          </linearGradient>
             <filter id="pfGlowF" x="-10%" y="-10%" width="120%" height="120%">
               <feGaussianBlur stdDeviation="2"/>
             </filter>
@@ -2038,8 +2038,9 @@ const DEFAULTS = {
    / v35→v36: 通り過ぎた後に頭へ引き戻されるループを修正 / キーメッセージの出方を2種類に
               / 軌道の出現と移動を同時に(moveLead) / 待ちを全体的に短縮
    / v36→v37: 軌道ライト廃止 / 惑星デザインのキーを A1..C3 に振り直し / ゆらぎ既定=クロス
-              / パネルを階層化＋全項目に補足 / 実績を中央寄せ＋画像レスポンシブ＋パララックス) */
-const STORAGE_KEY = 'anyflow-embed-anim-v37';
+              / パネルを階層化＋全項目に補足 / 実績を中央寄せ＋画像レスポンシブ＋パララックス
+   / v37→v38: 軌道グラデの白をカンプ通りに戻した) */
+const STORAGE_KEY = 'anyflow-embed-anim-v38';
 
 let params = load();
 function load() {
