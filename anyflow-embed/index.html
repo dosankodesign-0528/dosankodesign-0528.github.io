@@ -241,18 +241,20 @@
   /* ブラー出現の共通初期状態 (JSが毎フレーム上書きする) */
   .rv { opacity: 0; will-change: opacity, filter, transform; }
 
-  /* ---- Vision セクション (カンプ 14708:37961 準拠) ----
-     Our Vison = SF Pro Light 40px / 本文 = Noto Sans JP Thin 100px lh1.7 / gap 13px */
-  /* セクション全体を50px上げた位置 (カンプ264 → 214) */
+  /* ---- Vision セクション (カンプ 14708:37961・2026-08-15 再取得) ----
+     枠は flex column / gap 24px / 中央そろえ
+       Our Vision = SF Pro Text Light(300) 26px / 行間 1 / #000
+       本文       = Noto Sans JP Thin(100) 100px / 行間 1.7 / #101828
+     かたまりの高さ = 26 + 24 + 170×2 = 390px。921px のステージの上下中央に置く */
   .vis-label {
     position: absolute;
     left: 0;
     right: 0;
-    text-align: center;     /* 2026-08-14: 左寄せ → 中央寄せに変更 */
-    top: 214px;
+    text-align: center;
+    top: 265.5px;
     font-family: var(--font-en);
     font-weight: 300;
-    font-size: 40px;
+    font-size: 26px;
     line-height: 1;
     color: #000;
   }
@@ -271,8 +273,8 @@
   }
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
-  .vis-l1 { top: 267px; }
-  .vis-l2 { top: 437px; }
+  .vis-l1 { top: 315.5px; }   /* 265.5 + 26 + gap24 */
+  .vis-l2 { top: 485.5px; }   /* + 行間170 */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -520,6 +522,7 @@
   /* ⚠️ モックと右リストを固定の left で置くと、画面幅が広がった時に左へ寄ってしまう
      （実測 1637px幅で 左105 / 右302 とズレた）。1230px の枠ごと画面中央に置くこと */
   .dev-group {
+    perspective: 1600px;
     position: absolute;
     left: 50%;
     margin-left: -615px;      /* 1230 / 2 */
@@ -527,6 +530,31 @@
     top: 274px;
     height: 504.37px;
   }
+  /* 後ろに控えるモック(影武者)。中身は作らず、パネルの形だけを出す。
+     カンプ 14924:21985 の実測: 手前 760.4×456.2 / 中 684.3×410.6 / 奥 615.9×369.5
+     → 840.6 基準で 0.905 / 0.814 / 0.733 倍。左右にずらして端をのぞかせる */
+  .dm-ghost {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 840.6px;
+    height: 504.37px;
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+    pointer-events: none;
+  }
+  .dm-ghost .dg-panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 24px;
+    background: rgba(255,255,255,.06);
+    box-shadow: 0 24px 48px rgba(0,0,0,.25);
+    overflow: hidden;
+  }
+  .dm-ghost .dg-side { flex: 0 0 52px; background: rgba(255,255,255,.07); }
+  .dm-ghost .dg-body { flex: 1 0 0; }
   .dev-mock {
     position: absolute;
     left: 0;
@@ -558,20 +586,39 @@
     display: flex;
     align-items: center;
     gap: 28px;
-    opacity: .2;
     cursor: pointer;
-    transition: opacity var(--t-fast) var(--e-fast);
-    will-change: opacity, filter;
+    will-change: opacity;
   }
-  .dl-item.is-on { opacity: 1; }
   .dl-bar {
     align-self: stretch;
     width: 1px;
     background: #fff;
     opacity: 0;
-    transition: opacity var(--t-fast) var(--e-fast);
+    transform: scaleY(.3);
+    transform-origin: 50% 50%;
+    /* 反応感のいいオーバーアクション: 少し行き過ぎてから戻る */
+    transition: opacity .18s var(--e-fast), transform .32s cubic-bezier(.2,1.5,.35,1);
   }
-  .dl-item.is-on .dl-bar { opacity: 1; }
+  .dl-item.is-on .dl-bar { opacity: 1; transform: scaleY(1); }
+  /* 【2026-08-15】ブラーでの切替はやめ、下線が伸びて白文字になるだけにした */
+  .dl-head b, .dl-head span {
+    position: relative;
+    transition: color .16s var(--e-fast);
+  }
+  .dl-head { position: relative; padding-bottom: 6px; }
+  .dl-head::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: #fff;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    /* 行き過ぎてから戻る = 反応がいい */
+    transition: transform .34s cubic-bezier(.2,1.4,.3,1);
+  }
+  .dl-item.is-on .dl-head::after { transform: scaleX(1); }
+  .dl-item.is-on .dl-head b, .dl-item.is-on .dl-head span { color: #fff; }
   .dl-body { width: 301.383px; display: flex; flex-direction: column; gap: 13px; }
   .dl-head { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
   /* カンプ: 「API」SF Pro Text Thin(100) 28px ／「の場合」Noto Sans JP Light(300) 18px */
@@ -938,7 +985,7 @@
     .mq-set img { height: 26px; }
 
     /* --- ビジョン --- */
-    .vis-label { left: 24px; top: 74px; font-size: 18px; }
+    .vis-label { left: 24px; top: 74px; font-size: 15px; }
     .vis-line { left: 20px; font-size: 32px; line-height: 54px; }
     .vis-l1 { top: 116px; }
     .vis-l2 { top: 170px; }
@@ -991,6 +1038,7 @@
     .dev-center .dc-one { font-size: 24px; line-height: 36px; }
     /* モックは JS 側で 0.40 倍。中央に置いて左右の余白を揃える */
     .dev-group { left: 0; margin-left: 0; width: 390px; top: 0; height: auto; }
+    .dm-ghost { display: none; }   /* スマホでは重ねない */
     .dev-mock { left: 50%; top: 190px; margin-left: -420.3px; }
     .dev-list { left: 24px; top: 470px; width: 342px; padding-top: 0; gap: 22px; align-items: flex-start; }
     .dl-body { width: 314px; }
@@ -1319,7 +1367,7 @@
 <section class="pin" id="vision">
   <div class="pin-vp">
     <div class="pin-stage">
-      <div class="vis-label rv" id="visLabel">Our Vison</div>
+      <div class="vis-label rv" id="visLabel">Our Vision</div>
       <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、</span></div>
       <div class="vis-line vis-l2" id="visL2"><span class="vl-in">強みになる時代へ。</span></div>
 
@@ -1410,6 +1458,9 @@
         <span class="dc-one">開発環境に柔軟に適応</span>
       </div>
       <div class="dev-group">
+      <!-- カンプ 14924:21985: モックの後ろに2枚控える。ホバーで前後が入れ替わる -->
+      <div class="dm-ghost" id="dmGhost0" aria-hidden="true"><div class="dg-panel"><div class="dg-side"></div><div class="dg-body"></div></div></div>
+      <div class="dm-ghost" id="dmGhost1" aria-hidden="true"><div class="dg-panel"><div class="dg-side"></div><div class="dg-body"></div></div></div>
       <div class="dev-mock" id="devMock">
         <div class="dm-panel" id="dmPanel">
           <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
@@ -2018,7 +2069,7 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
-      lenVh: 150,
+      lenVh: 130,
       countDur: 2.2,   // 数字がランダムから確定するまで
       countAt: 0.45,   // 数字が回り始めるまで
       imgBlur: 24,     // 画像が出る時のぼかし量
@@ -2027,16 +2078,17 @@ const DEFAULTS = {
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
-      outFrom: 0.30,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
-      outTo: 0.90,     // 案B: ここで完全に暗い背景になる
+      outFrom: 0.55,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
+      outTo: 0.86,     // 案B: ここで完全に暗い背景になる (短くして一気に切り替える)
       outBlur: 22,     // 消える時のぼかし量
     },
-    dev:     { lenVh: 220, swapBlur: 14 },   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
+    dev:     { lenVh: 200, swapBlur: 14 },   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 200, depth: 1, inBlur: 20, gap: 44, playSec: 5.4 },
   },
   patterns: {
     results: 'B',   // 実績のレイアウト A=横長画像 / B=左端の縦帯(カンプ 14831:22066)
+    devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
   },   // セクション演出の採用案
 };
@@ -2092,7 +2144,9 @@ const DEFAULTS = {
 /* v42→v43: 実績に案B(カンプ 14831:22066)を追加して既定に。案Aは「テキスト→画像」の順へ */
 /* v43→v44: スキップ削除 / モックの会話を作り直し / モックは消さず左へスライド
              / 実績(案B)の終わりで暗い背景へトランジション */
-const STORAGE_KEY = 'anyflow-embed-anim-v44';
+/* v44→v45: ビジョンと実績のフォントをカンプ再取得値へ / 実績→開発者体験を1スクロールで切替
+             / 章②を短縮しリストは一括 / ホバーは下線＋白文字 / 開発者体験②を3枚スタックに */
+const STORAGE_KEY = 'anyflow-embed-anim-v45';
 
 let params = load();
 function load() {
@@ -2988,6 +3042,7 @@ const devEls = {
   panel: document.getElementById('dmPanel'),
   list: document.getElementById('devList'),
   listItems: [...document.querySelectorAll('#devList .dl-item')],
+  ghosts: [document.getElementById('dmGhost0'), document.getElementById('dmGhost1')],
 };
 /* 絵コンテのコマ順:
    ①真っ黒→「自動生成で開発スピードを加速」(1行)がブラー出現・下にモックちら見え
@@ -3012,19 +3067,35 @@ const devEls = {
    ①モックが下からスケールアップ → 見出し① → 中の会話とコード
    ②【見出し①だけ】ブラーで消え、モックは消えずにそのまま左へスライド
      → 見出し② → 右の API/CLI/SDK がブラーで出現 */
+/* ===== 開発者体験の時間割 =====
+   ①モックが下からスケールアップ → 見出し① → 中の会話とコード
+   ②見出し①だけブラーで消え、モックは消えずに左へスライド。
+     【2026-08-15】のっそりしていたので短縮し、見出し②とリストは移動と重ねて同時に出す */
 const DEV_P = {
   mock1: [0.000, 0.110],  // ①モックが下からスケールアップ
   h1:    [0.120, 0.200],  // ①見出し
-  out1:  [0.420, 0.500],  // ②見出し①だけがブラーで消える (モックは消さない)
-  move:  [0.480, 0.720],  // ②モックが中央 → カンプの位置(左)へスライド
-  h2:    [0.660, 0.760],  // ②見出し
-  list:  [0.760, 1.000],  // ②右のリストが順に出る
+  out1:  [0.420, 0.470],  // ②見出し①だけがブラーで消える (モックは消さない)
+  move:  [0.450, 0.640],  // ②モックが中央 → 左へスライド
+  h2:    [0.560, 0.660],  // ②見出し (移動の途中から重ねて出す)
+  list:  [0.600, 0.720],  // ②右のリストは【一括】で出す
 };
+/* カンプ 14924:21985 の実測から起こしたカードスタック。
+   手前(実物) 0.905倍 / 中 0.814倍 / 奥 0.733倍。中は左に、奥は右にずらして端をのぞかせる。
+   選ばれている画面が変わると、この3つの席を回して入れ替わる（3Dっぽく見せる） */
+/* カンプの実測（3枚の中心座標の差）から起こした値
+   手前 中心(498.3, 549.4) / 中 中心(403.8, 552.4) / 奥 中心(626.8, 533.1) */
+const DEV_STACK = [
+  { sc: 0.905, dx:     0, dy:    0, op: 1.00, z: 3 },   /* 手前 = 実物のモック */
+  { sc: 0.814, dx: -94.5, dy:    3, op: 0.55, z: 2 },   /* 中 = 左にのぞく */
+  { sc: 0.733, dx: 128.5, dy:  -16, op: 0.38, z: 1 },   /* 奥 = 右にのぞく */
+];
+const DEV_SCREENS = ['api', 'cli', 'sdk'];
+
 const DEV_CH = [
   /* ⚠️ 章の終わり(to)は「退場の開始点(out1[0]=0.42)」より必ず手前に置くこと。
      同じ値にすると、章の最後のフレームで退場側の描き方に落ちて絵が消えてしまう */
   { from: 0.00, to: 0.40, sec: 6.0, at: 0.00 },   /* ① */
-  { from: 0.40, to: 1.00, sec: 8.4, at: 0.42 },   /* ② */
+  { from: 0.40, to: 1.00, sec: 5.6, at: 0.42 },   /* ② (8.4→5.6秒に短縮) */
 ];
 /* 章が全部終わってから、あと何割スクロールしたら白へ戻りきるか */
 const DEV_FIN = 0.30;
@@ -3317,8 +3388,13 @@ function updateDev(pRaw) {
   const pat = params.patterns.dev;
   /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
   const p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
+  const patStack = params.patterns.devStack !== 'off';   /* 後ろに2枚控えるスタック */
 
-  const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
+  /* 【2026-08-15】実績が暗転しはじめるのと同時にモックが下から出てくるようにする。
+     章の再生を待つと「黒いだけの画面」を挟んでしまうので、助走(preP)でも上げ始める */
+  const devPre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
+  const introK = easeSlick(clamp01((devPre - 0.20) / 0.55));
+  const inM1 = Math.max(introK, seg(p, ...DEV_P.mock1, easeSlick));
   const in1  = seg(p, ...DEV_P.h1,    easeOutQ);
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
   const mv   = seg(p, ...DEV_P.move,  easeSlick);
@@ -3349,7 +3425,7 @@ function updateDev(pRaw) {
   devEls.panel.classList.toggle('is-term', screen === 'cli');
   devEls.panel.classList.toggle('is-sdk',  screen === 'sdk');
   /* 切り替えの瞬間だけ、やわらかくぼける */
-  const swapDipK = devSwapT0 === null ? 0 : swapDip(clamp01((elapsed - devSwapT0) / 0.55));
+  const swapDipK = devSwapT0 === null ? 0 : swapDip(clamp01((elapsed - devSwapT0) / 0.34));
 
   /* ---- モック ---- */
   /* 【2026-08-15】モックは章をまたいでも消さない。中央 → 左へスライドするだけ */
@@ -3359,23 +3435,42 @@ function updateDev(pRaw) {
   const tx = cx * (1 - mv);
   const ty = (1 - inM1) * 120;
   let bl = (1 - inM1) * 10 + swapDipK * c.swapBlur * 0.6 + fin * 16;
+  /* ---- ②では後ろに2枚控えるスタックにする (カンプ 14924:21985) ----
+     ホバーで選択が変わると席が回り、3Dっぽく入れ替わって見える */
+  const stackK = patStack ? mv : 0;                 // 左へ着くにつれてスタックが開く
+  const sel = Math.max(0, DEV_SCREENS.indexOf(screen));
+  devEls.ghosts.forEach((gEl, i) => {
+    if (!gEl) return;
+    /* 実物が「手前」の席。影武者は選択に応じて中/奥の席を入れ替わる */
+    const seat = DEV_STACK[1 + ((i + sel) % 2)];
+    const gx = tx + seat.dx * stackK, gy = ty + seat.dy * stackK;
+    const gs = (0.82 + 0.18 * inM1) * mk * (1 + (seat.sc - 1) * stackK);
+    gEl.style.opacity = (op * seat.op * stackK).toFixed(3);
+    gEl.style.zIndex = seat.z;
+    gEl.style.transform =
+      `translate(${gx.toFixed(2)}px, ${gy.toFixed(2)}px) scale(${gs.toFixed(4)}) rotateY(${(seat.dx > 0 ? -6 : 6) * stackK}deg)`;
+    gEl.style.filter = bl > 0.05 ? `blur(${(bl * 0.6).toFixed(2)}px)` : '';
+  });
+  devEls.mock.style.zIndex = DEV_STACK[0].z;
+  const frontSc = sc * (1 + (DEV_STACK[0].sc - 1) * stackK);
+  const frontY = ty + DEV_STACK[0].dy * stackK;
   devEls.mock.style.opacity = op.toFixed(3);
-  devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${sc.toFixed(4)})`;
+  devEls.mock.style.transform = `translate(${tx.toFixed(2)}px, ${frontY.toFixed(2)}px) scale(${frontSc.toFixed(4)})`;
   devEls.mock.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
 
   /* 最後にスクロールで背景がグラデーションで明るい元の背景へ戻る */
   devBg2.style.opacity = fin.toFixed(3);
 
   /* ---- 右のリスト: 順にブラーで出る → 以降はホバーで選択が動く ---- */
-  const [lA, lB] = DEV_P.list, lStep = (lB - lA) / (devEls.listItems.length + 1);
-  devEls.listItems.forEach((it, i) => {
-    const k = seg(p, lA + i * lStep, lA + i * lStep + lStep * 1.6, easeOutQ);
+  /* 【2026-08-15】ディレイをやめて3つ一括で出す */
+  const listK = seg(p, ...DEV_P.list, easeOutQ);
+  devEls.listItems.forEach((it) => {
+    const k = listK;
     const on = it.dataset.screen === screen;
     it.classList.toggle('is-on', on);
-    /* 0.2 ↔ 1 の行き来は毎フレーム少しずつ寄せて、ホバーの反応をなめらかにする */
-    const want = on ? 1 : 0.2;
-    it._k = it._k == null ? want : it._k + (want - it._k) * Math.min(1, frameDt * 9);
-    it.style.opacity = (k * it._k * (1 - fin)).toFixed(3);
+    /* ⚠️ 以前は毎フレーム少しずつ寄せていたのでホバーの反応が鈍かった。
+       いまは CSS の transition に任せて即座に切り替える */
+    it.style.opacity = (k * (on ? 1 : 0.2) * (1 - fin)).toFixed(3);
     it.style.filter = k < 1 ? `blur(${((1 - k) * 10).toFixed(2)}px)` : '';
   });
 
