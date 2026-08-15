@@ -1769,13 +1769,13 @@ const DEFAULTS = {
   kv: {
     gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
     headerAt: 0.25,   // ヘッダーがブラーで出る
-    eyebrowGap: 0.25, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
+    eyebrowGap: 0.18, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
     typeAt: 1.0,      // タイピング開始
-    charDur: 0.09,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
-    charDur2: 0.20,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
+    charDur: 0.055,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
+    charDur2: 0.115,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
     typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
-    lineGap: 0.45,    // 改行の間
-    graphicGap: 0.45, // 打ち終わってからグラフィックが出るまで
+    lineGap: 0.28,    // 改行の間
+    graphicGap: 0.12, // 小ラベルのあとグラフィックが出るまで（早めに出す）
   },
   orbits: {
     /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
@@ -1855,8 +1855,10 @@ const DEFAULTS = {
               スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長
    / v26→v27: 全セクションを「所定の位置で止めて1本の映像として自動再生」方式に
    / v27→v28: ビジョンの出だし・行間・上下分割と、実績のテキスト出現を詰めた
-   / v28→v29: 描画ループを例外で止まらないようにし、所定の位置へ寄せてから再生開始) */
-const STORAGE_KEY = 'anyflow-embed-anim-v29';
+   / v28→v29: 描画ループを例外で止まらないようにし、所定の位置へ寄せてから再生開始
+   / v29→v30: KVのタイピングを速く、早送りを4倍速に（白へワープするバグ修正）、
+              ビジョンの助走→本編の時間飛びを解消) */
+const STORAGE_KEY = 'anyflow-embed-anim-v30';
 
 let params = load();
 function load() {
@@ -2126,11 +2128,15 @@ function playT(key, total, canStart, sec) {
   if (!st.done && st.t0 === null && canStart) {
     const off = sec ? sec.getBoundingClientRect().top : 0;
     if (Math.abs(off) > 6) {
+      /* ⚠️ 寄せている途中でユーザーが操作すると onComplete が来ないことがある。
+         1.2秒経っても着かなければ諦めてその場で再生を始める（無限に止まらないため） */
       if (!st.snapping) {
-        st.snapping = true;
+        st.snapping = elapsed;
         if (lenis) lenis.scrollTo(sec.offsetTop, { duration: 0.45, lock: true, force: true,
                                                    onComplete: () => { st.snapping = false; } });
         else { window.scrollTo(0, sec.offsetTop); st.snapping = false; }
+      } else if (elapsed - st.snapping > 1.2) {
+        st.snapping = false; st.t0 = elapsed; return 0;
       }
       return -1;
     }
@@ -2150,16 +2156,20 @@ function updateScrollLock() {
   if (key && !scrollLocked) { scrollLocked = true; lockPush = 0; if (lenis) lenis.stop(); }
   else if (!key && scrollLocked) { scrollLocked = false; if (lenis) lenis.start(); }
 }
-/* 再生中にホイールを回し続けたら「早送りして解放」(閉じ込め防止) */
+/* 再生中にホイールを回すと早送りする(閉じ込め防止)。
+   ⚠️ 以前は「残りを一気に飛ばす」実装で、開発者体験だと最終フレーム＝白背景に
+      いきなりワープして【途中から突然真っ白になる】バグになっていた。
+      いまは回している間だけ最大4倍速になる。飛ばずに早く流れるだけ。 */
 window.addEventListener('wheel', e => {
-  if (!scrollLocked) return;
-  lockPush += Math.abs(e.deltaY);
-  if (lockPush > 900) {
-    const key = anyPlaying();
-    if (key) secPlay[key].skip += 999;   // 残りを一気に終わらせる
-    lockPush = 0;
-  }
+  if (scrollLocked) lockPush += Math.abs(e.deltaY);
 }, { passive: true });
+function fastForward() {
+  lockPush *= Math.exp(-frameDt * 2.5);          // 手を止めると数百msで元の速さへ戻る
+  const key = anyPlaying();
+  if (!key) { lockPush = 0; return; }
+  const boost = Math.min(3, lockPush / 260);     // 最大 +3倍（合計4倍速）
+  if (boost > 0.02) secPlay[key].skip += frameDt * boost;
+}
 
 /* ===== (旧) スクロール＝きっかけ / 再生＝時間 =====
    スクロール位置は「ここまで再生してよい」という【上限】だけを決める。
@@ -2332,9 +2342,13 @@ function updateVision(p) {
      セクションがビューポートの中央まで来てから開始する (pre = 0.5) */
   /* 近づいてくる間に「Our Vison」と1行目だけ出す(乗り換え区間を空にしないため)。
      本編はセクションが所定の位置(固定)に着いてから、1本の映像として自動再生 */
-  const approach = pre >= 0.5 ? Math.min(VIS_AUTO_HEAD, elapsed - (visAutoT0 || (visAutoT0 = elapsed))) : -1;
+  if (pre >= 0.5 && visAutoT0 === null) visAutoT0 = elapsed;
+  const approach = visAutoT0 === null ? -1 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
   const main = playT('vision', VIS_TOTAL, p > 0.002, SECS.vision);
-  const A = main >= 0 ? Math.max(main, VIS_AUTO_HEAD) : approach;
+  /* ⚠️ 以前は本編が始まった瞬間に A が 0 → VIS_AUTO_HEAD(1.35秒) へ飛んでいて、
+     助走を見ていない時（勢いよくスクロールした時）に1行目が一瞬で出てカクついた。
+     助走で進んだ分と本編の大きい方を採ると、どちらの入り方でも時間が飛ばない */
+  const A = main >= 0 ? Math.max(main, Math.max(0, approach)) : approach;
 
   /* --- 自動パートの時間割 (秒) --- */
   const l1At = c.line1At;
@@ -3030,6 +3044,7 @@ function updateKV() {
 
 function updateSections() {
   updateScrollLock();
+  fastForward();
   updateKV();
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
