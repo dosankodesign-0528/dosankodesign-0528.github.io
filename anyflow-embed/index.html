@@ -1819,9 +1819,9 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: { lenVh: 220, countDur: 2.8, imgBlur: 24 },
-    dev:     { lenVh: 850, swapBlur: 14, rate: 0.085 },           // 尺 / CLI・API・SDK切替のブラー量
+    dev:     { lenVh: 850, swapBlur: 14, playSec: 16 },   // 1本の映像として何秒で流すか           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
-    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44, rate: 0.16 },
+    cases:   { lenVh: 420, depth: 1, inBlur: 20, gap: 44, playSec: 8 },
   },
   patterns: { dev: 'A', cases: 'A', mock: 'B' },   // セクション演出の採用案
 };
@@ -1852,8 +1852,9 @@ const DEFAULTS = {
    / v23→v24: 波の惑星の配色をカンプ実測の面積比ランプに差し替え
    / v24→v25: スクロール速度の上限(maxRate)は“のっそり”するため撤去。元の追従に戻した
    / v25→v26: Platform図の役割ラベルをドット基準の相対配置に変更、
-              スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長) */
-const STORAGE_KEY = 'anyflow-embed-anim-v26';
+              スクロール＝きっかけ/再生＝時間 方式に、ビジョンの尺をドット停止まで延長
+   / v26→v27: 全セクションを「所定の位置で止めて1本の映像として自動再生」方式に) */
+const STORAGE_KEY = 'anyflow-embed-anim-v27';
 
 let params = load();
 function load() {
@@ -2103,7 +2104,47 @@ function pinP(sec) {
   if (total <= 0) return 0;
   return clamp01(-r.top / total);
 }
-/* ===== スクロール＝きっかけ / 再生＝時間 (2026-08-14 採用) =====
+/* ===== 所定の位置で止めて、再生し終わったら進む (2026-08-14 採用) =====
+   各セクションは【固定位置に着いたら1本の映像として自動再生される】。
+   再生中はスクロールを止め、終わったら解放する。
+     ・見せたい所で必ず最後まで見てもらえる
+     ・手の速さで再生が早送りにならない
+   ⚠️ 閉じ込め防止: 再生中に強くスクロールし続けると残りを早送りして解放する。
+   ⚠️ スマホは Lenis がタッチを握っていない(syncTouch:false)ので止められない。
+      その場合は「時間で再生されるが、スクロールは通る」動作になる。 */
+const secPlay = {};
+let scrollLocked = false, lockPush = 0;
+
+/* canStart になったら再生開始。戻り値は再生位置(秒)。-1 = まだ始まっていない */
+function playT(key, total, canStart) {
+  const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0 });
+  if (!st.done && st.t0 === null && canStart) st.t0 = elapsed;
+  if (st.t0 === null) return -1;
+  const t = elapsed - st.t0 + st.skip;
+  if (t >= total) st.done = true;
+  return Math.min(t, total);
+}
+function anyPlaying() {
+  for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
+  return null;
+}
+function updateScrollLock() {
+  const key = anyPlaying();
+  if (key && !scrollLocked) { scrollLocked = true; lockPush = 0; if (lenis) lenis.stop(); }
+  else if (!key && scrollLocked) { scrollLocked = false; if (lenis) lenis.start(); }
+}
+/* 再生中にホイールを回し続けたら「早送りして解放」(閉じ込め防止) */
+window.addEventListener('wheel', e => {
+  if (!scrollLocked) return;
+  lockPush += Math.abs(e.deltaY);
+  if (lockPush > 900) {
+    const key = anyPlaying();
+    if (key) secPlay[key].skip += 999;   // 残りを一気に終わらせる
+    lockPush = 0;
+  }
+}, { passive: true });
+
+/* ===== (旧) スクロール＝きっかけ / 再生＝時間 =====
    スクロール位置は「ここまで再生してよい」という【上限】だけを決める。
    実際に絵を進めるのは時間なので、手の速さで再生スピードが変わらない。
      ・勢いよく回す → 上限だけ先に飛ぶ。絵は等速で追いかける = 早送りにならない
@@ -2246,9 +2287,10 @@ const visEls = {
    そこから “ワンスクロール” で文字が上下に分かれて消え、軌道が左下へ移動して実寸になる。 */
 let visAutoT0 = null;    // 自動シーケンスの開始時刻
 let visT = -1;           // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
-/* 自動パート(5.275) + 軌道が左下へ(2.0) + ドットが周回して停止(spinDur4 + spinBrake2.5) を
-   ぜんぶ含む長さ。⚠️ ここが短いとドットが回りっぱなしで止まらない（実際に踏んだ） */
-const VIS_TOTAL = 12.6;
+/* 自動パート(5.275) + 軌道が左下へ(2.0) + ドット周回して停止(4+2.5)
+   + そこから Platform〜2つの価値のチェーン(約3.5) をぜんぶ含む長さ。
+   ⚠️ 短いとドットが回りっぱなしになったり、文字が出切らない（両方踏んだ） */
+const VIS_TOTAL = 15.6;
 const VIS_AUTO_HEAD = 2.05;  // ここまでは自動 (「Our Vison」と1行目が出るところまで)
 let visAutoDone = false; // 自動パートが終わったか
 let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時刻
@@ -2271,12 +2313,11 @@ function updateVision(p) {
        ・max で持つので巻き戻らない (スクロールで戻っても終わった状態のまま) */
   /* 2026-08-14: 画面に顔を出した瞬間だと早すぎるとの指摘。
      セクションがビューポートの中央まで来てから開始する (pre = 0.5) */
-  if (visAutoT0 === null && pre >= 0.5) visAutoT0 = elapsed;
-  const head = visAutoT0 === null ? 0 : Math.min(VIS_AUTO_HEAD, elapsed - visAutoT0);
-  /* スクロールが解放する上限。実際に進むのは gateP が時間で回す (1秒/秒) */
-  const limit = head + clamp01(p / 0.88) * (VIS_TOTAL - VIS_AUTO_HEAD);
-  if (visAutoT0 !== null) visT = gateP('vision', limit, 1);
-  const A = visAutoT0 === null ? -1 : visT;
+  /* 近づいてくる間に「Our Vison」と1行目だけ出す(乗り換え区間を空にしないため)。
+     本編はセクションが所定の位置(固定)に着いてから、1本の映像として自動再生 */
+  const approach = pre >= 0.5 ? Math.min(VIS_AUTO_HEAD, elapsed - (visAutoT0 || (visAutoT0 = elapsed))) : -1;
+  const main = playT('vision', VIS_TOTAL, p > 0.002);
+  const A = main >= 0 ? Math.max(main, VIS_AUTO_HEAD) : approach;
 
   /* --- 自動パートの時間割 (秒) --- */
   const l1At = c.line1At;
@@ -2290,6 +2331,7 @@ function updateVision(p) {
 
   /* --- 自動パートが終わったら、続けて軌道が左下へ (同じ時計で動かす) --- */
   const mvT = A < 0 ? -1 : A - autoEnd;
+  const cruise = Math.max(0.2, c.spinDur), brake = Math.max(0.3, c.spinBrake);
   const mv = mvT < 0 ? 0 : easeIO(clamp01(mvT / c.moveDur));
   const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
 
@@ -2383,7 +2425,6 @@ function updateVision(p) {
   /* 移動と同時にドットがフェードイン＆周回 → 減速して規定位置に停止 */
   const T = mvT;
   const v = 360 / params.duration * params.globalSpeed * params.direction * c.spinSpeed;
-  const cruise = Math.max(0.2, c.spinDur), brake = Math.max(0.3, c.spinBrake);
   const totalRot = v * cruise + v * brake / 2;
   let rot = 0;
   if (T > 0) {
@@ -2405,7 +2446,9 @@ function updateVision(p) {
 
   /* 左下に着いたら間を置かずに Platform → プラットフォーム → 役割名 →
      2つの価値 → Point01 → Point02 をディレイで出す (位置は動かさずブラーのみ) */
-  const C = mvT < 0 ? -99 : mvT - c.moveDur;
+  /* ⚠️ Platform・役割名は【ドットが周回を終えて止まってから】出す (ヒデさん指定)。
+     以前は移動が終わった時点(mvT - moveDur)で出ていて、ドットはまだ回っていた */
+  const C = mvT < 0 ? -99 : mvT - (cruise + brake);
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.2) / T_IN)), B);
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((C - 0.45 - i * 0.14) / T_IN)), B));
@@ -2458,9 +2501,8 @@ function updateResults(p) {
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   const q = pre < 1 ? pre * 0.3 : 0.3 + p * 0.7;    // 助走で3割、固定中に7割
   if (resT0 === null && q > 0.002) resT0 = elapsed;
-  /* スクロールが上限を決め、時間が進める (1秒/秒) */
-  if (resT0 !== null) resT = gateP('results', (q / 0.92) * RES_TOTAL, 1);
-  const t = resT;
+  /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
+  const t = playT('results', RES_TOTAL, p > 0.002);
 
   /* グラデ画像: ぼんやり出現 → 鮮明化 (絵コンテ準拠)。ゆったりめ */
   /* 絵コンテ: ①何もない ②画像がぼんやり出現 ③鮮明な流線グラフィックに
@@ -2747,9 +2789,11 @@ function updateDev(pRaw) {
      助走ぶんを進捗の頭 12% として繰り込み、1つめの訴求文が助走のうちに出るようにする */
   const pre = progOverride.devPre != null ? progOverride.devPre : preP(SECS.dev);
   const PRE = 0.12;
-  const pLimit = pre < 1 ? pre * PRE : PRE + pRaw * (1 - PRE);
-  /* 1つの見せ場(6〜14%)が 0.8〜1.7秒で流れる速さ */
-  const p = gateP('dev', pLimit, c.rate);
+  /* 所定の位置(固定)に着いたら1本の映像として自動再生。
+     ⚠️ 以前は「スクロールが上限を決めて時間で追う」方式だったが、
+        手を止めると絵も止まるため“のっそり”すると指摘があり、こちらへ切り替えた */
+  const t = playT('dev', c.playSec, pRaw > 0.002);
+  const p = t < 0 ? 0 : clamp01(t / c.playSec);
 
   const in1 = seg(p, ...DEV_P.h1, easeOutQ), o1 = seg(p, ...DEV_P.out1, easeIO);
   const rise = seg(p, ...DEV_P.rise, easeSlick);   // せり上がりも「ぬるっと」で
@@ -2837,8 +2881,9 @@ const caseTop = () => (isMobile ? 118 : 172);
 
 function updateCases(pRaw) {
   const c = params.sections.cases;
-  /* スクロールが上限を決め、時間が進める */
-  const p = gateP('cases', pRaw, c.rate);
+  /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
+  const tc = playT('cases', c.playSec, pRaw > 0.002);
+  const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
      こうしないと、前の開発者体験セクションの固定が外れてから
@@ -2882,6 +2927,8 @@ function resetSectionClocks() {
   visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1;
   resT0 = null; resT = -1;
   for (const k in storyP) delete storyP[k];
+  for (const k in secPlay) delete secPlay[k];
+  scrollLocked = false; if (lenis) lenis.start();
   devHoldT0 = null; devScreenT0 = null; devStarted = false;
 }
 
@@ -2965,6 +3012,7 @@ function updateKV() {
 }
 
 function updateSections() {
+  updateScrollLock();
   updateKV();
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
@@ -3213,6 +3261,8 @@ window.__anim = {
   setPattern(sec, key) { params.patterns[sec] = key; renderFrame(); },
   startResults() { resT0 = elapsed; resT = -1; renderFrame(); },
   getState() { return { elapsed, params }; },
+  /* 検証用: いま何が再生中でスクロールが止まっているか */
+  lockState() { return { locked: scrollLocked, playing: anyPlaying(), sections: JSON.parse(JSON.stringify(secPlay)) }; },
 };
 
 /* ================= ステージのスケーリング =================
@@ -3483,7 +3533,7 @@ function buildPanel() {
   const catDev = category('🖥 開発者体験', false);
   sub(catDev, 'スクロール尺');
   rows.push(slider('尺', 300, 1600, 20, () => sv().dev.lenVh, v => { sv().dev.lenVh = v; fit(); }, v => v + 'vh'));
-  rows.push(slider('再生スピード', 0.03, 0.3, 0.005, () => sv().dev.rate, v => sv().dev.rate = v, v => '全部で' + (1 / v).toFixed(1) + '秒'));
+  rows.push(slider('再生時間', 6, 30, 0.5, () => sv().dev.playSec, v => sv().dev.playSec = v, v => v.toFixed(1) + '秒'));
   sub(catDev, '演出');
   rows.push(slider('切替ブラー量', 0, 24, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px'));
 
@@ -3491,7 +3541,7 @@ function buildPanel() {
   const catCase = category('🗂 導入事例', false);
   sub(catCase, 'スクロール尺');
   rows.push(slider('尺', 200, 1000, 10, () => sv().cases.lenVh, v => { sv().cases.lenVh = v; fit(); }, v => v + 'vh'));
-  rows.push(slider('再生スピード', 0.05, 0.5, 0.01, () => sv().cases.rate, v => sv().cases.rate = v, v => '全部で' + (1 / v).toFixed(1) + '秒'));
+  rows.push(slider('再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒'));
   sub(catCase, '演出');
   rows.push(slider('出現ブラー', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px'));
   sub(catCase, '重なり');
