@@ -406,29 +406,10 @@
   .res-nums { display: flex; align-items: center; gap: 44px; width: 100%; }
   .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .res-nums .rn b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
-  /* ===== 数字のカウンター (スロット式・2026-08-15) =====
-     0〜9 を縦に並べた帯を、1文字ぶんの窓(overflow:hidden)で切り取って上へ流す。
-     ⚠️ 「.res-nums .rn span」は中の <span> にも全部当たってしまうので、
-        帯や窓には .cnt 側の指定が効くよう、下で個別に上書きしている */
   .res-nums .rn span {
     display: block; width: 100%;
     font-family: var(--font-en); font-weight: 100; font-size: 80px; line-height: 1;
     text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  .res-nums .rn span .cnt, .res-stats .st span .cnt { display: inline-flex; align-items: flex-start; width: auto; }
-  .res-nums .rn span .cd, .res-stats .st span .cd {
-    display: inline-block !important;
-    width: auto !important;
-    overflow: hidden;          /* ← これが「マスク」。1文字ぶんだけ見せる */
-    height: 1em;
-    line-height: 1;
-  }
-  .res-nums .rn span .cd .reel, .res-stats .st span .cd .reel {
-    display: block !important; width: auto !important; will-change: transform;
-  }
-  .cnt .cd .reel i { display: block; height: 1em; line-height: 1; font-style: normal; }
-  .res-nums .rn span .cs, .res-stats .st span .cs {
-    display: inline-block !important; width: auto !important; height: 1em; line-height: 1;
   }
   .res-main { display: flex; flex-direction: column; gap: 34px; color: #000; }
   .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
@@ -2147,7 +2128,7 @@ const DEFAULTS = {
     results: {
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       countDur: 2.2,   // 数字がランダムから確定するまで
-      countAt: 0.45,   // 数字が回り始めるまで
+      numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
       imgBlur: 24,     // 画像が出る時のぼかし量
       parallax: 16,    // スクロールで画像の中身がずれる量
       typeAt: 0.15,    // タイピングが始まるまで(案B)
@@ -2237,7 +2218,8 @@ const DEFAULTS = {
 /* v52→v53: 数字のカウンターをスロット式(縦帯をマスクで切り取って回す)に */
 /* v53→v54: 上に戻る時のスクロールリプレイをきれいに (奥にいる間は完成状態を見せる) */
 /* v54→v55: 開発者体験の見出しをさらに4px下げ＋Thinへ / API・CLI・SDK のウェイトをカンプ 14937:23895 へ */
-const STORAGE_KEY = 'anyflow-embed-anim-v55';
+/* v55→v56: 実績の数字はスロットをやめて単純なブラー出現に（見出し→数字の順） */
+const STORAGE_KEY = 'anyflow-embed-anim-v56';
 
 let params = load();
 function load() {
@@ -3075,62 +3057,12 @@ let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
 /* ランダム数字 → 左の桁から順に確定するカウンター */
-/* ===== 数字のカウンター (スロット式) =====
-   0〜9 を縦に並べた帯を、1文字ぶんの窓で切り取って上へ流す。
-   桁ごとに「その桁の連続値」で位置を決めるので、下の桁ほど速く回り、
-   上の桁はゆっくり回る＝走行距離計のような見え方になる。
-   ⚠️ 2026-08-15 に「ランダムな数字がパラパラ変わる」演出から作り替えた。 */
-function buildCounter(el, finalStr, suffix) {
-  if (el._cnt) return el._cnt;
-  el.textContent = '';
-  const wrap = document.createElement('span');
-  wrap.className = 'cnt';
-  const cells = [];
-  /* 小数点より上を place 0,1,2... 下を -1,-2... として桁を割り当てる */
-  const dot = finalStr.indexOf('.');
-  const intLen = dot < 0 ? finalStr.length : dot;
-  [...finalStr].forEach((ch, i) => {
-    if (!/\d/.test(ch)) {
-      const st = document.createElement('span');
-      st.className = 'cs'; st.textContent = ch;
-      wrap.appendChild(st);
-      return;
-    }
-    const place = (i < intLen) ? (intLen - 1 - i) : (intLen - i);
-    const cd = document.createElement('span');
-    cd.className = 'cd';
-    const reel = document.createElement('span');
-    reel.className = 'reel';
-    for (let n = 0; n <= 10; n++) {          /* 0〜9 + 折り返し用の 0 */
-      const d = document.createElement('i');
-      d.textContent = String(n % 10);
-      reel.appendChild(d);
-    }
-    cd.appendChild(reel);
-    wrap.appendChild(cd);
-    cells.push({ reel, place });
-  });
-  if (suffix) {
-    const sf = document.createElement('span');
-    sf.className = 'cs'; sf.textContent = suffix;
-    wrap.appendChild(sf);
-  }
-  el.appendChild(wrap);
-  el._cnt = { cells };
-  return el._cnt;
-}
-
-function setCounter(el, finalStr, suffix, t, dur) {
-  const c = buildCounter(el, finalStr, suffix);
-  const target = parseFloat(finalStr);
-  const k = t <= 0 ? 0 : easeOutQ(clamp01(t / Math.max(0.1, dur)));
-  const now = target * k;
-  c.cells.forEach(({ reel, place }) => {
-    /* その桁の「連続した値」。小数を含むので帯がなめらかに動く */
-    const v = (now / Math.pow(10, place)) % 10;
-    const pos = ((v % 10) + 10) % 10;
-    reel.style.transform = `translateY(${(-pos * 100).toFixed(3)}%)`;
-  });
+/* 数字は演出せず、確定値をそのまま出す（見せ方はブラー出現に一本化）。
+   ⚠️ ランダム演出 → カウントアップ → スロット と試したが、
+      2026-08-15 に「単純にブラーで出現」で確定した。 */
+function setCounter(el, finalStr, suffix) {
+  const want = finalStr + suffix;
+  if (el.textContent !== want) el.textContent = want;
 }
 
 /* 全部出そろうまでの秒数 (下段カウンターの終わり = 2.9 + countDur 2.2) */
@@ -3175,20 +3107,26 @@ function updateResults(p) {
   }
 
   if (patB) {
-    /* ---- 案B: 【2026-08-15】タイピングをやめ、見出しもブラーでゆったり出す ---- */
-    const headK = easeOutQ(clamp01((t - c.typeAt) / c.softDur));
+    /* ---- 案B: 【2026-08-15 確定】
+       ①「事業の推進力を、Anyflowが支えます。」がブラーで出る
+       ② そのあと 罫線 → 数字 → 下段 → 本文 が続けてブラーで出る
+       ③ 左の画像は①と同時にブラーで出る ---- */
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
+    const headK = easeOutQ(clamp01((t - c.typeAt) / c.softDur));
     resEls.head.style.opacity = headK.toFixed(3);
     resEls.head.style.filter = headK >= 1 ? '' : `blur(${((1 - headK) * 12).toFixed(2)}px)`;
-    const soft = easeOutQ(clamp01((t - c.typeAt) / c.softDur));   // ゆったり出す
-    rv(resEls.main,  1, 0);                     // 箱は出したまま(中の文字で見せる)
+    /* 見出しが出きるより少し前から、下の要素が続く */
+    const after = c.typeAt + c.softDur * c.numsGap;
+    const soft = easeOutQ(clamp01((t - after) / c.softDur));
+    rv(resEls.main, 1, 0);
     resEls.main.style.filter = '';
     resEls.main.querySelector('.res-line').style.opacity = soft.toFixed(3);
-    resEls.main.querySelector('.res-nums').style.opacity = soft.toFixed(3);
-    resEls.main.querySelector('.res-nums').style.filter = soft >= 1 ? '' : `blur(${((1 - soft) * 10).toFixed(2)}px)`;
-    rv(resEls.stats, soft, 10);
-    rv(resEls.text,  soft, 8);
-    /* タイピング開始と同時に左の画像もブラーで出る */
+    const nums = resEls.main.querySelector('.res-nums');
+    nums.style.opacity = soft.toFixed(3);
+    nums.style.filter = soft >= 1 ? '' : `blur(${((1 - soft) * 12).toFixed(2)}px)`;
+    rv(resEls.stats, easeOutQ(clamp01((t - after - 0.18) / c.softDur)), 10);
+    rv(resEls.text,  easeOutQ(clamp01((t - after - 0.30) / c.softDur)), 8);
+    /* 見出しと同時に左の画像もブラーで出る */
     rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
   } else {
     /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
@@ -3205,9 +3143,9 @@ function updateResults(p) {
   }
 
   /* 3つの数字は同時にランダム → 確定 (1week だけ演出なし: 絵コンテ準拠) */
-  setCounter(resEls.cntMain, '200', '+', t - c.countAt, c.countDur);
-  setCounter(resEls.cntSub1, '500', '+', t - c.countAt, c.countDur);
-  setCounter(resEls.cntSub2, '99.9', '%', t - c.countAt, c.countDur);
+  setCounter(resEls.cntMain, '200', '+');
+  setCounter(resEls.cntSub1, '500', '+');
+  setCounter(resEls.cntSub2, '99.9', '%');
 
   /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
      中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
@@ -4597,8 +4535,8 @@ function buildPanel() {
   sub(catRes, '演出');
   rows.push(slider('画像のぼかし', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
     '大きいほど、画像がぼんやりした状態から現れる。'));
-  rows.push(slider('カウント時間', 0.4, 5, 0.1, () => sv().results.countDur, v => sv().results.countDur = v, v => v.toFixed(1) + 's',
-    '数字がランダムから確定するまでの時間。大きいほど長く回る。'));
+  rows.push(slider('数字が出るまで', 0, 1.2, 0.05, () => sv().results.numsGap, v => sv().results.numsGap = v, v => '見出しの' + Math.round(v * 100) + '%',
+    '見出しが何割出たら、下の数字たちが出はじめるか。大きいほど後から出る。'));
   rows.push(slider('パララックス', 0, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
     'スクロールに合わせて画像の中身だけがずれる量。大きいほど奥行きが出る。0=なし。'));
   rows.push(slider('タイピング開始', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + 's',
@@ -4607,8 +4545,6 @@ function buildPanel() {
     '案B。小さいほど速く打つ。'));
   rows.push(slider('まわりが出そろうまで', 0.4, 4, 0.1, () => sv().results.softDur, v => sv().results.softDur = v, v => v.toFixed(1) + 's',
     '罫線・数字・本文がブラーから現れるのにかける時間。大きいほどゆったり。'));
-  rows.push(slider('数字が回り始める', 0, 2, 0.05, () => sv().results.countAt, v => sv().results.countAt = v, v => v.toFixed(2) + 's',
-    '大きいほど、ランダム数字が始まるのが遅くなる。'));
   rows.push(slider('画像が出るまで(案A)', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + 's',
     '案Aで、テキスト群のあと何秒で画像がブラーから出るか。'));
   sub(catRes, '次のセクションへのつなぎ（案B）');
