@@ -252,13 +252,15 @@
      枠は flex column / gap 24px / 中央そろえ
        Our Vision = SF Pro Text Light(300) 26px / 行間 1 / #000
        本文       = Noto Sans JP Thin(100) 100px / 行間 1.7 / #101828
-     かたまりの高さ = 26 + 24 + 170×2 = 390px。921px のステージの上下中央に置く */
+     【2026-08-15】「日本語の2行を上下中央に」の指定に変更。
+       2行の高さ 170×2 = 340 → 上端 = (921-340)/2 = 290.5
+       英語はその 24px(gap) + 自身の高さ26 ぶん上 = 240.5 */
   .vis-label {
     position: absolute;
     left: 0;
     right: 0;
     text-align: center;
-    top: 265.5px;
+    top: 240.5px;
     font-family: var(--font-en);
     font-weight: 300;
     font-size: 26px;
@@ -280,8 +282,8 @@
   }
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
-  .vis-l1 { top: 315.5px; }   /* 265.5 + 26 + gap24 */
-  .vis-l2 { top: 485.5px; }   /* + 行間170 */
+  .vis-l1 { top: 290.5px; }   /* 2行(340px)を921pxの上下中央に */
+  .vis-l2 { top: 460.5px; }   /* + 行間170 */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -519,7 +521,7 @@
     letter-spacing: -1px;
     line-height: 1;
     color: #0EBBFF;
-    margin-bottom: 12px;
+    margin-bottom: 16px;   /* カンプ12px + 指定の4px下げ */
   }
   .dev-center .dc-one {
     display: block;
@@ -2205,7 +2207,9 @@ const DEFAULTS = {
 /* v48→v49: ドットの回り方と軌道の出方を3パターンずつに (visSpin / visMove) */
 /* v49→v50: 実績→開発者体験を1画面重ねて「その場で切り替わる」形に / モックの下地を不透明に
              / ゆらぎクロスは平行から始める / パネルの確定項目を整理 / 滑らかさ既定3 */
-const STORAGE_KEY = 'anyflow-embed-anim-v50';
+/* v50→v51: ビジョンの2行を上下中央へ / 実績も再生中はスクロールを止める
+             / 開発者体験の日本語見出しを4px下げ / モックの会話をスピーディーに */
+const STORAGE_KEY = 'anyflow-embed-anim-v51';
 
 let params = load();
 function load() {
@@ -3045,7 +3049,7 @@ function setCounter(el, finalStr, suffix, t, dur) {
 }
 
 /* 全部出そろうまでの秒数 (下段カウンターの終わり = 2.9 + countDur 2.2) */
-const RES_TOTAL = 4.2;
+const RES_TOTAL = 3.8;   /* 打ち終わり + 数字が確定しきるまで */
 /* 中央でピン留めされたら再生。出終わったらスクロールで下のセクションへ抜ける。
    ⚠️ 以前は「時間だけ」で進めていたので、ピンしている間にスクロールしても何も進まず、
       再生が終わってからさらに数画面スクロールしないと下へ抜けられなかった。
@@ -3061,10 +3065,9 @@ function updateResults(p) {
   /* 【2026-08-15】「ビューポートに入った段階で始めてよい（中央でなくてよい）」指定。
      ピンで固定して止めるのはやめ、セクションが画面に入った時刻を起点に時間で再生する */
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
-  /* 【2026-08-15】開始は「セクションがビューポート中央に来てから」に戻した。
-     固定(ピン)が始まった瞬間 = ステージが画面の上下中央に収まった瞬間 */
-  if (resT0 === null && p > 0.0005) resT0 = elapsed;
-  const t = resT0 === null ? -1 : elapsed - resT0;
+  /* 【2026-08-15】ビューポート中央(＝固定が始まった瞬間)に来たら再生し、
+     再生が終わるまでスクロールを止める（他のセクションと同じ playT の仕組み） */
+  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results);
 
   /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
   const r = SECS.results.getBoundingClientRect();
@@ -3079,6 +3082,7 @@ function updateResults(p) {
   }
 
   if (t < 0) {
+    resEls.dark.style.opacity = 0;
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { el.style.opacity = 0; });
     resHeadChars.forEach(sp => { sp.style.opacity = 0; });
     return;
@@ -3205,7 +3209,7 @@ const DEV_CH = [
   { from: 0.40, to: 1.00, sec: 5.6, at: 0.42 },   /* ② (8.4→5.6秒に短縮) */
 ];
 /* 章が全部終わってから、あと何割スクロールしたら白へ戻りきるか */
-const DEV_FIN = 0.30;
+const DEV_FIN = 0.22;   /* 短くして「白いだけの時間」を作らない */
 const MOCK_W = 840.6, MOCK_LEFT = 105;
 const mockK = () => (isMobile ? 0.40 : 1);   // スマホでのモックの縮小率
 /* カンプ位置(左寄せ)から見て「画面中央に置くための X オフセット」。
@@ -3294,10 +3298,10 @@ const DM_CODE = {
 const DM_TIMING = {
   /* load=ローディング開始 / loadDur=ゆったり見せる時間 / holdT=書き出す前の溜め
      step,dur=一気に書き出すテンポ */
-  editor: { chat: true,  load: 6.2, loadDur: 2.2, holdT: 0.4, step: 0.06, dur: 0.16, loop: 17 },
-  cli:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
-  api:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
-  sdk:    { chat: false, load: 0.4, loadDur: 2.4, holdT: 0.5, step: 0.07, dur: 0.18, loop: 11 },
+  editor: { chat: true,  load: 4.2, loadDur: 1.5, holdT: 0.3, step: 0.045, dur: 0.13, loop: 12.5 },
+  cli:    { chat: false, load: 0.4, loadDur: 1.8, holdT: 0.4, step: 0.05, dur: 0.14, loop: 9 },
+  api:    { chat: false, load: 0.4, loadDur: 1.8, holdT: 0.4, step: 0.05, dur: 0.14, loop: 9 },
+  sdk:    { chat: false, load: 0.4, loadDur: 1.8, holdT: 0.4, step: 0.05, dur: 0.14, loop: 9 },
 };
 
 /* SDK画面の右ペイン。AIペインと同じ角丸・同じ余白でトンマナを踏襲しつつ中身だけ変える */
@@ -3430,11 +3434,12 @@ function devMockContent(mode, t, screen) {
     /* 【2026-08-15】空の状態 → 入力欄にタイピング → 送信ボタンを押す
        → 打った文字がそのまま履歴に入る（アイコンなし）
        → AIが普通のテキストで返す → そのあと左のコードが流れる */
-    const typeFrom = 0.35, typeTo = typeFrom + DM_TEXT.length * 0.075;
-    const sendAt = typeTo + 0.35;          // 送信ボタンを押す
-    const postAt = sendAt + 0.25;          // 履歴に反映
-    const thinkTo = postAt + 1.25;         // 考え中
-    const replyTo = thinkTo + DM_REPLY.length * 0.045;
+    /* 2026-08-15: もっとスピーディーにとの指定で全体を詰めた */
+    const typeFrom = 0.25, typeTo = typeFrom + DM_TEXT.length * 0.046;
+    const sendAt = typeTo + 0.22;          // 送信ボタンを押す
+    const postAt = sendAt + 0.16;          // 履歴に反映
+    const thinkTo = postAt + 0.75;         // 考え中
+    const replyTo = thinkTo + DM_REPLY.length * 0.028;
 
     const sent = T >= sendAt;
     const n = sent ? 0 : Math.floor(clamp01((T - typeFrom) / (typeTo - typeFrom)) * DM_TEXT.length);
@@ -3551,7 +3556,7 @@ function updateDev(pRaw) {
   const stD = secPlay.dev;
   if (stD && stD.done && stD.endP == null) stD.endP = pRaw;
   const fin = (stD && stD.endP != null)
-    ? seg(pRaw, stD.endP + 0.03, Math.min(0.99, stD.endP + DEV_FIN), easeIO) : 0;
+    ? seg(pRaw, stD.endP + 0.10, Math.min(0.99, stD.endP + 0.10 + DEV_FIN), easeIO) : 0;
 
   devHeading(devEls.h1, in1, o1);
   devHeading(devEls.h2, in2, fin);
@@ -3579,7 +3584,9 @@ function updateDev(pRaw) {
   const sc = (0.82 + 0.18 * inM1) * mk;
   const tx = cx * (1 - mv);
   const ty = (1 - inM1) * 120;
-  let bl = (1 - inM1) * 10 + fin * 16;   /* ホバー切替のブラーは廃止 (2026-08-15) */
+  /* ⚠️ fin(白へ戻す量)をぼかしに掛けないこと。
+     掛けると白くなる途中でモックが大きくぼけ、洗いざらしの画面になる(実際に発生) */
+  let bl = (1 - inM1) * 10;
   /* ---- ②では後ろに2枚控えるスタックにする (カンプ 14924:21985) ----
      ホバーで選択が変わると席が回り、3Dっぽく入れ替わって見える */
   const stackK = patStack ? mv : 0;                 // 左へ着くにつれてスタックが開く
