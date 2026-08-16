@@ -2,6 +2,19 @@
 
 ユーザーは非エンジニア。Claude Code は以下を守ること。
 
+## 📚 ドキュメントの置き場所（必須）
+
+> **📄 索引は [docs/README.md](docs/README.md)。資料を探す時も足す時もまずここ。**
+
+- **全プロダクト共通の資料 → `docs/general/`**（進め方・カンプの読み方・デプロイ運用）
+- **特定プロダクトの資料 → `docs/<プロダクト名>/`**（フォルダ名はプロダクトのフォルダ名とそろえる）
+- 新しく `.md` を作る時は**プロダクト直下に置かず `docs/` の下に置く**。
+  例外は下の3つだけ:
+  1. `CLAUDE.md` / `AGENTS.md`（Claude Code がその場所から読むので動かせない）
+  2. 各プロダクトの `README.md`（GitHub がフォルダを開いた時に出す定位置）
+  3. 納品物としてフォルダごと渡すもの（例: `anyflow-embed/framer-handoff/`）
+- **ファイルを足したら [docs/README.md](docs/README.md) の表にも1行足す**（索引が古くなると意味がない）
+
 ## 🎨 UI 提案ルール（必須）
 
 ヒデさんから「〜のUIを提案して」「○案出して」など UI 案を求められた時は、
@@ -19,8 +32,8 @@ URL を一緒に渡すこと**。
 
 ## 🧭 進め方の共通ルール（推測・質問・報告）🔴最重要
 
-> **📄 全文は [WORKING-RULES.md](WORKING-RULES.md)（持ち運び用）。着手前に必ず読む。**
-> 根拠となった実測と経緯は [docs/anyflow-postmortem.md](docs/anyflow-postmortem.md)。
+> **📄 全文は [docs/general/WORKING-RULES.md](docs/general/WORKING-RULES.md)（持ち運び用）。着手前に必ず読む。**
+> 根拠となった実測と経緯は [docs/anyflow-embed/anyflow-postmortem.md](docs/anyflow-embed/anyflow-postmortem.md)。
 
 ### 大原則
 
@@ -61,10 +74,11 @@ URL を一緒に渡すこと**。
 
 ## 📐 Figma カンプ参照ルール（必須・違反したら作り直し）
 
-> **📄 詳細は [DESIGN-SYSTEM-RULES.md](DESIGN-SYSTEM-RULES.md) に全文がある。**
+> **📄 詳細は [docs/general/DESIGN-SYSTEM-RULES.md](docs/general/DESIGN-SYSTEM-RULES.md) に全文がある。**
 > **📄 既存サイトのスタイルを棚卸ししてデザインシステムに整える手順は
-> [DESIGN-SYSTEM-WORKFLOW.md](DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
-> abashiri-site で実際に通した工程。完成物の実例は [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md)）。
+> [docs/general/DESIGN-SYSTEM-WORKFLOW.md](docs/general/DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
+> abashiri-site で実際に通した工程。完成物の実例は
+> [docs/abashiri-site/DESIGN-SYSTEM.md](docs/abashiri-site/DESIGN-SYSTEM.md)）。
 > フォントだけでなく **角丸・padding・margin・gap・レイアウト・制約・影・ブラー・
 > グラデ・不透明度・線** など、デザインシステムと呼ばれるもの全般が対象。
 > 他の Claude アカウント／他プロジェクトで使う時は、あのファイルを持っていけばよい。

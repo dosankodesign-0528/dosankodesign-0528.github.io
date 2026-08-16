@@ -72,7 +72,7 @@
 
 - 元の実装: `../index.html`（HTML/CSS/JS 1ファイル・v61）
 - 図解つきの解説: Figma セクション「📘 Anyflow Embed ドキュメント」
-- デザイントークンの整理: `../DESIGN-TOKENS.md`
+- デザイントークンの整理: `../../docs/anyflow-embed/DESIGN-TOKENS.md`
 
 ---
 

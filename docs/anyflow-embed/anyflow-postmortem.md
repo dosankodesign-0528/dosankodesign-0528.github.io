@@ -57,7 +57,7 @@ Claudeは進めるために自分で埋めた。それが「渡した資料に�
 
 **推測したこと自体より、「推測しました」と言わなかったことの方が問題。**
 言っていれば、その場で「そこは◯◯だよ」と5秒で解決していた。
-（→ 2026-08-14 に [DESIGN-SYSTEM-RULES.md](../DESIGN-SYSTEM-RULES.md) として制定済み）
+（→ 2026-08-14 に [DESIGN-SYSTEM-RULES.md](../general/DESIGN-SYSTEM-RULES.md) として制定済み）
 
 ### 原因③ 「確認しました」の中身が目視だった
 
@@ -127,7 +127,7 @@ Claudeは進めるために自分で埋めた。それが「渡した資料に�
 
 実際、調整パネルを入れてからは「Claudeが決めて外す」が減り、
 ヒデさん自身が値を決めて `📋 設定をコピー` で渡す流れに変わった。
-**この方式を最初から採るのが一番効く。**（→ [tune-panel](../tune-panel/) として共通化済み）
+**この方式を最初から採るのが一番効く。**（→ [tune-panel](../../tune-panel/) として共通化済み）
 
 ### ルール3: 「確認しました」は実測とセットでしか言わない
 
@@ -158,8 +158,8 @@ anyflow-embed は単一HTMLという性質上こうなったが、
 
 | 対策 | 場所 | 状態 |
 |---|---|---|
-| カンプ実装ルール（推測禁止・全項目照合・表で報告） | [DESIGN-SYSTEM-RULES.md](../DESIGN-SYSTEM-RULES.md) | ✅ 2026-08-14 制定 |
-| 調整パネルの共通ライブラリ化 | [tune-panel/](../tune-panel/) | ✅ 2026-08-15 |
-| ルール1〜6 の常時適用 | [CLAUDE.md](../CLAUDE.md) / [AGENTS.md](../AGENTS.md) | ✅ 2026-08-15 追記 |
-| 推測・質問・報告の共通ルール（汎用化） | [WORKING-RULES.md](../WORKING-RULES.md) | ✅ 2026-08-16 制定 |
-| デザインシステム整備の手順（汎用化） | [DESIGN-SYSTEM-WORKFLOW.md](../DESIGN-SYSTEM-WORKFLOW.md) | ✅ 2026-08-15 制定 |
+| カンプ実装ルール（推測禁止・全項目照合・表で報告） | [DESIGN-SYSTEM-RULES.md](../general/DESIGN-SYSTEM-RULES.md) | ✅ 2026-08-14 制定 |
+| 調整パネルの共通ライブラリ化 | [tune-panel/](../../tune-panel/) | ✅ 2026-08-15 |
+| ルール1〜6 の常時適用 | [CLAUDE.md](../../CLAUDE.md) / [AGENTS.md](../../AGENTS.md) | ✅ 2026-08-15 追記 |
+| 推測・質問・報告の共通ルール（汎用化） | [WORKING-RULES.md](../general/WORKING-RULES.md) | ✅ 2026-08-16 制定 |
+| デザインシステム整備の手順（汎用化） | [DESIGN-SYSTEM-WORKFLOW.md](../general/DESIGN-SYSTEM-WORKFLOW.md) | ✅ 2026-08-15 制定 |
