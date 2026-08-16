@@ -203,10 +203,23 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | ブランチ | 中身 | 作った日 |
 |---|---|---|
 | `abashiri-v1.0` | 網走サイト バージョン 1.0（デザインシステム整備・命名統一まで完了した状態） | 2026-08-16 |
-| `restore-abashiri-before-design-system` | 網走サイト デザインシステム整備に着手する直前 | 2026-08-15 |
 
 - これ以降の網走サイトのアップデートは **main に積む**（v1.0 ブランチには何も足さない）
 - 凍結ブランチを増やす時は、この表にも 1 行足すこと
+
+### 🧹 消してよい古いブランチ（役目を終えたもの）
+
+`abashiri-v1.0` と `main` 以外は、ヒデさんの判断で消してよい。
+⚠️ **この環境（Claude Code Remote）からはブランチ削除ができない**（`git push --delete` が
+403 で弾かれる）。消す時は GitHub の Branches 画面か、ヒデさんのローカルから実行する。
+
+| ブランチ | 状態 |
+|---|---|
+| `restore-abashiri-before-design-system` | 役目終了（2026-08-16 にヒデさん確認済み） |
+| `claude/laughing-maxwell` / `claude/tender-bartik` | 過去の自動ブランチ。本番未反映トラブルの元 |
+| `claude/design-system-figma-docs-toi8q2` | 今回の作業ブランチ。main に統合済み |
+| `claude/abashiri-speech-bubble-animation-rrs13o` | 統合済みなら不要 |
+| `release/v2.0` | 中身を確認してから判断 |
 
 ## 🚀 各プロジェクトの本番 URL とデプロイ先
 
