@@ -1,0 +1,65 @@
+/* 3案共通のガワ。本番(index.html)の見た目・イージングをそのまま持ってきている */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --e-out: cubic-bezier(.22,1,.36,1);
+  --e-fast: cubic-bezier(.4,0,.2,1);
+  /* サイト全体で使っている「ぬるっと」= 大きい移動 1.3s */
+  --t-big: 1.3s;
+  --font-en: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+}
+body {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #161616 0%, #454545 100%);
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  color: #fff;
+  overflow-x: hidden;
+}
+.wrap { position: relative; width: 1440px; height: 920px; margin: 0 auto; transform-origin: top center; }
+.head { position: absolute; left: 0; right: 0; top: 142.8px; text-align: center; }
+.head .lab { display: block; font-family: var(--font-en); font-weight: 200; font-size: 20px; letter-spacing: -1px; line-height: 1; color: #0EBBFF; margin-bottom: 12px; }
+.head .ttl { display: block; font-weight: 200; font-size: 44px; line-height: normal; }
+
+/* モックと右リストのまとまり(1230px)を中央に */
+.group { position: absolute; left: 50%; margin-left: -615px; width: 1230px; top: 274px; height: 504.37px; perspective: 1600px; }
+.card {
+  position: absolute; left: 0; top: 0; width: 840.6px; height: 504.37px;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, filter;
+}
+.panel {
+  position: absolute; inset: 0; display: flex;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 24px;
+  background: rgba(255,255,255,.1);
+  backdrop-filter: blur(75px); -webkit-backdrop-filter: blur(75px);
+  box-shadow: 0 24px 48px rgba(0,0,0,.25), inset 1px 1px 2px rgba(255,255,255,.2);
+  overflow: hidden;
+}
+.side { flex: 0 0 52px; background: rgba(255,255,255,.1); display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px 0; }
+.side i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.25); }
+.side i.on { background: #FF5D97; }
+.code { flex: 1 0 0; padding: 32px; display: flex; flex-direction: column; gap: 12px; }
+.code i { display: block; height: 7px; border-radius: 4px; }
+.chat { flex: 0 0 300px; border-left: 1px solid rgba(255,255,255,.1); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.chat .row { display: flex; gap: 10px; align-items: flex-start; }
+.chat .av { width: 24px; height: 24px; border-radius: 50%; background: #0EBBFF; flex: none; }
+.chat .av.pk { background: #FF5D97; }
+.chat .bar { flex: 1; height: 34px; border-radius: 8px; background: rgba(255,255,255,.14); }
+.tag { position: absolute; left: 24px; bottom: 18px; font-family: var(--font-en); font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.5); }
+
+/* 右のリスト */
+.list { position: absolute; left: 900.617px; top: 0; width: 329.383px; padding-top: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 37px; }
+.item { display: flex; align-items: center; gap: 28px; opacity: .2; cursor: pointer; transition: opacity .2s var(--e-fast); }
+.item.on { opacity: 1; }
+.bar-l { align-self: stretch; width: 1px; background: #fff; opacity: 0; transform: scaleY(.3); transition: opacity .18s var(--e-fast), transform .32s cubic-bezier(.2,1.5,.35,1); }
+.item.on .bar-l { opacity: 1; transform: scaleY(1); }
+.body { width: 301.383px; display: flex; flex-direction: column; gap: 13px; }
+.hd { position: relative; display: flex; align-items: center; gap: 5px; white-space: nowrap; padding-bottom: 6px; }
+.hd::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #fff; transform: scaleX(0); transform-origin: 0 50%; transition: transform .34s cubic-bezier(.2,1.4,.3,1); }
+.item.on .hd::after { transform: scaleX(1); }
+.hd b { font-family: var(--font-en); font-weight: 200; font-size: 28px; }
+.hd span { font-weight: 300; font-size: 18px; }
+.body p { font-weight: 300; font-size: 12px; line-height: 1.9; }
+
+.note { position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 20px; background: rgba(0,0,0,.72); backdrop-filter: blur(10px); font-size: 12px; line-height: 1.7; z-index: 50; }
+.note b { font-weight: 500; }
+.note a { color: #0EBBFF; }

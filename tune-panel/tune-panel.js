@@ -1,0 +1,952 @@
+/*!
+ * tune-panel.js — 汎用「調整パネル」
+ * 1ファイル / 依存なし / CSSも自分で流し込む。
+ *
+ *   <script src="tune-panel.js"></script>
+ *   const panel = TunePanel.create({ storageKey:'my-app', version:1, params, defaults, schema:[...] })
+ *
+ * MIT License
+ */
+(function (root, factory) {
+  var mod = factory();
+  if (typeof module === 'object' && module.exports) module.exports = mod;
+  else root.TunePanel = mod;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ============================================================
+     小道具
+     ============================================================ */
+
+  var isObj = function (v) {
+    return v !== null && typeof v === 'object' && !Array.isArray(v);
+  };
+  var clone = function (v) {
+    return v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+  };
+
+  function getPath(obj, path) {
+    var ks = String(path).split('.');
+    var cur = obj;
+    for (var i = 0; i < ks.length; i++) {
+      if (cur == null) return undefined;
+      cur = cur[ks[i]];
+    }
+    return cur;
+  }
+  function setPath(obj, path, v) {
+    var ks = String(path).split('.');
+    var last = ks.pop();
+    var cur = obj;
+    for (var i = 0; i < ks.length; i++) {
+      if (!isObj(cur[ks[i]]) && !Array.isArray(cur[ks[i]])) cur[ks[i]] = {};
+      cur = cur[ks[i]];
+    }
+    cur[last] = v;
+  }
+
+  /* 保存値を初期値の形に合わせて取り込む。
+     初期値に無いキーは捨て、型が違う値も初期値へ戻す（＝壊れた保存値で事故らない） */
+  function mergeSaved(def, saved) {
+    if (saved === undefined) return clone(def);
+    if (isObj(def)) {
+      if (!isObj(saved)) return clone(def);
+      var out = {};
+      for (var k in def) out[k] = mergeSaved(def[k], saved[k]);
+      return out;
+    }
+    if (Array.isArray(def)) {
+      if (!Array.isArray(saved)) return clone(def);
+      return def.map(function (d, i) { return mergeSaved(d, saved[i]); });
+    }
+    return typeof saved === typeof def ? saved : clone(def);
+  }
+
+  /* params の「箱」は差し替えず中身だけ書き換える（利用側が持っている参照を生かすため） */
+  function assignDeep(target, src) {
+    for (var k in src) {
+      if (isObj(src[k]) && isObj(target[k])) assignDeep(target[k], src[k]);
+      else target[k] = clone(src[k]);
+    }
+  }
+
+  /* 数値の見せ方のショートカット */
+  var FMT = {
+    s: function (v) { return (+v).toFixed(2) + 's'; },
+    sec: function (v) { return (+v).toFixed(2) + 's'; },
+    ms: function (v) { return Math.round(v) + 'ms'; },
+    '%': function (v) { return Math.round(v * 100) + '%'; },
+    px: function (v) { return Math.round(v) + 'px'; },
+    deg: function (v) { return Math.round(v) + '°'; },
+    '°': function (v) { return Math.round(v) + '°'; },
+    x: function (v) { return '×' + (+v).toFixed(2); },
+    '×': function (v) { return '×' + (+v).toFixed(2); },
+    int: function (v) { return String(Math.round(v)); },
+    n1: function (v) { return (+v).toFixed(1); },
+    n2: function (v) { return (+v).toFixed(2); }
+  };
+  function toFmt(f, step) {
+    if (typeof f === 'function') return f;
+    if (typeof f === 'string' && FMT[f]) return FMT[f];
+    var dec = String(step || 1).indexOf('.') >= 0 ? String(step).split('.')[1].length : 0;
+    return function (v) { return (+v).toFixed(dec); };
+  }
+
+  /* ============================================================
+     CSS（1回だけ差し込む）
+     ============================================================ */
+
+  var CSS = [
+    '.tp{position:fixed;z-index:2147483000;display:flex;flex-direction:column;overflow:hidden;',
+    '  width:360px;height:520px;min-width:240px;min-height:44px;max-width:92vw;max-height:92vh;',
+    '  resize:both;background:rgba(255,255,255,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);',
+    '  border:1px solid #e2e2e2;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.10);',
+    '  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;',
+    '  font-size:12px;line-height:1.5;color:#101828;font-weight:400;}',
+    '.tp *{box-sizing:border-box;}',
+    '.tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;',
+    '  cursor:grab;user-select:none;flex:0 0 auto;}',
+    '.tp-head:active{cursor:grabbing;}',
+    '.tp-title{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+    '.tp-chev{font-size:10px;color:#888;transition:transform .25s;padding:2px 4px;cursor:pointer;}',
+    '.tp.closed .tp-chev{transform:rotate(180deg);}',
+    '.tp.closed{height:auto !important;resize:none;}',
+    '.tp.closed .tp-body,.tp.closed .tp-foot{display:none;}',
+    '.tp-body{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:0 12px 12px;}',
+    '.tp-foot{flex:0 0 auto;padding:8px 12px 10px;border-top:1px solid #ececec;background:rgba(255,255,255,.6);}',
+    '.tp-search{width:100%;padding:6px 9px;margin:8px 0 2px;border:1px solid #e2e2e2;border-radius:6px;',
+    '  font:inherit;color:inherit;background:#fff;}',
+    '.tp-search::placeholder{color:#bbb;}',
+    /* 大カテゴリ */
+    '.tp-cat{border:1px solid #e8e8e8;border-radius:8px;margin-top:10px;overflow:hidden;background:#fff;}',
+    '.tp-cat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;',
+    '  font-weight:500;background:#fafafa;cursor:pointer;user-select:none;}',
+    '.tp-cat-head:hover{background:#f2f2f2;}',
+    '.tp-cat-chev{font-size:10px;color:#888;transition:transform .2s;}',
+    '.tp-cat.closed .tp-cat-chev{transform:rotate(-90deg);}',
+    '.tp-cat-body{padding:0 12px 12px;}',
+    '.tp-cat.closed .tp-cat-body{display:none;}',
+    '.tp-hidden{display:none !important;}',
+    /* 小見出し */
+    '.tp-grp{margin-top:10px;padding-top:10px;border-top:1px solid #ececec;}',
+    '.tp-cat-body>.tp-grp:first-child{border-top:none;margin-top:6px;}',
+    '.tp-grp-title{font-weight:400;margin-bottom:6px;display:flex;align-items:center;gap:6px;}',
+    '.tp-grp.deep{margin-top:8px;padding-top:8px;border-top:1px dashed #eee;padding-left:10px;border-left:2px solid #ececec;}',
+    '.tp-grp.deep .tp-grp-title{font-size:11px;color:#666;}',
+    '.tp-note{font-size:10px;line-height:1.6;color:#999;margin:-2px 0 6px;}',
+    '.tp-hint{font-size:10px;line-height:1.55;color:#999;margin:-1px 0 6px 100px;}',
+    /* 行 */
+    '.tp-row{display:flex;align-items:center;gap:8px;margin:4px 0;}',
+    '.tp-row>label{flex:0 0 92px;color:#555;font-weight:300;}',
+    '.tp-row input[type=range]{flex:1;accent-color:#090909;min-width:0;}',
+    '.tp-val{flex:0 0 46px;text-align:right;font-variant-numeric:tabular-nums;color:#333;}',
+    '.tp-row select,.tp-row input[type=text],.tp-row input[type=number]{flex:1;min-width:0;padding:5px 7px;',
+    '  border:1px solid #d8d8d8;border-radius:6px;font:inherit;background:#fff;color:inherit;}',
+    '.tp-row input[type=color]{flex:0 0 34px;height:24px;padding:0;border:1px solid #d8d8d8;border-radius:5px;background:#fff;}',
+    /* セグメント */
+    '.tp-seg{display:flex;border:1px solid #d8d8d8;border-radius:6px;overflow:hidden;flex:1;}',
+    '.tp-seg button{flex:1;border:none;background:#fff;font-family:inherit;font-size:11px;padding:5px 0;cursor:pointer;color:#555;}',
+    '.tp-seg button.on{background:#090909;color:#fff;}',
+    /* ピル */
+    '.tp-pills{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px;}',
+    '.tp-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #ddd;border-radius:999px;',
+    '  background:#fff;font-family:inherit;font-size:11px;color:#333;cursor:pointer;}',
+    '.tp-pill:hover{border-color:#999;}',
+    '.tp-pill.on{background:#090909;color:#fff;border-color:#090909;}',
+    '.tp-swatch{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.08);}',
+    '.tp-desc{margin:4px 0 6px;color:#777;font-weight:300;font-size:11px;}',
+    /* スイッチ */
+    '.tp-switch{position:relative;width:36px;height:20px;flex:0 0 36px;border-radius:999px;background:#d8d8d8;',
+    '  border:none;cursor:pointer;transition:background .2s;padding:0;}',
+    '.tp-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;',
+    '  background:#fff;transition:transform .2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}',
+    '.tp-switch.on{background:#090909;}',
+    '.tp-switch.on::after{transform:translateX(16px);}',
+    /* ボタン */
+    '.tp-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}',
+    '.tp-btns button{flex:1 1 auto;white-space:nowrap;font-family:inherit;font-size:11px;padding:7px 10px;',
+    '  border-radius:6px;border:1px solid #d8d8d8;background:#fff;cursor:pointer;transition:background .2s;color:#101828;}',
+    '.tp-btns button:hover{background:#f2f2f2;}',
+    '.tp-btns button.primary{background:#090909;color:#fff;border-color:#090909;}',
+    '.tp-btns button.primary:hover{background:#333;}',
+    '.tp-toast{position:absolute;left:0;right:0;bottom:0;padding:7px 12px;background:#090909;color:#fff;',
+    '  font-size:11px;opacity:0;transform:translateY(100%);transition:opacity .2s,transform .2s;pointer-events:none;}',
+    '.tp-toast.show{opacity:1;transform:translateY(0);}',
+    /* ダーク */
+    '.tp.dark{background:rgba(20,20,22,.92);border-color:#333;color:#eee;}',
+    '.tp.dark .tp-cat{background:#1b1b1e;border-color:#2e2e32;}',
+    '.tp.dark .tp-cat-head{background:#232327;}',
+    '.tp.dark .tp-cat-head:hover{background:#2a2a2f;}',
+    '.tp.dark .tp-row>label{color:#aaa;}',
+    '.tp.dark .tp-val{color:#ddd;}',
+    '.tp.dark .tp-grp{border-top-color:#2e2e32;}',
+    '.tp.dark .tp-seg,.tp.dark .tp-pill,.tp.dark .tp-btns button,.tp.dark .tp-search,',
+    '.tp.dark .tp-row select,.tp.dark .tp-row input[type=text],.tp.dark .tp-row input[type=number]',
+    '  {background:#1b1b1e;border-color:#3a3a3f;color:#eee;}',
+    '.tp.dark .tp-seg button{background:#1b1b1e;color:#bbb;}',
+    '.tp.dark .tp-seg button.on,.tp.dark .tp-pill.on{background:#fff;color:#111;border-color:#fff;}',
+    '.tp.dark .tp-btns button.primary{background:#fff;color:#111;border-color:#fff;}',
+    '.tp.dark .tp-foot{background:rgba(20,20,22,.6);border-top-color:#2e2e32;}',
+    '.tp.dark input[type=range]{accent-color:#fff;}'
+  ].join('\n');
+
+  function injectCSS() {
+    if (document.getElementById('tune-panel-css')) return;
+    var st = document.createElement('style');
+    st.id = 'tune-panel-css';
+    st.textContent = CSS;
+    document.head.appendChild(st);
+  }
+
+  /* ============================================================
+     本体
+     ============================================================ */
+
+  function Panel(cfg) {
+    this.cfg = cfg = cfg || {};
+    this.params = cfg.params;
+    if (!this.params) throw new Error('[TunePanel] params が要ります');
+    this.defaults = clone(cfg.defaults !== undefined ? cfg.defaults : cfg.params);
+    this.version = cfg.version === undefined ? 1 : cfg.version;
+    this.storageKey = cfg.storageKey || null;
+    this.settleDelay = cfg.settleDelay === undefined ? 250 : cfg.settleDelay;
+    this.autoCenter = cfg.autoCenter !== false;
+    this.rows = [];
+    this.catOpen = {};
+    this._settleTimer = 0;
+    this._muted = false;
+
+    injectCSS();
+    this._buildShell();
+    this._loadParams();
+    this._loadUI();
+    this.rebuild();
+  }
+
+  /* ---------- 保存 ---------- */
+
+  Panel.prototype._pKey = function () { return 'tp:' + this.storageKey + ':v' + this.version; };
+  Panel.prototype._uKey = function () { return 'tp:' + this.storageKey + ':ui'; };
+
+  Panel.prototype._loadParams = function () {
+    if (!this.storageKey) return;
+    /* 古いバージョンの保存値は掃除する（＝バージョンを上げれば必ず新しい初期値で出る） */
+    try {
+      var prefix = 'tp:' + this.storageKey + ':v';
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(prefix) === 0 && k !== this._pKey()) localStorage.removeItem(k);
+      }
+      var raw = localStorage.getItem(this._pKey());
+      if (raw) assignDeep(this.params, mergeSaved(this.defaults, JSON.parse(raw)));
+    } catch (e) { /* 壊れていたら初期値のまま */ }
+  };
+
+  Panel.prototype.save = function () {
+    if (!this.storageKey) return;
+    try { localStorage.setItem(this._pKey(), JSON.stringify(this.params)); } catch (e) {}
+  };
+
+  Panel.prototype._saveUI = function () {
+    if (!this.storageKey) return;
+    var r = this.el.getBoundingClientRect();
+    /* 画面サイズが取れない瞬間（タブが裏／最小化など）に潰れた値を保存しない。
+       これを保存すると次回から左上に小さく貼りついたまま復元されてしまう */
+    if (!innerWidth || !innerHeight || r.width < 120 || (!this.el.classList.contains('closed') && r.height < 80)) return;
+    try {
+      localStorage.setItem(this._uKey(), JSON.stringify({
+        x: r.left, y: r.top,
+        w: this.el.classList.contains('closed') ? this._openW : r.width,
+        h: this.el.classList.contains('closed') ? this._openH : r.height,
+        closed: this.el.classList.contains('closed'),
+        cats: this.catOpen,
+        scroll: this.body.scrollTop
+      }));
+    } catch (e) {}
+  };
+
+  Panel.prototype._loadUI = function () {
+    var ui = null;
+    if (this.storageKey) {
+      try { ui = JSON.parse(localStorage.getItem(this._uKey())); } catch (e) {}
+    }
+    var size = this.cfg.size || {};
+    /* 潰れた保存値（過去バージョンで入り込んだもの）は無視して既定サイズに戻す */
+    var w = (ui && ui.w > 120 ? ui.w : 0) || size.w || 360;
+    var h = (ui && ui.h > 80 ? ui.h : 0) || size.h || 520;
+    this._openW = w; this._openH = h;
+    this.el.style.width = w + 'px';
+    this.el.style.height = h + 'px';
+
+    if (ui && typeof ui.x === 'number') {
+      this._place(ui.x, ui.y);
+    } else {
+      var pos = this.cfg.position || {};
+      var margin = 20;
+      this.el.style.left = 'auto'; this.el.style.top = 'auto';
+      this.el.style.right = (pos.right === undefined ? margin : pos.right) + 'px';
+      this.el.style.bottom = (pos.bottom === undefined ? margin : pos.bottom) + 'px';
+      if (pos.left !== undefined) { this.el.style.left = pos.left + 'px'; this.el.style.right = 'auto'; }
+      if (pos.top !== undefined) { this.el.style.top = pos.top + 'px'; this.el.style.bottom = 'auto'; }
+    }
+    if (ui && ui.cats) this.catOpen = ui.cats;
+    var startClosed = ui ? ui.closed : !!this.cfg.startClosed;
+    this.el.classList.toggle('closed', !!startClosed);
+    this._restoreScroll = (ui && ui.scroll) || 0;
+  };
+
+  Panel.prototype._place = function (x, y) {
+    var w = this.el.offsetWidth, h = this.el.offsetHeight;
+    /* 画面サイズが取れない時（幅0で返ってくる瞬間がある）は、はみ出し補正をしない */
+    if (innerWidth > 0 && innerHeight > 0) {
+      x = Math.min(Math.max(0, x), Math.max(0, innerWidth - w));
+      y = Math.min(Math.max(0, y), Math.max(0, innerHeight - h));
+    }
+    this.el.style.left = x + 'px';
+    this.el.style.top = y + 'px';
+    this.el.style.right = 'auto';
+    this.el.style.bottom = 'auto';
+  };
+
+  /* ---------- 枠組み ---------- */
+
+  Panel.prototype._buildShell = function () {
+    var self = this;
+    var el = this.el = document.createElement('div');
+    el.className = 'tp' + (this.cfg.theme === 'dark' ? ' dark' : '');
+
+    var head = this.head = document.createElement('div');
+    head.className = 'tp-head';
+    var title = document.createElement('span');
+    title.className = 'tp-title';
+    title.textContent = this.cfg.title || '⚙️ 調整パネル';
+    var chev = document.createElement('span');
+    chev.className = 'tp-chev';
+    chev.textContent = '▲';
+    chev.title = '開閉';
+    head.append(title, chev);
+
+    var body = this.body = document.createElement('div');
+    body.className = 'tp-body';
+    /* 慣性スクロール(Lenis)を使っているページで、パネル内のホイールを
+       ページに持っていかれないようにする。Lenis が公式に見る属性 */
+    body.setAttribute('data-lenis-prevent', '');
+    el.setAttribute('data-lenis-prevent', '');
+    var foot = this.foot = document.createElement('div');
+    foot.className = 'tp-foot';
+    var toast = this.toast = document.createElement('div');
+    toast.className = 'tp-toast';
+
+    el.append(head, body, foot, toast);
+    (this.cfg.mount || document.body).appendChild(el);
+
+    /* 開閉 */
+    chev.addEventListener('click', function (e) { e.stopPropagation(); self.toggle(); });
+
+    /* ヘッダーを掴んで移動 */
+    var drag = null;
+    head.addEventListener('pointerdown', function (e) {
+      if (e.target === chev) return;
+      var r = el.getBoundingClientRect();
+      drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+      head.setPointerCapture(e.pointerId);
+    });
+    head.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      self._place(e.clientX - drag.dx, e.clientY - drag.dy);
+    });
+    head.addEventListener('pointerup', function () { if (drag) { drag = null; self._saveUI(); } });
+
+    /* リサイズ（CSS resize:both）を保存 */
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(function () {
+        if (el.classList.contains('closed')) return;
+        if (el.offsetWidth < 120 || el.offsetHeight < 80) return;   /* 潰れた瞬間は無視 */
+        self._openW = el.offsetWidth; self._openH = el.offsetHeight;
+        clearTimeout(self._roT);
+        self._roT = setTimeout(function () { self._saveUI(); }, 300);
+      });
+      ro.observe(el);
+    }
+    body.addEventListener('scroll', function () {
+      clearTimeout(self._scT);
+      self._scT = setTimeout(function () { self._saveUI(); }, 300);
+    });
+
+    /* ショートカット（既定 "." キー）でパネルを隠す/出す */
+    var key = this.cfg.hotkey === undefined ? '.' : this.cfg.hotkey;
+    if (key) {
+      this._onKey = function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        if (e.key === key && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          el.style.display = el.style.display === 'none' ? '' : 'none';
+        }
+      };
+      window.addEventListener('keydown', this._onKey);
+    }
+  };
+
+  /* ---------- 通知 ---------- */
+
+  Panel.prototype._changed = function (info) {
+    var self = this;
+    if (this._muted) return;
+    this.save();
+    if (this.cfg.onChange) this.cfg.onChange(info);
+    clearTimeout(this._settleTimer);
+    if (info && info.immediate) {
+      if (this.cfg.onSettle) this.cfg.onSettle(info);
+    } else {
+      this._settleTimer = setTimeout(function () {
+        if (self.cfg.onSettle) self.cfg.onSettle(info);
+      }, this.settleDelay);
+    }
+  };
+
+  Panel.prototype.flash = function (msg) {
+    var self = this;
+    this.toast.textContent = msg;
+    this.toast.classList.add('show');
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(function () { self.toast.classList.remove('show'); }, 1600);
+  };
+
+  /* ---------- アクセサ ---------- */
+
+  Panel.prototype._get = function (item) {
+    return item.get ? item.get(this.params) : getPath(this.params, item.path);
+  };
+  Panel.prototype._set = function (item, v) {
+    if (item.set) item.set(v, this.params); else setPath(this.params, item.path, v);
+  };
+  Panel.prototype._default = function (item) {
+    if (item.defaultValue !== undefined) return item.defaultValue;
+    if (item.get) {
+      /* get が params を閉じ込んでいる書き方でも初期値を取れるようにする */
+      var keep = this.params;
+      try { this.params = this.defaults; return item.get(this.defaults); }
+      catch (e) { return undefined; }
+      finally { this.params = keep; }
+    }
+    return getPath(this.defaults, item.path);
+  };
+
+  /* 廃止した選択肢が localStorage に残っていると、どれも選ばれていない状態になる。
+     options に無い値だったら初期値へ戻す（anyflow-embed で実際に起きた） */
+  Panel.prototype._validateEnum = function (item) {
+    if (!item.options || !item.options.length) return;
+    var cur = this._get(item);
+    var ok = item.options.some(function (o) {
+      var v = Array.isArray(o) ? o[1] : (o.value !== undefined ? o.value : o);
+      return String(v) === String(cur);
+    });
+    if (!ok) {
+      var d = this._default(item);
+      this._set(item, d);
+      this.save();
+    }
+  };
+
+  /* ---------- 描画 ---------- */
+
+  Panel.prototype.rebuild = function () {
+    var self = this;
+    var keepScroll = this.body.scrollTop || this._restoreScroll || 0;
+    this.body.innerHTML = '';
+    this.foot.innerHTML = '';
+    this.rows = [];
+
+    /* 検索ボックス */
+    if (this.cfg.search !== false) {
+      var s = document.createElement('input');
+      s.className = 'tp-search';
+      s.type = 'search';
+      s.placeholder = '項目を検索…';
+      s.value = this._query || '';
+      s.addEventListener('input', function () { self._filter(s.value); });
+      this.body.appendChild(s);
+    }
+
+    var schema = typeof this.cfg.schema === 'function' ? this.cfg.schema(this.params) : (this.cfg.schema || []);
+    schema.forEach(function (cat) {
+      if (cat.when && !cat.when(self.params)) return;
+      self._renderCat(cat);
+    });
+
+    this._renderFoot();
+    this.body.scrollTop = keepScroll;
+    this._restoreScroll = 0;
+    if (this._query) this._filter(this._query);
+    return this;
+  };
+
+  Panel.prototype._renderCat = function (cat) {
+    var self = this;
+    var title = cat.cat || cat.title || '';
+    var isOpen = this.catOpen[title] !== undefined ? this.catOpen[title] : cat.open !== false;
+    this.catOpen[title] = isOpen;
+
+    var box = document.createElement('div');
+    box.className = 'tp-cat' + (isOpen ? '' : ' closed');
+    var head = document.createElement('div');
+    head.className = 'tp-cat-head';
+    head.innerHTML = '<span></span><span class="tp-cat-chev">▾</span>';
+    head.firstChild.textContent = title;
+    var content = document.createElement('div');
+    content.className = 'tp-cat-body';
+    head.addEventListener('click', function () {
+      self.catOpen[title] = !box.classList.toggle('closed');
+      self._saveUI();
+    });
+    box.append(head, content);
+    this.body.appendChild(box);
+
+    this._mount = content;
+    (cat.items || []).forEach(function (item) { self._renderItem(item, content); });
+  };
+
+  Panel.prototype._renderItem = function (item, catBody) {
+    var self = this;
+    if (!item) return;
+    if (item.when && !item.when(this.params)) return;
+
+    /* 小見出し */
+    if (item.sub !== undefined) {
+      var g = document.createElement('div');
+      g.className = 'tp-grp' + (item.deep ? ' deep' : '');
+      var t = document.createElement('div');
+      t.className = 'tp-grp-title';
+      t.innerHTML = item.sub;
+      g.appendChild(t);
+      catBody.appendChild(g);
+      this._mount = item.deep ? g : catBody;
+      return;
+    }
+    var mount = this._mount || catBody;
+
+    if (item.note !== undefined) {
+      var n = document.createElement('div');
+      n.className = 'tp-note';
+      n.textContent = item.note;
+      mount.appendChild(n);
+      return;
+    }
+    if (item.custom) { item.custom(mount, this); return; }
+
+    var row = null;
+    if (item.slider !== undefined) row = this._slider(item, mount);
+    else if (item.seg !== undefined) row = this._seg(item, mount);
+    else if (item.pills !== undefined) row = this._pills(item, mount);
+    else if (item.toggle !== undefined) row = this._toggle(item, mount);
+    else if (item.select !== undefined) row = this._select(item, mount);
+    else if (item.color !== undefined) row = this._color(item, mount);
+    else if (item.text !== undefined) row = this._text(item, mount);
+    else if (item.button !== undefined) row = this._button(item, mount);
+
+    if (row && item.hint) {
+      var h = document.createElement('div');
+      h.className = 'tp-hint';
+      h.textContent = item.hint;
+      mount.appendChild(h);
+      row._hint = h;
+    }
+    if (row) this.rows.push(row);
+  };
+
+  /* --- スライダー --- */
+  Panel.prototype._slider = function (item, mount) {
+    var self = this;
+    var min = item.min === undefined ? 0 : item.min;
+    var step = item.step === undefined ? 0.01 : item.step;
+    var max = item.max === undefined ? 1 : item.max;
+
+    /* ツマミの既定位置を真ん中にする（＝初期値から下げることも上げることもできる）。
+       item.autoCenter:false で個別に切れる */
+    if (this.autoCenter && item.autoCenter !== false) {
+      var d = this._default(item);
+      if (typeof d === 'number' && isFinite(d) && d > min) {
+        max = Math.round((2 * d - min) / step) * step;
+      }
+    }
+
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    var lab = document.createElement('label');
+    lab.textContent = item.slider;
+    var input = document.createElement('input');
+    input.type = 'range';
+    input.min = min; input.max = max; input.step = step;
+    input.value = this._get(item);
+    var val = document.createElement('span');
+    val.className = 'tp-val';
+    var fmt = toFmt(item.fmt, step);
+    val.textContent = fmt(this._get(item));
+
+    input.addEventListener('input', function () {
+      var v = parseFloat(input.value);
+      self._set(item, v);
+      val.textContent = fmt(v);
+      self._changed({ item: item, path: item.path, value: v, immediate: false });
+    });
+    input.addEventListener('change', function () {
+      self._changed({ item: item, path: item.path, value: parseFloat(input.value), immediate: true });
+    });
+
+    row.append(lab, input, val);
+    mount.appendChild(row);
+    row._label = item.slider;
+    row._sync = function () { input.value = self._get(item); val.textContent = fmt(self._get(item)); };
+    return row;
+  };
+
+  /* --- 2〜3択のセグメント --- */
+  Panel.prototype._seg = function (item, mount) {
+    var self = this;
+    this._validateEnum(item);
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    if (item.seg) { var lab = document.createElement('label'); lab.textContent = item.seg; row.appendChild(lab); }
+    var seg = document.createElement('div');
+    seg.className = 'tp-seg';
+    var btns = (item.options || []).map(function (o) {
+      var text = Array.isArray(o) ? o[0] : o.name;
+      var value = Array.isArray(o) ? o[1] : o.value;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = text;
+      b.addEventListener('click', function () {
+        self._set(item, value);
+        sync();
+        self._changed({ item: item, path: item.path, value: value, immediate: true });
+        if (item.rebuild || typeof self.cfg.schema === 'function') self.rebuild();
+      });
+      seg.appendChild(b);
+      return [b, value];
+    });
+    function sync() {
+      var cur = self._get(item);
+      btns.forEach(function (p) { p[0].classList.toggle('on', p[1] === cur); });
+    }
+    sync();
+    row.appendChild(seg);
+    mount.appendChild(row);
+    row._label = item.seg || '';
+    row._sync = sync;
+    return row;
+  };
+
+  /* --- ピル（案の切替） --- */
+  Panel.prototype._pills = function (item, mount) {
+    var self = this;
+    this._validateEnum(item);
+    var wrap = document.createElement('div');
+    if (item.pills) {
+      var t = document.createElement('div');
+      t.className = 'tp-grp-title';
+      t.style.marginBottom = '2px';
+      t.textContent = item.pills;
+      wrap.appendChild(t);
+    }
+    var rowEl = document.createElement('div');
+    rowEl.className = 'tp-pills';
+    var desc = document.createElement('div');
+    desc.className = 'tp-desc';
+
+    (item.options || []).forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tp-pill';
+      b.dataset.value = o.value;
+      if (o.swatch) {
+        var sw = document.createElement('span');
+        sw.className = 'tp-swatch';
+        sw.style.background = o.swatch;
+        b.appendChild(sw);
+      }
+      b.append(document.createTextNode(o.name));
+      b.addEventListener('click', function () {
+        self._set(item, o.value);
+        sync();
+        self._changed({ item: item, path: item.path, value: o.value, immediate: true });
+        if (item.rebuild !== false && (typeof self.cfg.schema === 'function' || item.rebuild)) self.rebuild();
+      });
+      rowEl.appendChild(b);
+    });
+    function sync() {
+      var cur = self._get(item);
+      var found = null;
+      rowEl.querySelectorAll('.tp-pill').forEach(function (b) {
+        var on = b.dataset.value === String(cur);
+        b.classList.toggle('on', on);
+        if (on) found = b;
+      });
+      var opt = (item.options || []).filter(function (o) { return String(o.value) === String(cur); })[0];
+      desc.textContent = (opt && opt.desc) || '';
+      desc.style.display = desc.textContent ? '' : 'none';
+    }
+    wrap.append(rowEl, desc);
+    mount.appendChild(wrap);
+    sync();
+    wrap._label = (item.pills || '') + ' ' + (item.options || []).map(function (o) { return o.name; }).join(' ');
+    wrap._sync = sync;
+    return wrap;
+  };
+
+  /* --- ON/OFF --- */
+  Panel.prototype._toggle = function (item, mount) {
+    var self = this;
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    var lab = document.createElement('label');
+    lab.textContent = item.toggle;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tp-switch';
+    function sync() { b.classList.toggle('on', !!self._get(item)); }
+    b.addEventListener('click', function () {
+      var v = !self._get(item);
+      self._set(item, v);
+      sync();
+      self._changed({ item: item, path: item.path, value: v, immediate: true });
+      if (item.rebuild || typeof self.cfg.schema === 'function') self.rebuild();
+    });
+    sync();
+    row.append(lab, b);
+    mount.appendChild(row);
+    row._label = item.toggle;
+    row._sync = sync;
+    return row;
+  };
+
+  /* --- プルダウン --- */
+  Panel.prototype._select = function (item, mount) {
+    var self = this;
+    this._validateEnum(item);
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    var lab = document.createElement('label');
+    lab.textContent = item.select;
+    var sel = document.createElement('select');
+    (item.options || []).forEach(function (o) {
+      var text = Array.isArray(o) ? o[0] : (o.name !== undefined ? o.name : o);
+      var value = Array.isArray(o) ? o[1] : (o.value !== undefined ? o.value : o);
+      var op = document.createElement('option');
+      op.value = value; op.textContent = text;
+      sel.appendChild(op);
+    });
+    function sync() { sel.value = self._get(item); }
+    sel.addEventListener('change', function () {
+      self._set(item, sel.value);
+      self._changed({ item: item, path: item.path, value: sel.value, immediate: true });
+      if (item.rebuild || typeof self.cfg.schema === 'function') self.rebuild();
+    });
+    sync();
+    row.append(lab, sel);
+    mount.appendChild(row);
+    row._label = item.select;
+    row._sync = sync;
+    return row;
+  };
+
+  /* --- 色 --- */
+  Panel.prototype._color = function (item, mount) {
+    var self = this;
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    var lab = document.createElement('label');
+    lab.textContent = item.color;
+    var inp = document.createElement('input');
+    inp.type = 'color';
+    var txt = document.createElement('input');
+    txt.type = 'text';
+    function sync() { inp.value = self._get(item); txt.value = self._get(item); }
+    function apply(v) {
+      self._set(item, v); sync();
+      self._changed({ item: item, path: item.path, value: v, immediate: false });
+    }
+    inp.addEventListener('input', function () { apply(inp.value); });
+    txt.addEventListener('change', function () { apply(txt.value); });
+    sync();
+    row.append(lab, inp, txt);
+    mount.appendChild(row);
+    row._label = item.color;
+    row._sync = sync;
+    return row;
+  };
+
+  /* --- 文字 --- */
+  Panel.prototype._text = function (item, mount) {
+    var self = this;
+    var row = document.createElement('div');
+    row.className = 'tp-row';
+    var lab = document.createElement('label');
+    lab.textContent = item.text;
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    function sync() { inp.value = self._get(item) == null ? '' : self._get(item); }
+    inp.addEventListener('input', function () {
+      self._set(item, inp.value);
+      self._changed({ item: item, path: item.path, value: inp.value, immediate: false });
+    });
+    sync();
+    row.append(lab, inp);
+    mount.appendChild(row);
+    row._label = item.text;
+    row._sync = sync;
+    return row;
+  };
+
+  /* --- ボタン --- */
+  Panel.prototype._button = function (item, mount) {
+    var self = this;
+    var box = document.createElement('div');
+    box.className = 'tp-btns';
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = item.button;
+    if (item.primary) b.className = 'primary';
+    b.addEventListener('click', function () { item.onClick && item.onClick(self); });
+    box.appendChild(b);
+    mount.appendChild(box);
+    box._label = item.button;
+    box._sync = function () {};
+    return box;
+  };
+
+  /* ---------- フッター ---------- */
+
+  Panel.prototype._renderFoot = function () {
+    var self = this;
+    if (this.cfg.footer === false) { this.foot.style.display = 'none'; return; }
+    var box = document.createElement('div');
+    box.className = 'tp-btns';
+    box.style.marginTop = '0';
+
+    var defs = [
+      { label: '📋 設定をコピー', onClick: function () { self.copy(); } },
+      { label: '📥 読み込み', onClick: function () { self.importPrompt(); } },
+      { label: '↺ 初期値', onClick: function () { self.reset(); } }
+    ];
+    var list = (this.cfg.footer || []).concat(this.cfg.footerDefaults === false ? [] : defs);
+    list.forEach(function (b) {
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.textContent = b.label;
+      if (b.primary) el.className = 'primary';
+      el.addEventListener('click', function () { b.onClick && b.onClick(self); });
+      box.appendChild(el);
+    });
+    this.foot.appendChild(box);
+  };
+
+  /* ---------- 公開API ---------- */
+
+  Panel.prototype.sync = function () {
+    this.rows.forEach(function (r) { r._sync && r._sync(); });
+    return this;
+  };
+
+  Panel.prototype.toggle = function (force) {
+    var closed = force === undefined ? !this.el.classList.contains('closed') : !force;
+    this.el.classList.toggle('closed', closed);
+    if (!closed) { this.el.style.width = this._openW + 'px'; this.el.style.height = this._openH + 'px'; }
+    this._saveUI();
+    return this;
+  };
+
+  Panel.prototype.reset = function () {
+    assignDeep(this.params, this.defaults);
+    this.save();
+    this.rebuild();
+    this._changed({ reset: true, immediate: true });
+    this.flash('初期値に戻しました');
+    return this;
+  };
+
+  Panel.prototype.exportJSON = function () { return JSON.stringify(this.params, null, 2); };
+
+  Panel.prototype.copy = function () {
+    var self = this;
+    var text = this.exportJSON();
+    var done = function () { self.flash('コピーしました（Claude に貼れば既定値にできます）'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { self._fallbackCopy(text, done); });
+    } else this._fallbackCopy(text, done);
+    return this;
+  };
+
+  Panel.prototype._fallbackCopy = function (text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { window.prompt('コピーしてください', text); }
+    document.body.removeChild(ta);
+  };
+
+  Panel.prototype.importJSON = function (str) {
+    var obj;
+    try { obj = JSON.parse(str); } catch (e) { this.flash('JSON が読めませんでした'); return this; }
+    assignDeep(this.params, mergeSaved(this.defaults, obj));
+    this.save();
+    this.rebuild();
+    this._changed({ imported: true, immediate: true });
+    this.flash('読み込みました');
+    return this;
+  };
+
+  Panel.prototype.importPrompt = function () {
+    var s = window.prompt('設定JSONを貼り付けてください');
+    if (s) this.importJSON(s);
+    return this;
+  };
+
+  /* 検索で行を絞る（74本あっても目的の項目にすぐ着く） */
+  Panel.prototype._filter = function (q) {
+    this._query = q;
+    var key = (q || '').trim().toLowerCase();
+    var cats = this.body.querySelectorAll('.tp-cat');
+    cats.forEach(function (cat) {
+      var hit = 0;
+      cat.querySelectorAll('.tp-row, .tp-pills, .tp-btns').forEach(function (row) {
+        var host = row.classList.contains('tp-pills') ? row.parentNode : row;
+        var text = (host.textContent || '') + ' ' + (host._label || '');
+        var on = !key || text.toLowerCase().indexOf(key) >= 0;
+        host.classList.toggle('tp-hidden', !on);
+        var hint = host.nextSibling;
+        if (hint && hint.classList && hint.classList.contains('tp-hint')) hint.classList.toggle('tp-hidden', !on);
+        if (on) hit++;
+      });
+      if (key) {
+        cat.classList.toggle('tp-hidden', hit === 0);
+        cat.classList.remove('closed');
+        cat.querySelectorAll('.tp-grp').forEach(function (g) { g.classList.remove('tp-hidden'); });
+      } else {
+        cat.classList.remove('tp-hidden');
+        var title = cat.querySelector('.tp-cat-head span').textContent;
+        cat.classList.toggle('closed', this.catOpen[title] === false);
+      }
+    }, this);
+    return this;
+  };
+
+  Panel.prototype.destroy = function () {
+    if (this._onKey) window.removeEventListener('keydown', this._onKey);
+    this.el.remove();
+    return this;
+  };
+
+  /* ============================================================
+     入口
+     ============================================================ */
+
+  return {
+    create: function (cfg) { return new Panel(cfg); },
+    Panel: Panel,
+    /* 便利物（利用側でも使えるように） */
+    utils: { getPath: getPath, setPath: setPath, mergeSaved: mergeSaved, assignDeep: assignDeep, clone: clone },
+    version: '1.0.0'
+  };
+});
