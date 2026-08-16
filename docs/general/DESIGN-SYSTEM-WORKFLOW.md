@@ -4,7 +4,7 @@
 このファイルをリポジトリに置くか、内容をそのまま貼れば同じ手順で動く。
 
 > 制定: 2026-08-15 / 出どころ: `abashiri-site` で実際に通した工程を、他の案件でも使える形に書き直したもの
-> 実例: [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md)（完成物）
+> 実例: [abashiri-site/DESIGN-SYSTEM.md](../abashiri-site/DESIGN-SYSTEM.md)（完成物）
 > 対になるルール: [DESIGN-SYSTEM-RULES.md](DESIGN-SYSTEM-RULES.md)（Figmaカンプの読み方）
 
 ---

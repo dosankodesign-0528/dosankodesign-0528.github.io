@@ -113,5 +113,5 @@ Redeploy は**同じソースを再生するだけ**で、既存デプロイの�
 
 ## 関連ファイル
 
-- [.github/workflows/supabase-keepalive.yml](../.github/workflows/supabase-keepalive.yml) — Supabase 自動停止防止
-- [CLAUDE.md](../CLAUDE.md) / [AGENTS.md](../AGENTS.md) — AI 向け運用ルール（symlink で同一）
+- [.github/workflows/supabase-keepalive.yml](../../.github/workflows/supabase-keepalive.yml) — Supabase 自動停止防止
+- [CLAUDE.md](../../CLAUDE.md) / [AGENTS.md](../../AGENTS.md) — AI 向け運用ルール（symlink で同一）
