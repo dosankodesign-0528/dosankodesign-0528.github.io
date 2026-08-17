@@ -246,3 +246,9 @@ body {
   /* 同じ並びを2周ぶん置いてあるので、半分流れたら先頭に戻る＝継ぎ目なく回る */
   to   { transform: translateX(-50%); }
 }
+
+/* 窓枠が出た瞬間のカクつきを吸収する、ごく短いフェード */
+@keyframes botto-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

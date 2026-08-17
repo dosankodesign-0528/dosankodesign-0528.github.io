@@ -14,7 +14,13 @@
  * 2→3 の間に「窓枠をくぐって向こう側の世界に入る」遷移が挟まる（enterPatterns.ts の5案）。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+  type Variants,
+} from "framer-motion";
 import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
 import { findEnter } from "./enterPatterns";
@@ -41,6 +47,16 @@ const SPOTS: Spot[] = [
   { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", video: "/video/ryuhyo.mp4" },
 ];
 
+/* ぼーっと体験の背景写真（カンプ 15152:27990 / 29216）。
+   海へ向かう一本道に灯台。まだ public/img に置かれていない間は、
+   壊れた画像にならないよう既存写真へ自動で退避する。 */
+const BG_ROAD = "/img/botto-road.jpg";
+const BG_FALLBACK = "/img/scene-himawari.jpg";
+const bgFallback = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const el = e.currentTarget;
+  if (!el.src.endsWith(BG_FALLBACK)) el.src = BG_FALLBACK;
+};
+
 /* カンプ 15152:29215 の実寸 */
 const CARD_W = 902;
 const CARD_H = 586;
@@ -49,6 +65,22 @@ const CARD_GAP = 60;
 const HOVER_SCALE = 1160 / CARD_W; /* = 1.2860… 高さも 754/586 = 1.2866 でほぼ同じ */
 /* 1周にかける秒数。ゆっくり流す */
 const LOOP_SEC = 48;
+
+/* 導入の文字は、上から順に1ブロックずつブラーが晴れて出てくる。
+   景色のブラーが掛かり終わる（0.8+2.2秒）のを待ってから始める */
+const INTRO_STAGGER: Variants = {
+  hidden: {},
+  show: { transition: { delayChildren: 1.5, staggerChildren: 0.55 } },
+};
+const INTRO_BLOCK: Variants = {
+  hidden: { opacity: 0, filter: "blur(16px)", y: 14 },
+  show: {
+    opacity: 1,
+    filter: "blur(0px)",
+    y: 0,
+    transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 /* ═══════════ 導入 ═══════════ */
 function Intro({ onNext }: { onNext: () => void }) {
@@ -65,7 +97,8 @@ function Intro({ onNext }: { onNext: () => void }) {
           背景は2枚重ね（奥 blur42 / 手前 blur32）。
           ⚠️ カンプの緑の道の写真は取得できなかったので、既存のひまわり畑で仮置き。 */}
       <motion.img
-        src="/img/scene-himawari.jpg"
+        src={BG_ROAD}
+        onError={bgFallback}
         alt=""
         className="absolute inset-0 size-full scale-110 object-cover"
         initial={{ filter: "blur(0px)" }}
@@ -79,38 +112,47 @@ function Intro({ onNext }: { onNext: () => void }) {
         transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
       />
 
-      {/* カンプ 15152:29260: (565, 110) 382x629 / 縦並び gap 100 */}
+      {/* カンプ 15152:29260: (565, 110) 382x629 / 縦並び gap 100。
+          文字は一気に出さず、上から順に1ブロックずつブラーが晴れて出てくる。
+          ぼーっと読ませたいので、間隔は広め（0.55秒おき）に取っている */}
       <motion.div
-        className="absolute left-1/2 top-[110px] flex w-[382px] -translate-x-1/2 flex-col items-center gap-[100px] text-center text-white"
-        initial={{ opacity: 0, filter: "blur(16px)" }}
-        animate={{ opacity: 1, filter: "blur(0px)" }}
-        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 1.6 }}
+        /* 上下中央ぞろえ。カンプは top 110px 固定だが、文字量で高さが変わるので
+           画面の真ん中に置いたほうが収まりが良い */
+        className="absolute left-1/2 top-1/2 flex w-[382px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-[100px] text-center text-white"
+        variants={INTRO_STAGGER}
+        initial="hidden"
+        animate="show"
       >
         <div className="flex w-full flex-col items-center gap-[77px]">
-          <div className="flex flex-col items-center leading-[1.6] whitespace-nowrap">
+          <motion.div
+            variants={INTRO_BLOCK}
+            className="flex flex-col items-center leading-[1.6] whitespace-nowrap"
+          >
             <p className="text-body-18 font-light">網走に来る前に、まずやってみよう</p>
             <p className="text-title-44 font-thin">ぼーっと体験</p>
-          </div>
+          </motion.div>
           <div className="flex w-full flex-col items-center gap-[33px] text-body-16 font-light leading-[1.8]">
-            <p>網走は何もないけど、それがたまらない。</p>
-            <p>
+            <motion.p variants={INTRO_BLOCK}>網走は何もないけど、それがたまらない。</motion.p>
+            <motion.p variants={INTRO_BLOCK}>
               忙しなく過ごす、あなたの日常からそっと離れて、
               <br />
               何も考えず、「ぼーっとする」こと。
-            </p>
-            <p className="whitespace-nowrap">
+            </motion.p>
+            <motion.p variants={INTRO_BLOCK} className="whitespace-nowrap">
               それが最大の癒しであり、くつろぎです。
               <br />
               網走では、そんな体験が思う存分できる。
-            </p>
-            <p className="whitespace-nowrap">
+            </motion.p>
+            <motion.p variants={INTRO_BLOCK} className="whitespace-nowrap">
               ウェブサイトを通して、その空間を
               <br />
               疑似体験しよう。
-            </p>
+            </motion.p>
           </div>
         </div>
-        <GlassButton onClick={onNext}>次へ進む</GlassButton>
+        <motion.div variants={INTRO_BLOCK}>
+          <GlassButton onClick={onNext}>次へ進む</GlassButton>
+        </motion.div>
       </motion.div>
     </motion.div>
   );
@@ -156,7 +198,8 @@ function Pick({
     >
       {/* 背景：奥にぼかした景色（カンプ 15152:29216 blur42 / 29217 blur32） */}
       <img
-        src="/img/scene-himawari.jpg"
+        src={BG_ROAD}
+        onError={bgFallback}
         alt=""
         className="absolute inset-0 size-full scale-110 object-cover blur-42"
       />
@@ -457,9 +500,10 @@ function EnterWindow({
         transition={{ duration: sec, ease: p.ease }}
       />
 
-      {/* 窓の開口部。枠だけが近づいて広がる */}
+      {/* 窓の開口部。枠だけが近づいて広がる。
+          出た瞬間だけ 140ms でフェードインして、カードとの見え方の差を吸収する */}
       <motion.div
-        className="absolute overflow-hidden border-white/60"
+        className="absolute overflow-hidden border-white/60 [animation:botto-fade-in_140ms_linear]"
         style={{ x, y, width: from.w, height: from.h }}
         initial={{
           x: from.x,
@@ -489,14 +533,23 @@ function EnterWindow({
           borderWidth: { duration: sec * 0.55, ease: p.ease },
         }}
       >
-        {/* 窓の向こうの景色。画面に固定したまま動かさない。
-            開口部が動いたぶんだけ逆に動かして、画面上の位置を保つ */}
-        <motion.img
-          src={spot.src}
-          alt=""
-          className="absolute max-w-none object-cover"
+        {/* 窓の向こうの景色。開口部が動いたぶんだけ逆に動かして、画面上の位置を保つ。
+            そのうえで、景色そのものは“わずかに”しか大きくならない（1.18→1.0 の視差）。
+            枠が 2.6倍に広がるのに対して景色はほぼ動かない＝この差が奥行きになる。
+            景色まで同じ倍率で拡大すると「写真を引き伸ばした」動きになって不自然になる。 */}
+        <motion.div
+          className="absolute"
           style={{ x: imgX, y: imgY, width: STAGE_W, height: STAGE_H, left: 0, top: 0 }}
-        />
+        >
+          <motion.img
+            src={spot.src}
+            alt=""
+            className="size-full max-w-none object-cover"
+            initial={{ scale: 1.18 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
+          />
+        </motion.div>
       </motion.div>
     </motion.div>
   );
