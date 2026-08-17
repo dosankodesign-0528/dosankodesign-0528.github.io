@@ -24,6 +24,7 @@ import {
 import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
 import { findEnter } from "./enterPatterns";
+import { findCarousel } from "./carouselPatterns";
 
 export type Step = 1 | 2 | 3;
 
@@ -56,6 +57,9 @@ const bgFallback = (e: React.SyntheticEvent<HTMLImageElement>) => {
   const el = e.currentTarget;
   if (!el.src.endsWith(BG_FALLBACK)) el.src = BG_FALLBACK;
 };
+
+const STAGE_W = 1512;
+const STAGE_H = 982;
 
 /* カンプ 15152:29215 の実寸 */
 const CARD_W = 902;
@@ -177,15 +181,40 @@ function GlassButton({
   );
 }
 
-/* ═══════════ 場所えらび（自動カルーセル） ═══════════ */
+/* ═══════════ 場所えらび（中央固定のカルーセル） ═══════════ */
+/*
+ * 選べるのは中央に来たカードだけ。中央のカードだけが拡大して
+ * 「この場所にする」が出る。左右のカードにはボタンを出さない。
+ *
+ * こうすると、窓に入る遷移が「中央から真っ直ぐ膨らむ」だけになる。
+ * 横に滑りながら膨らむと『部品が飛んできた』に見えて、近づいている感じが出ない。
+ */
+const STEP = CARD_W + CARD_GAP; /* カード1枚ぶんの送り幅 */
+
 function Pick({
   onPick,
+  pattern,
 }: {
   onPick: (spot: Spot, rect: DOMRect) => void;
+  pattern?: number | string | null;
 }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  /* 同じ並びを2周ぶん置いて、-50% までスクロールしたら先頭に戻す＝無限に流れて見える */
-  const loop = [...SPOTS, ...SPOTS];
+  const pat = findCarousel(pattern);
+  const [index, setIndex] = useState(0);
+  /* 自動送り。止まる案は「見せる時間＋滑る時間」、流れ続ける案は滑る時間だけ */
+  useEffect(() => {
+    const wait = pat.continuous ? pat.slide : pat.dwell + pat.slide;
+    const id = setInterval(() => setIndex((i) => i + 1), wait);
+    return () => clearInterval(id);
+  }, [pat]);
+
+  const active = ((index % SPOTS.length) + SPOTS.length) % SPOTS.length;
+  /* 中央のカードの左端が (1512 - 902) / 2 に来るように track をずらす */
+  const trackX = (STAGE_W - CARD_W) / 2 - index * STEP;
+  /* 前後2枚ずつだけ描く。index は増え続けるが、中身は循環させるので無限に流れる */
+  const slots = [-2, -1, 0, 1, 2].map((d) => {
+    const pos = index + d;
+    return { pos, spot: SPOTS[((pos % SPOTS.length) + SPOTS.length) % SPOTS.length] };
+  });
 
   return (
     <motion.div
@@ -205,39 +234,41 @@ function Pick({
       />
       <div className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/40 to-transparent" />
 
-      {/* ホバー時のカンプ（15152:29191）には見出しが無く、拡大したカードが上まで来る。
-          カードとぶつかるので、拡大中は見出しを引っ込める */}
-      <p
-        className={`absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white transition-all duration-500 ease-standard ${
-          hovered ? "-translate-y-4 opacity-0" : "translate-y-0 opacity-100"
-        }`}
-      >
+      <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
         どこでぼーっとする？
       </p>
 
-      {/* カンプ 15152:29228: 通常時 top 239 / gap 60 / カード 902x586。
-          ホバーで 1160x754 に広がる（15152:29191）ので、器はその高さぶん確保しておく。
+      {/* ホバーで 1160x754 に広がる（15152:29191）ので、器はその高さぶん確保しておく。
           中心ぞろえにすると通常時の上端がカンプどおり 239px に来る（155 + (754-586)/2）。 */}
       <div className="absolute left-0 top-[155px] h-[754px] w-full overflow-hidden">
-        <div
-          className="flex h-full w-max items-center"
-          style={{
-            gap: CARD_GAP,
-            animation: `botto-marquee ${LOOP_SEC}s linear infinite`,
-            animationPlayState: hovered ? "paused" : "running",
-          }}
+        <motion.div
+          className="relative h-full"
+          animate={{ x: trackX }}
+          transition={{ duration: pat.slide / 1000, ease: pat.ease }}
         >
-          {loop.map((s, i) => (
+          {slots.map(({ pos, spot }) => (
             <SpotCard
-              key={`${s.id}-${i}`}
-              spot={s}
-              active={hovered === `${s.id}-${i}`}
-              onEnter={() => setHovered(`${s.id}-${i}`)}
-              onLeave={() => setHovered(null)}
+              key={pos}
+              spot={spot}
+              /* いま中央に来ている1枚だけを有効にする */
+              active={pos === index}
+              left={pos * STEP}
               onPick={onPick}
             />
           ))}
-        </div>
+        </motion.div>
+      </div>
+
+      {/* いま何枚目か。中央固定にすると位置の手がかりが要る */}
+      <div className="absolute bottom-[42px] left-1/2 flex -translate-x-1/2 items-center gap-3">
+        {SPOTS.map((s, i) => (
+          <span
+            key={s.id}
+            className={`block size-[8px] rounded-full transition-all duration-500 ease-standard ${
+              i === active ? "w-[26px] bg-white" : "bg-white/40"
+            }`}
+          />
+        ))}
       </div>
     </motion.div>
   );
@@ -246,20 +277,20 @@ function Pick({
 function SpotCard({
   spot,
   active,
-  onEnter,
-  onLeave,
+  left,
   onPick,
 }: {
   spot: Spot;
+  /** 中央に来ているか。true の時だけ拡大してボタンが出る */
   active: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
+  /** track の中での左端の位置(px) */
+  left: number;
   onPick: (spot: Spot, rect: DOMRect) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  /* ホバーしている間だけ動画プレビューを流す */
+  /* 中央にいる間だけ動画プレビューを流す */
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -275,15 +306,17 @@ function SpotCard({
   return (
     <div
       ref={ref}
-      onPointerEnter={onEnter}
-      onPointerLeave={onLeave}
-      className="relative shrink-0 overflow-hidden border-white/60 transition-transform duration-700 ease-standard"
+      className="absolute top-1/2 overflow-hidden border-white/60 transition-all duration-700 ease-standard"
       style={{
+        left,
+        marginTop: -CARD_H / 2,
         width: CARD_W,
         height: CARD_H,
         borderWidth: 10,
         borderRadius: 120,
         transform: `scale(${active ? HOVER_SCALE : 1})`,
+        /* 中央以外は少し引いて見せて、選べるのが中央だけだと分かるようにする */
+        opacity: active ? 1 : 0.55,
         zIndex: active ? 10 : 1,
       }}
     >
@@ -294,16 +327,17 @@ function SpotCard({
         loop
         playsInline
         preload="none"
-        /* 見せるだけの飾りなので、クリックは全部すり抜けさせる
-           （これが無いと「この場所にする」ボタンを覆って押せなくなる） */
+        /* 見せるだけの飾りなので、クリックは全部すり抜けさせる */
         className={`pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
           active ? "opacity-100" : "opacity-0"
         }`}
       />
-      {/* カンプ 15152:29231: カード内 top 464 に「この場所にする」 */}
+      {/* カンプ 15152:29231: カード内 top 464。中央のカードにだけ出す */}
       <div
-        className={`absolute left-1/2 top-[464px] z-10 -translate-x-1/2 transition-opacity duration-500 ease-standard ${
-          active ? "opacity-100" : "pointer-events-none opacity-0"
+        className={`absolute left-1/2 top-[464px] z-10 -translate-x-1/2 transition-all duration-500 ease-standard ${
+          active
+            ? "translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-2 opacity-0"
         }`}
       >
         <GlassButton
@@ -453,8 +487,6 @@ function Watch({ spot }: { spot: Spot }) {
  *  5. 人物イラストは Stage 側の一番上のレイヤーに残るので、窓が人物の手前ではなく
  *     奥から迫ってきて、人物ごと世界に入っていくように見える（z-20 で人物 z-30 の下）
  */
-const STAGE_W = 1512;
-const STAGE_H = 982;
 
 function EnterWindow({
   spot,
@@ -586,11 +618,14 @@ export default function ExperienceFlow({
   step,
   setStep,
   enter,
+  carousel,
 }: {
   step: Step;
   setStep: (s: Step) => void;
   /** 1〜5: 窓枠をくぐる遷移のパターン（enterPatterns.ts） */
   enter?: number | string | null;
+  /** 1〜3: カルーセルの動き方（carouselPatterns.ts） */
+  carousel?: number | string | null;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState<Spot>(SPOTS[1]);
@@ -627,7 +662,7 @@ export default function ExperienceFlow({
       <WorldPush active={!!entering} pattern={enter}>
         <AnimatePresence mode="wait">
           {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
-          {step === 2 && <Pick key="pick" onPick={handlePick} />}
+          {step === 2 && <Pick key="pick" onPick={handlePick} pattern={carousel} />}
           {step === 3 && <Watch key="watch" spot={spot} />}
         </AnimatePresence>
       </WorldPush>
