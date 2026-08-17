@@ -26,6 +26,11 @@
  */
 import { useState } from "react";
 import { AnimatePresence, motion, useTransform, type MotionValue } from "framer-motion";
+import {
+  mergeSpotTransition,
+  totalScroll,
+  type SpotTransition,
+} from "./spotTransition";
 
 type Spot = {
   id: string;
@@ -50,29 +55,49 @@ const SPOTS: Spot[] = [
   { id: "ryuhyo", title: "流氷クルーズ", img: "/img/ice.jpg", body: BODY },
 ];
 
-export default function SpotShowcase({ scrollY }: { scrollY: MotionValue<number> }) {
+export default function SpotShowcase({
+  scrollY,
+  tune,
+}: {
+  scrollY: MotionValue<number>;
+  /** 入れ替わりのタイミング（spotTransition.ts / /mock/spot-tune で調整） */
+  tune?: Partial<SpotTransition> | null;
+}) {
   const [index, setIndex] = useState(0);
   const spot = SPOTS[index];
   /* サムネイルは「今出ていないもの」を並び順のまま3枚 */
   const thumbs = SPOTS.filter((_, i) => i !== index);
 
-  /* KV の背景は [0,160,400] で 16px までぼける。それと入れ違いになるよう、
-     こちらは同じ帯でブラーが晴れながら濃くなる＝クロスで入れ替わって見える */
-  const opacity = useTransform(scrollY, [0, 120, 460], [0, 0, 1]);
-  const filter = useTransform(scrollY, [0, 120, 460], [
-    "blur(30px)",
-    "blur(30px)",
-    "blur(0px)",
-  ]);
-  /* 完全に出るまでは触れないようにして、KV のボタンを邪魔しない */
-  const pointerEvents = useTransform(scrollY, (v) => (v > 380 ? "auto" : "none"));
+  const t = mergeSpotTransition(tune);
+
+  /* KV の背景がブラーで奥へ引くのと入れ違いになるよう、
+     こちらは同じ帯でブラーが晴れながら濃くなる＝クロスで入れ替わって見える。
+     晴れきる位置 (spotTo) から先が「固定ビュー」 */
+  const opacity = useTransform(scrollY, [0, t.spotFrom, t.spotTo], [0, 0, 1]);
+  const filter = useTransform(
+    scrollY,
+    [0, t.spotFrom, t.spotTo],
+    [`blur(${t.spotBlur}px)`, `blur(${t.spotBlur}px)`, "blur(0px)"]
+  );
+  /* ほぼ晴れるまでは触れないようにして、KV のボタンを邪魔しない */
+  const pointerEvents = useTransform(scrollY, (v) =>
+    v > t.spotFrom + (t.spotTo - t.spotFrom) * 0.75 ? "auto" : "none"
+  );
 
   return (
-    /* 高さ 2456px ＝ 画面ぶん(982) ＋ 留まる長さ(1474)。
-       内側が sticky なので、スクロール 0〜1474px の間このセクションが画面に居座る。
-       ⚠️ ここを 1964px にすると、ブラーが晴れ切る 460px 地点から
-          500px ぶんしか見られず、サムネイルを押す間もなく次のセクションに押し出される */
-    <div className="relative -mt-[982px] h-[2456px]">
+    /* 高さ ＝ 画面ぶん(982) ＋ 総スクロール量(spotTo + hold)。
+       内側が sticky なので、その間このセクションが画面に居座る。
+       ⚠️ hold を削るとブラーが晴れた直後に次のセクションへ押し出され、
+          サムネイルを押す間がなくなる（v1.1 で一度やって戻した） */
+    <div
+      /* ⚠️ pointer-events-none は必須。
+         この入れ物は KV の上に重なる（DOM 順で後ろ＝手前に描かれる）ので、
+         付け忘れると透明なまま KV の「ぼーっとしてみる」ボタンのクリックを
+         飲み込んでしまう（v1.1 で実際に起きた。中の section 側は
+         style の pointerEvents で auto に戻している） */
+      className="pointer-events-none relative"
+      style={{ marginTop: -982, height: 982 + totalScroll(t) }}
+    >
       <motion.section
         id="spot"
         className="sticky top-0 h-[982px] w-full overflow-hidden"

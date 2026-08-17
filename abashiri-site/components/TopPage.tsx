@@ -171,6 +171,7 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
 import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
+import { mergeSpotTransition, type SpotTransition } from "./spotTransition";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -196,6 +197,7 @@ export default function TopPage({
   frameShadow,
   shadowTune,
   layout,
+  spotTune,
 }: {
   intro?: number;
   kv?: number;
@@ -233,10 +235,14 @@ export default function TopPage({
   shadowTune?: Partial<ShadowTune>;
   /** タブレットの位置ずらし（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
+  /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
+  spotTune?: Partial<SpotTransition> | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
+  /* 入れ替わりのタイミング（作字が消える → 背景ブラー → スポットが晴れる → 固定） */
+  const T = mergeSpotTransition(spotTune);
 
   /* アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
   const animated = Boolean(write || kami || combo || blurSeq);
@@ -269,30 +275,39 @@ export default function TopPage({
      スクロール量に応じてその場で変化しながら消え、
      下からコンテンツがすべり込んで交代する */
   const { scrollY } = useScroll({ container: scrollerRef });
+  /* 作字が消えきるまでの距離。
+     トップページは spotTransition.ts 側で「作字 → 背景 → スポット → 固定」の
+     順番ごと管理しているので、そこの kvOut を使う。
+     /mock/kv/[n] のようにパターンを見比べる時だけ、そのパターンの range を使う */
+  const kvRange = kv === 1 ? T.kvOut : kp.range;
   const heroBlur = useTransform(
     scrollY,
-    [0, kp.range * 0.45, kp.range],
+    [0, kvRange * 0.45, kvRange],
     [0, kp.blurMax * 0.35, kp.blurMax]
   );
   const heroOpacity = useTransform(
     scrollY,
-    [0, kp.range * kp.fadeStart, kp.range],
+    [0, kvRange * kp.fadeStart, kvRange],
     [1, 0.55, 0]
   );
-  const heroScale = useTransform(scrollY, [0, kp.range], kp.scale);
-  const heroY = useTransform(scrollY, [0, kp.range], kp.y);
-  const buttonY = useTransform(scrollY, [0, kp.range], [0, kp.buttonParallax ?? 0]);
+  const heroScale = useTransform(scrollY, [0, kvRange], kp.scale);
+  const heroY = useTransform(scrollY, [0, kvRange], kp.y);
+  const buttonY = useTransform(scrollY, [0, kvRange], [0, kp.buttonParallax ?? 0]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
 
-  /* 背景写真：スクロールすると早めに濃いめのブラーがかかっていく。
+  /* 背景写真：作字が消えていく流れに続いてブラーがかかっていく（spotTransition の ②）。
      ボケた時に端が透けないよう、ブラー量に応じて少しだけ拡大して補正 */
-  const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 8, 16]);
+  const bgBlur = useTransform(
+    scrollY,
+    [0, T.bgFrom, T.bgTo],
+    [0, T.bgBlur * 0.5, T.bgBlur]
+  );
 
   /* 人物イラストは KV だけのもの。ぼーっとスポットのカンプ（15191:2178）には
-     いないので、スクロールでスポットが出てくるのと入れ替わりに見送る */
+     いないので、作字が消えるのに合わせて見送る */
   useMotionValueEvent(scrollY, "change", (v) => {
-    const t = Math.max(0, Math.min(1, (v - 120) / 260));
+    const t = Math.max(0, Math.min(1, (v - T.kvOut * 0.4) / (T.kvOut * 0.6)));
     window.dispatchEvent(
       new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
     );
@@ -302,12 +317,11 @@ export default function TopPage({
   /* ブラー時に端が透けないよう、ズームに少し上乗せ（+0.08まで） */
   const bgScale = useTransform(
     scrollY,
-    [0, 160, 400, kp.range],
+    [0, T.bgFrom, T.bgTo],
     [
       bgZoom[0],
       bgZoom[0] + 0.04,
       Math.max(bgZoom[0], bgZoom[1]) + 0.08,
-      bgZoom[1] + 0.08,
     ]
   );
 
@@ -626,8 +640,9 @@ export default function TopPage({
         </div>
 
         {/* ぼーっとスポット（カンプ 15191:2178）。
-            KV がブラーで奥へ引くのと入れ替わりに、ここの写真がブラーから合ってくる */}
-        <SpotShowcase scrollY={scrollY} />
+            KV がブラーで奥へ引くのと入れ替わりに、ここの写真がブラーから合ってくる。
+            晴れきったところで固定ビューになり、そのあと下へ進める（spotTransition.ts） */}
+        <SpotShowcase scrollY={scrollY} tune={spotTune} />
 
         {/* v1.1: ここから下にあった3つ（プロモ「ぼーっとする、やってみない？」／
             素朴なグルメ／体験・イベント）は、作り直しのため 2026-08-18 に画面から外した。
