@@ -46,7 +46,10 @@ export type Spot = {
 
 const SPOTS: Spot[] = [
   { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg" },
-  { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", video: "/video/ryuhyo.mp4" },
+  /* 静止画は動画と同じ「流氷の海」を使う。
+     scene-ryuhyo.jpg は船が写っていて動画と絵が違うため、遷移の途中で
+     船の写真が挟まって見えてしまう。ice.jpg なら動画の絵とつながる */
+  { id: "ryuhyo", label: "流氷クルーズ", src: "/img/ice.jpg", video: "/video/ryuhyo.mp4" },
   { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", placeholder: true },
   { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg" },
 ];
@@ -351,7 +354,8 @@ function SpotCard({
           src={spot.video}
           loop
           playsInline
-          preload="none"
+          preload="metadata"
+          poster={spot.src}
           /* 見せるだけの飾りなので、クリックは全部すり抜けさせる */
           className={`pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
             active ? "opacity-100" : "opacity-0"
@@ -452,6 +456,8 @@ function Watch({ spot }: { spot: Spot }) {
           src={spot.video}
           loop
           playsInline
+          preload="auto"
+          poster={spot.src}
           className="absolute inset-0 size-full object-cover"
         />
       ) : (
@@ -606,6 +612,8 @@ function EnterWindow({
               muted
               loop
               playsInline
+              preload="auto"
+              poster={spot.src}
               className="size-full max-w-none object-cover"
               initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
               animate={{
