@@ -67,7 +67,11 @@ export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
   },
 ];
 
-export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[0];
+/* 採用案：案2「下からぴょこん」。
+   2026-08-18 にヒデさんが案1（テクテク歩いてくる）から差し替えを指示。
+   トップページは illustEnter を渡していないので、ここが本番の見た目になる。
+   案1は /mock/illust-enter/1 で今も見比べられる。 */
+export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[1];
 
 export function findIllustEnter(key?: string | number | null): IllustEnterPattern {
   if (key == null) return DEFAULT_ILLUST_ENTER;

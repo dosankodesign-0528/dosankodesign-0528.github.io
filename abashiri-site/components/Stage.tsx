@@ -12,6 +12,7 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { findTamaranee } from "./tamaraneePatterns";
+import { findBo } from "./boPatterns";
 import { findIllustEnter } from "./illustEnterPatterns";
 
 /*
@@ -117,6 +118,8 @@ type StageProps = {
   layout?: Partial<LayoutTune> | null;
   /** 1〜5: ホバー時に「たまらねー」が出るパターン（tamaraneePatterns.ts） */
   tamaranee?: number | string | null;
+  /** 1〜5: 動画再生中の「ぼーっ」の出方（boPatterns.ts / illustration="bo" の時だけ効く） */
+  bo?: number | string | null;
   /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
   illustEnter?: number | string | null;
   /** true: 人物イラストを出さない（カンプにイラストが無い画面用） */
@@ -139,6 +142,7 @@ export default function Stage({
   face,
   layout,
   tamaranee,
+  bo,
   illustEnter,
   hideIllust = false,
 }: StageProps) {
@@ -151,6 +155,7 @@ export default function Stage({
   /* browLift が 0 より大きい＝カーソルがイラストに乗っている */
   const over = browLift > 0;
   const tp = findTamaranee(tamaranee);
+  const bp = findBo(bo);
   const iep = findIllustEnter(illustEnter);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
@@ -345,10 +350,26 @@ export default function Stage({
                 alt=""
                 className="absolute left-0 top-[14px] h-[227px] w-[162px] object-contain object-bottom drop-shadow-illust"
               />
-              <img
+              {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts の5案）。
+                  いちばん最初は出さず、startDelay（5秒）たってから1周目が始まる。
+                  ⚠️ 位置（left/top/w）はカンプ採寸なので触らない。動きだけを案で差し替える */}
+              <motion.img
                 src="/img/text-bo.svg"
                 alt="ぼーっ"
-                className="absolute left-[135px] top-[8px] w-[62px]"
+                /* ⚠️ 仮置き: 文字は白（カンプのまま）なので、流氷のような明るい映像の上では
+                   ほぼ見えない。人物と同じ Shadow_Illust を掛けて最低限浮かせている。
+                   見せ方（影／すりガラスの地／文字色）はヒデさん確認待ち */
+                className="absolute left-[135px] top-[8px] w-[62px] drop-shadow-illust"
+                style={{ transformOrigin: bp.origin }}
+                initial={{ opacity: 0 }}
+                animate={bp.keyframes}
+                transition={{
+                  duration: bp.cycle,
+                  times: bp.times,
+                  ease: bp.ease,
+                  repeat: Infinity,
+                  delay: bp.startDelay,
+                }}
               />
             </>
           )}
