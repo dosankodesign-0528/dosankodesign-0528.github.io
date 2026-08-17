@@ -14,7 +14,7 @@
  * 2→3 の間に「窓枠をくぐって向こう側の世界に入る」遷移が挟まる（enterPatterns.ts の5案）。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
 import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
 import { findEnter } from "./enterPatterns";
@@ -251,13 +251,15 @@ function SpotCard({
         loop
         playsInline
         preload="none"
-        className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
+        /* 見せるだけの飾りなので、クリックは全部すり抜けさせる
+           （これが無いと「この場所にする」ボタンを覆って押せなくなる） */
+        className={`pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
           active ? "opacity-100" : "opacity-0"
         }`}
       />
       {/* カンプ 15152:29231: カード内 top 464 に「この場所にする」 */}
       <div
-        className={`absolute left-1/2 top-[464px] -translate-x-1/2 transition-opacity duration-500 ease-standard ${
+        className={`absolute left-1/2 top-[464px] z-10 -translate-x-1/2 transition-opacity duration-500 ease-standard ${
           active ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
@@ -275,34 +277,62 @@ function SpotCard({
 }
 
 /* ═══════════ 動画再生 ═══════════ */
+/* v1.0 と同じ挙動：最初は止まっていて、再生ボタンを押すと動画とタイマーが同時に始まる。
+   再生中は3秒さわらないと操作系が消えて、動かすとまた出てくる。 */
 function Watch({ spot }: { spot: Spot }) {
+  const [playing, setPlaying] = useState(false);
   const [remaining, setRemaining] = useState(3 * 60);
+  const [uiVisible, setUiVisible] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* 再生中だけ、3秒放置で操作系を隠す */
+  const pokeUi = useCallback(() => {
+    setUiVisible(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setUiVisible(false), 3000);
+  }, []);
+  useEffect(
+    () => () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    },
+    []
+  );
+  const controlsShown = uiVisible || !playing;
+
+  /* playing の状態と <video> の再生を同期する */
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.muted = devSilent();
-    v.play().catch(() => {});
-  }, []);
+    if (playing) {
+      v.muted = devSilent(); /* 開発中(localhost)は無音 */
+      v.play().catch(() => setPlaying(false));
+    } else {
+      v.pause();
+    }
+  }, [playing]);
 
+  /* 動画が始まったらぼーっとタイマーがカウントダウン */
   useEffect(() => {
-    if (remaining <= 0) return;
+    if (!playing || remaining <= 0) return;
     const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(id);
-  }, [remaining]);
+  }, [playing, remaining]);
 
   /* 動画の音声が優先：再生状態を環境音（SoundUi）へ知らせる */
   useEffect(() => {
     window.dispatchEvent(
-      new CustomEvent("abashiri:video-audio", { detail: { active: true } })
+      new CustomEvent("abashiri:video-audio", { detail: { active: playing } })
     );
-    return () => {
+  }, [playing]);
+  useEffect(
+    () => () => {
       window.dispatchEvent(
         new CustomEvent("abashiri:video-audio", { detail: { active: false } })
       );
-    };
-  }, []);
+    },
+    []
+  );
 
   const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
   const ss = String(remaining % 60).padStart(2, "0");
@@ -314,6 +344,7 @@ function Watch({ spot }: { spot: Spot }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      onPointerMove={() => playing && pokeUi()}
     >
       <video
         ref={videoRef}
@@ -322,8 +353,32 @@ function Watch({ spot }: { spot: Spot }) {
         playsInline
         className="absolute inset-0 size-full object-cover"
       />
-      {/* カンプ 15152:29287: 左67 / 下から（top 768）/ 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
-      <div className="absolute left-[67px] top-[768px] flex flex-col items-start justify-center gap-6 rounded-16 bg-white/10 px-11 py-6 backdrop-blur-65">
+
+      {/* 再生／一時停止。最初は止まっているので、押して始める */}
+      <button
+        type="button"
+        onClick={() => {
+          setPlaying((v) => !v);
+          pokeUi();
+        }}
+        aria-label={playing ? "一時停止" : "再生"}
+        className={`absolute left-1/2 top-1/2 z-10 flex size-[96px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-all duration-500 ease-standard hover:scale-110 ${
+          controlsShown ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <img
+          src={playing ? "/img/icon-pause.svg" : "/img/play-circle.svg"}
+          alt=""
+          className="size-full"
+        />
+      </button>
+
+      {/* カンプ 15152:29287: 左67 / top 768 / 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
+      <div
+        className={`absolute left-[67px] top-[768px] flex flex-col items-start justify-center gap-6 rounded-16 bg-white/10 px-11 py-6 backdrop-blur-65 transition-opacity duration-500 ease-standard ${
+          controlsShown ? "opacity-100" : "opacity-0"
+        }`}
+      >
         {/* ラベルの札はパネルの上辺にまたがる（カンプ: left 122.5 / top -22） */}
         <div className="absolute left-[122.5px] top-[-22px] flex items-center justify-center rounded-full bg-white/40 px-4 py-1.5 backdrop-blur-90">
           <p className="whitespace-nowrap text-body-16 font-normal leading-[1.2] text-white">
@@ -339,6 +394,25 @@ function Watch({ spot }: { spot: Spot }) {
 }
 
 /* ═══════════ 窓枠をくぐる遷移 ═══════════ */
+/*
+ * 「窓に近づいていく」を成立させる肝は、窓枠と、窓の向こうの景色を切り離すこと。
+ *
+ * 前の実装は、写真ごとカードを scale で拡大していた。これは物理的には
+ * 「写真を引き伸ばしている」動きで、「窓に近づいている」動きではない。
+ * 近づいた時に大きくなるのは“枠”であって、遠くにある景色はほとんど大きくならない。
+ * ここがずれていたので不自然に見えていた。
+ *
+ * 直したところ
+ *  1. 景色は画面に固定して一切動かさない。広がるのは窓の“開口部”だけ（＝覗き穴が広がる）
+ *  2. 開口部は画面の中心へ寄りながら広がる。カード自身の中心ではなく、目線の先へ向かう
+ *  3. イージングを ease-in 寄りに。等速で歩いて近づくと、見た目の大きさは加速して増える
+ *  4. まわりの世界（カルーセル・見出し・背景）は外へ押し出して奥に流す
+ *  5. 人物イラストは Stage 側の一番上のレイヤーに残るので、窓が人物の手前ではなく
+ *     奥から迫ってきて、人物ごと世界に入っていくように見える（z-20 で人物 z-30 の下）
+ */
+const STAGE_W = 1512;
+const STAGE_H = 982;
+
 function EnterWindow({
   spot,
   from,
@@ -346,49 +420,110 @@ function EnterWindow({
   onDone,
 }: {
   spot: Spot;
-  from: DOMRect;
+  /** ステージ座標での、押した瞬間のカードの位置と大きさ */
+  from: { x: number; y: number; w: number; h: number };
   pattern: number | string | null | undefined;
   onDone: () => void;
 }) {
   const p = findEnter(pattern);
+  const sec = p.duration / 1000;
+
   useEffect(() => {
     const id = setTimeout(onDone, p.duration);
     return () => clearTimeout(id);
   }, [onDone, p.duration]);
 
+  /* 開口部の左上と大きさ。最後は画面より一回り大きくして、フチが見えないところまで開く */
+  const overshoot = 1.12;
+  const toW = STAGE_W * overshoot;
+  const toH = STAGE_H * overshoot;
+  const toX = (STAGE_W - toW) / 2;
+  const toY = (STAGE_H - toH) / 2;
+
+  /* 開口部の動き。この値を写真側の打ち消しにも使う */
+  const x = useMotionValue(from.x);
+  const y = useMotionValue(from.y);
+  /* 景色は画面に貼り付いたままなので、開口部が動いたぶんだけ中で逆に動かす */
+  const imgX = useTransform(x, (v) => -v);
+  const imgY = useTransform(y, (v) => -v);
+
   return (
-    <motion.div className="absolute inset-0 z-50" key="enter">
+    <motion.div className="absolute inset-0 z-20 overflow-hidden" key="enter">
       {/* まわりを暗く落とす（トンネル感） */}
       <motion.div
         className="absolute inset-0 bg-shadow"
         initial={{ opacity: 0 }}
         animate={{ opacity: p.dim }}
-        transition={{ duration: p.duration / 1000, ease: p.ease }}
+        transition={{ duration: sec, ease: p.ease }}
       />
-      {/* 選んだカードが窓枠。近づくにつれて角丸とフチが外れ、画面いっぱいになる */}
+
+      {/* 窓の開口部。枠だけが近づいて広がる */}
       <motion.div
         className="absolute overflow-hidden border-white/60"
-        style={{ left: from.left, top: from.top, width: from.width, height: from.height }}
+        style={{ x, y, width: from.w, height: from.h }}
         initial={{
-          scale: p.scale[0],
+          x: from.x,
+          y: from.y,
+          width: from.w,
+          height: from.h,
           borderRadius: p.radius[0],
           borderWidth: p.border[0],
-          filter: `blur(${p.blur[0]}px)`,
         }}
         animate={{
-          scale: p.scale[1],
+          x: toX,
+          y: toY,
+          width: toW,
+          height: toH,
           borderRadius: p.radius[1],
           borderWidth: p.border[1],
-          filter: [
-            `blur(${p.blur[0]}px)`,
-            `blur(${p.blur[1]}px)`,
-            `blur(${p.blur[2]}px)`,
-          ],
         }}
-        transition={{ duration: p.duration / 1000, ease: p.ease }}
+        transition={{
+          duration: sec,
+          /* 歩いて近づくと見た目の大きさは加速して増える。
+             寸法は ease-in 寄り、位置だけ ease-out 寄りにすると、
+             「まっすぐ吸い込まれる」感じになる */
+          ease: [0.55, 0, 0.85, 0.6],
+          x: { duration: sec, ease: p.ease },
+          y: { duration: sec, ease: p.ease },
+          borderRadius: { duration: sec * 0.75, ease: p.ease },
+          borderWidth: { duration: sec * 0.55, ease: p.ease },
+        }}
       >
-        <img src={spot.src} alt="" className="absolute inset-0 size-full object-cover" />
+        {/* 窓の向こうの景色。画面に固定したまま動かさない。
+            開口部が動いたぶんだけ逆に動かして、画面上の位置を保つ */}
+        <motion.img
+          src={spot.src}
+          alt=""
+          className="absolute max-w-none object-cover"
+          style={{ x: imgX, y: imgY, width: STAGE_W, height: STAGE_H, left: 0, top: 0 }}
+        />
       </motion.div>
+    </motion.div>
+  );
+}
+
+/* まわりの世界（カルーセル・見出し・背景）を外へ押し出して奥に流す */
+function WorldPush({
+  children,
+  active,
+  pattern,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  pattern: number | string | null | undefined;
+}) {
+  const p = findEnter(pattern);
+  return (
+    <motion.div
+      className="absolute inset-0"
+      animate={
+        active
+          ? { scale: 1.35, opacity: 0, filter: "blur(12px)" }
+          : { scale: 1, opacity: 1, filter: "blur(0px)" }
+      }
+      transition={{ duration: p.duration / 1000, ease: [0.55, 0, 0.85, 0.6] }}
+    >
+      {children}
     </motion.div>
   );
 }
@@ -404,12 +539,25 @@ export default function ExperienceFlow({
   /** 1〜5: 窓枠をくぐる遷移のパターン（enterPatterns.ts） */
   enter?: number | string | null;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState<Spot>(SPOTS[1]);
-  const [entering, setEntering] = useState<DOMRect | null>(null);
+  const [entering, setEntering] =
+    useState<{ x: number; y: number; w: number; h: number } | null>(null);
 
+  /* ブラウザ座標 → ステージ座標（1512x982）に直してから渡す。
+     ステージは画面サイズに合わせて縮小表示されているので、その倍率で割る */
   const handlePick = useCallback((s: Spot, rect: DOMRect) => {
+    const root = rootRef.current;
+    if (!root) return;
+    const rr = root.getBoundingClientRect();
+    const scale = rr.width / root.offsetWidth || 1;
     setSpot(s);
-    setEntering(rect);
+    setEntering({
+      x: (rect.left - rr.left) / scale,
+      y: (rect.top - rr.top) / scale,
+      w: rect.width / scale,
+      h: rect.height / scale,
+    });
   }, []);
 
   const finishEnter = useCallback(() => {
@@ -418,15 +566,18 @@ export default function ExperienceFlow({
   }, [setStep]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div ref={rootRef} className="absolute inset-0 overflow-hidden">
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
 
-      <AnimatePresence mode="wait">
-        {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
-        {step === 2 && !entering && <Pick key="pick" onPick={handlePick} />}
-        {step === 3 && <Watch key="watch" spot={spot} />}
-      </AnimatePresence>
+      {/* 遷移中は、まわりの世界だけ外へ押し出して奥へ流す */}
+      <WorldPush active={!!entering} pattern={enter}>
+        <AnimatePresence mode="wait">
+          {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
+          {step === 2 && <Pick key="pick" onPick={handlePick} />}
+          {step === 3 && <Watch key="watch" spot={spot} />}
+        </AnimatePresence>
+      </WorldPush>
 
       {entering && (
         <EnterWindow spot={spot} from={entering} pattern={enter} onDone={finishEnter} />
