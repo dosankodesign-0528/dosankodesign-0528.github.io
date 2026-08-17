@@ -31,7 +31,7 @@ export default function IllustMockIndex() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
+    <main className="h-dvh overflow-y-auto bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
           人物スイング 比較mock（5案・±4°）

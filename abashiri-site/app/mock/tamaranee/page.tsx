@@ -3,7 +3,9 @@ import { TAMARANEE_PATTERNS } from "@/components/tamaraneePatterns";
 
 export default function TamaraneeIndex() {
   return (
-    <main className="min-h-dvh bg-[#e6f3ff] px-6 py-12">
+    /* globals.css で html/body に overflow:hidden が掛かっている（固定ステージ用）ので、
+       一覧ページは自前でスクロールできる箱にする */
+    <main className="h-dvh overflow-y-auto bg-[#e6f3ff] px-6 py-12">
       <div className="mx-auto w-full max-w-[720px]">
         <p className="text-[13px] font-medium tracking-[0.12em] text-[#0070c9]">
           ABASHIRI v1.1 / KEY VISUAL

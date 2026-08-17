@@ -234,3 +234,10 @@ body {
   animation: kenburns 36s ease-in-out infinite alternate;
   will-change: transform;
 }
+
+/* ===== ぼーっと体験のカルーセル（右から左へゆっくり自動送り） ===== */
+@keyframes botto-marquee {
+  from { transform: translateX(0); }
+  /* 同じ並びを2周ぶん置いてあるので、半分流れたら先頭に戻る＝継ぎ目なく回る */
+  to   { transform: translateX(-50%); }
+}

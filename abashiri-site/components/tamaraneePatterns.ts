@@ -27,79 +27,81 @@ export type TamaraneePattern = {
   };
 };
 
-const STANDARD = "cubic-bezier(0.22, 1, 0.36, 1)";
-/** 行き過ぎてから戻る＝「ひょこっ」の正体 */
-const OVERSHOOT = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+/* 行き過ぎてから戻る＝「ひょこっ」の正体。跳ね方の強さで4段用意した */
+const BOUNCE_S = "cubic-bezier(0.34, 1.40, 0.64, 1)";   /* 軽く跳ねる */
+const BOUNCE_M = "cubic-bezier(0.34, 1.56, 0.64, 1)";   /* しっかり跳ねる */
+const BOUNCE_L = "cubic-bezier(0.18, 1.85, 0.42, 1)";   /* 大きく跳ねる */
+const BOUNCE_XL = "cubic-bezier(0.16, 2.20, 0.38, 1)";  /* かなり暴れる */
 
 export const TAMARANEE_PATTERNS: TamaraneePattern[] = [
   {
     key: "hyoko",
-    label: "案1  ひょこっ",
-    note: "下から跳ね上がって、行き過ぎてから収まる。いちばん「ひょこっ」らしい",
-    brow: { duration: 260, ease: OVERSHOOT },
+    label: "案1  ひょこっ（標準）",
+    note: "下から跳ね上がって、行き過ぎてから収まる。素直で使いやすい跳ね方",
+    brow: { duration: 260, ease: BOUNCE_M },
     text: {
       duration: 460,
       delay: 60,
-      ease: OVERSHOOT,
+      ease: BOUNCE_M,
       origin: "50% 100%",
-      off: { opacity: 0, transform: "translateY(14px) scale(0.7)" },
+      off: { opacity: 0, transform: "translateY(16px) scale(0.72)" },
       on: { opacity: 1, transform: "translateY(0) scale(1)" },
     },
   },
   {
-    key: "fuwa",
-    label: "案2  ふわっ",
-    note: "ブラーが晴れながらゆっくり浮かぶ。サイトの登場演出と同じ質感",
-    brow: { duration: 380, ease: STANDARD },
+    key: "poyon",
+    label: "案2  ぽよん（大きく弾む）",
+    note: "小さく縮んだ状態から大きく跳ねて戻る。いちばんコミカルで目を引く",
+    brow: { duration: 220, ease: BOUNCE_L },
     text: {
-      duration: 700,
-      delay: 80,
-      ease: STANDARD,
+      duration: 620,
+      delay: 40,
+      ease: BOUNCE_XL,
       origin: "50% 100%",
-      off: { opacity: 0, filter: "blur(10px)", transform: "translateY(8px)" },
-      on: { opacity: 1, filter: "blur(0px)", transform: "translateY(0)" },
+      off: { opacity: 0, transform: "translateY(20px) scale(0.35)" },
+      on: { opacity: 1, transform: "translateY(0) scale(1)" },
+    },
+  },
+  {
+    key: "punyu",
+    label: "案3  ぷにゅっ（潰れて戻る）",
+    note: "横に潰れた状態から縦に伸びて戻る。ゴムまりが跳ねたような弾力が出る",
+    brow: { duration: 240, ease: BOUNCE_M },
+    text: {
+      duration: 560,
+      delay: 50,
+      ease: BOUNCE_L,
+      origin: "50% 100%",
+      off: { opacity: 0, transform: "translateY(12px) scaleX(1.35) scaleY(0.45)" },
+      on: { opacity: 1, transform: "translateY(0) scaleX(1) scaleY(1)" },
     },
   },
   {
     key: "kururi",
-    label: "案3  くるっ",
-    note: "傾いた状態から回りながら出る。手で書き足したような勢いが出る",
-    brow: { duration: 300, ease: OVERSHOOT },
+    label: "案4  くるっ（回って跳ねる）",
+    note: "傾いた状態から回りながら跳ね上がる。手で書き足したような勢いが出る",
+    brow: { duration: 260, ease: BOUNCE_M },
     text: {
-      duration: 520,
+      duration: 540,
       delay: 40,
-      ease: OVERSHOOT,
-      origin: "10% 100%",
-      off: { opacity: 0, transform: "rotate(-18deg) scale(0.6)" },
-      on: { opacity: 1, transform: "rotate(0deg) scale(1)" },
+      ease: BOUNCE_L,
+      origin: "12% 95%",
+      off: { opacity: 0, transform: "translateY(10px) rotate(-22deg) scale(0.55)" },
+      on: { opacity: 1, transform: "translateY(0) rotate(0deg) scale(1)" },
     },
   },
   {
-    key: "paki",
-    label: "案4  ぱっ",
-    note: "フェードなしの1コマ。カモメやキラキラと同じGIF風のカクつき",
-    brow: { duration: 0, ease: "linear" },
+    key: "sotto",
+    label: "案5  そっと（弱めに跳ねる）",
+    note: "跳ねを控えめにして、ゆっくり出る。落ち着いた「ぼーっ」の世界に馴染む",
+    brow: { duration: 340, ease: BOUNCE_S },
     text: {
-      duration: 0,
+      duration: 720,
       delay: 90,
-      ease: "linear",
+      ease: BOUNCE_S,
       origin: "50% 100%",
-      off: { opacity: 0, transform: "translateY(6px)" },
-      on: { opacity: 1, transform: "translateY(0)" },
-    },
-  },
-  {
-    key: "nobi",
-    label: "案5  のびっ",
-    note: "左から書き出すように横へ伸びる。手書きが進むように見える",
-    brow: { duration: 320, ease: STANDARD },
-    text: {
-      duration: 560,
-      delay: 60,
-      ease: STANDARD,
-      origin: "0% 60%",
-      off: { opacity: 0, transform: "scaleX(0.2) scaleY(0.85)" },
-      on: { opacity: 1, transform: "scaleX(1) scaleY(1)" },
+      off: { opacity: 0, transform: "translateY(10px) scale(0.86)" },
+      on: { opacity: 1, transform: "translateY(0) scale(1)" },
     },
   },
 ];

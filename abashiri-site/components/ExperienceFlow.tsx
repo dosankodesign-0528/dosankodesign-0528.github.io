@@ -1,381 +1,430 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+/*
+ * ぼーっと体験（v1.1）
+ * カンプ: 15152:27989（導入）/ 15152:29215（場所えらび）/ 15152:29191（ホバー）
+ *         15152:29237（遷移後）/ 15152:29261（動画再生）
+ *
+ * 3ステップ
+ *   1 導入      … 全画面のぼやけた景色 ＋ 中央のテキスト ＋「次へ進む」
+ *   2 場所えらび … 右から左へゆっくり流れるカルーセル。ホバーで拡大＋動画プレビュー
+ *   3 動画再生   … 全画面の動画 ＋ 左下のぼーっとタイマー
+ *
+ * 2→3 の間に「窓枠をくぐって向こう側の世界に入る」遷移が挟まる（enterPatterns.ts の5案）。
+ */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import Bird from "./Bird";
 import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
-import { buildShadow, mergeShadow } from "./shadowConfig";
-import { mergeLayout } from "./layoutConfig";
+import { findEnter } from "./enterPatterns";
 
 export type Step = 1 | 2 | 3;
 
-const FEELINGS = [
-  ["疲れた", "焦ってる", "イライラ"],
-  ["忙しすぎる", "眠い", "ちょっと不安"],
-];
-
-/* 写真の上に 40% でのせる色。値は globals.css のトークンが唯一の出どころ */
-const TINT = (v: string) => `color-mix(in srgb, var(${v}) 40%, transparent)`;
-
-const SCENES = [
-  [
-    { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", tint: TINT("--color-tint-tento") },
-    { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", tint: TINT("--color-tint-sango") },
-  ],
-  [
-    { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", tint: TINT("--color-accent") },
-    { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", tint: TINT("--color-tint-ryuhyo") },
-  ],
-];
-
-/* STEP インジケーター */
-function StepIndicator({ step }: { step: Step }) {
-  const states = [1, 2, 3].map((n) => {
-    if (n < step) return "done";
-    if (n === step) return "active";
-    return "idle";
-  });
-  return (
-    <div className="absolute left-1/2 top-[120px] h-[104px] w-[666px] -translate-x-1/2">
-      <div className="absolute left-[20px] top-[74px] h-[5px] w-[626px] rounded-full bg-sky-pale" />
-      {states.map((state, i) => (
-        <div
-          key={i}
-          className="absolute top-0 flex w-[56px] flex-col items-center gap-px"
-          style={{ left: i * 305 }}
-        >
-          <div
-            className={`font-num flex flex-col items-center text-center font-extrabold leading-none ${
-              state === "idle" ? "text-sky-pale opacity-70" : "text-brand"
-            }`}
-          >
-            <p className="text-control-14 leading-[1.2]">STEP</p>
-            <p className="text-number-28">0{i + 1}</p>
-          </div>
-          <img
-            src={
-              state === "active"
-                ? "/img/step-active.svg"
-                : state === "done"
-                  ? "/img/step-done.svg"
-                  : "/img/step-idle.svg"
-            }
-            alt=""
-            className="size-[56px]"
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* 次へ／もどる */
-function StepButtons({
-  canProceed,
-  onNext,
-  onBack,
-}: {
-  canProceed: boolean;
-  onNext: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <div className="absolute left-1/2 top-[720px] flex w-[250px] -translate-x-1/2 flex-col items-center gap-5">
-      <button
-        onClick={onNext}
-        disabled={!canProceed}
-        className={`w-full rounded-full bg-brand px-11 py-4 text-control-20 font-bold text-white transition-all duration-300 ${
-          canProceed
-            ? "cursor-pointer hover:scale-105 hover:brightness-110"
-            : "cursor-default opacity-30"
-        }`}
-      >
-        次へ
-      </button>
-      <button
-        onClick={onBack}
-        className="cursor-pointer text-control-20 font-medium text-ink transition-opacity hover:opacity-70"
-      >
-        もどる
-      </button>
-    </div>
-  );
-}
-
-const stepTransition = {
-  initial: { opacity: 0, y: 24, filter: "blur(16px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit: { opacity: 0, y: -16, filter: "blur(16px)" },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+/* カンプ 15152:29215 のカルーセル。
+   ⚠️ 3枚目の「駅のホーム」の写真はカンプにしか無く、この環境から取得できなかったため
+   既存の天都山展望台で仮置きしている。差し替え待ち。
+   ⚠️ 動画も ryuhyo.mp4 の1本しか無いので、プレビューは全カード同じものを流している。 */
+export type Spot = {
+  id: string;
+  label: string;
+  src: string;
+  video: string;
+  /** カンプに無く仮置きしている素材かどうか（報告用） */
+  placeholder?: boolean;
 };
 
-export default function ExperienceFlow({
-  step,
-  setStep,
+const SPOTS: Spot[] = [
+  { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", video: "/video/ryuhyo.mp4" },
+  { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", video: "/video/ryuhyo.mp4" },
+  { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", video: "/video/ryuhyo.mp4", placeholder: true },
+  { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", video: "/video/ryuhyo.mp4" },
+];
+
+/* カンプ 15152:29215 の実寸 */
+const CARD_W = 902;
+const CARD_H = 586;
+const CARD_GAP = 60;
+/* ホバー時（15152:29191）は 1160x754 に広がる */
+const HOVER_SCALE = 1160 / CARD_W; /* = 1.2860… 高さも 754/586 = 1.2866 でほぼ同じ */
+/* 1周にかける秒数。ゆっくり流す */
+const LOOP_SEC = 48;
+
+/* ═══════════ 導入 ═══════════ */
+function Intro({ onNext }: { onNext: () => void }) {
+  return (
+    <motion.div
+      key="intro"
+      className="absolute inset-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* カンプは「最初はブラーなしで景色が出て、徐々にブラーがかかって文字が出る」。
+          背景は2枚重ね（奥 blur42 / 手前 blur32）。
+          ⚠️ カンプの緑の道の写真は取得できなかったので、既存のひまわり畑で仮置き。 */}
+      <motion.img
+        src="/img/scene-himawari.jpg"
+        alt=""
+        className="absolute inset-0 size-full scale-110 object-cover"
+        initial={{ filter: "blur(0px)" }}
+        animate={{ filter: "blur(42px)" }}
+        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
+      />
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/45 to-transparent"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
+      />
+
+      {/* カンプ 15152:29260: (565, 110) 382x629 / 縦並び gap 100 */}
+      <motion.div
+        className="absolute left-1/2 top-[110px] flex w-[382px] -translate-x-1/2 flex-col items-center gap-[100px] text-center text-white"
+        initial={{ opacity: 0, filter: "blur(16px)" }}
+        animate={{ opacity: 1, filter: "blur(0px)" }}
+        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 1.6 }}
+      >
+        <div className="flex w-full flex-col items-center gap-[77px]">
+          <div className="flex flex-col items-center leading-[1.6] whitespace-nowrap">
+            <p className="text-body-18 font-light">網走に来る前に、まずやってみよう</p>
+            <p className="text-title-44 font-thin">ぼーっと体験</p>
+          </div>
+          <div className="flex w-full flex-col items-center gap-[33px] text-body-16 font-light leading-[1.8]">
+            <p>網走は何もないけど、それがたまらない。</p>
+            <p>
+              忙しなく過ごす、あなたの日常からそっと離れて、
+              <br />
+              何も考えず、「ぼーっとする」こと。
+            </p>
+            <p className="whitespace-nowrap">
+              それが最大の癒しであり、くつろぎです。
+              <br />
+              網走では、そんな体験が思う存分できる。
+            </p>
+            <p className="whitespace-nowrap">
+              ウェブサイトを通して、その空間を
+              <br />
+              疑似体験しよう。
+            </p>
+          </div>
+        </div>
+        <GlassButton onClick={onNext}>次へ進む</GlassButton>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* カンプ 15152:28007 / 15152:29231 共通のすりガラスボタン */
+function GlassButton({
+  children,
+  onClick,
 }: {
-  step: Step;
-  setStep: (s: Step) => void;
+  children: React.ReactNode;
+  onClick: () => void;
 }) {
-  const router = useRouter();
-  const [feelings, setFeelings] = useState<string[]>([]);
-  const [scene, setScene] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [remaining, setRemaining] = useState(5 * 60);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-[220px] cursor-pointer items-center justify-center rounded-full border-2 border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ═══════════ 場所えらび（自動カルーセル） ═══════════ */
+function Pick({
+  onPick,
+}: {
+  onPick: (spot: Spot, rect: DOMRect) => void;
+}) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  /* 同じ並びを2周ぶん置いて、-50% までスクロールしたら先頭に戻す＝無限に流れて見える */
+  const loop = [...SPOTS, ...SPOTS];
+
+  return (
+    <motion.div
+      key="pick"
+      className="absolute inset-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* 背景：奥にぼかした景色（カンプ 15152:29216 blur42 / 29217 blur32） */}
+      <img
+        src="/img/scene-himawari.jpg"
+        alt=""
+        className="absolute inset-0 size-full scale-110 object-cover blur-42"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/40 to-transparent" />
+
+      <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
+        どこでぼーっとする？
+      </p>
+
+      {/* カンプ 15152:29228: top 239 / gap 60 / カード 902x586 */}
+      <div className="absolute left-0 top-[239px] w-full overflow-hidden">
+        <div
+          className="flex w-max items-center"
+          style={{
+            gap: CARD_GAP,
+            animation: `botto-marquee ${LOOP_SEC}s linear infinite`,
+            animationPlayState: hovered ? "paused" : "running",
+          }}
+        >
+          {loop.map((s, i) => (
+            <SpotCard
+              key={`${s.id}-${i}`}
+              spot={s}
+              active={hovered === `${s.id}-${i}`}
+              onEnter={() => setHovered(`${s.id}-${i}`)}
+              onLeave={() => setHovered(null)}
+              onPick={onPick}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function SpotCard({
+  spot,
+  active,
+  onEnter,
+  onLeave,
+  onPick,
+}: {
+  spot: Spot;
+  active: boolean;
+  onEnter: () => void;
+  onLeave: () => void;
+  onPick: (spot: Spot, rect: DOMRect) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  /* 再生ボタン・タイマーはマウス操作時だけ表示し、3秒放置で消える */
-  const [uiVisible, setUiVisible] = useState(true);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pokeUi = () => {
-    setUiVisible(true);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setUiVisible(false), 3000);
-  };
-  useEffect(
-    () => () => {
-      if (hideTimer.current) clearTimeout(hideTimer.current);
-    },
-    []
-  );
-  const controlsShown = uiVisible || !playing;
-
-  /* playing の状態と <video> の再生を同期する */
+  /* ホバーしている間だけ動画プレビューを流す */
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (playing) {
-      /* 音声ありで再生。ブラウザの自動再生ポリシーで拒否されたら
-         一時停止表示にして、ユーザーの再生ボタン押下（ジェスチャ）で鳴らす */
-      v.muted = devSilent(); /* 開発中(localhost)は無音 */
-      v.play().catch(() => setPlaying(false));
+    if (active) {
+      v.muted = true; /* プレビューは常に無音。音は動画再生画面から */
+      v.currentTime = 0;
+      v.play().catch(() => {});
     } else {
       v.pause();
     }
-  }, [playing, step]);
+  }, [active]);
 
-  /* STEP03 に入ったら▶ボタン待ちの状態にする。
-     再生ボタンを押すと動画が流れ始め、タイマーも同時に始動する */
-  useEffect(() => {
-    if (step === 3) {
-      setRemaining(5 * 60);
-      setPlaying(false);
-      setUiVisible(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  return (
+    <div
+      ref={ref}
+      onPointerEnter={onEnter}
+      onPointerLeave={onLeave}
+      className="relative shrink-0 overflow-hidden border-white/60 transition-transform duration-700 ease-standard"
+      style={{
+        width: CARD_W,
+        height: CARD_H,
+        borderWidth: 10,
+        borderRadius: 120,
+        transform: `scale(${active ? HOVER_SCALE : 1})`,
+        zIndex: active ? 10 : 1,
+      }}
+    >
+      <img src={spot.src} alt={spot.label} className="absolute inset-0 size-full object-cover" />
+      <video
+        ref={videoRef}
+        src={spot.video}
+        loop
+        playsInline
+        preload="none"
+        className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
+          active ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      {/* カンプ 15152:29231: カード内 top 464 に「この場所にする」 */}
+      <div
+        className={`absolute left-1/2 top-[464px] -translate-x-1/2 transition-opacity duration-500 ease-standard ${
+          active ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <GlassButton
+          onClick={() => {
+            const r = ref.current?.getBoundingClientRect();
+            if (r) onPick(spot, r);
+          }}
+        >
+          この場所にする
+        </GlassButton>
+      </div>
+    </div>
+  );
+}
 
-  /* 動画が始まったらぼーっとタイマーがカウントダウン */
+/* ═══════════ 動画再生 ═══════════ */
+function Watch({ spot }: { spot: Spot }) {
+  const [remaining, setRemaining] = useState(3 * 60);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
-    if (step !== 3 || !playing || remaining <= 0) return;
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = devSilent();
+    v.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (remaining <= 0) return;
     const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
     return () => clearInterval(id);
-  }, [step, playing, remaining]);
+  }, [remaining]);
 
   /* 動画の音声が優先：再生状態を環境音（SoundUi）へ知らせる */
   useEffect(() => {
     window.dispatchEvent(
-      new CustomEvent("abashiri:video-audio", {
-        detail: { active: step === 3 && playing },
-      })
+      new CustomEvent("abashiri:video-audio", { detail: { active: true } })
     );
-  }, [step, playing]);
-  useEffect(
-    () => () => {
+    return () => {
       window.dispatchEvent(
         new CustomEvent("abashiri:video-audio", { detail: { active: false } })
       );
-    },
-    []
-  );
-
-  const toggleFeeling = (f: string) =>
-    setFeelings((prev) =>
-      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
-    );
-
-  const startVideo = () => setStep(3);
+    };
+  }, []);
 
   const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    <div
-      className="absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-60 border-[30px] border-white"
-      style={{
-        boxShadow: buildShadow(mergeShadow(null)),
-        transform: `translate(${mergeLayout(null).tabletX}px, ${mergeLayout(null).tabletY}px)`,
-      }}
+    <motion.div
+      key="watch"
+      className="absolute inset-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
-      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
-      <div className="relative h-full w-full overflow-hidden rounded-t-30 bg-canvas">
-        <AnimatePresence mode="wait">
-          {step !== 3 ? (
-            <motion.div key="select" className="absolute inset-0" {...stepTransition}>
-              <GlobalNav theme="dark" size="md" />
-              <StepIndicator step={step} />
-
-              {/* 装飾の青カモメ */}
-              <div className="absolute left-[134px] top-[362px] h-[64px] w-[110px]">
-                <Bird color="var(--color-sky-pale)" flapDuration={0.62} driftDuration={9} strokeWidth={4.2} />
-              </div>
-              <div className="absolute right-[83px] top-[229px] h-[86px] w-[189px]">
-                <Bird color="var(--color-sky-pale)" flapDuration={0.75} driftDuration={11} delay={0.6} strokeWidth={2.5} />
-              </div>
-
-              <AnimatePresence mode="wait">
-                {step === 1 ? (
-                  /* STEP01：気持ちの複数選択 */
-                  <motion.div
-                    key="step1"
-                    className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
-                    {...stepTransition}
-                  >
-                    <p className="text-title-32 font-bold leading-[1.6] text-ink">
-                      今、どんな気持ち？
-                    </p>
-                    <div className="flex flex-col items-center gap-4">
-                      {FEELINGS.map((row, ri) => (
-                        <div key={ri} className="flex items-center gap-3">
-                          {row.map((f) => {
-                            const active = feelings.includes(f);
-                            return (
-                              <button
-                                key={f}
-                                onClick={() => toggleFeeling(f)}
-                                className={`cursor-pointer rounded-full px-6 py-2 text-control-20 font-bold transition-all duration-300 hover:scale-105 ${
-                                  active ? "bg-accent text-white" : "bg-white/90 text-brand"
-                                }`}
-                              >
-                                {f}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                ) : (
-                  /* STEP02：場面の選択 */
-                  <motion.div
-                    key="step2"
-                    className="absolute inset-x-0 top-[247px] flex flex-col items-center gap-8"
-                    {...stepTransition}
-                  >
-                    <p className="text-title-32 font-bold leading-[1.6] text-ink whitespace-pre-line text-center">
-                      {"お疲れさま。頭を空っぽにしてみよう。\nどこでぼーっとする？"}
-                    </p>
-                    <div className="flex flex-col gap-8">
-                      {SCENES.map((row, ri) => (
-                        <div
-                          key={ri}
-                          className="flex items-center justify-center gap-8"
-                        >
-                          {row.map((s) => {
-                            const dimmed = scene !== null && scene !== s.id;
-                            return (
-                              <button
-                                key={s.id}
-                                onClick={() => setScene(s.id)}
-                                className={`relative h-[120px] w-[300px] cursor-pointer overflow-hidden rounded-12 border-[10px] border-white transition-all duration-300 hover:scale-[1.03] ${
-                                  dimmed ? "opacity-10" : "opacity-100"
-                                }`}
-                              >
-                                <img
-                                  src={s.src}
-                                  alt=""
-                                  className="absolute inset-0 h-full w-full object-cover"
-                                />
-                                <div
-                                  className="absolute inset-0"
-                                  style={{ background: s.tint }}
-                                />
-                                <span className="relative z-10 flex h-full w-full items-center justify-center text-control-20 font-black leading-[1.6] text-white">
-                                  {s.label}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <StepButtons
-                canProceed={step === 1 ? feelings.length > 0 : scene !== null}
-                onNext={() => (step === 1 ? setStep(2) : startVideo())}
-                onBack={() => (step === 1 ? router.push("/") : setStep(1))}
-              />
-            </motion.div>
-          ) : (
-            /* STEP03：ぼーっと動画再生 */
-            <motion.div
-              key="video"
-              className="absolute inset-0"
-              onMouseMove={pokeUi}
-              {...stepTransition}
-            >
-              <div className="absolute inset-0 overflow-hidden">
-                <video
-                  ref={videoRef}
-                  src="/video/ryuhyo.mp4"
-                  poster="/img/ice.jpg"
-                  className="h-full w-full object-cover"
-                  preload="auto"
-                  loop
-                  playsInline
-                />
-              </div>
-
-              <GlobalNav theme="light" size="sm" />
-
-              {/* 再生／一時停止 */}
-              <button
-                onClick={() => {
-                  /* stateの反映を待たず、videoを直接叩いてラグをなくす */
-                  const v = videoRef.current;
-                  if (playing) {
-                    v?.pause();
-                  } else {
-                    v?.play().catch(() => setPlaying(false));
-                  }
-                  setPlaying(!playing);
-                  pokeUi();
-                }}
-                aria-label={playing ? "一時停止" : "再生"}
-                className={`absolute left-1/2 top-1/2 size-[264px] -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-[opacity,transform] duration-700 hover:scale-105 ${
-                  controlsShown ? "opacity-100" : "pointer-events-none opacity-0"
-                }`}
-              >
-                <img
-                  src={playing ? "/img/icon-pause.svg" : "/img/play-circle.svg"}
-                  alt=""
-                  className="size-full"
-                />
-              </button>
-
-              {/* ぼーっとタイマー */}
-              <div
-                className={`absolute bottom-[76px] left-[52px] flex flex-col items-start gap-2 transition-opacity duration-700 ${
-                  controlsShown ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                <span className="rounded-full bg-white px-4 py-2 text-control-14 font-black text-brand backdrop-blur-6">
-                  ぼーっとタイマー
-                </span>
-                <p className="font-num text-number-80 font-bold leading-[1.2] text-white [font-variant-numeric:tabular-nums]">
-                  {mm}:{ss}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <video
+        ref={videoRef}
+        src={spot.video}
+        loop
+        playsInline
+        className="absolute inset-0 size-full object-cover"
+      />
+      {/* カンプ 15152:29287: 左67 / 下から（top 768）/ 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
+      <div className="absolute left-[67px] top-[768px] flex flex-col items-start justify-center gap-6 rounded-16 bg-white/10 px-11 py-6 backdrop-blur-65">
+        {/* ラベルの札はパネルの上辺にまたがる（カンプ: left 122.5 / top -22） */}
+        <div className="absolute left-[122.5px] top-[-22px] flex items-center justify-center rounded-full bg-white/40 px-4 py-1.5 backdrop-blur-90">
+          <p className="whitespace-nowrap text-body-16 font-normal leading-[1.2] text-white">
+            ぼーっとタイマー
+          </p>
+        </div>
+        <p className="font-num whitespace-nowrap text-number-120 font-thin leading-none text-white">
+          {mm}:{ss}
+        </p>
       </div>
+    </motion.div>
+  );
+}
+
+/* ═══════════ 窓枠をくぐる遷移 ═══════════ */
+function EnterWindow({
+  spot,
+  from,
+  pattern,
+  onDone,
+}: {
+  spot: Spot;
+  from: DOMRect;
+  pattern: number | string | null | undefined;
+  onDone: () => void;
+}) {
+  const p = findEnter(pattern);
+  useEffect(() => {
+    const id = setTimeout(onDone, p.duration);
+    return () => clearTimeout(id);
+  }, [onDone, p.duration]);
+
+  return (
+    <motion.div className="absolute inset-0 z-50" key="enter">
+      {/* まわりを暗く落とす（トンネル感） */}
+      <motion.div
+        className="absolute inset-0 bg-shadow"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: p.dim }}
+        transition={{ duration: p.duration / 1000, ease: p.ease }}
+      />
+      {/* 選んだカードが窓枠。近づくにつれて角丸とフチが外れ、画面いっぱいになる */}
+      <motion.div
+        className="absolute overflow-hidden border-white/60"
+        style={{ left: from.left, top: from.top, width: from.width, height: from.height }}
+        initial={{
+          scale: p.scale[0],
+          borderRadius: p.radius[0],
+          borderWidth: p.border[0],
+          filter: `blur(${p.blur[0]}px)`,
+        }}
+        animate={{
+          scale: p.scale[1],
+          borderRadius: p.radius[1],
+          borderWidth: p.border[1],
+          filter: [
+            `blur(${p.blur[0]}px)`,
+            `blur(${p.blur[1]}px)`,
+            `blur(${p.blur[2]}px)`,
+          ],
+        }}
+        transition={{ duration: p.duration / 1000, ease: p.ease }}
+      >
+        <img src={spot.src} alt="" className="absolute inset-0 size-full object-cover" />
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ═══════════ 本体 ═══════════ */
+export default function ExperienceFlow({
+  step,
+  setStep,
+  enter,
+}: {
+  step: Step;
+  setStep: (s: Step) => void;
+  /** 1〜5: 窓枠をくぐる遷移のパターン（enterPatterns.ts） */
+  enter?: number | string | null;
+}) {
+  const [spot, setSpot] = useState<Spot>(SPOTS[1]);
+  const [entering, setEntering] = useState<DOMRect | null>(null);
+
+  const handlePick = useCallback((s: Spot, rect: DOMRect) => {
+    setSpot(s);
+    setEntering(rect);
+  }, []);
+
+  const finishEnter = useCallback(() => {
+    setEntering(null);
+    setStep(3);
+  }, [setStep]);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* サウンドON/OFFの置き場：SoundUi がここへ描画する */}
+      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
+
+      <AnimatePresence mode="wait">
+        {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
+        {step === 2 && !entering && <Pick key="pick" onPick={handlePick} />}
+        {step === 3 && <Watch key="watch" spot={spot} />}
+      </AnimatePresence>
+
+      {entering && (
+        <EnterWindow spot={spot} from={entering} pattern={enter} onDone={finishEnter} />
+      )}
+
+      <GlobalNav theme="light" />
     </div>
   );
 }
