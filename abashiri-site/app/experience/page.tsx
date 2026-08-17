@@ -14,7 +14,9 @@ export default function ExperiencePage() {
   }, []);
   return (
     <>
-      <Stage illustration={step === 3 ? "bo" : "tamannee"}>
+      {/* カンプ 15152:29210 / 29251 / 29271 はどれも back（後ろ姿）バリアント。
+          導入（step1）はカンプにイラストが無いので出さない */}
+      <Stage illustration="bo" hideIllust={step === 1}>
         <ExperienceFlow step={step} setStep={setStep} />
       </Stage>
     </>

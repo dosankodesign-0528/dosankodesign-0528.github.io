@@ -30,7 +30,9 @@ const UNIT = ILLUST_VIEWBOX.h / ILLUST_RENDER.h;
 
 const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
 /* <img> が object-cover なので、重ねる SVG も同じ詰め方に合わせる */
-const FIT = "xMidYMid slice";
+/* 画像側の object-contain / object-bottom と必ず対に。
+   slice（＝cover）だと元PNGの縦横比の差で白フチが左右で切れる */
+const FIT = "xMidYMax meet";
 
 function Brows({ fill, spread }: { fill: string; spread?: number }) {
   return (
@@ -63,7 +65,7 @@ export default function IllustTamannee({ lift = 0, className }: Props) {
       <img
         src="/img/illust-main.png"
         alt=""
-        className="absolute inset-0 size-full object-cover"
+        className="absolute inset-0 size-full object-contain object-bottom"
       />
       <svg
         className="absolute inset-0 size-full"

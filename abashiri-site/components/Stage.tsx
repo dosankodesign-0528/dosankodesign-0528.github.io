@@ -119,6 +119,8 @@ type StageProps = {
   tamaranee?: number | string | null;
   /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
   illustEnter?: number | string | null;
+  /** true: 人物イラストを出さない（カンプにイラストが無い画面用） */
+  hideIllust?: boolean;
 };
 
 /**
@@ -138,6 +140,7 @@ export default function Stage({
   layout,
   tamaranee,
   illustEnter,
+  hideIllust = false,
 }: StageProps) {
   const L = mergeLayout(layout);
   const fc = mergeFace(face);
@@ -268,6 +271,7 @@ export default function Stage({
              右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
              右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
           className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
+          style={{ visibility: hideIllust ? "hidden" : "visible" }}
           initial={illustEntrance ? iep.initial : false}
           animate={illustIn ? iep.animate : undefined}
           transition={iep.transition}
@@ -317,12 +321,12 @@ export default function Stage({
               <img
                 src="/img/illust-video.png"
                 alt=""
-                className="absolute left-[-6px] top-[20px] h-[234px] w-[162px] object-cover drop-shadow-illust"
+                className="absolute left-0 top-[14px] h-[227px] w-[162px] object-contain object-bottom drop-shadow-illust"
               />
               <img
                 src="/img/text-bo.svg"
                 alt="ぼーっ"
-                className="absolute left-[142px] top-[25px] w-[40px]"
+                className="absolute left-[135px] top-[8px] w-[62px]"
               />
             </>
           )}

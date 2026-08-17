@@ -10,7 +10,7 @@ export default function IllustEnterIndex() {
           ABASHIRI v1.1 / KEY VISUAL
         </p>
         <h1 className="mt-2 text-[28px] font-light leading-[1.4] text-[#0b3c69]">
-          人物イラストの登場演出　5案
+          人物イラストの登場演出　2案
         </h1>
         <p className="mt-3 text-[15px] font-light leading-[1.8] text-[#3c4a57]">
           キービジュアルの演出が全部終わったあと（開いてから約4.5秒後）に人物が出てきます。
@@ -35,7 +35,7 @@ export default function IllustEnterIndex() {
         </ul>
 
         <p className="mt-8 text-[13px] font-light leading-[1.8] text-[#5a6b7a]">
-          採用案が決まったら、他の4案は消します（dev サーバが重くなるため）。
+          5案から「テクテク歩いてくる」「下からぴょこん」の2案に絞り込み済み。採用が決まったらもう一方も消します。
         </p>
       </div>
     </main>

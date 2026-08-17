@@ -162,14 +162,22 @@ function Pick({
       />
       <div className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/40 to-transparent" />
 
-      <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
+      {/* ホバー時のカンプ（15152:29191）には見出しが無く、拡大したカードが上まで来る。
+          カードとぶつかるので、拡大中は見出しを引っ込める */}
+      <p
+        className={`absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white transition-all duration-500 ease-standard ${
+          hovered ? "-translate-y-4 opacity-0" : "translate-y-0 opacity-100"
+        }`}
+      >
         どこでぼーっとする？
       </p>
 
-      {/* カンプ 15152:29228: top 239 / gap 60 / カード 902x586 */}
-      <div className="absolute left-0 top-[239px] w-full overflow-hidden">
+      {/* カンプ 15152:29228: 通常時 top 239 / gap 60 / カード 902x586。
+          ホバーで 1160x754 に広がる（15152:29191）ので、器はその高さぶん確保しておく。
+          中心ぞろえにすると通常時の上端がカンプどおり 239px に来る（155 + (754-586)/2）。 */}
+      <div className="absolute left-0 top-[155px] h-[754px] w-full overflow-hidden">
         <div
-          className="flex w-max items-center"
+          className="flex h-full w-max items-center"
           style={{
             gap: CARD_GAP,
             animation: `botto-marquee ${LOOP_SEC}s linear infinite`,
