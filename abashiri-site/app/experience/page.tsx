@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Stage from "@/components/Stage";
 import ExperienceFlow, { type Step } from "@/components/ExperienceFlow";
+import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
+import { DEFAULT_BO } from "@/components/boPatterns";
+import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
   /* 「この場所にする」を押したか。人物イラストはここで初めて出てくる */
   const [picked, setPicked] = useState(false);
+  /* 「ぼーっ」はこの画面にしか出ないので、調整パネルもここに置く */
+  const [tune, setTune] = useState<TopTuneValues>({
+    boPattern: DEFAULT_BO,
+    illustEnter: 2,
+    spot: DEFAULT_SPOT_TRANSITION,
+  });
+  const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
   /* ?step=2 / ?step=3 で途中のステップから開始できる（動作確認・デモ用） */
   useEffect(() => {
@@ -21,13 +31,16 @@ export default function ExperiencePage() {
           導入（step1）と場所えらび（step2）にはイラストを出さない。
           「この場所にする」を押した瞬間に所定の位置でフェードインして、
           そのまま人物ごと窓の中へ入っていく */}
-      <Stage illustration="bo" hideIllust={!picked}>
+      <Stage illustration="bo" hideIllust={!picked} bo={tune.boPattern}>
         <ExperienceFlow
           step={step}
           setStep={setStep}
           onPicked={() => setPicked(true)}
         />
       </Stage>
+
+      {/* ⚠️ 公開前に外す：確認用の調整パネル（右下・たたんだ状態） */}
+      <TopTunePanel onSettleValues={onSettleValues} />
     </>
   );
 }

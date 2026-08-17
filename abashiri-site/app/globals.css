@@ -109,6 +109,33 @@
   /* Ease_Linear（カモメ・キラキラのコマ送り）は Tailwind 既定の ease-linear */
 }
 
+/* ══════════ 人物イラストまわりの位置・大きさ ══════════
+   既定値はカンプ 15071:24641 の採寸。
+   画面右下の調整パネル（TopTunePanel）がここを直接書き換えるので、
+   ドラッグ中も React を通さずその場で動く。
+   ⚠️ 数値を変えたい時はここを直す（コンポーネント側に生の px を書かない） */
+:root {
+  /* 210x241 の枠。右端・上端からの距離 */
+  --illust-frame-right: 57px;
+  --illust-frame-top: 750px;
+  /* 人物（縦横比 162:227 = 1:1.4012 を保つ） */
+  --illust-person-x: 0px;
+  --illust-person-y: 14px;
+  --illust-person-w: 162px;
+  /* 「たまらねー」（縦横比 75:53） */
+  --illust-tamaranee-x: 135px;
+  --illust-tamaranee-y: 0px;
+  --illust-tamaranee-w: 75px;
+  /* 「ぼーっ」（動画視聴中。高さは元の比率まかせ） */
+  --illust-bo-x: 135px;
+  --illust-bo-y: 8px;
+  --illust-bo-w: 62px;
+  /* キラキラ */
+  --illust-sparkle-x: 7px;
+  --illust-sparkle-y: 54px;
+  --illust-sparkle-w: 14px;
+}
+
 html,
 body {
   height: 100%;

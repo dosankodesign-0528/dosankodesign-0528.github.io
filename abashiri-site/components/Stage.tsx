@@ -290,8 +290,11 @@ export default function Stage({
              「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
              右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
              右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
-          className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
+          className="pointer-events-none absolute z-30 h-[241px] w-[210px]"
           style={{
+            /* 位置は globals.css の --illust-* から。調整パネルがそこを書き換える */
+            right: "var(--illust-frame-right)",
+            top: "var(--illust-frame-top)",
             visibility: hideIllust ? "hidden" : "visible",
             opacity: hideIllust ? 0 : illustFade,
             transition: "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -312,8 +315,15 @@ export default function Stage({
               {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.div
                 ref={illustRef}
-                className="absolute left-0 top-[14px] h-[227px] w-[162px] drop-shadow-illust"
-                style={ia.style}
+                className="absolute drop-shadow-illust"
+                style={{
+                  left: "var(--illust-person-x)",
+                  top: "var(--illust-person-y)",
+                  width: "var(--illust-person-w)",
+                  /* 162:227 の比率を保つ */
+                  height: "calc(var(--illust-person-w) * 1.4012)",
+                  ...ia.style,
+                }}
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
               >
@@ -324,7 +334,14 @@ export default function Stage({
                   イラスト枠 (1244.6, 764) 162x226.8 の中で 8.6% / 20.6% の位置
                   ＝中心 (1258.6, 810.7)、大きさ 14px として置いている。
                   動きはこの点のまわりを3コマで小さく跳ねるだけ（フェード無しのGIF風）。 */}
-              <div className="sparkle-hop absolute left-[7px] top-[54px] w-[14px]">
+              <div
+                className="sparkle-hop absolute"
+                style={{
+                  left: "var(--illust-sparkle-x)",
+                  top: "var(--illust-sparkle-y)",
+                  width: "var(--illust-sparkle-w)",
+                }}
+              >
                 <img src="/img/sparkle.svg" alt="" className="w-full" />
               </div>
               {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
@@ -332,8 +349,13 @@ export default function Stage({
               <img
                 src="/img/text-tamaranee.svg"
                 alt="たまらねー"
-                className="absolute left-[135px] top-0 h-[53px] w-[75px] will-change-transform"
+                className="absolute will-change-transform"
                 style={{
+                  left: "var(--illust-tamaranee-x)",
+                  top: "var(--illust-tamaranee-y)",
+                  width: "var(--illust-tamaranee-w)",
+                  /* 75:53 の比率を保つ */
+                  height: "calc(var(--illust-tamaranee-w) * 0.7067)",
                   transformOrigin: tp.text.origin,
                   transitionProperty: "opacity, transform, filter",
                   transitionDuration: `${tp.text.duration}ms`,
@@ -348,7 +370,13 @@ export default function Stage({
               <img
                 src="/img/illust-video.png"
                 alt=""
-                className="absolute left-0 top-[14px] h-[227px] w-[162px] object-contain object-bottom drop-shadow-illust"
+                className="absolute object-contain object-bottom drop-shadow-illust"
+                style={{
+                  left: "var(--illust-person-x)",
+                  top: "var(--illust-person-y)",
+                  width: "var(--illust-person-w)",
+                  height: "calc(var(--illust-person-w) * 1.4012)",
+                }}
               />
               {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts の5案）。
                   いちばん最初は出さず、startDelay（5秒）たってから1周目が始まる。
@@ -359,8 +387,13 @@ export default function Stage({
                 /* ⚠️ 仮置き: 文字は白（カンプのまま）なので、流氷のような明るい映像の上では
                    ほぼ見えない。人物と同じ Shadow_Illust を掛けて最低限浮かせている。
                    見せ方（影／すりガラスの地／文字色）はヒデさん確認待ち */
-                className="absolute left-[135px] top-[8px] w-[62px] drop-shadow-illust"
-                style={{ transformOrigin: bp.origin }}
+                className="absolute drop-shadow-illust"
+                style={{
+                  left: "var(--illust-bo-x)",
+                  top: "var(--illust-bo-y)",
+                  width: "var(--illust-bo-w)",
+                  transformOrigin: bp.origin,
+                }}
                 initial={{ opacity: 0 }}
                 animate={bp.keyframes}
                 transition={{
