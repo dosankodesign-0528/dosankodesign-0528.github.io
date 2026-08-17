@@ -12,16 +12,19 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { findTamaranee } from "./tamaraneePatterns";
+import { findIllustEnter } from "./illustEnterPatterns";
 
 /*
  * 人物イラストのスイング（/mock/illust で5パターン比較）
  * 共通ルール：回転軸はイラストの下辺中央（transformOrigin 50% 100%）、
- * 角度は −4°〜+4° の範囲だけ。その中で緩急（メリハリ）の付け方を変えている。
- * 約15秒に1回。下端の切れ目対策でイラストは28px下げてある（top:72）
+ * 角度は −4°〜+4° の範囲だけ。その中で緩急（メリハリ）の付け方を変えている。約15秒に1回。
+ *
+ * v1.1: 位置はカンプ側で決まるので、ここでは transformOrigin だけを持つ。
+ * （v1.0 にあった top:72 の下げは、全画面化でカンプ位置とずれるため撤去）
  */
 import type { Transition } from "framer-motion";
 
-const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%", top: 72 };
+const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%" };
 
 type IllustAnim = {
   animate: Record<string, number[]>;
@@ -114,6 +117,8 @@ type StageProps = {
   layout?: Partial<LayoutTune> | null;
   /** 1〜5: ホバー時に「たまらねー」が出るパターン（tamaraneePatterns.ts） */
   tamaranee?: number | string | null;
+  /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
+  illustEnter?: number | string | null;
 };
 
 /**
@@ -132,6 +137,7 @@ export default function Stage({
   face,
   layout,
   tamaranee,
+  illustEnter,
 }: StageProps) {
   const L = mergeLayout(layout);
   const fc = mergeFace(face);
@@ -142,6 +148,7 @@ export default function Stage({
   /* browLift が 0 より大きい＝カーソルがイラストに乗っている */
   const over = browLift > 0;
   const tp = findTamaranee(tamaranee);
+  const iep = findIllustEnter(illustEnter);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
@@ -253,28 +260,19 @@ export default function Stage({
 
         {children}
 
-        {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面。
-            ブラーで出たあと、一回だけクルンと一回転（軽いバウンスつき）して目立たせる */}
+        {/* 人物イラスト（たまらねー・キラキラ込み）。常に最前面。
+            キービジュアルの演出が全部終わってから登場する（出方は illustEnterPatterns.ts の5案） */}
         <motion.div
           /* v1.1 カンプ 15071:24641: イラストは (1244.56, 764) / 162x226.8、
              「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
-             元PNG（284x357）は書き出しの縦横比が違うので、
-             カンプの絵の高さ 216.4px に合わせて 172x216 に縮めて置いている。 */
-          /* 右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
+             右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
              右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
           className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
-          initial={
-            illustEntrance
-              ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
-              : false
-          }
-          animate={illustIn ? { opacity: 1, filter: "blur(0px)" } : undefined}
-          transition={{
-            duration: timing.illust.duration / 1000,
-            ease: [0.22, 1, 0.36, 1],
-          }}
+          initial={illustEntrance ? iep.initial : false}
+          animate={illustIn ? iep.animate : undefined}
+          transition={iep.transition}
           onAnimationComplete={() => {
-            if (illustEntrance && illustIn) setSpin(true);
+            if (illustEntrance && illustIn && iep.swingAfter) setSpin(true);
           }}
         >
           <div className="relative h-full w-full">
@@ -290,8 +288,12 @@ export default function Stage({
               >
                 <IllustTamannee lift={browLift} className="size-full" />
               </motion.div>
-              {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
-              <div className="sparkle-hop absolute left-[6px] top-[58px] w-[17px]">
+              {/* キラキラ。基点はカンプから採寸した。
+                  カンプでは人物画像に焼き込まれていて独立したノードが無いため、
+                  イラスト枠 (1244.6, 764) 162x226.8 の中で 8.6% / 20.6% の位置
+                  ＝中心 (1258.6, 810.7)、大きさ 14px として置いている。
+                  動きはこの点のまわりを3コマで小さく跳ねるだけ（フェード無しのGIF風）。 */}
+              <div className="sparkle-hop absolute left-[7px] top-[54px] w-[14px]">
                 <img src="/img/sparkle.svg" alt="" className="w-full" />
               </div>
               {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
