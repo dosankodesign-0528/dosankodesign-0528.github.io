@@ -521,6 +521,10 @@ export default function TopPage({
     >
       <div
         ref={scrollerRef}
+        /* data-abashiri-scroller: ヘッダーの「ホーム」がここを探して一番上へ戻す。
+           このページは window ではなくこの箱の中がスクロールするので、
+           普通の「/」リンクでは何も起きない */
+        data-abashiri-scroller=""
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。

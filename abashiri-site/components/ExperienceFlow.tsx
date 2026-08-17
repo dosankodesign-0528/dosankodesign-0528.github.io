@@ -63,18 +63,37 @@ const CARD_H = 586;
 const CARD_GAP = 60;
 
 /* 導入の文字は、上から順に1ブロックずつブラーが晴れて出てくる。
-   景色のブラーが掛かり終わる（0.8+2.2秒）のを待ってから始める */
+   ヒデさん指示（2026-08-18）で「もっとゆったり、順番に」見せる方向へ緩めた。
+   ブロックは6つ（見出し＋本文4つ＋ボタン）なので、
+   最後のボタンが出はじめるのは startDelay + stagger*5 になる。
+   ⚠️ 速さの好みが出るところなので、ここだけ触れば全体のテンポが変わるようにしてある */
+const INTRO_PACE = {
+  /** 景色のブラーが晴れるのを待つ時間(秒) */
+  startDelay: 1.8,
+  /** 1ブロックずつずらす間隔(秒)。旧 0.55 */
+  stagger: 0.9,
+  /** 1ブロックが出きるまで(秒)。旧 1.1 */
+  duration: 1.7,
+  /** ブラーの掛かり具合(px)。ゆっくりになった分、少し強めでも重くならない */
+  blur: 18,
+};
+
 const INTRO_STAGGER: Variants = {
   hidden: {},
-  show: { transition: { delayChildren: 1.5, staggerChildren: 0.55 } },
+  show: {
+    transition: {
+      delayChildren: INTRO_PACE.startDelay,
+      staggerChildren: INTRO_PACE.stagger,
+    },
+  },
 };
 const INTRO_BLOCK: Variants = {
-  hidden: { opacity: 0, filter: "blur(16px)", y: 14 },
+  hidden: { opacity: 0, filter: `blur(${INTRO_PACE.blur}px)`, y: 14 },
   show: {
     opacity: 1,
     filter: "blur(0px)",
     y: 0,
-    transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: INTRO_PACE.duration, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
@@ -89,10 +108,9 @@ function Intro({ onNext }: { onNext: () => void }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* 背景は写真をやめて青のグラデーションだけ。
-          下は Stage の空グラデ（Brand_SkyTop → Brand_SkyBottom）が透けて、
-          上に向かってブランドカラーが濃くなる */}
-      <div className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
+      {/* 背景の青グラデは ExperienceFlow 本体に1枚だけ置いてある（ここには持たせない）。
+          ここに持たせると、導入→場所えらび に切り替わる一瞬だけグラデが消えて
+          下地の空グラデが顔を出し、「別の青が挟まった」ように見える */}
 
       {/* カンプ 15152:29260: (565, 110) 382x629 / 縦並び gap 100。
           文字は一気に出さず、上から順に1ブロックずつブラーが晴れて出てくる。
@@ -253,8 +271,7 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => v
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* 背景は写真をやめて青のグラデーションだけ（導入と同じ） */}
-      <div className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
+      {/* 背景の青グラデは ExperienceFlow 本体側に1枚だけ（導入と共通で敷いてある） */}
 
       <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
         どこでぼーっとする？
@@ -777,6 +794,17 @@ export default function ExperienceFlow({
           WorldPush が元の大きさへ戻る動きが余計に走ってしまう */}
       {step !== 3 && (
         <WorldPush active={!!entering} pattern={enter}>
+          {/* 背景の青グラデはここに1枚だけ置く（2026-08-18 ヒデさん指示）。
+              導入・場所えらびの両方で同じ色味を出しっぱなしにするのが目的。
+              以前は Intro / Pick がそれぞれ持っていたため、切り替わる一瞬だけ
+              両方が消えて下地の空グラデ（別の青）が顔を出していた。
+              入ってきた最初だけふわっと出し、そのあとは切り替えでも触らない */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          />
           <AnimatePresence mode="wait">
             {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
             {step === 2 && <Pick key="pick" onPick={handlePick} />}
