@@ -18,6 +18,16 @@ export default function IllustEnterIndex() {
           着地点はどの案も同じカンプ位置で、<strong className="font-medium">そこへ来るまでの動き方だけ</strong>を変えています。
         </p>
 
+        <Link
+          href="/mock/illust-enter/tune"
+          className="mt-6 block rounded-2xl bg-[#0b3c69] px-6 py-5 text-white transition-transform hover:scale-[1.01]"
+        >
+          <p className="text-[18px] font-medium">🎛 調整パネルで見比べる（おすすめ）</p>
+          <p className="mt-1 text-[14px] font-light leading-[1.7] opacity-85">
+            ページを移動せずに2案を切り替えて、何度でも見返せます。
+          </p>
+        </Link>
+
         <ul className="mt-8 flex flex-col gap-3">
           {ILLUST_ENTER_PATTERNS.map((p, i) => (
             <li key={p.key}>
