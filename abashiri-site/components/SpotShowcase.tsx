@@ -20,9 +20,7 @@
  *     ・本文                       Noto Sans JP ExtraLight 14px 行間2.2 字間0.7px 幅624px
  *   サムネイル … (40, 805) 3枚 各 164.845x110.442 / 間 14.4px / 角丸なし
  *
- * ⚠️ カンプの写真そのものはこの環境から取得できなかった（figma.com へのアクセスが
- *    ネットワークポリシーで塞がれている）。手持ちで一番近いものを仮置きしてある。
- *    placeholder: true が付いているものが差し替え待ち。
+ * 写真は4枚ともカンプの実素材（2026-08-18 に差し替え済み）。
  */
 import { useState } from "react";
 import { AnimatePresence, motion, useTransform, type MotionValue } from "framer-motion";
@@ -37,22 +35,24 @@ type Spot = {
   title: string;
   img: string;
   body: string;
-  /** カンプの写真が手に入らず、手持ちで仮置きしているもの */
-  placeholder?: boolean;
 };
 
 /* 本文はカンプでは4画面とも同じ文言だったので、そのまま共通で持たせている */
 const BODY =
   "いつもの騒がしい日常から抜けて、何も考えずぼーっと過ごせる場所。網走の広大に広がる地平線と豊かな自然に囲まれて、気の赴くままに自由に過ごせちゃう。";
 
+/* 4枚ともカンプ（15191:2178）の実素材。
+   2026-08-18 に Figma MCP で元画像を書き出して差し替えた（それまでは手持ちの仮置き）。
+   並び順もカンプの4画面と同じ（能取岬 → サンゴ草 → 網走駅 → 流氷）。 */
 const SPOTS: Spot[] = [
-  /* カンプは牧草地に灯台が立つカット。手持ちで灯台が写っているのはこれだけ */
-  { id: "notoro", title: "能取岬", img: "/img/bg-hero.jpg", body: BODY, placeholder: true },
-  /* ここはカンプとほぼ同じ絵が手元にある */
-  { id: "sango", title: "能取湖サンゴ草群落地", img: "/img/spot-3.jpg", body: BODY },
-  /* 駅のホームの写真が無い。カルーセル3枚目と同じ差し替え待ち */
-  { id: "eki", title: "網走駅", img: "/img/spot-1.jpg", body: BODY, placeholder: true },
-  { id: "ryuhyo", title: "流氷クルーズ", img: "/img/ice.jpg", body: BODY },
+  /* カンプ 15152:29475：牧草ロールの向こうに灯台 */
+  { id: "notoro", title: "能取岬", img: "/img/spot-notoro.jpg", body: BODY },
+  /* カンプ 15152:29500：木道に人が立つ赤いサンゴ草 */
+  { id: "sango", title: "能取湖サンゴ草群落地", img: "/img/spot-sangoso.jpg", body: BODY },
+  /* カンプ 15152:29524：「あばしり」の駅名標が立つホーム */
+  { id: "eki", title: "網走駅", img: "/img/spot-eki.jpg", body: BODY },
+  /* カンプ 15152:29547：一面の流氷 */
+  { id: "ryuhyo", title: "流氷クルーズ", img: "/img/spot-ryuhyo.jpg", body: BODY },
 ];
 
 export default function SpotShowcase({
