@@ -29,6 +29,7 @@
 | ファイル | 中身 |
 |---|---|
 | [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md) | 完成したデザインシステム（色・文字・余白のトークン一覧） |
+| [abashiri-site/V1.1-STATUS.md](abashiri-site/V1.1-STATUS.md) | v1.1 のいまの状態・仮置き一覧・実装の地雷・次にやること（引き継ぎ用） |
 
 ### anyflow-embed
 | ファイル | 中身 |
