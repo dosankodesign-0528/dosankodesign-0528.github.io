@@ -31,21 +31,24 @@ export type Step = 1 | 2 | 3;
 /* カンプ 15152:29215 のカルーセル。
    ⚠️ 3枚目の「駅のホーム」の写真はカンプにしか無く、この環境から取得できなかったため
    既存の天都山展望台で仮置きしている。差し替え待ち。
-   ⚠️ 動画も ryuhyo.mp4 の1本しか無いので、プレビューは全カード同じものを流している。 */
+   ⚠️ 動画は ryuhyo.mp4 の1本しか無い。全カードで同じ動画を流すと、
+      さんご草のカードに流氷の映像が被って「流氷を選んだのに赤い写真が出る」ことになる。
+      なので video は動画が実在するスポットにだけ持たせ、無いカードは写真のまま見せる。 */
 export type Spot = {
   id: string;
   label: string;
   src: string;
-  video: string;
+  /** そのスポット自身の動画。まだ無いスポットは未設定にしておく */
+  video?: string;
   /** カンプに無く仮置きしている素材かどうか（報告用） */
   placeholder?: boolean;
 };
 
 const SPOTS: Spot[] = [
-  { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg", video: "/video/ryuhyo.mp4" },
+  { id: "sango", label: "さんご草", src: "/img/scene-sango.jpg" },
   { id: "ryuhyo", label: "流氷クルーズ", src: "/img/scene-ryuhyo.jpg", video: "/video/ryuhyo.mp4" },
-  { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", video: "/video/ryuhyo.mp4", placeholder: true },
-  { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg", video: "/video/ryuhyo.mp4" },
+  { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", placeholder: true },
+  { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg" },
 ];
 
 /* ぼーっと体験の背景写真（カンプ 15152:27990 / 29216）。
@@ -339,10 +342,10 @@ function SpotCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
 
-  /* 中央にいる間だけ動画プレビューを流す */
+  /* 中央にいる間だけ動画プレビューを流す（そのスポットの動画がある時だけ） */
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !spot.video) return;
     if (active) {
       v.muted = true; /* プレビューは常に無音。音は動画再生画面から */
       v.currentTime = 0;
@@ -372,17 +375,19 @@ function SpotCard({
       }}
     >
       <img src={spot.src} alt={spot.label} className="absolute inset-0 size-full object-cover" />
-      <video
-        ref={videoRef}
-        src={spot.video}
-        loop
-        playsInline
-        preload="none"
-        /* 見せるだけの飾りなので、クリックは全部すり抜けさせる */
-        className={`pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
-          active ? "opacity-100" : "opacity-0"
-        }`}
-      />
+      {spot.video && (
+        <video
+          ref={videoRef}
+          src={spot.video}
+          loop
+          playsInline
+          preload="none"
+          /* 見せるだけの飾りなので、クリックは全部すり抜けさせる */
+          className={`pointer-events-none absolute inset-0 size-full object-cover transition-opacity duration-700 ease-standard ${
+            active ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      )}
       {/* カンプ 15152:29231: カード内 top 464。中央のカードにだけ出す */}
       <div
         className={`absolute left-1/2 top-[464px] z-10 -translate-x-1/2 transition-all duration-500 ease-standard ${
@@ -408,7 +413,8 @@ function SpotCard({
 /* v1.0 と同じ挙動：最初は止まっていて、再生ボタンを押すと動画とタイマーが同時に始まる。
    再生中は3秒さわらないと操作系が消えて、動かすとまた出てくる。 */
 function Watch({ spot }: { spot: Spot }) {
-  const [playing, setPlaying] = useState(false);
+  /* 動画がまだ無いスポットは、写真を眺めるだけなので最初から進める */
+  const [playing, setPlaying] = useState(!spot.video);
   const [remaining, setRemaining] = useState(3 * 60);
   const [uiVisible, setUiVisible] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -466,23 +472,25 @@ function Watch({ spot }: { spot: Spot }) {
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    <motion.div
-      key="watch"
-      className="absolute inset-0"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-      onPointerMove={() => playing && pokeUi()}
-    >
-      <video
-        ref={videoRef}
-        src={spot.video}
-        loop
-        playsInline
-        className="absolute inset-0 size-full object-cover"
-      />
+    /* 窓をくぐった直後なので、フェードもスケールも掛けずそのまま出す */
+    <div className="absolute inset-0" onPointerMove={() => playing && pokeUi()}>
+      {/* まだ動画が無いスポットは、選んだ景色の写真をそのまま見せる。
+          他スポットの動画で代用すると、選んだ場所と違う景色が出てしまう */}
+      {spot.video ? (
+        <video
+          ref={videoRef}
+          src={spot.video}
+          loop
+          playsInline
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : (
+        <img src={spot.src} alt={spot.label} className="absolute inset-0 size-full object-cover" />
+      )}
 
-      {/* 再生／一時停止。最初は止まっているので、押して始める */}
+      {/* 再生／一時停止。最初は止まっているので、押して始める。
+          動画がまだ無いスポットでは出さない */}
+      {spot.video && (
       <button
         type="button"
         onClick={() => {
@@ -490,7 +498,7 @@ function Watch({ spot }: { spot: Spot }) {
           pokeUi();
         }}
         aria-label={playing ? "一時停止" : "再生"}
-        className={`absolute left-1/2 top-1/2 z-10 flex size-[96px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-all duration-500 ease-standard hover:scale-110 ${
+        className={`absolute left-1/2 top-1/2 z-10 flex size-[192px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-all duration-500 ease-standard hover:scale-110 ${
           controlsShown ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
@@ -500,6 +508,7 @@ function Watch({ spot }: { spot: Spot }) {
           className="size-full"
         />
       </button>
+      )}
 
       {/* カンプ 15152:29287: 左67 / top 768 / 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
       <div
@@ -517,7 +526,7 @@ function Watch({ spot }: { spot: Spot }) {
           {mm}:{ss}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -715,14 +724,19 @@ export default function ExperienceFlow({
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する */}
       <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
 
-      {/* 遷移中は、まわりの世界だけ外へ押し出して奥へ流す */}
-      <WorldPush active={!!entering} pattern={enter}>
-        <AnimatePresence mode="wait">
-          {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
-          {step === 2 && <Pick key="pick" onPick={handlePick} />}
-          {step === 3 && <Watch key="watch" spot={spot} />}
-        </AnimatePresence>
-      </WorldPush>
+      {/* 遷移中は、まわりの世界だけ外へ押し出して奥へ流す。
+          動画画面はこの外に出しておく。中に入れると、窓をくぐり終わったあとに
+          WorldPush が元の大きさへ戻る動きが余計に走ってしまう */}
+      {step !== 3 && (
+        <WorldPush active={!!entering} pattern={enter}>
+          <AnimatePresence mode="wait">
+            {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
+            {step === 2 && <Pick key="pick" onPick={handlePick} />}
+          </AnimatePresence>
+        </WorldPush>
+      )}
+      {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる */}
+      {step === 3 && <Watch spot={spot} />}
 
       {entering && (
         <EnterWindow spot={spot} from={entering} pattern={enter} onDone={finishEnter} />

@@ -34,77 +34,25 @@ export type EnterPattern = {
 };
 
 const STANDARD: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/* 出だしゆっくり→終盤に加速。等速で歩いて近づくと見た目の大きさは加速して増える */
-const ACCEL: [number, number, number, number] = [0.55, 0, 0.85, 0.6];
-const ACCEL_HARD: [number, number, number, number] = [0.7, 0, 0.9, 0.5];
-const EVEN: [number, number, number, number] = [0.4, 0.1, 0.6, 0.9];
-const SETTLE: [number, number, number, number] = [0.5, 0, 0.15, 1];
+/* 出だしをうんと殺して、終盤で一気に加速する。
+   等速で歩いて窓に近づくと、見た目の大きさは終盤ほど急激に増える。
+   この「最初はほとんど動かない → 最後にぐっと吸い込まれる」が吸引感の正体。 */
+const SUCK: [number, number, number, number] = [0.9, 0, 0.92, 0.35];
 
 export const ENTER_PATTERNS: EnterPattern[] = [
   {
-    key: "straight",
-    label: "案1  まっすぐ入る",
-    note: "一定の歩幅で窓へ。角丸とフチが外れて全画面になる。いちばん素直で、どこにも引っかからない",
-    duration: 1400,
-    ease: STANDARD,
-    growEase: ACCEL,
-    parallax: 1.14,
-    radius: [120, 0],
-    border: [10, 0],
-    blur: [0, 0, 0],
-    dim: 0,
-  },
-  {
     key: "tunnel",
-    label: "案2  吸い込まれる",
-    note: "まわりが暗く落ちて、終盤ぐっと加速する。トンネルをくぐる感じがいちばん強い",
-    duration: 1600,
+    label: "吸い込まれる",
+    note: "最初はほとんど動かず、終盤で一気に加速して吸い込まれる。まわりは暗く落ちる",
+    duration: 1900,
     ease: STANDARD,
-    growEase: ACCEL_HARD,
-    parallax: 1.06,
+    growEase: SUCK,
+    /* 景色をほぼ止めることで、枠だけが猛烈に迫ってくるように見せる */
+    parallax: 1.05,
     radius: [120, 0],
     border: [10, 0],
     blur: [0, 0, 0],
-    dim: 0.55,
-  },
-  {
-    key: "window",
-    label: "案3  窓が開いてから入る",
-    note: "先に白フチと角丸だけスッと消えて、ワンテンポ置いてから世界が広がる",
-    duration: 1700,
-    ease: STANDARD,
-    growEase: SETTLE,
-    parallax: 1.2,
-    radius: [120, 0],
-    border: [10, 0],
-    blur: [0, 0, 0],
-    dim: 0.2,
-  },
-  {
-    key: "focus",
-    label: "案4  ピントが合う",
-    note: "一度ぼやけてから晴れる。目が慣れていくような、いちばんのんびりした入り方",
-    duration: 1800,
-    ease: STANDARD,
-    growEase: ACCEL,
-    parallax: 1.24,
-    radius: [120, 0],
-    border: [10, 0],
-    blur: [0, 16, 0],
-    dim: 0.15,
-  },
-  {
-    key: "drift",
-    label: "案5  ゆっくり流れ込む",
-    note: "等速に近い長い尺。急かされない、引きのいちばん強い入り方",
-    duration: 2400,
-    ease: EVEN,
-    growEase: EVEN,
-    parallax: 1.3,
-    radius: [120, 0],
-    border: [10, 0],
-    blur: [0, 6, 0],
-    dim: 0.3,
+    dim: 0.62,
   },
 ];
 
