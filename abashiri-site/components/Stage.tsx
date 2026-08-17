@@ -264,14 +264,24 @@ export default function Stage({
         {children}
 
         {/* 人物イラスト（たまらねー・キラキラ込み）。常に最前面。
-            キービジュアルの演出が全部終わってから登場する（出方は illustEnterPatterns.ts の5案） */}
-        <motion.div
+            キービジュアルの演出が全部終わってから登場する（出方は illustEnterPatterns.ts の5案）
+
+            ⚠️ フェードは外側のこの div が持つ。中の motion.div は framer-motion が
+               opacity を握っているので、そこに style で opacity を書いても効かない。 */}
+        <div
           /* v1.1 カンプ 15071:24641: イラストは (1244.56, 764) / 162x226.8、
              「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
              右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
              右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
           className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
-          style={{ visibility: hideIllust ? "hidden" : "visible" }}
+          style={{
+            visibility: hideIllust ? "hidden" : "visible",
+            opacity: hideIllust ? 0 : 1,
+            transition: "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
+        >
+        <motion.div
+          className="size-full"
           initial={illustEntrance ? iep.initial : false}
           animate={illustIn ? iep.animate : undefined}
           transition={iep.transition}
@@ -332,6 +342,7 @@ export default function Stage({
           )}
           </div>
         </motion.div>
+        </div>
 
         {/* v1.1: 右レール（縦書き「網走 観光サイト」＋SNS 3つ）はカンプから無くなった。
             サイト名は吹き出しの上の手書き「網走市観光サイト」に置き換わっている。

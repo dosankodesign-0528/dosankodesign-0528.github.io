@@ -385,18 +385,82 @@ function SpotCard({
   );
 }
 
+/* ═══════════ 窓の向こうに映すもの（唯一の映像レイヤー） ═══════════ */
+/*
+ * ⚠️ ここが「拡大しきった瞬間に絵が飛ぶ」問題の急所。
+ * 以前は「ズームイン用の video」と「再生画面の video」の2つがあり、
+ * 拡大が終わった瞬間にバトンタッチしていた。別の要素は必ず別のコマから
+ * 始まるので、どれだけ秒数を合わせても一瞬ずれる（poster が挟まることもある）。
+ * 映像の要素はサイト内でこの1つだけにして、窓が拡大しきった後もそのまま残す。
+ * こうすれば「最後のコマ」と「最初のコマ」は物理的に同じコマになる。
+ */
+function MediaLayer({
+  spot,
+  videoRef,
+  startAt,
+}: {
+  spot: Spot;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  /** プレビューが映していた秒数。null なら直接この画面に来た＝頭から止まったまま */
+  startAt: number | null;
+}) {
+  const synced = useRef(false);
+
+  /* プレビューが映していたコマに合わせて、そのまま流し続ける */
+  const sync = useCallback(() => {
+    const v = videoRef.current;
+    if (!v || synced.current || v.readyState < 1) return;
+    synced.current = true;
+    if (startAt != null) {
+      if (startAt > 0) v.currentTime = startAt;
+      v.muted = true; /* 音は動画再生画面（Watch）が引き取る */
+      v.play().catch(() => {});
+    }
+  }, [startAt, videoRef]);
+
+  useEffect(() => {
+    sync();
+  }, [sync]);
+
+  return (
+    <>
+      <img
+        src={spot.src}
+        alt={spot.label}
+        className="absolute inset-0 size-full object-cover"
+      />
+      {spot.video && (
+        <video
+          ref={videoRef}
+          src={spot.video}
+          playsInline
+          preload="auto"
+          poster={spot.src}
+          onLoadedMetadata={sync}
+          className="absolute inset-0 size-full object-cover"
+        />
+      )}
+    </>
+  );
+}
+
 /* ═══════════ 動画再生 ═══════════ */
 /* v1.0 と同じ挙動：最初は止まっていて、再生ボタンを押すと動画とタイマーが同時に始まる。
    再生中は3秒さわらないと操作系が消えて、動かすとまた出てくる。 */
-function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
-  /* カルーセルから入って来た時は、ズームインの続きのコマから流れ続ける。
-     直接この画面に来た時（?step=3）は今までどおり止まった状態から始める */
-  const seamless = startAt != null;
-  /* 動画がまだ無いスポットは、写真を眺めるだけなので最初から進める */
+function Watch({
+  spot,
+  videoRef,
+  seamless,
+}: {
+  spot: Spot;
+  /* 動画そのものは MediaLayer が持つ。ここは操作するだけ */
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  /* カルーセルから続けて入って来たか。true なら止めずにそのまま流す */
+  seamless: boolean;
+}) {
   const [playing, setPlaying] = useState(!spot.video || seamless);
   const [remaining, setRemaining] = useState(3 * 60);
   const [uiVisible, setUiVisible] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* 再生中だけ、3秒放置で操作系を隠す */
@@ -423,7 +487,7 @@ function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
     } else {
       v.pause();
     }
-  }, [playing]);
+  }, [playing, videoRef]);
 
   /* 動画が始まったらぼーっとタイマーがカウントダウン */
   useEffect(() => {
@@ -451,49 +515,29 @@ function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
   const ss = String(remaining % 60).padStart(2, "0");
 
   return (
-    /* 窓をくぐった直後なので、フェードもスケールも掛けずそのまま出す */
-    <div className="absolute inset-0" onPointerMove={() => playing && pokeUi()}>
-      {/* まだ動画が無いスポットは、選んだ景色の写真をそのまま見せる。
-          他スポットの動画で代用すると、選んだ場所と違う景色が出てしまう */}
-      {spot.video ? (
-        <video
-          ref={videoRef}
-          src={spot.video}
-          loop
-          playsInline
-          preload="auto"
-          poster={spot.src}
-          /* ズームインが終わった時点のコマから続ける。
-             ここを 0 に戻すと、窓をくぐった瞬間に絵が飛んで見える */
-          onLoadedMetadata={(e) => {
-            if (seamless) e.currentTarget.currentTime = startAt ?? 0;
-          }}
-          className="absolute inset-0 size-full object-cover"
-        />
-      ) : (
-        <img src={spot.src} alt={spot.label} className="absolute inset-0 size-full object-cover" />
-      )}
-
-      {/* 再生／一時停止。最初は止まっているので、押して始める。
-          動画がまだ無いスポットでは出さない */}
+    /* 動画の上に重なる操作パネルだけ。映像には一切触らない */
+    <div
+      className="absolute inset-0 z-30"
+      onPointerMove={() => playing && pokeUi()}
+    >
       {spot.video && (
-      <button
-        type="button"
-        onClick={() => {
-          setPlaying((v) => !v);
-          pokeUi();
-        }}
-        aria-label={playing ? "一時停止" : "再生"}
-        className={`absolute left-1/2 top-1/2 z-10 flex size-[192px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-all duration-500 ease-standard hover:scale-110 ${
-          controlsShown ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        <img
-          src={playing ? "/img/icon-pause.svg" : "/img/play-circle.svg"}
-          alt=""
-          className="size-full"
-        />
-      </button>
+        <button
+          type="button"
+          onClick={() => {
+            setPlaying((v) => !v);
+            pokeUi();
+          }}
+          aria-label={playing ? "一時停止" : "再生"}
+          className={`absolute left-1/2 top-1/2 z-10 flex size-[192px] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full transition-all duration-500 ease-standard hover:scale-110 ${
+            controlsShown ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
+        >
+          <img
+            src={playing ? "/img/icon-pause.svg" : "/img/play-circle.svg"}
+            alt=""
+            className="size-full"
+          />
+        </button>
       )}
 
       {/* カンプ 15152:29287: 左67 / top 768 / 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
@@ -502,7 +546,6 @@ function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
           controlsShown ? "opacity-100" : "opacity-0"
         }`}
       >
-        {/* ラベルの札はパネルの上辺にまたがる（カンプ: left 122.5 / top -22） */}
         <div className="absolute left-[122.5px] top-[-22px] flex items-center justify-center rounded-full bg-white/40 px-4 py-1.5 backdrop-blur-90">
           <p className="whitespace-nowrap text-body-16 font-normal leading-[1.2] text-white">
             ぼーっとタイマー
@@ -535,19 +578,20 @@ function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
  */
 
 function EnterWindow({
-  spot,
   from,
   pattern,
-  startAt,
+  landed,
   onDone,
+  children,
 }: {
-  spot: Spot;
   /** ステージ座標での、押した瞬間のカードの位置と大きさ＋器の実寸 */
   from: { x: number; y: number; w: number; h: number; stageW: number; stageH: number };
   pattern: number | string | null | undefined;
-  /** プレビューが映していた秒数。ここから続けて流す */
-  startAt: number;
+  /** 拡大しきったか。くぐり終わったら暗幕を外して素の映像に戻す */
+  landed: boolean;
   onDone: () => void;
+  /** 窓の向こうに映すもの。拡大が終わってもこの要素のまま残す */
+  children: React.ReactNode;
 }) {
   const p = findEnter(pattern);
   const sec = p.duration / 1000;
@@ -595,11 +639,11 @@ function EnterWindow({
 
   return (
     <motion.div className="absolute inset-0 z-20 overflow-hidden" key="enter">
-      {/* まわりを暗く落とす（トンネル感） */}
+      {/* まわりを暗く落とす（トンネル感）。くぐり終わったら消す */}
       <motion.div
         className="absolute inset-0 bg-shadow"
         initial={{ opacity: 0 }}
-        animate={{ opacity: p.dim }}
+        animate={{ opacity: landed ? 0 : p.dim }}
         transition={{ duration: sec, ease: p.ease }}
       />
 
@@ -608,58 +652,22 @@ function EnterWindow({
         className="absolute overflow-hidden border-white/60 [animation:botto-fade-in_140ms_linear]"
         style={{ x, y, width: w, height: h, borderRadius: radius, borderWidth: border }}
       >
-        {/* 窓の向こうの景色。parallax の量だけ“わずかに”しか動かない。
-            枠が大きく広がるのに景色はほぼ動かない、この差が奥行きになる。
-            景色まで同じ倍率で拡大すると「写真を引き伸ばした」動きになって不自然。 */}
+        {/* 窓の向こうの中身は外（MediaLayer）から渡される。
+            ここで自前の video を持つと、拡大しきった瞬間に別の要素へ
+            バトンタッチすることになり、必ず「別のコマ」に切り替わってしまう。
+            要素をひとつに保つのが、絵がずれないための唯一の条件。 */}
         <motion.div
           className="absolute left-0 top-0"
           style={{ x: imgX, y: imgY, width: from.stageW, height: from.stageH }}
         >
-          {/* 動画があるスポットは、写真ではなく動画のまま近づいていく。
-              くぐり終わったあとの再生画面と地続きに見せたいので、
-              ここでも同じ動画を（無音・自動再生で）流しておく */}
-          {spot.video ? (
-            <motion.video
-              src={spot.video}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              poster={spot.src}
-              /* プレビューの続きのコマから流す */
-              onLoadedMetadata={(e) => {
-                e.currentTarget.currentTime = startAt;
-              }}
-              className="size-full max-w-none object-cover"
-              initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
-              animate={{
-                scale: 1,
-                filter: [
-                  `blur(${p.blur[0]}px)`,
-                  `blur(${p.blur[1]}px)`,
-                  `blur(${p.blur[2]}px)`,
-                ],
-              }}
-              transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
-            />
-          ) : (
-            <motion.img
-              src={spot.src}
-              alt=""
-              className="size-full max-w-none object-cover"
-              initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
-              animate={{
-                scale: 1,
-                filter: [
-                  `blur(${p.blur[0]}px)`,
-                  `blur(${p.blur[1]}px)`,
-                  `blur(${p.blur[2]}px)`,
-                ],
-              }}
-              transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
-            />
-          )}
+          <motion.div
+            className="size-full"
+            initial={{ scale: p.parallax }}
+            animate={{ scale: 1 }}
+            transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
+          >
+            {children}
+          </motion.div>
         </motion.div>
       </motion.div>
     </motion.div>
@@ -697,13 +705,19 @@ export default function ExperienceFlow({
   step,
   setStep,
   enter,
+  onPicked,
 }: {
   step: Step;
   setStep: (s: Step) => void;
   /** 1〜5: 窓枠をくぐる遷移のパターン（enterPatterns.ts） */
   enter?: number | string | null;
+  /** 「この場所にする」を押した合図。人物イラストはここから出す */
+  onPicked?: () => void;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
+  const mediaRef = useRef<HTMLVideoElement | null>(null);
+  const [landed, setLanded] = useState(false);
   const [spot, setSpot] = useState<Spot>(SPOTS[1]);
   /* プレビューを止めた位置（秒）。null なら直接この画面に来たということ */
   const [startAt, setStartAt] = useState<number | null>(null);
@@ -717,10 +731,15 @@ export default function ExperienceFlow({
     stageH: number;
   } | null>(null);
 
+  /* handlePick の中身を作り直したくないので ref 経由で渡す */
+  const onPickedRef = useRef(onPicked);
+  onPickedRef.current = onPicked;
+
   /* ブラウザ座標 → ステージ座標（1512x982）に直してから渡す。
      ステージは画面サイズに合わせて縮小表示されているので、その倍率で割る */
   const handlePick = useCallback((s: Spot, rect: DOMRect, at: number) => {
     setStartAt(at);
+    onPickedRef.current?.();
     const root = rootRef.current;
     if (!root) return;
     const rr = root.getBoundingClientRect();
@@ -736,14 +755,17 @@ export default function ExperienceFlow({
     });
   }, []);
 
+  /* 窓は畳まない。拡大しきった状態のまま置いておき、中の映像もそのまま残す。
+     ここで entering を null にして別の要素に描き直すと、その瞬間だけ必ず
+     別のコマ（または poster）が映って「急に画面が変わった」ように見える */
   const finishEnter = useCallback(() => {
-    /* ズームインの尺だけ動画は進んでいる。その到達点から再生画面を始めないと、
-       窓をくぐった瞬間に尺のぶんだけ絵が巻き戻って「急に変わった」ように見える */
-    const ran = findEnter(enter).duration / 1000;
-    setStartAt((a) => (a == null ? null : a + ran));
-    setEntering(null);
+    setLanded(true);
     setStep(3);
-  }, [setStep, enter]);
+  }, [setStep]);
+
+  const media = (
+    <MediaLayer spot={spot} videoRef={mediaRef} startAt={startAt} />
+  );
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden">
@@ -761,11 +783,25 @@ export default function ExperienceFlow({
           </AnimatePresence>
         </WorldPush>
       )}
-      {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる */}
-      {step === 3 && <Watch spot={spot} startAt={startAt} />}
+      {/* 映像レイヤー。カルーセルから入って来た時は窓の中に、
+          ?step=3 で直接来た時はそのまま全画面に置く。どちらも要素は1つ */}
+      {entering ? (
+        <EnterWindow
+          from={entering}
+          pattern={enter}
+          landed={landed}
+          onDone={finishEnter}
+        >
+          {media}
+        </EnterWindow>
+      ) : (
+        step === 3 && <div className="absolute inset-0 z-20">{media}</div>
+      )}
 
-      {entering && (
-        <EnterWindow spot={spot} from={entering} pattern={enter} startAt={startAt ?? 0} onDone={finishEnter} />
+      {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる。
+          Watch は操作パネルだけで、映像そのものには触らない */}
+      {step === 3 && (
+        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} />
       )}
 
       <GlobalNav theme="light" />
