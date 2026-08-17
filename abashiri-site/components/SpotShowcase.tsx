@@ -68,9 +68,11 @@ export default function SpotShowcase({ scrollY }: { scrollY: MotionValue<number>
   const pointerEvents = useTransform(scrollY, (v) => (v > 380 ? "auto" : "none"));
 
   return (
-    /* 高さ 1964px ＝ 画面ぶん(982) ＋ 見てもらうための余白(982)。
-       内側が sticky なので、その間このセクションが画面に留まる */
-    <div className="relative -mt-[982px] h-[1964px]">
+    /* 高さ 2456px ＝ 画面ぶん(982) ＋ 留まる長さ(1474)。
+       内側が sticky なので、スクロール 0〜1474px の間このセクションが画面に居座る。
+       ⚠️ ここを 1964px にすると、ブラーが晴れ切る 460px 地点から
+          500px ぶんしか見られず、サムネイルを押す間もなく次のセクションに押し出される */
+    <div className="relative -mt-[982px] h-[2456px]">
       <motion.section
         id="spot"
         className="sticky top-0 h-[982px] w-full overflow-hidden"

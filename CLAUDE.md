@@ -246,6 +246,7 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | **anyflow-embed** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
+| **abashiri-site（網走）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✅ main push で自動（Root Directory: `abashiri-site`）<br>v1.0 は `abashiri-v1.0` ブランチのプレビューURLで見られる |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
 
