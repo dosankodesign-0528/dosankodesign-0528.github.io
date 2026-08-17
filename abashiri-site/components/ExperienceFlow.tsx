@@ -220,9 +220,16 @@ function SliderButton({
       type="button"
       onClick={onClick}
       aria-label={dir === "left" ? "前の場所へ" : "次の場所へ"}
-      className={`absolute top-1/2 z-20 flex size-[68px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/60 bg-white/20 backdrop-blur-65 transition-all duration-300 ease-standard hover:scale-110 hover:bg-white/35 ${
-        dir === "left" ? "left-[96px]" : "right-[96px]"
-      }`}
+      /* 中央カードの左右の端に乗せる（半幅451 の 62px 内側 ＝ カードのフチから28px）。
+         画面幅に依らないよう、器の中央からの相対位置で置く */
+      style={{
+        left: "50%",
+        transform:
+          dir === "left"
+            ? "translate(calc(-50% - 389px), -50%)"
+            : "translate(calc(-50% + 389px), -50%)",
+      }}
+      className="absolute top-1/2 z-20 flex size-[68px] cursor-pointer items-center justify-center rounded-full border border-white/60 bg-white/20 backdrop-blur-65 transition-colors duration-300 ease-standard hover:bg-white/35"
     >
       <Chevron dir={dir} />
     </button>
@@ -234,8 +241,10 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect) => void }) {
   const go = (d: number) => setIndex((i) => i + d);
 
   const active = ((index % SPOTS.length) + SPOTS.length) % SPOTS.length;
-  /* 中央のカードの左端が (1512 - 902) / 2 = 305 に来るように track をずらす */
-  const trackX = (STAGE_W - CARD_W) / 2 - index * STEP;
+  /* track の原点を「器の中央（left:50%）」に置き、カードは中心基準で並べる。
+     ステージは横長の画面だと 1512px より広がるので、
+     1512 を固定値として中央を計算するとその差のぶんだけ左にずれる。 */
+  const trackX = -index * STEP;
   /* 前後2枚ずつだけ描く。index は増え続けるが、中身は循環させるので端が見えない */
   const slots = [-2, -1, 0, 1, 2].map((d) => {
     const pos = index + d;
@@ -278,7 +287,7 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect) => void }) {
       <div className="absolute left-0 top-[239px] h-[586px] w-full">
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            className="relative h-full"
+            className="absolute left-1/2 top-0 h-full"
             animate={{ x: trackX }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -287,7 +296,7 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect) => void }) {
                 key={pos}
                 spot={spot}
                 active={pos === index}
-                left={pos * STEP}
+                left={pos * STEP - CARD_W / 2}
                 onPick={onPick}
               />
             ))}
