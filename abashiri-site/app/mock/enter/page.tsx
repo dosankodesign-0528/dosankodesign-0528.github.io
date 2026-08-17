@@ -43,7 +43,7 @@ export default function EnterIndex() {
                   {p.note}
                 </p>
                 <p className="mt-2 text-[12px] font-light text-[#8c9ba8]">
-                  尺 {(p.duration / 1000).toFixed(1)}秒 ／ 寄り {p.scale[0]}→{p.scale[1]}倍
+                  尺 {(p.duration / 1000).toFixed(1)}秒 ／ 景色の視差 {p.parallax.toFixed(2)}
                   {p.dim > 0 && ` ／ まわりを ${Math.round(p.dim * 100)}% 落とす`}
                   {p.blur[1] > 0 && ` ／ 途中で ${p.blur[1]}px ぼかす`}
                 </p>

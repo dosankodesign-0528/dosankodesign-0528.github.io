@@ -15,6 +15,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  animate,
   AnimatePresence,
   motion,
   useMotionValue,
@@ -545,8 +546,8 @@ function EnterWindow({
   onDone,
 }: {
   spot: Spot;
-  /** ステージ座標での、押した瞬間のカードの位置と大きさ */
-  from: { x: number; y: number; w: number; h: number };
+  /** ステージ座標での、押した瞬間のカードの位置と大きさ＋器の実寸 */
+  from: { x: number; y: number; w: number; h: number; stageW: number; stageH: number };
   pattern: number | string | null | undefined;
   onDone: () => void;
 }) {
@@ -558,19 +559,41 @@ function EnterWindow({
     return () => clearTimeout(id);
   }, [onDone, p.duration]);
 
-  /* 開口部の左上と大きさ。最後は画面より一回り大きくして、フチが見えないところまで開く */
+  /* 終点。画面より一回り大きくして、フチが見えないところまで開く。
+     ⚠️ 1512x982 の固定値で出すと、横長の画面では終点が左上寄りになり、
+        しかも画面を覆いきらないまま止まる。必ず器の実寸から出すこと。 */
   const overshoot = 1.12;
-  const toW = STAGE_W * overshoot;
-  const toH = STAGE_H * overshoot;
-  const toX = (STAGE_W - toW) / 2;
-  const toY = (STAGE_H - toH) / 2;
+  const toW = from.stageW * overshoot;
+  const toH = from.stageH * overshoot;
 
-  /* 開口部の動き。この値を写真側の打ち消しにも使う */
-  const x = useMotionValue(from.x);
-  const y = useMotionValue(from.y);
-  /* 景色は画面に貼り付いたままなので、開口部が動いたぶんだけ中で逆に動かす */
+  /* ⚠️ 位置と大きさに別々のイージングを当てると、小さいまま位置だけ先に
+     終点（＝左上のマイナス座標）へ走ってしまう。窓が左上へ飛んで見えた原因はこれ。
+     ひとつの進行度 t から矩形の中心と大きさを両方出して、常に一体で動かす。 */
+  const t = useMotionValue(0);
+  useEffect(() => {
+    const controls = animate(t, 1, { duration: sec, ease: p.growEase });
+    return () => controls.stop();
+  }, [t, sec, p.growEase]);
+
+  const mix = (a: number, b: number) => (v: number) => a + (b - a) * v;
+  const fromCx = from.x + from.w / 2;
+  const fromCy = from.y + from.h / 2;
+  const toCx = from.stageW / 2;
+  const toCy = from.stageH / 2;
+
+  const w = useTransform(t, mix(from.w, toW));
+  const h = useTransform(t, mix(from.h, toH));
+  const cx = useTransform(t, mix(fromCx, toCx));
+  const cy = useTransform(t, mix(fromCy, toCy));
+  /* 左上 = 中心 − 大きさの半分。これで矩形が破綻しない */
+  const x = useTransform([cx, w], ([c, ww]: number[]) => c - ww / 2);
+  const y = useTransform([cy, h], ([c, hh]: number[]) => c - hh / 2);
+  /* 景色は画面に貼り付いたまま。開口部が動いたぶんだけ中で逆に動かす */
   const imgX = useTransform(x, (v) => -v);
   const imgY = useTransform(y, (v) => -v);
+
+  const radius = useTransform(t, mix(p.radius[0], p.radius[1]));
+  const border = useTransform(t, mix(p.border[0], p.border[1]));
 
   return (
     <motion.div className="absolute inset-0 z-20 overflow-hidden" key="enter">
@@ -582,53 +605,31 @@ function EnterWindow({
         transition={{ duration: sec, ease: p.ease }}
       />
 
-      {/* 窓の開口部。枠だけが近づいて広がる。
-          出た瞬間だけ 140ms でフェードインして、カードとの見え方の差を吸収する */}
+      {/* 窓の開口部。枠だけが近づいて広がる */}
       <motion.div
         className="absolute overflow-hidden border-white/60 [animation:botto-fade-in_140ms_linear]"
-        style={{ x, y, width: from.w, height: from.h }}
-        initial={{
-          x: from.x,
-          y: from.y,
-          width: from.w,
-          height: from.h,
-          borderRadius: p.radius[0],
-          borderWidth: p.border[0],
-        }}
-        animate={{
-          x: toX,
-          y: toY,
-          width: toW,
-          height: toH,
-          borderRadius: p.radius[1],
-          borderWidth: p.border[1],
-        }}
-        transition={{
-          duration: sec,
-          /* 歩いて近づくと見た目の大きさは加速して増える。
-             寸法は ease-in 寄り、位置だけ ease-out 寄りにすると、
-             「まっすぐ吸い込まれる」感じになる */
-          ease: [0.55, 0, 0.85, 0.6],
-          x: { duration: sec, ease: p.ease },
-          y: { duration: sec, ease: p.ease },
-          borderRadius: { duration: sec * 0.75, ease: p.ease },
-          borderWidth: { duration: sec * 0.55, ease: p.ease },
-        }}
+        style={{ x, y, width: w, height: h, borderRadius: radius, borderWidth: border }}
       >
-        {/* 窓の向こうの景色。開口部が動いたぶんだけ逆に動かして、画面上の位置を保つ。
-            そのうえで、景色そのものは“わずかに”しか大きくならない（1.18→1.0 の視差）。
-            枠が 2.6倍に広がるのに対して景色はほぼ動かない＝この差が奥行きになる。
-            景色まで同じ倍率で拡大すると「写真を引き伸ばした」動きになって不自然になる。 */}
+        {/* 窓の向こうの景色。parallax の量だけ“わずかに”しか動かない。
+            枠が大きく広がるのに景色はほぼ動かない、この差が奥行きになる。
+            景色まで同じ倍率で拡大すると「写真を引き伸ばした」動きになって不自然。 */}
         <motion.div
-          className="absolute"
-          style={{ x: imgX, y: imgY, width: STAGE_W, height: STAGE_H, left: 0, top: 0 }}
+          className="absolute left-0 top-0"
+          style={{ x: imgX, y: imgY, width: from.stageW, height: from.stageH }}
         >
           <motion.img
             src={spot.src}
             alt=""
             className="size-full max-w-none object-cover"
-            initial={{ scale: 1.18 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
+            animate={{
+              scale: 1,
+              filter: [
+                `blur(${p.blur[0]}px)`,
+                `blur(${p.blur[1]}px)`,
+                `blur(${p.blur[2]}px)`,
+              ],
+            }}
             transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
           />
         </motion.div>
@@ -676,8 +677,15 @@ export default function ExperienceFlow({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState<Spot>(SPOTS[1]);
-  const [entering, setEntering] =
-    useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [entering, setEntering] = useState<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    /** 器の実寸（ステージ座標）。横長の画面では 1512 より広くなる */
+    stageW: number;
+    stageH: number;
+  } | null>(null);
 
   /* ブラウザ座標 → ステージ座標（1512x982）に直してから渡す。
      ステージは画面サイズに合わせて縮小表示されているので、その倍率で割る */
@@ -692,6 +700,8 @@ export default function ExperienceFlow({
       y: (rect.top - rr.top) / scale,
       w: rect.width / scale,
       h: rect.height / scale,
+      stageW: root.offsetWidth,
+      stageH: root.offsetHeight,
     });
   }, []);
 
