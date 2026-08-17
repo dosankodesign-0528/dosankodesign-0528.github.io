@@ -51,16 +51,6 @@ const SPOTS: Spot[] = [
   { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg" },
 ];
 
-/* ぼーっと体験の背景写真（カンプ 15152:27990 / 29216）。
-   海へ向かう一本道に灯台。まだ public/img に置かれていない間は、
-   壊れた画像にならないよう既存写真へ自動で退避する。 */
-const BG_ROAD = "/img/botto-road.jpg";
-const BG_FALLBACK = "/img/scene-himawari.jpg";
-const bgFallback = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  const el = e.currentTarget;
-  if (!el.src.endsWith(BG_FALLBACK)) el.src = BG_FALLBACK;
-};
-
 const STAGE_W = 1512;
 const STAGE_H = 982;
 
@@ -96,24 +86,10 @@ function Intro({ onNext }: { onNext: () => void }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* カンプは「最初はブラーなしで景色が出て、徐々にブラーがかかって文字が出る」。
-          背景は2枚重ね（奥 blur42 / 手前 blur32）。
-          ⚠️ カンプの緑の道の写真は取得できなかったので、既存のひまわり畑で仮置き。 */}
-      <motion.img
-        src={BG_ROAD}
-        onError={bgFallback}
-        alt=""
-        className="absolute inset-0 size-full scale-110 object-cover"
-        initial={{ filter: "blur(0px)" }}
-        animate={{ filter: "blur(42px)" }}
-        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
-      />
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/45 to-transparent"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
-      />
+      {/* 背景は写真をやめて青のグラデーションだけ。
+          下は Stage の空グラデ（Brand_SkyTop → Brand_SkyBottom）が透けて、
+          上に向かってブランドカラーが濃くなる */}
+      <div className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
 
       {/* カンプ 15152:29260: (565, 110) 382x629 / 縦並び gap 100。
           文字は一気に出さず、上から順に1ブロックずつブラーが晴れて出てくる。
@@ -274,14 +250,8 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect) => void }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* 背景：奥にぼかした景色（カンプ 15152:29216 blur42 / 29217 blur32） */}
-      <img
-        src={BG_ROAD}
-        onError={bgFallback}
-        alt=""
-        className="absolute inset-0 size-full scale-110 object-cover blur-42"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-brand/85 via-brand/40 to-transparent" />
+      {/* 背景は写真をやめて青のグラデーションだけ（導入と同じ） */}
+      <div className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
 
       <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
         どこでぼーっとする？
@@ -626,21 +596,45 @@ function EnterWindow({
           className="absolute left-0 top-0"
           style={{ x: imgX, y: imgY, width: from.stageW, height: from.stageH }}
         >
-          <motion.img
-            src={spot.src}
-            alt=""
-            className="size-full max-w-none object-cover"
-            initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
-            animate={{
-              scale: 1,
-              filter: [
-                `blur(${p.blur[0]}px)`,
-                `blur(${p.blur[1]}px)`,
-                `blur(${p.blur[2]}px)`,
-              ],
-            }}
-            transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
-          />
+          {/* 動画があるスポットは、写真ではなく動画のまま近づいていく。
+              くぐり終わったあとの再生画面と地続きに見せたいので、
+              ここでも同じ動画を（無音・自動再生で）流しておく */}
+          {spot.video ? (
+            <motion.video
+              src={spot.video}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="size-full max-w-none object-cover"
+              initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
+              animate={{
+                scale: 1,
+                filter: [
+                  `blur(${p.blur[0]}px)`,
+                  `blur(${p.blur[1]}px)`,
+                  `blur(${p.blur[2]}px)`,
+                ],
+              }}
+              transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
+            />
+          ) : (
+            <motion.img
+              src={spot.src}
+              alt=""
+              className="size-full max-w-none object-cover"
+              initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
+              animate={{
+                scale: 1,
+                filter: [
+                  `blur(${p.blur[0]}px)`,
+                  `blur(${p.blur[1]}px)`,
+                  `blur(${p.blur[2]}px)`,
+                ],
+              }}
+              transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
+            />
+          )}
         </motion.div>
       </motion.div>
     </motion.div>
