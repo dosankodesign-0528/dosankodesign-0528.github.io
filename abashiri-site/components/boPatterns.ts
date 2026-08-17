@@ -4,12 +4,12 @@
  *
  * ヒデさんの希望（2026-08-18）
  *   ・動画再生中、5秒に1回くらいのペースでフェードイン／フェードアウト
- *   ・いちばん最初は非表示。5秒たってから初めて出てきて、そこからループ
+ *   ・いちばん最初は非表示。ただし1回目だけは早めに、3秒で出す（周期は5秒のまま）
  *   ・「ぼーっとしている」ニュアンスが出る動きにしたい
  *
  * 共通ルール
  *   ・1周期は5秒（cycle）。出ている時間は案ごとに違う
- *   ・最初だけ startDelay（5秒）待ってから1周目が始まる
+ *   ・最初だけ startDelay（3秒）待ってから1周目が始まる。2回目以降は5秒おき
  *   ・keyframes の配列と times の長さは必ずそろえる（framer-motion の決まり）
  *   ・単位はカンプ（1512x982 ステージ）上の px ＝ 見た目そのままの px
  *   ・文字そのもの（text-bo.svg）は動かさない。出方・漂い方だけを変えている
@@ -41,8 +41,10 @@ export type BoPattern = {
   ease: "linear" | "easeIn" | "easeOut" | "easeInOut";
 };
 
-/* 5案とも共通。最初の5秒は出さない */
-const START_DELAY = 5;
+/* 5案とも共通。
+   START_DELAY … 1回目が出はじめるまでの待ち。ヒデさん指示で 5秒 → 3秒に前倒し（2026-08-18）
+   CYCLE       … 2回目以降のペース。ここは5秒のまま */
+const START_DELAY = 3;
 const CYCLE = 5;
 
 export const BO_PATTERNS: BoPattern[] = [
@@ -126,9 +128,9 @@ export const BO_PATTERNS: BoPattern[] = [
   },
 ];
 
-/* 本番で使う案。⚠️ 2026-08-18 時点ではヒデさん未決のため案1を仮置き。
-   決まったらここだけ差し替える（/mock/bo で比較中） */
-export const DEFAULT_BO = 1;
+/* 本番で使う案。2026-08-18 ヒデさんが案4「息を吐くように抜ける」を選択。
+   他の案は /mock/bo で今も見比べられる */
+export const DEFAULT_BO = 4;
 
 /** 番号（1〜5）か key で引く。見つからなければ既定の案 */
 export function findBo(v?: number | string | null): BoPattern {

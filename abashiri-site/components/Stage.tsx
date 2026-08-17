@@ -378,8 +378,8 @@ export default function Stage({
                   height: "calc(var(--illust-person-w) * 1.4012)",
                 }}
               />
-              {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts の5案）。
-                  いちばん最初は出さず、startDelay（5秒）たってから1周目が始まる。
+              {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts）。
+                  採用は案4「息を吐くように抜ける」。1回目だけ3秒で出し、以降は5秒おき。
                   ⚠️ 位置（left/top/w）はカンプ採寸なので触らない。動きだけを案で差し替える */}
               <motion.img
                 src="/img/text-bo.svg"

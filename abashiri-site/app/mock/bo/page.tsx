@@ -16,7 +16,7 @@ export default function BoIndex() {
         <p className="mt-3 text-[15px] font-light leading-[1.8] text-[#3c4a57]">
           動画再生中、右下の人物の横に出る「ぼーっ」の吹き出しです。
           <br />
-          5案とも <strong className="font-medium">最初の5秒は出さず</strong>、そのあと
+          5案とも <strong className="font-medium">1回目は3秒</strong>で出て、そのあとは
           <strong className="font-medium">5秒ごと</strong>に出たり消えたりをくり返します。
           <br />
           周期と待ち時間は5案とも同じで、<strong className="font-medium">出方・漂い方の質感だけ</strong>を変えています。
@@ -24,7 +24,7 @@ export default function BoIndex() {
         <p className="mt-3 rounded-xl bg-white/70 px-4 py-3 text-[13px] font-light leading-[1.8] text-[#5a6b7a]">
           開いたら、画面の再生ボタンを押して動画を流してから見てください。
           <br />
-          「ぼーっ」は右下の人物の右上に出ます。出るまで最初は5秒かかります。
+          「ぼーっ」は右下の人物の右上に出ます。1回目は3秒後です。
         </p>
 
         <ul className="mt-8 flex flex-col gap-3">
@@ -47,9 +47,9 @@ export default function BoIndex() {
         </ul>
 
         <p className="mt-8 text-[13px] font-light leading-[1.8] text-[#5a6b7a]">
-          採用案が決まったら、他の4案は消します（dev サーバが重くなるため）。
+          いまの本番は <strong className="font-medium">案4「息を吐くように抜ける」</strong>（2026-08-18 採用）。
           <br />
-          いまの本番は <strong className="font-medium">案1</strong> を仮で入れています。
+          他の4案は見比べ用に残しています。不要になったら消します（dev サーバが重くなるため）。
         </p>
       </div>
     </main>

@@ -119,7 +119,10 @@ export default function TopTunePanel({
       panel = lib.create({
         title: "⚙️ 網走サイト 調整パネル",
         storageKey: "abashiri-top-tune",
-        version: 1,
+        /* ⚠️ 既定値の意味を変えたら必ず上げる（古い保存値が自動で捨てられる）。
+           v2: 「ぼーっ」の採用案を 案1 → 案4 に変更（2026-08-18）。
+               上げないと、前に触った人のブラウザでは案1が残り続ける */
+        version: 2,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,

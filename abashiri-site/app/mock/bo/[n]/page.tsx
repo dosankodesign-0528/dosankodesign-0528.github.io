@@ -30,7 +30,7 @@ export default async function BoMockPage({
           {pat.label}　{pat.note}
         </p>
         <p className="rounded-full bg-black/50 px-4 py-2 text-[13px] font-light text-white shadow">
-          最初の{pat.startDelay}秒は出ません。そのあと{pat.cycle}秒ごとにくり返します
+          1回目は{pat.startDelay}秒後。そのあと{pat.cycle}秒ごとにくり返します
         </p>
         <div className="flex items-center gap-1">
           {BO_PATTERNS.map((p, i) => (
