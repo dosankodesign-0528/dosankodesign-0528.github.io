@@ -8,6 +8,7 @@ import {
   useScroll,
   useTransform,
   useMotionTemplate,
+  useMotionValueEvent,
   type Variants,
 } from "framer-motion";
 import Bird from "./Bird";
@@ -31,13 +32,8 @@ const stagger: Variants = {
 
 type CardData = { src: string; alt: string; title: string };
 
-/* タイトルは仮のものあり。正式名称が決まったら差し替える */
-const SPOT_CARDS: CardData[] = [
-  { src: "/img/spot-1.jpg", alt: "天都山展望台", title: "天都山展望台" },
-  { src: "/img/spot-2.jpg", alt: "ひまわり畑", title: "ひまわり畑" },
-  { src: "/img/spot-3.jpg", alt: "能取岬", title: "能取岬" },
-  { src: "/img/spot-4.jpg", alt: "オホーツクの海", title: "オホーツクの海" },
-];
+/* タイトルは仮のものあり。正式名称が決まったら差し替える。
+   v1.1: スポットのカード列は SpotShowcase（KV直下の全画面セクション）に置き換わった */
 const GOURMET_CARDS: CardData[] = [
   { src: "/img/gourmet-1.jpg", alt: "わかさぎの唐揚げ", title: "わかさぎの唐揚げ" },
   { src: "/img/gourmet-2.jpg", alt: "浜の海鮮焼き", title: "浜の海鮮焼き" },
@@ -169,6 +165,7 @@ import HeroWriting from "./HeroWriting";
 import HeroKamishibai from "./HeroKamishibai";
 import HeroCombo from "./HeroCombo";
 import HeroBlurSeq from "./HeroBlurSeq";
+import SpotShowcase from "./SpotShowcase";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
@@ -238,8 +235,6 @@ export default function TopPage({
   layout?: Partial<LayoutTune> | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  /* 「ぼーっと過ごせるスポット」見出し（オーバーレイ混色のため出現後に filter を外す） */
-  const spotHeadRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
 
@@ -293,6 +288,15 @@ export default function TopPage({
   /* 背景写真：スクロールすると早めに濃いめのブラーがかかっていく。
      ボケた時に端が透けないよう、ブラー量に応じて少しだけ拡大して補正 */
   const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 8, 16]);
+
+  /* 人物イラストは KV だけのもの。ぼーっとスポットのカンプ（15191:2178）には
+     いないので、スクロールでスポットが出てくるのと入れ替わりに見送る */
+  useMotionValueEvent(scrollY, "change", (v) => {
+    const t = Math.max(0, Math.min(1, (v - 120) / 260));
+    window.dispatchEvent(
+      new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
+    );
+  });
   const bgFilter = useMotionTemplate`blur(${bgBlur}px)`;
   const bgZoom = kp.bgZoom ?? [1, 1];
   /* ブラー時に端が透けないよう、ズームに少し上乗せ（+0.08まで） */
@@ -621,6 +625,10 @@ export default function TopPage({
           </motion.div>
         </div>
 
+        {/* ぼーっとスポット（カンプ 15191:2178）。
+            KV がブラーで奥へ引くのと入れ替わりに、ここの写真がブラーから合ってくる */}
+        <SpotShowcase scrollY={scrollY} />
+
         {/* z-index は付けない：付けると独立した重なりグループになり、
             見出しの「ぼーっ」のオーバーレイ混色が背景写真まで届かなくなる。
             KV より後ろのDOM順なので、relative だけで手前に描画される */}
@@ -628,48 +636,10 @@ export default function TopPage({
 
           <div className="mx-auto flex w-[980px] flex-col items-center pb-50 pt-[982px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-75">
-              {/* ぼーっと過ごせるスポット ＋ プロモ */}
+              {/* v1.1: 「ぼーっと過ごせるスポット」のカード列は、
+                  KV 直下の全画面セクション（SpotShowcase）に置き換わった。
+                  カンプ 15191:2178 参照。ここにはプロモだけが残る */}
               <div className="flex w-full flex-col gap-20">
-                <motion.section
-                  id="spot"
-                  className="flex w-full flex-col gap-30"
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={viewport}
-                  variants={stagger}
-                >
-                  <motion.div
-                    ref={spotHeadRef}
-                    variants={reveal}
-                    className="flex w-full items-end justify-between"
-                    /* 登場アニメが残す filter/transform はスタッキングコンテキストを
-                       作ってしまい、「ぼーっ」のオーバーレイ混色が背景写真に届かない。
-                       出現し終わったら消して、カンプ通り写真と混ざるようにする */
-                    onAnimationComplete={() => {
-                      const el = spotHeadRef.current;
-                      if (el) {
-                        el.style.filter = "none";
-                        el.style.transform = "none";
-                      }
-                    }}
-                  >
-                    <div className="flex items-start">
-                      <div className="mix-blend-overlay">
-                        <img
-                          src="/img/header-botto.svg"
-                          alt="ぼーっ"
-                          className="w-[140px] -rotate-[0.42deg]"
-                        />
-                      </div>
-                      <p className="ml-[3px] mt-2 text-title-48 font-medium leading-[1.2] text-white">
-                        と過ごせるスポット
-                      </p>
-                    </div>
-                    <ViewMore anim={moreAnim} />
-                  </motion.div>
-                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} hover={cardHover} />
-                </motion.section>
-
                 {/* ぼーっとする、やってみない？ */}
                 <motion.div
                   initial="hidden"
@@ -776,7 +746,7 @@ export default function TopPage({
                   </div>
                   <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} hover={cardHover} />
+                <CardRow cards={GOURMET_CARDS} rowIndex={0} registerRow={registerRow} hover={cardHover} />
               </motion.section>
 
               {/* 体験・イベント */}
@@ -804,7 +774,7 @@ export default function TopPage({
                   </div>
                   <ViewMore anim={moreAnim} />
                 </motion.div>
-                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} hover={cardHover} />
+                <CardRow cards={EVENT_CARDS} rowIndex={1} registerRow={registerRow} hover={cardHover} />
               </motion.section>
             </div>
           </div>

@@ -6,7 +6,8 @@ import "./globals.css";
 /* v1.1 のカンプ（15071:24641 / 15176:2415）で指定されている書体。
    本文・見出しは Noto Sans JP、数字は Inter。ウェイトはカンプに出てくる4段だけ読む。 */
 const noto = Noto_Sans_JP({
-  weight: ["100", "300", "400", "500"],
+  /* 200(ExtraLight) は v1.1 のぼーっとスポット（本文・もっと見る）で使う */
+  weight: ["100", "200", "300", "400", "500"],
   subsets: ["latin"],
   variable: "--font-noto",
   display: "swap",

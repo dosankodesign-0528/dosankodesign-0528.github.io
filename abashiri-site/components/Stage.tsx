@@ -157,6 +157,10 @@ export default function Stage({
     null
   );
   const [illustIn, setIllustIn] = useState(!illustEntrance);
+  /* スクロールでイラストを引っ込める量（1=そのまま 0=消える）。
+     カンプ 15191:2178 のぼーっとスポットには人物がいないので、
+     KV から下へ送ると同時に見送る */
+  const [illustFade, setIllustFade] = useState(1);
   const [spin, setSpin] = useState(false);
 
   /* 調整パネル用：カモメをドラッグで動かす */
@@ -196,6 +200,14 @@ export default function Stage({
     calc();
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
+  }, []);
+
+  /* TopPage がスクロール量に応じて送ってくる、イラストの見送り量 */
+  useEffect(() => {
+    const fade = (e: Event) =>
+      setIllustFade((e as CustomEvent<{ v: number }>).detail?.v ?? 1);
+    window.addEventListener("abashiri:illust-fade", fade);
+    return () => window.removeEventListener("abashiri:illust-fade", fade);
   }, []);
 
   /* TopPage からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
@@ -276,7 +288,7 @@ export default function Stage({
           className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
           style={{
             visibility: hideIllust ? "hidden" : "visible",
-            opacity: hideIllust ? 0 : 1,
+            opacity: hideIllust ? 0 : illustFade,
             transition: "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
