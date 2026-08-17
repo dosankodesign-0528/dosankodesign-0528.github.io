@@ -260,7 +260,9 @@ export default function Stage({
              「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
              元PNG（284x357）は書き出しの縦横比が違うので、
              カンプの絵の高さ 216.4px に合わせて 172x216 に縮めて置いている。 */
-          className="pointer-events-none absolute left-[1245px] top-[750px] z-30 h-[241px] w-[210px]"
+          /* 右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
+             右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
+          className="pointer-events-none absolute right-[57px] top-[750px] z-30 h-[241px] w-[210px]"
           initial={
             illustEntrance
               ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
