@@ -118,10 +118,16 @@ export default function SpotShowcase({
         </AnimatePresence>
 
         {/* すりガラスの説明パネル。カンプ 15152:29490 */}
-        <div className="absolute right-[41px] top-[684px] flex h-[237px] w-[712px] flex-col justify-center gap-6 bg-white/10 p-11 backdrop-blur-65">
+        <div className="absolute right-[41px] top-[684px] flex h-[238px] w-[712px] flex-col justify-center gap-6 bg-white/10 p-11 backdrop-blur-65">
           <div className="flex w-full items-end gap-6">
-            <div className="flex min-w-px flex-1 flex-col gap-6 font-thin leading-[1.2] text-white">
-              <p className="whitespace-nowrap text-body-18">ぼーっとスポット</p>
+            {/* v1.1 更新（2026-08-18 ヒデさんがカンプで gap を詰めた）:
+                「ぼーっとスポット」と地名の間は 24px → 8px。
+                小見出しだけ text-box を cap 高さで詰めているのもカンプ指定
+                （Figma 上の高さが 18px フォントで 13px になっているのがその印） */}
+            <div className="flex min-w-px flex-1 flex-col gap-2 font-thin leading-[1.2] text-white">
+              <p className="whitespace-nowrap text-body-18 [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]">
+                ぼーっとスポット
+              </p>
               <AnimatePresence mode="wait">
                 <motion.p
                   key={spot.id}
