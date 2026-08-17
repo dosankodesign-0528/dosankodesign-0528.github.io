@@ -9,12 +9,13 @@ type GlobalNavProps = {
 };
 
 const ITEMS: { label: string; href?: string; anchor?: string }[] = [
+  /* ホームは一番左。押すと TOP ページへ戻る */
+  { label: "ホーム", href: "/" },
   { label: "ぼーっとスポット", anchor: "#spot" },
   { label: "グルメ", anchor: "#gourmet" },
   { label: "体験", href: "/experience" },
   { label: "宿泊" },
   { label: "よくある質問" },
-  { label: "お問い合わせ" },
 ];
 
 export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {

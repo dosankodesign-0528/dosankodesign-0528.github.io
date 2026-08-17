@@ -219,7 +219,7 @@ function SliderButton({
   );
 }
 
-function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect) => void }) {
+function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => void }) {
   const [index, setIndex] = useState(0);
   const go = (d: number) => setIndex((i) => i + d);
 
@@ -309,7 +309,7 @@ function SpotCard({
   active: boolean;
   /** track の中での左端の位置(px) */
   left: number;
-  onPick: (spot: Spot, rect: DOMRect) => void;
+  onPick: (spot: Spot, rect: DOMRect, at: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -373,7 +373,9 @@ function SpotCard({
         <GlassButton
           onClick={() => {
             const r = ref.current?.getBoundingClientRect();
-            if (r) onPick(spot, r);
+            /* プレビューがいま何秒目を映しているかを一緒に渡す。
+               ズームインも再生画面もこの続きから始めるので、絵が飛ばない */
+            if (r) onPick(spot, r, videoRef.current?.currentTime ?? 0);
           }}
         >
           この場所にする
@@ -386,9 +388,12 @@ function SpotCard({
 /* ═══════════ 動画再生 ═══════════ */
 /* v1.0 と同じ挙動：最初は止まっていて、再生ボタンを押すと動画とタイマーが同時に始まる。
    再生中は3秒さわらないと操作系が消えて、動かすとまた出てくる。 */
-function Watch({ spot }: { spot: Spot }) {
+function Watch({ spot, startAt }: { spot: Spot; startAt?: number | null }) {
+  /* カルーセルから入って来た時は、ズームインの続きのコマから流れ続ける。
+     直接この画面に来た時（?step=3）は今までどおり止まった状態から始める */
+  const seamless = startAt != null;
   /* 動画がまだ無いスポットは、写真を眺めるだけなので最初から進める */
-  const [playing, setPlaying] = useState(!spot.video);
+  const [playing, setPlaying] = useState(!spot.video || seamless);
   const [remaining, setRemaining] = useState(3 * 60);
   const [uiVisible, setUiVisible] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -458,6 +463,11 @@ function Watch({ spot }: { spot: Spot }) {
           playsInline
           preload="auto"
           poster={spot.src}
+          /* ズームインが終わった時点のコマから続ける。
+             ここを 0 に戻すと、窓をくぐった瞬間に絵が飛んで見える */
+          onLoadedMetadata={(e) => {
+            if (seamless) e.currentTarget.currentTime = startAt ?? 0;
+          }}
           className="absolute inset-0 size-full object-cover"
         />
       ) : (
@@ -528,12 +538,15 @@ function EnterWindow({
   spot,
   from,
   pattern,
+  startAt,
   onDone,
 }: {
   spot: Spot;
   /** ステージ座標での、押した瞬間のカードの位置と大きさ＋器の実寸 */
   from: { x: number; y: number; w: number; h: number; stageW: number; stageH: number };
   pattern: number | string | null | undefined;
+  /** プレビューが映していた秒数。ここから続けて流す */
+  startAt: number;
   onDone: () => void;
 }) {
   const p = findEnter(pattern);
@@ -614,6 +627,10 @@ function EnterWindow({
               playsInline
               preload="auto"
               poster={spot.src}
+              /* プレビューの続きのコマから流す */
+              onLoadedMetadata={(e) => {
+                e.currentTarget.currentTime = startAt;
+              }}
               className="size-full max-w-none object-cover"
               initial={{ scale: p.parallax, filter: `blur(${p.blur[0]}px)` }}
               animate={{
@@ -688,6 +705,8 @@ export default function ExperienceFlow({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState<Spot>(SPOTS[1]);
+  /* プレビューを止めた位置（秒）。null なら直接この画面に来たということ */
+  const [startAt, setStartAt] = useState<number | null>(null);
   const [entering, setEntering] = useState<{
     x: number;
     y: number;
@@ -700,7 +719,8 @@ export default function ExperienceFlow({
 
   /* ブラウザ座標 → ステージ座標（1512x982）に直してから渡す。
      ステージは画面サイズに合わせて縮小表示されているので、その倍率で割る */
-  const handlePick = useCallback((s: Spot, rect: DOMRect) => {
+  const handlePick = useCallback((s: Spot, rect: DOMRect, at: number) => {
+    setStartAt(at);
     const root = rootRef.current;
     if (!root) return;
     const rr = root.getBoundingClientRect();
@@ -717,9 +737,13 @@ export default function ExperienceFlow({
   }, []);
 
   const finishEnter = useCallback(() => {
+    /* ズームインの尺だけ動画は進んでいる。その到達点から再生画面を始めないと、
+       窓をくぐった瞬間に尺のぶんだけ絵が巻き戻って「急に変わった」ように見える */
+    const ran = findEnter(enter).duration / 1000;
+    setStartAt((a) => (a == null ? null : a + ran));
     setEntering(null);
     setStep(3);
-  }, [setStep]);
+  }, [setStep, enter]);
 
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden">
@@ -738,10 +762,10 @@ export default function ExperienceFlow({
         </WorldPush>
       )}
       {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる */}
-      {step === 3 && <Watch spot={spot} />}
+      {step === 3 && <Watch spot={spot} startAt={startAt} />}
 
       {entering && (
-        <EnterWindow spot={spot} from={entering} pattern={enter} onDone={finishEnter} />
+        <EnterWindow spot={spot} from={entering} pattern={enter} startAt={startAt ?? 0} onDone={finishEnter} />
       )}
 
       <GlobalNav theme="light" />

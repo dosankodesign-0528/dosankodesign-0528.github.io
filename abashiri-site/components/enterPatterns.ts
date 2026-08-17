@@ -34,25 +34,24 @@ export type EnterPattern = {
 };
 
 const STANDARD: [number, number, number, number] = [0.22, 1, 0.36, 1];
-/* 出だしをうんと殺して、終盤で一気に加速する。
-   等速で歩いて窓に近づくと、見た目の大きさは終盤ほど急激に増える。
-   この「最初はほとんど動かない → 最後にぐっと吸い込まれる」が吸引感の正体。 */
-const SUCK: [number, number, number, number] = [0.9, 0, 0.92, 0.35];
+/* 出だしを抑えて終盤で加速する。強くしすぎると溜めが長すぎて重く感じるので、
+   ほどよく効くこのくらいに留める。 */
+const SUCK: [number, number, number, number] = [0.7, 0, 0.9, 0.5];
 
 export const ENTER_PATTERNS: EnterPattern[] = [
   {
     key: "tunnel",
     label: "吸い込まれる",
     note: "最初はほとんど動かず、終盤で一気に加速して吸い込まれる。まわりは暗く落ちる",
-    duration: 1900,
+    duration: 1600,
     ease: STANDARD,
     growEase: SUCK,
     /* 景色をほぼ止めることで、枠だけが猛烈に迫ってくるように見せる */
-    parallax: 1.05,
+    parallax: 1.06,
     radius: [120, 0],
     border: [10, 0],
     blur: [0, 0, 0],
-    dim: 0.62,
+    dim: 0.55,
   },
 ];
 
