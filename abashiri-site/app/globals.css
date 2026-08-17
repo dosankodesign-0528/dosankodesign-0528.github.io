@@ -18,9 +18,13 @@
   /* ---------- 書体 ----------
      実体は next/font が html に注入する --font-zen / --font-rounded。
      inline にしているのは、その実行時変数を展開して埋め込むため。 */
-  --font-body: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN",
+  --font-body: var(--font-noto), "Noto Sans JP", "Hiragino Kaku Gothic ProN",
     sans-serif;
-  --font-num: var(--font-rounded), "M PLUS Rounded 1c", "SF Pro Rounded", sans-serif;
+  --font-num: var(--font-inter), "Inter", "SF Pro Text", sans-serif;
+  /* v1.0 の書体。まだ差し替えていないセクションが参照している */
+  --font-zen-body: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN",
+    sans-serif;
+  --font-rounded-num: var(--font-rounded), "M PLUS Rounded 1c", sans-serif;
 }
 
 @theme {
@@ -70,6 +74,21 @@
   --text-number-140: 140px;
   --text-number-80: 80px;
   --text-number-28: 28px;
+
+  /* ══════════ v1.1 のテキストサイズ ══════════
+     キービジュアル／ぼーっと体験のカンプ（15071:24641・15176:2415）から。
+     Noto Sans JP の Thin 100 / Light 300 / Regular 400 / Medium 500 だけを使う。 */
+  --text-title-44: 44px; /* Title_44px   「ぼーっと体験」「どこでぼーっとする？」 Thin */
+  --text-number-120: 120px; /* Number_120px ぼーっとタイマー Inter Thin */
+  /* Body_16px / Body_18px は上の既存トークンと同値なのでそのまま使う */
+
+  /* v1.1 の角丸・ブラー。すりガラスの面が 65px、背景の引きが 32/42px に変わった */
+  --radius-16: 16px; /* Radius_16px  タイマーの札 */
+  --radius-120: 120px; /* Radius_120px カルーセルのカード */
+  --blur-32: 32px; /* Blur_32px  ぼーっと体験の背景（手前） */
+  --blur-42: 42px; /* Blur_42px  ぼーっと体験の背景（奥） */
+  --blur-65: 65px; /* Blur_65px  すりガラスのボタン・タイマー */
+  --blur-90: 90px; /* Blur_90px  タイマーのラベル札 */
 
   /* ══════════ ブラー（4 段） ══════════ */
   --blur-6: 6px; /* Blur_6px  触れた時のうっすら。ボタン・カードの幕・タイマー札 */

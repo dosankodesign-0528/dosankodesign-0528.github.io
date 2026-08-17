@@ -11,6 +11,7 @@ import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
+import { findTamaranee } from "./tamaraneePatterns";
 
 /*
  * 人物イラストのスイング（/mock/illust で5パターン比較）
@@ -111,6 +112,8 @@ type StageProps = {
   face?: Partial<FaceConfig> | null;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
+  /** 1〜5: ホバー時に「たまらねー」が出るパターン（tamaraneePatterns.ts） */
+  tamaranee?: number | string | null;
 };
 
 /**
@@ -128,6 +131,7 @@ export default function Stage({
   illustAnim = 4,
   face,
   layout,
+  tamaranee,
 }: StageProps) {
   const L = mergeLayout(layout);
   const fc = mergeFace(face);
@@ -135,6 +139,9 @@ export default function Stage({
      カーソルの座標を見て自前で判定する（詳細は useFaceReaction.ts） */
   const illustRef = useRef<HTMLDivElement>(null);
   const browLift = useFaceReaction(illustRef, fc);
+  /* browLift が 0 より大きい＝カーソルがイラストに乗っている */
+  const over = browLift > 0;
+  const tp = findTamaranee(tamaranee);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
@@ -249,7 +256,11 @@ export default function Stage({
         {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面。
             ブラーで出たあと、一回だけクルンと一回転（軽いバウンスつき）して目立たせる */}
         <motion.div
-          className="pointer-events-none absolute right-0 top-[600px] z-30 h-[401px] w-[366px] overflow-clip"
+          /* v1.1 カンプ 15071:24641: イラストは (1244.56, 764) / 162x226.8、
+             「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
+             元PNG（284x357）は書き出しの縦横比が違うので、
+             カンプの絵の高さ 216.4px に合わせて 172x216 に縮めて置いている。 */
+          className="pointer-events-none absolute left-[1245px] top-[750px] z-30 h-[241px] w-[210px]"
           initial={
             illustEntrance
               ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
@@ -270,7 +281,7 @@ export default function Stage({
               {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.div
                 ref={illustRef}
-                className="absolute left-[1px] top-[44px] h-[357px] w-[284px] drop-shadow-illust"
+                className="absolute left-0 top-[14px] h-[227px] w-[162px] drop-shadow-illust"
                 style={ia.style}
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
@@ -278,13 +289,23 @@ export default function Stage({
                 <IllustTamannee lift={browLift} className="size-full" />
               </motion.div>
               {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
-              <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">
+              <div className="sparkle-hop absolute left-[6px] top-[58px] w-[17px]">
                 <img src="/img/sparkle.svg" alt="" className="w-full" />
               </div>
+              {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
+                 出方は tamaraneePatterns.ts の5案から選べる（/mock/tamaranee で比較） */}
               <img
-                src="/img/text-tamannee.svg"
-                alt="たまんねーっ"
-                className="absolute left-[213px] top-[29px] w-[127px]"
+                src="/img/text-tamaranee.svg"
+                alt="たまらねー"
+                className="absolute left-[135px] top-0 h-[53px] w-[75px] will-change-transform"
+                style={{
+                  transformOrigin: tp.text.origin,
+                  transitionProperty: "opacity, transform, filter",
+                  transitionDuration: `${tp.text.duration}ms`,
+                  transitionTimingFunction: tp.text.ease,
+                  transitionDelay: `${over ? tp.text.delay : 0}ms`,
+                  ...(over ? tp.text.on : tp.text.off),
+                }}
               />
             </>
           ) : (
@@ -292,45 +313,21 @@ export default function Stage({
               <img
                 src="/img/illust-video.png"
                 alt=""
-                className="absolute left-[-9px] top-[34px] h-[387px] w-[268px] object-cover drop-shadow-illust"
+                className="absolute left-[-6px] top-[20px] h-[234px] w-[162px] object-cover drop-shadow-illust"
               />
               <img
                 src="/img/text-bo.svg"
                 alt="ぼーっ"
-                className="absolute left-[246px] top-[42px] w-[65px]"
+                className="absolute left-[142px] top-[25px] w-[40px]"
               />
             </>
           )}
           </div>
         </motion.div>
 
-        {/* 右レール：ロゴ・SNS・縦書き「観光サイト」。位置は layoutConfig で調整できる */}
-        <div
-          className="absolute flex items-start gap-3"
-          style={{ right: L.railX, top: L.railY }}
-        >
-          <div className="flex flex-col items-center gap-15">
-            <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
-              <img src="/img/logo-abashiri.svg" alt="網走" className="h-[159px] w-[75px]" />
-            </Link>
-            <div className="flex flex-col gap-4 opacity-70">
-              <a href="#" aria-label="Instagram" className="relative block size-[44px] transition-transform hover:scale-110">
-                <img src="/img/sns-ig-frame.svg" alt="" className="absolute inset-0 size-full" />
-                <img src="/img/sns-ig-circle.svg" alt="" className="absolute inset-[24.32%]" />
-                <img src="/img/sns-ig-dot.svg" alt="" className="absolute right-[17.3%] top-[17.3%] size-[12%]" />
-              </a>
-              <a href="#" aria-label="X" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
-                <img src="/img/sns-x.svg" alt="" className="w-[40px]" />
-              </a>
-              <a href="#" aria-label="YouTube" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
-                <img src="/img/sns-yt.svg" alt="" className="w-[44px]" />
-              </a>
-            </div>
-          </div>
-          <p className="text-center text-body-18 font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
-            観光サイト
-          </p>
-        </div>
+        {/* v1.1: 右レール（縦書き「網走 観光サイト」＋SNS 3つ）はカンプから無くなった。
+            サイト名は吹き出しの上の手書き「網走市観光サイト」に置き換わっている。
+            アセット（logo-abashiri.svg / sns-*.svg）はフッター用に残してある。 */}
       </div>
     </div>
   );

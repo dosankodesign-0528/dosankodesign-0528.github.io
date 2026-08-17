@@ -497,20 +497,18 @@ export default function TopPage({
 
   return (
     <div
-      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-60 border-[30px] border-white ${frameShadow ?? ""}`}
-      style={{
-        ...(frameShadow ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
-        transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
-      }}
+      /* v1.1: タブレットのモック枠をやめて画面いっぱいに。
+         白ベゼル30px・角丸60px・浮遊シャドウはカンプ 15071:24641 から無くなった */
+      className="absolute inset-0"
     >
       <div
         ref={scrollerRef}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-30 bg-sky-bottom [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
             下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
-        <div className="pointer-events-none sticky top-0 h-[945px] w-full overflow-hidden bg-brand">
+        <div className="pointer-events-none sticky top-0 h-[982px] w-full overflow-hidden bg-brand">
           {/* Figmaのトリミング・色加工を焼き込み、角丸の縁を切り落とした四角い書き出し画像。
               角丸はCSS側だけで付けるので、継ぎ目やズレが出ない */}
           <motion.img
@@ -523,9 +521,9 @@ export default function TopPage({
 
         {/* キービジュアル：画面中央に固定されたまま、ブラーで登場 →
             スクロールでその場から奥へ引いて消える */}
-        <div className="pointer-events-none sticky top-0 -mt-[945px] h-[865px]">
+        <div className="pointer-events-none sticky top-0 -mt-[982px] h-[982px]">
           <motion.div
-            className="flex h-full flex-col items-center pt-30"
+            className="flex h-full flex-col items-center pt-[150px]"
             initial={
               animated
                 ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
@@ -540,7 +538,7 @@ export default function TopPage({
             transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
           >
             <motion.div
-              className="flex flex-col items-center gap-6"
+              className="flex flex-col items-center gap-8"
               style={{
                 filter: heroFilter,
                 opacity: heroOpacity,
@@ -549,6 +547,17 @@ export default function TopPage({
                 pointerEvents: heroPointer,
               }}
             >
+              {/* v1.1: 吹き出しの上に手書きの「網走市観光サイト」が乗った（カンプ 15071:24686）。
+                  位置はカンプの 415px コンテナ基準 (215.73, 8.34) を、
+                  実装の 471x390 の書き出し（原点が 28.22, 24.33 ずれている）に読み替えた値。 */}
+              <div className="relative">
+              <img
+                src="/img/text-kanko-site.svg"
+                alt="網走市観光サイト"
+                className={`absolute left-[243.7px] top-[-4.8px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
+                  animated && !buttonIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
+                }`}
+              />
               {blurSeq ? (
                 <HeroBlurSeq
                   timing={timing}
@@ -583,6 +592,7 @@ export default function TopPage({
                   className="h-[390px] w-[471px]"
                 />
               )}
+              </div>
               <motion.div style={{ y: buttonY }}>
                 {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
                 <motion.div
@@ -597,9 +607,11 @@ export default function TopPage({
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
+                  {/* v1.1 カンプ 15071:24707: 白2px枠・地 white/10・backdrop-blur 65px
+                      文字は Noto Sans JP Medium 16px 白・行間 1.2・左右44px/上下16px */}
                   <Link
                     href="/experience"
-                    className="rounded-full bg-white/90 px-11 py-4 text-control-20 font-black text-brand backdrop-blur-6 transition-transform hover:scale-105"
+                    className="flex items-center justify-center rounded-full border-2 border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
@@ -612,9 +624,9 @@ export default function TopPage({
         {/* z-index は付けない：付けると独立した重なりグループになり、
             見出しの「ぼーっ」のオーバーレイ混色が背景写真まで届かなくなる。
             KV より後ろのDOM順なので、relative だけで手前に描画される */}
-        <div className="pointer-events-none relative -mt-[865px]">
+        <div className="pointer-events-none relative -mt-[982px]">
 
-          <div className="mx-auto flex w-[980px] flex-col items-center pb-50 pt-[1005px]">
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-50 pt-[982px]">
             <div className="pointer-events-auto relative flex w-full flex-col gap-75">
               {/* ぼーっと過ごせるスポット ＋ プロモ */}
               <div className="flex w-full flex-col gap-20">
