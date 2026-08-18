@@ -234,6 +234,9 @@
     overflow: hidden;
     background: #f2f2f2;
   }
+  /* 固定追従なし: 貼りつけをやめ、重ねも解除する（普通に上から下へ流れる） */
+  html.nopin .pin-vp { position: relative; }
+  html.nopin #dev, html.nopin #cases { margin-top: 0; }
   .pin-stage {
     position: absolute;
     left: 0;
@@ -2112,6 +2115,9 @@ const DEFAULTS = {
       /* スクロール駆動の時、ピン区間の何割で再生しきるか。
          小さいほど少ないスクロールで一気に展開する */
       driveWin: 0.80,
+      /* スクロール駆動の時、セクションの尺を何倍に伸ばすか。
+         2.0 で「スクロール量あたりの進み方」が半分＝ゆったりになる */
+      driveLen: 2.0,
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2199,6 +2205,11 @@ const DEFAULTS = {
        time   = 今までどおり。固定して「映像を再生」する。速さが常に一定で絵コンテ通り
        scroll = スクロール量で展開する。手を止めれば絵も止まり、戻せばそのまま巻き戻る */
   drive: 'time',
+  /* 【2026-08-18 指定】固定追従(sticky)を使うか。
+       on  = 従来。セクションを画面に貼りつけて見せる
+       off = 貼りつけない。セクションは普通に流れ、画面に入った時に中で再生する
+             （貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に無い） */
+  pin: 'on',
   patterns: {
     results: 'B',   // 実績のレイアウト A=横長画像 / B=左端の縦帯(カンプ 14831:22066)
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
@@ -2282,7 +2293,7 @@ const DEFAULTS = {
               描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
               ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
 /* v60→v61: ビジョンの開始をビューポート中央（ピン開始）にそろえた */
-const STORAGE_KEY = 'anyflow-embed-anim-v68';
+const STORAGE_KEY = 'anyflow-embed-anim-v69';
 
 let params = load();
 function load() {
@@ -4137,6 +4148,7 @@ function updateDev(pRaw) {
 
 /* ---------- 導入事例 (カードスタック) ---------- */
 const caseEls = {
+  vp: document.querySelector('#cases .pin-vp'),
   title: document.getElementById('caseTitle'),
   cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
 };
@@ -4162,6 +4174,15 @@ function updateCases(pRaw) {
      真っさらな画面を挟まずに次の話へ移れる */
   /* 【2026-08-18 指定】助走(pre)は「まだ背景が暗いうち」に終わってしまうので使えない。
      開発者体験の暗転の進み具合(devFin)を基準にして、明るくなりきってから中身を出す */
+  /* ⚠️【2026-08-18 真因】.pin-vp には不透明な明るい背景(#f2f2f2)が入っている。
+     導入事例は margin-top:-100vh で開発者体験と重なり、DOM で後ろにあるため
+     【白い板が開発者体験を下から覆いながら上がってくる】。
+     これが「暗い面の下に何も無い明るい帯」の正体だった。
+     開発者体験が実績に対して同じ手当てをしているのと同様に、
+     定位置(top:0)に着くまでは板そのものを透明にしておく。 */
+  const casTop = rectOf(SECS.cases).top;
+  setStyle(caseEls.vp, 'opacity', casTop > 2 ? '0' : '1');
+
   const intro = seg(devFin, c.introAt, c.introAt + c.introDur, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
@@ -4627,10 +4648,16 @@ function fit() {
   st.setProperty('--dh', DH + 'px');
   stage.parentElement.style.height = (DH * s) + 'px';
   /* スクロール尺 (調整パネルから変えられる) */
-  SECS.vision.style.height = params.sections.vision.lenVh + 'vh';
-  SECS.dev.style.height = params.sections.dev.lenVh + 'vh';
-  SECS.cases.style.height = params.sections.cases.lenVh + 'vh';
-  SECS.results.style.height = params.sections.results.lenVh + 'vh';
+  /* 固定追従なしの時は 100vh（貼りつけないので余分な尺は要らない）。
+     スクロール駆動の時は尺を driveLen 倍に伸ばして、進み方をゆったりにする */
+  const noPin = params.pin === 'off';
+  document.documentElement.classList.toggle('nopin', noPin);
+  const lenMul = params.drive === 'scroll' ? Math.max(1, params.sections.common.driveLen) : 1;
+  const H = key => (noPin ? 100 : Math.round(params.sections[key].lenVh * lenMul)) + 'vh';
+  SECS.vision.style.height = H('vision');
+  SECS.dev.style.height = H('dev');
+  SECS.cases.style.height = H('cases');
+  SECS.results.style.height = H('results');
 }
 fitReady = true;
 window.addEventListener('resize', fit);
@@ -4825,7 +4852,15 @@ function buildPanel() {
     ? 'スクロール駆動: スクロールした分だけ絵が進みます。手を止めれば絵も止まり、戻せばそのまま巻き戻ります。参考サイトと同じ考え方。トラックパッドの慣性でも絵が破綻しません。'
     : '時間で再生: セクションに着いたら固定して、決まった秒数で1本の映像として流します。速さが常に一定で絵コンテ通り。ただしトラックパッドの慣性ではロックを振り切られることがあります。');
   segRow('動かし方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
-    () => params.drive, v => { params.drive = v; resetSectionClocks(); save(); buildPanel(); });
+    () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); save(); buildPanel(); });
+  note(params.pin === 'off'
+    ? '固定なし: セクションを画面に貼りつけません。普通に上から下へ流れ、画面に入った時に中で再生します。貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に起きません。'
+    : '固定あり: セクションを画面に貼りつけて見せます（従来）。');
+  segRow('固定追従', [['あり', 'on'], ['なし', 'off']],
+    () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); save(); buildPanel(); });
+  rows.push(slider('スクロール駆動の尺', 1, 4, 0.25, () => sv().common.driveLen, v => { sv().common.driveLen = v; fit(); },
+    v => '×' + v.toFixed(2) + '（体感 ' + (1 / v).toFixed(2) + '倍速）',
+    'スクロール駆動の時だけ有効。大きいほどセクションが長くなり、スクロールあたりの進み方がゆっくりになる。'));
   rows.push(slider('展開しきる位置', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
     v => 'ピン区間の' + Math.round(v * 100) + '%',
     'スクロール駆動の時のみ有効。小さいほど少ないスクロールで一気に展開する。'));
