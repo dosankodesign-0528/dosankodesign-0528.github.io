@@ -2730,21 +2730,45 @@ function updateScrollLock() {
         位置そのものを毎フレーム押し戻す。
         許すのは【ピン区間の終わりまで】。そこまでなら固定は保たれているので破綻しない。
         再生が終わったセクションは対象外なので、見終わったあとは自由に進める。 */
+function forceScroll(y) {
+  if (lenis) lenis.scrollTo(y, { immediate: true, force: true, lock: true });
+  else window.scrollTo(0, y);
+}
+
+/* ===== スクロールの固定 (2026-08-18 作り直し) =====
+   ⚠️ macOS のトラックパッドは、慣性で流れている間 wheel イベントが cancelable:false になり、
+      preventDefault が一切効かない。「操作を止める」方式では原理的に止まらない。
+      （Playwright の合成ホイールでは preventDefault が効くため、テストで再現しなかった）
+
+   なので「位置そのものを毎フレーム戻す」方式にする。
+   誰がどうスクロールを動かしても、次のフレームで元の位置へ戻るので必ず止まる。 */
 function clampScroll() {
+  /* ① 再生中のセクションがあれば、再生を始めた位置に釘付けにする */
+  for (const k in secPlay) {
+    const st = secPlay[k], el = SECS[k];
+    if (!el || st.done || st.t0 === null) continue;
+    if (st.lockY == null) st.lockY = Math.round(window.scrollY || window.pageYOffset || 0);
+    const y = window.scrollY || window.pageYOffset || 0;
+    if (Math.abs(y - st.lockY) > 1) forceScroll(st.lockY);
+    return;
+  }
+  /* ② 再生していない時は記録を捨てる。
+        「まだ終わっていないセクション」からは、ピン区間の終わりより下へ行かせない
+        （章と章の間は、次の章へ送るために動けるようにしておく） */
   let maxY = Infinity;
   for (const k in secPlay) {
     const st = secPlay[k], el = SECS[k];
-    if (!el || st.done) continue;
-    if (st.t0 === null && !st.started) continue;   /* まだ始まっていないセクションは対象外 */
+    if (!el) continue;
+    st.lockY = null;
+    if (st.done) continue;
+    if (st.t0 === null && !st.started) continue;
     maxY = Math.min(maxY, el.offsetTop + el.offsetHeight - (window.innerHeight || 1));
   }
   if (!isFinite(maxY)) return;
   const y = window.scrollY || window.pageYOffset || 0;
-  if (y > maxY + 1) {
-    if (lenis) lenis.scrollTo(maxY, { immediate: true, force: true, lock: true });
-    else window.scrollTo(0, maxY);
-  }
+  if (y > maxY + 1) forceScroll(maxY);
 }
+
 
 /* ロック中は操作そのものも無効化する（押し戻しだけだと、いったん動いてから戻るのでガタつく）。
    ⚠️ 調整パネルの中で回した時は通す */
