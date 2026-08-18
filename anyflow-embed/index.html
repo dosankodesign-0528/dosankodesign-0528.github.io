@@ -221,6 +221,10 @@
      画面が上下にスライドせず「その場で切り替わる」ようになる。
      重なっている間は #dev の板を JS で透明にしておき、実績を隠さないようにする */
   #dev { margin-top: -100vh; }
+  /* 【2026-08-18 指定】導入事例も1画面ぶん重ねて、開発者体験の真下に置く。
+     こうしないと「黒が明るくなりきってから、何も起きない1画面」を
+     スクロールさせられる。中身を出すタイミングは JS 側で遅らせている */
+  #cases { margin-top: -100vh; }
   #dev .pin-vp { will-change: opacity; }
 
   .pin-vp {
@@ -415,6 +419,15 @@
     font-family: var(--font-en); font-weight: 100; font-size: 80px; line-height: 1;
     text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
   }
+  /* ===== 実績の数字: 桁ごとに縦へ回るスロット =====
+     ⚠️ 中身に span を使わないこと。`.res-nums .rn span` / `.res-stats .st span` が
+        入れ子まで拾って display:block と width:100% を当て、窓とリールが潰れる。
+        （2026-08-15 に一度これで壊したので <i> と <em> だけで組む） */
+  .slot { display: inline-flex; align-items: flex-start; font-style: normal; }
+  .slot .rl { font-style: normal; display: inline-block; overflow: hidden; height: 1em; }
+  .slot .stp { font-style: normal; display: block; will-change: transform; }
+  .slot .stp em { font-style: normal; display: block; height: 1em; line-height: 1; text-align: center; }
+  .slot .fx { font-style: normal; display: inline-block; }
   .res-main { display: flex; flex-direction: column; gap: 34px; color: #000; }
   .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
   .res-stats { display: flex; align-items: center; color: #000; }
@@ -1469,7 +1482,7 @@
       </div>
       <div class="res-stats rv" id="resStats">
         <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
-        <div class="st"><b>最短リリース</b><span>1week</span></div>
+        <div class="st"><b>最短リリース</b><span id="cntSub3">1week</span></div>
       </div>
       <div class="res-text rv" id="resText">テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</div>
     </div>
@@ -2087,6 +2100,9 @@ const DEFAULTS = {
   sections: {
     common: {
       smooth: 3,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
+      /* 再生中にホイールを回した時の早送り。0 で早送りなし(閉じ込められるので非推奨) */
+      ffMax: 1.2,        // 上限。1.2 なら最大 2.2倍速まで
+      ffGain: 420,       // 効きはじめの緩さ。大きいほどゆるやかに効く
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2111,6 +2127,10 @@ const DEFAULTS = {
       miniY: 0,          // ミニ軌道の縦位置の微調整(px。0=2行のちょうど間)
       miniScale: 0.16,   // ミニ楕円の縮小率 (2026-08-15: もっと小さく始める指定)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
+      /* 軌道上のドットの出方 (2026-08-17 指定)。以前は軌道が出た時点で6個そろっていた */
+      dotsInAt: 0.25,      // 軌道が出はじめてから、1個目が出るまでの秒数
+      dotsInStagger: 0.14, // ドットごとの遅れ (大きいほど1つずつ順に出る)
+      dotsInDur: 0.5,      // 1個が出きるまでの秒数 (点が膨らみながら濃くなる)
       spinLaps: 1,       // 止まるまでに何周するか (2026-08-15: きっちり1周)
       spinHold: 0.5,     // 左下に着いてから止まり始めるまでの秒数
                          /* ⚠️ spinHold + spinBrake = 1.35 にすると、役割名(コネクタ等)が
@@ -2141,10 +2161,30 @@ const DEFAULTS = {
       outFrom: 0.48,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
       outTo: 0.84,     // 案B: ここで完全に暗い背景になる (着地より前に真っ黒にする)
       outBlur: 22,     // 消える時のぼかし量
+      /* 数字のスロット (2026-08-17 指定)。
+         数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
+         ⚠️ 下の4つは「回転が見えるように」仮で置いた値。パネルで詰めてください */
+      slotAt: 0.3,       // 再生開始から回り出すまでの秒数 (0 で即スタート)
+      slotDur: 1.4,      // 1桁が回り終わるまでの秒数
+      slotStagger: 0.12, // 桁ごとの遅れ (左から順に止まる)
+      slotCycles: 3,     // 止まるまでに 0〜9 を何周流すか
+      slotEnterAt: 0.85, // 数字が画面のどこまで入ったら回り出すか (1.0=下端 / 0.5=中央)
+      slotEase: 5,       // 減速の強さ。大きいほど「最初速く→最後じりじり」になる (2〜9)
+                         /* ⚠️ 回転中のぼかしは 2026-08-17 に「要らない」で確定。
+                            パラメータごと削除したので、復活させる時は renderSlots にも戻すこと */
     },
     dev:     { lenVh: 200, swapBlur: 14, stackDur: 1.3 },   // stackDur=カードが回って入れ替わる秒数   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
-    cases:   { lenVh: 200, depth: 1, inBlur: 20, gap: 44, playSec: 5.4 },
+    cases:   { lenVh: 200, depth: 1, inBlur: 20, gap: 44, playSec: 5.4,
+      /* 【2026-08-18】開発者体験と1画面重ねたので、助走(pre)の前半は
+         「黒→白に切り替わる区間」に当たる。中身はそれが終わってから出す。
+         早すぎると、暗い背景の上に文字が重なって読みづらくなる */
+      introAt: 0.50,   // 「導入事例」の文字が出はじめる位置 (助走の何割地点か)
+      introDur: 0.18,  // 出きるまでの長さ
+      cardAt: 0.60,    // 1枚目のカードが出はじめる位置
+      cardGap: 0.10,   // カードごとの遅れ
+      cardDur: 0.24,   // 1枚が出きるまでの長さ
+    },
   },
   patterns: {
     results: 'B',   // 実績のレイアウト A=横長画像 / B=左端の縦帯(カンプ 14831:22066)
@@ -2229,7 +2269,7 @@ const DEFAULTS = {
               描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
               ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
 /* v60→v61: ビジョンの開始をビューポート中央（ピン開始）にそろえた */
-const STORAGE_KEY = 'anyflow-embed-anim-v61';
+const STORAGE_KEY = 'anyflow-embed-anim-v67';
 
 let params = load();
 function load() {
@@ -2310,8 +2350,14 @@ const dotEls = DOTS.map(d => {
   const back = mk(), front = mk();
   dotsBackG.appendChild(back);
   dotsFrontG.appendChild(front);
-  return { back, front };
+  return { back, front, k: 1 };
 });
+
+/* ドットの出現度合い (0=まだ無い / 1=出きった)。
+   Our Vision で軌道が出てくる時に、1つずつ順に出すために使う (2026-08-17 指定)。
+   ⚠️ 軌道の SVG は KV と Our Vision で使い回しているので、
+      Our Vision 以外の場面では 1 のままにしておくこと */
+const dotK = DOTS.map(() => 1);
 
 /* 現在の軌道ジオメトリ = カンプ基準値 × パネル設定 (サイズ/角度/位置) + ゆれ */
 function orbitGeom(key) {
@@ -2427,6 +2473,13 @@ function renderFrame() {
       el.setAttribute('cx', pos.x);
       el.setAttribute('cy', pos.y);
     });
+    /* 出現度合いが変わった時だけ、半径と濃さを書き換える */
+    const dk = dotK[i];
+    if (els.k !== dk) {
+      els.k = dk;
+      const rr = (DOT_R * dk).toFixed(3), op = dk.toFixed(3);
+      [els.back, els.front].forEach(el => { el.setAttribute('r', rr); el.setAttribute('opacity', op); });
+    }
     els.front.style.display = pos.front ? '' : 'none';
     els.back.style.display = pos.front ? 'none' : '';
   });
@@ -2637,10 +2690,13 @@ window.addEventListener('wheel', e => {
   if (scrollLocked) lockPush += Math.abs(e.deltaY);
 }, { passive: true });
 function fastForward() {
+  const cm = params.sections.common;
   lockPush *= Math.exp(-frameDt * 2.5);          // 手を止めると数百msで元の速さへ戻る
   const key = anyPlaying();
   if (!key) { lockPush = 0; return; }
-  const boost = Math.min(3, lockPush / 260);     // 最大 +3倍（合計4倍速）
+  /* 【2026-08-18 指定】勢いよく回すと極端な早送りになるのを抑える。
+     上限を下げ、効きはじめもゆるやかにした (以前は最大4倍速・立ち上がりも急だった) */
+  const boost = Math.min(cm.ffMax, lockPush / cm.ffGain);
   if (boost > 0.02) secPlay[key].skip += frameDt * boost;
 }
 
@@ -2958,6 +3014,13 @@ function updateVision(p) {
      CSSのscaleで拡大するとラスタライズ済みの絵が引き伸ばされて粗くなるため、
      楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
   const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
+  /* 【2026-08-17 指定】ドットは軌道が出たあと、1つずつ順に出てくる。
+     以前は軌道が出た時点でもう6個そろっていた。
+     ⚠️ A<0（まだ再生していない）ときは 1 に戻す。KV でも同じ SVG を使っているため */
+  for (let i = 0; i < dotK.length; i++) {
+    dotK[i] = A < 0 ? 1
+      : easeOutQ(clamp01((A - (miniAt + c.dotsInAt + i * c.dotsInStagger)) / Math.max(0.01, c.dotsInDur)));
+  }
   /* 画面幅に合わせて軌道も拡大する。縦にはみ出さない範囲で頭打ちにする */
   /* スマホは基準幅を狭めて、軌道が画面幅いっぱいに見えるようにする */
   const kFill = Math.min(stagePinW / (isMobile ? 900 : 1440), (DH - 80) / 667);
@@ -3086,17 +3149,95 @@ const resHeadChars = (() => {
 let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
-/* ランダム数字 → 左の桁から順に確定するカウンター */
-/* 数字は演出せず、確定値をそのまま出す（見せ方はブラー出現に一本化）。
-   ⚠️ ランダム演出 → カウントアップ → スロット と試したが、
-      2026-08-15 に「単純にブラーで出現」で確定した。 */
-function setCounter(el, finalStr, suffix) {
-  const want = finalStr + suffix;
-  if (el.textContent !== want) el.textContent = want;
-}
+/* 数字の見せ方の変遷:
+   ランダム演出 → カウントアップ → スロット → ブラー出現のみ (2026-08-15)
+   → スロットを復活 (2026-08-17 指定・Counter Pro のような桁ごとのロール)。
+   描画は下の renderSlots() が受け持つ。 */
 
 /* 全部出そろうまでの秒数 (見出しのブラー出現 → 数字 → 下段 まで) */
-const RES_TOTAL = 3.8;   /* 打ち終わり + 数字が確定しきるまで */
+/* ===== 実績の数字: 桁ごとに縦へ回るスロット =====
+   数字は「0 から目的の数字まで、0〜9 を何周か流してから止まる」形で作る。
+   桁ごとに少し遅らせて止めるので、左から順に確定していく。 */
+const SLOT_TARGETS = [
+  ['cntMain', '200+'], ['cntSub1', '500+'], ['cntSub2', '99.9%'], ['cntSub3', '1week'],
+];
+let slots = [];
+let slotBuiltCycles = -1;
+/* 数字がビューポートに入った時刻。null = まだ入っていない */
+let slotT0 = null;
+
+function buildSlots() {
+  const cy = Math.max(1, Math.round(params.sections.results.slotCycles));
+  if (slotBuiltCycles === cy && slots.length) return;
+  slotBuiltCycles = cy;
+  slots = [];
+  for (const [id, text] of SLOT_TARGETS) {
+    const host = document.getElementById(id);
+    if (!host) continue;
+    host.textContent = '';
+    const wrap = document.createElement('i');
+    wrap.className = 'slot';
+    const reels = [];
+    for (const ch of text) {
+      if (ch >= '0' && ch <= '9') {
+        const rl = document.createElement('i');
+        rl.className = 'rl';
+        const stp = document.createElement('i');
+        stp.className = 'stp';
+        /* cy 周ぶんの 0〜9 を並べ、最後に目的の数字を置く */
+        const seq = [];
+        for (let c = 0; c < cy; c++) for (let d = 0; d < 10; d++) seq.push(d);
+        seq.push(Number(ch));
+        for (const d of seq) {
+          const em = document.createElement('em');
+          em.textContent = String(d);
+          stp.appendChild(em);
+        }
+        rl.appendChild(stp);
+        wrap.appendChild(rl);
+        reels.push({ rl, stp, len: seq.length });
+      } else {
+        const fx = document.createElement('i');
+        fx.className = 'fx';
+        fx.textContent = ch;
+        wrap.appendChild(fx);
+      }
+    }
+    host.appendChild(wrap);
+    slots.push({ host, reels });
+  }
+}
+
+/* いちばん桁数の多い数字が止まりきるまでの秒数 */
+function slotEnd() {
+  const c = params.sections.results;
+  let maxReels = 1;
+  for (const s of slots) maxReels = Math.max(maxReels, s.reels.length);
+  return c.slotAt + c.slotDur + (maxReels - 1) * c.slotStagger;
+}
+
+/* ts = 数字ブロックが出はじめてからの秒数。マイナスなら先頭(0)で待たせる */
+function renderSlots(ts) {
+  const c = params.sections.results;
+  for (const s of slots) {
+    s.reels.forEach((re, i) => {
+      const k = clamp01((ts - (c.slotAt + i * c.slotStagger)) / Math.max(0.01, c.slotDur));
+      /* 緩急: 1 - (1-k)^n。n が大きいほど「最初は速く、最後はじりじり」になる。
+         n=2 でゆるやか / n=5 が既定 / n=9 でかなり粘って止まる。
+         ⚠️ easeSlick(臨界減衰) だと全体的に均一で、スロットらしい溜めが出なかった */
+      const e = 1 - Math.pow(1 - k, Math.max(1, c.slotEase));
+      setStyle(re.stp, 'transform', `translateY(${(-(re.len - 1) * e).toFixed(4)}em)`);
+      /* ⚠️ 回転中のぼかしは入れない（2026-08-17 に「要らない」で確定）。
+         数字はくっきりしたまま回して止める */
+    });
+  }
+}
+
+/* 見出しが出きるまで と 数字が回りきるまで の、遅い方 */
+function resTotal() {
+  const c = params.sections.results;
+  return Math.max(c.typeAt + c.softDur + 0.2, slotEnd() + 0.3);
+}
 /* 中央でピン留めされたら再生。出終わったらスクロールで下のセクションへ抜ける。
    ⚠️ 以前は「時間だけ」で進めていたので、ピンしている間にスクロールしても何も進まず、
       再生が終わってからさらに数画面スクロールしないと下へ抜けられなかった。
@@ -3114,7 +3255,8 @@ function updateResults(p) {
   const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
   /* 【2026-08-15】ビューポート中央(＝固定が始まった瞬間)に来たら再生し、
      再生が終わるまでスクロールを止める（他のセクションと同じ playT の仕組み） */
-  const t = playT('results', RES_TOTAL, canPlay(p), SECS.results, p);
+  buildSlots();
+  const t = playT('results', resTotal(), canPlay(p), SECS.results, p);
 
   /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
   const r = rectOf(SECS.results);
@@ -3133,6 +3275,8 @@ function updateResults(p) {
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { el.style.opacity = 0; });
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
     resEls.head.style.opacity = 0;
+    renderSlots(-1);   /* 数字は 0 の位置で待たせる */
+    slotT0 = null;
     return;
   }
 
@@ -3145,17 +3289,27 @@ function updateResults(p) {
     const headK = easeOutQ(clamp01((t - c.typeAt) / c.softDur));
     resEls.head.style.opacity = headK.toFixed(3);
     resEls.head.style.filter = headK >= 1 ? '' : `blur(${((1 - headK) * 12).toFixed(2)}px)`;
-    /* 見出しが出きるより少し前から、下の要素が続く */
-    const after = c.typeAt + c.softDur * c.numsGap;
-    const soft = easeOutQ(clamp01((t - after) / c.softDur));
+    /* 【2026-08-17 指定】ブラーで出るのは見出しだけ。
+       罫線・数字・下段・本文は最初から出したままにして、
+       数字はスロットの回転そのものを見せる（ブラー出現と重なると回転が埋もれる）。 */
     rv(resEls.main, 1, 0);
     resEls.main.style.filter = '';
-    resEls.main.querySelector('.res-line').style.opacity = soft.toFixed(3);
+    resEls.main.querySelector('.res-line').style.opacity = 1;
     const nums = resEls.main.querySelector('.res-nums');
-    nums.style.opacity = soft.toFixed(3);
-    nums.style.filter = soft >= 1 ? '' : `blur(${((1 - soft) * 12).toFixed(2)}px)`;
-    rv(resEls.stats, easeOutQ(clamp01((t - after - 0.18) / c.softDur)), 10);
-    rv(resEls.text,  easeOutQ(clamp01((t - after - 0.30) / c.softDur)), 8);
+    nums.style.opacity = 1;
+    nums.style.filter = '';
+    /* 【2026-08-17 指定】スロットは「数字が実際にビューポートに入ってから」回り出す。
+       セクションの再生開始を起点にすると、数字がまだ画面の下にいるうちに回り終わることがある。
+       いちど入ったら覚えておき、上に大きく戻った時だけ巻き戻す（リプレイ用） */
+    const nr = rectOf(nums);
+    if (slotT0 === null) {
+      if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
+    } else if (nr.top > innerHeight * 1.2) {
+      slotT0 = null;
+    }
+    renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
+    rv(resEls.stats, 1, 0);
+    rv(resEls.text,  1, 0);
     /* 見出しと同時に左の画像もブラーで出る */
     rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
   } else {
@@ -3170,12 +3324,13 @@ function updateResults(p) {
     rv(resEls.stats, kTx, 8, 12);
     rv(resEls.text,  kTx, 8, 12);
     rv(resEls.img,   easeOutQ(clamp01((t - c.imgAt) / (c.softDur * 1.4))), c.imgBlur);
+    renderSlots(t - 0.1);   /* 案A は従来どおり時間で回す */
   }
 
-  /* 3つの数字は同時にランダム → 確定 (1week だけ演出なし: 絵コンテ準拠) */
-  setCounter(resEls.cntMain, '200', '+');
-  setCounter(resEls.cntSub1, '500', '+');
-  setCounter(resEls.cntSub2, '99.9', '%');
+  /* ⚠️ ここに以前あった setCounter() は削除した。
+     毎フレーム textContent を書き戻すので、スロットのリールを作った直後に
+     平文へ潰してしまう（2026-08-17 にこれで1回ハマった）。
+     数字の描画は renderSlots() が受け持つ。 */
 
   /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
      中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
@@ -3821,13 +3976,13 @@ function updateCases(pRaw) {
   /* 「導入事例」の文字は乗り換え区間に入った直後から出す。
      こうすると黒いセクションを抜けた瞬間にもう文字が見えていて、
      真っさらな画面を挟まずに次の話へ移れる */
-  const intro = seg(pre, 0.02, 0.45, easeOutQ);
+  const intro = seg(pre, c.introAt, c.introAt + c.introDur, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
   /* カードは【カンプのように縦にgap分空けて並んだ状態】でブラー出現し、
      スクロールするとリストごと上へ流れて、上端に着いたものから順に貼り付いて重なる。
      (2026-08-14: 画面外から1枚ずつ飛び込んでくる形をやめてこの形に) */
-  const inK = [0, 1, 2].map(i => seg(pre, 0.30 + i * 0.16, 0.78 + i * 0.16, easeOutQ));
+  const inK = [0, 1, 2].map(i => seg(pre, c.cardAt + i * c.cardGap, c.cardAt + i * c.cardGap + c.cardDur, easeOutQ));
 
   const CASE_TOP = caseTop(), CASE_H = caseH();
   const step = CASE_H + c.gap;              // カード1枚ぶんの送り量
@@ -4618,6 +4773,14 @@ function buildPanel() {
     '小さい軌道が左下の定位置まで移動するのにかける時間。大きいほどゆったり。'));
   rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
     '楕円の線の太さ。'));
+  sub(catVis, 'ドットの出方');
+  note('軌道が出たあと、ドットが1つずつ順に膨らみながら濃くなって出てきます。');
+  rows.push(slider('出はじめるまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + 's',
+    '軌道が出はじめてから、1個目のドットが出るまでの間。0で軌道と同時。'));
+  rows.push(slider('ドットごとの遅れ', 0, 0.5, 0.01, () => sv().vision.dotsInStagger, v => sv().vision.dotsInStagger = v, v => v.toFixed(2) + 's',
+    '大きいほど「1つずつ順に」感が強くなる。0で6個同時に出る。'));
+  rows.push(slider('1個が出る時間', 0.1, 2, 0.05, () => sv().vision.dotsInDur, v => sv().vision.dotsInDur = v, v => v.toFixed(2) + 's',
+    '長いほどゆっくり膨らんで濃くなる。'));
   sub(catVis, 'ドットの周回');
   rows.push(slider('止まるまでの周回数', 0.25, 4, 0.25, () => sv().vision.spinLaps, v => sv().vision.spinLaps = v, v => v.toFixed(2) + '周',
     '止まるまでに何周するか。1.00周ならきっちり一周して元の位置で止まる。'));
@@ -4660,6 +4823,20 @@ function buildPanel() {
     '罫線・数字・本文がブラーから現れるのにかける時間。大きいほどゆったり。'));
   rows.push(slider('画像が出るまで(案A)', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + 's',
     '案Aで、テキスト群のあと何秒で画像がブラーから出るか。'));
+  sub(catRes, '数字のスロット');
+  note('見出しがブラーで出たあと、数字が桁ごとに縦へ回って止まります。左の桁から順に確定します。');
+  rows.push(slider('回り出すまで', 0, 2, 0.05, () => sv().results.slotAt, v => sv().results.slotAt = v, v => v.toFixed(2) + 's',
+    'セクションの再生開始から、回り出すまでの間。0で即スタート。'));
+  rows.push(slider('1桁が回る時間', 0.3, 3, 0.05, () => sv().results.slotDur, v => sv().results.slotDur = v, v => v.toFixed(2) + 's',
+    '長いほどゆっくり回って止まる。'));
+  rows.push(slider('桁ごとの遅れ', 0, 0.4, 0.01, () => sv().results.slotStagger, v => sv().results.slotStagger = v, v => v.toFixed(2) + 's',
+    '大きいほど「左から順にパタパタ止まる」感じが強くなる。0だと全桁同時に止まる。'));
+  rows.push(slider('回す周数', 1, 6, 1, () => sv().results.slotCycles, v => sv().results.slotCycles = v, v => v + '周',
+    '止まるまでに 0〜9 を何周流すか。多いほど勢いよく回って見える。'));
+  rows.push(slider('回り出す位置', 0.4, 1, 0.05, () => sv().results.slotEnterAt, v => sv().results.slotEnterAt = v, v => '画面の' + Math.round(v * 100) + '%',
+    '数字が画面のどこまで入ったら回り出すか。100%=下端に顔を出した瞬間 / 50%=中央まで来てから。'));
+  rows.push(slider('減速の強さ', 2, 9, 0.5, () => sv().results.slotEase, v => sv().results.slotEase = v, v => '×' + v.toFixed(1),
+    '大きいほど「最初は速く、最後はじりじり」になる。2でほぼ一定速度、5が既定、9でかなり粘って止まる。'));
   sub(catRes, '次のセクションへのつなぎ（案B）');
   note('出そろったあと、中身がブラーで消えるのと同時に、開発者体験の暗い背景へ変わります。');
   rows.push(slider('消え始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
