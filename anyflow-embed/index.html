@@ -3847,8 +3847,16 @@ function updateDev(pRaw) {
         全部終わった地点の pRaw を覚えて、そこからの差分で白くする */
   const stD = secPlay.dev;
   if (stD && stD.done && stD.endP == null) stD.endP = pRaw;
-  const fin = (stD && stD.endP != null)
+  const finPlay = (stD && stD.endP != null)
     ? seg(pRaw, stD.endP + 0.10, Math.min(0.99, stD.endP + 0.10 + DEV_FIN), easeIO) : 0;
+  /* 【2026-08-18 バグ修正】早送りすると endP の記録位置が後ろへズレ、
+     セクションの固定が外れても暗転が終わっていない状態になっていた。
+     その結果「上に暗い帯だけ残って、下は空っぽの明るい画面」になる（実際に発生）。
+     ⚠️ 保険として、セクションの下端が画面のどこまで上がってきたかでも進める。
+        これはスクロール位置だけで決まるので、早送りしても上下に動かしても必ず同じ値になる。
+        遅い方には引っぱられないよう max で合成する */
+  const devTail = clamp01((0.75 - rectOf(SECS.dev).bottom / (innerHeight || 1)) / 0.30);
+  const fin = Math.max(finPlay, devTail);
   /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
   devFin = fin;
 
