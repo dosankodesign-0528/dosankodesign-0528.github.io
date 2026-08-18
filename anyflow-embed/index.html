@@ -2620,6 +2620,21 @@ let scrollLocked = false, lockPush = 0;
      from/to = その章で描く進捗の範囲 / sec = 再生秒数 / at = 次の章を解放するスクロール量
    ⚠️ 章と章の間はロックを外す。ここでスクロールできないと「進めない」体験になる。 */
 function chapterP(key, chapters, pScroll, canStart, sec) {
+  /* 固定追従なし: 章を続けて時間で流す（送るためのスクロールが無いため） */
+  if (params.pin === 'off') {
+    const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false, ch: 0 });
+    if (st.t0 === null) {
+      if (clamp01(preP(sec)) < 0.6) return chapters[0].from;
+      st.t0 = elapsed;
+    }
+    let t = elapsed - st.t0, acc = 0;
+    for (const ch of chapters) {
+      if (t <= acc + ch.sec) return ch.from + (ch.to - ch.from) * clamp01((t - acc) / ch.sec);
+      acc += ch.sec;
+    }
+    st.done = true;
+    return chapters[chapters.length - 1].to;
+  }
   /* スクロール駆動: ピン区間を章の数で割って、位置から章の進捗を決める */
   if (params.drive === 'scroll') {
     const q = clamp01(pScroll / Math.max(0.1, params.sections.common.driveWin));
@@ -2683,6 +2698,19 @@ function canPlay(p) { return p > 0.0005 && p < 0.35; }
       「そこで固まった」ように見えていた。所定の位置(上端0)から6px以上ずれていたら、
       まずそこへ寄せてから再生を始める。 */
 function playT(key, total, canStart, sec, pNow) {
+  /* 固定追従なし: セクションの高さが 100vh なので pinP の分母が 0 になり、
+     pinP が常に 0 ＝ 再生開始の判定が永久に成立しなかった（真っ白の原因）。
+     画面を6割占めたら時間で再生する。寄せ(snap)もロックもしない */
+  if (params.pin === 'off') {
+    const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
+    if (st.t0 === null) {
+      if (clamp01(preP(sec)) < 0.6) return -1;
+      st.t0 = elapsed;
+    }
+    const t = elapsed - st.t0 + st.skip;
+    if (t >= total) st.done = true;
+    return Math.min(t, total);
+  }
   /* スクロール駆動: 位置がそのまま再生位置になる。
      手を止めれば絵も止まり、上へ戻せばそのまま巻き戻る（逆再生の実装が要らない） */
   if (params.drive === 'scroll') {
@@ -2731,8 +2759,8 @@ function playT(key, total, canStart, sec, pNow) {
    上下どちらへ動いても絵が飛ばず、なめらかにつながる。
    ⚠️ 初回だけは今までどおり「時間で流れる映像」。2回目以降がスクラブになる */
 function anyPlaying() {
-  /* スクロール駆動の時は、そもそも止めない（手の動きがそのまま絵になる） */
-  if (params.drive === 'scroll') return null;
+  /* スクロール駆動と固定なしの時は、そもそも止めない */
+  if (params.drive === 'scroll' || params.pin === 'off') return null;
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
   /* 章の間 (t0 === null) はロックしない = スクロールで次へ進める */
   return null;
@@ -3469,13 +3497,18 @@ function updateResults(p) {
     /* 【2026-08-17 指定】スロットは「数字が実際にビューポートに入ってから」回り出す。
        セクションの再生開始を起点にすると、数字がまだ画面の下にいるうちに回り終わることがある。
        いちど入ったら覚えておき、上に大きく戻った時だけ巻き戻す（リプレイ用） */
-    const nr = rectOf(nums);
-    if (slotT0 === null) {
-      if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
-    } else if (nr.top > innerHeight * 1.2) {
-      slotT0 = null;
+    if (params.drive === 'scroll') {
+      /* スクロール駆動では、数字もスクロール位置で回す（時間と混ざると噛み合わない） */
+      renderSlots(t);
+    } else {
+      const nr = rectOf(nums);
+      if (slotT0 === null) {
+        if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
+      } else if (nr.top > innerHeight * 1.2) {
+        slotT0 = null;
+      }
+      renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
     }
-    renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
     rv(resEls.stats, 1, 0);
     rv(resEls.text,  1, 0);
     /* 見出しと同時に左の画像もブラーで出る */
@@ -4037,9 +4070,16 @@ function updateDev(pRaw) {
      それ自体が【黒→白とスライドを同時進行させる】原因だった（ヒデさん報告）。
      暗転はピン区間の中だけで完結させ、スライドは暗転が終わってから始める。
      （下へ抜けさせない制御は clampScroll 側で行う） */
-  const fin = params.drive === 'scroll'
-    ? seg(pRaw, 0.42, 0.72, easeIO)   /* スクロール駆動: 位置で暗転。スライドが始まる前に終わらせる */
-    : finPlay;
+  const fin = params.pin === 'off'
+    /* 固定なし: 重ねが無いので、セクションが上へ抜けていく分で暗転させる */
+    ? clamp01((1.05 - rectOf(SECS.dev).bottom / (innerHeight || 1)) / 0.45)
+    : params.drive === 'scroll'
+      /* ⚠️ 章の進行は pinP 0→driveWin(既定0.8) で終わる。
+         それより早く暗転を始めると、章②の見出しが出きる前に消され始める
+         （実測: devH2 が 0.7 で止まっていた）。章の後・スライドの前に置く */
+      ? seg(pRaw, Math.min(0.9, params.sections.common.driveWin + 0.02),
+                  Math.min(0.98, params.sections.common.driveWin + 0.16), easeIO)
+      : finPlay;
   /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
   devFin = fin;
 
@@ -4181,15 +4221,17 @@ function updateCases(pRaw) {
      開発者体験が実績に対して同じ手当てをしているのと同様に、
      定位置(top:0)に着くまでは板そのものを透明にしておく。 */
   const casTop = rectOf(SECS.cases).top;
-  setStyle(caseEls.vp, 'opacity', casTop > 2 ? '0' : '1');
+  setStyle(caseEls.vp, 'opacity', (params.pin !== 'off' && casTop > 2) ? '0' : '1');
 
-  const intro = seg(devFin, c.introAt, c.introAt + c.introDur, easeOutQ);
+  /* 固定なしの時は devFin に頼らず、セクションが画面に入った分で出す */
+  const gate = params.pin === 'off' ? clamp01((preP(SECS.cases) - 0.25) / 0.5) : devFin;
+  const intro = seg(gate, c.introAt, c.introAt + c.introDur, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
   /* カードは【カンプのように縦にgap分空けて並んだ状態】でブラー出現し、
      スクロールするとリストごと上へ流れて、上端に着いたものから順に貼り付いて重なる。
      (2026-08-14: 画面外から1枚ずつ飛び込んでくる形をやめてこの形に) */
-  const inK = [0, 1, 2].map(i => seg(devFin, c.cardAt + i * c.cardGap, c.cardAt + i * c.cardGap + c.cardDur, easeOutQ));
+  const inK = [0, 1, 2].map(i => seg(gate, c.cardAt + i * c.cardGap, c.cardAt + i * c.cardGap + c.cardDur, easeOutQ));
 
   const CASE_TOP = caseTop(), CASE_H = caseH();
   const step = CASE_H + c.gap;              // カード1枚ぶんの送り量
