@@ -2446,6 +2446,8 @@ let elapsed = 0;      // 再生中のみ進む累積時間
 let frameSeq = 0;     // フレーム番号。矩形キャッシュの寿命管理に使う
 let lastTs = null;
 let frameDt = 1 / 60; // 直近フレームの実時間 (スクロール慣性補間用・一時停止中も進む)
+/* スクロールの向き (-1=上へ / 1=下へ / 0=止まっている)。逆再生の開始判定に使う */
+let scrollDir = 0, lastScrollY = 0;
 
 /* ドットの現在角度(deg): 緩急ゆらぎつきの周回 */
 function patternDeg(d, i, p) {
@@ -2598,16 +2600,17 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
   /* 見終わったあとはスクロール位置で行ったり来たりできる（上へ戻せば逆再生）。
      章ごとに「送るしきい値(at)」で区切って、その区間を章の進捗に割り当てる */
   if (st.done) {
-    /* 上へ戻す間(preP が 1→0)に、最後の章から順に巻き戻していく。
-       ピンし切っている間は最後まで見た状態のまま */
-    const pr = clamp01(preP(sec));
+    /* 上へ戻る時は、行きと同じ秒数をかけて章を逆順に巻き戻す */
     const last = chapters[chapters.length - 1];
-    if (pr >= 0.999) return last.to;
-    const n = chapters.length;
-    const idx = Math.min(n - 1, Math.floor(pr * n));
-    const ch = chapters[idx];
-    const k = clamp01(pr * n - idx);
-    return ch.from + (ch.to - ch.from) * k;
+    const totalSec = chapters.reduce((a, c) => a + c.sec, 0);
+    const rt = revT(st, totalSec, sec);
+    if (rt >= totalSec) return last.to;
+    let acc = 0;
+    for (const ch of chapters) {
+      if (rt <= acc + ch.sec) return ch.from + (ch.to - ch.from) * clamp01((rt - acc) / ch.sec);
+      acc += ch.sec;
+    }
+    return last.to;
   }
   /* 上から戻ってきた時、セクションの奥にいる間は完成した状態を見せる (playT と同じ考え方) */
   if (!st.started && pScroll > 0.45) return chapters[chapters.length - 1].to;
@@ -2656,7 +2659,7 @@ function canPlay(p) { return p > 0.0005 && p < 0.35; }
 function playT(key, total, canStart, sec, pNow) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
   /* 見終わったあとは、スクロール位置で行ったり来たりできる（上へ戻せば逆再生） */
-  if (st.done) return scrubT(total, sec);
+  if (st.done) return revT(st, total, sec);
   /* ⚠️ 下までスクロールしてから戻ってくると、時計は巻き戻っているのに
      まだ再生開始位置に着いていない＝「何も出ていない空のセクション」が見えてしまう。
      セクションの奥にいる間は【完成した状態】を見せておき、頭に着いたら流し直す */
@@ -2694,14 +2697,30 @@ function playT(key, total, canStart, sec, pNow) {
    下へ動かせば進み、上へ戻せば巻き戻る＝逆再生。固定(sticky)はそのままなので、
    上下どちらへ動いても絵が飛ばず、なめらかにつながる。
    ⚠️ 初回だけは今までどおり「時間で流れる映像」。2回目以降がスクラブになる */
-function scrubT(total, sec) {
-  /* ⚠️ 再生はピン区間の【先頭】(pinP≒0)で終わるので、そこから下へ巻き戻す余地が無い。
-     逆再生に使うのは「セクションが画面下から上がってくる区間(preP)」。
-     ピンし切った所で 1、上へ戻すほど 0 に近づくので、
-     画面1つぶん(約1000px)かけてなめらかに巻き戻る。 */
-  return total * clamp01(preP(sec));
+/* ===== 逆再生 (2026-08-18 指定) =====
+   スクロール量に割り当てると、行きは6.6秒なのに帰りは一瞬で終わってしまう。
+   ご指定どおり【行きと同じ速さ・同じ挙動】にするため、時間で巻き戻す。
+   行きと同じく、逆再生している間はスクロールを止める。 */
+function revT(st, total, sec) {
+  /* 上へ戻ろうとしていて、まだセクションが画面に残っているなら巻き戻しを始める */
+  if (st.rev == null) {
+    if (scrollDir < 0 && preP(sec) < 0.995 && rectOf(sec).bottom > 0) st.rev = elapsed;
+    else return total;
+  }
+  const rt = total - (elapsed - st.rev);
+  if (rt <= 0) {
+    /* 巻き戻しきったら、頭から見られる状態に戻す（下へ動かせばまた順再生） */
+    st.rev = null; st.done = false; st.t0 = null; st.snapTried = false; st.skip = 0;
+    if (st.ch != null) st.ch = 0;
+    if (st.started != null) st.started = false;
+    if (st.endP != null) st.endP = null;
+    return 0;
+  }
+  return rt;
 }
 function anyPlaying() {
+  /* 逆再生している間も、行きと同じくスクロールを止める */
+  for (const k in secPlay) { if (secPlay[k].rev != null) return k; }
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
   /* 章の間 (t0 === null) はロックしない = スクロールで次へ進める */
   return null;
@@ -3930,7 +3949,10 @@ function updateDev(pRaw) {
      ⚠️ 保険として、セクションの下端が画面のどこまで上がってきたかでも進める。
         これはスクロール位置だけで決まるので、早送りしても上下に動かしても必ず同じ値になる。
         遅い方には引っぱられないよう max で合成する */
-  const devTail = clamp01((0.75 - rectOf(SECS.dev).bottom / (innerHeight || 1)) / 0.30);
+  /* ⚠️ 効きはじめが遅いと、セクションが3割ほど抜けた時点でもまだ暗転が半端で、
+     「暗い面の下に、何も出ていない明るい帯」が見える（ヒデさん報告のスクショの状態）。
+     セクションが抜け始める前(下端=画面下端)から効かせ、3割抜けるまでに出しきる */
+  const devTail = clamp01((1.00 - rectOf(SECS.dev).bottom / (innerHeight || 1)) / 0.30);
   const fin = Math.max(finPlay, devTail);
   /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
   devFin = fin;
@@ -4217,6 +4239,10 @@ function updateKV() {
 }
 
 function updateSections() {
+  const nowY = window.scrollY || window.pageYOffset || 0;
+  const dY = nowY - lastScrollY;
+  if (Math.abs(dY) > 0.5) scrollDir = dY < 0 ? -1 : 1;
+  lastScrollY = nowY;
   updateScrollLock();
   clampScroll();
   fastForward();
