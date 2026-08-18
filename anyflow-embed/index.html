@@ -2736,27 +2736,33 @@ function updateScrollLock() {
         位置そのものを毎フレーム押し戻す。
         許すのは【ピン区間の終わりまで】。そこまでなら固定は保たれているので破綻しない。
         再生が終わったセクションは対象外なので、見終わったあとは自由に進める。 */
-/* ===== 現象の記録 (2026-08-18) =====
-   トラックパッドの慣性で「開発者体験のセクションが抜ける」現象が、
-   こちらの環境ではどうしても再現できない。実機で起きた瞬間の状態を残しておき、
-   ブラウザのコンソールで  __anim.diag()  と打つと取り出せるようにする。 */
-const diagLog = [];
+/* ===== 現象の記録 (2026-08-18 作り直し) =====
+   ⚠️ 最初は「こういう状態になったら記録する」という条件付きにしたが、
+      実機で現象が起きているのに1件も記録されなかった＝条件の想定が間違っていた。
+      条件を当てるのをやめて【直近4秒ぶんを無条件で記録】する。
+      現象が出た直後に __anim.diag() を打てば、その瞬間の推移が丸ごと取れる。 */
+const DIAG_MAX = 240;                 /* 約4秒ぶん */
+const diagRing = [];
 function diagWatch() {
-  const sec = SECS.dev; if (!sec) return;
-  const vp = sec.querySelector('.pin-vp'); if (!vp) return;
-  const vh = window.innerHeight || 1;
-  const b = rectOf(vp).bottom;
-  const title = caseEls && caseEls.title ? parseFloat(caseEls.title.style.opacity || '1') : 1;
-  /* 「開発者体験の面が途中まで抜けているのに、導入事例が出ていない」瞬間だけ拾う */
-  if (b > 80 && b < vh - 80 && title < 0.3 && diagLog.length < 20) {
-    const st = secPlay.dev || {};
-    diagLog.push({
-      y: Math.round(window.scrollY || 0), vh, panelBottom: Math.round(b),
-      title: +title.toFixed(2), fin: +devFin.toFixed(2), drive: params.drive,
-      dev: { t0: st.t0 == null ? null : 1, done: !!st.done, started: !!st.started, ch: st.ch, endP: st.endP == null ? null : +st.endP.toFixed(2) },
-      devTop: Math.round(rectOf(sec).top), devH: sec.offsetHeight,
-    });
+  const vh = window.innerHeight || 1, vw = window.innerWidth || 1;
+  const row = { y: Math.round(window.scrollY || 0), vh };
+  for (const k of ['results', 'dev', 'cases']) {
+    const el = SECS[k]; if (!el) continue;
+    const r = rectOf(el);
+    const vp = el.querySelector('.pin-vp');
+    row[k] = Math.round(r.top) + '/' + Math.round(r.bottom) + (vp ? ':' + Math.round(rectOf(vp).bottom) : '');
   }
+  row.fin = +devFin.toFixed(2);
+  row.drive = params.drive === 'scroll' ? 'S' : 'T';
+  const t = caseEls && caseEls.title;
+  row.title = t ? +(parseFloat(getComputedStyle(t).opacity) || 0).toFixed(2) : null;
+  const st = secPlay.dev || {};
+  row.dev_st = (st.t0 == null ? '-' : 'P') + (st.done ? 'D' : '') + (st.started ? 'S' : '') + (st.ch != null ? st.ch : '');
+  /* 画面の下寄りに何が描かれているかを記録する（空っぽかどうかの決め手） */
+  const e = document.elementFromPoint(Math.round(vw / 2), Math.round(vh * 0.78));
+  row.at78 = e ? String(e.id || e.className || e.tagName).slice(0, 18) : 'なし';
+  diagRing.push(row);
+  if (diagRing.length > DIAG_MAX) diagRing.shift();
 }
 
 function forceScroll(y) {
@@ -4563,8 +4569,11 @@ window.__anim = {
   startResults() { resT0 = elapsed; resT = -1; renderFrame(); },
   getState() { return { elapsed, params }; },
   /* 実機で起きた「セクションが抜ける」瞬間の記録を取り出す */
-  diag() { return diagLog.length ? diagLog : '記録なし（現象が起きていません）'; },
-  diagClear() { diagLog.length = 0; return 'クリアしました'; },
+  /* 現象が出た直後に打つと、直近4秒ぶんの推移が出る。
+     読み方: 各セクションは「上端/下端:固定枠の下端」。dev_st は P=再生中 D=完了 S=開始済 と章番号 */
+  diag(n) { return diagRing.slice(-(n || 60)); },
+  diagText(n) { return diagRing.slice(-(n || 60)).map(r =>
+    `y${r.y} vh${r.vh} ${r.drive} res${r.results} dev${r.dev} cas${r.cases} fin${r.fin} ttl${r.title} ${r.dev_st} @${r.at78}`).join('\n'); },
   /* 検証用: いま何が再生中でスクロールが止まっているか */
   lockState() { return { locked: scrollLocked, playing: anyPlaying(), sections: JSON.parse(JSON.stringify(secPlay)) }; },
 };
