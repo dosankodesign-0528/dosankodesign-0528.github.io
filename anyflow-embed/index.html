@@ -237,6 +237,17 @@
   /* 固定追従なし: 貼りつけをやめ、重ねも解除する（普通に上から下へ流れる） */
   html.nopin .pin-vp { position: relative; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
+  /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
+  html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #f2f2f2; }
+  html.nopin #dev .np-vp { background: #161616; }
+  /* 章①用の静止モック（複製）。ホバーも動きも持たない見せ物 */
+  /* 章①用の静止モック。JS で動かさないので、CSS で中央に置いて見出しの下に収める */
+  html.nopin .np-mock {
+    position: absolute; left: 50%; top: 300px; width: 840.6px; height: 504.37px;
+    transform: translateX(-50%) scale(0.905); transform-origin: 50% 0;
+    pointer-events: none;
+  }
+  html.nopin .np-mock .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
   .pin-stage {
     position: absolute;
     left: 0;
@@ -2712,8 +2723,10 @@ function playT(key, total, canStart, sec, pNow) {
     return Math.min(t, total);
   }
   /* スクロール駆動: 位置がそのまま再生位置になる。
-     手を止めれば絵も止まり、上へ戻せばそのまま巻き戻る（逆再生の実装が要らない） */
-  if (params.drive === 'scroll') {
+     手を止めれば絵も止まり、上へ戻せばそのまま巻き戻る（逆再生の実装が要らない）
+     ⚠️【2026-08-18 指定】実績だけは例外。スクロールに連動させず、
+        ビューポート中央に来た段階で時間再生する（数字のスロットが噛み合わないため） */
+  if (params.drive === 'scroll' && key !== 'results') {
     return total * clamp01((pNow == null ? pinP(sec) : pNow) / Math.max(0.1, params.sections.common.driveWin));
   }
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
@@ -2759,8 +2772,13 @@ function playT(key, total, canStart, sec, pNow) {
    上下どちらへ動いても絵が飛ばず、なめらかにつながる。
    ⚠️ 初回だけは今までどおり「時間で流れる映像」。2回目以降がスクラブになる */
 function anyPlaying() {
-  /* スクロール駆動と固定なしの時は、そもそも止めない */
-  if (params.drive === 'scroll' || params.pin === 'off') return null;
+  /* スクロール駆動と固定なしの時は、そもそも止めない。
+     ただしスクロール駆動でも実績だけは時間再生なので、その間は止める */
+  if (params.pin === 'off') return null;
+  if (params.drive === 'scroll') {
+    const r = secPlay.results;
+    return (r && r.t0 !== null && !r.done) ? 'results' : null;
+  }
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
   /* 章の間 (t0 === null) はロックしない = スクロールで次へ進める */
   return null;
@@ -2807,6 +2825,106 @@ function diagWatch() {
   row.at78 = e ? String(e.id || e.className || e.tagName).slice(0, 18) : 'なし';
   diagRing.push(row);
   if (diagRing.length > DIAG_MAX) diagRing.shift();
+}
+
+/* ===== 固定追従なしモードの縦積みレイアウト (2026-08-18 指定) =====
+   貼りつけ前提の演出（移動・拡大・章送り）をやめ、ブロックを縦に積んで
+   「画面に入ったらブラーで出現」だけにする。
+   ⚠️ 要素は複製せず【移動】する。id が変わらないのでアニメ側のコードはそのまま動く。
+      章①のモックだけは、章②のカードと共有できないので静止した複製を置く。 */
+let npState = null;
+function buildNoPin(on) {
+  if (on === !!npState) return;
+  if (on) {
+    npState = [];
+    const mk = (sec, ids, extra) => {
+      const vp = document.createElement('div');
+      vp.className = 'pin-vp np-vp';
+      const stg = document.createElement('div');
+      stg.className = 'pin-stage';
+      vp.appendChild(stg);
+      sec.insertBefore(vp, sec.firstElementChild);
+      const moved = [];
+      for (const id of ids) {
+        const n = document.getElementById(id);
+        if (!n) continue;
+        moved.push({ node: n, parent: n.parentNode, next: n.nextSibling });
+        stg.appendChild(n);
+      }
+      if (extra) extra(stg);
+      npState.push({ vp, moved });
+    };
+    /* Our Vision: 上のブロックにキーメッセージ、下のブロックに軌道＋2つの価値 */
+    mk(SECS.vision, ['visLabel', 'visL1', 'visL2']);
+    /* 開発者体験: 上のブロックに章①の見出し＋静止モック、下のブロックに章② */
+    mk(SECS.dev, ['devH1'], stg => {
+      const src = document.querySelector('#devMock .dm-panel');
+      if (!src) return;
+      const box = document.createElement('div');
+      box.className = 'np-mock';
+      const cp = src.cloneNode(true);
+      cp.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+      box.appendChild(cp);
+      stg.appendChild(box);
+    });
+  } else {
+    npState.forEach(b => {
+      b.moved.forEach(m => m.parent.insertBefore(m.node, m.next));
+      b.vp.remove();
+    });
+    npState = null;
+  }
+}
+
+/* 固定なしモードの見え方。updateXxx のあとに走って上書きする。
+   ・ブロック単位で「画面に入ったらブラーで出現」
+   ・キーメッセージと章①の見出しは、本来の演出だと消えてしまうので出したままにする */
+function npReveal(el) {
+  const r = rectOf(el), vh = window.innerHeight || 1;
+  return easeOutQ(clamp01((vh - r.top) / (vh * 0.62)));
+}
+function renderNoPin() {
+  if (!npState) return;
+  /* ⚠️ ここは setStyle を使わないこと。
+     updateXxx 側は el.style.opacity に直接代入しているため、setStyle のキャッシュが
+     「もう '1' を書いた」と誤認して書き込みを飛ばし、上書きが空振りする
+     （2026-08-18 にこれで1回ハマった）。 */
+  document.querySelectorAll('.np-vp, html.nopin .pin-vp').forEach(vp => {
+    const stg = vp.querySelector('.pin-stage');
+    if (!stg) return;
+    const k = npReveal(vp);
+    stg.style.opacity = k.toFixed(3);
+    stg.style.filter = k >= 1 ? '' : `blur(${((1 - k) * 14).toFixed(2)}px)`;
+  });
+  /* 割らずに置いたままにする要素（ブロック側のブラーで出す）。
+     子要素にも個別に opacity / transform が入るので、中まで戻すこと */
+  for (const id of ['visLabel', 'visL1', 'visL2', 'devH1', 'devH2']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.style.transform = 'none';
+    el.style.opacity = '1';
+    el.style.filter = '';
+    el.querySelectorAll('*').forEach(c => {
+      c.style.opacity = '1';
+      c.style.transform = 'none';
+      c.style.filter = '';
+      c.style.clipPath = 'none';
+    });
+  }
+  /* 実績の暗幕は使わない（重ねが無いので暗転させる必要がない）。
+     これを消さないと実績のブロックが真っ暗になる */
+  if (resEls && resEls.dark) resEls.dark.style.opacity = '0';
+  /* 実績の中身も出したままにする。
+     ⚠️ 再生前の状態で el.style.opacity = 0 が直接入るのに対し、出現側は setStyle
+        （キャッシュ付き）で書くため、噛み合わずに 0 のまま残ることがある */
+  if (resEls) for (const el of [resEls.main, resEls.img, resEls.stats, resEls.text, resEls.head]) {
+    if (!el) continue;
+    el.style.opacity = '1';
+    el.style.filter = '';
+    el.style.transform = 'none';
+  }
+  /* 開発者体験の「白へ戻す」板も使わない（ブロックが独立しているため） */
+  if (devBg2) devBg2.style.opacity = '0';
 }
 
 function forceScroll(y) {
@@ -3503,18 +3621,14 @@ function updateResults(p) {
     /* 【2026-08-17 指定】スロットは「数字が実際にビューポートに入ってから」回り出す。
        セクションの再生開始を起点にすると、数字がまだ画面の下にいるうちに回り終わることがある。
        いちど入ったら覚えておき、上に大きく戻った時だけ巻き戻す（リプレイ用） */
-    if (params.drive === 'scroll') {
-      /* スクロール駆動では、数字もスクロール位置で回す（時間と混ざると噛み合わない） */
-      renderSlots(t);
-    } else {
-      const nr = rectOf(nums);
-      if (slotT0 === null) {
-        if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
-      } else if (nr.top > innerHeight * 1.2) {
-        slotT0 = null;
-      }
-      renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
+    /* 数字は常に「画面に入ってから時間で回す」（実績は駆動方式に関わらず時間再生） */
+    const nr = rectOf(nums);
+    if (slotT0 === null) {
+      if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
+    } else if (nr.top > innerHeight * 1.2) {
+      slotT0 = null;
     }
+    renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
     rv(resEls.stats, 1, 0);
     rv(resEls.text,  1, 0);
     /* 見出しと同時に左の画像もブラーで出る */
@@ -4405,6 +4519,7 @@ function updateSections() {
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
   updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', prog(SECS.results)));
+  if (params.pin === 'off') renderNoPin();
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -4705,8 +4820,11 @@ function fit() {
      スクロール駆動の時は尺を driveLen 倍に伸ばして、進み方をゆったりにする */
   const noPin = params.pin === 'off';
   document.documentElement.classList.toggle('nopin', noPin);
+  buildNoPin(noPin);
   const lenMul = params.drive === 'scroll' ? Math.max(1, params.sections.common.driveLen) : 1;
-  const H = key => (noPin ? 100 : Math.round(params.sections[key].lenVh * lenMul)) + 'vh';
+  /* 固定なしでは 1ブロック=100vh。ビジョンと開発者体験は2ブロック積むので 200vh 必要 */
+  const NP_BLOCKS = { vision: 2, dev: 2, results: 1, cases: 1 };
+  const H = key => (noPin ? 100 * NP_BLOCKS[key] : Math.round(params.sections[key].lenVh * lenMul)) + 'vh';
   SECS.vision.style.height = H('vision');
   SECS.dev.style.height = H('dev');
   SECS.cases.style.height = H('cases');
