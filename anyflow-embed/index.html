@@ -2103,9 +2103,6 @@ const DEFAULTS = {
       /* 再生中にホイールを回した時の早送り。0 で早送りなし(閉じ込められるので非推奨) */
       ffMax: 0.6,        // 上限。0.6 なら最大 1.6倍速まで (2026-08-18: さらに抑えた)
       ffGain: 700,       // 効きはじめの緩さ。大きいほどゆるやかに効く
-      /* 見終わったあと、スクロールのどこまでで再生しきるか。
-         小さいほど少しのスクロールで一気に進む(=巻き戻しも速い) */
-      scrubEnd: 0.35,
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2601,14 +2598,16 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
   /* 見終わったあとはスクロール位置で行ったり来たりできる（上へ戻せば逆再生）。
      章ごとに「送るしきい値(at)」で区切って、その区間を章の進捗に割り当てる */
   if (st.done) {
-    for (let i = chapters.length - 1; i >= 0; i--) {
-      const ch = chapters[i];
-      if (pScroll >= ch.at || i === 0) {
-        const end = chapters[i + 1] ? chapters[i + 1].at : Math.min(0.98, ch.at + 0.43);
-        const k = clamp01((pScroll - ch.at) / Math.max(0.01, end - ch.at));
-        return ch.from + (ch.to - ch.from) * k;
-      }
-    }
+    /* 上へ戻す間(preP が 1→0)に、最後の章から順に巻き戻していく。
+       ピンし切っている間は最後まで見た状態のまま */
+    const pr = clamp01(preP(sec));
+    const last = chapters[chapters.length - 1];
+    if (pr >= 0.999) return last.to;
+    const n = chapters.length;
+    const idx = Math.min(n - 1, Math.floor(pr * n));
+    const ch = chapters[idx];
+    const k = clamp01(pr * n - idx);
+    return ch.from + (ch.to - ch.from) * k;
   }
   /* 上から戻ってきた時、セクションの奥にいる間は完成した状態を見せる (playT と同じ考え方) */
   if (!st.started && pScroll > 0.45) return chapters[chapters.length - 1].to;
@@ -2657,7 +2656,7 @@ function canPlay(p) { return p > 0.0005 && p < 0.35; }
 function playT(key, total, canStart, sec, pNow) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
   /* 見終わったあとは、スクロール位置で行ったり来たりできる（上へ戻せば逆再生） */
-  if (st.done) return scrubT(total, pNow);
+  if (st.done) return scrubT(total, sec);
   /* ⚠️ 下までスクロールしてから戻ってくると、時計は巻き戻っているのに
      まだ再生開始位置に着いていない＝「何も出ていない空のセクション」が見えてしまう。
      セクションの奥にいる間は【完成した状態】を見せておき、頭に着いたら流し直す */
@@ -2695,9 +2694,12 @@ function playT(key, total, canStart, sec, pNow) {
    下へ動かせば進み、上へ戻せば巻き戻る＝逆再生。固定(sticky)はそのままなので、
    上下どちらへ動いても絵が飛ばず、なめらかにつながる。
    ⚠️ 初回だけは今までどおり「時間で流れる映像」。2回目以降がスクラブになる */
-function scrubT(total, pNow) {
-  const e = Math.max(0.05, params.sections.common.scrubEnd);
-  return total * clamp01((pNow == null ? 1 : pNow) / e);
+function scrubT(total, sec) {
+  /* ⚠️ 再生はピン区間の【先頭】(pinP≒0)で終わるので、そこから下へ巻き戻す余地が無い。
+     逆再生に使うのは「セクションが画面下から上がってくる区間(preP)」。
+     ピンし切った所で 1、上へ戻すほど 0 に近づくので、
+     画面1つぶん(約1000px)かけてなめらかに巻き戻る。 */
+  return total * clamp01(preP(sec));
 }
 function anyPlaying() {
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
