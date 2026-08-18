@@ -1581,18 +1581,18 @@
             </div>
             <!-- 空の状態から、入力→送信→履歴に反映→AIが返答、の順に動く -->
             <div class="dm-history">
-              <div class="dm-msg dm-user" id="dmUserMsg"><p id="dmUserText"></p></div>
-              <div class="dm-msg dm-bot" id="dmThink">
+              <div class="dm-msg dm-user" id="dmUserMsg"><p></p></div>
+              <div class="dm-msg dm-bot dm-thinkmsg" id="dmThink">
                 <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
                 <div class="lines dm-think-b"><i></i><i></i><i></i></div>
               </div>
-              <div class="dm-msg dm-bot" id="dmBotMsg">
+              <div class="dm-msg dm-bot dm-botmsg" id="dmBotMsg">
                 <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
-                <p id="dmBotText"></p>
+                <p></p>
               </div>
             </div>
             <div class="dm-input-c">
-              <span class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span id="dmPlaceholder">Ask anything...</span></span>
+              <span class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span class="dm-ph" id="dmPlaceholder">Ask anything...</span></span>
               <span class="dm-send"><img src="assets/mock/arrow-up.svg" alt=""></span>
             </div>
           </div>
@@ -2832,7 +2832,7 @@ function diagWatch() {
    「画面に入ったらブラーで出現」だけにする。
    ⚠️ 要素は複製せず【移動】する。id が変わらないのでアニメ側のコードはそのまま動く。
       章①のモックだけは、章②のカードと共有できないので静止した複製を置く。 */
-let npState = null;
+let npState = null, npMock = null;
 function buildNoPin(on) {
   if (on === !!npState) return;
   if (on) {
@@ -2858,21 +2858,28 @@ function buildNoPin(on) {
     mk(SECS.vision, ['visLabel', 'visL1', 'visL2']);
     /* 開発者体験: 上のブロックに章①の見出し＋静止モック、下のブロックに章② */
     mk(SECS.dev, ['devH1'], stg => {
+      /* 章①はエディタ画面なので、その状態で写しを取る */
+      dmBuildScreen('editor');
       const src = document.querySelector('#devMock .dm-panel');
       if (!src) return;
       const box = document.createElement('div');
       box.className = 'np-mock';
       const cp = src.cloneNode(true);
+      /* id が重複すると本物の取得が壊れるので落とす。参照は class で拾い直す */
       cp.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+      cp.classList.remove('is-term', 'is-sdk', 'is-blank');
       box.appendChild(cp);
       stg.appendChild(box);
+      /* この写しにも本物と同じアニメを流す（2026-08-18 ヒデさん指定）。
+         ブロックが画面に入った時が起点。出ていったら巻き戻して流し直す */
+      npMock = { box, vp: stg.parentElement, refs: dmRefs(cp), t0: null };
     });
   } else {
     npState.forEach(b => {
       b.moved.forEach(m => m.parent.insertBefore(m.node, m.next));
       b.vp.remove();
     });
-    npState = null;
+    npState = null; npMock = null;
   }
 }
 
@@ -2925,6 +2932,21 @@ function renderNoPin() {
   }
   /* 開発者体験の「白へ戻す」板も使わない（ブロックが独立しているため） */
   if (devBg2) devBg2.style.opacity = '0';
+  /* 見出しは renderNoPin で出したままにしているので、あたり判定も戻す
+     （devHeading が透明時に pointerEvents:none を入れるため） */
+  if (devEls && devEls.h1) devEls.h1.style.pointerEvents = '';
+  /* 章①のモック（写し）: ブロックが画面に入ったら自動で流す（2026-08-18 ヒデさん指定） */
+  if (npMock && npMock.refs.lines.length) {
+    const vis = npReveal(npMock.vp);
+    if (vis > 0.35) {
+      if (npMock.t0 === null) npMock.t0 = elapsed;
+      npMock.refs.panel.classList.remove('is-blank');
+      devMockContent('anim', elapsed - npMock.t0, 'editor', npMock.refs);
+    } else {
+      npMock.t0 = null;
+      devMockContent('empty', 0, 'editor', npMock.refs);
+    }
+  }
 }
 
 function forceScroll(y) {
@@ -3214,6 +3236,11 @@ let visMoveT0 = null;    // ワンスクロールで左下へ動き出した時�
 function updateVision(p) {
   const c = params.sections.vision;
   const B = c.blur;
+  /* 【2026-08-18 ヒデさん指定】固定追従なしの時は
+     「後ろから拡大 → 左下へ移動」をやめ、最初から所定の位置（左下・実寸）で組み上がった
+     状態にする。出現はブロックごとのブラー（renderNoPin）に任せる。
+     ドットだけは止まらずに回り続ける */
+  const noPin = params.pin === 'off';
 
   /* ⚠️ 2026-08-14 まで、このセクションは【全部が時間駆動】だった。
      つまりピン留めされている1.6画面ぶん、いくらスクロールしても進捗が1ミリも動かず、
@@ -3268,9 +3295,9 @@ function updateVision(p) {
     : id === 'late' ? easeIO(clamp01((x - 0.28) / 0.72))       /* 後半で動く */
     : id === 'early'? easeOutQ(clamp01(x / 0.62))              /* 前半で終わる */
     : x;
-  const mv  = curve(MP.posE, mvRaw);
-  const mvS = curve(MP.sclE, mvRaw);
-  const ex = mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6)));
+  const mv  = noPin ? 1 : curve(MP.posE, mvRaw);
+  const mvS = noPin ? 1 : curve(MP.sclE, mvRaw);
+  const ex = noPin ? 0 : (mvT < 0 ? 0 : easeIO(clamp01(mvT / (c.moveDur * 0.6))));
   /* 【2026-08-15】上下に分かれたあと、その場で静止せずに
      「慣性が効いたようにふわーっと」流れ続けながら消える。
      spT = 分かれ始めてからの秒数。drift は指数で減速するので、離れるほど遅くなる */
@@ -3333,12 +3360,12 @@ function updateVision(p) {
   /* 軌道グラフィック: 上下に分かれた文字の間に小さくブラー出現(自動) → ワンスクロールで左下へ＋実寸。
      CSSのscaleで拡大するとラスタライズ済みの絵が引き伸ばされて粗くなるため、
      楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
-  const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));
+  const mi = noPin ? 1 : easeOutQ(clamp01((A - miniAt) / c.miniDur));
   /* 【2026-08-17 指定】ドットは軌道が出たあと、1つずつ順に出てくる。
      以前は軌道が出た時点でもう6個そろっていた。
      ⚠️ A<0（まだ再生していない）ときは 1 に戻す。KV でも同じ SVG を使っているため */
   for (let i = 0; i < dotK.length; i++) {
-    dotK[i] = A < 0 ? 1
+    dotK[i] = (noPin || A < 0) ? 1
       : easeOutQ(clamp01((A - (miniAt + c.dotsInAt + i * c.dotsInStagger)) / Math.max(0.01, c.dotsInDur)));
   }
   /* 画面幅に合わせて軌道も拡大する。縦にはみ出さない範囲で頭打ちにする */
@@ -3399,14 +3426,17 @@ function updateVision(p) {
   const totalRot = 360 * c.spinLaps * params.direction;
   const v = totalRot / Math.max(0.01, brakeStart + brake / n1);
   let rot = 0;
-  if (S > 0) {
+  /* 固定なし: 減速せずに等速で回り続ける（d.deg - totalRot + rot で相殺されるので
+     totalRot を足し戻してから時間で回す）*/
+  if (noPin) rot = totalRot + v * elapsed;
+  else if (S > 0) {
     if (S < brakeStart) rot = v * S;
     else {
       const u = clamp01((S - brakeStart) / brake);
       rot = v * brakeStart + v * brake * (1 - Math.pow(1 - u, n1)) / n1;
     }
   }
-  const dotIn = S < 0 ? 0 : clamp01(S / 0.9);
+  const dotIn = noPin ? 1 : (S < 0 ? 0 : clamp01(S / 0.9));
   PF_DOTS.forEach((d, i) => {
     const el = visEls.dots[i];
     el.style.opacity = dotIn.toFixed(3);
@@ -3422,7 +3452,7 @@ function updateVision(p) {
      以前は移動が終わった時点(mvT - moveDur)で出ていて、ドットはまだ回っていた */
   /* 左下に着いたら Platform → プラットフォーム → 2つの価値 → Point01 → Point02。
      ドットはこの間ずっと回っている */
-  const C = mvT < 0 ? -99 : mvT - c.moveDur;
+  const C = noPin ? 99 : (mvT < 0 ? -99 : mvT - c.moveDur);
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
@@ -3431,7 +3461,7 @@ function updateVision(p) {
   rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X, c.p1Y);
   rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
-  const D = S < 0 ? -99 : S - (brakeStart + brake);
+  const D = noPin ? 99 : (S < 0 ? -99 : S - (brakeStart + brake));
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
 }
 
@@ -4006,37 +4036,54 @@ dmFillSdkList('dmSdkList2');
 /* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
 const DM_REPLY = 'Slack と kintone をつなぐフローを作成します。トリガーと変換処理まで一式生成しますね。';
-const dmEls = {
-  typed: document.getElementById('dmTyped'),
-  cursor: document.getElementById('dmCursor'),
-  ph: document.getElementById('dmPlaceholder'),
-  send: document.querySelector('.dm-send'),
-  userMsg: document.getElementById('dmUserMsg'),
-  userText: document.getElementById('dmUserText'),
-  botMsg: document.getElementById('dmBotMsg'),
-  botText: document.getElementById('dmBotText'),
-  think: document.getElementById('dmThink'),
-};
+/* ⚠️ id ではなく class で拾う（写しでも同じコードが使えるようにするため）。
+   dmRefs は関数宣言なので、下で定義していてもここから呼べる */
+const dmEls = dmRefs(document.getElementById('dmPanel')).els;
 
 function dmClearCode() {
   dmLineEls.forEach(l => { l.style.clipPath = 'inset(0 100% 0 0)'; l.style.opacity = 1; l.style.filter = ''; });
 }
 
-function devMockContent(mode, t, screen) {
+/* モック1台ぶんの参照をまとめて拾う。id ではなく class で拾うので【写し】でも使える。
+   固定追従なしモードでは章①用にもう1台（写し）を置き、そこにも同じアニメを流す */
+function dmRefs(root) {
+  const q = sel => root.querySelector(sel);
+  const load = q('.dm-load');
+  const code = q('.dm-code');
+  return {
+    els: {
+      typed: q('.dm-typed'), cursor: q('.dm-cursor'), ph: q('.dm-ph'),
+      send: q('.dm-send'), userMsg: q('.dm-user'), userText: q('.dm-user p'),
+      botMsg: q('.dm-botmsg'), botText: q('.dm-botmsg p'), think: q('.dm-thinkmsg'),
+    },
+    lines: code ? [...code.children] : [],
+    load, sks: load ? [...load.children] : [],
+    sdkRows: [...root.querySelectorAll('.dm-sdk-list > *')],
+    panel: root.classList.contains('dm-panel') ? root : q('.dm-panel'),
+  };
+}
+
+/* R を渡すとそのモックを動かす。省略時は本物（#devMock）を動かす */
+function devMockContent(mode, t, screen, R) {
+  const E = R ? R.els : dmEls;
+  const LINES = R ? R.lines : dmLineEls;
+  const LOAD = R ? R.load : dmLoadRoot;
+  const SKS = R ? R.sks : dmSkEls;
+  const SDKR = R ? R.sdkRows : dmSdkRowEls;
   const tm = DM_TIMING[screen] || DM_TIMING.editor;
   if (mode === 'empty') {
-    dmEls.typed.textContent = '';
-    dmEls.ph.style.display = '';
-    dmEls.cursor.style.opacity = 0;
-    dmEls.userMsg.style.opacity = 0;
-    dmEls.botMsg.style.opacity = 0;
-    dmEls.userText.textContent = '';
-    dmEls.botText.textContent = '';
-    dmEls.send.classList.remove('is-hit');
-    dmEls.think.style.display = 'none';
-    dmLoadRoot.style.opacity = 0;
-    dmSdkRowEls.forEach(e => { e.style.opacity = 0; });
-    dmClearCode();
+    E.typed.textContent = '';
+    E.ph.style.display = '';
+    E.cursor.style.opacity = 0;
+    E.userMsg.style.opacity = 0;
+    E.botMsg.style.opacity = 0;
+    E.userText.textContent = '';
+    E.botText.textContent = '';
+    E.send.classList.remove('is-hit');
+    E.think.style.display = 'none';
+    LOAD.style.opacity = 0;
+    SDKR.forEach(e => { e.style.opacity = 0; });
+    LINES.forEach(l => { l.style.clipPath = 'inset(0 100% 0 0)'; l.style.opacity = 1; l.style.filter = ''; });
     return;
   }
   const T = t % tm.loop;
@@ -4054,37 +4101,37 @@ function devMockContent(mode, t, screen) {
 
     const sent = T >= sendAt;
     const n = sent ? 0 : Math.floor(clamp01((T - typeFrom) / (typeTo - typeFrom)) * DM_TEXT.length);
-    dmEls.typed.textContent = DM_TEXT.slice(0, n);
-    dmEls.ph.style.display = n > 0 ? 'none' : '';
-    dmEls.cursor.style.opacity = (!sent && T > typeFrom - 0.1 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
-    dmEls.send.classList.toggle('is-hit', T >= sendAt && T < sendAt + 0.22);
+    E.typed.textContent = DM_TEXT.slice(0, n);
+    E.ph.style.display = n > 0 ? 'none' : '';
+    E.cursor.style.opacity = (!sent && T > typeFrom - 0.1 && (T * 1.8) % 1 < 0.55) ? 1 : 0;
+    E.send.classList.toggle('is-hit', T >= sendAt && T < sendAt + 0.22);
 
-    dmEls.userMsg.style.opacity = clamp01((T - postAt) / 0.3).toFixed(3);
-    dmEls.userText.textContent = T >= postAt ? DM_TEXT : '';
+    E.userMsg.style.opacity = clamp01((T - postAt) / 0.3).toFixed(3);
+    E.userText.textContent = T >= postAt ? DM_TEXT : '';
 
     const thinkOn = T > postAt + 0.35 && T < thinkTo;
-    dmEls.think.style.display = thinkOn ? 'flex' : 'none';
-    dmEls.think.querySelectorAll('.dm-think-b i').forEach((d, i) => {
+    E.think.style.display = thinkOn ? 'flex' : 'none';
+    E.think.querySelectorAll('.dm-think-b i').forEach((d, i) => {
       d.style.opacity = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(T * 7 - i * 1.1))).toFixed(2);
     });
-    dmEls.botMsg.style.opacity = clamp01((T - thinkTo) / 0.25).toFixed(3);
+    E.botMsg.style.opacity = clamp01((T - thinkTo) / 0.25).toFixed(3);
     const rn = Math.floor(clamp01((T - thinkTo) / (replyTo - thinkTo)) * DM_REPLY.length);
-    dmEls.botText.textContent = T >= thinkTo ? DM_REPLY.slice(0, rn) : '';
+    E.botText.textContent = T >= thinkTo ? DM_REPLY.slice(0, rn) : '';
   } else {
-    dmEls.typed.textContent = '';
-    dmEls.ph.style.display = '';
-    dmEls.cursor.style.opacity = 0;
-    dmEls.userMsg.style.opacity = 0;
-    dmEls.botMsg.style.opacity = 0;
-    dmEls.think.style.display = 'none';
+    E.typed.textContent = '';
+    E.ph.style.display = '';
+    E.cursor.style.opacity = 0;
+    E.userMsg.style.opacity = 0;
+    E.botMsg.style.opacity = 0;
+    E.think.style.display = 'none';
   }
 
   /* ① ローディング: スケルトンに光が走る */
   const loadIn = clamp01((T - tm.load) / 0.5);
   const burstAt = tm.load + tm.loadDur + tm.holdT;
   const loadOut = clamp01((T - (burstAt - 0.35)) / 0.3);
-  dmLoadRoot.style.opacity = (loadIn * (1 - loadOut)).toFixed(3);
-  dmSkEls.forEach((b, i) => {
+  LOAD.style.opacity = (loadIn * (1 - loadOut)).toFixed(3);
+  SKS.forEach((b, i) => {
     /* ゆっくり光が横切る (0.55周/秒) */
     const ph = (((T - tm.load) * 0.55 - i * 0.1) % 1 + 1) % 1;
     b.style.backgroundPositionX = (170 - ph * 240).toFixed(1) + '%';
@@ -4092,7 +4139,7 @@ function devMockContent(mode, t, screen) {
 
   /* SDK画面: 右のリファレンス一覧がコードと同じテンポで並んでいく */
   const sdkOn = screen === 'sdk';
-  dmSdkRowEls.forEach((el, i) => {
+  SDKR.forEach((el, i) => {
     if (!sdkOn) { el.style.opacity = 0; return; }
     const k = clamp01((T - (tm.load + tm.loadDur + tm.holdT) - i * 0.12) / 0.35);
     el.style.opacity = k.toFixed(3);
@@ -4101,7 +4148,7 @@ function devMockContent(mode, t, screen) {
 
   /* ② 溜め → ③ 一気に書き出す */
   const pat = params.patterns.mock;
-  dmLineEls.forEach((line, i) => {
+  LINES.forEach((line, i) => {
     const at = burstAt + i * tm.step;
     const k = clamp01((T - at) / tm.dur);
     if (k <= 0) { line.style.clipPath = 'inset(0 100% 0 0)'; line.style.filter = ''; line.style.opacity = 1; return; }
@@ -4147,7 +4194,12 @@ function updateDev(pRaw) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
   /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
-  const p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
+  let p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
+  const noPin = params.pin === 'off';
+  /* 【2026-08-18 ヒデさん指定】固定追従なしの時は章送りをやめ、
+     「中央から出てきて左に寄る」動きも省いて、最初から3枚が並んだ完成形で置く。
+     出現はブロックごとのブラー（renderNoPin）に任せる */
+  if (noPin) p = 1;
   const patStack = params.patterns.devStack !== 'off';   /* 後ろに2枚控えるスタック */
 
   /* 【2026-08-15】実績が暗転しはじめるのと同時にモックが下から出てくるようにする。
@@ -4156,7 +4208,7 @@ function updateDev(pRaw) {
      こうしないと、上がってくる途中の開発者体験が実績を下から覆ってしまう。
      定位置(top:0)に着いた時にはもう実績側の暗幕が真っ黒なので、切り替わりは見えない */
   const devTop = rectOf(SECS.dev).top;
-  devEls.vp.style.opacity = devTop > 2 ? '0' : '1';
+  devEls.vp.style.opacity = (noPin || devTop <= 2) ? '1' : '0';
   const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
   const in1  = seg(p, ...DEV_P.h1, easeOutQ);
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
@@ -4190,9 +4242,9 @@ function updateDev(pRaw) {
      それ自体が【黒→白とスライドを同時進行させる】原因だった（ヒデさん報告）。
      暗転はピン区間の中だけで完結させ、スライドは暗転が終わってから始める。
      （下へ抜けさせない制御は clampScroll 側で行う） */
-  const fin = params.pin === 'off'
-    /* 固定なし: 重ねが無いので、セクションが上へ抜けていく分で暗転させる */
-    ? clamp01((1.05 - rectOf(SECS.dev).bottom / (innerHeight || 1)) / 0.45)
+  const fin = noPin
+    /* 固定なし: 導入事例と重ねていないので、暗転で受け渡す必要がない */
+    ? 0
     : params.drive === 'scroll'
       /* ⚠️ 章の進行は pinP 0→driveWin(既定0.8) で終わる。
          それより早く暗転を始めると、章②の見出しが出きる前に消され始める
@@ -4297,11 +4349,14 @@ function updateDev(pRaw) {
   /* ---- モック内アニメ ----
      【2026-08-15】「文字が出るまでアニメは始まらない／中身も空っぽ」指定。
      見出しが出そろってから走らせ、それまでは枠だけ (AI Assistant やアイコンも隠す) */
-  const textShown = p < DEV_P.out1[0] ? in1 >= 0.99 : in2 >= 0.99;
+  /* 固定なし: 章②のブロックが画面に入ってから流す（入る前は空、出たら巻き戻す） */
+  const textShown = noPin ? npReveal(devEls.vp) > 0.35
+    : (p < DEV_P.out1[0] ? in1 >= 0.99 : in2 >= 0.99);
+  if (noPin && !textShown) { devStarted = false; devHoldT0 = null; devScreenT0 = null; }
   if (textShown) devStarted = true;
   devEls.panel.classList.toggle('is-blank', !devStarted);
   if (devHoldT0 === null && devStarted) devHoldT0 = elapsed;
-  if (devScreenT0 === null) devScreenT0 = elapsed;
+  if (devScreenT0 === null && devStarted) devScreenT0 = elapsed;
   if (!devStarted) devMockContent('empty', 0, screen);
   else devMockContent('anim', elapsed - (screen === 'editor' ? devHoldT0 : devScreenT0), screen);
 }
