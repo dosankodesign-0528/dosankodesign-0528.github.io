@@ -2101,8 +2101,8 @@ const DEFAULTS = {
     common: {
       smooth: 3,         // スクロール慣性補間の強さ (小さいほど慣性たっぷり / 0=オフ)
       /* 再生中にホイールを回した時の早送り。0 で早送りなし(閉じ込められるので非推奨) */
-      ffMax: 1.2,        // 上限。1.2 なら最大 2.2倍速まで
-      ffGain: 420,       // 効きはじめの緩さ。大きいほどゆるやかに効く
+      ffMax: 0.6,        // 上限。0.6 なら最大 1.6倍速まで (2026-08-18: さらに抑えた)
+      ffGain: 700,       // 効きはじめの緩さ。大きいほどゆるやかに効く
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2682,6 +2682,45 @@ function updateScrollLock() {
   if (key && !scrollLocked) { scrollLocked = true; lockPush = 0; if (lenis) lenis.stop(); }
   else if (!key && scrollLocked) { scrollLocked = false; if (lenis) lenis.start(); }
 }
+
+/* ===== スクロールの押し戻し (2026-08-18 バグ修正) =====
+   ⚠️ lenis.stop() だけでは素のスクロールが素通りする。
+      実測: 固定中に激しくホイールを回すと 1069px 動き、セクションが画面外へ抜けた。
+      「下の方に進めてしまう」バグの正体がこれ。
+
+   対処: 入力の種類（ホイール・指・キー・スクロールバー・慣性）に関係なく効かせるため、
+        位置そのものを毎フレーム押し戻す。
+        許すのは【ピン区間の終わりまで】。そこまでなら固定は保たれているので破綻しない。
+        再生が終わったセクションは対象外なので、見終わったあとは自由に進める。 */
+function clampScroll() {
+  let maxY = Infinity;
+  for (const k in secPlay) {
+    const st = secPlay[k], el = SECS[k];
+    if (!el || st.done) continue;
+    if (st.t0 === null && !st.started) continue;   /* まだ始まっていないセクションは対象外 */
+    maxY = Math.min(maxY, el.offsetTop + el.offsetHeight - (window.innerHeight || 1));
+  }
+  if (!isFinite(maxY)) return;
+  const y = window.scrollY || window.pageYOffset || 0;
+  if (y > maxY + 1) {
+    if (lenis) lenis.scrollTo(maxY, { immediate: true, force: true, lock: true });
+    else window.scrollTo(0, maxY);
+  }
+}
+
+/* ロック中は操作そのものも無効化する（押し戻しだけだと、いったん動いてから戻るのでガタつく）。
+   ⚠️ 調整パネルの中で回した時は通す */
+const LOCK_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ']);
+const inPanel = t => !!(t && t.closest && t.closest('.tools'));
+window.addEventListener('wheel', e => {
+  if (scrollLocked && !inPanel(e.target)) e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchmove', e => {
+  if (scrollLocked && !inPanel(e.target)) e.preventDefault();
+}, { passive: false });
+window.addEventListener('keydown', e => {
+  if (scrollLocked && LOCK_KEYS.has(e.key) && !inPanel(e.target)) e.preventDefault();
+}, { passive: false });
 /* 再生中にホイールを回すと早送りする(閉じ込め防止)。
    ⚠️ 以前は「残りを一気に飛ばす」実装で、開発者体験だと最終フレーム＝白背景に
       いきなりワープして【途中から突然真っ白になる】バグになっていた。
@@ -4140,6 +4179,7 @@ function updateKV() {
 
 function updateSections() {
   updateScrollLock();
+  clampScroll();
   fastForward();
   replayCheck();
   updateKV();
