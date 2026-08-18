@@ -2179,11 +2179,11 @@ const DEFAULTS = {
       /* 【2026-08-18】開発者体験と1画面重ねたので、助走(pre)の前半は
          「黒→白に切り替わる区間」に当たる。中身はそれが終わってから出す。
          早すぎると、暗い背景の上に文字が重なって読みづらくなる */
-      introAt: 0.50,   // 「導入事例」の文字が出はじめる位置 (助走の何割地点か)
-      introDur: 0.18,  // 出きるまでの長さ
-      cardAt: 0.60,    // 1枚目のカードが出はじめる位置
-      cardGap: 0.10,   // カードごとの遅れ
-      cardDur: 0.24,   // 1枚が出きるまでの長さ
+      introAt: 0.72,   // 「導入事例」の文字が出はじめる位置 (暗転の何割地点か)
+      introDur: 0.22,  // 出きるまでの長さ
+      cardAt: 0.84,    // 1枚目のカードが出はじめる位置
+      cardGap: 0.05,   // カードごとの遅れ
+      cardDur: 0.16,   // 1枚が出きるまでの長さ
     },
   },
   patterns: {
@@ -3419,7 +3419,7 @@ const DEV_CH = [
   { from: 0.40, to: 1.00, sec: 5.6, at: 0.42 },   /* ② (8.4→5.6秒に短縮) */
 ];
 /* 章が全部終わってから、あと何割スクロールしたら白へ戻りきるか */
-const DEV_FIN = 0.22;   /* 短くして「白いだけの時間」を作らない */
+const DEV_FIN = 0.34;   /* 2026-08-18: 導入事例の中身もこの区間で出すので、少し長く取る */
 const MOCK_W = 840.6, MOCK_LEFT = 105;
 const mockK = () => (isMobile ? 0.40 : 1);   // スマホでのモックの縮小率
 /* カンプ位置(左寄せ)から見て「画面中央に置くための X オフセット」。
@@ -3804,6 +3804,8 @@ function devMockContent(mode, t, screen) {
 let devHoldT0 = null, devScreenT0 = null, devStarted = false;
 /* ②で選ばれている画面。既定は API (カンプで選択状態になっているもの)。ホバーで変わる */
 let devScreen2 = 'api', devSwapT0 = null;
+/* 開発者体験の「暗い背景 → 明るい背景」の進み具合 (0→1)。導入事例が参照する */
+let devFin = 0;
 
 /* ---- 右リストのホバー: 左のモックがブラーで切り替わる ---- */
 (function bindDevList() {
@@ -3847,6 +3849,8 @@ function updateDev(pRaw) {
   if (stD && stD.done && stD.endP == null) stD.endP = pRaw;
   const fin = (stD && stD.endP != null)
     ? seg(pRaw, stD.endP + 0.10, Math.min(0.99, stD.endP + 0.10 + DEV_FIN), easeIO) : 0;
+  /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
+  devFin = fin;
 
   devHeading(devEls.h1, in1, o1);
   devHeading(devEls.h2, in2, fin);
@@ -3976,13 +3980,15 @@ function updateCases(pRaw) {
   /* 「導入事例」の文字は乗り換え区間に入った直後から出す。
      こうすると黒いセクションを抜けた瞬間にもう文字が見えていて、
      真っさらな画面を挟まずに次の話へ移れる */
-  const intro = seg(pre, c.introAt, c.introAt + c.introDur, easeOutQ);
+  /* 【2026-08-18 指定】助走(pre)は「まだ背景が暗いうち」に終わってしまうので使えない。
+     開発者体験の暗転の進み具合(devFin)を基準にして、明るくなりきってから中身を出す */
+  const intro = seg(devFin, c.introAt, c.introAt + c.introDur, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
   /* カードは【カンプのように縦にgap分空けて並んだ状態】でブラー出現し、
      スクロールするとリストごと上へ流れて、上端に着いたものから順に貼り付いて重なる。
      (2026-08-14: 画面外から1枚ずつ飛び込んでくる形をやめてこの形に) */
-  const inK = [0, 1, 2].map(i => seg(pre, c.cardAt + i * c.cardGap, c.cardAt + i * c.cardGap + c.cardDur, easeOutQ));
+  const inK = [0, 1, 2].map(i => seg(devFin, c.cardAt + i * c.cardGap, c.cardAt + i * c.cardGap + c.cardDur, easeOutQ));
 
   const CASE_TOP = caseTop(), CASE_H = caseH();
   const step = CASE_H + c.gap;              // カード1枚ぶんの送り量
