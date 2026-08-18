@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ⚠️ たたき台のサイト。公式サイトと誤認されないよう検索避けをかけている。
+     公開時に外す場合は robots.txt と vercel.json のヘッダーも一緒に外すこと -->
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
 <title>Anyflow Embed — API連携でAIと事業を強くする</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1574,21 +1578,21 @@
           <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>API</b><span>の場合</span></div>
-            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+            <p>HTTPで叩くだけ。言語もフレームワークも選ばず、いまあるバックエンドからそのまま呼び出せます。認証はキー1本。</p>
           </div>
         </div>
         <div class="dl-item" data-screen="cli">
           <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>CLI</b><span>の場合</span></div>
-            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+            <p>手元のターミナルで試して、そのままCI/CDへ。ユーザー単位で実行ログを追えるので、運用も開発の延長で回せます。</p>
           </div>
         </div>
         <div class="dl-item" data-screen="sdk">
           <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>SDK</b><span>の場合</span></div>
-            <p>テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</p>
+            <p>連携画面ごと、自社プロダクトに埋め込めます。数行置くだけで、ユーザーが自分でSaaSをつなげるようになります。</p>
           </div>
         </div>
       </div>
@@ -3304,20 +3308,17 @@ const DM_CODE = {
     [['kw', 'export'], ['pl', ' '], ['kw', 'default'], ['pl', ' '], ['id', 'flow'], ['pl', ';']],
   ],
   cli: [
-    [['kw', '$'], ['pl', ' anyflow login --token '], ['st', '••••••••']],
-    [['ok', '✔'], ['cm', ' Authenticated as dosanko-design']],
+    [['kw', '$'], ['pl', ' anyflow connectors list']],
+    [['cm', '  salesforce  hubspot  slack  kintone  …  '], ['ok', '200+ connectors']],
     [],
-    [['kw', '$'], ['pl', ' anyflow flows create slack-to-kintone']],
-    [['cm', '→ resolving connectors...']],
-    [['ok', '✔'], ['cm', ' Created flow '], ['id', 'flw_8Xk2']],
-    [],
-    [['kw', '$'], ['pl', ' anyflow deploy --prod']],
-    [['cm', '→ bundling  (12 files)']],
-    [['cm', '→ uploading (1.4 MB)']],
-    [['ok', '✔'], ['cm', ' Deployed in '], ['id', '4.2s']],
+    [['kw', '$'], ['pl', ' anyflow flows run '], ['id', 'flw_8Xk2'], ['pl', ' --as-user '], ['id', 'usr_9f2']],
+    [['cm', '  \u280b'], ['cm', ' running…']],
+    [['ok', '  \u2714'], ['cm', ' succeeded · '], ['id', '3 records'], ['cm', ' · 128ms']],
     [],
     [['kw', '$'], ['pl', ' anyflow logs --follow']],
-    [['cm', '  12:04:31  run '], ['ok', 'succeeded']],
+    [['cm', '  12:04:31  '], ['id', 'usr_9f2'], ['cm', '  slack → kintone     '], ['ok', 'succeeded']],
+    [['cm', '  12:04:36  '], ['id', 'usr_1a8'], ['cm', '  hubspot → slack     '], ['ok', 'succeeded']],
+    [['cm', '  12:04:41  '], ['id', 'usr_3c7'], ['cm', '  salesforce → slack  '], ['ok', 'succeeded']],
   ],
   api: [
     [['kw', 'POST'], ['pl', ' /v1/flows/'], ['id', 'flw_8Xk2'], ['pl', '/run']],
@@ -3335,18 +3336,20 @@ const DM_CODE = {
     [['pl', '{ '], ['st', '"status"'], ['pl', ': '], ['ok', '"succeeded"'], ['pl', ', '], ['st', '"records"'], ['pl', ': '], ['id', '3'], ['pl', ' }']],
   ],
   sdk: [
-    [['kw', 'import'], ['pl', ' { '], ['id', 'Anyflow'], ['pl', ' } '], ['kw', 'from'], ['st', ' "@anyflow/sdk"'], ['pl', ';']],
+    [['kw', 'import'], ['pl', ' {']],
+    [['pl', '  '], ['id', 'AnyflowProvider'], ['pl', ', '], ['id', 'ConnectButton'], ['pl', ',']],
+    [['pl', '} '], ['kw', 'from'], ['st', ' "@anyflow/react"'], ['pl', ';']],
     [],
-    [['kw', 'const'], ['pl', ' '], ['id', 'client'], ['pl', ' = '], ['kw', 'new'], ['pl', ' '], ['id', 'Anyflow'], ['pl', '({']],
-    [['pl', '  apiKey: process.env.'], ['id', 'ANYFLOW_KEY'], ['pl', ',']],
-    [['pl', '});']],
-    [],
-    [['kw', 'const'], ['pl', ' '], ['id', 'run'], ['pl', ' = '], ['kw', 'await'], ['pl', ' '], ['id', 'client'], ['pl', '.flows.'], ['id', 'run'], ['pl', '(']],
-    [['st', '  "flw_8Xk2"'], ['pl', ', { input: { channel: '], ['st', '"#sales"'], ['pl', ' } },']],
-    [['pl', ');']],
-    [],
-    [['id', 'console'], ['pl', '.log('], ['id', 'run'], ['pl', '.status); '], ['cm', '// "succeeded"']],
-    [['id', 'console'], ['pl', '.log('], ['id', 'run'], ['pl', '.records); '], ['cm', '// 3']],
+    [['kw', 'export function'], ['pl', ' '], ['id', 'Integrations'], ['pl', '({ '], ['id', 'userToken'], ['pl', ' }) {']],
+    [['pl', '  '], ['kw', 'return'], ['pl', ' (']],
+    [['pl', '    <'], ['id', 'AnyflowProvider'], ['pl', ' token={'], ['id', 'userToken'], ['pl', '}>']],
+    [['pl', '      <'], ['id', 'ConnectButton']],
+    [['pl', '        connector='], ['st', '"salesforce"']],
+    [['pl', '        onSuccess={(c) => '], ['id', 'console'], ['pl', '.log(c.status)}  '], ['cm', '// "connected"']],
+    [['pl', '      />']],
+    [['pl', '    </'], ['id', 'AnyflowProvider'], ['pl', '>']],
+    [['pl', '  );']],
+    [['pl', '}']],
   ],
 };
 /* 画面ごとのテンポ: chat=会話パートの有無 / load=ローディング開始 / hold=溜め / burst=一気に書く */
@@ -3360,13 +3363,15 @@ const DM_TIMING = {
 };
 
 /* SDK画面の右ペイン。AIペインと同じ角丸・同じ余白でトンマナを踏襲しつつ中身だけ変える */
+/* ⚠️ この一覧は innerHTML で組み立てている。'<' をそのまま書くとタグとして
+   解釈されて消えるので、必ず &lt; で書くこと (2026-08-18 にこれで1回消えた) */
 const DM_SDK_ROWS = [
+  ['&lt;ConnectButton', ' />', 'Component'],
+  ['&lt;ConnectorList', ' />', 'Component'],
+  ['&lt;FlowBuilder', ' />', 'Component'],
+  ['useConnections', '()', 'Connection[]'],
+  ['useFlowRun', '()', 'Run'],
   ['client.flows', '.run()', 'Promise<Run>'],
-  ['client.flows', '.list()', 'Flow[]'],
-  ['client.connectors', '.list()', 'Connector[]'],
-  ['client.auth', '.exchange()', 'Token'],
-  ['client.webhooks', '.verify()', 'boolean'],
-  ['client.runs', '.watch()', 'Stream'],
 ];
 const dmSdkRowEls = (() => {
   const root = document.getElementById('dmSdkList');
@@ -3409,6 +3414,76 @@ function dmFillSdkList(rootId) {
   });
 }
 
+/* ===== 章②のモック内アニメ (2026-08-18) =====
+   API / CLI / SDK それぞれ、中身が1行ずつ出てくる。
+   CLI は途中で印がくるくる回ってから ✔ が付き、SDK は右の一覧も順に出る。 */
+const DM_SPIN = '\u280b\u2819\u2839\u2838\u283c\u2834\u2826\u2827\u2807\u280f';
+const DM2 = {
+  lineGap: 0.13,   // 1行ずつずらす間隔(秒)
+  lineDur: 0.30,   // 1行が出きるまで(秒)
+  rowGap:  0.09,   // SDK 一覧の行ごとの間隔(秒)
+  rowsAt:  0.35,   // コードが出はじめてから、右の一覧が出るまで(秒)
+  spinPer: 0.08,   // くるくるの1コマ(秒)
+};
+/* API は「送ってから返ってくる」間を作りたいので、レスポンス行だけ待たせる */
+const DM2_PAUSE = { api: { from: 11, add: 0.55 } };
+let dmSpinEl = null, dmSpinLine = -1;
+let dm2Spin, dm2SpinLine = -1;
+
+/* ⚠️ 手前に来るカードは画面ごとに違う。
+   API は本体パネル(#dmCode)、CLI と SDK は「ゴースト」と呼んでいる複製カードが前に回ってくる。
+   本体を animate しても後ろに隠れていて見えないので、必ず手前のカードを動かすこと。 */
+const DM2_ROOT = { api: 'dmCode', cli: 'dmCodeCli', sdk: 'dmCodeSdk' };
+const dm2Cache = {};
+function dm2Lines(screen) {
+  const id = DM2_ROOT[screen];
+  if (!id) return [];
+  if (screen === 'api') return dmLineEls;          /* 本体は作り直されるので毎回取り直す */
+  if (!dm2Cache[id]) dm2Cache[id] = [...document.getElementById(id).children];
+  return dm2Cache[id];
+}
+let dm2SdkRows2 = null;
+
+function dmAnimScreen(screen, ts) {
+  const pause = DM2_PAUSE[screen];
+  const lines = dm2Lines(screen);
+  for (let i = 0; i < lines.length; i++) {
+    const at = i * DM2.lineGap + (pause && i >= pause.from ? pause.add : 0);
+    const k = easeOutQ(clamp01((ts - at) / DM2.lineDur));
+    const el = lines[i];
+    /* ⚠️ .dm-line は既定で clip-path: inset(0 100% 0 0)（＝全部隠れている）。
+       ここを開かないと、文字があっても一切見えない。
+       章①のエディタと同じく、左から右へ拭くように出す */
+    setStyle(el, 'clipPath', k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`);
+    setStyle(el, 'opacity', k <= 0 ? '0' : '1');
+  }
+  /* CLI: 次の行(✔)が出はじめるまで、印を回し続ける */
+  if (screen === 'cli') {
+    if (dm2Spin === undefined) {
+      dm2Spin = null;
+      lines.forEach((l, li) => { for (const sp of l.children)
+        if (sp.textContent.indexOf(DM_SPIN[0]) >= 0) { dm2Spin = sp; dm2SpinLine = li; } });
+    }
+    if (dm2Spin) {
+      const doneAt = (dm2SpinLine + 1) * DM2.lineGap;
+      if (ts >= 0 && ts < doneAt) {
+        const f = Math.floor(ts / DM2.spinPer) % DM_SPIN.length;
+        const want = '  ' + DM_SPIN[f];
+        if (dm2Spin.textContent !== want) dm2Spin.textContent = want;
+      }
+    }
+  }
+  /* SDK: 右の一覧も1行ずつ (手前に来るのはゴースト側の一覧) */
+  if (screen === 'sdk') {
+    if (!dm2SdkRows2) dm2SdkRows2 = [...document.getElementById('dmSdkList2').children];
+    dm2SdkRows2.forEach((el, i) => {
+      const k = easeOutQ(clamp01((ts - DM2.rowsAt - i * DM2.rowGap) / DM2.lineDur));
+      setStyle(el, 'opacity', k.toFixed(3));
+      setStyle(el, 'transform', k >= 1 ? '' : `translateY(${((1 - k) * 8).toFixed(2)}px)`);
+    });
+  }
+}
+
 const dmCodeRoot = document.getElementById('dmCode');
 const dmLoadRoot = document.getElementById('dmLoad');
 let dmLineEls = [], dmCurScreen = null;
@@ -3428,6 +3503,7 @@ function dmBuildScreen(key) {
   dmCodeRoot.className = 'dm-code code';
   dmCodeRoot.innerHTML = '';
   dmLineEls = [];
+  dmSpinEl = null; dmSpinLine = -1;
   DM_CODE[key].forEach(tokens => {
     const line = document.createElement('div');
     line.className = 'dm-line';
@@ -3439,6 +3515,10 @@ function dmBuildScreen(key) {
       line.appendChild(sp);
     });
     dmCodeRoot.appendChild(line);
+    /* CLI の「くるくる回る印」を覚えておく (あとで回すため) */
+    for (const sp of line.children) {
+      if (sp.textContent.indexOf(DM_SPIN[0]) >= 0) { dmSpinEl = sp; dmSpinLine = dmLineEls.length; }
+    }
     dmLineEls.push(line);
   });
 }
@@ -3629,6 +3709,9 @@ function updateDev(pRaw) {
   }
   devEls.panel.classList.toggle('is-term', screen === 'cli');
   devEls.panel.classList.toggle('is-sdk',  screen === 'sdk');
+  /* 章②のモックは、画面が切り替わるたびに中身を1行ずつ出し直す
+     (章①のエディタは専用の演出があるので触らない) */
+  if (screen !== 'editor') dmAnimScreen(screen, devScreenT0 === null ? 0 : elapsed - devScreenT0);
   /* 切り替えの瞬間だけ、やわらかくぼける */
   const swapDipK = devSwapT0 === null ? 0 : swapDip(clamp01((elapsed - devSwapT0) / 0.34));
 
