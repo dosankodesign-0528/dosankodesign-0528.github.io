@@ -2103,6 +2103,9 @@ const DEFAULTS = {
       /* 再生中にホイールを回した時の早送り。0 で早送りなし(閉じ込められるので非推奨) */
       ffMax: 0.6,        // 上限。0.6 なら最大 1.6倍速まで (2026-08-18: さらに抑えた)
       ffGain: 700,       // 効きはじめの緩さ。大きいほどゆるやかに効く
+      /* 見終わったあと、スクロールのどこまでで再生しきるか。
+         小さいほど少しのスクロールで一気に進む(=巻き戻しも速い) */
+      scrubEnd: 0.35,
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2595,6 +2598,18 @@ let scrollLocked = false, lockPush = 0;
    ⚠️ 章と章の間はロックを外す。ここでスクロールできないと「進めない」体験になる。 */
 function chapterP(key, chapters, pScroll, canStart, sec) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false, ch: 0 });
+  /* 見終わったあとはスクロール位置で行ったり来たりできる（上へ戻せば逆再生）。
+     章ごとに「送るしきい値(at)」で区切って、その区間を章の進捗に割り当てる */
+  if (st.done) {
+    for (let i = chapters.length - 1; i >= 0; i--) {
+      const ch = chapters[i];
+      if (pScroll >= ch.at || i === 0) {
+        const end = chapters[i + 1] ? chapters[i + 1].at : Math.min(0.98, ch.at + 0.43);
+        const k = clamp01((pScroll - ch.at) / Math.max(0.01, end - ch.at));
+        return ch.from + (ch.to - ch.from) * k;
+      }
+    }
+  }
   /* 上から戻ってきた時、セクションの奥にいる間は完成した状態を見せる (playT と同じ考え方) */
   if (!st.started && pScroll > 0.45) return chapters[chapters.length - 1].to;
   if (!st.started) {
@@ -2641,6 +2656,8 @@ function canPlay(p) { return p > 0.0005 && p < 0.35; }
       まずそこへ寄せてから再生を始める。 */
 function playT(key, total, canStart, sec, pNow) {
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
+  /* 見終わったあとは、スクロール位置で行ったり来たりできる（上へ戻せば逆再生） */
+  if (st.done) return scrubT(total, pNow);
   /* ⚠️ 下までスクロールしてから戻ってくると、時計は巻き戻っているのに
      まだ再生開始位置に着いていない＝「何も出ていない空のセクション」が見えてしまう。
      セクションの奥にいる間は【完成した状態】を見せておき、頭に着いたら流し直す */
@@ -2671,6 +2688,16 @@ function playT(key, total, canStart, sec, pNow) {
   const t = elapsed - st.t0 + st.skip;
   if (t >= total) st.done = true;
   return Math.min(t, total);
+}
+
+/* ===== 見終わったあとの「行ったり来たり」 (2026-08-18 指定) =====
+   一度最後まで見たセクションは、スクロール位置で再生位置が決まるようにする。
+   下へ動かせば進み、上へ戻せば巻き戻る＝逆再生。固定(sticky)はそのままなので、
+   上下どちらへ動いても絵が飛ばず、なめらかにつながる。
+   ⚠️ 初回だけは今までどおり「時間で流れる映像」。2回目以降がスクラブになる */
+function scrubT(total, pNow) {
+  const e = Math.max(0.05, params.sections.common.scrubEnd);
+  return total * clamp01((pNow == null ? 1 : pNow) / e);
 }
 function anyPlaying() {
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
@@ -3886,8 +3913,15 @@ function updateDev(pRaw) {
         全部終わった地点の pRaw を覚えて、そこからの差分で白くする */
   const stD = secPlay.dev;
   if (stD && stD.done && stD.endP == null) stD.endP = pRaw;
-  const finPlay = (stD && stD.endP != null)
-    ? seg(pRaw, stD.endP + 0.10, Math.min(0.99, stD.endP + 0.10 + DEV_FIN), easeIO) : 0;
+  /* ⚠️ 2026-08-18 バグ: endP(再生を終えた位置)が終盤だと、暗転の範囲が
+     「開始 1.10 → 終了 0.99」のように前後逆転し、seg() が常に 1 を返していた。
+     その結果、ページの先頭へ戻っても暗転が解除されず、導入事例の文字も出っぱなしになる。
+     必ず「開始 < 終了」になるよう、開始位置に上限を設ける */
+  let finPlay = 0;
+  if (stD && stD.endP != null) {
+    const finFrom = Math.min(stD.endP + 0.10, 0.98 - DEV_FIN);
+    finPlay = seg(pRaw, finFrom, finFrom + DEV_FIN, easeIO);
+  }
   /* 【2026-08-18 バグ修正】早送りすると endP の記録位置が後ろへズレ、
      セクションの固定が外れても暗転が終わっていない状態になっていた。
      その結果「上に暗い帯だけ残って、下は空っぽの明るい画面」になる（実際に発生）。
@@ -4075,6 +4109,9 @@ function replayCheck() {
     const r = rectOf(SECS[k]);
     /* 完全に画面の外へ出たら巻き戻す。再生が始まるのは固定された時(top≒0)なので、
        これでも「見ている最中に頭へ戻る」ことはない */
+    /* ⚠️ 見終わったセクションは巻き戻さない。スクロールで行ったり来たりできる
+       状態のまま残しておく（巻き戻すと、上へ戻った時に頭から再生し直して飛ぶ） */
+    if (secPlay[k].done) continue;
     if (r.bottom <= 0 || r.top >= innerHeight) resetSectionClock(k);
   }
 }
