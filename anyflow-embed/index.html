@@ -2643,10 +2643,15 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
   }
   const ch = chapters[Math.min(st.ch, chapters.length - 1)];
   if (st.t0 === null) {
-    /* 章と章の間。スクロールが次の章のしきい値を越えたら再生を始める */
-    if (pScroll >= ch.at) { st.t0 = elapsed; st.skip = 0; }
+    /* 章と章の間。スクロールが次の章のしきい値を越えたら再生を始める。
+       ⚠️【2026-08-18】ここで区間の終わりまで進めてしまうと、最後の章が
+          ピン区間の最後で終わり、暗転に使う余白が無くなる。
+          その結果「黒→白」と「スライド」が同時進行になる（ヒデさん報告）。
+          clampScroll に「ここまで」を伝えて、送るのに必要な分だけ進ませる */
+    st.nextAt = ch.at;
+    if (pScroll >= ch.at) { st.t0 = elapsed; st.skip = 0; st.nextAt = null; }
     else return ch.from;
-  }
+  } else st.nextAt = null;
   const k = clamp01((elapsed - st.t0 + st.skip) / ch.sec);
   if (k >= 1) {
     if (st.ch < chapters.length - 1) { st.ch++; st.t0 = null; st.skip = 0; }
@@ -2797,7 +2802,23 @@ function clampScroll() {
     st.lockY = null;
     if (st.done) continue;
     if (st.t0 === null && !st.started) continue;
-    maxY = Math.min(maxY, el.offsetTop + el.offsetHeight - (window.innerHeight || 1));
+    const pinRange = el.offsetHeight - (window.innerHeight || 1);
+    /* 章の間は「次の章が始まる位置の少し先」まで。区間の終わりまで行かせない */
+    const lim = st.nextAt != null
+      ? el.offsetTop + Math.min(1, st.nextAt + 0.06) * pinRange
+      : el.offsetTop + pinRange;
+    maxY = Math.min(maxY, lim);
+  }
+  /* ③ 開発者体験は「暗転が終わりきるまで」ピン区間から下へ抜けさせない。
+        これが無いと、黒→白の途中でセクションがスライドし始めて、
+        暗い面の下に何も無い帯が見える（2026-08-18 ヒデさん報告の症状） */
+  /* ⚠️ 再生がまだ終わっていない間は ② が既に止めている。
+     ここで止めるのは【再生は終わったが暗転がまだ】の区間だけ。
+     条件を広げると、暗転が始まらないまま永久に止まって先へ進めなくなる
+     （2026-08-18 に実際に発生。1190x844 で最下部へ行けなくなった） */
+  const devEl = SECS.dev;
+  if (devEl && secPlay.dev && secPlay.dev.done && devFin < 0.999) {
+    maxY = Math.min(maxY, devEl.offsetTop + devEl.offsetHeight - (window.innerHeight || 1));
   }
   if (!isFinite(maxY)) return;
   const y = window.scrollY || window.pageYOffset || 0;
@@ -4001,12 +4022,13 @@ function updateDev(pRaw) {
   /* ⚠️ 効きはじめが遅いと、セクションが3割ほど抜けた時点でもまだ暗転が半端で、
      「暗い面の下に、何も出ていない明るい帯」が見える（ヒデさん報告のスクショの状態）。
      セクションが抜け始める前(下端=画面下端)から効かせ、3割抜けるまでに出しきる */
-  /* スクロール駆動ではロックが無く、セクションが早く抜けていくので窓を前倒しする。
-     時間で再生する方は、章の再生中に暗転が始まらないよう遅めに置く */
-  const tailFrom = params.drive === 'scroll' ? 1.30 : 1.00;
-  const tailSpan = params.drive === 'scroll' ? 0.40 : 0.15;   /* 時間軸は狭くして、抜け際に一気に出しきる */
-  const devTail = clamp01((tailFrom - rectOf(SECS.dev).bottom / (innerHeight || 1)) / tailSpan);
-  const fin = Math.max(finPlay, devTail);
+  /* ⚠️【2026-08-18】以前ここに「セクションの抜け具合でも暗転を進める」保険を入れていたが、
+     それ自体が【黒→白とスライドを同時進行させる】原因だった（ヒデさん報告）。
+     暗転はピン区間の中だけで完結させ、スライドは暗転が終わってから始める。
+     （下へ抜けさせない制御は clampScroll 側で行う） */
+  const fin = params.drive === 'scroll'
+    ? seg(pRaw, 0.42, 0.72, easeIO)   /* スクロール駆動: 位置で暗転。スライドが始まる前に終わらせる */
+    : finPlay;
   /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
   devFin = fin;
 
