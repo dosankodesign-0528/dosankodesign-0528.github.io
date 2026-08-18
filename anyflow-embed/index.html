@@ -2117,7 +2117,7 @@ const DEFAULTS = {
       driveWin: 0.80,
       /* スクロール駆動の時、セクションの尺を何倍に伸ばすか。
          2.0 で「スクロール量あたりの進み方」が半分＝ゆったりになる */
-      driveLen: 2.0,
+      driveLen: 3.0,
     },
     /* ビジョンは「ピン留めされたら自動再生 → ワンスクロールで軌道が左下へ」。
        自動パートの時間はすべて秒で指定する */
@@ -2293,7 +2293,7 @@ const DEFAULTS = {
               描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
               ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
 /* v60→v61: ビジョンの開始をビューポート中央（ピン開始）にそろえた */
-const STORAGE_KEY = 'anyflow-embed-anim-v69';
+const STORAGE_KEY = 'anyflow-embed-anim-v70';
 
 let params = load();
 function load() {
@@ -2822,6 +2822,12 @@ function forceScroll(y) {
    なので「位置そのものを毎フレーム戻す」方式にする。
    誰がどうスクロールを動かしても、次のフレームで元の位置へ戻るので必ず止まる。 */
 function clampScroll() {
+  /* ⚠️ 固定追従なしの時は押し戻さない。
+     セクションの高さが 100vh なので「押し戻しの上限」がそのセクションの先頭に
+     なってしまい、再生が終わるまで下へ進めなくなっていた
+     （2026-08-18 ヒデさん報告「固定なしだとKVから下に行けない」）。
+     貼りつけないので、そもそも位置を固定する必要がない */
+  if (params.pin === 'off') return;
   /* ① 再生中のセクションがあれば、再生を始めた位置に釘付けにする */
   for (const k in secPlay) {
     const st = secPlay[k], el = SECS[k];
@@ -4390,10 +4396,15 @@ function updateSections() {
   fastForward();
   replayCheck();
   updateKV();
-  updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', pinP(SECS.vision)));
-  updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', pinP(SECS.dev)));
-  updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', pinP(SECS.cases)));
-  updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', pinP(SECS.results)));
+  /* ⚠️ 固定追従なしではセクションの高さが 100vh なので pinP の分母が 0 ＝ 常に 0 になる。
+     その結果「スクロール量に紐づく見た目」（軌道の移動・拡大、暗転、カードの重なり）が
+     一切進まず、軌道が小さいまま止まる（2026-08-18 ヒデさん報告）。
+     固定なしの時は「セクションが画面下から上がってくる分」を進行度として渡す。 */
+  const prog = el => (params.pin === 'off' ? clamp01(preP(el)) : pinP(el));
+  updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', prog(SECS.vision)));
+  updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
+  updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
+  updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', prog(SECS.results)));
 }
 
 /* ================= 球体 (WebGL / 2Dグラデを3D回転) ================= */
@@ -4900,7 +4911,7 @@ function buildPanel() {
     : '固定あり: セクションを画面に貼りつけて見せます（従来）。');
   segRow('固定追従', [['あり', 'on'], ['なし', 'off']],
     () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); save(); buildPanel(); });
-  rows.push(slider('スクロール駆動の尺', 1, 4, 0.25, () => sv().common.driveLen, v => { sv().common.driveLen = v; fit(); },
+  rows.push(slider('スクロール駆動の尺', 1, 8, 0.25, () => sv().common.driveLen, v => { sv().common.driveLen = v; fit(); },
     v => '×' + v.toFixed(2) + '（体感 ' + (1 / v).toFixed(2) + '倍速）',
     'スクロール駆動の時だけ有効。大きいほどセクションが長くなり、スクロールあたりの進み方がゆっくりになる。'));
   rows.push(slider('展開しきる位置', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
