@@ -45,18 +45,23 @@
 
   /* ===== アイコンのループアニメ =====
      【2026-08-19 ヒデさん指定】Figma Make「Create Icon Animations」(GE91u2SPWqjwNbNizrDy8R)
-     の App.tsx から実測移植。数値・イージング・タイミング・SVGパスは全て Make のまま。
+     の App.tsx から移植。形状・座標・SVGパス・ガラスのスタイルは全て Make の実測値のまま。
      Make のカードは 109.778px 角＝この KV の箱と同寸なので、
      「Make の絶対座標 − カード原点(フォルダ25/メール171.78/グラフ318.56/カレンダー465.33)」
      がそのまま箱内の相対座標になる。1周6秒・無限ループ。
-     KV.setIconAnim(false) で全停止＝組み上がった静止状態（カンプの見た目）に戻る。 */
+     【2026-08-19 ヒデさん指定・改】Make 原案の「出ては消える」演出は廃止。
+     全パーツ常時表示のまま、アイコンの中で「ちょっと動く」控えめなループに変更。
+     KV.setIconAnim(false) で全停止＝静止状態（カンプの見た目）に戻る。 */
   const ICO_D   = 6000;                              /* Make: const D = 6 (秒) */
-  const ICO_SPR = 'cubic-bezier(0.16, 1, 0.3, 1)';   /* Make: SPR 出現のばね風 */
-  const ICO_EO  = 'cubic-bezier(0.42, 0, 1, 1)';     /* Make: EO  退場のease   */
   const ICO_LIN = 'linear';
-  const E5  = [ICO_LIN, ICO_SPR, ICO_LIN, ICO_EO, ICO_LIN];   /* 隠れ→出現→保持→退場→隠れ */
-  const E4  = [ICO_SPR, ICO_LIN, ICO_EO, ICO_LIN];            /* 即出現→保持→退場→隠れ */
-  const E5r = [ICO_LIN, ICO_EO, ICO_LIN, ICO_SPR, ICO_LIN];   /* 表示→退場→隠れ→復帰(メール用) */
+  const ICO_IO  = 'cubic-bezier(0.45, 0, 0.55, 1)';  /* なめらかな ease-in-out */
+  /* pulse: 1周(6秒)のうち s の位置で一度だけ、w×2 の時間かけて dip して戻る。
+     不透明度は一切いじらない（消えるアニメ禁止）ので transform 1トラックだけ */
+  const pulse = (f, base, dip, s, w) => ({
+    f, v: [base, base, dip, base, base],
+    t: [0, s, s + w, s + w * 2, 1],
+    e: [ICO_LIN, ICO_IO, ICO_IO, ICO_LIN],
+  });
   /* Make の svg-2977cc967k.ts より（パスは一切いじらない） */
   const ICO_PATHS = {
     tab:    'M0 13.7482C0 10.3001 2.49286 7.35737 5.89406 6.7905L46.0508 0.0977185C50.3502 -0.618855 54.2641 2.69668 54.2641 7.05542V14.2852C54.2641 18.1808 51.106 21.3389 47.2104 21.3389H7.05368C3.15804 21.3389 0 18.1808 0 14.2852V13.7482Z',
@@ -88,62 +93,51 @@
     `<svg style="display:block;width:100%;height:100%" fill="none" preserveAspectRatio="none" viewBox="0 0 56.9444 25.3703"><g filter="url(#kvmf)"><path clip-rule="evenodd" fill-rule="evenodd" d="${ICO_PATHS.vlines}" fill="white" fill-opacity="0.16"/></g><defs><filter id="kvmf" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" x="0" y="0" width="56.9444" height="27.2685"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" mode="normal" result="shape"/><feColorMatrix in="SourceAlpha" result="hardAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dy="1.89814"/><feGaussianBlur stdDeviation="0.949072"/><feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.4 0"/><feBlend in2="shape" mode="normal" result="effect1_innerShadow"/></filter></defs></svg>`;
   const CAL_TABS_HTML =
     `<svg style="display:block;width:100%;height:100%" fill="none" preserveAspectRatio="none" viewBox="0 0 40.7842 24.4705"><path d="${ICO_PATHS.cyl1}" fill="url(#kvcg1)"/><path d="${ICO_PATHS.cyl2}" fill="url(#kvcg2)"/><defs><linearGradient id="kvcg1" gradientUnits="userSpaceOnUse" x1="0" x2="43.3722" y1="0" y2="18.355"><stop stop-color="#82E8FF"/><stop offset="1" stop-color="#379FFF"/></linearGradient><linearGradient id="kvcg2" gradientUnits="userSpaceOnUse" x1="0" x2="43.3722" y1="0" y2="18.355"><stop stop-color="#82E8FF"/><stop offset="1" stop-color="#379FFF"/></linearGradient></defs></svg>`;
-  /* カレンダー日付セル: [x, y, w, h, 出現開始, 出現完了]（退場は全セル共通 0.75→0.8167） */
+  /* カレンダー日付セル: [x, y, w, h]。ヘッダー帯→上段→下段の順に時差でふわっと縮んで戻る */
   const calCells = [
-    [26.08, 38.54, 57.098,  8.157, 0.10, 0.1833],   /* ヘッダー帯 */
-    [26.08, 50.78, 16.314, 12.235, 0.13, 0.2133],
-    [46.48, 50.78, 16.314, 12.235, 0.16, 0.2433],
-    [66.87, 50.78, 16.314, 12.235, 0.19, 0.2733],
-    [26.08, 67.09, 16.314, 12.235, 0.22, 0.3033],
-    [46.48, 67.09, 16.314, 12.235, 0.25, 0.3333],
-    [66.87, 67.09, 16.314, 12.235, 0.28, 0.3633],
-  ].map(([x, y, w, h, t1, t2]) => ({
+    [26.08, 38.54, 57.098,  8.157],   /* ヘッダー帯 */
+    [26.08, 50.78, 16.314, 12.235],
+    [46.48, 50.78, 16.314, 12.235],
+    [66.87, 50.78, 16.314, 12.235],
+    [26.08, 67.09, 16.314, 12.235],
+    [46.48, 67.09, 16.314, 12.235],
+    [66.87, 67.09, 16.314, 12.235],
+  ].map(([x, y, w, h], i) => ({
     x, y, w, h, css: icoCell,
-    op: { v: [0, 0, 1, 1, 0, 0], t: [0, t1, t2, 0.75, 0.8167, 1], e: E5 },
-    tr: { f: trS, v: [0, 0, 1, 1, 0, 0], t: [0, t1, t2 + 0.015, 0.75, 0.8167, 1], e: E5 },
+    tr: pulse(trS, 1, 0.85, 0.04 + i * 0.045, 0.06),
   }));
-  /* 各アイコンのパーツ（配列順 = 重なり順）。op=不透明度 tr=変形 のキーフレーム */
+  /* 各アイコンのパーツ（配列順 = 重なり順）。形状・座標は Make 実測のまま、
+     動きは「常時表示のまま、時差でひと呼吸だけ動く」パルスに置き換え。
+     位相はアイコンごとにずらす: カレンダー0.05 → フォルダ0.16 → メール0.42 → グラフ0.68 */
   const ICO_ANIM = {
     folder: [
-      { x: 28.20, y: 16.56, w: 54.264, h: 22.61, html: FOLDER_TAB_HTML,   /* タブ: 下から飛び出す */
-        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.25, 0.75, 0.85, 1], e: E5 },
-        tr: { f: trY, v: [20, 20, 0, 0, 20, 20], t: [0, 0.1333, 0.3, 0.75, 0.85, 1], e: E5 } },
+      { x: 28.20, y: 16.56, w: 54.264, h: 22.61, html: FOLDER_TAB_HTML,
+        tr: pulse(trY, 0, -2.5, 0.16, 0.09) },                 /* タブがひょこっと持ち上がる */
       { x: 19.16, y: 30.12, w: 72.352, h: 54.264, css: icoGlass(7.11, 10.581, 1.411, 3.527, 14.107, 108.7),
-        op: { v: [0, 1, 1, 0, 0], t: [0, 0.1333, 0.75, 0.8833, 1], e: E4 },
-        tr: { f: trY, v: [30, 0, 0, 30, 30], t: [0, 0.2, 0.75, 0.9167, 1], e: E4 } },
+        tr: pulse(trY, 0, 1.2, 0.18, 0.09) },                  /* ガラス面はわずかに沈む(対の動き) */
     ],
-    mail: [   /* メールだけ「最初は見えていて、いったん退場して戻る」 */
-      { x: 29.02, y: 24.84, w: 51.737, h: 22.173,   /* 封筒の中の色面: 上へ抜ける */
+    mail: [
+      { x: 29.02, y: 24.84, w: 51.737, h: 22.173,              /* 封筒の中の色面がのぞく */
         css: 'position:absolute;border-radius:3.696px;background-image:linear-gradient(120.65deg, #82E8FF 0%, #379FFF 100%);',
-        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.25, 0.5, 0.75, 0.9, 1], e: E5r },
-        tr: { f: trY, v: [0, 0, -18, -18, 0, 0], t: [0, 0.25, 0.45, 0.75, 0.9, 1], e: E5r } },
-      { x: 17.93, y: 28.54, w: 73.91, h: 55.433, css: icoGlass(11.087, 5.543, 0.739, 1.848, 7.391, 108.7),
-        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.13, 0.38, 0.75, 0.88, 1], e: E5r },
-        tr: { f: trY, v: [0, 0, 28, 28, 0, 0], t: [0, 0.13, 0.4, 0.75, 0.92, 1], e: E5r } },
-      { x: 26.41, y: 37.33, w: 56.944, h: 25.37, html: MAIL_VLINES_HTML,   /* V字ライン: 縮んで消える */
-        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.08, 0.22, 0.75, 0.88, 1], e: E5r },
-        tr: { f: trS, v: [1, 1, 0.6, 0.6, 1, 1], t: [0, 0.08, 0.24, 0.75, 0.9, 1], e: E5r } },
+        tr: pulse(trY, 0, -3, 0.42, 0.09) },
+      { x: 17.93, y: 28.54, w: 73.91, h: 55.433, css: icoGlass(11.087, 5.543, 0.739, 1.848, 7.391, 108.7) },
+      { x: 26.41, y: 37.33, w: 56.944, h: 25.37, html: MAIL_VLINES_HTML,
+        tr: pulse(trS, 1, 1.06, 0.45, 0.09) },                 /* V字ラインが軽くふくらむ */
     ],
     chart: [
-      { x: 18.46, y: 80.38, w: 76.485, h: 10.926,   /* 土台の濃いグラデ: 常時表示 */
+      { x: 18.46, y: 80.38, w: 76.485, h: 10.926,              /* 土台の濃いグラデ: 静止 */
         css: 'position:absolute;border-radius:3.642px;background-image:linear-gradient(150.64deg, #82E8FF 0%, #379FFF 100%);' },
-      { x: 22.10, y: 43.96, w: 18.21, h: 43.71, css: icoBar,   /* 左 → 中 → 右 の順に伸びる */
-        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.05, 0.1167, 0.75, 0.85, 1], e: E5 },
-        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.05, 0.3, 0.75, 0.9167, 1], e: E5 } },
+      { x: 22.10, y: 43.96, w: 18.21, h: 43.71, css: icoBar,   /* 棒3本が左→中→右で軽く上下 */
+        tr: pulse(trSY, 1, 0.88, 0.68, 0.07) },
       { x: 47.60, y: 22.11, w: 18.21, h: 65.56, css: icoBar,
-        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.2, 0.75, 0.85, 1], e: E5 },
-        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.3833, 0.75, 0.9167, 1], e: E5 } },
+        tr: pulse(trSY, 1, 0.86, 0.74, 0.07) },
       { x: 73.10, y: 54.89, w: 18.21, h: 32.78, css: icoBar,
-        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.2167, 0.2833, 0.75, 0.85, 1], e: E5 },
-        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.2167, 0.4667, 0.75, 0.9167, 1], e: E5 } },
+        tr: pulse(trSY, 1, 0.90, 0.80, 0.07) },
     ],
     cal: [
-      { x: 34.24, y: 22.23, w: 40.784, h: 24.4705, html: CAL_TABS_HTML,   /* 上の円柱2本: 上から刺さる */
-        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.0833, 0.1833, 0.75, 0.85, 1], e: E5 },
-        tr: { f: trY, v: [-10, -10, 0, 0, -10, -10], t: [0, 0.0833, 0.2167, 0.75, 0.85, 1], e: E5 } },
-      { x: 17.93, y: 30.38, w: 73.412, h: 57.098, css: icoGlass(12.235, 6.118, 0.816, 2.039, 8.157, 108.08),
-        op: { v: [0, 1, 1, 0, 0], t: [0, 0.1167, 0.75, 0.85, 1], e: E4 },
-        tr: { f: trY, v: [-20, 0, 0, -20, -20], t: [0, 0.1667, 0.75, 0.8833, 1], e: E4 } },
+      { x: 34.24, y: 22.23, w: 40.784, h: 24.4705, html: CAL_TABS_HTML,
+        tr: pulse(trY, 0, -1.8, 0.05, 0.08) },                 /* 円柱2本がひょこっと浮く */
+      { x: 17.93, y: 30.38, w: 73.412, h: 57.098, css: icoGlass(12.235, 6.118, 0.816, 2.039, 8.157, 108.08) },
     ].concat(calCells),
   };
   const icoParts = [];   /* { el, p } — アニメ対象パーツ */
