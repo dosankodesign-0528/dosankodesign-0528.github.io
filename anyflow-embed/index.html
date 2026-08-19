@@ -2163,7 +2163,9 @@ const DEFAULTS = {
   visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
   marquee: {
-    gap: 96,           // ロゴとロゴの間隔(px)。継ぎ目も同じ値になる
+    /* ロゴとロゴの左右の間隔(px)。継ぎ目も同じ値になるので、どこで切れても等間隔。
+       【2026-08-19 ヒデさん指定】96px は広すぎたので 72px に詰めた */
+    gap: 72,
     duration: 30,    // ロゴが1周する秒数
     direction: 1,    // 1=左へ / -1=右へ
   },
@@ -2402,6 +2404,9 @@ function load() {
         inner: { ...DEFAULTS.orbits.inner, ...((s.orbits && s.orbits.inner) || {}) },
       };
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
+      /* 【2026-08-19】ロゴの間隔を 96 → 72px に詰めた。
+         旧既定(96)のまま保存されている＝触っていない場合だけ、新しい既定に載せ替える */
+      if (merged.marquee && merged.marquee.gap === 96) merged.marquee.gap = DEFAULTS.marquee.gap;
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.dotGap = merged.dotGap || DEFAULTS.dotGap;
@@ -5564,6 +5569,27 @@ function buildPanel() {
     rows.push(slider('ゆれのずらし', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°',
       '2本が同じタイミングだと単調なので、片方をずらしたい時に。'));
   });
+
+  /* ---------- 🏢 導入企業のロゴ (2026-08-19 追加) ----------
+     ⚠️ marquee.gap / duration / direction は前からあったのにパネルに出ていなかった。
+        ここは押した瞬間に反映させる（惑星と同じ扱い）。
+        間隔を触るたびに文字のモーションが頭出しし直すと、詰め具合を見比べられないため。
+     ⚠️ 見た目の反映には applyMarquee() が要る（CSS変数 --logo-gap を書くのはあの関数）。
+        set の中で必ず呼ぶこと。 */
+  liveEdit = true;
+  sub(catKv, '🏢 導入企業のロゴ');
+  note('画面いちばん下を、ロゴが横に流れ続ける帯です。ここは押した瞬間その場で変わります。');
+  /* ⚠️ fixedMax を渡さないと、slider() が「既定を中央に置く」ために上限を勝手に縮める
+     (実測: 160 と書いたのに 128 になっていた)。ここは書いた上限をそのまま使う */
+  rows.push(slider('ロゴの間隔', 16, 160, 2,
+    () => params.marquee.gap, v => { params.marquee.gap = v; applyMarquee(); }, v => v + 'px',
+    'ロゴとロゴの左右のすき間。小さいほど詰まって並びます。', { fixedMax: true }));
+  rows.push(slider('一巡の秒数', 10, 90, 1,
+    () => params.marquee.duration, v => { params.marquee.duration = v; applyMarquee(); }, v => v + '秒',
+    'ロゴがひとまわりするのにかかる時間。大きいほどゆっくり流れます。', { fixedMax: true }));
+  segRow('流れる向き', [['左へ', 1], ['右へ', -1]],
+    () => params.marquee.direction, v => { params.marquee.direction = v; applyMarquee(); markDirty(); });
+  liveEdit = false;
 
   /* ========== 📖 ビジョン ========== */
   const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
