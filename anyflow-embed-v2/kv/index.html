@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>キービジュアル改修案 — anyflow V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Noto Sans JP",sans-serif; background:#f2f2f2; color:#101828; padding:48px 6vw 80px; }
+h1 { font-weight:300; font-size:26px; letter-spacing:.05em; }
+p.lead { margin-top:10px; font-size:13px; font-weight:300; color:#555; line-height:1.9; }
+.grid { margin-top:32px; display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:24px; }
+.card { display:block; text-decoration:none; color:inherit; background:#fff; border:1px solid #ececec;
+  border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.06);
+  transition:transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s; }
+.card:hover { transform:translateY(-4px); box-shadow:0 14px 40px rgba(0,0,0,.12); }
+.thumb { position:relative; aspect-ratio:1440/920; overflow:hidden; background:#eee; }
+.thumb iframe { width:1440px; height:920px; border:0; transform-origin:0 0; position:absolute; left:0; top:0; pointer-events:none; }
+.meta { padding:14px 16px 16px; }
+.meta b { font-weight:500; font-size:14px; }
+.meta p { margin-top:6px; font-size:12px; font-weight:300; color:#666; line-height:1.8; }
+.note { margin-top:28px; font-size:12px; color:#888; line-height:2; }
+</style>
+</head>
+<body>
+<h1>キービジュアル改修案（V2）</h1>
+<p class="lead">データ基盤 × AIエージェント。右がデータ基盤の網、中央のディザ発光がAIエージェント。<br>
+ドット（API）が連携先からエージェントへ流れ込み、到達するとグラデーションがふわりと反応します。<br>
+各ページ下のバーで「箱: フラット / 立体 / アイソメ」を切り替えられます。</p>
+<div class="grid">
+  <a class="card" href="p1.html">
+    <div class="thumb"><iframe src="p1.html" tabindex="-1" loading="lazy"></iframe></div>
+    <div class="meta"><b>P1 忠実・呼吸</b><p>カンプの配色そのまま。エージェントが中心から呼吸するように明滅し、ドット到達でふわりと膨らむ。</p></div>
+  </a>
+  <a class="card" href="p2.html">
+    <div class="thumb"><iframe src="p2.html" tabindex="-1" loading="lazy"></iframe></div>
+    <div class="meta"><b>P2 ダーク・掃引</b><p>ダークテック。斜めの色帯がエージェントを掃引し、暗い盤面をドットの光が走る。</p></div>
+  </a>
+  <a class="card" href="p3.html">
+    <div class="thumb"><iframe src="p3.html" tabindex="-1" loading="lazy"></iframe></div>
+    <div class="meta"><b>P3 波及フロー</b><p>ドットが到着した方向から、色の波がエージェントの中を押し寄せる。流入が多いほど波立つ。</p></div>
+  </a>
+  <a class="card" href="p4.html">
+    <div class="thumb"><iframe src="p4.html" tabindex="-1" loading="lazy"></iframe></div>
+    <div class="meta"><b>P4 ミニマル線画</b><p>白ベース・細線・アウトラインの箱。エージェントはディザ粒を細かくして上品に。色相がゆっくり回る。</p></div>
+  </a>
+  <a class="card" href="p5.html">
+    <div class="thumb"><iframe src="p5.html" tabindex="-1" loading="lazy"></iframe></div>
+    <div class="meta"><b>P5 収束ブルーム</b><p>ドットが到達すると色が中心へ吸い込まれ、ひと呼吸おいて開花するように広がる。</p></div>
+  </a>
+</div>
+<p class="note">スタイリング違い × グラデの流れ方違いの5案。カンプ（figma 15276-23959）の座標・配色・グラデ実測値ベース。<br>
+アイコンは連携先をイメージさせる汎用ピクトグラム（データベース / ストレージ / チャット / 表計算 / 通知 / カレンダー）です。</p>
+<script>
+/* サムネの iframe をカード幅に合わせて縮小 */
+function fit() {
+  document.querySelectorAll('.thumb').forEach(t => {
+    const f = t.querySelector('iframe');
+    f.style.transform = 'scale(' + (t.clientWidth / 1440) + ')';
+  });
+}
+addEventListener('resize', fit); addEventListener('load', fit); fit();
+</script>
+</body>
+</html>

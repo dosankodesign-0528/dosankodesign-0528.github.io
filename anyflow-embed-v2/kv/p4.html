@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>P4 ミニマル線画 — KV案 V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="kv.css">
+</head>
+<body class="pat-4">
+
+<div class="kv-copy">
+  <div class="eyebrow">APIでデータを繋ぐプラットフォーム</div>
+  <h1>AIと事業を<br>強くする</h1>
+</div>
+
+<div id="kv"></div>
+
+<div class="kv-bar">
+  <b>P4 ミニマル線画</b>
+  <span class="sep"></span>
+  箱:
+  <button data-bs="flat" class="on">フラット</button>
+  <button data-bs="solid">立体</button>
+  <button data-bs="iso">アイソメ</button>
+  <span class="sep"></span>
+  <a href="./">一覧</a>
+  <a href="p3.html">← 前</a>
+  <a href="p5.html">次 →</a>
+</div>
+
+<script src="engine.js"></script>
+<script>
+  const root = KV.start(Object.assign({ mount: 'kv' }, { flow:'huedrift', cell:2, mono:true, dotR:5, dotSpeed:.12 }));
+  KV.setBoxStyle(root, 'flat');
+  document.querySelectorAll('.kv-bar [data-bs]').forEach(b => b.onclick = () => {
+    KV.setBoxStyle(root, b.dataset.bs);
+    document.querySelectorAll('.kv-bar [data-bs]').forEach(x => x.classList.toggle('on', x === b));
+  });
+</script>
+</body>
+</html>

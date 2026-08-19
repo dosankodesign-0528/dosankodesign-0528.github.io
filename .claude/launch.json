@@ -116,6 +116,15 @@
         "cd '/Users/hideyuki/Developer/Claude Code/tune-panel' && exec python3 -m http.server 8774"
       ],
       "port": 8774
+    },
+    {
+      "name": "anyflow-v2",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed-v2' && exec python3 -m http.server 8774"
+      ],
+      "port": 8774
     }
   ]
 }
