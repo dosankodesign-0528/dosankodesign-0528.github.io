@@ -640,10 +640,12 @@ export default function TopPage({
                 >
                   {/* v1.2 カンプ 15071:24707: 白1px枠・地 white/10・backdrop-blur 65px
                       文字は Noto Sans JP Medium 16px 白・行間 1.2・左右44px/上下16px
-                      枠は v1.1 では 2px と読んでいたが、更新版のカンプでは 1px */}
+                      枠は v1.1 では 2px と読んでいたが、更新版のカンプでは 1px。
+                      border ではなく内側のリングにしているのは、border だと枠のぶん
+                      ボタンが 218x53.2 に太り、カンプの 216x51 とずれるため */}
                   <Link
                     href="/experience"
-                    className="flex items-center justify-center rounded-full border border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
+                    className="flex items-center justify-center rounded-full bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white ring-1 ring-inset ring-white backdrop-blur-65 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>

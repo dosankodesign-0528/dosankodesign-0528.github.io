@@ -42,3 +42,6 @@ next-env.d.ts
 
 # 元動画素材（配信は public/video の圧縮版）
 _source/
+
+# 作業用の一時ファイル置き場（比較シートなど）。本番に出さない
+public/_tmp/

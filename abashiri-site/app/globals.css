@@ -118,7 +118,7 @@
   /* 210x241 の枠。右端・上端からの距離 */
   --illust-frame-right: 57px;
   --illust-frame-top: 750px;
-  /* 人物（縦横比 162:227 = 1:1.4012 を保つ） */
+  /* 人物（新素材 648x907。縦横比 162:226.8 = 1:1.4 を保つ） */
   --illust-person-x: 0px;
   --illust-person-y: 14px;
   --illust-person-w: 162px;
@@ -130,10 +130,7 @@
   --illust-bo-x: 135px;
   --illust-bo-y: 8px;
   --illust-bo-w: 62px;
-  /* キラキラ */
-  --illust-sparkle-x: 7px;
-  --illust-sparkle-y: 54px;
-  --illust-sparkle-w: 14px;
+  /* v1.2: キラキラは人物イラストに描き込まれたので、独立した変数は廃止 */
 }
 
 html,
@@ -235,23 +232,8 @@ body {
   will-change: transform;
 }
 
-/* ===== キラキラ（GIF風：2箇所をパキッと行き来するだけ。フェード無し） ===== */
-/* カンプの位置を基点に、そのまわりを3コマで小さく跳ねるだけ。
-   フェードは掛けない（GIF風のカクつきを残す） */
-@keyframes sparkle-hop {
-  0%, 33.2% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-  }
-  33.3%, 66.5% {
-    transform: translate(9px, -7px) scale(0.78) rotate(22deg);
-  }
-  66.6%, 100% {
-    transform: translate(-5px, 6px) scale(0.9) rotate(-14deg);
-  }
-}
-.sparkle-hop {
-  animation: sparkle-hop 1.5s linear infinite;
-}
+/* v1.2: キラキラの跳ねアニメ（sparkle-hop）は廃止。
+   更新版カンプ 15332:21660 で人物イラストに描き込まれ、独立した要素が無くなったため。 */
 
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */
 @keyframes kenburns {

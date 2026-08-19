@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Bird from "./Bird";
-import IllustTamannee from "./IllustTamannee";
 import { useFaceReaction } from "./useFaceReaction";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
@@ -320,8 +319,8 @@ export default function Stage({
                   left: "var(--illust-person-x)",
                   top: "var(--illust-person-y)",
                   width: "var(--illust-person-w)",
-                  /* 162:227 の比率を保つ */
-                  height: "calc(var(--illust-person-w) * 1.4012)",
+                  /* 新素材 648x907 の比率（162:226.8 ＝ カンプの枠と同じ） */
+                  height: "calc(var(--illust-person-w) * 1.4)",
                   ...ia.style,
                 }}
                 animate={spin ? ia.animate : undefined}
@@ -371,7 +370,7 @@ export default function Stage({
                   left: "var(--illust-person-x)",
                   top: "var(--illust-person-y)",
                   width: "var(--illust-person-w)",
-                  height: "calc(var(--illust-person-w) * 1.4012)",
+                  height: "calc(var(--illust-person-w) * 1.4)",
                 }}
               />
               {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts）。

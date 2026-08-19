@@ -38,9 +38,6 @@ const POS_DEFAULTS = {
   boX: 135,
   boY: 8,
   boW: 62,
-  sparkleX: 7,
-  sparkleY: 54,
-  sparkleW: 14,
 };
 
 /* params のキー → CSS 変数名 */
@@ -56,9 +53,6 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
   boX: "--illust-bo-x",
   boY: "--illust-bo-y",
   boW: "--illust-bo-w",
-  sparkleX: "--illust-sparkle-x",
-  sparkleY: "--illust-sparkle-y",
-  sparkleW: "--illust-sparkle-w",
 };
 
 type Params = {
@@ -120,9 +114,9 @@ export default function TopTunePanel({
         title: "⚙️ 網走サイト 調整パネル",
         storageKey: "abashiri-top-tune",
         /* ⚠️ 既定値の意味を変えたら必ず上げる（古い保存値が自動で捨てられる）。
-           v2: 「ぼーっ」の採用案を 案1 → 案4 に変更（2026-08-18）。
-               上げないと、前に触った人のブラウザでは案1が残り続ける */
-        version: 2,
+           v2: 「ぼーっ」の採用案を 案1 → 案4 に変更（2026-08-18）
+           v3: カンプ更新でイラストが差し替わり、キラキラの項目が無くなった（2026-08-19） */
+        version: 3,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -139,7 +133,7 @@ export default function TopTunePanel({
                 max: 400,
                 step: 1,
                 fmt: "px",
-                hint: "大きくすると左へ寄ります。人物・文字・キラキラがまとめて動きます。",
+                hint: "大きくすると左へ寄ります。人物と文字がまとめて動きます。",
               },
               {
                 slider: "上からの距離",
@@ -249,35 +243,6 @@ export default function TopTunePanel({
                 path: "pos.boW",
                 min: 30,
                 max: 180,
-                step: 1,
-                fmt: "px",
-              },
-            ],
-          },
-          {
-            cat: "✨ キラキラ",
-            items: [
-              {
-                slider: "横ずれ",
-                path: "pos.sparkleX",
-                min: -40,
-                max: 200,
-                step: 1,
-                fmt: "px",
-              },
-              {
-                slider: "縦ずれ",
-                path: "pos.sparkleY",
-                min: -40,
-                max: 240,
-                step: 1,
-                fmt: "px",
-              },
-              {
-                slider: "大きさ",
-                path: "pos.sparkleW",
-                min: 6,
-                max: 60,
                 step: 1,
                 fmt: "px",
               },
