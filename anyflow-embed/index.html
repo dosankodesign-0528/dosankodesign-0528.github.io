@@ -654,8 +654,10 @@
     opacity: 0;
     transform: scaleY(.3);
     transform-origin: 50% 50%;
-    /* 反応感のいいオーバーアクション: 少し行き過ぎてから戻る */
-    transition: opacity .18s var(--e-fast), transform .32s cubic-bezier(.2,1.5,.35,1);
+    /* ⚠️【2026-08-19 ヒデさん指摘】以前は cubic-bezier(.2,1.5,.35,1) で
+       「少し行き過ぎてから戻る」オーバーアクションを付けていたが、
+       バウンス（跳ね返り）に見えて浮くため廃止。サイト標準のカーブに統一する */
+    transition: opacity .18s var(--e-fast), transform .34s var(--e-out);
   }
   .dl-item.is-on .dl-bar { opacity: 1; transform: scaleY(1); }
   /* 【2026-08-15】ブラーでの切替はやめ、下線が伸びて白文字になるだけにした */
@@ -672,8 +674,8 @@
     background: #fff;
     transform: scaleX(0);
     transform-origin: 0 50%;
-    /* 行き過ぎてから戻る = 反応がいい */
-    transition: transform .34s cubic-bezier(.2,1.4,.3,1);
+    /* ⚠️ 下線もバウンス（cubic-bezier(.2,1.4,.3,1)）をやめてサイト標準のカーブへ */
+    transition: transform .38s var(--e-out);
   }
   .dl-item.is-on .dl-head::after { transform: scaleX(1); }
   .dl-item.is-on .dl-head b, .dl-item.is-on .dl-head span { color: #fff; }
@@ -2223,7 +2225,9 @@ const DEFAULTS = {
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
       imgBlur: 24,     // 画像が出る時のぼかし量
-      parallax: 16,    // スクロールで画像の中身がずれる量
+      /* スクロールで画像の中身がずれる量。
+         【2026-08-19 ヒデさん指定】左のグラデーション画像はパララックスなしにする → 0 */
+      parallax: 0,
       typeAt: 0.15,    // タイピングが始まるまで(案B)
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
@@ -2243,7 +2247,12 @@ const DEFAULTS = {
                          /* ⚠️ 回転中のぼかしは 2026-08-17 に「要らない」で確定。
                             パラメータごと削除したので、復活させる時は renderSlots にも戻すこと */
     },
-    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3 },   // stackDur=カードが回って入れ替わる秒数   // 尺は「章を送るためのスクロール量」なので短くてよい           // 尺 / CLI・API・SDK切替のブラー量
+    /* stackDur = カードが回って入れ替わるのにかける秒数
+       swapEase = その動き出し方 (DEV_SWAP_EASES)
+       ⚠️ 2026-08-19: 1.3秒 × easeOutQ だと動きの半分が最初の13%で終わってしまい、
+          「パッと動いて、あとは長く止まりに行く」＝急に見えた（ヒデさん指摘）。
+          2.0秒 × ゆったり(easeIO) を既定にした */
+    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 2.0, swapEase: 1 },
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 200, driveLen: 3.0, depth: 1, inBlur: 20, gap: 44, playSec: 5.4,
       /* 【2026-08-18】開発者体験と1画面重ねたので、助走(pre)の前半は
@@ -2391,6 +2400,18 @@ function load() {
         dev:     { ...DEFAULTS.sections.dev,     ...((s.sections && s.sections.dev) || {}) },
         cases:   { ...DEFAULTS.sections.cases,   ...((s.sections && s.sections.cases) || {}) },
       };
+      /* 【2026-08-19】モックの入れ替えを「1.3秒・キビキビ」から「2.0秒・ゆったり」に変更した。
+         ⚠️ 保存値があると新しい既定が効かないが、【旧既定のまま(=触っていない)】なら
+            載せ替えてよい。ヒデさんが自分で決めた値は残す */
+      if (merged.sections.dev && Math.abs(merged.sections.dev.stackDur - 1.3) < 1e-6)
+        merged.sections.dev.stackDur = DEFAULTS.sections.dev.stackDur;
+      if (merged.sections.dev && (merged.sections.dev.swapEase == null ||
+          merged.sections.dev.swapEase < 1 || merged.sections.dev.swapEase > DEV_SWAP_EASES.length))
+        merged.sections.dev.swapEase = DEFAULTS.sections.dev.swapEase;
+      /* 【2026-08-19】実績の左グラデ画像はパララックスなしに変更（旧既定 16 → 0）。
+         旧既定のまま(=触っていない)なら新しい既定に載せ替える */
+      if (merged.sections.results && Math.abs(merged.sections.results.parallax - 16) < 1e-6)
+        merged.sections.results.parallax = DEFAULTS.sections.results.parallax;
       merged.patterns = { ...DEFAULTS.patterns, ...(s.patterns || {}) };
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
@@ -3879,6 +3900,15 @@ const DEV_STACK = [
   { sc: 0.788, dx:  121.7, dy: -17.6, dz: -120, ry: -22, op: 0.38, z: 1 },   /* 右後ろ */
 ];
 const DEV_SCREENS = ['api', 'cli', 'sdk'];
+/* ===== カードが入れ替わる時の動き出し方 (2026-08-19) =====
+   ⚠️ 「半分まで進むのに全体の何割の時間を使うか」で急さが決まる。
+      easeOutQ は 13% で半分まで行ってしまうので、いきなり動いてから
+      長く止まりに行く＝急に見える。ヒデさん指摘の「急すぎる」の正体。 */
+const DEV_SWAP_EASES = [
+  { name: '①ゆったり',   fn: easeIO,    desc: 'そっと動き出して、そっと止まる。いちばん落ち着いて見える。' },
+  { name: '②すっと動く', fn: easeOutC,  desc: '動き出しは早め、止まりはなめらか。反応の良さも欲しい時に。' },
+  { name: '③キビキビ',   fn: easeOutQ,  desc: 'パッと動いてゆっくり止まる（2026-08-19 以前の動き）。' },
+];
 
 const DEV_CH = [
   /* ⚠️ 章の終わり(to)は「退場の開始点(out1[0]=0.42)」より必ず手前に置くこと。
@@ -4427,7 +4457,8 @@ function updateDev(pRaw) {
       el._t0 = elapsed;
     }
     const to = DEV_STACK[seatI];
-    const kk = el._t0 == null ? 1 : easeOutQ(clamp01((elapsed - el._t0) / c.stackDur));
+    const swapEase = (DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0]).fn;
+    const kk = el._t0 == null ? 1 : swapEase(clamp01((elapsed - el._t0) / c.stackDur));
     /* ⚠️【2026-08-19 バグ修正】不透明度だけは、位置と同じタイミングで動かさないこと。
        後ろへ回るカードは席が変わった瞬間から薄くなり始めるが、その時点ではまだ
        大きいまま手前を横切っている。結果【回っている最中にカードが透けて、
@@ -5614,10 +5645,13 @@ function buildPanel() {
   sectionLenSlider('dev', 1600);
 
   sub(catDev, '画面が切り替わる時の見え方');
+  note('右の API / CLI / SDK にマウスを乗せると、左の3枚が回って入れ替わります。');
+  note(DEV_SWAP_EASES[(sv().dev.swapEase || 1) - 1].desc);
+  pillRow(DEV_SWAP_EASES, (_, i) => (sv().dev.swapEase || 1) === i + 1, (_, i) => sv().dev.swapEase = i + 1);
+  rows.push(slider('入れ替わる時間', 0.4, 4, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + '秒',
+    '3枚が回って入れ替わりきるまでの時間。大きいほどゆったり。'));
   rows.push(slider('切り替わりのぼかし', 0, 30, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
     '入れ替わる瞬間のぼけの強さ。0でパキッと切り替わります。'));
-  rows.push(slider('入れ替わる時間', 0.4, 3, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + '秒',
-    '3枚が回って入れ替わる時間。大きいほどゆったり。'));
 
   sub(catDev, '後ろに重なるカード');
   note(params.patterns.devStack === 'off'
