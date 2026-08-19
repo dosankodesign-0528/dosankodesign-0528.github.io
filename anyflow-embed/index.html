@@ -1303,11 +1303,18 @@
   .grp.sub2 .grp-title { font-size: 12px; color: #555; }
   .row-hint { font-size: 10px; line-height: 1.55; color: #999; margin: -1px 0 6px 100px; }
   .grp-note { font-size: 10px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
+  /* カテゴリを開いてすぐの説明。小見出しより前に来るので上に余白がいる */
+  .grp-note.cat-note { margin: 10px 0 0; }
+  /* たたまれている時に「押せる」と分かるようにする小さい添え書き */
+  .panel-head-sub { font-size: 10px; color: #999; margin-left: 8px; font-weight: 300; }
+  .panel:not(.closed) .panel-head-sub { display: none; }
   .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
   .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-  .row label { flex: 0 0 92px; color: #555; font-weight: 300; }
+  /* ⚠️ 2026-08-19: ラベルを分かりやすい日本語に書き直したら 92px では折り返した。
+     長い項目名でも1行に収まる幅にし、値の欄も「32秒」「120px」が入る幅にする */
+  .row label { flex: 0 0 116px; color: #555; font-weight: 300; }
   .row input[type=range] { flex: 1; accent-color: #090909; min-width: 0; }
-  .row .val { flex: 0 0 44px; text-align: right; font-variant-numeric: tabular-nums; color: #333; }
+  .row .val { flex: 0 0 58px; text-align: right; font-variant-numeric: tabular-nums; color: #333; }
   .btns { display: flex; gap: 8px; margin-top: 12px; }
   .btns button {
     flex: 1;
@@ -1673,7 +1680,7 @@
 <div class="tools">
 <div class="panel closed" id="panel">
   <div class="panel-head" id="panelHead">
-    <span>⚙️ 調整パネル</span>
+    <span>⚙️ モーション調整パネル<span class="panel-head-sub">クリックで開く</span></span>
     <span class="chev">▲</span>
   </div>
   <div class="panel-body" id="panelBody"></div>
@@ -5032,6 +5039,24 @@ function replayHere(now) {
   if (now) doIt(); else replayTimer = setTimeout(doIt, 250);
 }
 
+/* ===== 「その場で反映」と「頭から流し直し」の使い分け (2026-08-19 ヒデさん指摘) =====
+   ⚠️ これまではパネルを触ると必ず replayHere() が走り、
+      キービジュアルにいる時は elapsed が 0 に戻っていた。
+      つまり【ヘッダーのブラー → タイピング → グラフィック出現】が全部やり直しになる。
+      惑星の柄を選んだだけで画面がリセットされるので、リロードしたようにしか見えない。
+      実測: 柄のピルを押すと elapsed 20s → 0s、ヘッダーの不透明度 1 → 0。
+
+   見た目そのものを変える項目（惑星の柄・自転・軌道の見え方）は、時計を戻さず
+   その場で描き直すだけでよい。逆に「登場の順番やタイミング」を触る項目は
+   頭から流し直さないと結果が見えないので、従来どおり流し直す。
+
+   liveEdit = true の間に作られた項目は「その場で反映」になる。 */
+let liveEdit = false;
+function applyEdit(isLive, now) {
+  if (isLive) renderFrame();
+  else replayHere(now);
+}
+
 function defaultOf(get) {
   const keep = params;
   try { params = DEFAULTS; return get(); }
@@ -5058,13 +5083,14 @@ function slider(label, min, max, step, get, set, fmt, hint) {
   val.className = 'val';
   const f = fmt || (v => v);
   val.textContent = f(get());
+  const isLive = liveEdit;   /* 作った時点の設定を覚えておく (押した時ではなく) */
   input.addEventListener('input', () => {
     set(parseFloat(input.value));
     val.textContent = f(parseFloat(input.value));
     save();
-    replayHere();            /* 手が止まったら、その場で流し直す */
+    applyEdit(isLive);       /* 見た目だけの項目は即反映 / それ以外は手が止まってから流し直す */
   });
-  input.addEventListener('change', () => replayHere(true));
+  input.addEventListener('change', () => applyEdit(isLive, true));
   row.append(lab, input, val);
   row._sync = () => { input.value = get(); val.textContent = f(get()); };
   mount.appendChild(row);
@@ -5111,11 +5137,20 @@ function sub(target, html, deep) {
   mount = deep ? g : target;
 }
 /* グループのすぐ下に置く注釈 */
+/* ⚠️ mount は sub() が呼ばれて初めて決まる。sub() より前に note() を呼ぶと
+   mount が null で落ちる（2026-08-19 に実際に踏んだ）。保険で body に逃がす */
 function note(text) {
   const d = document.createElement('div');
   d.className = 'grp-note';
   d.textContent = text;
-  mount.appendChild(d);
+  (mount || body).appendChild(d);
+}
+/* カテゴリを開いてすぐ、小見出しより前に置く「このカテゴリは何か」の説明 */
+function catNote(target, text) {
+  const d = document.createElement('div');
+  d.className = 'grp-note cat-note';
+  d.textContent = text;
+  target.appendChild(d);
 }
 
 /* 方向切替の2択ボタン行 */
@@ -5125,10 +5160,11 @@ function segRow(label, opts, getDir, setDir) {
   row.innerHTML = `<label>${label}</label>`;
   const seg = document.createElement('div');
   seg.className = 'seg';
+  const isLive = liveEdit;
   const bs = opts.map(([text, value]) => {
     const b = document.createElement('button');
     b.textContent = text;
-    b.onclick = () => { setDir(value); sync(); replayHere(true); };
+    b.onclick = () => { setDir(value); sync(); applyEdit(isLive, true); };
     seg.appendChild(b);
     return [b, value];
   });
@@ -5138,10 +5174,24 @@ function segRow(label, opts, getDir, setDir) {
   mount.appendChild(row);
 }
 
+/* パネルを作り直しても、目印にした要素が画面の同じ高さに留まるようにする。
+   目印はテキストで探し直す（作り直しで DOM は別物になるため）*/
+function rebuildKeeping(markEl) {
+  const key = markEl ? markEl.textContent.trim() : null;
+  const before = markEl ? markEl.getBoundingClientRect().top : null;
+  buildPanel();
+  if (key == null || before == null) return;
+  const again = [...body.querySelectorAll('.sw-pill')].find(b => b.textContent.trim() === key);
+  if (!again) return;
+  const diff = again.getBoundingClientRect().top - before;
+  if (diff) body.scrollTop += diff;
+}
+
 /* 選択ピル (惑星デザインなど) */
 function pillRow(items, isOn, onPick) {
   const row = document.createElement('div');
   row.className = 'sw-row';
+  const isLive = liveEdit;
   items.forEach((it, i) => {
     const b = document.createElement('button');
     b.className = 'sw-pill';
@@ -5157,8 +5207,15 @@ function pillRow(items, isOn, onPick) {
       onPick(it, i);
       row.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', isOn(items[j], j)));
       save();
-      buildPanel();
-      replayHere(true);      /* 案を切り替えたら、その場で流し直す */
+      /* ⚠️【2026-08-19 ヒデさん指摘】押すと buildPanel() でパネルを作り直すため、
+         選んだ案によって上の説明文の行数や下の項目数が変わり、
+         【押したボタンが画面の中で動いてしまう】(レイアウトシフト)。
+         柄を続けて比べたいのに、毎回ボタンを探し直すことになっていた。
+         押したボタン自体を目印にして、作り直しの前後で同じ画面位置に留める */
+      rebuildKeeping(b);
+      /* 見た目だけの案（惑星の柄など）はその場で反映。
+         登場の順番が変わる案は、頭から流し直さないと結果が見えないので流し直す */
+      applyEdit(isLive, true);
     };
     row.appendChild(b);
   });
@@ -5172,365 +5229,410 @@ function buildPanel() {
   const keepScroll = body.scrollTop;   // 作り直しでスクロール位置が飛ばないように退避
   body.innerHTML = '';
   rows.length = 0;
+  liveEdit = false;                    // 既定は「頭から流し直す」。見た目だけの所で true にする
   const sv = () => params.sections;
 
-  /* セクション共通の「尺」スライダー。scroll モード時は倍率、time モード時は vh。
-     ⚠️ 中の値（driveLen / lenVh）は別なので、モードごとに触る先を切り替える */
+  /* セクションの長さ。スクロール駆動の時は倍率、時間で再生の時は画面何個ぶんか。
+     ⚠️ 中の値（driveLen / lenVh）は別物なので、モードごとに触る先を切り替える */
   const sectionLenSlider = (key, maxVh) => {
     if (params.drive === 'scroll') {
-      rows.push(slider('尺', 1, 12, 0.25,
+      rows.push(slider('見せる長さ', 1, 12, 0.25,
         () => sv()[key].driveLen, v => { sv()[key].driveLen = v; fit(); },
-        v => '×' + v.toFixed(2) + '（体感 ' + (1 / v).toFixed(2) + '倍速）',
-        'スクロール駆動の時の倍率。大きいほどこのセクションが長くなり、スクロールあたりの進み方がゆっくりになる。'));
+        v => '×' + v.toFixed(2),
+        '見終わるのに必要なスクロール量。大きいほどゆっくり見せます。'));
     } else {
-      rows.push(slider('尺', 110, maxVh, 10,
+      rows.push(slider('見せる長さ', 110, maxVh, 10,
         () => sv()[key].lenVh, v => { sv()[key].lenVh = v; fit(); },
-        v => v + 'vh',
-        '時間再生の時の、このセクションの長さ。大きいほど再生後に次へ抜けるまでのスクロールが長くなる。'));
+        v => (v / 100).toFixed(1) + '画面',
+        'モーションが終わってから次へ抜けるまでの長さ。大きいほど余韻が残ります。'));
     }
   };
 
   /* ========== 🌊 全体 ========== */
-  const catAll = category('🌊 全体（スクロールの質感）', true);
-  sub(catAll, 'アニメーションの動かし方');
+  const catAll = category('🌊 全体（サイト全体のモーション）', true);
+  catNote(catAll, 'まずはここだけ。サイト全体の印象が決まります。');
+
+  sub(catAll, '① モーションが進むきっかけ');
   note(params.drive === 'scroll'
-    ? 'スクロール駆動: スクロールした分だけ絵が進みます。手を止めれば絵も止まり、戻せばそのまま巻き戻ります。参考サイトと同じ考え方。トラックパッドの慣性でも絵が破綻しません。'
-    : '時間で再生: セクションに着いたら固定して、決まった秒数で1本の映像として流します。速さが常に一定で絵コンテ通り。ただしトラックパッドの慣性ではロックを振り切られることがあります。');
-  segRow('動かし方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
+    ? '動かした分だけ絵が進みます。手を止めれば絵も止まり、戻せば巻き戻ります。'
+    : 'セクションに着いたら、決まった秒数の映像として流します。誰が見ても同じ速さ。');
+  segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
     () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); save(); buildPanel(); });
+
+  sub(catAll, '② セクションを画面に貼りつけるか');
   note(params.pin === 'off'
-    ? '固定なし: セクションを画面に貼りつけません。普通に上から下へ流れ、画面に入った時に中で再生します。貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に起きません。'
-    : '固定あり: セクションを画面に貼りつけて見せます（従来）。');
-  segRow('固定追従', [['あり', 'on'], ['なし', 'off']],
+    ? '貼りつけず、上から下へ普通に流れます。スクロールが引っかかりません。'
+    : '画面いっぱいで一度止まり、その場でモーションが流れてから次へ進みます。');
+  segRow('貼りつけ', [['貼りつける', 'on'], ['貼りつけない', 'off']],
     () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); save(); buildPanel(); });
-  note('各セクションの「尺」は、それぞれのグループの中で調整できます。');
-  rows.push(slider('展開しきる位置', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
-    v => 'ピン区間の' + Math.round(v * 100) + '%',
-    'スクロール駆動の時のみ有効。小さいほど少ないスクロールで一気に展開する。'));
-  sub(catAll, 'スクロール');
-  segRow('リプレイ', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; save(); });
-  note('リプレイ「する」= 画面から出たセクションは、戻ってくるともう一度アニメが流れます。');
-  rows.push(slider('滑らかさ', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
+  if (params.drive === 'scroll' && params.pin === 'on')
+    rows.push(slider('見せきる早さ', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
+      v => Math.round(v * 100) + '%',
+      '貼りついている間の何割で見せきるか。小さいほど一気に展開。'));
+
+  sub(catAll, '③ スクロールの感触');
+  rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
-    '小さいほど慣性が強く、指を離しても長く流れる。大きいほどピタッと止まる。'));
+    '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
+  segRow('もう一度見せる', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; save(); });
+  note('一度見たセクションも、戻ってくるともう一度流れます。');
 
   /* ========== 🖼 キービジュアル ========== */
-  const catKv = category('🖼 キービジュアル', false);
+  const catKv = category('🖼 キービジュアル（いちばん上の画面）', false);
+  catNote(catKv, '最初に見える画面。文字が打たれ、そのあと惑星と輪が出ます。');
 
-  sub(catKv, '文字の登場');
-  rows.push(slider('ヘッダー', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + 's',
-    '大きいほど、ヘッダーが出るのが遅くなる。'));
-  rows.push(slider('タイピング開始', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + 's',
-    '大きいほど、文字を打ち始めるのが遅くなる。'));
-  rows.push(slider('1行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's',
-    '1文字あたりの秒数。小さいほど速く打つ。'));
-  rows.push(slider('2行目の速さ', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's',
-    '同上。2行目はゆったり見せたいので大きめ。'));
-  rows.push(slider('タイピング緩急', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
-    '大きいほど、打ち始めが速く終わりがゆっくりになる。0=一定の速さ。'));
-  rows.push(slider('改行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + 's',
-    '大きいほど、1行目と2行目の間があく。'));
-  rows.push(slider('打ち終わり→小ラベル', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + 's',
-    '大きいほど、「APIでデータを繋ぐ〜」が出るのが遅くなる。'));
-  rows.push(slider('グラフィックまで', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + 's',
-    '大きいほど、惑星と軌道が出るのが遅くなる。'));
-  rows.push(slider('ブラー出現の速さ', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + 's',
-    '小ラベル・グラフィック・ロゴがブラーから現れるのにかける時間。大きいほどゆったり。'));
+  sub(catKv, '文字が出てくる順番とタイミング');
+  note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
+  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
+    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
+  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
+    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
+  rows.push(slider('1行目を打つ速さ', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
+    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
+  rows.push(slider('2行目を打つ速さ', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
+    'ゆっくりにすると、最後の一言が印象に残ります。'));
+  rows.push(slider('打つ速さの変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
+    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
+  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
+    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
+  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
+    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
+  rows.push(slider('→ 惑星と輪が出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+    'その一言が出てから、右側の惑星と輪が現れるまで。'));
+  rows.push(slider('ぼけから現れる速さ', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
+    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
-  /* ---------- 🪐 惑星 (デザイン・柄・ライト・自転・位置を全部ここに) ---------- */
+  /* ---------- 🪐 惑星 ----------
+     ⚠️【2026-08-19 ヒデさん指定】ここだけは触っても頭から流し直さない。
+        柄を選ぶたびにヘッダーのブラーとタイピングまでやり直しになり、
+        リロードしたようにしか見えなかったため。他のグループは従来どおり流し直す。 */
+  liveEdit = true;
   sub(catKv, '🪐 惑星');
-  note('デザインを選ぶと、その下の「柄の動き」の中身が入れ替わります。');
+  note('ここは押した瞬間その場で変わります（文字は流し直しません）。');
+
+  sub(catKv, '柄を選ぶ', true);
+  note('A系＝写真の質感 / B＝ドット絵風 / C系＝色の帯が流れる。');
   pillRow(Object.entries(DESIGNS).map(([key, d]) => ({ key, name: d.name, swatch: d.swatch })),
     it => params.design === it.key, it => params.design = it.key);
 
   if (params.design === 'B') {
-    sub(catKv, '柄の動き（ハーフトーンの粒）', true);
+    sub(catKv, '点々の動き方', true);
     note(DITHERS[(params.dither || 1) - 1].desc);
     pillRow(DITHERS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
   } else if (WAVE_DESIGNS.includes(params.design)) {
-    sub(catKv, '柄の動き（色の帯の流れ方）', true);
+    sub(catKv, '色の帯の流れ方', true);
     note(WAVE_FLOWS[(params.dither || 1) - 1].desc);
     pillRow(WAVE_FLOWS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
+  } else {
+    sub(catKv, '柄の動き', true);
+    note('この柄に動きの選択肢はありません。B や C 系を選ぶと出てきます。');
   }
 
-  sub(catKv, '自転', true);
-  rows.push(slider('1回転の秒数', 4, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + 's',
-    '小さいほど速く回る。大きいほどゆっくり。'));
-  segRow('回す向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; save(); });
-  rows.push(slider('回転軸の傾き', -180, 180, 1, () => params.sphere.tilt, v => params.sphere.tilt = v, v => v + '°',
-    '柄の見え始める位置がずれる。同じ速さのまま向きだけ変えたい時に。'));
-  rows.push(slider('ランダム', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
-    '大きいほど回転速度が不規則に伸び縮みして、繰り返しに見えにくくなる。0=一定。'));
-  rows.push(slider('多面ゆらぎ', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%',
-    '大きいほど2軸目の回転が強まり、コロコロ転がる感じになる。0=1軸だけ。'));
-  rows.push(slider('質感の粒', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%',
-    '大きいほどザラつきが増す。0=つるつる。'));
+  sub(catKv, '惑星の回り方', true);
+  rows.push(slider('1回転の時間', 4, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + '秒',
+    'ぐるっと1周する時間。小さいほど速く回ります。'));
+  segRow('回る向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; save(); });
+  rows.push(slider('軸の傾き', -180, 180, 1, () => params.sphere.tilt, v => params.sphere.tilt = v, v => v + '°',
+    '柄のどこが正面に来るかがずれます。速さは変わりません。'));
+  rows.push(slider('速さのムラ', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
+    '大きいほど速さが不規則に伸び縮みし、繰り返しに見えにくくなります。'));
+  rows.push(slider('転がり感', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%',
+    '大きいほど縦にも回り、コロコロ転がる感じに。0で横だけ。'));
+  rows.push(slider('表面のザラつき', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%',
+    '大きいほど表面がざらっとします。0でつるつる。'));
 
-  sub(catKv, '位置と大きさ', true);
-  rows.push(slider('X位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
-  rows.push(slider('Y位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
-  rows.push(slider('大きさ', 0.4, 1.8, 0.01, () => params.planet.scale, v => params.planet.scale = v, v => '×' + v.toFixed(2), '1.00 がカンプの寸法。'));
+  sub(catKv, '惑星の置き場所', true);
+  note('惑星だけを動かします。輪ごと動かすなら下の「まわりの輪」で。');
+  rows.push(slider('左右の位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
+  rows.push(slider('上下の位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
+  rows.push(slider('大きさ', 0.4, 1.8, 0.01, () => params.planet.scale, v => params.planet.scale = v, v => '×' + v.toFixed(2), '1.00 がデザイン通りの大きさです。'));
+  liveEdit = false;   /* ← 惑星ここまで。以降は従来どおり頭から流し直す */
 
-  /* ---------- 🛰 軌道 ---------- */
-  sub(catKv, '🛰 軌道');
-  note('惑星のまわりを回る2本の楕円と、その上を回るドットの設定です。');
-  rows.push(slider('全体のX位置', -300, 300, 1, () => params.kv.gx, v => params.kv.gx = v, v => v + 'px', '惑星ごとグラフィック全体が動きます。'));
-  rows.push(slider('全体のY位置', -300, 300, 1, () => params.kv.gy, v => params.kv.gy = v, v => v + 'px', '同上。'));
+  /* ---------- 🛰 まわりの輪 ---------- */
+  sub(catKv, '🛰 まわりの輪');
+  note('惑星のまわりの2本の輪と、その上を回る7個の玉です。');
+  rows.push(slider('全体の左右位置', -300, 300, 1, () => params.kv.gx, v => params.kv.gx = v, v => v + 'px',
+    '惑星と輪をまとめて動かします。プラスで右へ。'));
+  rows.push(slider('全体の上下位置', -300, 300, 1, () => params.kv.gy, v => params.kv.gy = v, v => v + 'px',
+    'まとめて動かします。プラスで下へ。'));
 
-  sub(catKv, 'ゆらぎ（全体のゆっくりした動き）', true);
+  sub(catKv, '2本の輪のゆっくりした傾き', true);
   note(SWAYS[(params.sway || 1) - 1].desc);
   pillRow(SWAYS, (_, i) => params.sway === i + 1, (_, i) => params.sway = i + 1);
 
-  sub(catKv, 'ドットの回り方', true);
+  sub(catKv, '玉が輪を回るスピード', true);
   note(ORBIT_EASES[(params.orbitEase || 1) - 1].desc);
   pillRow(ORBIT_EASES, (_, i) => params.orbitEase === i + 1, (_, i) => params.orbitEase = i + 1);
-  rows.push(slider('1周の秒数', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + 's',
-    '小さいほど速く回る。大きいほどゆっくり。'));
-  rows.push(slider('スピード倍率', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2),
-    '上の秒数をまとめて何倍速にするか。'));
-  rows.push(slider('なめらか加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + 's',
-    '大きいほど、動き始めがじわっと加速する。0=いきなり等速。'));
-  segRow('回転方向', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; save(); });
-  rows.push(slider('速さのゆらぎ', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
-    '大きいほど、周期的に速くなったり遅くなったりする。0=一定。'));
-  rows.push(slider('ゆらぎの周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + 's',
-    '上のゆらぎが1往復する秒数。'));
+  rows.push(slider('1周にかかる時間', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + '秒',
+    '玉が1周する時間。小さいほど速く回ります。'));
+  rows.push(slider('まとめて何倍速', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2),
+    '上の時間はそのまま、速さだけまとめて変えたい時に。'));
+  rows.push(slider('動き出しの加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + '秒',
+    'この秒数をかけてじわっと本来の速さまで上がります。0で即。'));
+  segRow('回る向き', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; save(); });
+  rows.push(slider('速さの波', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
+    '大きいほど、速い⇄遅いを繰り返します。0で一定。'));
+  rows.push(slider('波の周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + '秒',
+    '速い→遅い→速い が1往復する時間。'));
 
-  sub(catKv, 'ドットの間隔', true);
+  sub(catKv, '玉と玉の間隔', true);
   note(DOT_GAPS[(params.dotGap || 1) - 1].desc);
   pillRow(DOT_GAPS, (_, i) => params.dotGap === i + 1, (_, i) => params.dotGap = i + 1);
   if ((params.dotGap || 1) === 1 && (params.orbitEase || 1) === 2)
-    note('⚠️ 上の「ドットの回り方」を②緩急にしていると、手前と奥で速さが変わるぶん間隔も伸び縮みします。きっちり等間隔で見せたい時は①等速に。');
+    note('⚠️ すぐ上を②緩急にしていると間隔も伸び縮みします。①等速との併用がおすすめ。');
 
-  [['outer', '外側の楕円', '#FF5D97'], ['inner', '内側の楕円', '#00ABEB']].forEach(([key, label, color]) => {
+  [['outer', '外側の輪（上を通る方・ピンク）', '#FF5D97'], ['inner', '内側の輪（下を通る方・水色）', '#00ABEB']].forEach(([key, label, color]) => {
     sub(catKv, `<span class="chip" style="background:${color}"></span>${label}`, true);
     const o = () => params.orbits[key];
-    rows.push(slider('サイズ', 0.5, 1.5, 0.01, () => o().scale, v => o().scale = v, v => '×' + v.toFixed(2), '1.00 がカンプの寸法。'));
-    rows.push(slider('角度', -45, 45, 0.5, () => o().angle, v => o().angle = v, v => v + '°', '楕円の傾き。'));
-    rows.push(slider('X位置', -200, 200, 1, () => o().dx, v => o().dx = v, v => v + 'px', 'プラスで右へ。'));
-    rows.push(slider('Y位置', -200, 200, 1, () => o().dy, v => o().dy = v, v => v + 'px', 'プラスで下へ。'));
-    rows.push(slider('ゆれ幅', 0, 20, 0.5, () => o().wobbleAmp, v => o().wobbleAmp = v, v => v + '°', '大きいほど大きく傾く。0=傾かない。'));
-    rows.push(slider('ゆれ周期', 2, 30, 0.5, () => o().wobblePeriod, v => o().wobblePeriod = v, v => v.toFixed(1) + 's', '1往復する秒数。大きいほどゆっくり。'));
-    rows.push(slider('ゆれ位相', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°', '2本のタイミングをずらしたい時に。'));
+    rows.push(slider('輪の大きさ', 0.5, 1.5, 0.01, () => o().scale, v => o().scale = v, v => '×' + v.toFixed(2), '1.00 がデザイン通りの大きさです。'));
+    rows.push(slider('輪の傾き', -45, 45, 0.5, () => o().angle, v => o().angle = v, v => v + '°', 'この輪だけを傾けます。'));
+    rows.push(slider('左右の位置', -200, 200, 1, () => o().dx, v => o().dx = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
+    rows.push(slider('上下の位置', -200, 200, 1, () => o().dy, v => o().dy = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
+    rows.push(slider('ゆれる大きさ', 0, 20, 0.5, () => o().wobbleAmp, v => o().wobbleAmp = v, v => v + '°',
+      'ゆらゆら傾く幅。0でまったく傾きません。'));
+    rows.push(slider('ゆれる周期', 2, 30, 0.5, () => o().wobblePeriod, v => o().wobblePeriod = v, v => v.toFixed(1) + '秒',
+      'ゆれが1往復する時間。大きいほどゆったり。'));
+    rows.push(slider('ゆれのずらし', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°',
+      '2本が同じタイミングだと単調なので、片方をずらしたい時に。'));
   });
 
   /* ========== 📖 ビジョン ========== */
-  const catVis = category('📖 ビジョン', false);
-  sub(catVis, '尺');
+  const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
+  catNote(catVis, '文字が出る → 上下に分かれて消える → 間から輪が出て左下へ → Platform の図。');
+
+  sub(catVis, 'このセクションの長さ');
   sectionLenSlider('vision', 800);
-  /* 文字は3グループに分ける（Our Vision ラベル / 2行のメッセージ / 上下に分かれる） */
-  sub(catVis, '文字 - ブラー');
-  rows.push(slider('ブラー量', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px',
-    '大きいほど、出入りのぼけが強くなる。'));
 
-  sub(catVis, '文字 - 「Our Vison」ラベル');
-  rows.push(slider('出るタイミング', 0, 3, 0.05, () => sv().vision.labelAt, v => sv().vision.labelAt = v, v => v.toFixed(2) + 's',
-    '大きいほど、「Our Vison」が出るのが遅くなる。'));
-  rows.push(slider('出現時間', 0.4, 4, 0.1, () => sv().vision.labelDur, v => sv().vision.labelDur = v, v => v.toFixed(1) + 's',
-    '「Our Vison」がブラーから現れるのにかける時間。大きいほどゆったり。'));
-  rows.push(slider('消え始めるまで', 0, 2, 0.05, () => sv().vision.labelOutLead, v => sv().vision.labelOutLead = v, v => v.toFixed(2) + 's前',
-    '上下に分かれ始める何秒前から消し始めるか。大きいほど早く消える。'));
-  rows.push(slider('消えきる時間', 0.2, 2, 0.05, () => sv().vision.labelOutDur, v => sv().vision.labelOutDur = v, v => v.toFixed(2) + 's',
-    'ブラーで消えきるまでの時間。小さいほどサッと消える。'));
+  sub(catVis, '文字のぼけ具合');
+  rows.push(slider('ぼかしの強さ', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px',
+    '文字が出る時・消える時のぼやけの強さ。'));
 
-  sub(catVis, '文字 - キーメッセージ（2行）');
-  rows.push(slider('1行目が出るタイミング', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + 's',
-    '大きいほど、1行目が出るのが遅くなる。'));
-  rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + 's',
-    '大きいほど、1行目と2行目の間があく。'));
-  rows.push(slider('1行の出現時間', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + 's',
-    '1行が出きるまでの時間。大きいほどゆったり。'));
-  rows.push(slider('1文字ずつの遅れ', 0, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => v === 0 ? '行ごと' : Math.round(v * 100) + '%',
-    '大きいほど文字がバラバラに出る。0＝行まるごと同時。'));
+  sub(catVis, '① 「Our Vision」の小さい文字');
+  note('キーメッセージの上に出る小さいラベル。文字とぶつからないよう先に消します。');
+  rows.push(slider('出るまで', 0, 3, 0.05, () => sv().vision.labelAt, v => sv().vision.labelAt = v, v => v.toFixed(2) + '秒後',
+    'セクションが始まってから「Our Vision」が出るまでの時間。'));
+  rows.push(slider('出きるまで', 0.4, 4, 0.1, () => sv().vision.labelDur, v => sv().vision.labelDur = v, v => v.toFixed(1) + '秒',
+    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
+  rows.push(slider('消し始める', 0, 2, 0.05, () => sv().vision.labelOutLead, v => sv().vision.labelOutLead = v, v => v.toFixed(2) + '秒前',
+    '分かれ始める何秒前から消すか。大きいほど早めに消えます。'));
+  rows.push(slider('消えきるまで', 0.2, 2, 0.05, () => sv().vision.labelOutDur, v => sv().vision.labelOutDur = v, v => v.toFixed(2) + '秒',
+    '消えきるまでの時間。小さいほどサッと消えます。'));
 
-  sub(catVis, '文字 - 上下に分かれる');
-  rows.push(slider('分かれ始めるまで', -0.6, 2, 0.05, () => sv().vision.splitGap, v => sv().vision.splitGap = v, v => v.toFixed(2) + 's',
-    '2行そろってから上下に開くまでの間。0＝止まらずそのまま開く。マイナスで出きる前に開き始める。'));
-  rows.push(slider('分かれる時間', 0.4, 4, 0.1, () => sv().vision.splitDur, v => sv().vision.splitDur = v, v => v.toFixed(1) + 's',
-    '上下に開くのにかける時間。大きいほどゆっくり開く。'));
-  rows.push(slider('開く量', 0, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px',
-    '上下にどれだけ離れるか。'));
-  rows.push(slider('慣性で流れる量', 0, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
-    '上下に分かれたあと、止まらずどこまで流れ続けるか。大きいほど遠くへ流れる。'));
-  rows.push(slider('消え始めるまで', 0, 1, 0.05, () => sv().vision.vanishAt, v => sv().vision.vanishAt = v, v => '分割の' + Math.round(v * 100) + '%',
-    '分かれ始めてから消え始めるまで。小さいほど早く消え始める。'));
-  rows.push(slider('消えきる時間', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + 's',
-    '流れながら消えるのにかける時間。小さいほどサッと消える。'));
-  sub(catVis, '軌道グラフィック');
-  rows.push(slider('動き出すタイミング', 0, 1, 0.05, () => sv().vision.moveLead, v => sv().vision.moveLead = v, v => '出現の' + Math.round(v * 100) + '%',
-    '軌道が何割見えた時点で左下へ動き出すか。0%＝出はじめと同時に動く。'));
-  rows.push(slider('出るタイミング', 0, 1, 0.05, () => sv().vision.miniGap, v => sv().vision.miniGap = v, v => '分割の' + Math.round(v * 100) + '%',
-    '分かれ始めてから軌道が出るまで。小さいほど早く出る。'));
-  rows.push(slider('出現時間', 0.4, 3, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + 's',
-    '軌道がブラーから現れるのにかける時間。'));
-  rows.push(slider('小さい時の大きさ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2),
-    '2行の間に出る時の軌道の縮小率。'));
-  rows.push(slider('小さい時のY微調整', -300, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px',
-    'その時の上下位置の微調整。'));
-  rows.push(slider('左下へ動く時間', 0.8, 6, 0.1, () => sv().vision.moveDur, v => sv().vision.moveDur = v, v => v.toFixed(1) + 's',
-    '小さい軌道が左下の定位置まで移動するのにかける時間。大きいほどゆったり。'));
-  rows.push(slider('軌道線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
-    '楕円の線の太さ。'));
-  sub(catVis, 'ドットの出方');
-  note('軌道が出たあと、ドットが1つずつ順に膨らみながら濃くなって出てきます。');
-  rows.push(slider('出はじめるまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + 's',
-    '軌道が出はじめてから、1個目のドットが出るまでの間。0で軌道と同時。'));
-  rows.push(slider('ドットごとの遅れ', 0, 0.5, 0.01, () => sv().vision.dotsInStagger, v => sv().vision.dotsInStagger = v, v => v.toFixed(2) + 's',
-    '大きいほど「1つずつ順に」感が強くなる。0で6個同時に出る。'));
-  rows.push(slider('1個が出る時間', 0.1, 2, 0.05, () => sv().vision.dotsInDur, v => sv().vision.dotsInDur = v, v => v.toFixed(2) + 's',
-    '長いほどゆっくり膨らんで濃くなる。'));
-  sub(catVis, 'ドットの周回');
+  sub(catVis, '② キーメッセージ2行が出る');
+  note('「つなぐことが、」「強みになる時代へ。」の2行です。');
+  rows.push(slider('1行目が出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
+    'セクションが始まってから1行目が出るまでの時間。'));
+  rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + '秒',
+    '大きいほど、ひと呼吸おいてから2行目が出ます。'));
+  rows.push(slider('1行が出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
+    '1行がぼけた状態から出きるまでの時間。'));
+  rows.push(slider('1文字ずつずらす', 0, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => v === 0 ? '行ごと' : Math.round(v * 100) + '%',
+    '大きいほど1文字ずつバラバラに。0で行まるごと同時。'));
+
+  sub(catVis, '③ 2行が上下に分かれて消える');
+  note('2行が上下へ開き、流れながら消えます。空いた間から輪が出ます。');
+  rows.push(slider('分かれ始めるまで', -0.6, 2, 0.05, () => sv().vision.splitGap, v => sv().vision.splitGap = v, v => v.toFixed(2) + '秒',
+    '0で止まらずそのまま開く。マイナスで出きる前から開き始めます。'));
+  rows.push(slider('開ききるまで', 0.4, 4, 0.1, () => sv().vision.splitDur, v => sv().vision.splitDur = v, v => v.toFixed(1) + '秒',
+    '上下に開くのにかける時間。大きいほどゆっくり開きます。'));
+  rows.push(slider('開く距離', 0, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px',
+    '2行が上下にどれだけ離れるか。'));
+  rows.push(slider('流れる距離', 0, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
+    '開いたあと、どこまで流れ続けるか。'));
+  rows.push(slider('消え始める', 0, 1, 0.05, () => sv().vision.vanishAt, v => sv().vision.vanishAt = v, v => Math.round(v * 100) + '%',
+    '開く動きの何割で消え始めるか。小さいほど早く薄くなります。'));
+  rows.push(slider('消えきるまで', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + '秒',
+    '流れながら消えきるまでの時間。小さいほどサッと消えます。'));
+
+  sub(catVis, '④ 輪が現れて左下へ移動する');
+  note('2行の間に小さく現れ、左下へ動きながら実物大になります。');
+  rows.push(slider('現れるまで', 0, 1, 0.05, () => sv().vision.miniGap, v => sv().vision.miniGap = v, v => Math.round(v * 100) + '%',
+    '開く動きの何割で輪が現れるか。小さいほど早く現れます。'));
+  rows.push(slider('現れきるまで', 0.4, 3, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + '秒',
+    'ぼやけた状態からくっきり現れるまでの時間。'));
+  rows.push(slider('動き出すまで', 0, 1, 0.05, () => sv().vision.moveLead, v => sv().vision.moveLead = v, v => Math.round(v * 100) + '%',
+    '輪が何割見えたら左下へ動き出すか。0%で現れると同時。'));
+  rows.push(slider('左下へ着くまで', 0.8, 6, 0.1, () => sv().vision.moveDur, v => sv().vision.moveDur = v, v => v.toFixed(1) + '秒',
+    '左下の定位置まで移動する時間。大きいほどゆったり。'));
+  rows.push(slider('現れる時の小ささ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2),
+    '現れた時点の大きさ。小さいほど、そのあと大きく育ちます。'));
+  rows.push(slider('現れた時の位置', -300, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px',
+    '小さく現れた時の上下位置の微調整。プラスで下へ。'));
+  rows.push(slider('輪の線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
+    '2本の輪の線の太さ。'));
+
+  sub(catVis, '⑤ 図の玉が1つずつ出てくる');
+  note('コネクタ・監査などの玉が、1つずつ膨らみながら出てきます。');
+  rows.push(slider('1個目が出るまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + '秒',
+    '輪が出てから1個目が出るまで。0で輪と同時。'));
+  rows.push(slider('次の玉までの間', 0, 0.5, 0.01, () => sv().vision.dotsInStagger, v => sv().vision.dotsInStagger = v, v => v.toFixed(2) + '秒',
+    '大きいほど「1つずつ順に」。0で全部いっぺんに。'));
+  rows.push(slider('1個が出きるまで', 0.1, 2, 0.05, () => sv().vision.dotsInDur, v => sv().vision.dotsInDur = v, v => v.toFixed(2) + '秒',
+    '長いほど、ゆっくり膨らんで濃くなります。'));
+
+  sub(catVis, '⑥ 図の玉が回って止まる');
   if (params.pin === 'off') {
-    note('固定追従なし: 画面に入ってから少し回って所定の位置で止まります。');
+    note('画面に入ってから少し回って、デザイン通りの位置で止まります。');
     rows.push(slider('回る角度', 0, 180, 5, () => sv().vision.npSpinDeg, v => sv().vision.npSpinDeg = v, v => v.toFixed(0) + '°',
-      '画面に入ってから、カンプの位置に着くまでに回る角度。0でまったく回りません。'));
-    rows.push(slider('回りきる時間', 0.2, 3, 0.1, () => sv().vision.npSpinDur, v => sv().vision.npSpinDur = v, v => v.toFixed(1) + 's',
-      '短いほど「サッと動いてすぐ止まる」。'));
+      '止まるまでに回る角度。0でまったく回りません。'));
+    rows.push(slider('止まるまで', 0.2, 3, 0.1, () => sv().vision.npSpinDur, v => sv().vision.npSpinDur = v, v => v.toFixed(1) + '秒',
+      '短いほど「サッと動いてすぐ止まる」感じになります。'));
   } else {
-    note('固定追従あり: 定位置に着いてから一定時間回って、減速して止まります。');
-    rows.push(slider('止まるまでの周回数', 0.25, 4, 0.25, () => sv().vision.spinLaps, v => sv().vision.spinLaps = v, v => v.toFixed(2) + '周',
-      '止まるまでに何周するか。1.00周ならきっちり一周して元の位置で止まる。'));
-    rows.push(slider('回っている時間', 0.5, 10, 0.1, () => sv().vision.spinHold, v => sv().vision.spinHold = v, v => v.toFixed(1) + 's',
-      '定位置に着いてから止まり始めるまで。この間に Platform と2つの価値が出る。'));
-    rows.push(slider('止まりきる時間', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + 's',
-      '減速して止まりきるまでの時間。大きいほどゆっくり止まる。'));
+    note('定位置に着いたあとしばらく回り、減速して止まってから役割名が出ます。');
+    rows.push(slider('何周して止まるか', 0.25, 4, 0.25, () => sv().vision.spinLaps, v => sv().vision.spinLaps = v, v => v.toFixed(2) + '周',
+      '1.00周できっちり一周し、デザイン通りの位置で止まります。'));
+    rows.push(slider('回り続ける時間', 0.5, 10, 0.1, () => sv().vision.spinHold, v => sv().vision.spinHold = v, v => v.toFixed(1) + '秒',
+      '止まり始めるまで。この間に Platform と2つの価値が出ます。'));
+    rows.push(slider('減速して止まる時間', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + '秒',
+      '大きいほど、じわーっと粘って止まります。'));
   }
-  sub(catVis, '2つの価値の位置');
-  note('カンプの位置からどれだけずらすか。プラスで右／下へ動きます。');
-  [['連携が生む、2つの価値', 'headX', 'headY'], ['Point 01', 'p1X', 'p1Y'], ['Point 02', 'p2X', 'p2Y']]
+
+  sub(catVis, '⑦ 「2つの価値」の文字の位置');
+  note('デザイン位置からのズレ。プラスで右／下へ。');
+  [['見出し「連携が生む、2つの価値」', 'headX', 'headY'], ['Point 01 のかたまり', 'p1X', 'p1Y'], ['Point 02 のかたまり', 'p2X', 'p2Y']]
     .forEach(([label, kx, ky]) => {
       sub(catVis, label, true);
-      rows.push(slider('X位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
-      rows.push(slider('Y位置', -400, 400, 2, () => sv().vision[ky], v => sv().vision[ky] = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
+      rows.push(slider('左右の位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
+      rows.push(slider('上下の位置', -400, 400, 2, () => sv().vision[ky], v => sv().vision[ky] = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
     });
 
   /* ========== 📈 実績 ========== */
-  const catRes = category('📈 実績', false);
-  sub(catRes, '尺');
+  const catRes = category('📈 実績（導入企業◯◯社などの数字）', false);
+  catNote(catRes, '見出し → 数字と本文 → 見終わると暗くなって次のセクションへ。');
+
+  sub(catRes, 'このセクションの長さ');
   sectionLenSlider('results', 600);
-  /* 統一順: レイアウト案 → ブラー → タイミング → 個別要素 */
-  sub(catRes, 'レイアウト案');
+
+  sub(catRes, 'レイアウトを選ぶ');
   note(params.patterns.results === 'A'
-    ? '案A: 画像が左に横長。本文は左下。先にテキスト群 → あとから画像がブラーで出ます。'
-    : '案B: 画像が左端の縦帯。テキストは全部右に1カラム。見出しがタイピングし、同時に他がブラーで出ます。');
-  pillRow([{ key: 'B', name: '案B 縦帯（カンプ）' }, { key: 'A', name: '案A 横長' }],
+    ? '写真が左に横長。先に文字が出て、あとから写真が現れます。'
+    : '写真が左端の細長い帯。文字は右に1列。見出しと同時に他も現れます。');
+  pillRow([{ key: 'B', name: '案B 縦帯（デザイン通り）' }, { key: 'A', name: '案A 横長' }],
     it => params.patterns.results === it.key, it => params.patterns.results = it.key);
 
-  sub(catRes, 'ブラー');
-  rows.push(slider('画像のブラー量', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
-    '大きいほど、画像がぼんやりした状態から現れる。'));
+  sub(catRes, '写真のぼけ具合');
+  rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
+    '大きいほど、写真がぼんやりした状態から現れます。'));
 
-  sub(catRes, 'タイミング');
-  rows.push(slider('見出しのタイピング開始', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + 's',
-    '案B。大きいほど、見出しを打ち始めるのが遅くなる。'));
-  rows.push(slider('1文字の速さ', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's',
-    '案B。小さいほど速く打つ。'));
-  rows.push(slider('数字が出るまで', 0, 1.2, 0.05, () => sv().results.numsGap, v => sv().results.numsGap = v, v => '見出しの' + Math.round(v * 100) + '%',
-    '見出しが何割出たら、下の数字たちが出はじめるか。大きいほど後から出る。'));
-  rows.push(slider('まわりが出そろう時間', 0.4, 4, 0.1, () => sv().results.softDur, v => sv().results.softDur = v, v => v.toFixed(1) + 's',
-    '罫線・数字・本文がブラーから現れるのにかける時間。大きいほどゆったり。'));
-  rows.push(slider('画像が出るまで(案A)', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + 's',
-    '案Aで、テキスト群のあと何秒で画像がブラーから出るか。'));
+  sub(catRes, '出てくる順番とタイミング');
+  rows.push(slider('打ち始めるまで', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + '秒後',
+    '案Bのみ。セクションが始まってから打ち始めるまで。'));
+  rows.push(slider('見出しを打つ速さ', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's/字',
+    '案Bのみ。1文字あたりの時間。小さいほど速く打ちます。'));
+  rows.push(slider('数字が出るまで', 0, 1.2, 0.05, () => sv().results.numsGap, v => sv().results.numsGap = v, v => Math.round(v * 100) + '%',
+    '見出しが何割出たら数字が出るか。大きいほど後から出ます。'));
+  rows.push(slider('数字と本文が出る', 0.4, 4, 0.1, () => sv().results.softDur, v => sv().results.softDur = v, v => v.toFixed(1) + '秒',
+    '線・数字・本文がぼけから出きるまで。'));
+  rows.push(slider('写真が出るまで', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + '秒後',
+    '案Aのみ。文字が出たあと、何秒で写真が現れるか。'));
 
-  sub(catRes, '画像のパララックス');
-  rows.push(slider('パララックス', 0, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
-    'スクロールに合わせて画像の中身だけがずれる量。大きいほど奥行きが出る。0=なし。'));
-  sub(catRes, '数字のスロット');
-  note('見出しがブラーで出たあと、数字が桁ごとに縦へ回って止まります。左の桁から順に確定します。');
-  rows.push(slider('回り出すまで', 0, 2, 0.05, () => sv().results.slotAt, v => sv().results.slotAt = v, v => v.toFixed(2) + 's',
-    'セクションの再生開始から、回り出すまでの間。0で即スタート。'));
-  rows.push(slider('1桁が回る時間', 0.3, 3, 0.05, () => sv().results.slotDur, v => sv().results.slotDur = v, v => v.toFixed(2) + 's',
-    '長いほどゆっくり回って止まる。'));
-  rows.push(slider('桁ごとの遅れ', 0, 0.4, 0.01, () => sv().results.slotStagger, v => sv().results.slotStagger = v, v => v.toFixed(2) + 's',
-    '大きいほど「左から順にパタパタ止まる」感じが強くなる。0だと全桁同時に止まる。'));
-  rows.push(slider('回す周数', 1, 6, 1, () => sv().results.slotCycles, v => sv().results.slotCycles = v, v => v + '周',
-    '止まるまでに 0〜9 を何周流すか。多いほど勢いよく回って見える。'));
-  rows.push(slider('回り出す位置', 0.4, 1, 0.05, () => sv().results.slotEnterAt, v => sv().results.slotEnterAt = v, v => '画面の' + Math.round(v * 100) + '%',
-    '数字が画面のどこまで入ったら回り出すか。100%=下端に顔を出した瞬間 / 50%=中央まで来てから。'));
-  rows.push(slider('減速の強さ', 2, 9, 0.5, () => sv().results.slotEase, v => sv().results.slotEase = v, v => '×' + v.toFixed(1),
-    '大きいほど「最初は速く、最後はじりじり」になる。2でほぼ一定速度、5が既定、9でかなり粘って止まる。'));
-  sub(catRes, '次のセクションへのつなぎ（案B）');
-  note('出そろったあと、中身がブラーで消えるのと同時に、開発者体験の暗い背景へ変わります。');
-  rows.push(slider('消え始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
-    'このセクションを何割スクロールしたら消え始めるか。小さいほど早く暗くなる。'));
+  sub(catRes, '写真の奥行き');
+  rows.push(slider('スクロールでのズレ', 0, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
+    '枠はそのままに中の写真だけがずれます。大きいほど奥行きが出ます。'));
+
+  sub(catRes, '数字が回って止まる演出');
+  note('数字が桁ごとに回り、左の桁から順に止まります。');
+  rows.push(slider('回り出すまで', 0, 2, 0.05, () => sv().results.slotAt, v => sv().results.slotAt = v, v => v.toFixed(2) + '秒後',
+    'セクションが始まってから回り出すまで。0で即。'));
+  rows.push(slider('1桁が止まるまで', 0.3, 3, 0.05, () => sv().results.slotDur, v => sv().results.slotDur = v, v => v.toFixed(2) + '秒',
+    '長いほどゆっくり回って止まります。'));
+  rows.push(slider('次の桁までの間', 0, 0.4, 0.01, () => sv().results.slotStagger, v => sv().results.slotStagger = v, v => v.toFixed(2) + '秒',
+    '大きいほど「左からパタパタ」に。0で全桁同時。'));
+  rows.push(slider('何周まわすか', 1, 6, 1, () => sv().results.slotCycles, v => sv().results.slotCycles = v, v => v + '周',
+    '0〜9 を何回流すか。多いほど勢いよく見えます。'));
+  rows.push(slider('回り出す位置', 0.4, 1, 0.05, () => sv().results.slotEnterAt, v => sv().results.slotEnterAt = v, v => Math.round(v * 100) + '%',
+    '100%＝画面の下に出た瞬間 / 50%＝真ん中まで来てから。'));
+  rows.push(slider('止まり際の粘り', 2, 9, 0.5, () => sv().results.slotEase, v => sv().results.slotEase = v, v => '×' + v.toFixed(1),
+    '大きいほど「最初は勢いよく、最後はじりじり」に。'));
+
+  sub(catRes, '次のセクションへのつなぎ');
+  note('案Bのみ。中身が消えるのと同時に、背景が暗い画面へ変わります。');
+  rows.push(slider('暗くなり始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
+    '何割スクロールしたら暗くなり始めるか。'));
   rows.push(slider('暗くなりきる', 0.2, 1, 0.02, () => sv().results.outTo, v => sv().results.outTo = v, v => Math.round(v * 100) + '%',
-    'ここで完全に暗い背景になる。'));
-  rows.push(slider('消える時のブラー量', 0, 40, 1, () => sv().results.outBlur, v => sv().results.outBlur = v, v => v + 'px',
-    '大きいほど強くぼけながら消える。'));
+    'ここで完全に暗くなります。上との差が小さいほどパッと切り替わります。'));
+  rows.push(slider('消える時のぼかし', 0, 40, 1, () => sv().results.outBlur, v => sv().results.outBlur = v, v => v + 'px',
+    '大きいほど強くぼけながら消えます。'));
 
   /* ========== 🖥 開発者体験 ========== */
-  const catDev = category('🖥 開発者体験', false);
-  sub(catDev, '尺');
+  const catDev = category('🖥 開発者体験（暗い画面のコード紹介）', false);
+  catNote(catDev, '暗い背景で API / CLI / SDK の画面が順に切り替わります。');
+
+  sub(catDev, 'このセクションの長さ');
   sectionLenSlider('dev', 1600);
-  sub(catDev, 'ブラー');
-  rows.push(slider('画面切替のブラー量', 0, 30, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
-    'API / CLI / SDK を切り替えた瞬間の、やわらかいぼけの強さ。'));
 
-  sub(catDev, 'モックカードの切替');
-  rows.push(slider('カードが回る時間', 0.4, 3, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + 's',
-    'API/CLI/SDK を切り替えた時に、3枚が回って入れ替わるのにかける時間。大きいほどゆったり。'));
+  sub(catDev, '画面が切り替わる時の見え方');
+  rows.push(slider('切り替わりのぼかし', 0, 30, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
+    '入れ替わる瞬間のぼけの強さ。0でパキッと切り替わります。'));
+  rows.push(slider('入れ替わる時間', 0.4, 3, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + '秒',
+    '3枚が回って入れ替わる時間。大きいほどゆったり。'));
 
-  sub(catDev, '背景スタック（後ろに控える2枚）');
+  sub(catDev, '後ろに重なるカード');
   note(params.patterns.devStack === 'off'
-    ? '後ろに控える2枚なし。手前の1枚だけを見せます。'
-    : '後ろに2枚（左後ろ・右後ろ）が控えるスタック表示。手前が回って入れ替わります。');
-  pillRow([{ key: 'on', name: 'あり（カンプ）' }, { key: 'off', name: 'なし' }],
+    ? '手前の1枚だけ。すっきりしますが奥行きは出ません。'
+    : '後ろに2枚が少しずれて重なり、トランプの束のような奥行きが出ます。');
+  pillRow([{ key: 'on', name: 'あり（デザイン通り）' }, { key: 'off', name: 'なし' }],
     it => (params.patterns.devStack || 'on') === it.key,
     it => params.patterns.devStack = it.key);
 
-  sub(catDev, 'モック内アニメ');
-  note(params.patterns.mock === 'B' ? '案B: 書き出した直後だけ白くにじむ。'
-    : params.patterns.mock === 'C' ? '案C: 発光しながら現れる。'
-    : '案A: そのまま出す（既定）。');
-  pillRow([{ key: 'A', name: '案A そのまま' }, { key: 'B', name: '案B 白にじみ' }, { key: 'C', name: '案C 発光' }],
+  sub(catDev, '画面の中のコードの見せ方');
+  note(params.patterns.mock === 'B' ? '書き出した直後の文字だけ、白くにじんで見えます。'
+    : params.patterns.mock === 'C' ? '文字が光りながら現れます。'
+    : 'そのまま素直に出します。');
+  pillRow([{ key: 'A', name: '案A そのまま' }, { key: 'B', name: '案B 白くにじむ' }, { key: 'C', name: '案C 光って出る' }],
     it => params.patterns.mock === it.key, it => params.patterns.mock = it.key);
 
   /* ========== 🗂 導入事例 ========== */
-  const catCase = category('🗂 導入事例', false);
-  sub(catCase, '尺');
+  const catCase = category('🗂 導入事例（カードが重なるセクション）', false);
+  catNote(catCase, '見出し → カードが並んで現れる → 上から順に重なります。');
+
+  sub(catCase, 'このセクションの長さ');
   sectionLenSlider('cases', 1000);
-  rows.push(slider('再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
-    'カードが重なりきるまでの時間。小さいほどキビキビ動く。'));
-  sub(catCase, 'ブラー');
-  rows.push(slider('カード出現のブラー量', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px',
-    '大きいほど、カードが強くぼけた状態から現れる。（固定なしのモードでは効きません）'));
+  /* ⚠️ 2026-08-19: 同じ「再生時間」スライダーがここと「タイミング」の2か所にあり、
+     どちらを動かしても同じ値が変わるので混乱のもとだった。ここ1本にまとめる */
+  rows.push(slider('重なりきるまで', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
+    '3枚が重なりきるまで。小さいほどキビキビ動きます。'));
 
-  sub(catCase, 'タイミング');
-  rows.push(slider('再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
-    'カードが重なりきるまでの時間。小さいほどキビキビ動く。'));
-  rows.push(slider('見出しが出るタイミング', 0, 1, 0.02, () => sv().cases.introAt, v => sv().cases.introAt = v, v => Math.round(v * 100) + '%',
-    '暗転が何割進んだら「導入事例」が出はじめるか。小さいほど早く見え始める。'));
-  rows.push(slider('見出しの出現時間', 0.05, 1, 0.02, () => sv().cases.introDur, v => sv().cases.introDur = v, v => v.toFixed(2) + 's',
-    '「導入事例」の文字がブラーから現れるのにかける時間。'));
-  rows.push(slider('1枚目が出るタイミング', 0, 1, 0.02, () => sv().cases.cardAt, v => sv().cases.cardAt = v, v => Math.round(v * 100) + '%',
-    'カード1枚目が出はじめる位置。'));
-  rows.push(slider('カードごとの遅れ', 0, 0.2, 0.01, () => sv().cases.cardGap, v => sv().cases.cardGap = v, v => v.toFixed(2),
-    '大きいほど「1枚ずつ順に」感が強くなる。'));
-  rows.push(slider('1枚が出る時間', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
-    '1枚が出きるまでの長さ。'));
+  sub(catCase, 'カードのぼけ具合');
+  rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px',
+    '大きいほど強くぼけた状態から現れます。※貼りつけない時は無効。'));
 
-  sub(catCase, 'カードの重なり');
+  sub(catCase, '出てくる順番とタイミング');
+  note('「%」は、前の暗い画面が明るく戻る動きの進み具合です。');
+  rows.push(slider('見出しが出る', 0, 1, 0.02, () => sv().cases.introAt, v => sv().cases.introAt = v, v => Math.round(v * 100) + '%',
+    '何割進んだら見出しが出はじめるか。小さいほど早く見えます。'));
+  rows.push(slider('見出しが出きるまで', 0.05, 1, 0.02, () => sv().cases.introDur, v => sv().cases.introDur = v, v => v.toFixed(2) + '秒',
+    '「導入事例」の文字がぼけから出きるまでの時間。'));
+  rows.push(slider('1枚目が出る', 0, 1, 0.02, () => sv().cases.cardAt, v => sv().cases.cardAt = v, v => Math.round(v * 100) + '%',
+    '1枚目が出はじめる時点。見出しより後にすると読んでから出ます。'));
+  rows.push(slider('次のカードまでの間', 0, 0.2, 0.01, () => sv().cases.cardGap, v => sv().cases.cardGap = v, v => v.toFixed(2),
+    '大きいほど「1枚ずつ順に」。0で3枚同時。'));
+  rows.push(slider('1枚が出きるまで', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
+    '1枚がぼけから出きるまでの長さ。'));
+
+  sub(catCase, 'カードの重なり方');
   rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%',
-    '大きいほど、奥のカードが小さくなって奥行きが出る。0=同じ大きさで重なる。'));
-  rows.push(slider('カードの間隔', 0, 120, 4, () => sv().cases.gap, v => sv().cases.gap = v, v => v + 'px',
-    '重なる前に縦に並んでいる時の、カード同士のすき間。'));
+    '大きいほど奥のカードが小さくなり奥行きが出ます。0で同じ大きさ。'));
+  rows.push(slider('重なる前のすき間', 0, 120, 4, () => sv().cases.gap, v => sv().cases.gap = v, v => v + 'px',
+    '重なる前に縦へ並んでいる時の、カード同士のすき間。'));
 
   /* ボタン */
   const btns = document.createElement('div');
   btns.className = 'btns';
   const playBtn = document.createElement('button');
   playBtn.className = 'primary';
-  function syncPlay() { playBtn.textContent = params.running ? '⏸ 一時停止' : '▶ 再生'; }
+  function syncPlay() { playBtn.textContent = params.running ? '⏸ 動きを止める' : '▶ 動きを再開'; }
   playBtn.onclick = () => { params.running = !params.running; syncPlay(); applyMarquee(); save(); };
   syncPlay();
   const restartBtn = document.createElement('button');
-  restartBtn.textContent = '↺ 最初から';
+  restartBtn.textContent = '↺ 先頭から見直す';
   /* 各セクションの再生時刻は「一度再生したら巻き戻さない」ので、
      最初から見たい時はここで一緒にリセットする */
   restartBtn.onclick = () => { elapsed = 0; resetSectionClocks(); window.scrollTo(0, 0); };
   const resetBtn = document.createElement('button');
-  resetBtn.textContent = '初期値に戻す';
+  resetBtn.textContent = '↩︎ 全部を元に戻す';
   resetBtn.onclick = () => {
+    if (!window.confirm('このパネルで変えた設定をすべて捨てて、最初の状態に戻します。よろしいですか？')) return;
     params = structuredClone(DEFAULTS);
     elapsed = 0;
     save();
@@ -5543,18 +5645,25 @@ function buildPanel() {
 
   const copy = document.createElement('button');
   copy.className = 'sw-copy';
-  copy.textContent = '📋 いまの設定をコピー（デフォルト化用）';
+  const COPY_LABEL = '📋 いまの設定をコピーする';
+  copy.textContent = COPY_LABEL;
   copy.onclick = async () => {
     const json = JSON.stringify(params, null, 2);
     try {
       await navigator.clipboard.writeText(json);
-      copy.textContent = '✅ コピーしました！Claudeに貼ればデフォルト化できます';
+      copy.textContent = '✅ コピーしました。これを制作担当に送れば、この状態が正式版になります';
     } catch (e) {
-      window.prompt('この内容をコピーしてください', json);
+      window.prompt('この内容をコピーして、制作担当に送ってください', json);
     }
-    setTimeout(() => { copy.textContent = '📋 いまの設定をコピー（デフォルト化用）'; }, 3000);
+    setTimeout(() => { copy.textContent = COPY_LABEL; }, 4000);
   };
   body.appendChild(copy);
+  const copyNote = document.createElement('div');
+  copyNote.className = 'grp-note';
+  copyNote.style.margin = '6px 0 0';
+  copyNote.textContent = '触った内容はこのブラウザに残るだけで、公開サイトは変わりません。'
+    + 'この形でいきたい時は、コピーして制作担当へ。';
+  body.appendChild(copyNote);
   body.scrollTop = keepScroll;         // 見ていた位置に戻す
 }
 buildPanel();
