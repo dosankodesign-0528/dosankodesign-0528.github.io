@@ -18,6 +18,7 @@ import { useEffect, useRef } from "react";
 import { BO_PATTERNS, DEFAULT_BO } from "./boPatterns";
 import { ILLUST_ENTER_PATTERNS } from "./illustEnterPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
+import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -58,6 +59,7 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 type Params = {
   pos: typeof POS_DEFAULTS;
   anim: { boPattern: number; illustEnter: number };
+  sound: { volume: number };
   spot: SpotTransition;
 };
 
@@ -85,6 +87,8 @@ export default function TopTunePanel({
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
       anim: { boPattern: DEFAULT_BO, illustEnter: 2 },
+      /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
+      sound: { volume: Math.round(DEFAULT_BGM_VOLUME * 100) },
       spot: { ...DEFAULT_SPOT_TRANSITION },
     };
     const params: Params = structuredClone(DEFAULTS);
@@ -96,6 +100,14 @@ export default function TopTunePanel({
         root.style.setProperty(VAR_OF[k], `${params.pos[k]}px`);
       }
     };
+    /* 音量は SoundUi へイベントで直接渡す（鳴っている最中でもその場で変わる） */
+    const applyVolume = () =>
+      window.dispatchEvent(
+        new CustomEvent(BGM_VOLUME_EVENT, {
+          detail: { v: params.sound.volume / 100 },
+        })
+      );
+
     /* ② 案・スクロール連動は React へ */
     const pushValues = () =>
       onSettleValues({
@@ -115,13 +127,31 @@ export default function TopTunePanel({
         storageKey: "abashiri-top-tune",
         /* ⚠️ 既定値の意味を変えたら必ず上げる（古い保存値が自動で捨てられる）。
            v2: 「ぼーっ」の採用案を 案1 → 案4 に変更（2026-08-18）
-           v3: カンプ更新でイラストが差し替わり、キラキラの項目が無くなった（2026-08-19） */
-        version: 3,
+           v3: カンプ更新でイラストが差し替わり、キラキラの項目が無くなった（2026-08-19）
+           v4: 環境音の音量を追加（2026-08-19） */
+        version: 4,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
         defaults: DEFAULTS,
         schema: [
+          {
+            cat: "🔊 環境音（BGM）",
+            items: [
+              {
+                slider: "音量",
+                path: "sound.volume",
+                min: 0,
+                max: 100,
+                step: 1,
+                fmt: "%",
+                hint: "100% で音源そのままの大きさ。これ以上は上げられない仕様なので音割れしません。カンプ制定時は45%、いまの既定は62%です。",
+              },
+              {
+                note: "動かすとその場で音量が変わります（鳴っている最中でもOK）。開発中(localhost)は既定で無音なので、URLに ?sound を付けて開いてください。",
+              },
+            ],
+          },
           {
             cat: "🧍 人物イラスト",
             items: [
@@ -344,14 +374,19 @@ export default function TopTunePanel({
             ],
           },
         ],
-        onChange: applyVars,
+        onChange: () => {
+          applyVars();
+          applyVolume();
+        },
         onSettle: () => {
           applyVars();
+          applyVolume();
           pushValues();
         },
       });
       /* 保存されていた値を最初の1回だけ反映する */
       applyVars();
+      applyVolume();
       pushValues();
     };
 

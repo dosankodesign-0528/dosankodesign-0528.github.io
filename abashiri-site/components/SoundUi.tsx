@@ -14,6 +14,11 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { markConsentDone } from "./consentGate";
 import { devSilent } from "./devSound";
+import {
+  BGM_VOLUME_EVENT,
+  DEFAULT_BGM_VOLUME,
+  clampVolume,
+} from "./bgmConfig";
 
 /** 白モック内のボタン置き場（TopPage / ExperienceFlow が用意する） */
 const SLOT_ID = "abashiri-sound-slot";
@@ -72,6 +77,8 @@ export default function SoundUi({
   /** 実際に音が鳴っているか（ボタン表示はこれに追従） */
   const [audible, setAudible] = useState(false);
   const duckRef = useRef(false); /* 動画再生中フラグ（動画の音声優先） */
+  /* 環境音の音量（0〜1）。既定は bgmConfig.ts。調整パネルから変えられる */
+  const volRef = useRef(DEFAULT_BGM_VOLUME);
   const [showDialog, setShowDialog] = useState(false);
 
   /* ボタンの見た目（白の濃さ・背景ブラー）。調整パネルからライブで変えられる */
@@ -103,7 +110,7 @@ export default function SoundUi({
     const a = audioRef.current;
     if (!a || duckRef.current) return;
     if (devSilent()) return; /* 開発中(localhost)は鳴らさない。?sound で解除 */
-    a.volume = 0.45;
+    a.volume = clampVolume(volRef.current);
     a.muted = false;
     a.play().catch(() => {});
   };
@@ -114,6 +121,19 @@ export default function SoundUi({
       sessionStorage.setItem(KEY, next ? "on" : "off");
     } catch {}
   };
+
+  /* 調整パネルからの音量変更。鳴っている最中でもその場で反映する */
+  useEffect(() => {
+    const onVol = (e: Event) => {
+      const v = (e as CustomEvent<{ v: number }>).detail?.v;
+      if (typeof v !== "number") return;
+      volRef.current = clampVolume(v);
+      const a = audioRef.current;
+      if (a) a.volume = volRef.current;
+    };
+    window.addEventListener(BGM_VOLUME_EVENT, onVol);
+    return () => window.removeEventListener(BGM_VOLUME_EVENT, onVol);
+  }, []);
 
   /* 表示状態は audio の実際の再生状態に常に同期 */
   useEffect(() => {
