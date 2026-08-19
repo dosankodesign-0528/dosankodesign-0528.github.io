@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=7">
+<link rel="stylesheet" href="kv.css?v=8">
 </head>
 <body>
 
@@ -60,6 +60,10 @@
     <button data-am="flow3">軸ゆらぎ</button>
     <button data-am="flow4">中央→端</button>
     <button data-am="halftone">ハーフトーン</button>
+    <span class="sep"></span>
+    アイコンの動き:
+    <button data-ia="on" class="on">オン</button>
+    <button data-ia="off">オフ</button>
   </div>
   <div class="row2">
     角度
@@ -79,7 +83,7 @@
   </div>
 </div>
 
-<script src="engine.js?v=7"></script>
+<script src="engine.js?v=8"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -131,6 +135,12 @@
     document.querySelectorAll('.kv-bar [data-am]').forEach(x => x.classList.toggle('on', x === b));
   });
   buildFlowRow('flow0');
+
+  /* アイコンのループアニメ オン/オフ（2026-08-19 ヒデさん指定。オフ＝カンプの静止状態） */
+  document.querySelectorAll('.kv-bar [data-ia]').forEach(b => b.onclick = () => {
+    KV.setIconAnim(b.dataset.ia === 'on');
+    document.querySelectorAll('.kv-bar [data-ia]').forEach(x => x.classList.toggle('on', x === b));
+  });
 
   /* アイコン色: カラーピッカー(直感) と HEX入力(コード指定) を同期 */
   document.querySelectorAll('[data-ic]').forEach(p => p.addEventListener('input', () => {

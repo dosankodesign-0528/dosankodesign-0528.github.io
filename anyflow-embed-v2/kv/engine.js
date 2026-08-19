@@ -30,16 +30,158 @@
      kind: css   = ガラス箱を CSS で作りアイコン SVG を中に置く
            asset = カンプが箱ごと1枚のSVGで書き出しているもの（そのまま置く）
            empty = アイコン無しのフェード箱 */
+  /* 【2026-08-19 ヒデさん指定】アイコン4種はループアニメ化（下の ICO_ANIM 参照）。
+     箱ごと1枚SVG(asset)や固定アイコンはやめ、全部「白ガラス箱 + パーツ組み立て」に。
+     組み立て済みの静止状態＝カンプの見た目（アニメOFF時はこの状態に戻る） */
   const BOXES = [
-    { id: 'folder', kind: 'asset', x: 584.20, y: 203.89, svg: 'assets/icon-folder-box.svg' },
-    { id: 'mail',   kind: 'css',   x: 584.20, y: 490.68,
-      icon: { svg: 'assets/icon-mail.svg', x: 19.16, y: 16.56, w: 72.352, h: 67.83 } },
+    { id: 'folder', kind: 'css',   x: 584.20, y: 203.89 },
+    { id: 'mail',   kind: 'css',   x: 584.20, y: 490.68 },
     { id: 'tc',     kind: 'empty', x: 967.12, y: 101.81, flip: false },
     { id: 'bc',     kind: 'empty', x: 895.15, y: 709.97, flip: true },
-    { id: 'chart',  kind: 'asset', x: 1228.66, y: 214.09, svg: 'assets/icon-chart-box.svg' },
-    { id: 'cal',    kind: 'css',   x: 1256.22, y: 542.14, lightBlue24: true },
+    { id: 'chart',  kind: 'css',   x: 1228.66, y: 214.09 },
+    { id: 'cal',    kind: 'css',   x: 1256.22, y: 542.14 },
   ];
   const BOX_S = 109.778;
+
+  /* ===== アイコンのループアニメ =====
+     【2026-08-19 ヒデさん指定】Figma Make「Create Icon Animations」(GE91u2SPWqjwNbNizrDy8R)
+     の App.tsx から実測移植。数値・イージング・タイミング・SVGパスは全て Make のまま。
+     Make のカードは 109.778px 角＝この KV の箱と同寸なので、
+     「Make の絶対座標 − カード原点(フォルダ25/メール171.78/グラフ318.56/カレンダー465.33)」
+     がそのまま箱内の相対座標になる。1周6秒・無限ループ。
+     KV.setIconAnim(false) で全停止＝組み上がった静止状態（カンプの見た目）に戻る。 */
+  const ICO_D   = 6000;                              /* Make: const D = 6 (秒) */
+  const ICO_SPR = 'cubic-bezier(0.16, 1, 0.3, 1)';   /* Make: SPR 出現のばね風 */
+  const ICO_EO  = 'cubic-bezier(0.42, 0, 1, 1)';     /* Make: EO  退場のease   */
+  const ICO_LIN = 'linear';
+  const E5  = [ICO_LIN, ICO_SPR, ICO_LIN, ICO_EO, ICO_LIN];   /* 隠れ→出現→保持→退場→隠れ */
+  const E4  = [ICO_SPR, ICO_LIN, ICO_EO, ICO_LIN];            /* 即出現→保持→退場→隠れ */
+  const E5r = [ICO_LIN, ICO_EO, ICO_LIN, ICO_SPR, ICO_LIN];   /* 表示→退場→隠れ→復帰(メール用) */
+  /* Make の svg-2977cc967k.ts より（パスは一切いじらない） */
+  const ICO_PATHS = {
+    tab:    'M0 13.7482C0 10.3001 2.49286 7.35737 5.89406 6.7905L46.0508 0.0977185C50.3502 -0.618855 54.2641 2.69668 54.2641 7.05542V14.2852C54.2641 18.1808 51.106 21.3389 47.2104 21.3389H7.05368C3.15804 21.3389 0 18.1808 0 14.2852V13.7482Z',
+    vlines: 'M0.457 0.662883C1.13924 -0.133058 2.33753 -0.225235 3.13348 0.457L27.2369 21.1171C27.9477 21.7264 28.9967 21.7264 29.7075 21.1171L53.8109 0.457C54.6069 -0.225235 55.8052 -0.133058 56.4874 0.662883C57.1696 1.45882 57.0775 2.65712 56.2815 3.33936L32.1781 23.9994C30.0456 25.8273 26.8988 25.8273 24.7663 23.9994L0.662883 3.33936C-0.133058 2.65712 -0.225235 1.45882 0.457 0.662883Z',
+    cyl1:   'M0 4.07842C0 1.82597 1.82597 0 4.07842 0H8.15684C10.4093 0 12.2353 1.82597 12.2353 4.07842V20.3921C12.2353 22.6445 10.4093 24.4705 8.15684 24.4705H4.07842C1.82597 24.4705 0 22.6445 0 20.3921V4.07842Z',
+    cyl2:   'M28.5489 4.07842C28.5489 1.82597 30.3749 0 32.6273 0H36.7058C38.9582 0 40.7842 1.82597 40.7842 4.07842V20.3921C40.7842 22.6445 38.9582 24.4705 36.7058 24.4705H32.6273C30.3749 24.4705 28.5489 22.6445 28.5489 20.3921V4.07842Z',
+  };
+  /* ガラス面の共通スタイル（Make の3層を1枚に統合。見た目は同じ） */
+  const icoGrad  = deg => `linear-gradient(${deg}deg, rgba(130,232,255,0.2) 0%, rgba(55,159,255,0.2) 100%), linear-gradient(90deg, rgba(241,241,241,0.1), rgba(241,241,241,0.1))`;
+  const icoGlass = (r, blur, bw, sy, sb, deg) =>
+    `position:absolute;border-radius:${r}px;background-image:${icoGrad(deg)};` +
+    `backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);` +
+    `border:${bw}px solid #7EE5FF;box-shadow:inset 0 ${sy}px ${sb}px rgba(255,255,255,0.4);`;
+  const icoBar =   /* 棒グラフのガラス棒（Make の barStyle） */
+    'position:absolute;border-radius:5.46px;transform-origin:50% 100%;' +
+    'backdrop-filter:blur(5.46px);-webkit-backdrop-filter:blur(5.46px);' +
+    'background-image:linear-gradient(108.7deg, rgba(130,232,255,0.2) 0%, rgba(55,159,255,0.2) 100%);' +
+    'background-color:rgba(241,241,241,0.1);border:0.73px solid rgba(126,229,255,0.72);' +
+    'box-shadow:inset 0 1.82px 3.64px rgba(255,255,255,0.4);';
+  const icoCell =  /* カレンダーの日付セル */
+    'position:absolute;border-radius:4.078px;background:rgba(255,255,255,0.16);' +
+    'box-shadow:inset 0 2.039px 2.039px rgba(255,255,255,0.4);';
+  const trY  = v => `translateY(${v}px)`;
+  const trS  = v => `scale(${v})`;
+  const trSY = v => `scaleY(${v})`;
+  const FOLDER_TAB_HTML =
+    `<div style="position:absolute;inset:5.62% 0 0 0"><svg style="display:block;width:100%;height:100%" fill="none" preserveAspectRatio="none" viewBox="0 0 54.2641 21.3389"><path d="${ICO_PATHS.tab}" fill="url(#kvfg)"/><defs><linearGradient id="kvfg" gradientUnits="userSpaceOnUse" x1="0" x2="49.6165" y1="-1.27116" y2="28.9653"><stop stop-color="#82E8FF"/><stop offset="1" stop-color="#379FFF"/></linearGradient></defs></svg></div>`;
+  const MAIL_VLINES_HTML =
+    `<svg style="display:block;width:100%;height:100%" fill="none" preserveAspectRatio="none" viewBox="0 0 56.9444 25.3703"><g filter="url(#kvmf)"><path clip-rule="evenodd" fill-rule="evenodd" d="${ICO_PATHS.vlines}" fill="white" fill-opacity="0.16"/></g><defs><filter id="kvmf" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" x="0" y="0" width="56.9444" height="27.2685"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" mode="normal" result="shape"/><feColorMatrix in="SourceAlpha" result="hardAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/><feOffset dy="1.89814"/><feGaussianBlur stdDeviation="0.949072"/><feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.4 0"/><feBlend in2="shape" mode="normal" result="effect1_innerShadow"/></filter></defs></svg>`;
+  const CAL_TABS_HTML =
+    `<svg style="display:block;width:100%;height:100%" fill="none" preserveAspectRatio="none" viewBox="0 0 40.7842 24.4705"><path d="${ICO_PATHS.cyl1}" fill="url(#kvcg1)"/><path d="${ICO_PATHS.cyl2}" fill="url(#kvcg2)"/><defs><linearGradient id="kvcg1" gradientUnits="userSpaceOnUse" x1="0" x2="43.3722" y1="0" y2="18.355"><stop stop-color="#82E8FF"/><stop offset="1" stop-color="#379FFF"/></linearGradient><linearGradient id="kvcg2" gradientUnits="userSpaceOnUse" x1="0" x2="43.3722" y1="0" y2="18.355"><stop stop-color="#82E8FF"/><stop offset="1" stop-color="#379FFF"/></linearGradient></defs></svg>`;
+  /* カレンダー日付セル: [x, y, w, h, 出現開始, 出現完了]（退場は全セル共通 0.75→0.8167） */
+  const calCells = [
+    [26.08, 38.54, 57.098,  8.157, 0.10, 0.1833],   /* ヘッダー帯 */
+    [26.08, 50.78, 16.314, 12.235, 0.13, 0.2133],
+    [46.48, 50.78, 16.314, 12.235, 0.16, 0.2433],
+    [66.87, 50.78, 16.314, 12.235, 0.19, 0.2733],
+    [26.08, 67.09, 16.314, 12.235, 0.22, 0.3033],
+    [46.48, 67.09, 16.314, 12.235, 0.25, 0.3333],
+    [66.87, 67.09, 16.314, 12.235, 0.28, 0.3633],
+  ].map(([x, y, w, h, t1, t2]) => ({
+    x, y, w, h, css: icoCell,
+    op: { v: [0, 0, 1, 1, 0, 0], t: [0, t1, t2, 0.75, 0.8167, 1], e: E5 },
+    tr: { f: trS, v: [0, 0, 1, 1, 0, 0], t: [0, t1, t2 + 0.015, 0.75, 0.8167, 1], e: E5 },
+  }));
+  /* 各アイコンのパーツ（配列順 = 重なり順）。op=不透明度 tr=変形 のキーフレーム */
+  const ICO_ANIM = {
+    folder: [
+      { x: 28.20, y: 16.56, w: 54.264, h: 22.61, html: FOLDER_TAB_HTML,   /* タブ: 下から飛び出す */
+        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.25, 0.75, 0.85, 1], e: E5 },
+        tr: { f: trY, v: [20, 20, 0, 0, 20, 20], t: [0, 0.1333, 0.3, 0.75, 0.85, 1], e: E5 } },
+      { x: 19.16, y: 30.12, w: 72.352, h: 54.264, css: icoGlass(7.11, 10.581, 1.411, 3.527, 14.107, 108.7),
+        op: { v: [0, 1, 1, 0, 0], t: [0, 0.1333, 0.75, 0.8833, 1], e: E4 },
+        tr: { f: trY, v: [30, 0, 0, 30, 30], t: [0, 0.2, 0.75, 0.9167, 1], e: E4 } },
+    ],
+    mail: [   /* メールだけ「最初は見えていて、いったん退場して戻る」 */
+      { x: 29.02, y: 24.84, w: 51.737, h: 22.173,   /* 封筒の中の色面: 上へ抜ける */
+        css: 'position:absolute;border-radius:3.696px;background-image:linear-gradient(120.65deg, #82E8FF 0%, #379FFF 100%);',
+        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.25, 0.5, 0.75, 0.9, 1], e: E5r },
+        tr: { f: trY, v: [0, 0, -18, -18, 0, 0], t: [0, 0.25, 0.45, 0.75, 0.9, 1], e: E5r } },
+      { x: 17.93, y: 28.54, w: 73.91, h: 55.433, css: icoGlass(11.087, 5.543, 0.739, 1.848, 7.391, 108.7),
+        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.13, 0.38, 0.75, 0.88, 1], e: E5r },
+        tr: { f: trY, v: [0, 0, 28, 28, 0, 0], t: [0, 0.13, 0.4, 0.75, 0.92, 1], e: E5r } },
+      { x: 26.41, y: 37.33, w: 56.944, h: 25.37, html: MAIL_VLINES_HTML,   /* V字ライン: 縮んで消える */
+        op: { v: [1, 1, 0, 0, 1, 1], t: [0, 0.08, 0.22, 0.75, 0.88, 1], e: E5r },
+        tr: { f: trS, v: [1, 1, 0.6, 0.6, 1, 1], t: [0, 0.08, 0.24, 0.75, 0.9, 1], e: E5r } },
+    ],
+    chart: [
+      { x: 18.46, y: 80.38, w: 76.485, h: 10.926,   /* 土台の濃いグラデ: 常時表示 */
+        css: 'position:absolute;border-radius:3.642px;background-image:linear-gradient(150.64deg, #82E8FF 0%, #379FFF 100%);' },
+      { x: 22.10, y: 43.96, w: 18.21, h: 43.71, css: icoBar,   /* 左 → 中 → 右 の順に伸びる */
+        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.05, 0.1167, 0.75, 0.85, 1], e: E5 },
+        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.05, 0.3, 0.75, 0.9167, 1], e: E5 } },
+      { x: 47.60, y: 22.11, w: 18.21, h: 65.56, css: icoBar,
+        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.2, 0.75, 0.85, 1], e: E5 },
+        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.1333, 0.3833, 0.75, 0.9167, 1], e: E5 } },
+      { x: 73.10, y: 54.89, w: 18.21, h: 32.78, css: icoBar,
+        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.2167, 0.2833, 0.75, 0.85, 1], e: E5 },
+        tr: { f: trSY, v: [0, 0, 1, 1, 0, 0], t: [0, 0.2167, 0.4667, 0.75, 0.9167, 1], e: E5 } },
+    ],
+    cal: [
+      { x: 34.24, y: 22.23, w: 40.784, h: 24.4705, html: CAL_TABS_HTML,   /* 上の円柱2本: 上から刺さる */
+        op: { v: [0, 0, 1, 1, 0, 0], t: [0, 0.0833, 0.1833, 0.75, 0.85, 1], e: E5 },
+        tr: { f: trY, v: [-10, -10, 0, 0, -10, -10], t: [0, 0.0833, 0.2167, 0.75, 0.85, 1], e: E5 } },
+      { x: 17.93, y: 30.38, w: 73.412, h: 57.098, css: icoGlass(12.235, 6.118, 0.816, 2.039, 8.157, 108.08),
+        op: { v: [0, 1, 1, 0, 0], t: [0, 0.1167, 0.75, 0.85, 1], e: E4 },
+        tr: { f: trY, v: [-20, 0, 0, -20, -20], t: [0, 0.1667, 0.75, 0.8833, 1], e: E4 } },
+    ].concat(calCells),
+  };
+  const icoParts = [];   /* { el, p } — アニメ対象パーツ */
+  const icoAnims = [];   /* 稼働中の WAAPI Animation（オフで全 cancel） */
+  let icoOn = true;
+  function buildIconParts(b, face) {
+    const defs = ICO_ANIM[b.id]; if (!defs) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'kv-ico-parts';   /* setIconColor のフィルタはこの箱ごと掛かる */
+    wrap.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+    defs.forEach(pt => {
+      const d = document.createElement('div');
+      d.style.cssText = (pt.css || 'position:absolute;') +
+        `left:${pt.x}px;top:${pt.y}px;width:${pt.w}px;height:${pt.h}px;`;
+      if (pt.html) d.innerHTML = pt.html;
+      wrap.appendChild(d);
+      if (pt.op || pt.tr) icoParts.push({ el: d, p: pt });
+    });
+    face.appendChild(wrap);
+  }
+  /* Make のキーフレーム（values/times/ease配列）を WAAPI 形式へ。
+     easing はその区間の入口キーフレームに付ける（Web Animations の仕様どおり） */
+  function icoKF(track, isTr) {
+    return track.t.map((t, i) => {
+      const kf = { offset: t, easing: track.e[i] || 'linear' };
+      if (isTr) kf.transform = track.f(track.v[i]); else kf.opacity = track.v[i];
+      return kf;
+    });
+  }
+  function setIconAnim(on) {
+    icoOn = !!on;
+    icoAnims.forEach(a => a.cancel()); icoAnims.length = 0;
+    if (!icoOn) return;   /* 止めると基準スタイル＝全パーツそろった静止状態に戻る */
+    icoParts.forEach(({ el, p }) => {
+      if (p.op) icoAnims.push(el.animate(icoKF(p.op, false), { duration: ICO_D, iterations: Infinity }));
+      if (p.tr) icoAnims.push(el.animate(icoKF(p.tr, true),  { duration: ICO_D, iterations: Infinity }));
+    });
+  }
 
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -351,6 +493,7 @@ void main(){
       const face = document.createElement('div'); face.className = 'kv-face';
       d.appendChild(face);
       b._face = face;   /* アイコン色変更(setIconColor)が参照する */
+      buildIconParts(b, face);   /* アイコン4種はここでパーツを組む（Make実測） */
       if (b.kind === 'asset') {
         fetch(b.svg).then(r => r.text()).then(t => { face.innerHTML = t; const s = face.querySelector('svg');
           if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
@@ -401,6 +544,7 @@ void main(){
     /* 検証用: ?freeze=1 で静止状態に固定 */
     const qs = new URLSearchParams(location.search);
     const FREEZE = qs.get('freeze') === '1';
+    setIconAnim(!FREEZE);   /* アイコンのループアニメ開始（?freeze=1 なら静止） */
     function frame(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = FREEZE ? 0 : now / 1000;
       dots.forEach(d => {
@@ -488,7 +632,7 @@ void main(){
   function setIconColor(id, hex) {
     const box = BOXES.find(x => x.id === id);
     if (!box) return false;
-    const host = box.kind === 'asset' ? box._face : (box._face && (box._face.querySelector('.kv-box-ico') || box._face.querySelector('.kv-lb24')));
+    const host = box._face && (box._face.querySelector('.kv-ico-parts') || box._face.querySelector('.kv-box-ico') || box._face.querySelector('.kv-lb24') || box._face);
     if (!host) return false;
     if (!hex) { host.style.filter = ''; return true; }   /* 空文字で元の色へ */
     const c = hexToHsl(hex);
@@ -504,5 +648,5 @@ void main(){
   }
 
   function setParam(k, v) { if (k in PARAMS) PARAMS[k] = +v; }
-  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, setIconAnim, isIconAnimOn: () => icoOn, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
 })(window);
