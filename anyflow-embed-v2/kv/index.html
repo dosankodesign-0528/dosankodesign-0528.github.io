@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=5">
+<link rel="stylesheet" href="kv.css?v=6">
 </head>
 <body>
 
@@ -54,7 +54,11 @@
     <button data-view="iso4">右流し</button>
     <span class="sep"></span>
     中央:
-    <button data-am="grad" class="on">グラデ</button>
+    <button data-am="flow0" class="on">一方向</button>
+    <button data-am="flow1">混ざる</button>
+    <button data-am="flow2">端→中央</button>
+    <button data-am="flow3">軸ゆらぎ</button>
+    <button data-am="flow4">中央→端</button>
     <button data-am="halftone">ハーフトーン</button>
   </div>
   <div class="row2">
@@ -74,7 +78,7 @@
   </div>
 </div>
 
-<script src="engine.js?v=5"></script>
+<script src="engine.js?v=6"></script>
 <script>
   KV.start({ mount: 'kv' });
 

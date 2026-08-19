@@ -41,25 +41,6 @@
   ];
   const BOX_S = 109.778;
 
-  /* ===== カンプ3枚のグラデーション（キーフレーム）=====
-     3枚とも同じ5色。共通軸 t（0=右上 → 1=左下）に直した各色の位置。
-     F3 だけ角度が反転(47.24°)していたので t=1-p で正規化してある。
-     ⚠️ 位置は画面外(<0, >1)もそのまま持つ。CSSと同じく端の色で頭打ちして評価する。 */
-  const GRAD_COLORS = {
-    cy: [14, 187, 255],    /* #0EBBFF */
-    bl: [71, 126, 209],    /* #477ED1 */
-    wh: [239, 238, 239],   /* #EFEEEF */
-    mg: [255, 93, 151],    /* #FF5D97 */
-    lb: [182, 224, 255],   /* #B6E0FF */
-  };
-  const GRAD_KEYS = {                  /*      F1        F2        F3   */
-    cy: [0.28106, 0.0094376, 0.17480],
-    bl: [0.36378, 0.52713,   0.53122],
-    wh: [0.59602, 0.27152,   0.00072],
-    mg: [1.00000, 0.60766,  -0.22260],
-    lb: [1.33030, 1.33140,   0.93457],
-  };
-
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const lerp = (a, b, t) => a + (b - a) * t;
   const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -77,51 +58,42 @@
     return p[p.length - 1];
   }
 
-  /* ===== グラデーション LUT（256px）を JS で焼く =====
-     キーフレーム間はこの JS 側で補間し、シェーダーは LUT を引くだけ。
-     ストップの順番がフレームによって入れ替わる（白と青が交差する）ため、
-     シェーダーで直接評価せず、CSSと同じ「位置でソートして区間補間」をここでやる。 */
-  const LUT_N = 256;
-  const lutData = new Uint8Array(LUT_N * 4);
-  function bakeStops(stops, out) {  /* stops: [{p, c:[r,g,b]}] */
-    stops.sort((a, b) => a.p - b.p);
+  /* ===== グラデーション LUT（512×2・循環）=====
+     【2026-08-19 ヒデさん指定】キーフレーム補間はガタつくのでやめ、
+     「循環するグラデ帯を一定速度でスクロール」する方式に。完全に滑らかな一方向。
+     row0 = 対角の帯（カンプ F1 実測の並びを循環化: cy→bl→wh→mg→lb→cy）
+     row1 = 放射の帯（カンプ 15332 実測: 薄ピンク→マゼンタ→シアン→濃青 を循環化）
+     シェーダーは fract() でサンプルするので、先頭と末尾の色は必ず一致させること。 */
+  const LUT_N = 512;
+  const lutData = new Uint8Array(LUT_N * 2 * 4);
+  const hex2rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  /* 対角（カンプF1のストップ間隔を周期1.332で正規化・lb→cyの橋で一周） */
+  const ROW0 = [
+    ['#0EBBFF', 0.0000], ['#477ED1', 0.0621], ['#EFEEEF', 0.2364],
+    ['#FF5D97', 0.5397], ['#B6E0FF', 0.7897], ['#0EBBFF', 1.0000],
+  ];
+  /* 放射（カンプ 15332:18998 実測。0.92 に圧縮し、末尾→先頭の橋を足して循環化） */
+  const ROW1_RAW = [
+    ['#FEE0F8', 0.142], ['#FF9EC7', 0.356], ['#FF7EAF', 0.463], ['#FF5D97', 0.570],
+    ['#C375B1', 0.644], ['#878CCB', 0.719], ['#6898D8', 0.756], ['#4AA4E5', 0.793],
+    ['#2CAFF2', 0.830], ['#0EBBFF', 0.867], ['#2B9CE8', 0.933], ['#477ED1', 1.000],
+  ];
+  const ROW1 = [['#FEE0F8', 0]].concat(ROW1_RAW.map(([c, p]) => [c, p * 0.92])).concat([['#FEE0F8', 1.0]]);
+  function bakeRow(stops, row) {
+    const st = stops.map(([c, p]) => ({ c: hex2rgb(c), p })).sort((a, b) => a.p - b.p);
     for (let i = 0; i < LUT_N; i++) {
       const x = i / (LUT_N - 1);
-      let c;
-      if (x <= stops[0].p) c = stops[0].c;
-      else if (x >= stops[stops.length - 1].p) c = stops[stops.length - 1].c;
-      else {
-        for (let k = 1; k < stops.length; k++) {
-          if (x <= stops[k].p) {
-            const a = stops[k - 1], b = stops[k];
-            const u = (x - a.p) / Math.max(1e-6, b.p - a.p);
-            c = [lerp(a.c[0], b.c[0], u), lerp(a.c[1], b.c[1], u), lerp(a.c[2], b.c[2], u)];
-            break;
-          }
-        }
+      let c = st[st.length - 1].c;
+      if (x <= st[0].p) c = st[0].c;
+      else for (let k = 1; k < st.length; k++) if (x <= st[k].p) {
+        const a2 = st[k - 1], b2 = st[k], u = (x - a2.p) / Math.max(1e-6, b2.p - a2.p);
+        c = [lerp(a2.c[0], b2.c[0], u), lerp(a2.c[1], b2.c[1], u), lerp(a2.c[2], b2.c[2], u)]; break;
       }
-      out[i * 4] = c[0]; out[i * 4 + 1] = c[1]; out[i * 4 + 2] = c[2]; out[i * 4 + 3] = 255;
+      const o = (row * LUT_N + i) * 4;
+      lutData[o] = c[0]; lutData[o + 1] = c[1]; lutData[o + 2] = c[2]; lutData[o + 3] = 255;
     }
   }
-  function stopsAt(f) {  /* f: 0..2 のキーフレーム位置（小数で補間） */
-    const i = Math.min(1, Math.floor(f)), u = f - i;
-    return Object.keys(GRAD_KEYS).map(k => ({ p: lerp(GRAD_KEYS[k][i], GRAD_KEYS[k][i + 1], u), c: GRAD_COLORS[k] }));
-  }
-  /* タイムライン【2026-08-19 ヒデさん指定: 左下→右上へ一方向・ゆっくりの波】
-     F1→F2→F3 と波がゆっくり右上へ抜け(10s)、間を置かず
-     色だけクロスフェードで F1 に戻る(1.4s)。逆走の動きは見せない。 */
-  const T_FWD = 10.0, T_HOLD = 0.2, T_X = 1.4, T_ALL = T_FWD + T_HOLD + T_X;
-  const lutA = new Uint8Array(LUT_N * 4), lutB = new Uint8Array(LUT_N * 4);
-  function bakeTimeline(time, out) {
-    const u = time % T_ALL;
-    /* ほぼ等速（両端だけ僅かに柔らかく）＝一定の波が流れ続けて見える */
-    const soft = t => t * t * (3 - 2 * t) * 0.25 + t * 0.75;
-    if (u < T_FWD) { bakeStops(stopsAt(soft(u / T_FWD) * 2), out); return; }
-    if (u < T_FWD + T_HOLD) { bakeStops(stopsAt(2), out); return; }
-    const s = easeIO((u - T_FWD - T_HOLD) / T_X);
-    bakeStops(stopsAt(2), lutA); bakeStops(stopsAt(0), lutB);
-    for (let i = 0; i < out.length; i++) out[i] = lutA[i] + (lutB[i] - lutA[i]) * s;
-  }
+  bakeRow(ROW0, 0); bakeRow(ROW1, 1);
 
   /* ===== シェーダー（ディザはカンプ同様ベイヤー8で全域均一） ===== */
   const VS = 'attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0);} ';
@@ -129,15 +101,14 @@
 precision highp float;
 uniform vec2  uRes;
 uniform float uTime;
-uniform float uMode;    /* 0=カンプのグラデ(LUT) 1=V1.0ハーフトーン */
+uniform float uMode;    /* 0=グラデ(LUT) 1=V1.0ハーフトーン */
+uniform float uFlow;    /* 0=一方向 1=混ざる 2=端→中央 3=軸ゆらぎ 4=中央→端 */
 uniform float uEnergy;
 uniform float uAspect;
-uniform float uCell;    /* ディザ1セルのデバイスpx（Figmaの Size=1 → ステージ1pxぶん） */
-uniform float uQuant;   /* 0=チャンネル別に量子化 1=グラデ位置を量子化（検証用） */
-uniform sampler2D uLUT;
+uniform float uCell;
+uniform sampler2D uLUT; /* 512×2: row0=対角の循環帯 / row1=放射の循環帯 */
 
-/* ===== Figma のレイヤー効果を実測値で再現 =====
-   Style: Bayer 16x16 / Size: 1 / Levels: 3 / Brightness: 104% / Contrast: 1.38 / Mono: off */
+/* Figma のレイヤー効果 実測: Bayer16×16 / Size1 / Levels3 / 明るさ104% / コントラスト1.38 */
 float bayer2(vec2 a){ a=floor(a); return fract(a.x/2.0 + a.y*a.y*0.75); }
 float bayer4(vec2 a){ return bayer2(0.5*a)*0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5*a)*0.25 + bayer2(a); }
@@ -146,7 +117,6 @@ float hash(vec2 p){ p=fract(p*vec2(127.1,311.7)); p+=dot(p,p+34.5); return fract
 float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y); }
 
-/* V1.0「B ハーフトーン」の配色ランプ（面積比そのまま移植） */
 vec3 rampV1(float x){
   x = clamp(x, 0.0, 1.0);
   vec3 mg = vec3(1.000, 0.365, 0.592);
@@ -168,10 +138,13 @@ void main(){
   vec2 fcc = (cell+0.5)*uCell;
   vec2 P = (fcc*2.0 - uRes)/uRes.y;
 
-  vec2 hs = vec2(0.86*uAspect, 0.86);
-  float sd = sdRound(P, hs, 0.135);
+  /* 【2026-08-19 ヒデさん指摘】以前は 0.86 倍のマスクで、グラデの外に透明の余白が
+     でき「オフセットの枠」に見えていた。グラデはキャンバス全面に敷き、
+     角丸(13px相当)だけ落とす。影は CSS がこの縁にぴったり付く。 */
+  vec2 hs = vec2(uAspect, 1.0);
+  float sd = sdRound(P, hs, 0.143);
   float pxw = 2.0/uRes.y;
-  float mask = 1.0 - smoothstep(-2.0*pxw, 2.0*pxw, sd);
+  float mask = 1.0 - smoothstep(-1.5*pxw, 1.5*pxw, sd);
   if (mask <= 0.0){ gl_FragColor = vec4(0.0); return; }
 
   vec2 pc = vec2(P.x, -P.y);
@@ -179,28 +152,38 @@ void main(){
   vec3 col;
 
   if (uMode < 0.5) {
-    /* カンプの線形グラデ 229.049° → LUT（キーフレーム補間済み・連続色） */
-    vec2 DIR = vec2(-0.75512, 0.65559);
+    float e = uEnergy, tm = uTime;
+    float row = 0.25;                        /* LUTの行: 0.25=対角 / 0.75=放射 */
+    float sample_;
+    vec2 DIR = vec2(-0.75512, 0.65559);      /* カンプ 229.049° */
     float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;
-    float t = 0.5 + dot(pc, DIR)/L;
-    t -= 0.04*uEnergy;
-    vec3 src = texture2D(uLUT, vec2(clamp(t, 0.0, 1.0), 0.5)).rgb;
-    /* Brightness 104% → Contrast 1.38（Figmaのパネル順） */
+    float t = 0.5 + dot(pc, DIR)/L;          /* 0=右上 → 1=左下 */
+    float rr = length(vec2(pc.x/uAspect, pc.y)) / 1.42;  /* 0=中央 → 1=四隅 */
+
+    if (uFlow < 0.5) {          /* ① 一方向: 左下→右上へ一定速度で流れ続ける */
+      sample_ = t*0.75 + tm*0.035;
+    } else if (uFlow < 1.5) {   /* ② 混ざり合い: 流れにゆっくり渦が混ざる */
+      float w = vnoise(pc*1.6 + tm*0.08) - 0.5;
+      sample_ = t*0.75 + tm*0.022 + w*0.5;
+    } else if (uFlow < 2.5) {   /* ③ 端→中央 (カンプ15332): 放射の帯が内側へ */
+      row = 0.75;
+      sample_ = rr*0.80 + tm*0.030;
+    } else if (uFlow < 3.5) {   /* ④ 軸ゆらぎ: 帯の向きがゆっくり揺れながら流れる */
+      float ang = sin(tm*0.13)*0.35;
+      vec2 D2 = vec2(DIR.x*cos(ang) - DIR.y*sin(ang), DIR.x*sin(ang) + DIR.y*cos(ang));
+      float t2 = 0.5 + dot(pc, D2)/L;
+      sample_ = t2*0.75 + tm*0.025;
+    } else {                    /* ⑤ 中央→端: 放射の帯が外側へ */
+      row = 0.75;
+      sample_ = rr*0.80 - tm*0.030;
+    }
+    sample_ -= 0.04*e;
+    vec3 src = texture2D(uLUT, vec2(fract(sample_), row)).rgb;
     src = clamp(src * 1.04, 0.0, 1.0);
     src = clamp((src - 0.5) * 1.38 + 0.5, 0.0, 1.0);
-    if (uQuant < 0.5) {
-      /* Levels 3: RGB各チャンネルを3階調へ、ベイヤー16の同一しきい値で量子化 */
-      col = clamp(floor(src * 2.0 + dith) / 2.0, 0.0, 1.0);
-    } else {
-      /* 検証用: グラデ位置そのものを3階調へ */
-      float q = clamp(floor(clamp(t,0.0,1.0) * 2.0 + dith) / 2.0, 0.0, 1.0);
-      col = texture2D(uLUT, vec2(q, 0.5)).rgb;
-      col = clamp(col * 1.04, 0.0, 1.0);
-      col = clamp((col - 0.5) * 1.38 + 0.5, 0.0, 1.0);
-    }
+    col = clamp(floor(src * 2.0 + dith) / 2.0, 0.0, 1.0);   /* Levels 3 */
   } else {
-    /* V1.0 ハーフトーンの配色で、白い帯が斜めに流れる。
-       【2026-08-19 ヒデさん指定】こちらはディザリング無し＝滑らかなグラデのまま */
+    /* V1.0 ハーフトーン（ディザ無し・滑らか） */
     vec2 axis = normalize(vec2(0.70, 0.62));
     float u = dot(pc, axis) / 0.9;
     float v = dot(pc, vec2(-axis.y, axis.x)) / 0.9;
@@ -233,16 +216,17 @@ void main(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const U = n => gl.getUniformLocation(p, n);
-    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uQuant: U('uQuant'), uLUT: U('uLUT') };
+    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uFlow: U('uFlow'), uLUT: U('uLUT') };
     gl.uniform1i(u.uLUT, 0);
+    /* LUT は静的（循環グラデ2本）。ここで1回だけ焼き込む */
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, lutData);
     return {
       draw(w, h, o) {
         if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
         gl.viewport(0, 0, w, h);
         gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, o.lut);
         gl.uniform2f(u.uRes, w, h); gl.uniform1f(u.uTime, o.time); gl.uniform1f(u.uMode, o.mode);
-        gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell); gl.uniform1f(u.uQuant, o.quant || 0);
+        gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell); gl.uniform1f(u.uFlow, o.flow || 0);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
@@ -366,11 +350,9 @@ void main(){
 
     let energy = 0, last = performance.now();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    /* 検証用: ?freeze=1 で F1 の静止状態（カンプ1枚目と同じ絵）に固定。
-       ?quant=t でグラデ位置量子化の比較モード */
+    /* 検証用: ?freeze=1 で静止状態に固定 */
     const qs = new URLSearchParams(location.search);
     const FREEZE = qs.get('freeze') === '1';
-    const QUANT = qs.get('quant') === 't' ? 1 : 0;
     function frame(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = FREEZE ? 0 : now / 1000;
       dots.forEach(d => {
@@ -390,13 +372,12 @@ void main(){
         d.node.style.opacity = (fadeIn * fadeOut * (0.55 + 0.45 * d.t)).toFixed(2);
       });
       energy = Math.max(0, energy - dt * 1.4);
-      bakeTimeline(time, lutData);
       const s = (root._scale || 1) * dpr;
       /* ⚠️ Figma の Size=1 ＝「ステージ座標の1px」がディザ1セル。
          キャンバスのデバイスpx换算では scale×dpr がちょうど1セルになる */
       agent.draw(Math.max(2, Math.round(AGENT.w * s)), Math.max(2, Math.round(AGENT.h * s)),
-        { time, mode: agentMode, energy: FREEZE ? 0 : clamp01(energy), aspect: AGENT.w / AGENT.h,
-          cell: Math.max(1, Math.round(s)), quant: QUANT, lut: lutData });
+        { time, mode: agentMode, flow: agentFlowRef.v, energy: FREEZE ? 0 : clamp01(energy),
+          aspect: AGENT.w / AGENT.h, cell: Math.max(1, Math.round(s)) });
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
@@ -425,7 +406,13 @@ void main(){
     iso3: { x: 62, y: 0, z: -45, s: 1.32 },   /* アイソメ深め */
     iso4: { x: 54, y: 0, z: 42,  s: 1.26 },   /* アイソメ右流し */
   };
-  function setAgentMode(m) { agentMode = (m === 'halftone') ? 1 : 0; }
+  let agentFlowRef = { v: 0 };
+  function setAgentMode(m) {
+    if (m === 'halftone') { agentMode = 1; return; }
+    agentMode = 0;
+    const map = { flow0: 0, flow1: 1, flow2: 2, flow3: 3, flow4: 4, grad: 0 };
+    agentFlowRef.v = map[m] != null ? map[m] : 0;
+  }
 
   /* ===== アイコンの色変更（2026-08-19 ヒデさん指定）=====
      カンプのアイコンSVGは青系ガラスの多層構造で、パスの塗りを個別に書き換えるのは
