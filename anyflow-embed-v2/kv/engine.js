@@ -1,104 +1,136 @@
 /* ============================================================
-   キービジュアル V2 — データ基盤 × AIエージェント 共通エンジン
-   カンプ: figma jSLFEubHMoy3Hxgcw1AZuR / node 15276-23959 (1440×920)
-   各パターン(p1〜p5)は KV.start(config) を呼ぶだけ。
-     config.flow    = グラデの流れ方 breathe/sweep/wave/huedrift/converge
-     config.mount   = マウント先の id（既定 'kv'）
-     config.cell    = ディザ粒の大きさ(px)
-     config.mono    = 縁のマゼンタを控えめに
-   箱のスタイルは KV.setBoxStyle(root, 'flat'|'solid'|'iso') で切替。
+   キービジュアル V2 — カンプ忠実版
+   カンプ: figma jSLFEubHMoy3Hxgcw1AZuR / 15294-31034（TOP 3枚組・1440×920）
+   ・レイアウト/線/ドット/箱/アイコンはすべてカンプ実測値
+   ・中央エージェントのグラデは、カンプ3枚をキーフレームにした
+     「光の波が右上へ抜けていく」アニメーション（LUTテクスチャ方式）
+   ・もう1モードとして V1.0 の「B ハーフトーン」柄を移植
+   切替: KV.setBoxStyle('flat'|'solid'|'iso') / KV.setAgentMode('grad'|'halftone')
    ============================================================ */
 (function (global) {
   'use strict';
 
-  /* ---- カンプ実測の座標（ステージ 1440×920）---- */
   const STAGE = { w: 1440, h: 920 };
-  const AGENT = { cx: 1021.8, cy: 387.7, w: 223.8, h: 178.8, r: 13 };  /* 角丸はカンプ 15290:25513 の 13px */
-  const BOX = { w: 125.7, h: 100.45, r: 10 };
-  /* 連携先ボックス（座標・ドット色はカンプ実測）。アイコンは汎用ピクトグラム（新規作成） */
-  const BOXES = [
-    { id: 'db',    cx: 651.4,   cy: 223.8,  color: '#FF5D97', icon: 'database', label: 'データベース' },
-    { id: 'cloud', cx: 1013.99, cy: 129.99, color: '#0EBBFF', icon: 'chat',    label: 'ストレージ' },
-    { id: 'chat',  cx: 1384.6,  cy: 229.3,  color: '#FF5D97', icon: 'chat',     label: 'チャット' },
-    { id: 'sheet', cx: 651.4,   cy: 553.7,  color: '#0E4497', icon: 'database',    label: '表計算' },
-    { id: 'mail',  cx: 1080.5,  cy: 822.5,  color: '#0EBBFF', icon: 'chat',     label: '通知' },
-    { id: 'cal',   cx: 1326.3,  cy: 694.45, color: '#0EBBFF', icon: 'database', label: 'カレンダー' },
-  ];
+  /* エージェント（カンプ 15294:29336 実測） */
+  const AGENT = { x: 912.62, y: 348.85, w: 227.855, h: 182.065, r: 13 };
 
-  /* ---- 連携先アイコン（2トーン版・2026-08-19）----
-     【ヒデさん指定】フルのリッチ化は工数がかかるので、既存の枠線アイコンに
-     ベタ塗りを効かせた2トーンをまず2個（データベース/チャット）だけ作り、
-     他の箱はこの2個を使い回す。方向性が決まったら残りを起こす。
-     色は currentColor 経由: 箱ごとに style.color = ドット色 が入るので、
-     同じアイコンでも箱によってブランド3色に塗り分けられる。 */
-  const ICONS = {
-    /* データベース: 胴体はうすいベタ(15%) + 枠線、天板だけ濃いベタ塗り */
-    database: `
-      <path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.6"/>
-      <path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3" fill="none" stroke="currentColor" stroke-width="1.6"/>
-      <ellipse cx="12" cy="6" rx="7" ry="3" fill="currentColor"/>
-      <ellipse cx="10.2" cy="5.4" rx="2.6" ry="0.9" fill="#fff" fill-opacity=".55"/>`,
-    /* チャット: 吹き出しはうすいベタ + 枠線、中の3点だけ濃いベタ塗り */
-    chat: `
-      <path d="M6 4.5h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.5L7 20v-3.5H6a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-      <circle cx="8.4" cy="10.5" r="1.35" fill="currentColor"/>
-      <circle cx="12"  cy="10.5" r="1.35" fill="currentColor" fill-opacity=".75"/>
-      <circle cx="15.6" cy="10.5" r="1.35" fill="currentColor" fill-opacity=".5"/>`,
+  /* ---- 配線（カンプの Vector 1〜6 のパスを座標解決したもの。白60%・2px）----
+     向きは「箱 → エージェント」。ドットはこの順に流れる。 */
+  const LINES = [
+    { id: 'TL', dot: '#0EBBFF', pts: [[694.33, 259.93], [777.80, 259.93], [777.80, 406.87], [909.19, 406.87]] },
+    { id: 'ML', dot: '#0E4497', pts: [[693.98, 542.14], [779.51, 542.14], [779.51, 475.17], [937.60, 475.17]] },
+    { id: 'TC', dot: '#FF5D97', pts: [[1017.98, 212.08], [1017.98, 348.06]] },
+    { id: 'TR', dot: '#0EBBFF', pts: [[1226.83, 268.98], [1178.04, 268.98], [1178.04, 415.92], [1103.38, 415.92]] },
+    { id: 'BC', dot: '#FF5D97', pts: [[950.04, 707.66], [950.04, 622.13], [1001.00, 622.13], [1001.00, 522.34]] },
+    { id: 'BR', dot: '#0E4497', pts: [[1254.63, 599.45], [1073.93, 599.45], [1073.93, 499.67]] },
+  ];
+  const DOT_R = 6.5867;   /* カンプの Ellipse 87〜92 = 13.173px */
+
+  /* ---- 箱（カンプ実測 109.778×109.778 / r10）----
+     kind: css   = ガラス箱を CSS で作りアイコン SVG を中に置く
+           asset = カンプが箱ごと1枚のSVGで書き出しているもの（そのまま置く）
+           empty = アイコン無しのフェード箱 */
+  const BOXES = [
+    { id: 'folder', kind: 'asset', x: 584.20, y: 203.89, svg: 'assets/icon-folder-box.svg' },
+    { id: 'mail',   kind: 'css',   x: 584.20, y: 490.68,
+      icon: { svg: 'assets/icon-mail.svg', x: 19.16, y: 16.56, w: 72.352, h: 67.83 } },
+    { id: 'tc',     kind: 'empty', x: 967.12, y: 101.81, flip: false },
+    { id: 'bc',     kind: 'empty', x: 895.15, y: 709.97, flip: true },
+    { id: 'chart',  kind: 'asset', x: 1228.66, y: 214.09, svg: 'assets/icon-chart-box.svg' },
+    { id: 'cal',    kind: 'css',   x: 1256.22, y: 542.14, lightBlue24: true },
+  ];
+  const BOX_S = 109.778;
+
+  /* ===== カンプ3枚のグラデーション（キーフレーム）=====
+     3枚とも同じ5色。共通軸 t（0=右上 → 1=左下）に直した各色の位置。
+     F3 だけ角度が反転(47.24°)していたので t=1-p で正規化してある。
+     ⚠️ 位置は画面外(<0, >1)もそのまま持つ。CSSと同じく端の色で頭打ちして評価する。 */
+  const GRAD_COLORS = {
+    cy: [14, 187, 255],    /* #0EBBFF */
+    bl: [71, 126, 209],    /* #477ED1 */
+    wh: [239, 238, 239],   /* #EFEEEF */
+    mg: [255, 93, 151],    /* #FF5D97 */
+    lb: [182, 224, 255],   /* #B6E0FF */
+  };
+  const GRAD_KEYS = {                  /*      F1        F2        F3   */
+    cy: [0.28106, 0.0094376, 0.17480],
+    bl: [0.36378, 0.52713,   0.53122],
+    wh: [0.59602, 0.27152,   0.00072],
+    mg: [1.00000, 0.60766,  -0.22260],
+    lb: [1.33030, 1.33140,   0.93457],
   };
 
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const lerp = (a, b, t) => a + (b - a) * t;
+  const easeIO = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const SVGNS = 'http://www.w3.org/2000/svg';
   const el = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
 
-  /* ---- 配線ジオメトリ（直角L字。カンプの Vector 1〜6 と同じ流儀）---- */
-  function agentAnchor(box) {
-    const a = AGENT, L = a.cx - a.w / 2, R = a.cx + a.w / 2, T = a.cy - a.h / 2, B = a.cy + a.h / 2;
-    const dx = box.cx - a.cx, dy = box.cy - a.cy;
-    if (Math.abs(dx) * a.h > Math.abs(dy) * a.w) {
-      const y = clamp01((box.cy - T) / (B - T)) * (B - T - 44) + T + 22;
-      return dx < 0 ? { x: L, y } : { x: R, y };
-    }
-    const x = clamp01((box.cx - L) / (R - L)) * (R - L - 44) + L + 22;
-    return dy < 0 ? { x, y: T } : { x, y: B };
-  }
-  function boxAnchor(box) {
-    const L = box.cx - BOX.w / 2, R = box.cx + BOX.w / 2, T = box.cy - BOX.h / 2, B = box.cy + BOX.h / 2;
-    const dx = AGENT.cx - box.cx, dy = AGENT.cy - box.cy;
-    if (Math.abs(dx) * BOX.h > Math.abs(dy) * BOX.w) return dx < 0 ? { x: L, y: box.cy } : { x: R, y: box.cy };
-    return dy < 0 ? { x: box.cx, y: T } : { x: box.cx, y: B };
-  }
-  function routePoly(box) {
-    const s = boxAnchor(box), e = agentAnchor(box);
-    const horizFromBox = Math.abs(s.x - box.cx) > 0.1;
-    const mid = horizFromBox ? { x: e.x, y: s.y } : { x: s.x, y: e.y };
-    return [s, mid, e].filter((p, i, arr) => i === 0 || Math.abs(p.x - arr[i - 1].x) > 0.5 || Math.abs(p.y - arr[i - 1].y) > 0.5);
-  }
-  function polyLen(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); return L; }
-  function polyAt(pts, t) {
-    const total = polyLen(pts); let d = t * total;
-    for (let i = 1; i < pts.length; i++) {
-      const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-      if (d <= seg || i === pts.length - 1) { const k = seg ? d / seg : 0; return { x: lerp(pts[i - 1].x, pts[i].x, k), y: lerp(pts[i - 1].y, pts[i].y, k) }; }
+  function polyLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
+  function polyAt(p, t) {
+    const total = polyLen(p); let d = t * total;
+    for (let i = 1; i < p.length; i++) {
+      const seg = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+      if (d <= seg || i === p.length - 1) { const k = seg ? d / seg : 0; return [lerp(p[i - 1][0], p[i][0], k), lerp(p[i - 1][1], p[i][1], k)]; }
       d -= seg;
     }
-    return pts[pts.length - 1];
+    return p[p.length - 1];
   }
 
-  /* ===================== AIエージェント (WebGL・ベイヤー8ディザ) =====================
-     現行サイトの「B ハーフトーン」と同じディザ質感を、角丸の発光コアに作り直したもの。
-     配色ランプはカンプの放射グラデ実測値（中心 #FEE0F8 → #0EBBFF → 縁 #FF5D97）。 */
-  const AGENT_VS = 'attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0);} ';
-  const AGENT_FS = `
+  /* ===== グラデーション LUT（256px）を JS で焼く =====
+     キーフレーム間はこの JS 側で補間し、シェーダーは LUT を引くだけ。
+     ストップの順番がフレームによって入れ替わる（白と青が交差する）ため、
+     シェーダーで直接評価せず、CSSと同じ「位置でソートして区間補間」をここでやる。 */
+  const LUT_N = 256;
+  const lutData = new Uint8Array(LUT_N * 4);
+  function bakeStops(stops, out) {  /* stops: [{p, c:[r,g,b]}] */
+    stops.sort((a, b) => a.p - b.p);
+    for (let i = 0; i < LUT_N; i++) {
+      const x = i / (LUT_N - 1);
+      let c;
+      if (x <= stops[0].p) c = stops[0].c;
+      else if (x >= stops[stops.length - 1].p) c = stops[stops.length - 1].c;
+      else {
+        for (let k = 1; k < stops.length; k++) {
+          if (x <= stops[k].p) {
+            const a = stops[k - 1], b = stops[k];
+            const u = (x - a.p) / Math.max(1e-6, b.p - a.p);
+            c = [lerp(a.c[0], b.c[0], u), lerp(a.c[1], b.c[1], u), lerp(a.c[2], b.c[2], u)];
+            break;
+          }
+        }
+      }
+      out[i * 4] = c[0]; out[i * 4 + 1] = c[1]; out[i * 4 + 2] = c[2]; out[i * 4 + 3] = 255;
+    }
+  }
+  function stopsAt(f) {  /* f: 0..2 のキーフレーム位置（小数で補間） */
+    const i = Math.min(1, Math.floor(f)), u = f - i;
+    return Object.keys(GRAD_KEYS).map(k => ({ p: lerp(GRAD_KEYS[k][i], GRAD_KEYS[k][i + 1], u), c: GRAD_COLORS[k] }));
+  }
+  /* タイムライン: F1→F2→F3 と波が右上へ抜け(6s)、0.4s置いて、
+     色だけクロスフェードで F1 に戻る(0.9s)。逆走の動きを見せないため。 */
+  const T_FWD = 6.0, T_HOLD = 0.4, T_X = 0.9, T_ALL = T_FWD + T_HOLD + T_X;
+  const lutA = new Uint8Array(LUT_N * 4), lutB = new Uint8Array(LUT_N * 4);
+  function bakeTimeline(time, out) {
+    const u = time % T_ALL;
+    if (u < T_FWD) { bakeStops(stopsAt(easeIO(u / T_FWD) * 2), out); return; }
+    if (u < T_FWD + T_HOLD) { bakeStops(stopsAt(2), out); return; }
+    const s = easeIO((u - T_FWD - T_HOLD) / T_X);
+    bakeStops(stopsAt(2), lutA); bakeStops(stopsAt(0), lutB);
+    for (let i = 0; i < out.length; i++) out[i] = lutA[i] + (lutB[i] - lutA[i]) * s;
+  }
+
+  /* ===== シェーダー（ディザはカンプ同様ベイヤー8で全域均一） ===== */
+  const VS = 'attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0);} ';
+  const FS = `
 precision highp float;
 uniform vec2  uRes;
 uniform float uTime;
-uniform float uFlow;    /* 0=呼吸 1=掃引 2=波及 3=色相ドリフト 4=収束 */
-uniform float uEnergy;  /* ドット到達で跳ねて減衰 */
-uniform vec2  uDir;     /* 直近のドットが来た方向 */
-uniform float uAspect;  /* w/h */
-uniform float uCell;    /* ディザ粒(px) */
-uniform float uMono;    /* (未使用・互換のため残す) */
+uniform float uMode;    /* 0=カンプのグラデ(LUT) 1=V1.0ハーフトーン */
+uniform float uEnergy;
+uniform float uAspect;
+uniform float uCell;
+uniform sampler2D uLUT;
 
 float bayer2(vec2 a){ a=floor(a); return fract(a.x/2.0 + a.y*a.y*0.75); }
 float bayer4(vec2 a){ return bayer2(0.5*a)*0.25 + bayer2(a); }
@@ -107,21 +139,19 @@ float hash(vec2 p){ p=fract(p*vec2(127.1,311.7)); p+=dot(p,p+34.5); return fract
 float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y); }
 
-/* ===== カンプ 15290:25513 の線形グラデを忠実に再現 =====
-   linear-gradient(229.049deg,
-     #0EBBFF 28.106%, #477ED1 36.378%, #EFEEEF 59.602%, #FF5D97 100%)
-   ※ 133% に #B6E0FF のストップもあるが、100% より外なので表示には出ない。
-   ※ 最初のストップが 28.1% なので、0〜28.1%（右上の角）はシアンのベタ。 */
-vec3 grad(float x){
+/* V1.0「B ハーフトーン」の配色ランプ（カンプ惑星の面積比そのまま移植） */
+vec3 rampV1(float x){
   x = clamp(x, 0.0, 1.0);
-  vec3 cy = vec3(0.055, 0.733, 1.000);   /* #0EBBFF */
-  vec3 bl = vec3(0.278, 0.494, 0.820);   /* #477ED1 */
-  vec3 wh = vec3(0.937, 0.933, 0.937);   /* #EFEEEF */
-  vec3 mg = vec3(1.000, 0.365, 0.592);   /* #FF5D97 */
-  if (x < 0.28106) return cy;
-  if (x < 0.36378) return mix(cy, bl, (x - 0.28106) / 0.08272);
-  if (x < 0.59602) return mix(bl, wh, (x - 0.36378) / 0.23224);
-  return mix(wh, mg, (x - 0.59602) / 0.40398);
+  vec3 mg = vec3(1.000, 0.365, 0.592);
+  vec3 pu = vec3(0.502, 0.459, 0.863);
+  vec3 bl = vec3(0.102, 0.659, 0.984);
+  vec3 cy = vec3(0.043, 0.867, 1.000);
+  vec3 wh = vec3(0.918, 1.000, 1.000);
+  if (x < 0.075) return mix(mg, pu, x / 0.075);
+  if (x < 0.115) return mix(pu, bl, (x - 0.075) / 0.040);
+  if (x < 0.355) return mix(bl, cy, (x - 0.115) / 0.240);
+  if (x < 0.915) return mix(cy, mix(cy, wh, 0.22), (x - 0.355) / 0.560);
+  return mix(mix(cy, wh, 0.22), wh, (x - 0.915) / 0.085);
 }
 float sdRound(vec2 p, vec2 b, float r){ vec2 d=abs(p)-b+r; return min(max(d.x,d.y),0.0)+length(max(d,0.0))-r; }
 
@@ -129,138 +159,154 @@ void main(){
   vec2 fc = gl_FragCoord.xy;
   vec2 cell = floor(fc/uCell);
   vec2 fcc = (cell+0.5)*uCell;
-  vec2 P = (fcc*2.0 - uRes)/uRes.y;          /* 中心原点 / y上向き */
+  vec2 P = (fcc*2.0 - uRes)/uRes.y;
 
   vec2 hs = vec2(0.86*uAspect, 0.86);
-  float sd = sdRound(P, hs, 0.16);
+  float sd = sdRound(P, hs, 0.135);
   float pxw = 2.0/uRes.y;
   float mask = 1.0 - smoothstep(-2.0*pxw, 2.0*pxw, sd);
   if (mask <= 0.0){ gl_FragColor = vec4(0.0); return; }
 
-  /* CSS の 229.049deg をそのまま投影する（CSSはy下向きなので反転） */
-  vec2 pc = vec2(P.x, -P.y);
-  vec2 DIR = vec2(-0.75512, 0.65559);        /* (sinθ, -cosθ) θ=229.049° */
-  float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;   /* CSSのグラデ線の長さ */
-  float t = 0.5 + dot(pc, DIR)/L;            /* 0=右上シアン側 → 1=左下マゼンタ側 */
-
-  /* ---- グラデの流れ方（カンプの絵を基準に、tを軽く動かすだけ）---- */
-  float e = uEnergy, tm = uTime;
-  float v = dot(pc, vec2(0.65559, 0.75512)); /* 帯と直交する向き */
-  float r = length(vec2(P.x/max(uAspect,0.001), P.y))/0.97;
-  if (uFlow < 0.5){        /* 呼吸: 全体がゆっくり行き来し、到達で白側へふわり */
-    t += 0.040*sin(tm*1.0) - 0.055*e;
-  } else if (uFlow < 1.5){ /* 掃引: 帯に沿って色が流れ続ける */
-    t += 0.065*sin(v*3.0 - tm*1.5) - 0.05*e;
-  } else if (uFlow < 2.5){ /* 波及: ドットの来た方向から波が走る */
-    float along = dot(normalize(pc + vec2(1e-4)), normalize(vec2(uDir.x, -uDir.y) + vec2(1e-4)));
-    t += sin(r*7.0 - tm*2.4) * (0.025 + 0.12*e) * (0.5 + 0.5*along);
-  } else if (uFlow < 3.5){ /* ドリフト: グラデ位置がゆっくり循環する */
-    t = fract(t - tm*0.04);
-  } else {                 /* 収束: 到達で中心へ吸い込まれ、白がふくらむ */
-    t = mix(t, 0.5, 0.35*e*exp(-r*1.5));
-    t -= 0.08*e;
-  }
-
-  t += (vnoise(pc*5.0 + tm*0.15) - 0.5)*0.03;   /* ごく薄いゆらぎ */
-
-  /* ---- ディザ（カンプと同じくグラデ全域に均一にかかる）---- */
+  vec2 pc = vec2(P.x, -P.y);                     /* CSSのy下向きに合わせる */
   float dith = bayer8(cell);
-  float levels = 7.0;
-  float q = clamp(floor(t*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
-  vec3 col = grad(q);
+  vec3 col;
 
+  if (uMode < 0.5) {
+    /* カンプの線形グラデ: 229.049° をそのまま投影 → LUT（3枚のキーフレーム補間済み） */
+    vec2 DIR = vec2(-0.75512, 0.65559);
+    float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;
+    float t = 0.5 + dot(pc, DIR)/L;
+    t += (vnoise(pc*5.0 + uTime*0.15) - 0.5)*0.025;
+    t -= 0.05*uEnergy;                            /* ドット到達で白側へふわり */
+    float levels = 7.0;
+    float q = clamp(floor(t*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
+    col = texture2D(uLUT, vec2(q, 0.5)).rgb;
+  } else {
+    /* V1.0 ハーフトーン: 白い帯が斜めに流れる（惑星Bの平面版） */
+    vec2 axis = normalize(vec2(0.70, 0.62));
+    float u = dot(pc, axis) / 0.9;
+    float v = dot(pc, vec2(-axis.y, axis.x)) / 0.9;
+    float wave = u*2.2 + sin(v*2.1 + uTime*0.5)*0.28 - uTime*0.30;
+    float lum = 0.5 + 0.5*sin(wave*3.14159265);
+    lum += (vnoise(pc*2.4 + uTime*0.1) - 0.5)*0.12;
+    lum += 0.15*uEnergy;
+    float levels = 6.0;
+    float q = clamp(floor(lum*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
+    col = rampV1(q);
+  }
   gl_FragColor = vec4(col*mask, mask);
 }`;
 
-  function makeAgentGL(canvas) {
+  function makeGL(canvas) {
     const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: true });
     if (!gl) return null;
-    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error('[KV shader]', gl.getShaderInfoLog(s)); return null; } return s; };
-    const v = sh(gl.VERTEX_SHADER, AGENT_VS), f = sh(gl.FRAGMENT_SHADER, AGENT_FS);
+    const sh = (ty, src) => { const s = gl.createShader(ty); gl.shaderSource(s, src); gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error('[KV]', gl.getShaderInfoLog(s)); return null; } return s; };
+    const v = sh(gl.VERTEX_SHADER, VS), f = sh(gl.FRAGMENT_SHADER, FS);
     if (!v || !f) return null;
     const p = gl.createProgram(); gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.error('[KV link]', gl.getProgramInfoLog(p)); return null; }
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.error('[KV]', gl.getProgramInfoLog(p)); return null; }
     gl.useProgram(p);
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(p, 'aPos'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const U = n => gl.getUniformLocation(p, n);
-    const u = { uRes: U('uRes'), uTime: U('uTime'), uFlow: U('uFlow'), uEnergy: U('uEnergy'), uDir: U('uDir'), uAspect: U('uAspect'), uCell: U('uCell'), uMono: U('uMono') };
+    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uLUT: U('uLUT') };
+    gl.uniform1i(u.uLUT, 0);
     return {
       draw(w, h, o) {
         if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
         gl.viewport(0, 0, w, h);
-        gl.uniform2f(u.uRes, w, h); gl.uniform1f(u.uTime, o.time); gl.uniform1f(u.uFlow, o.flow);
-        gl.uniform1f(u.uEnergy, o.energy); gl.uniform2f(u.uDir, o.dirX, o.dirY);
-        gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell); gl.uniform1f(u.uMono, o.mono);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, o.lut);
+        gl.uniform2f(u.uRes, w, h); gl.uniform1f(u.uTime, o.time); gl.uniform1f(u.uMode, o.mode);
+        gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
     };
   }
-  function agentFallback(canvas) {
+  function fallbackGL(canvas) {
     const ctx = canvas.getContext('2d');
     return { draw(w, h) { if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-      const g = ctx.createLinearGradient(w, 0, 0, h);   /* 右上→左下 ≒ 229deg */
+      const g = ctx.createLinearGradient(w, 0, 0, h);
       g.addColorStop(0, '#0EBBFF'); g.addColorStop(0.281, '#0EBBFF');
       g.addColorStop(0.364, '#477ED1'); g.addColorStop(0.596, '#EFEEEF'); g.addColorStop(1, '#FF5D97');
       ctx.clearRect(0, 0, w, h); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); } };
   }
 
   /* ===================== 構築 ===================== */
+  let rootEl = null, agentMode = 0;
   function start(cfg) {
     cfg = cfg || {};
-    const flowMap = { breathe: 0, sweep: 1, wave: 2, huedrift: 3, converge: 4 };
-    const flow = flowMap[cfg.flow] != null ? flowMap[cfg.flow] : 0;
     const root = document.getElementById(cfg.mount || 'kv');
-    root.classList.add('kv-root');
+    rootEl = root;
+    root.classList.add('kv-root', 'bs-flat');
 
     const stage = document.createElement('div'); stage.className = 'kv-stage'; root.appendChild(stage);
     const world = document.createElement('div'); world.className = 'kv-world'; stage.appendChild(world);
 
-    /* 線 */
+    /* 線＋ドット（カンプのパス座標をそのまま描く） */
     const svg = el('svg', { class: 'kv-lines', viewBox: `0 0 ${STAGE.w} ${STAGE.h}` });
     svg.setAttribute('width', STAGE.w); svg.setAttribute('height', STAGE.h);
     world.appendChild(svg);
-    const conns = BOXES.map(b => {
-      const pts = routePoly(b);
-      const d = 'M' + pts.map(p => `${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' L');
+    const dots = [];
+    LINES.forEach((ln, i) => {
+      const d = 'M' + ln.pts.map(p => `${p[0]} ${p[1]}`).join(' L');
       svg.appendChild(el('path', { d, class: 'kv-line', fill: 'none' }));
-      return { box: b, pts, len: polyLen(pts) };
+      const c = el('circle', { r: DOT_R, fill: ln.dot, class: 'kv-dot' });
+      svg.appendChild(c);
+      dots.push({ ln, node: c, t: (i * 0.37) % 1, speed: 0.14 * (0.9 + 0.25 * (i % 3) / 2) });
     });
 
-    /* 流れるドット（API）: 箱 → エージェント方向 */
-    const dotG = el('g', { class: 'kv-dots' }); svg.appendChild(dotG);
-    const DOTS_PER = cfg.dotsPerLine || 2;
-    const dots = [];
-    conns.forEach((c, ci) => { for (let i = 0; i < DOTS_PER; i++) {
-      const node = el('circle', { r: cfg.dotR || 6, fill: c.box.color, class: 'kv-dot' });
-      dotG.appendChild(node);
-      dots.push({ conn: c, node, t: (i / DOTS_PER + ci * 0.13) % 1,
-        speed: (cfg.dotSpeed || 0.15) * (0.85 + 0.3 * ((ci * 7 + i * 3) % 5) / 5) });
-    } });
-
-    /* 連携先ボックス */
+    /* 箱（3種類の作りをカンプどおりに） */
     BOXES.forEach(b => {
-      const d = document.createElement('div'); d.className = 'kv-box'; d.dataset.id = b.id;
-      d.style.left = (b.cx - BOX.w / 2) + 'px'; d.style.top = (b.cy - BOX.h / 2) + 'px';
-      d.style.width = BOX.w + 'px'; d.style.height = BOX.h + 'px';
-      d.style.color = b.color;   /* 2トーンの塗り色 = ドットと同じブランド色 */
-      d.innerHTML = `<svg viewBox="0 0 24 24" class="kv-ico" fill="none" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</svg>`;
+      const d = document.createElement('div');
+      d.className = 'kv-box kv-box--' + b.kind;
+      d.style.left = b.x + 'px'; d.style.top = b.y + 'px';
+      d.style.width = BOX_S + 'px'; d.style.height = BOX_S + 'px';
+      if (b.kind === 'asset') {
+        fetch(b.svg).then(r => r.text()).then(t => { d.innerHTML = t; const s = d.querySelector('svg');
+          if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
+      } else if (b.kind === 'empty') {
+        if (b.flip) d.classList.add('is-flip');
+      } else if (b.icon) {
+        fetch(b.icon.svg).then(r => r.text()).then(t => {
+          const w = document.createElement('div'); w.className = 'kv-box-ico';
+          w.style.left = b.icon.x + 'px'; w.style.top = b.icon.y + 'px';
+          w.style.width = b.icon.w + 'px'; w.style.height = b.icon.h + 'px';
+          w.innerHTML = t; const s = w.querySelector('svg');
+          if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; }
+          d.appendChild(w);
+        });
+      } else if (b.lightBlue24) {
+        /* カンプの Light-Blue-24 インスタンス: 色バー(グラデ) + ガラスSVG */
+        const w = document.createElement('div'); w.className = 'kv-lb24';
+        const bar = document.createElement('div'); bar.className = 'kv-lb24-bar'; w.appendChild(bar);
+        const glass = document.createElement('div'); glass.className = 'kv-lb24-glass';
+        fetch('assets/icon-cal-glass.svg').then(r => r.text()).then(t => { glass.innerHTML = t;
+          const s = glass.querySelector('svg'); if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
+        w.appendChild(glass);
+        d.appendChild(w);
+      }
       world.appendChild(d);
     });
 
-    /* AIエージェント */
+    /* エージェント */
     const agentBox = document.createElement('div'); agentBox.className = 'kv-agent';
-    agentBox.style.left = (AGENT.cx - AGENT.w / 2) + 'px'; agentBox.style.top = (AGENT.cy - AGENT.h / 2) + 'px';
+    agentBox.style.left = AGENT.x + 'px'; agentBox.style.top = AGENT.y + 'px';
     agentBox.style.width = AGENT.w + 'px'; agentBox.style.height = AGENT.h + 'px';
     agentBox.style.borderRadius = AGENT.r + 'px';
     const canvas = document.createElement('canvas'); canvas.className = 'kv-agent-cv'; agentBox.appendChild(canvas);
     world.appendChild(agentBox);
-    const agent = makeAgentGL(canvas) || agentFallback(canvas);
+    const agent = makeGL(canvas) || fallbackGL(canvas);
 
-    /* レスポンシブ: ステージを丸ごとスケール */
     function fit() {
       const rw = root.clientWidth, rh = root.clientHeight;
       const s = Math.min(rw / STAGE.w, rh / STAGE.h);
@@ -269,40 +315,33 @@ void main(){
     }
     window.addEventListener('resize', fit); fit();
 
-    /* アニメーション */
-    let energy = 0, dirX = 0, dirY = -1, last = performance.now();
+    let energy = 0, last = performance.now();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     function frame(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = now / 1000;
       dots.forEach(d => {
         d.t += d.speed * dt;
-        if (d.t >= 1) {  /* 到達 → エージェントへエネルギー注入 */
-          d.t -= 1;
-          energy = Math.min(1.3, energy + 0.45);
-          const a = agentAnchor(d.conn.box);
-          dirX = (a.x - AGENT.cx) / 140; dirY = (a.y - AGENT.cy) / 140;
-        }
-        const pos = polyAt(d.conn.pts, d.t);
-        d.node.setAttribute('cx', pos.x.toFixed(1)); d.node.setAttribute('cy', pos.y.toFixed(1));
-        d.node.setAttribute('opacity', (0.35 + 0.65 * d.t).toFixed(2));
+        if (d.t >= 1) { d.t -= 1; energy = Math.min(1.2, energy + 0.4); }
+        const pos = polyAt(d.ln.pts, d.t);
+        d.node.setAttribute('cx', pos[0].toFixed(1)); d.node.setAttribute('cy', pos[1].toFixed(1));
+        d.node.setAttribute('opacity', (0.4 + 0.6 * d.t).toFixed(2));
       });
-      energy = Math.max(0, energy - dt * 1.5);
+      energy = Math.max(0, energy - dt * 1.4);
+      bakeTimeline(time, lutData);
       const s = (root._scale || 1) * dpr;
       agent.draw(Math.max(2, Math.round(AGENT.w * s)), Math.max(2, Math.round(AGENT.h * s)),
-        { time, flow, energy: clamp01(energy), dirX, dirY, aspect: AGENT.w / AGENT.h, cell: (cfg.cell || 2) * dpr, mono: cfg.mono ? 1 : 0 });
-      const br = 1 + 0.018 * Math.sin(time * 1.1) + 0.03 * energy;   /* ふわりと膨らむ */
-      canvas.style.transform = `scale(${br.toFixed(4)})`;
+        { time, mode: agentMode, energy: clamp01(energy), aspect: AGENT.w / AGENT.h, cell: 2 * dpr, lut: lutData });
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
     return root;
   }
 
-  /* 箱のスタイル切替: flat（カンプ） / solid（立体） / iso（アイソメトリック） */
-  function setBoxStyle(root, style) {
-    root.classList.remove('bs-flat', 'bs-solid', 'bs-iso');
-    root.classList.add('bs-' + style);
+  function setBoxStyle(style) {
+    rootEl.classList.remove('bs-flat', 'bs-solid', 'bs-iso');
+    rootEl.classList.add('bs-' + style);
   }
+  function setAgentMode(m) { agentMode = (m === 'halftone') ? 1 : 0; }
 
-  global.KV = { start, setBoxStyle, BOXES, AGENT, STAGE };
+  global.KV = { start, setBoxStyle, setAgentMode, STAGE, AGENT };
 })(window);
