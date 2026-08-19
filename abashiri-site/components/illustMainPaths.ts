@@ -25,9 +25,10 @@ export const SKIN_FILL = "#FEDFCA";
 
 /**
  * パッチをどれだけ太らせるか。ILLUST_FLIP の中の単位なので、
- * 画面上では ×0.1 ×(表示幅/648) になる。70 で約3px ぶん。
+ * 画面上では ×0.1 ×(表示幅/648) になる。
+ * 120 ＝ 元画像で約12px、本番表示(162px幅)で約3.0px ぶん。
  */
-export const PATCH_SPREAD = 70;
+export const PATCH_SPREAD = 120;
 
 export const BROW_D = {
   left: [

@@ -30,6 +30,8 @@ OUT = os.path.join(HERE, "..", "components", "illustMainPaths.ts")
 
 # 線画とみなす明るさの上限（0-255）
 DARK_LUMA = 110
+# 元の眉を隠すパッチをどれだけ太らせるか（ヒデさん調整値 2026-08-19）
+PATCH_SPREAD = 120
 # 顔があるあたり（この外の黒い塊＝髪や輪郭は眉の候補から外す）
 FACE_BAND = dict(x0=0.20, x1=0.75, y0=0.12, y1=0.38)   # 画像サイズに対する割合
 
@@ -224,9 +226,10 @@ export const SKIN_FILL = "{skin_fill}";
 
 /**
  * パッチをどれだけ太らせるか。ILLUST_FLIP の中の単位なので、
- * 画面上では ×0.1 ×(表示幅/{w}) になる。70 で約3px ぶん。
+ * 画面上では ×0.1 ×(表示幅/{w}) になる。
+ * {PATCH_SPREAD} ＝ 元画像で約{PATCH_SPREAD/10:.0f}px、本番表示(162px幅)で約{PATCH_SPREAD/10*162/w:.1f}px ぶん。
  */
-export const PATCH_SPREAD = 70;
+export const PATCH_SPREAD = {PATCH_SPREAD};
 
 export const BROW_D = {{
   left: [

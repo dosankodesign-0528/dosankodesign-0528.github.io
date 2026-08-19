@@ -261,6 +261,18 @@ export default function TopPage({
     };
   }, [waitConsent]);
 
+  /* v1.2: 「網走市観光サイト」は吹き出しと同時に出す（ヒデさん指示 2026-08-19）。
+     以前はボタンと一緒（＝書き終わったあと）だったが、吹き出しに添えた見出しなので
+     吹き出しと同じ瞬間に、同じ 900ms・ブラー16px で現れる方が自然。
+     HeroBlurSeq 側の吹き出しも「環境音の確認が済んでから timing.start 後」に
+     始まるので、同じ条件で合わせている */
+  const [kankoIn, setKankoIn] = useState(!animated);
+  useEffect(() => {
+    if (!animated || !go) return;
+    const id = window.setTimeout(() => setKankoIn(true), timing.start);
+    return () => window.clearTimeout(id);
+  }, [animated, go, timing.start]);
+
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
   const handleScheduled = (writingEnd: number) => {
     const buttonAt = writingEnd + timing.button.gap;
@@ -583,8 +595,9 @@ export default function TopPage({
               <img
                 src="/img/text-kanko-site.svg"
                 alt="網走市観光サイト"
+                /* 出るタイミングは吹き出しと同じ（duration 900ms / blur 16px も揃えてある） */
                 className={`absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
-                  animated && !buttonIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
+                  animated && !kankoIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
                 }`}
               />
               <div className="absolute left-[-28px] top-[13.1px]">

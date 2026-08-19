@@ -11,8 +11,9 @@ export type FaceConfig = {
   hoverPad: number;
 };
 
+/* ヒデさん調整値（2026-08-19。/mock/brow で決めた） */
 export const DEFAULT_FACE: FaceConfig = {
-  browLift: 5,
+  browLift: 12,
   hoverPad: 0,
 };
 
