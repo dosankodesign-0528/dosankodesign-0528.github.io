@@ -217,6 +217,7 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | ブランチ | 中身 | 作った日 |
 |---|---|---|
 | `abashiri-v1.0` | 網走サイト バージョン 1.0（デザインシステム整備・命名統一まで完了した状態） | 2026-08-16 |
+| `anyflow-v1.0` | anyflow-embed バージョン 1.0（公開中の本番そのもの。ここからアップデート案を検討する） | 2026-08-19 |
 
 - これ以降の網走サイトのアップデートは **main に積む**（v1.0 ブランチには何も足さない）
 - 凍結ブランチを増やす時は、この表にも 1 行足すこと
@@ -245,7 +246,8 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **design-gallery** | **https://design-gallery-puce.vercel.app** | 親リポ subdir (main) | design-gallery | ✅ main push で自動（Root Directory: `design-gallery`、2026-07-31設定） |
 | **空き時間みつける君** | **https://akijikan-mitsukeru-kun.vercel.app** | 親リポ subdir (main) | akijikan-mitsukeru-kun | 手動（`vercel --prod`） |
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
-| **anyflow-embed** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
+| **anyflow-embed（V1.0・公開中）** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
+| **anyflow-embed-v2（アップデート案）** | **https://anyflow-embed-v2.vercel.app** | 親リポ subdir (main) | anyflow-embed-v2 | 手動（`vercel --prod`） |
 | **abashiri-site（網走）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✅ main push で自動（Root Directory: `abashiri-site`）<br>v1.0 は `abashiri-v1.0` ブランチのプレビューURLで見られる |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
@@ -257,6 +259,13 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | ポータル本体 | https://hideyuki-yamanaka.github.io/ | 親リポ `.github/workflows/deploy.yml` |
 
 注意事項：
+- 🔒 **anyflow-embed は V1.0（公開中）と V2（アップデート案）の2本立て**（2026-08-19 から）。
+  - `anyflow-embed/` = **V1.0。凍結**。バグ修正以外は足さない。URL は変えない
+  - `anyflow-embed-v2/` = アップデート案の作業場。ここはいくら壊してよい
+  - **Vercel プロジェクトが別**なので、V2 をデプロイしても V1.0 の URL は影響を受けない
+  - ⚠️ デプロイ前に必ず `cat .vercel/project.json` で projectName を確認する。
+    V2 のつもりで `anyflow-embed/` の中で叩くと**公開中のサイトが上書きされる**
+  - V1.0 のコードは `anyflow-v1.0` ブランチにも凍結済み（削除厳禁）
 - **アプリは全部 Vercel 一本**（2026-04-23 統一）。以前は GH Pages にも複製 deploy されてたが、houmon-app の mock モード問題や design-gallery の swc バグなどトラブルの温床だった。現在は各 `hideyuki-yamanaka.github.io/<app>/` にアクセスすると Vercel へリダイレクトされるだけ。
 - **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
 - ポータルの `product.meta.json` の `path` が絶対 URL（`https://...`）なら Vercel、未指定 or 相対パスなら GH Pages。今は全アプリが絶対URL指定済み。
