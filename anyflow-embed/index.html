@@ -1330,6 +1330,9 @@
   .btns button:hover { background: #f2f2f2; }
   .btns button.primary { background: #090909; color: #fff; border-color: #090909; }
   .btns button.primary:hover { background: #333; }
+  /* 未保存の変更があることを目立たせる */
+  .btns button.primary.dirty { background: #FF5D97; border-color: #FF5D97; }
+  .btns button.primary.dirty:hover { background: #ff4487; }
   .seg { display: flex; border: 1px solid #d8d8d8; border-radius: 8px; overflow: hidden; flex: 1; }
   .seg button {
     flex: 1; border: none; background: #fff; font-family: inherit;
@@ -2406,6 +2409,14 @@ function load() {
   return structuredClone(DEFAULTS);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
+/* ===== 保存の考え方 (2026-08-19 ヒデさん指定) =====
+   以前は「触った瞬間に保存」だったので、ちょっと試しただけの値が
+   そのまま次回の既定になってしまい、元に戻したいのに戻せなかった。
+   いまは【触っている間は画面で試せるだけ／保存ボタンを押して初めて残る】。
+   dirty = 保存していない変更があるか */
+let dirty = false;
+let syncSaveBtn = null;   /* パネルを組む時に、保存ボタンの表示を更新する関数が入る */
+function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); }
 
 /* ================= ドット要素 (奥/手前レイヤーに1個ずつ) ================= */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -3159,10 +3170,21 @@ function rvAt(el, k, blur, dy, ox, oy) {
 /* ⚠️ style への書き込みは、値が同じでも毎回「描き直し」の対象になる。
    毎フレーム同じ値を入れ続けると無駄な再描画が積み上がるので、
    前回と違う時だけ書き込む。 */
+/* 同じ値を毎フレーム書き込まないためのキャッシュ付き style 設定。
+   ⚠️【2026-08-19 バグ修正】「前回頼まれた値」だけを覚えていたので、
+      どこかが el.style.opacity = 0 のように【直接】書き換えると
+      キャッシュだけが古い値のまま残り、次に同じ値を頼まれても
+      「もうその値です」と判断して書き込まず、画面が戻らなくなっていた。
+      実害: スクロール駆動＋固定追従で、実績の画像・数字・本文が
+            一度消えたあと二度と出てこない（ヒデさん報告）。
+      対策: 「頼まれた値」に加えて【前回書いたあと DOM に入っていた値】も覚えておき、
+            それが変わっていたら誰かが直接書いたとみなして書き直す。
+      ※ ブラウザは "1.000" を "1" に正規化するので、書いた後の値を控えること */
 function setStyle(el, prop, v) {
-  if (el['_s_' + prop] === v) return;
+  if (el['_s_' + prop] === v && el.style[prop] === el['_r_' + prop]) return;
   el['_s_' + prop] = v;
   el.style[prop] = v;
+  el['_r_' + prop] = el.style[prop];
 }
 
 function rv(el, k, blur, dy) {
@@ -3713,7 +3735,10 @@ function updateResults(p) {
 
   if (t < 0) {
     resEls.dark.style.opacity = 0;
-    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { el.style.opacity = 0; });
+    /* ⚠️ ここは rv()/setStyle と同じ要素を触るので、直接 style を書かないこと。
+       直接書くとキャッシュとズレて、次に出そうとした時に書き込みが省略される
+       （2026-08-19: これで実績が二度と出てこなくなっていた） */
+    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { rv(el, 0, 0); });
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
     resEls.head.style.opacity = 0;
     renderSlots(-1);   /* 数字は 0 の位置で待たせる */
@@ -3783,9 +3808,10 @@ function updateResults(p) {
   const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=着いて少し進んだ */
   resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
   if (outK > 0) {
+    /* ⚠️ ここも rv() と同じ要素なので setStyle 経由で書く（直接書くとキャッシュとズレる） */
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
-      el.style.opacity = ((+el.style.opacity || 0) * (1 - outK)).toFixed(3);
-      el.style.filter = `blur(${(outK * c.outBlur).toFixed(2)}px)`;
+      setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - outK)).toFixed(3));
+      setStyle(el, 'filter', `blur(${(outK * c.outBlur).toFixed(2)}px)`);
     });
   }
 }
@@ -5087,7 +5113,7 @@ function slider(label, min, max, step, get, set, fmt, hint) {
   input.addEventListener('input', () => {
     set(parseFloat(input.value));
     val.textContent = f(parseFloat(input.value));
-    save();
+    markDirty();
     applyEdit(isLive);       /* 見た目だけの項目は即反映 / それ以外は手が止まってから流し直す */
   });
   input.addEventListener('change', () => applyEdit(isLive, true));
@@ -5206,7 +5232,7 @@ function pillRow(items, isOn, onPick) {
     b.onclick = () => {
       onPick(it, i);
       row.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', isOn(items[j], j)));
-      save();
+      markDirty();
       /* ⚠️【2026-08-19 ヒデさん指摘】押すと buildPanel() でパネルを作り直すため、
          選んだ案によって上の説明文の行数や下の項目数が変わり、
          【押したボタンが画面の中で動いてしまう】(レイアウトシフト)。
@@ -5257,24 +5283,24 @@ function buildPanel() {
     ? '動かした分だけ絵が進みます。手を止めれば絵も止まり、戻せば巻き戻ります。'
     : 'セクションに着いたら、決まった秒数の映像として流します。誰が見ても同じ速さ。');
   segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
-    () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); save(); buildPanel(); });
+    () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
 
-  sub(catAll, '② セクションを画面に貼りつけるか');
+  sub(catAll, '② 固定追従');
   note(params.pin === 'off'
     ? '貼りつけず、上から下へ普通に流れます。スクロールが引っかかりません。'
     : '画面いっぱいで一度止まり、その場でモーションが流れてから次へ進みます。');
   segRow('貼りつけ', [['貼りつける', 'on'], ['貼りつけない', 'off']],
-    () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); save(); buildPanel(); });
+    () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
   if (params.drive === 'scroll' && params.pin === 'on')
     rows.push(slider('見せきる早さ', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
       v => Math.round(v * 100) + '%',
       '貼りついている間の何割で見せきるか。小さいほど一気に展開。'));
 
-  sub(catAll, '③ スクロールの感触');
+  sub(catAll, '③ 慣性スクロール');
   rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
     '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
-  segRow('もう一度見せる', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; save(); });
+  segRow('もう一度見せる', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; markDirty(); });
   note('一度見たセクションも、戻ってくるともう一度流れます。');
 
   /* ========== 🖼 キービジュアル ========== */
@@ -5331,7 +5357,7 @@ function buildPanel() {
   sub(catKv, '惑星の回り方', true);
   rows.push(slider('1回転の時間', 4, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + '秒',
     'ぐるっと1周する時間。小さいほど速く回ります。'));
-  segRow('回る向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; save(); });
+  segRow('回る向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; markDirty(); });
   rows.push(slider('軸の傾き', -180, 180, 1, () => params.sphere.tilt, v => params.sphere.tilt = v, v => v + '°',
     '柄のどこが正面に来るかがずれます。速さは変わりません。'));
   rows.push(slider('速さのムラ', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
@@ -5369,7 +5395,7 @@ function buildPanel() {
     '上の時間はそのまま、速さだけまとめて変えたい時に。'));
   rows.push(slider('動き出しの加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + '秒',
     'この秒数をかけてじわっと本来の速さまで上がります。0で即。'));
-  segRow('回る向き', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; save(); });
+  segRow('回る向き', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; markDirty(); });
   rows.push(slider('速さの波', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
     '大きいほど、速い⇄遅いを繰り返します。0で一定。'));
   rows.push(slider('波の周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + '秒',
@@ -5616,31 +5642,39 @@ function buildPanel() {
   rows.push(slider('重なる前のすき間', 0, 120, 4, () => sv().cases.gap, v => sv().cases.gap = v, v => v + 'px',
     '重なる前に縦へ並んでいる時の、カード同士のすき間。'));
 
-  /* ボタン */
+  /* ボタン。
+     ⚠️【2026-08-19 ヒデさん指定】「動きを止める」「先頭から見直す」は削除。
+        触った値がそのまま次回の既定になる自動保存もやめて、
+        【保存を押した時だけ残る】形にした。 */
   const btns = document.createElement('div');
   btns.className = 'btns';
-  const playBtn = document.createElement('button');
-  playBtn.className = 'primary';
-  function syncPlay() { playBtn.textContent = params.running ? '⏸ 動きを止める' : '▶ 動きを再開'; }
-  playBtn.onclick = () => { params.running = !params.running; syncPlay(); applyMarquee(); save(); };
-  syncPlay();
-  const restartBtn = document.createElement('button');
-  restartBtn.textContent = '↺ 先頭から見直す';
-  /* 各セクションの再生時刻は「一度再生したら巻き戻さない」ので、
-     最初から見たい時はここで一緒にリセットする */
-  restartBtn.onclick = () => { elapsed = 0; resetSectionClocks(); window.scrollTo(0, 0); };
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'primary';
+  syncSaveBtn = () => {
+    saveBtn.textContent = dirty ? '保存する（未保存あり）' : '保存する';
+    saveBtn.classList.toggle('dirty', dirty);
+  };
+  saveBtn.onclick = () => {
+    save();
+    dirty = false;
+    syncSaveBtn();
+    saveBtn.textContent = '✅ 保存しました';
+    setTimeout(syncSaveBtn, 1600);
+  };
+  syncSaveBtn();
   const resetBtn = document.createElement('button');
-  resetBtn.textContent = '↩︎ 全部を元に戻す';
+  resetBtn.textContent = '↩︎ 元に戻す';
   resetBtn.onclick = () => {
-    if (!window.confirm('このパネルで変えた設定をすべて捨てて、最初の状態に戻します。よろしいですか？')) return;
+    if (!window.confirm('保存した内容も含めて、最初の状態に戻します。よろしいですか？')) return;
     params = structuredClone(DEFAULTS);
     elapsed = 0;
-    save();
+    localStorage.removeItem(STORAGE_KEY);   /* 保存そのものを消す */
+    dirty = false;
     buildPanel();
     applyMarquee();
     fit();
   };
-  btns.append(playBtn, restartBtn, resetBtn);
+  btns.append(saveBtn, resetBtn);
   body.appendChild(btns);
 
   const copy = document.createElement('button');
@@ -5661,8 +5695,8 @@ function buildPanel() {
   const copyNote = document.createElement('div');
   copyNote.className = 'grp-note';
   copyNote.style.margin = '6px 0 0';
-  copyNote.textContent = '触った内容はこのブラウザに残るだけで、公開サイトは変わりません。'
-    + 'この形でいきたい時は、コピーして制作担当へ。';
+  copyNote.textContent = '「保存する」を押すまで値は残りません（押すとこのブラウザに残ります）。'
+    + '公開サイトに反映したい時は、コピーして制作担当へ。';
   body.appendChild(copyNote);
   body.scrollTop = keepScroll;         // 見ていた位置に戻す
 }
