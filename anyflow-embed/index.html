@@ -2274,7 +2274,10 @@ const DEFAULTS = {
   /* 【2026-08-18】アニメーションの駆動方式。参考サイト調査を受けて2軸を用意した。
        time   = 今までどおり。固定して「映像を再生」する。速さが常に一定で絵コンテ通り
        scroll = スクロール量で展開する。手を止めれば絵も止まり、戻せばそのまま巻き戻る */
-  drive: 'time',
+  /* 【2026-08-19 ヒデさん指定】既定は「スクロール駆動 × 固定追従あり」。
+     ⚠️ 保存があればそちらが優先される（＝最後に保存した設定が引き継がれる）。
+        ここは「まだ一度も保存していない人／元に戻したあと」の初期値。 */
+  drive: 'scroll',
   /* 【2026-08-18 指定】固定追従(sticky)を使うか。
        on  = 従来。セクションを画面に貼りつけて見せる
        off = 貼りつけない。セクションは普通に流れ、画面に入った時に中で再生する
@@ -2410,9 +2413,12 @@ function load() {
          2.0秒 のまま保存されている場合だけ、元の 1.3秒 に戻す */
       if (merged.sections.dev && Math.abs(merged.sections.dev.stackDur - 2.0) < 1e-6)
         merged.sections.dev.stackDur = DEFAULTS.sections.dev.stackDur;
-      if (merged.sections.dev && (merged.sections.dev.swapEase == null ||
-          merged.sections.dev.swapEase < 1 || merged.sections.dev.swapEase > DEV_SWAP_EASES.length))
-        merged.sections.dev.swapEase = DEFAULTS.sections.dev.swapEase;
+      /* ⚠️【2026-08-19 重大バグ】ここで DEV_SWAP_EASES を参照していた。
+         あの定数の定義はこの行よりずっと下にあるため ReferenceError になり、
+         下の catch に飲み込まれて【保存値がまるごと無視され、毎回そっくり初期値で起動】していた。
+         「保存ボタンを押しても次に開くと元に戻る」の正体がこれ。
+         load() の中では、この関数より下で定義されるものを絶対に参照しないこと。
+         swapEase の範囲チェックは DEV_SWAP_EASES を定義した直後で行う。 */
       /* 【2026-08-19】実績の左グラデ画像はパララックスなしに変更（旧既定 16 → 0）。
          旧既定のまま(=触っていない)なら新しい既定に載せ替える */
       if (merged.sections.results && Math.abs(merged.sections.results.parallax - 16) < 1e-6)
@@ -2431,7 +2437,13 @@ function load() {
       if (merged.dotGap < 1 || merged.dotGap > DOT_GAPS.length) merged.dotGap = DEFAULTS.dotGap;
       return merged;
     }
-  } catch (e) {}
+  } catch (e) {
+    /* ⚠️【2026-08-19】ここは以前 catch (e) {} と【握りつぶし】ていた。
+       そのせいで load() の中のちょっとした書き間違い（下で定義される定数の参照）が
+       「保存値が毎回まるごと捨てられる」という症状になり、原因が全く見えなかった。
+       黙って初期値に戻すのは同じでよいが、必ず理由を残すこと。 */
+    console.error('[anyflow] 保存した設定を読み込めませんでした。初期値で起動します:', e);
+  }
   return structuredClone(DEFAULTS);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
@@ -3919,6 +3931,11 @@ const DEV_SWAP_EASES = [
   { name: '③ゆったり',   fn: easeIO,   css: 'cubic-bezier(.65,0,.35,1)',
     desc: 'そっと動き出して、そっと止まる。いちばん落ち着いて見える。' },
 ];
+/* 保存値の範囲チェックはここで行う。
+   ⚠️ load() の中でやると DEV_SWAP_EASES がまだ定義されておらず ReferenceError になり、
+      保存値がまるごと捨てられる（2026-08-19 に実際に起きた） */
+if (!(params.sections.dev.swapEase >= 1 && params.sections.dev.swapEase <= DEV_SWAP_EASES.length))
+  params.sections.dev.swapEase = DEFAULTS.sections.dev.swapEase;
 
 const DEV_CH = [
   /* ⚠️ 章の終わり(to)は「退場の開始点(out1[0]=0.42)」より必ず手前に置くこと。
@@ -4107,9 +4124,21 @@ function dm2Lines(screen) {
 }
 let dm2SdkRows2 = null;
 
+/* ループの終わり際、次の周へ戻る前にすっと消す時間(秒)。
+   これが無いと「全部出ている状態」から一瞬で空に戻り、パチッと切れて見える */
+const DM2_OUT = 0.6;
 function dmAnimScreen(screen, ts) {
   const pause = DM2_PAUSE[screen];
   const lines = dm2Lines(screen);
+  /* 【2026-08-19 ヒデさん指定】モック内のアニメーションはすべてループ再生にする。
+     ⚠️ 章①のチャット(devMockContent)は t % loop でもともと繰り返していたが、
+        章②のコード書き出し(ここ)だけ ts をそのまま使っていて【1回きり】だった。
+        右のパネル側と同じ DM_TIMING[screen].loop で回して、2つの周期をそろえる */
+  const tm = DM_TIMING[screen] || DM_TIMING.editor;
+  const loop = tm.loop > 0 ? tm.loop : 0;
+  if (loop > 0 && ts > 0) ts = ts % loop;
+  /* 周の終わり際のフェードアウト量 (0=そのまま / 1=消えきり) */
+  const outK = (loop > 0 && ts > loop - DM2_OUT) ? clamp01((ts - (loop - DM2_OUT)) / DM2_OUT) : 0;
   for (let i = 0; i < lines.length; i++) {
     const at = i * DM2.lineGap + (pause && i >= pause.from ? pause.add : 0);
     const k = easeOutQ(clamp01((ts - at) / DM2.lineDur));
@@ -4118,7 +4147,7 @@ function dmAnimScreen(screen, ts) {
        ここを開かないと、文字があっても一切見えない。
        章①のエディタと同じく、左から右へ拭くように出す */
     setStyle(el, 'clipPath', k >= 1 ? 'none' : `inset(0 ${((1 - k) * 100).toFixed(1)}% 0 0)`);
-    setStyle(el, 'opacity', k <= 0 ? '0' : '1');
+    setStyle(el, 'opacity', k <= 0 ? '0' : (1 - outK).toFixed(3));
   }
   /* CLI: 次の行(✔)が出はじめるまで、印を回し続ける */
   if (screen === 'cli') {
@@ -4141,7 +4170,7 @@ function dmAnimScreen(screen, ts) {
     if (!dm2SdkRows2) dm2SdkRows2 = [...document.getElementById('dmSdkList2').children];
     dm2SdkRows2.forEach((el, i) => {
       const k = easeOutQ(clamp01((ts - DM2.rowsAt - i * DM2.rowGap) / DM2.lineDur));
-      setStyle(el, 'opacity', k.toFixed(3));
+      setStyle(el, 'opacity', (k * (1 - outK)).toFixed(3));   /* コードと一緒に消えて、一緒に出直す */
       setStyle(el, 'transform', k >= 1 ? '' : `translateY(${((1 - k) * 8).toFixed(2)}px)`);
     });
   }
@@ -4401,7 +4430,8 @@ function updateDev(pRaw) {
   let finPlay = 0;
   if (stD && stD.endP != null) {
     const finFrom = Math.min(stD.endP + 0.10, 0.98 - DEV_FIN);
-    finPlay = seg(pRaw, finFrom, finFrom + DEV_FIN, easeIO);
+    /* 同上。スクロール量に比例させる（easeIO だと段付きに見える） */
+    finPlay = seg(pRaw, finFrom, finFrom + DEV_FIN, t => t);
   }
   /* 【2026-08-18 バグ修正】早送りすると endP の記録位置が後ろへズレ、
      セクションの固定が外れても暗転が終わっていない状態になっていた。
@@ -4423,8 +4453,14 @@ function updateDev(pRaw) {
       /* ⚠️ 章の進行は pinP 0→driveWin(既定0.8) で終わる。
          それより早く暗転を始めると、章②の見出しが出きる前に消され始める
          （実測: devH2 が 0.7 で止まっていた）。章の後・スライドの前に置く */
-      ? seg(pRaw, Math.min(0.9, params.sections.common.driveWin + 0.02),
-                  Math.min(0.98, params.sections.common.driveWin + 0.16), easeIO)
+      /* ⚠️【2026-08-19 ヒデさん指摘】終わりを +0.16 で切っていたため、
+           背景の切り替えに使える区間がピン区間の14%しかなく、
+           「パツッと切れていきなり白」に見えていた。区間の最後まで使って倍近く伸ばす */
+      /* ⚠️ ここは easeIO を使わないこと。easeIO は変化を区間の真ん中に集めるので、
+           スクロールに連れて変わる背景では「しばらく何も起きない → 急に白 → また止まる」
+           という段付きに見える（ヒデさん報告の「パツッと切れていきなり白」）。
+           スクロール量にそのまま比例させる（線形）のがいちばんなだらか */
+      ? seg(pRaw, Math.min(0.92, params.sections.common.driveWin + 0.01), 1, t => t)
       : finPlay;
   /* ===== 開発者体験 → 導入事例 の受け渡し (2026-08-19 ヒデさん指定) =====
      ⚠️ 以前は「コンテンツを消す」と「背景を暗い→明るいに変える」を
@@ -4436,8 +4472,11 @@ function updateDev(pRaw) {
         finBg = 背景の切り替わり具合   (fin 0.40 → 1.00 で変わる)
      0.05 だけ重ねてあるのは、完全に切ると「何も起きない間」ができて
      カクッと段付きに見えるため。 */
-  const finC  = clamp01(fin / 0.45);
-  const finBg = clamp01((fin - 0.40) / 0.60);
+  /* ⚠️ 2026-08-19: 当初 コンテンツ 0→0.45 / 背景 0.40→1.00 にしたが、
+        背景に回る区間が短くて「いきなり白」に見えた（ヒデさん指摘）。
+        コンテンツをもっと早く消しきり、背景に区間の7割以上を回す */
+  const finC  = clamp01(fin / 0.28);
+  const finBg = clamp01((fin - 0.24) / 0.76);
   /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する。
      ⚠️ ここは背景側(finBg)を渡すこと。コンテンツ側を渡すと、
         まだ背景が暗いうちに「導入事例」の文字が出てしまう */
