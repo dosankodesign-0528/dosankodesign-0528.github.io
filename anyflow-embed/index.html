@@ -2987,10 +2987,10 @@ function npBlockT(key, el) {
 }
 function renderNoPin() {
   if (!npState) return;
-  /* ⚠️ ここは setStyle を使わないこと。
-     updateXxx 側は el.style.opacity に直接代入しているため、setStyle のキャッシュが
-     「もう '1' を書いた」と誤認して書き込みを飛ばし、上書きが空振りする
-     （2026-08-18 にこれで1回ハマった）。 */
+  /* ここは直接 style に代入している（setStyle を通していない）。
+     2026-08-18 時点では「setStyle のキャッシュが誤認して空振りする」ための回避策だったが、
+     2026-08-19 に setStyle 側を直した（直接書き換えられたら検知して書き直す）ので、
+     いまはどちらでも動く。書き換える必要が出たら setStyle に寄せてよい。 */
   document.querySelectorAll('.np-vp, html.nopin .pin-vp').forEach(vp => {
     const stg = vp.querySelector('.pin-stage');
     if (!stg) return;
@@ -4325,7 +4325,12 @@ function updateDev(pRaw) {
      こうしないと、上がってくる途中の開発者体験が実績を下から覆ってしまう。
      定位置(top:0)に着いた時にはもう実績側の暗幕が真っ黒なので、切り替わりは見えない */
   const devTop = rectOf(SECS.dev).top;
-  devEls.vp.style.opacity = (noPin || devTop <= 2) ? '1' : '0';
+  /* ⚠️ 透明な板が下のセクションを覆って操作を奪わないよう、当たり判定も一緒に切る
+     (2026-08-19: 導入事例の板が開発者体験のリストを覆っていた件と同じ理屈) */
+  const devShown = (noPin || devTop <= 2);
+  setStyle(devEls.vp, 'opacity', devShown ? '1' : '0');
+  setStyle(devEls.vp, 'pointerEvents', devShown ? '' : 'none');
+  setStyle(SECS.dev, 'pointerEvents', devShown ? '' : 'none');
   const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
   const in1  = seg(p, ...DEV_P.h1, easeOutQ);
   const o1   = seg(p, ...DEV_P.out1,  easeIO);
@@ -4423,13 +4428,24 @@ function updateDev(pRaw) {
     }
     const to = DEV_STACK[seatI];
     const kk = el._t0 == null ? 1 : easeOutQ(clamp01((elapsed - el._t0) / c.stackDur));
+    /* ⚠️【2026-08-19 バグ修正】不透明度だけは、位置と同じタイミングで動かさないこと。
+       後ろへ回るカードは席が変わった瞬間から薄くなり始めるが、その時点ではまだ
+       大きいまま手前を横切っている。結果【回っている最中にカードが透けて、
+       下のカードの中身が見えてしまう】（ヒデさん報告。実測: 1.00 → 0.69 → 0.58 と
+       横切っている間ずっと半透明だった）。
+       暗くなる側は【動きがほぼ終わってから】暗くする。明るくなる側はそのまま。
+       こうすると、すれ違っている間はどのカードも不透明で、透けなくなる。
+       ⚠️ しきい値は「大きさが入れ替わる瞬間(kk≒0.5前後)」より必ず後ろに置くこと。
+          0.62 で試したら、まだ手前にいるカードが 0.57 まで薄くなる瞬間が残った（実測）。 */
+    const dimming = to.op < el._from.op;
+    const opK = dimming ? easeOutQ(clamp01((kk - 0.85) / 0.15)) : kk;
     const cur = {
       sc: el._from.sc + (to.sc - el._from.sc) * kk,
       dx: el._from.dx + (to.dx - el._from.dx) * kk,
       dy: el._from.dy + (to.dy - el._from.dy) * kk,
       dz: el._from.dz + (to.dz - el._from.dz) * kk,
       ry: el._from.ry + (to.ry - el._from.ry) * kk,
-      op: el._from.op + (to.op - el._from.op) * kk,
+      op: el._from.op + (to.op - el._from.op) * opK,
     };
     el._cur = cur;
     const cx2 = tx + cur.dx * stackK, cy2 = ty + cur.dy * stackK;
@@ -4513,7 +4529,17 @@ function updateCases(pRaw) {
      開発者体験が実績に対して同じ手当てをしているのと同様に、
      定位置(top:0)に着くまでは板そのものを透明にしておく。 */
   const casTop = rectOf(SECS.cases).top;
-  setStyle(caseEls.vp, 'opacity', (params.pin !== 'off' && casTop > 2) ? '0' : '1');
+  const casHidden = (params.pin !== 'off' && casTop > 2);
+  setStyle(caseEls.vp, 'opacity', casHidden ? '0' : '1');
+  /* ⚠️【2026-08-19 バグ修正】透明でもマウスの当たり判定は生きている。
+     導入事例の板は margin-top:-100vh で開発者体験の上に重なっているので、
+     透明なまま【右の API / CLI / SDK リストを覆って】ホバーが効かなくなっていた
+     （ヒデさん報告「SDK部分のホバーが効かない」。実測では CLI も効いていなかった）。
+     見えていない間は当たり判定も切る。
+     ⚠️ .pin-vp だけでは足りない。section 自体が -100vh で重なっているので、
+        section にも掛けないと「section が受け取ってしまう」（実測で確認） */
+  setStyle(caseEls.vp, 'pointerEvents', casHidden ? 'none' : '');
+  setStyle(SECS.cases, 'pointerEvents', casHidden ? 'none' : '');
 
   const noPin = params.pin === 'off';
   /* 固定なし: ブロックが画面に入ってからの秒数で流す（位置に直結させると
