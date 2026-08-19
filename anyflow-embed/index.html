@@ -1238,9 +1238,11 @@
     /* ⚠️ 高さを内容で決めない。アコーディオンを開くたびに外寸が変わると
        パネル全体が動いて(レイアウトシフト)、触っている場所がズレるため。
        外寸は固定して、中身だけスクロールさせる */
-    width: 360px;
+    /* 【2026-08-19 ヒデさん指定】画面をふさぎすぎないよう横幅をコンパクトに (360→300px)。
+       あわせて文字サイズと余白も一段小さくして、中身が入りきるようにしている */
+    width: 300px;
     height: 520px;
-    min-width: 260px;
+    min-width: 240px;
     min-height: 46px;
     max-width: 92vw;
     max-height: 92vh;
@@ -1250,7 +1252,7 @@
     border: 1px solid #ececec;
     border-radius: 8px;
     box-shadow: 0 8px 32px rgba(0,0,0,.10);
-    font-size: 12px;
+    font-size: 11px;
     color: #101828;
     z-index: 50;
     display: flex;
@@ -1261,7 +1263,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 9px 12px;
     cursor: grab;            /* ここを掴んで移動 */
     user-select: none;
     font-weight: 400;
@@ -1275,7 +1277,7 @@
     overflow-y: auto;
     /* ページ側へスクロールが伝播しないようにする (端まで来ても背後が動かない) */
     overscroll-behavior: contain;
-    padding: 0 14px 14px;
+    padding: 0 10px 10px;
   }
   .panel.closed { height: auto !important; resize: none; }
   .panel.closed .panel-body { display: none; }
@@ -1291,7 +1293,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 7px 10px;
     font-weight: 500;
     background: #f2f2f2;
     cursor: pointer;
@@ -1300,28 +1302,30 @@
   .cat-head:hover { background: #f2f2f2; }
   .cat-chev { font-size: 10px; color: #888; transition: transform .2s; }
   .cat.closed .cat-chev { transform: rotate(-90deg); }
-  .cat-body { padding: 0 12px 12px; }
+  .cat-body { padding: 0 10px 10px; }
   .cat.closed .cat-body { display: none; }
   .grp { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ececec; }
   .cat-body .grp:first-child { border-top: none; margin-top: 6px; }
   .grp-title { font-weight: 400; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   /* 入れ子の小見出し (惑星のデザイン > 柄の動き など) */
-  .grp.sub2 { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ececec; padding-left: 10px; border-left: 2px solid #ececec; }
+  .grp.sub2 { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ececec; padding-left: 7px; border-left: 2px solid #ececec; }
   .grp.sub2 .grp-title { font-size: 12px; color: #555; }
-  .row-hint { font-size: 10px; line-height: 1.55; color: #999; margin: -1px 0 6px 100px; }
-  .grp-note { font-size: 10px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
+  .row-hint { font-size: 9.5px; line-height: 1.55; color: #999; margin: -1px 0 6px 0; }
+  .grp-note { font-size: 9.5px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
   /* カテゴリを開いてすぐの説明。小見出しより前に来るので上に余白がいる */
   .grp-note.cat-note { margin: 10px 0 0; }
   /* たたまれている時に「押せる」と分かるようにする小さい添え書き */
   .panel-head-sub { font-size: 10px; color: #999; margin-left: 8px; font-weight: 300; }
   .panel:not(.closed) .panel-head-sub { display: none; }
   .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
   /* ⚠️ 2026-08-19: ラベルを分かりやすい日本語に書き直したら 92px では折り返した。
      長い項目名でも1行に収まる幅にし、値の欄も「32秒」「120px」が入る幅にする */
-  .row label { flex: 0 0 116px; color: #555; font-weight: 300; }
+  /* ⚠️ 100px は「いちばん長いラベル(9文字)を 11px で描いた実測 99px」に合わせた値。
+     ラベルを増やす時は9文字までに収めるか、ここを広げること */
+  .row label { flex: 0 0 100px; color: #555; font-weight: 300; }
   .row input[type=range] { flex: 1; accent-color: #090909; min-width: 0; }
-  .row .val { flex: 0 0 58px; text-align: right; font-variant-numeric: tabular-nums; color: #333; }
+  .row .val { flex: 0 0 48px; text-align: right; font-variant-numeric: tabular-nums; color: #333; }
   .btns { display: flex; gap: 8px; margin-top: 12px; }
   .btns button {
     flex: 1;
@@ -1343,8 +1347,14 @@
   .seg { display: flex; border: 1px solid #d8d8d8; border-radius: 8px; overflow: hidden; flex: 1; }
   .seg button {
     flex: 1; border: none; background: #fff; font-family: inherit;
-    font-size: 12px; padding: 5px 0; cursor: pointer; color: #555;
+    font-size: 10px; padding: 5px 2px; cursor: pointer; color: #555;
+    white-space: nowrap;   /* 「スクロール駆動」が2行に折れないように */
   }
+  /* ⚠️ 2択ボタンの行はラベルが短い（進み方・貼りつけ・回る向き など）ので、
+     ラベル欄を詰めてボタン側に幅を回す。
+     300px 幅では、100px のままだと「スクロール駆動」が折り返して
+     「貼りつけない」が見切れた（2026-08-19 実測） */
+  .row.seg-row label { flex: 0 0 74px; }
   .seg button.on { background: #090909; color: #fff; }
 </style>
 </head>
@@ -5305,7 +5315,7 @@ function catNote(target, text) {
 /* 方向切替の2択ボタン行 */
 function segRow(label, opts, getDir, setDir) {
   const row = document.createElement('div');
-  row.className = 'row';
+  row.className = 'row seg-row';
   row.innerHTML = `<label>${label}</label>`;
   const seg = document.createElement('div');
   seg.className = 'seg';
@@ -5432,7 +5442,8 @@ function buildPanel() {
   rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
     '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
-  segRow('もう一度見せる', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; markDirty(); });
+  /* ⚠️ 2択ボタンのラベル欄は 74px。7文字だと折り返すので6文字までに収めること */
+  segRow('くり返し', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; markDirty(); });
   note('一度見たセクションも、戻ってくるともう一度流れます。');
 
   /* ========== 🖼 キービジュアル ========== */
