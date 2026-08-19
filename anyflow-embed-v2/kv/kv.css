@@ -40,7 +40,9 @@ body {
   display: flex; align-items: center; justify-content: center;
   transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s cubic-bezier(.22,1,.36,1);
 }
-.kv-ico { width: 34px; height: 34px; color: var(--ico, #9aa1ad); }
+/* ⚠️ ここで color を指定しない。箱ごとの style.color（ドットと同じブランド色）を
+   currentColor として継承させる。指定すると全アイコンがグレーに戻る（実際に起きた） */
+.kv-ico { width: 34px; height: 34px; }
 
 /* ---- AIエージェント ---- */
 .kv-agent { position: absolute; overflow: hidden; box-shadow: var(--agent-shadow, 0 10px 40px rgba(14,187,255,.35)); }

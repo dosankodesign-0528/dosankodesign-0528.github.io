@@ -13,26 +13,37 @@
 
   /* ---- カンプ実測の座標（ステージ 1440×920）---- */
   const STAGE = { w: 1440, h: 920 };
-  const AGENT = { cx: 1021.8, cy: 387.7, w: 223.8, h: 178.8, r: 14 };
+  const AGENT = { cx: 1021.8, cy: 387.7, w: 223.8, h: 178.8, r: 13 };  /* 角丸はカンプ 15290:25513 の 13px */
   const BOX = { w: 125.7, h: 100.45, r: 10 };
   /* 連携先ボックス（座標・ドット色はカンプ実測）。アイコンは汎用ピクトグラム（新規作成） */
   const BOXES = [
     { id: 'db',    cx: 651.4,   cy: 223.8,  color: '#FF5D97', icon: 'database', label: 'データベース' },
-    { id: 'cloud', cx: 1013.99, cy: 129.99, color: '#0EBBFF', icon: 'cloud',    label: 'ストレージ' },
+    { id: 'cloud', cx: 1013.99, cy: 129.99, color: '#0EBBFF', icon: 'chat',    label: 'ストレージ' },
     { id: 'chat',  cx: 1384.6,  cy: 229.3,  color: '#FF5D97', icon: 'chat',     label: 'チャット' },
-    { id: 'sheet', cx: 651.4,   cy: 553.7,  color: '#0E4497', icon: 'sheet',    label: '表計算' },
-    { id: 'mail',  cx: 1080.5,  cy: 822.5,  color: '#0EBBFF', icon: 'mail',     label: '通知' },
-    { id: 'cal',   cx: 1326.3,  cy: 694.45, color: '#0EBBFF', icon: 'calendar', label: 'カレンダー' },
+    { id: 'sheet', cx: 651.4,   cy: 553.7,  color: '#0E4497', icon: 'database',    label: '表計算' },
+    { id: 'mail',  cx: 1080.5,  cy: 822.5,  color: '#0EBBFF', icon: 'chat',     label: '通知' },
+    { id: 'cal',   cx: 1326.3,  cy: 694.45, color: '#0EBBFF', icon: 'database', label: 'カレンダー' },
   ];
 
-  /* ---- 汎用ピクトグラム（連携先をイメージさせる線画。ブランドロゴではない）---- */
+  /* ---- 連携先アイコン（2トーン版・2026-08-19）----
+     【ヒデさん指定】フルのリッチ化は工数がかかるので、既存の枠線アイコンに
+     ベタ塗りを効かせた2トーンをまず2個（データベース/チャット）だけ作り、
+     他の箱はこの2個を使い回す。方向性が決まったら残りを起こす。
+     色は currentColor 経由: 箱ごとに style.color = ドット色 が入るので、
+     同じアイコンでも箱によってブランド3色に塗り分けられる。 */
   const ICONS = {
-    database: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6"/><path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3"/>',
-    cloud: '<path d="M7 18h9a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 6.5 9 3.75 3.75 0 0 0 7 18Z"/>',
-    chat: '<path d="M4 5h16v11H9l-4 3v-3H4z"/><path d="M8 10h8M8 13h5"/>',
-    sheet: '<rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 9h16M4 14h16M10 4v16"/>',
-    mail: '<rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/>',
-    calendar: '<rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 9h16M8 3v4M16 3v4"/><rect x="7" y="12" width="3" height="3" rx="0.5"/>',
+    /* データベース: 胴体はうすいベタ(15%) + 枠線、天板だけ濃いベタ塗り */
+    database: `
+      <path d="M5 6v12c0 1.66 3.13 3 7 3s7-1.34 7-3V6" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <ellipse cx="12" cy="6" rx="7" ry="3" fill="currentColor"/>
+      <ellipse cx="10.2" cy="5.4" rx="2.6" ry="0.9" fill="#fff" fill-opacity=".55"/>`,
+    /* チャット: 吹き出しはうすいベタ + 枠線、中の3点だけ濃いベタ塗り */
+    chat: `
+      <path d="M6 4.5h12a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-6.5L7 20v-3.5H6a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <circle cx="8.4" cy="10.5" r="1.35" fill="currentColor"/>
+      <circle cx="12"  cy="10.5" r="1.35" fill="currentColor" fill-opacity=".75"/>
+      <circle cx="15.6" cy="10.5" r="1.35" fill="currentColor" fill-opacity=".5"/>`,
   };
 
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
@@ -83,11 +94,11 @@ precision highp float;
 uniform vec2  uRes;
 uniform float uTime;
 uniform float uFlow;    /* 0=呼吸 1=掃引 2=波及 3=色相ドリフト 4=収束 */
-uniform float uEnergy;  /* ドット到達で跳ねて減衰。明るさ/膨らみに効く */
+uniform float uEnergy;  /* ドット到達で跳ねて減衰 */
 uniform vec2  uDir;     /* 直近のドットが来た方向 */
 uniform float uAspect;  /* w/h */
 uniform float uCell;    /* ディザ粒(px) */
-uniform float uMono;    /* 1=縁のマゼンタ控えめ */
+uniform float uMono;    /* (未使用・互換のため残す) */
 
 float bayer2(vec2 a){ a=floor(a); return fract(a.x/2.0 + a.y*a.y*0.75); }
 float bayer4(vec2 a){ return bayer2(0.5*a)*0.25 + bayer2(a); }
@@ -96,20 +107,21 @@ float hash(vec2 p){ p=fract(p*vec2(127.1,311.7)); p+=dot(p,p+34.5); return fract
 float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y); }
 
-/* カンプ実測の放射ランプ（外→中心の順に 1→0） */
-vec3 ramp(float x){
-  x = clamp(x,0.0,1.0);
-  vec3 wh = vec3(1.000,0.980,0.995);  /* ほぼ白（ラフの中心） */
-  vec3 lb = vec3(0.714,0.878,1.000);  /* #B6E0FF */
-  vec3 cy = vec3(0.055,0.733,1.000);  /* #0EBBFF */
-  vec3 pu = vec3(0.459,0.494,0.765);  /* #757EC3 */
-  vec3 mg = vec3(1.000,0.365,0.592);  /* #FF5D97 */
-  if (x < 0.14) return wh;                            /* 白のコア（ラフは中心の白が主役） */
-  if (x < 0.40) return mix(wh, lb, (x-0.14)/0.26);
-  if (x < 0.58) return mix(lb, cy, (x-0.40)/0.18);
-  if (x < 0.80) return cy;
-  if (x < 0.93) return mix(cy, pu, (x-0.80)/0.13);
-  return mix(pu, mg, (x-0.93)/0.07);
+/* ===== カンプ 15290:25513 の線形グラデを忠実に再現 =====
+   linear-gradient(229.049deg,
+     #0EBBFF 28.106%, #477ED1 36.378%, #EFEEEF 59.602%, #FF5D97 100%)
+   ※ 133% に #B6E0FF のストップもあるが、100% より外なので表示には出ない。
+   ※ 最初のストップが 28.1% なので、0〜28.1%（右上の角）はシアンのベタ。 */
+vec3 grad(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 cy = vec3(0.055, 0.733, 1.000);   /* #0EBBFF */
+  vec3 bl = vec3(0.278, 0.494, 0.820);   /* #477ED1 */
+  vec3 wh = vec3(0.937, 0.933, 0.937);   /* #EFEEEF */
+  vec3 mg = vec3(1.000, 0.365, 0.592);   /* #FF5D97 */
+  if (x < 0.28106) return cy;
+  if (x < 0.36378) return mix(cy, bl, (x - 0.28106) / 0.08272);
+  if (x < 0.59602) return mix(bl, wh, (x - 0.36378) / 0.23224);
+  return mix(wh, mg, (x - 0.59602) / 0.40398);
 }
 float sdRound(vec2 p, vec2 b, float r){ vec2 d=abs(p)-b+r; return min(max(d.x,d.y),0.0)+length(max(d,0.0))-r; }
 
@@ -117,50 +129,45 @@ void main(){
   vec2 fc = gl_FragCoord.xy;
   vec2 cell = floor(fc/uCell);
   vec2 fcc = (cell+0.5)*uCell;
-  vec2 P = (fcc*2.0 - uRes)/uRes.y;          /* 中心原点 / y基準 */
+  vec2 P = (fcc*2.0 - uRes)/uRes.y;          /* 中心原点 / y上向き */
 
-  vec2 hs = vec2(0.86*uAspect, 0.86);        /* 角丸ボックスの半サイズ */
+  vec2 hs = vec2(0.86*uAspect, 0.86);
   float sd = sdRound(P, hs, 0.16);
   float pxw = 2.0/uRes.y;
   float mask = 1.0 - smoothstep(-2.0*pxw, 2.0*pxw, sd);
   if (mask <= 0.0){ gl_FragColor = vec4(0.0); return; }
 
-  vec2 g = vec2(P.x/max(uAspect,0.001), P.y);
-  float r = length(g)/0.97;                  /* 0=中心 1=縁 */
-  float t = uTime, e = uEnergy;
+  /* CSS の 229.049deg をそのまま投影する（CSSはy下向きなので反転） */
+  vec2 pc = vec2(P.x, -P.y);
+  vec2 DIR = vec2(-0.75512, 0.65559);        /* (sinθ, -cosθ) θ=229.049° */
+  float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;   /* CSSのグラデ線の長さ */
+  float t = 0.5 + dot(pc, DIR)/L;            /* 0=右上シアン側 → 1=左下マゼンタ側 */
 
-  float radial = r;                          /* ランプに渡す半径（フローで加工） */
-  float boost = 0.0;                         /* 明るさ側の加算 */
-  if (uFlow < 0.5){                          /* 呼吸 */
-    radial = r * (1.0 - 0.06*sin(t*1.1) - 0.10*e);
-    boost = 0.10*e;
-  } else if (uFlow < 1.5){                   /* 掃引: 斜めの帯が横切る */
-    float band = sin((P.x + P.y)*2.6 - t*1.4);
-    radial = r - 0.09*band - 0.08*e;
-  } else if (uFlow < 2.5){                   /* 波及: 来た方向から波が押し寄せる */
-    float along = dot(normalize(P + vec2(1e-4)), normalize(uDir + vec2(1e-4)));
-    float wave = sin(r*8.0 - t*2.4) * (0.05 + 0.16*e) * (0.5 + 0.5*along);
-    radial = r - wave - 0.08*e;
-  } else if (uFlow < 3.5){                   /* 色相ドリフト: ランプ位置がゆっくり回る */
-    radial = fract(r*0.92 - t*0.045) ;
-    boost = 0.06*e;
-  } else {                                   /* 収束→開花 */
-    float pull = 0.30*e*exp(-r*2.2);
-    radial = r + pull - 0.22*e;
+  /* ---- グラデの流れ方（カンプの絵を基準に、tを軽く動かすだけ）---- */
+  float e = uEnergy, tm = uTime;
+  float v = dot(pc, vec2(0.65559, 0.75512)); /* 帯と直交する向き */
+  float r = length(vec2(P.x/max(uAspect,0.001), P.y))/0.97;
+  if (uFlow < 0.5){        /* 呼吸: 全体がゆっくり行き来し、到達で白側へふわり */
+    t += 0.040*sin(tm*1.0) - 0.055*e;
+  } else if (uFlow < 1.5){ /* 掃引: 帯に沿って色が流れ続ける */
+    t += 0.065*sin(v*3.0 - tm*1.5) - 0.05*e;
+  } else if (uFlow < 2.5){ /* 波及: ドットの来た方向から波が走る */
+    float along = dot(normalize(pc + vec2(1e-4)), normalize(vec2(uDir.x, -uDir.y) + vec2(1e-4)));
+    t += sin(r*7.0 - tm*2.4) * (0.025 + 0.12*e) * (0.5 + 0.5*along);
+  } else if (uFlow < 3.5){ /* ドリフト: グラデ位置がゆっくり循環する */
+    t = fract(t - tm*0.04);
+  } else {                 /* 収束: 到達で中心へ吸い込まれ、白がふくらむ */
+    t = mix(t, 0.5, 0.35*e*exp(-r*1.5));
+    t -= 0.08*e;
   }
 
-  radial += (vnoise(g*5.0 + t*0.18)-0.5)*0.07;
+  t += (vnoise(pc*5.0 + tm*0.15) - 0.5)*0.03;   /* ごく薄いゆらぎ */
 
+  /* ---- ディザ（カンプと同じくグラデ全域に均一にかかる）---- */
   float dith = bayer8(cell);
   float levels = 7.0;
-  float q = clamp(floor(radial*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
-  vec3 col = ramp(q);
-  col += vec3(boost);
-
-  /* 縁のマゼンタリム（カンプ準拠） */
-  float rim = smoothstep(0.78, 1.12, r);
-  float mgq = clamp(floor(rim*3.0 + (dith-0.5)*1.2 + 0.5)/3.0, 0.0, 1.0);
-  col = mix(col, vec3(1.0,0.365,0.592), mgq * (uMono > 0.5 ? 0.18 : 0.38));
+  float q = clamp(floor(t*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
+  vec3 col = grad(q);
 
   gl_FragColor = vec4(col*mask, mask);
 }`;
@@ -195,8 +202,9 @@ void main(){
   function agentFallback(canvas) {
     const ctx = canvas.getContext('2d');
     return { draw(w, h) { if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-      const g = ctx.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, Math.max(w, h) / 1.4);
-      g.addColorStop(0, '#FEE0F8'); g.addColorStop(0.45, '#0EBBFF'); g.addColorStop(1, '#FF5D97');
+      const g = ctx.createLinearGradient(w, 0, 0, h);   /* 右上→左下 ≒ 229deg */
+      g.addColorStop(0, '#0EBBFF'); g.addColorStop(0.281, '#0EBBFF');
+      g.addColorStop(0.364, '#477ED1'); g.addColorStop(0.596, '#EFEEEF'); g.addColorStop(1, '#FF5D97');
       ctx.clearRect(0, 0, w, h); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); } };
   }
 
@@ -238,7 +246,8 @@ void main(){
       const d = document.createElement('div'); d.className = 'kv-box'; d.dataset.id = b.id;
       d.style.left = (b.cx - BOX.w / 2) + 'px'; d.style.top = (b.cy - BOX.h / 2) + 'px';
       d.style.width = BOX.w + 'px'; d.style.height = BOX.h + 'px';
-      d.innerHTML = `<svg viewBox="0 0 24 24" class="kv-ico" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</svg>`;
+      d.style.color = b.color;   /* 2トーンの塗り色 = ドットと同じブランド色 */
+      d.innerHTML = `<svg viewBox="0 0 24 24" class="kv-ico" fill="none" stroke-linecap="round" stroke-linejoin="round">${ICONS[b.icon]}</svg>`;
       world.appendChild(d);
     });
 
