@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=6">
+<link rel="stylesheet" href="kv.css?v=7">
 </head>
 <body>
 
@@ -68,6 +68,7 @@
     Z <input type="range" id="rz" min="-90" max="90" step="1" value="0"><span id="rzv">0°</span>
     大きさ <input type="range" id="rs" min="0.8" max="1.5" step="0.02" value="1"><span id="rsv">×1.00</span>
   </div>
+  <div class="row4" id="flowRow"></div>
   <div class="row3">
     アイコン色:
     <label>📁<input type="color" data-ic="folder" value="#379FFF"><input type="text" data-ih="folder" value="#379FFF" maxlength="7"></label>
@@ -78,7 +79,7 @@
   </div>
 </div>
 
-<script src="engine.js?v=6"></script>
+<script src="engine.js?v=7"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -99,10 +100,37 @@
     KV.setView(v); syncSliders(v);
     document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.remove('on'));
   }));
+  /* ===== フローごとの調整スライダー（2026-08-19 ヒデさん指定）=====
+     選んだフローに関係する項目だけを row4 に出す */
+  const FLOW_SLIDERS = {
+    flow0: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05]],
+    flow1: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
+            ['mixAmp','混ざり強さ',0,1.2,0.05],['mixSpeed','混ざり速さ',0.01,0.3,0.01]],
+    flow2: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]],
+    flow3: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
+            ['swayAmp','揺れ幅',0,1.0,0.05],['swaySpeed','揺れ速さ',0.02,0.5,0.01]],
+    flow4: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]],
+    halftone: [['htSpeed','波の速さ',0.05,0.9,0.05],['htSwell','うねり',0,0.9,0.05]],
+  };
+  function buildFlowRow(mode) {
+    const row = document.getElementById('flowRow');
+    const defs = FLOW_SLIDERS[mode] || [];
+    const P = KV.getParams();
+    row.innerHTML = defs.map(([k, label, min, max, step]) =>
+      `<span class="fl">${label}
+        <input type="range" data-fp="${k}" min="${min}" max="${max}" step="${step}" value="${P[k]}">
+        <em data-fv="${k}">${P[k]}</em></span>`).join('');
+    row.querySelectorAll('[data-fp]').forEach(inp => inp.addEventListener('input', () => {
+      KV.setParam(inp.dataset.fp, inp.value);
+      row.querySelector(`[data-fv="${inp.dataset.fp}"]`).textContent = (+inp.value).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+    }));
+  }
   document.querySelectorAll('.kv-bar [data-am]').forEach(b => b.onclick = () => {
     KV.setAgentMode(b.dataset.am);
+    buildFlowRow(b.dataset.am);
     document.querySelectorAll('.kv-bar [data-am]').forEach(x => x.classList.toggle('on', x === b));
   });
+  buildFlowRow('flow0');
 
   /* アイコン色: カラーピッカー(直感) と HEX入力(コード指定) を同期 */
   document.querySelectorAll('[data-ic]').forEach(p => p.addEventListener('input', () => {

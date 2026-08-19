@@ -106,6 +106,9 @@ uniform float uFlow;    /* 0=一方向 1=混ざる 2=端→中央 3=軸ゆらぎ
 uniform float uEnergy;
 uniform float uAspect;
 uniform float uCell;
+uniform vec4  uPA;      /* x=速度 y=帯の広がり z=混ざり強さ w=混ざり速さ */
+uniform vec4  uPB;      /* x=揺れ幅(rad) y=揺れ速さ z=放射の速度 w=放射の密度 */
+uniform vec2  uPC;      /* x=ハーフトーン波速 y=うねり */
 uniform sampler2D uLUT; /* 512×2: row0=対角の循環帯 / row1=放射の循環帯 */
 
 /* Figma のレイヤー効果 実測: Bayer16×16 / Size1 / Levels3 / 明るさ104% / コントラスト1.38 */
@@ -134,60 +137,89 @@ float sdRound(vec2 p, vec2 b, float r){ vec2 d=abs(p)-b+r; return min(max(d.x,d.
 
 void main(){
   vec2 fc = gl_FragCoord.xy;
-  vec2 cell = floor(fc/uCell);
-  vec2 fcc = (cell+0.5)*uCell;
-  vec2 P = (fcc*2.0 - uRes)/uRes.y;
+  vec2 P0 = (fc*2.0 - uRes)/uRes.y;
 
-  /* 【2026-08-19 ヒデさん指摘】以前は 0.86 倍のマスクで、グラデの外に透明の余白が
-     でき「オフセットの枠」に見えていた。グラデはキャンバス全面に敷き、
-     角丸(13px相当)だけ落とす。影は CSS がこの縁にぴったり付く。 */
+  /* グラデは全面。角丸(13px相当)だけ落とす（余白の枠を作らない） */
   vec2 hs = vec2(uAspect, 1.0);
-  float sd = sdRound(P, hs, 0.143);
+  float sd = sdRound(P0, hs, 0.143);
   float pxw = 2.0/uRes.y;
   float mask = 1.0 - smoothstep(-1.5*pxw, 1.5*pxw, sd);
   if (mask <= 0.0){ gl_FragColor = vec4(0.0); return; }
 
-  vec2 pc = vec2(P.x, -P.y);
-  float dith = bayer16(cell);
   vec3 col;
-
   if (uMode < 0.5) {
     float e = uEnergy, tm = uTime;
-    float row = 0.25;                        /* LUTの行: 0.25=対角 / 0.75=放射 */
-    float sample_;
+    float speed = uPA.x, scale = uPA.y;
     vec2 DIR = vec2(-0.75512, 0.65559);      /* カンプ 229.049° */
     float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;
-    float t = 0.5 + dot(pc, DIR)/L;          /* 0=右上 → 1=左下 */
-    float rr = length(vec2(pc.x/uAspect, pc.y)) / 1.42;  /* 0=中央 → 1=四隅 */
 
-    if (uFlow < 0.5) {          /* ① 一方向: 左下→右上へ一定速度で流れ続ける */
-      sample_ = t*0.75 + tm*0.035;
-    } else if (uFlow < 1.5) {   /* ② 混ざり合い: 流れにゆっくり渦が混ざる */
-      float w = vnoise(pc*1.6 + tm*0.08) - 0.5;
-      sample_ = t*0.75 + tm*0.022 + w*0.5;
-    } else if (uFlow < 2.5) {   /* ③ 端→中央 (カンプ15332): 放射の帯が内側へ */
+    /* ===== ガクつき対策の本体 =====
+       以前はディザの網点がキャンバスに固定で、色だけが下を流れていた。
+       すると点が「その場でパタパタ切り替わる」ように見えてガタつく。
+       網点そのものを流れと同じ速度で滑らせる（印刷されたテクスチャごと動く）と滑らか。
+       shift = サンプル空間の移動量を、スクリーンpxに換算したもの。 */
+    float row = 0.25;
+    float sample_;
+    vec2 shiftPx = vec2(0.0);
+
+    if (uFlow < 0.5) {          /* ① 一方向 */
+      float t = 0.5 + dot(vec2(P0.x, -P0.y), DIR)/L;
+      sample_ = t*scale + tm*speed;
+      shiftPx = vec2(DIR.x, -DIR.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
+    } else if (uFlow < 1.5) {   /* ② 混ざり合い */
+      float t = 0.5 + dot(vec2(P0.x, -P0.y), DIR)/L;
+      float w = vnoise(vec2(P0.x, -P0.y)*1.6 + tm*uPA.w) - 0.5;
+      sample_ = t*scale + tm*speed + w*uPA.z;
+      shiftPx = vec2(DIR.x, -DIR.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
+    } else if (uFlow < 2.5) {   /* ③ 端→中央（カンプ15332） */
       row = 0.75;
-      sample_ = rr*0.80 + tm*0.030;
-    } else if (uFlow < 3.5) {   /* ④ 軸ゆらぎ: 帯の向きがゆっくり揺れながら流れる */
-      float ang = sin(tm*0.13)*0.35;
+      float rr = length(vec2(P0.x/uAspect, P0.y)) / 1.42;
+      sample_ = rr*uPB.w + tm*uPB.z;
+    } else if (uFlow < 3.5) {   /* ④ 軸ゆらぎ */
+      float ang = sin(tm*uPB.y)*uPB.x;
       vec2 D2 = vec2(DIR.x*cos(ang) - DIR.y*sin(ang), DIR.x*sin(ang) + DIR.y*cos(ang));
-      float t2 = 0.5 + dot(pc, D2)/L;
-      sample_ = t2*0.75 + tm*0.025;
-    } else {                    /* ⑤ 中央→端: 放射の帯が外側へ */
+      float t2 = 0.5 + dot(vec2(P0.x, -P0.y), D2)/L;
+      sample_ = t2*scale + tm*speed;
+      shiftPx = vec2(D2.x, -D2.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
+    } else {                    /* ⑤ 中央→端 */
       row = 0.75;
-      sample_ = rr*0.80 - tm*0.030;
+      float rr = length(vec2(P0.x/uAspect, P0.y)) / 1.42;
+      sample_ = rr*uPB.w - tm*uPB.z;
     }
     sample_ -= 0.04*e;
+
+    /* 網点は shiftPx ぶんズラした座標で刻む＝流れと一緒に滑る */
+    vec2 cell = floor((fc - shiftPx)/uCell);
+    float dith = bayer16(cell);
+    /* サンプル位置もセル中心に合わせて量子化（網点と色が同じ格子で動く） */
+    vec2 fcc = (cell + 0.5)*uCell + shiftPx;
+    vec2 Pq = (fcc*2.0 - uRes)/uRes.y;
+    if (uFlow < 0.5 || (uFlow >= 0.5 && uFlow < 1.5) || (uFlow >= 2.5 && uFlow < 3.5)) {
+      /* 方向系: 量子化した座標で計算し直す（色と網点の格子を一致させる） */
+      vec2 DU = DIR;
+      if (uFlow >= 2.5 && uFlow < 3.5) {
+        float ang = sin(tm*uPB.y)*uPB.x;
+        DU = vec2(DIR.x*cos(ang) - DIR.y*sin(ang), DIR.x*sin(ang) + DIR.y*cos(ang));
+      }
+      float tq = 0.5 + dot(vec2(Pq.x, -Pq.y), DU)/L;
+      sample_ = tq*scale + tm*speed - 0.04*e;
+      if (uFlow >= 0.5 && uFlow < 1.5) {
+        float w = vnoise(vec2(Pq.x, -Pq.y)*1.6 + tm*uPA.w) - 0.5;
+        sample_ += w*uPA.z;
+      }
+    }
+
     vec3 src = texture2D(uLUT, vec2(fract(sample_), row)).rgb;
     src = clamp(src * 1.04, 0.0, 1.0);
     src = clamp((src - 0.5) * 1.38 + 0.5, 0.0, 1.0);
     col = clamp(floor(src * 2.0 + dith) / 2.0, 0.0, 1.0);   /* Levels 3 */
   } else {
     /* V1.0 ハーフトーン（ディザ無し・滑らか） */
+    vec2 pc = vec2(P0.x, -P0.y);
     vec2 axis = normalize(vec2(0.70, 0.62));
     float u = dot(pc, axis) / 0.9;
     float v = dot(pc, vec2(-axis.y, axis.x)) / 0.9;
-    float wave = u*2.2 + sin(v*2.1 + uTime*0.5)*0.28 - uTime*0.30;
+    float wave = u*2.2 + sin(v*2.1 + uTime*0.5)*uPC.y - uTime*uPC.x;
     float lum = 0.5 + 0.5*sin(wave*3.14159265);
     lum += (vnoise(pc*2.4 + uTime*0.1) - 0.5)*0.10;
     lum += 0.15*uEnergy;
@@ -216,7 +248,7 @@ void main(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const U = n => gl.getUniformLocation(p, n);
-    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uFlow: U('uFlow'), uLUT: U('uLUT') };
+    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uFlow: U('uFlow'), uPA: U('uPA'), uPB: U('uPB'), uPC: U('uPC'), uLUT: U('uLUT') };
     gl.uniform1i(u.uLUT, 0);
     /* LUT は静的（循環グラデ2本）。ここで1回だけ焼き込む */
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, lutData);
@@ -227,6 +259,9 @@ void main(){
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.uniform2f(u.uRes, w, h); gl.uniform1f(u.uTime, o.time); gl.uniform1f(u.uMode, o.mode);
         gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell); gl.uniform1f(u.uFlow, o.flow || 0);
+        gl.uniform4f(u.uPA, PARAMS.speed, PARAMS.scale, PARAMS.mixAmp, PARAMS.mixSpeed);
+        gl.uniform4f(u.uPB, PARAMS.swayAmp, PARAMS.swaySpeed, PARAMS.radSpeed, PARAMS.radScale);
+        gl.uniform2f(u.uPC, PARAMS.htSpeed, PARAMS.htSwell);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
@@ -243,6 +278,19 @@ void main(){
 
   /* ===================== 構築 ===================== */
   let rootEl = null, agentMode = 0;
+  /* 調整パネルから触れるパラメータ（2026-08-19 ヒデさん指定） */
+  const PARAMS = {
+    speed: 0.035,     /* 一方向/混ざる/軸ゆらぎ: 流れる速度 */
+    scale: 0.75,      /* 同: 帯の広がり（小さいほど色の帯が太い） */
+    mixAmp: 0.5,      /* 混ざる: 渦の強さ */
+    mixSpeed: 0.08,   /* 混ざる: 渦の動く速さ */
+    swayAmp: 0.35,    /* 軸ゆらぎ: 揺れ幅(rad) */
+    swaySpeed: 0.13,  /* 軸ゆらぎ: 揺れの速さ */
+    radSpeed: 0.030,  /* 端→中央/中央→端: 流れる速度 */
+    radScale: 0.80,   /* 同: リングの密度 */
+    htSpeed: 0.30,    /* ハーフトーン: 波の速さ */
+    htSwell: 0.28,    /* ハーフトーン: うねり */
+  };
   function start(cfg) {
     cfg = cfg || {};
     const root = document.getElementById(cfg.mount || 'kv');
@@ -369,7 +417,9 @@ void main(){
            ドットがエージェントの上を滑って見えた（ヒデさん報告）。
            線(z=0)よりは上、面より下の 1px に置く */
         d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 1px) ${view.billboard} scale(${shrink.toFixed(3)})`;
-        d.node.style.opacity = (fadeIn * fadeOut * (0.55 + 0.45 * d.t)).toFixed(2);
+        /* 【2026-08-19 ヒデさん指定】道中は完全不透明（下の線が透けない）。
+           フェードは出はじめと取り込まれる端だけ */
+        d.node.style.opacity = (fadeIn * fadeOut).toFixed(2);
       });
       energy = Math.max(0, energy - dt * 1.4);
       const s = (root._scale || 1) * dpr;
@@ -453,5 +503,6 @@ void main(){
     return true;
   }
 
-  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, STAGE, AGENT };
+  function setParam(k, v) { if (k in PARAMS) PARAMS[k] = +v; }
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
 })(window);
