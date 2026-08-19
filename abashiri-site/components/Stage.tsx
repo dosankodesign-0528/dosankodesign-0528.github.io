@@ -327,23 +327,19 @@ export default function Stage({
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
               >
-                <IllustTamannee lift={browLift} className="size-full" />
+                {/* v1.2（カンプ 15332:21660 で絵が差し替わった）
+                    新しい絵は 1枚のPNG で、キラキラも頬の赤みも描き込み済み。
+                    カンプの置き方（枠162x226.8 の中で (3.30, 11.99) に 139.2x216.44）は
+                    画像側に焼き込んであるので、ここでは枠いっぱいに出すだけでよい。
+                    ⚠️ 眉が持ち上がるホバー演出（IllustTamannee）は旧イラスト用に
+                       引いたパスなので、この絵には合わない。いったん外してある
+                       （たまらねーのホバーは今まで通り動く） */}
+                <img
+                  src="/img/illust-main.png"
+                  alt=""
+                  className="size-full object-contain object-bottom"
+                />
               </motion.div>
-              {/* キラキラ。基点はカンプから採寸した。
-                  カンプでは人物画像に焼き込まれていて独立したノードが無いため、
-                  イラスト枠 (1244.6, 764) 162x226.8 の中で 8.6% / 20.6% の位置
-                  ＝中心 (1258.6, 810.7)、大きさ 14px として置いている。
-                  動きはこの点のまわりを3コマで小さく跳ねるだけ（フェード無しのGIF風）。 */}
-              <div
-                className="sparkle-hop absolute"
-                style={{
-                  left: "var(--illust-sparkle-x)",
-                  top: "var(--illust-sparkle-y)",
-                  width: "var(--illust-sparkle-w)",
-                }}
-              >
-                <img src="/img/sparkle.svg" alt="" className="w-full" />
-              </div>
               {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
                  出方は tamaraneePatterns.ts の5案から選べる（/mock/tamaranee で比較） */}
               <img

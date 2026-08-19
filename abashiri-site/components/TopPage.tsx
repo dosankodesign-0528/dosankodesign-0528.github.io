@@ -569,17 +569,25 @@ export default function TopPage({
                 pointerEvents: heroPointer,
               }}
             >
-              {/* v1.1: 吹き出しの上に手書きの「網走市観光サイト」が乗った（カンプ 15071:24686）。
-                  位置はカンプの 415px コンテナ基準 (215.73, 8.34) を、
-                  実装の 471x390 の書き出し（原点が 28.22, 24.33 ずれている）に読み替えた値。 */}
-              <div className="relative">
+              {/* v1.2 カンプ 15332:21660（更新版）の実測
+                    作字ブロック Frame1000007277 … 415 x 379
+                    作字 Group1137              … (0.22, 37.47) 414.56 x 341.34
+                    網走市観光サイト Group1143   … (215.73, 8.34) 188.16 x 36.28
+                    ボタンとの間                … gap 32px（ボタンは上から411px）
+                  ⚠️ 書き出し済みの hero-message.svg は 471x390 で、絵の外側に
+                     左右28.22 / 上下24.33 の余白を持っている。
+                     そのぶん左上へずらして、絵がカンプの座標に来るようにしている
+                     （SVGを作り直すと blurSeq のグループ構造に依存した演出が壊れるため、
+                      SVGはそのままで置き方だけ合わせる） */}
+              <div className="relative h-[379px] w-[415px]">
               <img
                 src="/img/text-kanko-site.svg"
                 alt="網走市観光サイト"
-                className={`absolute left-[243.7px] top-[-4.8px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
+                className={`absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
                   animated && !buttonIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
                 }`}
               />
+              <div className="absolute left-[-28px] top-[13.1px]">
               {blurSeq ? (
                 <HeroBlurSeq
                   timing={timing}
@@ -615,6 +623,7 @@ export default function TopPage({
                 />
               )}
               </div>
+              </div>
               <motion.div style={{ y: buttonY }}>
                 {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
                 <motion.div
@@ -629,11 +638,12 @@ export default function TopPage({
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
-                  {/* v1.1 カンプ 15071:24707: 白2px枠・地 white/10・backdrop-blur 65px
-                      文字は Noto Sans JP Medium 16px 白・行間 1.2・左右44px/上下16px */}
+                  {/* v1.2 カンプ 15071:24707: 白1px枠・地 white/10・backdrop-blur 65px
+                      文字は Noto Sans JP Medium 16px 白・行間 1.2・左右44px/上下16px
+                      枠は v1.1 では 2px と読んでいたが、更新版のカンプでは 1px */}
                   <Link
                     href="/experience"
-                    className="flex items-center justify-center rounded-full border-2 border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
+                    className="flex items-center justify-center rounded-full border border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
