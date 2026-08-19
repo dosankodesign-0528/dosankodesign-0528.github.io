@@ -22,11 +22,10 @@ import {
 
 /*
  * 持ち上げ量は画面px で受け取るが、SVG の中の transform は viewBox の単位で効く。
- * このイラストは Stage でも調整パネルでも 284x357 で描画される前提なので、
- * その比率で換算する（size を変える時はここも直すこと）。
+ * 本番（カンプ 15332:21660）の表示サイズは 162x227 なので、それを基準に換算する。
+ * 拡大して見せる調整用ページは renderH に実際の高さを渡すこと。
  */
-export const ILLUST_RENDER = { w: 284, h: 357 } as const;
-const UNIT = ILLUST_VIEWBOX.h / ILLUST_RENDER.h;
+export const ILLUST_RENDER = { w: 162, h: 227 } as const;
 
 const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
 /* <img> が object-cover なので、重ねる SVG も同じ詰め方に合わせる */
@@ -54,11 +53,24 @@ function Brows({ fill, spread }: { fill: string; spread?: number }) {
 type Props = {
   /** 眉を持ち上げる量（画面px）。0 で元の位置 */
   lift?: number;
+  /** 実際に描画される高さ(px)。持ち上げ量を画面px として扱うための基準 */
+  renderH?: number;
+  /** 元の眉を隠すパッチの太らせ量を上書きする（調整用ページから） */
+  patchSpread?: number;
+  /** true: パッチを赤くして、元の眉を覆えているか確かめる（調整用ページから） */
+  debugPatch?: boolean;
   /** 外枠（サイズ・影・位置）に当てるクラス */
   className?: string;
 };
 
-export default function IllustTamannee({ lift = 0, className }: Props) {
+export default function IllustTamannee({
+  lift = 0,
+  renderH = ILLUST_RENDER.h,
+  patchSpread = PATCH_SPREAD,
+  debugPatch = false,
+  className,
+}: Props) {
+  const unit = ILLUST_VIEWBOX.h / renderH;
   return (
     <div className={`relative ${className ?? ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -74,11 +86,11 @@ export default function IllustTamannee({ lift = 0, className }: Props) {
         aria-hidden
       >
         {/* 元の眉を隠しておく。眉が上がった時にここが額として見える */}
-        <Brows fill={SKIN_FILL} spread={PATCH_SPREAD} />
+        <Brows fill={debugPatch ? "#FF3B30" : SKIN_FILL} spread={patchSpread} />
         {/* 動く眉 */}
         <g
           className="transition-transform duration-300 ease-standard"
-          style={{ transform: `translateY(${-lift * UNIT}px)` }}
+          style={{ transform: `translateY(${-lift * unit}px)` }}
         >
           <Brows fill={BROW_FILL} />
         </g>

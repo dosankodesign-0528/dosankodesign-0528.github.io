@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Bird from "./Bird";
+import IllustTamannee from "./IllustTamannee";
 import { useFaceReaction } from "./useFaceReaction";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
@@ -330,14 +331,9 @@ export default function Stage({
                     新しい絵は 1枚のPNG で、キラキラも頬の赤みも描き込み済み。
                     カンプの置き方（枠162x226.8 の中で (3.30, 11.99) に 139.2x216.44）は
                     画像側に焼き込んであるので、ここでは枠いっぱいに出すだけでよい。
-                    ⚠️ 眉が持ち上がるホバー演出（IllustTamannee）は旧イラスト用に
-                       引いたパスなので、この絵には合わない。いったん外してある
-                       （たまらねーのホバーは今まで通り動く） */}
-                <img
-                  src="/img/illust-main.png"
-                  alt=""
-                  className="size-full object-contain object-bottom"
-                />
+                    眉だけは新しい絵からトレースし直してある
+                    （scripts/illust-brow-trace.py → illustMainPaths.ts）。 */}
+                <IllustTamannee lift={browLift} className="size-full" />
               </motion.div>
               {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
                  出方は tamaraneePatterns.ts の5案から選べる（/mock/tamaranee で比較） */}

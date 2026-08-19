@@ -1,126 +1,201 @@
 "use client";
 
 /*
- * 眉毛ホバーの調整パネル
- * - 本物のTOPページを表示したまま、動く量をスライダーで調整できる
- * - 動きが細かくて実機だと見づらいので、顔を拡大した「のぞき窓」を付けてある
- * - 値はその場で反映される（保存して再生は不要）
+ * 眉毛（新イラスト用）の確認・調整ページ
+ *
+ * 見るもの
+ *   1. 眉が持ち上がる量
+ *   2. 元の眉を隠す肌色パッチが、ちゃんと元の眉を覆えているか
+ *      （「パッチを赤くする」を ON にすると、はみ出し・覆い残しが一目で分かる）
+ *
+ * 眉のパスは scripts/illust-brow-trace.py が illustMainPaths.ts に書き出したもの。
+ * 絵を描き直したらスクリプトを流し直すこと（手で書き換えない）。
  */
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import Stage from "@/components/Stage";
-import TopPage from "@/components/TopPage";
 import TunePanel from "@/components/TunePanel";
 import IllustTamannee from "@/components/IllustTamannee";
-import { DEFAULT_BROW, type BrowConfig } from "@/components/browConfig";
-import { useBrowHover } from "@/components/useBrowHover";
+import { DEFAULT_FACE } from "@/components/faceConfig";
+import {
+  BROW_FILL,
+  ILLUST_VIEWBOX,
+  PATCH_SPREAD,
+  SKIN_FILL,
+} from "@/components/illustMainPaths";
 
-/* のぞき窓。イラスト（284x357表示）上での眉あたりを中心に拡大する */
-const LOUPE = { x: 130, y: 100, zoom: 2.6, h: 160 };
+/* 本番の表示サイズ（162x227）。ここでは倍率をかけて大きく見せる */
+const BASE_W = 162;
+const BASE_H = 227;
 
-function Slider({
-  label, value, min, max, step, unit, onChange,
+function Row({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  unit = "px",
+  onChange,
 }: {
-  label: string; value: number; min: number; max: number;
-  step: number; unit: string; onChange: (v: number) => void;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  onChange: (v: number) => void;
 }) {
   return (
-    <label className="block py-1.5 pl-1">
-      <span className="flex items-center justify-between">
-        <span className="text-[12px] font-bold text-[#1e1e1e]">{label}</span>
-        <span className="text-[12px] font-black text-[#0070c9]">
+    <label className="flex items-center justify-between gap-2 py-1 pl-3">
+      <span className="text-[12px] font-bold leading-[1.3] text-[#1e1e1e]">{label}</span>
+      <span className="flex shrink-0 items-center gap-1">
+        <input
+          type="range"
+          className="w-[96px]"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => onChange(Number(e.target.value))}
+        />
+        <span className="w-[52px] text-right text-[12px] font-bold text-[#0070c9]">
           {value}
-          <span className="ml-0.5 text-[10px] text-[#7ba7cc]">{unit}</span>
+          {unit}
         </span>
       </span>
-      <input
-        type="range"
-        className="mt-1 w-full accent-[#0070c9]"
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
     </label>
   );
 }
 
-export default function BrowTunePage() {
-  const [brow, setBrow] = useState<BrowConfig>(DEFAULT_BROW);
-  const upd = (patch: Partial<BrowConfig>) => setBrow((b) => ({ ...b, ...patch }));
+export default function BrowMockPage() {
+  const [lift, setLift] = useState(DEFAULT_FACE.browLift);
+  const [spread, setSpread] = useState(PATCH_SPREAD);
+  const [zoom, setZoom] = useState(3);
+  const [debugPatch, setDebugPatch] = useState(false);
+  const [hover, setHover] = useState(true);
 
-  /* のぞき窓のイラストも、本番と同じようにカーソルへ反応させる。
-     当たり判定は「窓」の方で取る（中身は拡大されていて、
-     getBoundingClientRect が窓からはみ出した大きさを返すため） */
-  const loupeRef = useRef<HTMLDivElement>(null);
-  const loupeOver = useBrowHover(loupeRef, brow.hoverPad);
+  const w = BASE_W * zoom;
+  const h = BASE_H * zoom;
 
   return (
-    <>
-      <Stage illustration="tamannee" face={{ browLift: brow.lift, hoverPad: brow.hoverPad }}>
-        <TopPage intro={2} />
-      </Stage>
+    <main className="h-dvh overflow-y-auto bg-[#e6f3ff] px-6 py-10">
+      <div className="mx-auto w-full max-w-[860px]">
+        <p className="text-[13px] font-medium tracking-[0.12em] text-[#0070c9]">
+          ABASHIRI v1.2 / 人物イラスト
+        </p>
+        <h1 className="mt-2 text-[28px] font-light leading-[1.4] text-[#0b3c69]">
+          眉毛のホバー演出（新しい絵）
+        </h1>
+        <p className="mt-3 text-[15px] font-light leading-[1.8] text-[#3c4a57]">
+          新しいイラストから眉だけをトレースし直しました。
+          <br />
+          元の眉は<strong className="font-medium">肌色のパッチで塗りつぶし</strong>、その上に動く眉を重ねています。
+          <br />
+          「パッチを赤くする」を ON にすると、元の眉を覆えているかが分かります
+          （赤の外に黒がはみ出していたら覆い残し）。
+        </p>
 
-      <TunePanel title="🤨 眉毛ホバー調整">
-        <div className="mb-3 overflow-hidden rounded-lg border border-[#bcd6ea] bg-white">
-          <div ref={loupeRef} className="relative w-full" style={{ height: LOUPE.h }}>
-            <div
-              className="absolute left-1/2 top-1/2 h-[357px] w-[284px]"
-              style={{
-                /* 眉の中心を窓のまん中に固定したまま拡大する */
-                transformOrigin: `${LOUPE.x}px ${LOUPE.y}px`,
-                transform: `translate(${-LOUPE.x}px, ${-LOUPE.y}px) scale(${LOUPE.zoom})`,
-              }}
-            >
+        <div className="mt-8 flex flex-wrap items-start gap-8">
+          <div
+            className="relative shrink-0 rounded-2xl bg-[#b5d7ff] p-4"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+          >
+            {/* IllustTamannee の中身は絶対配置なので、外側で必ず大きさを与える */}
+            <div style={{ width: w, height: h }}>
               <IllustTamannee
-                lift={loupeOver ? brow.lift : 0}
+                lift={hover ? lift : 0}
+                renderH={h}
+                patchSpread={spread}
+                debugPatch={debugPatch}
                 className="size-full"
               />
             </div>
+            <p className="mt-2 text-center text-[12px] font-bold text-[#0b3c69]">
+              {zoom}倍表示（本番は {BASE_W}x{BASE_H}）
+            </p>
           </div>
-          <p className="bg-[#e6f3ff] px-2 py-1 text-[10px] font-bold text-[#0070c9]">
-            ↑ 眉のまわりを{LOUPE.zoom}倍にした確認用。この窓にもカーソルを乗せると動きます
+
+          <div className="min-w-[260px] flex-1 rounded-2xl bg-white p-5">
+            <p className="text-[13px] font-black text-[#0070c9]">トレース結果</p>
+            <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px] font-light text-[#3c4a57]">
+              <dt>座標系</dt>
+              <dd>
+                {ILLUST_VIEWBOX.w} x {ILLUST_VIEWBOX.h}
+              </dd>
+              <dt>眉の色</dt>
+              <dd className="flex items-center gap-2">
+                <span
+                  className="inline-block size-[14px] rounded border border-[#ccc]"
+                  style={{ background: BROW_FILL }}
+                />
+                {BROW_FILL}
+              </dd>
+              <dt>パッチの色</dt>
+              <dd className="flex items-center gap-2">
+                <span
+                  className="inline-block size-[14px] rounded border border-[#ccc]"
+                  style={{ background: SKIN_FILL }}
+                />
+                {SKIN_FILL}
+              </dd>
+            </dl>
+            <p className="mt-3 text-[12px] font-light leading-[1.7] text-[#5a6b7a]">
+              値はイラストから実測したものです。描き直した時は
+              <code className="mx-1 rounded bg-[#eef6ff] px-1">
+                python3 scripts/illust-brow-trace.py
+              </code>
+              を流し直してください。
+            </p>
+          </div>
+        </div>
+
+        <TunePanel title="🙂 眉毛の調整">
+          <Row
+            label="持ち上げる量"
+            value={lift}
+            min={0}
+            max={20}
+            onChange={setLift}
+          />
+          <Row
+            label="パッチの太らせ"
+            value={spread}
+            min={0}
+            max={200}
+            step={5}
+            unit=""
+            onChange={setSpread}
+          />
+          <Row label="表示倍率" value={zoom} min={1} max={6} unit="倍" onChange={setZoom} />
+          <label className="flex items-center justify-between gap-2 py-2 pl-3">
+            <span className="text-[12px] font-bold text-[#1e1e1e]">パッチを赤くする</span>
+            <input
+              type="checkbox"
+              checked={debugPatch}
+              onChange={(e) => setDebugPatch(e.target.checked)}
+              className="size-[16px]"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-2 py-2 pl-3">
+            <span className="text-[12px] font-bold text-[#1e1e1e]">眉を上げた状態にする</span>
+            <input
+              type="checkbox"
+              checked={hover}
+              onChange={(e) => setHover(e.target.checked)}
+              className="size-[16px]"
+            />
+          </label>
+          <p className="mt-2 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
+            決まったら数値をClaudeに伝えてください（faceConfig.ts / illustMainPaths.ts に入れます）
           </p>
-        </div>
-
-        <Slider
-          label="眉が持ち上がる量"
-          value={brow.lift} min={0} max={20} step={0.5} unit="px"
-          onChange={(v) => upd({ lift: v })}
-        />
-        <Slider
-          label="反応する範囲の広げ幅"
-          value={brow.hoverPad} min={0} max={120} step={5} unit="px"
-          onChange={(v) => upd({ hoverPad: v })}
-        />
-        <p className="pl-1 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
-          広げ幅を上げると、イラストの少し外にカーソルが来ただけで反応します
-        </p>
-
-        <div className="mt-3 rounded-lg bg-[#f4f9ff] p-2">
-          <p className="text-[10px] font-bold text-[#7ba7cc]">いまの設定</p>
-          <code className="text-[11px] font-black text-[#0070c9]">
-            lift: {brow.lift}, hoverPad: {brow.hoverPad}
-          </code>
-        </div>
-
-        <button
-          onClick={() => setBrow(DEFAULT_BROW)}
-          className="mt-2 w-full cursor-pointer rounded-full bg-[#e6f3ff] py-2 text-[12px] font-bold text-[#0070c9]"
-        >
-          初期値にもどす
-        </button>
-        <p className="mt-2 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
-          決まったら上の数字をClaudeに伝えてください（本番に反映します）
-        </p>
-        <Link
-          href="/"
-          className="mt-2 inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
-        >
-          ← TOPへ
-        </Link>
-      </TunePanel>
-    </>
+          <Link
+            href="/"
+            className="mt-2 inline-block rounded-full bg-[#e6f3ff] px-4 py-1.5 text-[12px] font-black text-[#0070c9]"
+          >
+            ← トップへ
+          </Link>
+        </TunePanel>
+      </div>
+    </main>
   );
 }
