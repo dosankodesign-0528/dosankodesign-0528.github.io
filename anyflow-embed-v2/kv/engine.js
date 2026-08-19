@@ -383,7 +383,10 @@ void main(){
         const fadeIn = Math.min(1, d.t / 0.10);
         const fadeOut = Math.min(1, (1 - d.t) / 0.16);
         const shrink = 1 - 0.35 * Math.max(0, 1 - (1 - d.t) / 0.16);
-        d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 7px) ${view.billboard} scale(${shrink.toFixed(3)})`;
+        /* ⚠️ z はエージェントの面(2.5px)より必ず低くする。7px にしていた時、
+           ドットがエージェントの上を滑って見えた（ヒデさん報告）。
+           線(z=0)よりは上、面より下の 1px に置く */
+        d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 1px) ${view.billboard} scale(${shrink.toFixed(3)})`;
         d.node.style.opacity = (fadeIn * fadeOut * (0.55 + 0.45 * d.t)).toFixed(2);
       });
       energy = Math.max(0, energy - dt * 1.4);
