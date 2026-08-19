@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=4">
+<link rel="stylesheet" href="kv.css?v=5">
 </head>
 <body>
 
@@ -64,9 +64,17 @@
     Z <input type="range" id="rz" min="-90" max="90" step="1" value="0"><span id="rzv">0°</span>
     大きさ <input type="range" id="rs" min="0.8" max="1.5" step="0.02" value="1"><span id="rsv">×1.00</span>
   </div>
+  <div class="row3">
+    アイコン色:
+    <label>📁<input type="color" data-ic="folder" value="#379FFF"><input type="text" data-ih="folder" value="#379FFF" maxlength="7"></label>
+    <label>✉️<input type="color" data-ic="mail" value="#379FFF"><input type="text" data-ih="mail" value="#379FFF" maxlength="7"></label>
+    <label>📅<input type="color" data-ic="cal" value="#379FFF"><input type="text" data-ih="cal" value="#379FFF" maxlength="7"></label>
+    <label>📊<input type="color" data-ic="chart" value="#379FFF"><input type="text" data-ih="chart" value="#379FFF" maxlength="7"></label>
+    <button id="icReset">元に戻す</button>
+  </div>
 </div>
 
-<script src="engine.js?v=4"></script>
+<script src="engine.js?v=5"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -91,6 +99,29 @@
     KV.setAgentMode(b.dataset.am);
     document.querySelectorAll('.kv-bar [data-am]').forEach(x => x.classList.toggle('on', x === b));
   });
+
+  /* アイコン色: カラーピッカー(直感) と HEX入力(コード指定) を同期 */
+  document.querySelectorAll('[data-ic]').forEach(p => p.addEventListener('input', () => {
+    const id = p.dataset.ic;
+    KV.setIconColor(id, p.value);
+    document.querySelector(`[data-ih="${id}"]`).value = p.value.toUpperCase();
+  }));
+  document.querySelectorAll('[data-ih]').forEach(t => t.addEventListener('change', () => {
+    const id = t.dataset.ih;
+    let v = t.value.trim(); if (v && v[0] !== '#') v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+      KV.setIconColor(id, v);
+      t.value = v.toUpperCase();
+      document.querySelector(`[data-ic="${id}"]`).value = v;
+    }
+  }));
+  document.getElementById('icReset').onclick = () => {
+    ['folder','mail','cal','chart'].forEach(id => {
+      KV.setIconColor(id, '');
+      document.querySelector(`[data-ic="${id}"]`).value = '#379FFF';
+      document.querySelector(`[data-ih="${id}"]`).value = '#379FFF';
+    });
+  };
 </script>
 </body>
 </html>

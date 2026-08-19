@@ -88,6 +88,9 @@ body {
 
 /* ---- エージェント ---- */
 .kv-agent { position: absolute; transform-style: preserve-3d; }
+/* カンプ実測のドロップシャドウ: X0 / Y8 / Blur14 / #000 25%（普通ビューで適用。
+   3D・アイソメでは接地影(kv-slab-shadow)が受け持つので二重にしない） */
+.mode-flat .kv-agent { box-shadow: 0 8px 14px rgba(0, 0, 0, .25); }
 .kv-agent-cv { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit;
   transform: translateZ(0.5px); image-rendering: pixelated; }
 
@@ -136,8 +139,16 @@ body {
 .kv-bar .row2 input[type=range] { width: 86px; accent-color: #090909; }
 .kv-bar .row2 span { min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ドットの塗り分け: 普通=カンプの平らな円 / 3D・アイソメ=光の当たった球体 */
-.mode-flat .kv-dot3 { background: var(--dc); box-shadow: none; }
+/* ドット: 全ビューで「カンプどおりの平らな円」。
+   傾いたビューではビルボード(常にカメラ向き)なので楕円に潰れない。
+   3D時だけ細い白フチと極薄い影で床から浮いて見えるようにする（2Dのままの工夫） */
+.kv-dot3 { background: var(--dc); }
+.mode-flat .kv-dot3 { box-shadow: none; }
 .mode-3d .kv-dot3 {
-  background: radial-gradient(circle at 32% 28%, #ffffff 0%, var(--dc) 42%, color-mix(in srgb, var(--dc) 55%, #000) 100%);
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 2px 4px rgba(16,24,40,.18);
 }
+.kv-bar .row3 { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #555; }
+.kv-bar .row3 label { display: inline-flex; align-items: center; gap: 3px; }
+.kv-bar .row3 input[type=color] { width: 24px; height: 22px; padding: 0; border: 1px solid #d8d8d8; border-radius: 5px; background: #fff; cursor: pointer; }
+.kv-bar .row3 input[type=text] { width: 62px; font: inherit; font-size: 10.5px; padding: 3px 4px; border: 1px solid #d8d8d8; border-radius: 5px; text-transform: uppercase; }
+.kv-bar .row3 button { font-size: 10.5px; padding: 3px 8px; }

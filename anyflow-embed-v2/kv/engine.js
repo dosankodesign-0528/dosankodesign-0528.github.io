@@ -107,13 +107,16 @@
     const i = Math.min(1, Math.floor(f)), u = f - i;
     return Object.keys(GRAD_KEYS).map(k => ({ p: lerp(GRAD_KEYS[k][i], GRAD_KEYS[k][i + 1], u), c: GRAD_COLORS[k] }));
   }
-  /* タイムライン: F1→F2→F3 と波が右上へ抜け(6s)、0.4s置いて、
-     色だけクロスフェードで F1 に戻る(0.9s)。逆走の動きを見せないため。 */
-  const T_FWD = 6.0, T_HOLD = 0.4, T_X = 0.9, T_ALL = T_FWD + T_HOLD + T_X;
+  /* タイムライン【2026-08-19 ヒデさん指定: 左下→右上へ一方向・ゆっくりの波】
+     F1→F2→F3 と波がゆっくり右上へ抜け(10s)、間を置かず
+     色だけクロスフェードで F1 に戻る(1.4s)。逆走の動きは見せない。 */
+  const T_FWD = 10.0, T_HOLD = 0.2, T_X = 1.4, T_ALL = T_FWD + T_HOLD + T_X;
   const lutA = new Uint8Array(LUT_N * 4), lutB = new Uint8Array(LUT_N * 4);
   function bakeTimeline(time, out) {
     const u = time % T_ALL;
-    if (u < T_FWD) { bakeStops(stopsAt(easeIO(u / T_FWD) * 2), out); return; }
+    /* ほぼ等速（両端だけ僅かに柔らかく）＝一定の波が流れ続けて見える */
+    const soft = t => t * t * (3 - 2 * t) * 0.25 + t * 0.75;
+    if (u < T_FWD) { bakeStops(stopsAt(soft(u / T_FWD) * 2), out); return; }
     if (u < T_FWD + T_HOLD) { bakeStops(stopsAt(2), out); return; }
     const s = easeIO((u - T_FWD - T_HOLD) / T_X);
     bakeStops(stopsAt(2), lutA); bakeStops(stopsAt(0), lutB);
@@ -278,8 +281,9 @@ void main(){
          傾けたビューでは常にカメラへ向ける（ビルボード）。 */
       const c = document.createElement('div');
       c.className = 'kv-dot3';
-      /* 色は CSS 変数で渡す。普通ビュー=カンプどおりの平らな円 / 3D・アイソメ=球体
-         （塗り分けは kv.css 側。ここで background を直接書くと切替できない） */
+      /* 【2026-08-19 ヒデさん指定】3Dの球体はやめる。
+         2Dの平らな円のまま、傾いたビューでは常にカメラへ向ける（ビルボード）。
+         床ごと倒れないので楕円に潰れず、カンプの見た目のまま立体空間に馴染む */
       c.style.setProperty('--dc', ln.dot);
       world.appendChild(c);
       dots.push({ ln, node: c, t: (i * 0.37) % 1, speed: 0.14 * (0.9 + 0.25 * (i % 3) / 2) });
@@ -309,9 +313,12 @@ void main(){
       d.className = 'kv-box kv-box--' + b.kind;
       d.style.left = b.x + 'px'; d.style.top = b.y + 'px';
       d.style.width = BOX_S + 'px'; d.style.height = BOX_S + 'px';
-      buildSlab(d, 26, 8, true);
+      /* 【2026-08-19 ヒデさん指定】Blender風キューブは 幅=縦=高さ を統一して
+         きれいな立方体に見せる。厚み = 一辺(109.778px)そのもの */
+      buildSlab(d, BOX_S, 28, true);   /* 枚数が少ないと側面が縞になる（12枚で実際に縞が出た） */
       const face = document.createElement('div'); face.className = 'kv-face';
       d.appendChild(face);
+      b._face = face;   /* アイコン色変更(setIconColor)が参照する */
       if (b.kind === 'asset') {
         fetch(b.svg).then(r => r.text()).then(t => { face.innerHTML = t; const s = face.querySelector('svg');
           if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
@@ -344,7 +351,7 @@ void main(){
     agentBox.style.left = AGENT.x + 'px'; agentBox.style.top = AGENT.y + 'px';
     agentBox.style.width = AGENT.w + 'px'; agentBox.style.height = AGENT.h + 'px';
     agentBox.style.borderRadius = AGENT.r + 'px';
-    buildSlab(agentBox, 30, 8, false);
+    buildSlab(agentBox, 30, 12, false);
     const canvas = document.createElement('canvas'); canvas.className = 'kv-agent-cv'; agentBox.appendChild(canvas);
     world.appendChild(agentBox);
     const agent = makeGL(canvas) || fallbackGL(canvas);
@@ -370,8 +377,14 @@ void main(){
         d.t += d.speed * dt;
         if (d.t >= 1) { d.t -= 1; energy = Math.min(1.2, energy + 0.4); }
         const pos = polyAt(d.ln.pts, d.t);
-        d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 7px) ${view.billboard}`;
-        d.node.style.opacity = (0.4 + 0.6 * d.t).toFixed(2);
+        /* 【2026-08-19 ヒデさん指定】終点(エージェント)で急に消えず、
+           到達する頃にフェードアウト＋少し縮んで「取り込まれる」感じにする。
+           出はじめも軽くフェードイン。 */
+        const fadeIn = Math.min(1, d.t / 0.10);
+        const fadeOut = Math.min(1, (1 - d.t) / 0.16);
+        const shrink = 1 - 0.35 * Math.max(0, 1 - (1 - d.t) / 0.16);
+        d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 7px) ${view.billboard} scale(${shrink.toFixed(3)})`;
+        d.node.style.opacity = (fadeIn * fadeOut * (0.55 + 0.45 * d.t)).toFixed(2);
       });
       energy = Math.max(0, energy - dt * 1.4);
       bakeTimeline(time, lutData);
@@ -411,5 +424,44 @@ void main(){
   };
   function setAgentMode(m) { agentMode = (m === 'halftone') ? 1 : 0; }
 
-  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, STAGE, AGENT };
+  /* ===== アイコンの色変更（2026-08-19 ヒデさん指定）=====
+     カンプのアイコンSVGは青系ガラスの多層構造で、パスの塗りを個別に書き換えるのは
+     現実的でない。単色ベース(青 h≈210°)なので、CSSフィルタで丸ごと色相を回す。
+       hue-rotate = 目標色相 − 210° / saturate・brightness も目標のHSLから近似
+     白・透明の部分は hue-rotate の影響をほぼ受けないので、ガラスの質感は保たれる。 */
+  function hexToHsl(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    if (mx === mn) return { h: 0, s: 0, l };
+    const d = mx - mn;
+    const sat = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    let h;
+    if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+    else if (mx === g) h = ((b - r) / d + 2) * 60;
+    else h = ((r - g) / d + 4) * 60;
+    return { h, s: sat, l };
+  }
+  const ICON_BASE = { h: 210, s: 0.9, l: 0.62 };   /* カンプアイコンの支配色の実測近似 */
+  function setIconColor(id, hex) {
+    const box = BOXES.find(x => x.id === id);
+    if (!box) return false;
+    const host = box.kind === 'asset' ? box._face : (box._face && (box._face.querySelector('.kv-box-ico') || box._face.querySelector('.kv-lb24')));
+    if (!host) return false;
+    if (!hex) { host.style.filter = ''; return true; }   /* 空文字で元の色へ */
+    const c = hexToHsl(hex);
+    if (!c) return false;
+    const dh = Math.round(c.h - ICON_BASE.h);
+    const sat = Math.max(0.02, Math.min(2, c.s / ICON_BASE.s));
+    /* ⚠️ asset種(箱ごと1枚のSVG)は、明度補正が白い箱まで暗くしてグレーの箱になる
+       （緑#22C55Eで実際にグレー化した）。箱を巻き込まないよう明度はほぼ固定にする */
+    const briRange = box.kind === 'asset' ? [0.94, 1.10] : [0.55, 1.45];
+    const bri = Math.max(briRange[0], Math.min(briRange[1], c.l / ICON_BASE.l));
+    host.style.filter = `hue-rotate(${dh}deg) saturate(${sat.toFixed(2)}) brightness(${bri.toFixed(2)})`;
+    return true;
+  }
+
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, STAGE, AGENT };
 })(window);
