@@ -5207,11 +5207,16 @@ function defaultOf(get) {
   catch (e) { return null; }
   finally { params = keep; }
 }
-function slider(label, min, max, step, get, set, fmt, hint) {
+function slider(label, min, max, step, get, set, fmt, hint, opts) {
   /* ⚠️ 既定値が左端だと、そこから下げられない。既定がツマミの真ん中に来るよう上限を取り直す
-     (2026-08-15 指定)。既定が最小と同じもの(0など)は中央に置けないのでそのまま */
+     (2026-08-15 指定)。既定が最小と同じもの(0など)は中央に置けないのでそのまま。
+
+     ⚠️【2026-08-19 ヒデさん指摘】この自動調整は「もっと右へ伸ばしたい」項目では邪魔になる。
+        例: 見せる長さ は 1〜12 のつもりで書いていたのに、既定3を中央に置くために
+            上限が 5 まで縮められていて、指定した 12 がまったく効いていなかった。
+        opts.fixedMax = true を渡した項目は、書いた上限をそのまま使う。 */
   const d = defaultOf(get);
-  if (typeof d === 'number' && isFinite(d) && d > min) {
+  if (!(opts && opts.fixedMax) && typeof d === 'number' && isFinite(d) && d > min) {
     const wanted = 2 * d - min;
     max = Math.round(wanted / step) * step;
   }
@@ -5378,17 +5383,24 @@ function buildPanel() {
 
   /* セクションの長さ。スクロール駆動の時は倍率、時間で再生の時は画面何個ぶんか。
      ⚠️ 中の値（driveLen / lenVh）は別物なので、モードごとに触る先を切り替える */
+  /* ⚠️【2026-08-19 ヒデさん指摘】「もっと右へ動かしたいのに端で止まる」問題。
+     原因は slider() の自動上限調整（既定を中央に置くために上限を縮める）で、
+     スクロール駆動は 1〜12 と書いていたのに実際は 5 まで、
+     時間再生は 110〜800 と書いていたのに実際は 190vh までしか動かせなかった。
+     ここは書いた上限をそのまま使う（fixedMax）。 */
   const sectionLenSlider = (key, maxVh) => {
     if (params.drive === 'scroll') {
       rows.push(slider('見せる長さ', 1, 12, 0.25,
         () => sv()[key].driveLen, v => { sv()[key].driveLen = v; fit(); },
         v => '×' + v.toFixed(2),
-        '見終わるのに必要なスクロール量。大きいほどゆっくり見せます。'));
+        '見終わるのに必要なスクロール量。大きいほどゆっくり、じっくり見せます。',
+        { fixedMax: true }));
     } else {
       rows.push(slider('見せる長さ', 110, maxVh, 10,
         () => sv()[key].lenVh, v => { sv()[key].lenVh = v; fit(); },
         v => (v / 100).toFixed(1) + '画面',
-        'モーションが終わってから次へ抜けるまでの長さ。大きいほど余韻が残ります。'));
+        'モーションが終わってから次へ抜けるまでの長さ。大きいほど余韻が残ります。',
+        { fixedMax: true }));
     }
   };
 
@@ -5409,10 +5421,12 @@ function buildPanel() {
     : '画面いっぱいで一度止まり、その場でモーションが流れてから次へ進みます。');
   segRow('貼りつけ', [['貼りつける', 'on'], ['貼りつけない', 'off']],
     () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
-  if (params.drive === 'scroll' && params.pin === 'on')
-    rows.push(slider('見せきる早さ', 0.3, 1, 0.05, () => sv().common.driveWin, v => sv().common.driveWin = v,
-      v => Math.round(v * 100) + '%',
-      '貼りついている間の何割で見せきるか。小さいほど一気に展開。'));
+  /* ⚠️【2026-08-19 ヒデさん指定】ここにあった「見せきる早さ」(driveWin) は削除。
+     セクションごとの「見せる長さ」と役目がかぶっていて、
+     どちらをいじればいいのか分からずバッティングしていたため。
+     ペース調整は各セクションの「見せる長さ」に一本化する。
+     ⚠️ driveWin 自体は内部で既定(0.8)のまま使う。消すと再生位置の計算が壊れる。 */
+  note('見せるペースは、各セクションの「見せる長さ」で調整します。');
 
   sub(catAll, '③ 慣性スクロール');
   rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
