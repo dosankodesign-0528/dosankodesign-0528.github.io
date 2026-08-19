@@ -2730,7 +2730,16 @@ function playT(key, total, canStart, sec, pNow) {
      ⚠️【2026-08-18 指定】実績だけは例外。スクロールに連動させず、
         ビューポート中央に来た段階で時間再生する（数字のスロットが噛み合わないため） */
   if (params.drive === 'scroll' && key !== 'results') {
-    return total * clamp01((pNow == null ? pinP(sec) : pNow) / Math.max(0.1, params.sections.common.driveWin));
+    const raw = (pNow == null ? pinP(sec) : pNow);
+    /* ⚠️【2026-08-19 バグ修正】この関数の約束は「まだ再生していない＝マイナスを返す」。
+       スクロール駆動だけ 0 を返していたため、呼び出し側の `t < 0`（未再生）判定が
+       すり抜けて【再生位置 0 の状態】として扱われていた。
+       実害: キービジュアルのドット6個が消えた。軌道の SVG は KV と Our Vision で
+       使い回しているので、ビジョンの「ドットが1つずつ出る」処理(dotK)が
+       A=0 で「まだ1個も出ていない＝半径0」を書き込み、KV のドットまで消していた。
+       (固定あり × スクロール駆動 の組み合わせでのみ発生。他の3通りは -1 が返っていた) */
+    if (raw <= 0) return -1;
+    return total * clamp01(raw / Math.max(0.1, params.sections.common.driveWin));
   }
   const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
   /* 見終わったあとは、スクロール位置で行ったり来たりできる（上へ戻せば逆再生） */
