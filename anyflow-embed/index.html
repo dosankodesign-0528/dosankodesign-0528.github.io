@@ -656,14 +656,18 @@
     transform-origin: 50% 50%;
     /* ⚠️【2026-08-19 ヒデさん指摘】以前は cubic-bezier(.2,1.5,.35,1) で
        「少し行き過ぎてから戻る」オーバーアクションを付けていたが、
-       バウンス（跳ね返り）に見えて浮くため廃止。サイト標準のカーブに統一する */
-    transition: opacity .18s var(--e-fast), transform .34s var(--e-out);
+       バウンス（跳ね返り）に見えて浮くため廃止。
+       秒数とカーブは左のモックの入れ替えと【連動】させる（--dev-swap / --dev-swap-e）。
+       これらは updateDev() が毎フレーム調整パネルの値から書き込む */
+    transition: opacity .18s var(--e-fast),
+                transform var(--dev-swap, .34s) var(--dev-swap-e, var(--e-out));
   }
   .dl-item.is-on .dl-bar { opacity: 1; transform: scaleY(1); }
   /* 【2026-08-15】ブラーでの切替はやめ、下線が伸びて白文字になるだけにした */
   .dl-head b, .dl-head span {
     position: relative;
-    transition: color .16s var(--e-fast);
+    /* 文字色もモックの入れ替えと連動させる（別々だとちぐはぐに見える） */
+    transition: color var(--dev-swap, .16s) var(--dev-swap-e, var(--e-fast));
   }
   .dl-head { position: relative; padding-bottom: 6px; }
   .dl-head::after {
@@ -674,8 +678,9 @@
     background: #fff;
     transform: scaleX(0);
     transform-origin: 0 50%;
-    /* ⚠️ 下線もバウンス（cubic-bezier(.2,1.4,.3,1)）をやめてサイト標準のカーブへ */
-    transition: transform .38s var(--e-out);
+    /* ⚠️ 下線もバウンス（cubic-bezier(.2,1.4,.3,1)）をやめ、
+       秒数とカーブは左のモックの入れ替えと連動させる */
+    transition: transform var(--dev-swap, .38s) var(--dev-swap-e, var(--e-out));
   }
   .dl-item.is-on .dl-head::after { transform: scaleX(1); }
   .dl-item.is-on .dl-head b, .dl-item.is-on .dl-head span { color: #fff; }
@@ -2249,10 +2254,11 @@ const DEFAULTS = {
     },
     /* stackDur = カードが回って入れ替わるのにかける秒数
        swapEase = その動き出し方 (DEV_SWAP_EASES)
-       ⚠️ 2026-08-19: 1.3秒 × easeOutQ だと動きの半分が最初の13%で終わってしまい、
-          「パッと動いて、あとは長く止まりに行く」＝急に見えた（ヒデさん指摘）。
-          2.0秒 × ゆったり(easeIO) を既定にした */
-    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 2.0, swapEase: 1 },
+       ⚠️ 2026-08-19: 一度 2.0秒 × ゆったり(easeIO) にしたが、
+          ヒデさんが見比べて「前の方が良かった」とのことで元に戻した。
+          既定は 1.3秒 × ①元の動き(easeOutQ)。
+          他のカーブはパネルから選べるようにしてあるので、試したくなったらそこで。 */
+    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1 },
     /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
     cases:   { lenVh: 200, driveLen: 3.0, depth: 1, inBlur: 20, gap: 44, playSec: 5.4,
       /* 【2026-08-18】開発者体験と1画面重ねたので、助走(pre)の前半は
@@ -2400,10 +2406,9 @@ function load() {
         dev:     { ...DEFAULTS.sections.dev,     ...((s.sections && s.sections.dev) || {}) },
         cases:   { ...DEFAULTS.sections.cases,   ...((s.sections && s.sections.cases) || {}) },
       };
-      /* 【2026-08-19】モックの入れ替えを「1.3秒・キビキビ」から「2.0秒・ゆったり」に変更した。
-         ⚠️ 保存値があると新しい既定が効かないが、【旧既定のまま(=触っていない)】なら
-            載せ替えてよい。ヒデさんが自分で決めた値は残す */
-      if (merged.sections.dev && Math.abs(merged.sections.dev.stackDur - 1.3) < 1e-6)
+      /* 【2026-08-19】一度 2.0秒 に変えたが「前の方が良かった」とのことで 1.3秒 に戻した。
+         2.0秒 のまま保存されている場合だけ、元の 1.3秒 に戻す */
+      if (merged.sections.dev && Math.abs(merged.sections.dev.stackDur - 2.0) < 1e-6)
         merged.sections.dev.stackDur = DEFAULTS.sections.dev.stackDur;
       if (merged.sections.dev && (merged.sections.dev.swapEase == null ||
           merged.sections.dev.swapEase < 1 || merged.sections.dev.swapEase > DEV_SWAP_EASES.length))
@@ -3901,13 +3906,18 @@ const DEV_STACK = [
 ];
 const DEV_SCREENS = ['api', 'cli', 'sdk'];
 /* ===== カードが入れ替わる時の動き出し方 (2026-08-19) =====
-   ⚠️ 「半分まで進むのに全体の何割の時間を使うか」で急さが決まる。
-      easeOutQ は 13% で半分まで行ってしまうので、いきなり動いてから
-      長く止まりに行く＝急に見える。ヒデさん指摘の「急すぎる」の正体。 */
+   「半分まで進むのに全体の何割の時間を使うか」で急さが決まる。
+   ⚠️【2026-08-19 ヒデさん指定】右のリストのホバー表示（縦バー・下線・文字色）は、
+      このカーブと秒数に【連動】させること。別々に持つと、リストは一瞬で切り替わったのに
+      モックはまだ回っている、という「ちぐはぐ」になる。
+      css: は同じカーブの CSS 版。JS 側と CSS 側で必ず対にしておく */
 const DEV_SWAP_EASES = [
-  { name: '①ゆったり',   fn: easeIO,    desc: 'そっと動き出して、そっと止まる。いちばん落ち着いて見える。' },
-  { name: '②すっと動く', fn: easeOutC,  desc: '動き出しは早め、止まりはなめらか。反応の良さも欲しい時に。' },
-  { name: '③キビキビ',   fn: easeOutQ,  desc: 'パッと動いてゆっくり止まる（2026-08-19 以前の動き）。' },
+  { name: '①元の動き',   fn: easeOutQ, css: 'cubic-bezier(.22,1,.36,1)',
+    desc: 'パッと動いて、ゆっくり止まる。いちばん反応が良く見える（既定）。' },
+  { name: '②すっと動く', fn: easeOutC, css: 'cubic-bezier(.33,1,.68,1)',
+    desc: '動き出しは早め、止まりはなめらか。①より少し落ち着いた感じ。' },
+  { name: '③ゆったり',   fn: easeIO,   css: 'cubic-bezier(.65,0,.35,1)',
+    desc: 'そっと動き出して、そっと止まる。いちばん落ち着いて見える。' },
 ];
 
 const DEV_CH = [
@@ -4340,6 +4350,18 @@ let devFin = 0;
 function updateDev(pRaw) {
   const c = params.sections.dev;
   const pat = params.patterns.dev;
+  /* 【2026-08-19 ヒデさん指定】右のリストのホバー表示（縦バー・下線・文字色）を、
+     左のモックの入れ替えと【連動】させる。
+     ⚠️ CSS の transition は JS から秒数とカーブを渡さないと別々に動いてしまい、
+        「リストは一瞬で切り替わったのにモックはまだ回っている」というちぐはぐが起きる。
+     毎フレーム書くと重いので、値が変わった時だけ書き込む */
+  const swapE = DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0];
+  if (updateDev._d !== c.stackDur || updateDev._e !== swapE.css) {
+    updateDev._d = c.stackDur; updateDev._e = swapE.css;
+    const st = document.documentElement.style;
+    st.setProperty('--dev-swap', c.stackDur + 's');
+    st.setProperty('--dev-swap-e', swapE.css);
+  }
   /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
   let p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
   const noPin = params.pin === 'off';
@@ -4471,8 +4493,7 @@ function updateDev(pRaw) {
       el._t0 = elapsed;
     }
     const to = DEV_STACK[seatI];
-    const swapEase = (DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0]).fn;
-    const kk = el._t0 == null ? 1 : swapEase(clamp01((elapsed - el._t0) / c.stackDur));
+    const kk = el._t0 == null ? 1 : swapE.fn(clamp01((elapsed - el._t0) / c.stackDur));
     /* ⚠️【2026-08-19 バグ修正】不透明度だけは、位置と同じタイミングで動かさないこと。
        後ろへ回るカードは席が変わった瞬間から薄くなり始めるが、その時点ではまだ
        大きいまま手前を横切っている。結果【回っている最中にカードが透けて、
