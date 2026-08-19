@@ -5852,18 +5852,35 @@ applyMarquee();
 /* パネル開閉 */
 const panel = document.getElementById('panel');
 /* ===== 調整パネルの移動 (ヘッダーをドラッグ) =====
-   .tools は既定で right/bottom 固定。掴んだら left/top 指定に切り替える */
+   .tools は既定で right/bottom 固定。動かし始めたら left/top 指定に切り替える */
+const toolsEl = document.querySelector('.tools');
+/* パネルが画面からはみ出さないように、上端の位置を押し戻す。
+   ⚠️ right/bottom 固定のまま（＝一度も動かしていない）なら、
+      背が伸びた分は自然に上へ伸びるので何もしなくてよい */
+function keepPanelInView() {
+  if (!toolsEl.style.top || toolsEl.style.top === 'auto') return;
+  const h = toolsEl.offsetHeight;
+  const max = Math.max(8, (window.innerHeight || 0) - h - 8);
+  let top = parseFloat(toolsEl.style.top);
+  if (!isFinite(top)) return;
+  if (top > max) top = max;
+  if (top < 8) top = 8;
+  toolsEl.style.top = top + 'px';
+}
+window.addEventListener('resize', keepPanelInView);
+
 (() => {
-  const tools = document.querySelector('.tools');
+  const tools = toolsEl;
   const head = document.getElementById('panelHead');
   let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
   head.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
+    /* ⚠️【2026-08-19 バグ修正】ここで left/top 指定へ切り替えていたのが原因で、
+       【ヘッダーを押しただけ】でも上端固定になっていた。
+       閉じている時は下の方にいるので、そこから開くと背が 46px → 520px に伸びて
+       下へ突き抜け、画面外へ458pxはみ出していた（実測）。
+       位置の記録だけして、実際に動かし始める(pointermove で3px超)まで CSS は触らない。 */
     const r = tools.getBoundingClientRect();
-    tools.style.left = r.left + 'px';
-    tools.style.top = r.top + 'px';
-    tools.style.right = 'auto';
-    tools.style.bottom = 'auto';
     sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
     moved = false; dragging = true;
     head.setPointerCapture(e.pointerId);
@@ -5871,10 +5888,19 @@ const panel = document.getElementById('panel');
   head.addEventListener('pointermove', e => {
     if (!dragging) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
-    if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+    if (Math.abs(dx) + Math.abs(dy) <= 3) return;   /* まだ「押しただけ」。何もしない */
+    if (!moved) {
+      /* ここで初めて「動かしている」と判断して、left/top 指定へ切り替える */
+      moved = true;
+      tools.style.left = ox + 'px';
+      tools.style.top = oy + 'px';
+      tools.style.right = 'auto';
+      tools.style.bottom = 'auto';
+    }
     const w = tools.offsetWidth, h = tools.offsetHeight;
     tools.style.left = Math.min(Math.max(0, ox + dx), innerWidth - Math.min(w, 120)) + 'px';
-    tools.style.top = Math.min(Math.max(0, oy + dy), innerHeight - 40) + 'px';
+    /* 掴んで動かす時も、下へ突き抜けないところまでにしておく */
+    tools.style.top = Math.min(Math.max(0, oy + dy), Math.max(8, innerHeight - h - 8)) + 'px';
   });
   head.addEventListener('pointerup', e => {
     dragging = false;
@@ -5886,6 +5912,13 @@ const panel = document.getElementById('panel');
 
 document.getElementById('panelHead').addEventListener('click', () => {
   panel.classList.toggle('closed');
+  /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
+  keepPanelInView();
+});
+/* カテゴリの開閉では外寸は変わらない作りだが、
+   ヒデさんが右下のつまみで背を伸ばしている場合に備えて、ここでも押し戻しておく */
+document.getElementById('panelBody').addEventListener('click', () => {
+  requestAnimationFrame(keepPanelInView);
 });
 </script>
 </body>
