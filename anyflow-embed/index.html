@@ -1688,16 +1688,46 @@ const ELLIPSES = {
   outer: { cx: 457.741, cy: 306.543, rx: 435.517, ry: 146.026 },
   inner: { cx: 475.283, cy: 350.505, rx: 397.09,  ry: 133.142 },
 };
-/* 各ドット: 所属楕円とカンプ上の初期角度 (楕円式から逆算) */
+/* 各ドット: 所属楕円と初期角度
+   【2026-08-19 ヒデさん指定】
+     ・上の軌道(outer)はドットが2個しかなかったので、ピンクを1個足して3個に
+     ・ネイビー(#0E4497)は水色(#0EBBFF)へ
+     ・角度は「できるだけ等間隔」に → outer=120°ずつ / inner=90°ずつ
+   外側の基準角は【カンプの位置からいちばん動かなくて済む値】を最小二乗で求めた:
+     outer 44.15° (グレー -23.1° / 元ネイビー +23.1°)
+   内側の基準角は 14°。カンプ寄せの 33.14° にしなかったのは、
+   ⚠️ 2本の軌道は画面上で交差するため、そこですれ違うドットが重なるから。
+      全周を1°刻み × 内外の基準角を総当たりで走査した実測:
+        outer 44.15° / inner 33.14°(カンプ寄せ) → いちばん近づく瞬間 1px = 2個が1個に見える
+        outer 44.15° / inner 14°               → いちばん近づく瞬間 26px = ちゃんと2個に見える
+      26px はこの構成(3個+4個・この2本の楕円)で取りうる最大値。
+      ドットの直径が 11.2px なので、26px なら間に1個ぶんの隙間が残る */
 const DOTS = [
-  { name: 'ネイビー',  color: '#0E4497', ellipse: 'outer', angle: 261.0 },
-  { name: '水色 A',    color: '#0EBBFF', ellipse: 'inner', angle: 117.8 },
-  { name: 'ピンク A',  color: '#FF5D97', ellipse: 'inner', angle: 192.0 },
-  { name: 'グレー',    color: '#4E4E4E', ellipse: 'outer', angle: 67.3 },
-  { name: 'ピンク B',  color: '#FF5D97', ellipse: 'inner', angle: 33.8 },
-  { name: '水色 B',    color: '#0EBBFF', ellipse: 'inner', angle: 329.4 },
+  /* ↓ 上の軌道 (outer)。120°ずつの等間隔 */
+  { name: 'グレー',    color: '#4E4E4E', ellipse: 'outer', angle: 44.15 },
+  { name: 'ピンク C',  color: '#FF5D97', ellipse: 'outer', angle: 164.15 },   /* 2026-08-19 追加 */
+  { name: '水色 C',    color: '#0EBBFF', ellipse: 'outer', angle: 284.15 },   /* 元ネイビー #0E4497 */
+  /* ↓ 下の軌道 (inner)。90°ずつの等間隔。ピンクと水色が交互に並ぶ */
+  { name: 'ピンク B',  color: '#FF5D97', ellipse: 'inner', angle: 14 },
+  { name: '水色 A',    color: '#0EBBFF', ellipse: 'inner', angle: 104 },
+  { name: 'ピンク A',  color: '#FF5D97', ellipse: 'inner', angle: 194 },
+  { name: '水色 B',    color: '#0EBBFF', ellipse: 'inner', angle: 284 },
 ];
 const DOT_R = 5.606;
+/* ===== ドットの間隔 (2026-08-19) =====
+   「速さのゆらぎ(pulse)」の位相をドットごとにずらすと、等間隔に置いても
+   走っているうちに間隔が崩れる。実測: outer は 120°のはずが 82°〜151° まで開閉した。
+   ①きっちり等間隔 = 同じ軌道のドットは同じ位相で走らせる → 間隔が常に一定
+   ②ばらつかせる   = 従来どおりドットごとに位相をずらす → 団子になったり離れたりする */
+const DOT_GAPS = [
+  { name: '①きっちり等間隔', desc: '間隔を保ったまま7個が同じ速さで回る（外120°ずつ・内90°ずつ）。カンプの整った印象に近い。' },
+  { name: '②ばらつかせる',   desc: '1個ずつ速さがずれて、近づいたり離れたりする。生き物っぽく見えるが、間隔は崩れる。' },
+];
+/* ①の時に使う ゆらぎ位相。
+   ⚠️ 内と外でずらすと、2本のリングの相対位置が時間とともに動く。
+      すると軌道の交差点で【ドットが完全に重なる瞬間】が必ず出てしまう。
+      内外そろえておけば相対位置が固定され、最接近 26px（＝重ならない）を保てる */
+const DOT_PULSE_PHASE = 0;
 
 /* ================= ゆらぎ (グラフィック全体の動き) ================= */
 const SWAYS = [
@@ -2100,6 +2130,7 @@ const DEFAULTS = {
     inner: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
+  dotGap: 1,           // ドットの間隔 (DOT_GAPS) 1=きっちり等間隔 / 2=ばらつかせる
   visReveal: 2,        // キーメッセージは「その場でブラー出現」で確定（パネルからは外した）
   visSpin: 2,          // ドットの回り方は「②速く回って減速」で確定（パネルからは外した）
   visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
@@ -2109,7 +2140,10 @@ const DEFAULTS = {
     duration: 30,    // ロゴが1周する秒数
     direction: 1,    // 1=左へ / -1=右へ
   },
-  dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 60 })),
+  /* pulsePhase は「②ばらつかせる」の時だけ使う、ドットごとのゆらぎのズレ。
+     ⚠️ 以前は i*60 固定だったので、ドットが7個になると7個目が 360°(=0°) になり
+        1個目と完全に同じ動きになっていた。個数で割って必ずバラけるようにする */
+  dots: DOTS.map((_, i) => ({ speed: 1, delay: 0, offset: 0, pulsePhase: i * 360 / DOTS.length })),
   /* スクロールセクションの調整値 */
   sections: {
     common: {
@@ -2304,13 +2338,22 @@ const DEFAULTS = {
               描画まわりの改善(背景ぼかしは手前1枚 / 矩形キャッシュ / 無駄な書き込みを止める)
               ⚠️ swapBlur・countDur・spinSpeed を削除したのでバージョンを上げる */
 /* v60→v61: ビジョンの開始をビューポート中央（ピン開始）にそろえた */
+/* 2026-08-19: ドットを6個→7個に増やし、角度を等間隔に置き直した。
+   ⚠️ バージョンは上げない。上げると「動かし方(スクロール駆動)」「固定追従」など
+      ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
+      代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
+      新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
 const STORAGE_KEY = 'anyflow-embed-anim-v70';
 
 let params = load();
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (s && Array.isArray(s.dots) && s.dots.length === DOTS.length) {
+    /* ⚠️【2026-08-19】以前は保存されたドットの個数が今と違うと、この if を丸ごと外れて
+       【保存値ぜんぶが初期化】されていた。ドットを1個足しただけで
+       「動かし方」や「固定追従」の設定まで巻き添えで消える。
+       個数が違っても他の設定は生かし、ドットだけ既定で埋めるようにする */
+    if (s && Array.isArray(s.dots)) {
       const merged = { ...structuredClone(DEFAULTS), ...s };
       merged.pulse = { ...DEFAULTS.pulse, ...(s.pulse || {}) };
       merged.sphere = { ...DEFAULTS.sphere, ...(s.sphere || {}) };
@@ -2323,6 +2366,7 @@ function load() {
       merged.marquee = { ...DEFAULTS.marquee, ...(s.marquee || {}) };
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
+  merged.dotGap = merged.dotGap || DEFAULTS.dotGap;
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
@@ -2341,11 +2385,14 @@ function load() {
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
       if (!['A', 'B', 'C'].includes(merged.patterns.mock)) merged.patterns.mock = 'B';
-      merged.dots = s.dots.map((d, i) => ({ ...DEFAULTS.dots[i], ...d }));
+      /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
+         (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
+      merged.dots = DEFAULTS.dots.map((d, i) => ({ ...d, ...(s.dots[i] || {}) }));
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
       if (merged.sway < 1 || merged.sway > SWAYS.length) merged.sway = 1;
       if (merged.dither < 1 || merged.dither > DITHERS.length) merged.dither = 1;
+      if (merged.dotGap < 1 || merged.dotGap > DOT_GAPS.length) merged.dotGap = DEFAULTS.dotGap;
       return merged;
     }
   } catch (e) {}
@@ -2488,7 +2535,11 @@ let scrollDir = 0, lastScrollY = 0;
 function patternDeg(d, i, p) {
   const base = 360 / params.duration * params.globalSpeed * params.direction;
   const et = effectiveTime(elapsed, p.delay, params.ramp);
-  const wt = warpTime(et, params.pulse.amp, params.pulse.period, p.pulsePhase);
+  /* 【2026-08-19】「①きっちり等間隔」の時は、7個ぜんぶ同じ位相で走らせる。
+     位相がドットごとに違うと、等間隔に置いても走るうちに間隔が開閉する
+     (実測: 外側は 120° のはずが 101°〜151° まで開閉していた) */
+  const phase = (params.dotGap || 1) === 1 ? DOT_PULSE_PHASE : p.pulsePhase;
+  const wt = warpTime(et, params.pulse.amp, params.pulse.period, phase);
   /* 手前で速く・奥でゆっくり (パネルの「回り方の緩急」) */
   return orbitEase(d.angle + p.offset + base * p.speed * wt);
 }
@@ -5244,6 +5295,12 @@ function buildPanel() {
     '大きいほど、周期的に速くなったり遅くなったりする。0=一定。'));
   rows.push(slider('ゆらぎの周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + 's',
     '上のゆらぎが1往復する秒数。'));
+
+  sub(catKv, 'ドットの間隔', true);
+  note(DOT_GAPS[(params.dotGap || 1) - 1].desc);
+  pillRow(DOT_GAPS, (_, i) => params.dotGap === i + 1, (_, i) => params.dotGap = i + 1);
+  if ((params.dotGap || 1) === 1 && (params.orbitEase || 1) === 2)
+    note('⚠️ 上の「ドットの回り方」を②緩急にしていると、手前と奥で速さが変わるぶん間隔も伸び縮みします。きっちり等間隔で見せたい時は①等速に。');
 
   [['outer', '外側の楕円', '#FF5D97'], ['inner', '内側の楕円', '#00ABEB']].forEach(([key, label, color]) => {
     sub(catKv, `<span class="chip" style="background:${color}"></span>${label}`, true);
