@@ -43,28 +43,37 @@ body {
 @keyframes kvmq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---- ステージ ---- */
-.kv-root { position: fixed; inset: 0; }
-.kv-stage { position: absolute; left: 0; top: 0; width: 1440px; height: 920px; transform-origin: 0 0; }
-.kv-world { position: absolute; inset: 0; transform-origin: 1026px 440px; }
+.kv-root { position: fixed; inset: 0; perspective: none; }
+.kv-stage { position: absolute; left: 0; top: 0; width: 1440px; height: 920px; transform-origin: 0 0; transform-style: preserve-3d; }
+.kv-world { position: absolute; inset: 0; transform-origin: 1026px 440px; transform-style: preserve-3d;
+  transition: transform .7s cubic-bezier(.22,1,.36,1); }
 
 /* ---- 線・ドット（カンプ実測: 白60% / 2px） ---- */
 .kv-lines { position: absolute; left: 0; top: 0; overflow: visible; }
 .kv-line { stroke: rgba(255,255,255,.6); stroke-width: 2; }
+/* 球体ドット（div）。アイソメでもカメラを向く */
+.kv-dot3 {
+  position: absolute; left: 0; top: 0;
+  width: 13.173px; height: 13.173px; border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(16,24,40,.28);
+  will-change: transform;
+}
 
-/* ---- 箱（カンプ実測: ガラス質感） ---- */
-.kv-box { position: absolute; border-radius: 10px; }
-.kv-box--css {
+/* ---- 箱 ---- */
+.kv-box { position: absolute; border-radius: 10px; transform-style: preserve-3d; }
+.kv-face { position: absolute; inset: 0; border-radius: 10px; transform: translateZ(0.5px); }
+.kv-box--css  .kv-face {
   background: rgba(255,255,255,.7);
   border: 1px solid #fff;
   backdrop-filter: blur(52px);
   -webkit-backdrop-filter: blur(52px);
 }
-.kv-box--empty {
+.kv-box--empty .kv-face {
   background: linear-gradient(to top, rgba(255,255,255,.8), rgba(255,255,255,0));
   backdrop-filter: blur(52px);
   -webkit-backdrop-filter: blur(52px);
 }
-.kv-box--empty.is-flip { transform: rotate(180deg); }
+.kv-box--empty .kv-face.is-flip { transform: translateZ(0.5px) rotate(180deg); }
 .kv-box--asset svg { display: block; }
 .kv-box-ico { position: absolute; }
 
@@ -78,28 +87,32 @@ body {
 .kv-lb24-glass { position: absolute; left: 5.64px; top: 5.64px; width: 69.2px; height: 65.558px; }
 
 /* ---- エージェント ---- */
-.kv-agent { position: absolute; overflow: hidden; }
-.kv-agent-cv { position: absolute; inset: 0; width: 100%; height: 100%; }
+.kv-agent { position: absolute; transform-style: preserve-3d; }
+.kv-agent-cv { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit;
+  transform: translateZ(0.5px); image-rendering: pixelated; }
 
-/* ============ 箱スタイル切替 ============ */
-/* flat = カンプそのまま（既定・影なし） */
-
-/* solid = 3D。板に厚みが付く */
-.bs-solid .kv-box {
-  box-shadow:
-    5px 6px 0 rgba(14, 68, 151, .10),
-    12px 18px 30px rgba(0, 0, 0, .12);
+/* ===== 白キューブのスラブ（Blender風・上からのソフトライト） =====
+   普通(カンプ)ビューでは消す。3D/アイソメで厚みと接地影が現れる */
+.kv-slab-layer {
+  position: absolute; inset: 0; border-radius: 10px; display: none;
 }
-.bs-solid .kv-agent { box-shadow: 6px 8px 0 rgba(14,68,151,.22), 0 18px 50px rgba(14,187,255,.35); }
-
-/* iso = アイソメトリック。世界ごと等角投影（配線・ドットも一緒に倒れる） */
-.bs-iso .kv-world { transform: rotateX(54deg) rotateZ(-42deg) scale(1.26); }
-.bs-iso .kv-box {
-  box-shadow:
-    -8px 9px 0 rgba(14, 68, 151, .10),
-    -18px 22px 34px rgba(0, 0, 0, .14);
+.kv-agent .kv-slab-layer { border-radius: 13px; }
+.kv-slab-shadow {
+  position: absolute; inset: -14px; border-radius: 50%; display: none;
+  background: radial-gradient(closest-side, rgba(30,41,59,.30), rgba(30,41,59,0) 72%);
+  filter: blur(6px);
 }
-.bs-iso .kv-agent { box-shadow: -10px 12px 0 rgba(14,68,151,.24), 0 22px 60px rgba(14,187,255,.35); }
+.mode-3d .kv-slab-layer, .mode-3d .kv-slab-shadow { display: block; }
+/* 3D時: 天面は白いキューブの上面（光が当たる面）。既存アイコンはそのまま上に載る */
+.mode-3d .kv-box--css .kv-face,
+.mode-3d .kv-box--empty .kv-face {
+  background: linear-gradient(135deg, #ffffff 0%, #f2f5fa 78%, #e9edf5 100%);
+  border: 1px solid #fff;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.mode-3d .kv-box--asset .kv-face { background: linear-gradient(135deg, #ffffff 0%, #f2f5fa 100%); border-radius: 10px; }
+/* 3D時は線を床にうっすら（白線は白キューブと同化するので少し濃く） */
+.mode-3d .kv-line { stroke: rgba(148,163,184,.5); }
 
 /* ============ 切替バー（mock 用 UI） ============ */
 .kv-bar {
@@ -117,3 +130,14 @@ body {
   border-radius: 7px; padding: 4px 10px; cursor: pointer;
 }
 .kv-bar button.on { background: #090909; border-color: #090909; color: #fff; }
+.kv-bar { flex-direction: column; align-items: stretch; gap: 6px; }
+.kv-bar .row1, .kv-bar .row2 { display: flex; align-items: center; gap: 8px; }
+.kv-bar .row2 { font-size: 11px; color: #555; }
+.kv-bar .row2 input[type=range] { width: 86px; accent-color: #090909; }
+.kv-bar .row2 span { min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ドットの塗り分け: 普通=カンプの平らな円 / 3D・アイソメ=光の当たった球体 */
+.mode-flat .kv-dot3 { background: var(--dc); box-shadow: none; }
+.mode-3d .kv-dot3 {
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, var(--dc) 42%, color-mix(in srgb, var(--dc) 55%, #000) 100%);
+}

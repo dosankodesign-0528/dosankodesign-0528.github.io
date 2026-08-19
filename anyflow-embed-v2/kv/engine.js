@@ -129,17 +129,21 @@ uniform float uTime;
 uniform float uMode;    /* 0=カンプのグラデ(LUT) 1=V1.0ハーフトーン */
 uniform float uEnergy;
 uniform float uAspect;
-uniform float uCell;
+uniform float uCell;    /* ディザ1セルのデバイスpx（Figmaの Size=1 → ステージ1pxぶん） */
+uniform float uQuant;   /* 0=チャンネル別に量子化 1=グラデ位置を量子化（検証用） */
 uniform sampler2D uLUT;
 
+/* ===== Figma のレイヤー効果を実測値で再現 =====
+   Style: Bayer 16x16 / Size: 1 / Levels: 3 / Brightness: 104% / Contrast: 1.38 / Mono: off */
 float bayer2(vec2 a){ a=floor(a); return fract(a.x/2.0 + a.y*a.y*0.75); }
 float bayer4(vec2 a){ return bayer2(0.5*a)*0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5*a)*0.25 + bayer2(a); }
+float bayer16(vec2 a){ return bayer8(0.5*a)*0.25 + bayer2(a); }
 float hash(vec2 p){ p=fract(p*vec2(127.1,311.7)); p+=dot(p,p+34.5); return fract(p.x*p.y); }
 float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); vec2 u=f*f*(3.0-2.0*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y); }
 
-/* V1.0「B ハーフトーン」の配色ランプ（カンプ惑星の面積比そのまま移植） */
+/* V1.0「B ハーフトーン」の配色ランプ（面積比そのまま移植） */
 vec3 rampV1(float x){
   x = clamp(x, 0.0, 1.0);
   vec3 mg = vec3(1.000, 0.365, 0.592);
@@ -167,32 +171,41 @@ void main(){
   float mask = 1.0 - smoothstep(-2.0*pxw, 2.0*pxw, sd);
   if (mask <= 0.0){ gl_FragColor = vec4(0.0); return; }
 
-  vec2 pc = vec2(P.x, -P.y);                     /* CSSのy下向きに合わせる */
-  float dith = bayer8(cell);
+  vec2 pc = vec2(P.x, -P.y);
+  float dith = bayer16(cell);
   vec3 col;
 
   if (uMode < 0.5) {
-    /* カンプの線形グラデ: 229.049° をそのまま投影 → LUT（3枚のキーフレーム補間済み） */
+    /* カンプの線形グラデ 229.049° → LUT（キーフレーム補間済み・連続色） */
     vec2 DIR = vec2(-0.75512, 0.65559);
     float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;
     float t = 0.5 + dot(pc, DIR)/L;
-    t += (vnoise(pc*5.0 + uTime*0.15) - 0.5)*0.025;
-    t -= 0.05*uEnergy;                            /* ドット到達で白側へふわり */
-    float levels = 7.0;
-    float q = clamp(floor(t*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
-    col = texture2D(uLUT, vec2(q, 0.5)).rgb;
+    t -= 0.04*uEnergy;
+    vec3 src = texture2D(uLUT, vec2(clamp(t, 0.0, 1.0), 0.5)).rgb;
+    /* Brightness 104% → Contrast 1.38（Figmaのパネル順） */
+    src = clamp(src * 1.04, 0.0, 1.0);
+    src = clamp((src - 0.5) * 1.38 + 0.5, 0.0, 1.0);
+    if (uQuant < 0.5) {
+      /* Levels 3: RGB各チャンネルを3階調へ、ベイヤー16の同一しきい値で量子化 */
+      col = clamp(floor(src * 2.0 + dith) / 2.0, 0.0, 1.0);
+    } else {
+      /* 検証用: グラデ位置そのものを3階調へ */
+      float q = clamp(floor(clamp(t,0.0,1.0) * 2.0 + dith) / 2.0, 0.0, 1.0);
+      col = texture2D(uLUT, vec2(q, 0.5)).rgb;
+      col = clamp(col * 1.04, 0.0, 1.0);
+      col = clamp((col - 0.5) * 1.38 + 0.5, 0.0, 1.0);
+    }
   } else {
-    /* V1.0 ハーフトーン: 白い帯が斜めに流れる（惑星Bの平面版） */
+    /* V1.0 ハーフトーンの配色で、白い帯が斜めに流れる。
+       【2026-08-19 ヒデさん指定】こちらはディザリング無し＝滑らかなグラデのまま */
     vec2 axis = normalize(vec2(0.70, 0.62));
     float u = dot(pc, axis) / 0.9;
     float v = dot(pc, vec2(-axis.y, axis.x)) / 0.9;
     float wave = u*2.2 + sin(v*2.1 + uTime*0.5)*0.28 - uTime*0.30;
     float lum = 0.5 + 0.5*sin(wave*3.14159265);
-    lum += (vnoise(pc*2.4 + uTime*0.1) - 0.5)*0.12;
+    lum += (vnoise(pc*2.4 + uTime*0.1) - 0.5)*0.10;
     lum += 0.15*uEnergy;
-    float levels = 6.0;
-    float q = clamp(floor(lum*levels + (dith-0.5)*1.15 + 0.5)/levels, 0.0, 1.0);
-    col = rampV1(q);
+    col = rampV1(clamp(lum, 0.0, 1.0));
   }
   gl_FragColor = vec4(col*mask, mask);
 }`;
@@ -217,7 +230,7 @@ void main(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const U = n => gl.getUniformLocation(p, n);
-    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uLUT: U('uLUT') };
+    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uQuant: U('uQuant'), uLUT: U('uLUT') };
     gl.uniform1i(u.uLUT, 0);
     return {
       draw(w, h, o) {
@@ -226,7 +239,7 @@ void main(){
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, o.lut);
         gl.uniform2f(u.uRes, w, h); gl.uniform1f(u.uTime, o.time); gl.uniform1f(u.uMode, o.mode);
-        gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell);
+        gl.uniform1f(u.uEnergy, o.energy); gl.uniform1f(u.uAspect, o.aspect); gl.uniform1f(u.uCell, o.cell); gl.uniform1f(u.uQuant, o.quant || 0);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
@@ -247,7 +260,7 @@ void main(){
     cfg = cfg || {};
     const root = document.getElementById(cfg.mount || 'kv');
     rootEl = root;
-    root.classList.add('kv-root', 'bs-flat');
+    root.classList.add('kv-root', 'mode-flat');
 
     const stage = document.createElement('div'); stage.className = 'kv-stage'; root.appendChild(stage);
     const world = document.createElement('div'); world.className = 'kv-world'; stage.appendChild(world);
@@ -260,10 +273,35 @@ void main(){
     LINES.forEach((ln, i) => {
       const d = 'M' + ln.pts.map(p => `${p[0]} ${p[1]}`).join(' L');
       svg.appendChild(el('path', { d, class: 'kv-line', fill: 'none' }));
-      const c = el('circle', { r: DOT_R, fill: ln.dot, class: 'kv-dot' });
-      svg.appendChild(c);
+      /* 【2026-08-19 ヒデさん指定】ドットは SVG の円だとアイソメで床ごと倒れて
+         平べったく見える。div の球体（ラジアルグラデ＋影）にして、
+         傾けたビューでは常にカメラへ向ける（ビルボード）。 */
+      const c = document.createElement('div');
+      c.className = 'kv-dot3';
+      /* 色は CSS 変数で渡す。普通ビュー=カンプどおりの平らな円 / 3D・アイソメ=球体
+         （塗り分けは kv.css 側。ここで background を直接書くと切替できない） */
+      c.style.setProperty('--dc', ln.dot);
+      world.appendChild(c);
       dots.push({ ln, node: c, t: (i * 0.37) % 1, speed: 0.14 * (0.9 + 0.25 * (i % 3) / 2) });
     });
+
+    /* 白キューブの厚み（Blender風）。z=0 が天面、下へ layers 枚重ねて側面を作る。
+       ぼかした接地影も敷いて、上からのソフトな光で置いてある感じにする */
+    function buildSlab(host, thick, layers, lightTop) {
+      const sh = document.createElement('div'); sh.className = 'kv-slab-shadow';
+      sh.style.transform = `translateZ(${-thick - 2}px)`;
+      host.appendChild(sh);
+      for (let i = layers; i >= 1; i--) {
+        const L = document.createElement('div'); L.className = 'kv-slab-layer';
+        const k = i / layers;                     /* 1=最下段 */
+        const light = lightTop ? 1 : 0;
+        L.style.transform = `translateZ(${(-thick * k).toFixed(2)}px)`;
+        L.style.background = light
+          ? `hsl(222 30% ${92 - 14 * k}%)`        /* 白キューブの側面（下ほど陰） */
+          : `hsl(222 34% ${86 - 20 * k}%)`;
+        host.appendChild(L);
+      }
+    }
 
     /* 箱（3種類の作りをカンプどおりに） */
     BOXES.forEach(b => {
@@ -271,11 +309,14 @@ void main(){
       d.className = 'kv-box kv-box--' + b.kind;
       d.style.left = b.x + 'px'; d.style.top = b.y + 'px';
       d.style.width = BOX_S + 'px'; d.style.height = BOX_S + 'px';
+      buildSlab(d, 26, 8, true);
+      const face = document.createElement('div'); face.className = 'kv-face';
+      d.appendChild(face);
       if (b.kind === 'asset') {
-        fetch(b.svg).then(r => r.text()).then(t => { d.innerHTML = t; const s = d.querySelector('svg');
+        fetch(b.svg).then(r => r.text()).then(t => { face.innerHTML = t; const s = face.querySelector('svg');
           if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
       } else if (b.kind === 'empty') {
-        if (b.flip) d.classList.add('is-flip');
+        if (b.flip) face.classList.add('is-flip');
       } else if (b.icon) {
         fetch(b.icon.svg).then(r => r.text()).then(t => {
           const w = document.createElement('div'); w.className = 'kv-box-ico';
@@ -283,7 +324,7 @@ void main(){
           w.style.width = b.icon.w + 'px'; w.style.height = b.icon.h + 'px';
           w.innerHTML = t; const s = w.querySelector('svg');
           if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; }
-          d.appendChild(w);
+          face.appendChild(w);
         });
       } else if (b.lightBlue24) {
         /* カンプの Light-Blue-24 インスタンス: 色バー(グラデ) + ガラスSVG */
@@ -293,7 +334,7 @@ void main(){
         fetch('assets/icon-cal-glass.svg').then(r => r.text()).then(t => { glass.innerHTML = t;
           const s = glass.querySelector('svg'); if (s) { s.style.width = '100%'; s.style.height = '100%'; s.style.display = 'block'; } });
         w.appendChild(glass);
-        d.appendChild(w);
+        face.appendChild(w);
       }
       world.appendChild(d);
     });
@@ -303,6 +344,7 @@ void main(){
     agentBox.style.left = AGENT.x + 'px'; agentBox.style.top = AGENT.y + 'px';
     agentBox.style.width = AGENT.w + 'px'; agentBox.style.height = AGENT.h + 'px';
     agentBox.style.borderRadius = AGENT.r + 'px';
+    buildSlab(agentBox, 30, 8, false);
     const canvas = document.createElement('canvas'); canvas.className = 'kv-agent-cv'; agentBox.appendChild(canvas);
     world.appendChild(agentBox);
     const agent = makeGL(canvas) || fallbackGL(canvas);
@@ -317,31 +359,57 @@ void main(){
 
     let energy = 0, last = performance.now();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
+    /* 検証用: ?freeze=1 で F1 の静止状態（カンプ1枚目と同じ絵）に固定。
+       ?quant=t でグラデ位置量子化の比較モード */
+    const qs = new URLSearchParams(location.search);
+    const FREEZE = qs.get('freeze') === '1';
+    const QUANT = qs.get('quant') === 't' ? 1 : 0;
     function frame(now) {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = now / 1000;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; const time = FREEZE ? 0 : now / 1000;
       dots.forEach(d => {
         d.t += d.speed * dt;
         if (d.t >= 1) { d.t -= 1; energy = Math.min(1.2, energy + 0.4); }
         const pos = polyAt(d.ln.pts, d.t);
-        d.node.setAttribute('cx', pos[0].toFixed(1)); d.node.setAttribute('cy', pos[1].toFixed(1));
-        d.node.setAttribute('opacity', (0.4 + 0.6 * d.t).toFixed(2));
+        d.node.style.transform = `translate3d(${(pos[0] - DOT_R).toFixed(1)}px, ${(pos[1] - DOT_R).toFixed(1)}px, 7px) ${view.billboard}`;
+        d.node.style.opacity = (0.4 + 0.6 * d.t).toFixed(2);
       });
       energy = Math.max(0, energy - dt * 1.4);
       bakeTimeline(time, lutData);
       const s = (root._scale || 1) * dpr;
+      /* ⚠️ Figma の Size=1 ＝「ステージ座標の1px」がディザ1セル。
+         キャンバスのデバイスpx换算では scale×dpr がちょうど1セルになる */
       agent.draw(Math.max(2, Math.round(AGENT.w * s)), Math.max(2, Math.round(AGENT.h * s)),
-        { time, mode: agentMode, energy: clamp01(energy), aspect: AGENT.w / AGENT.h, cell: 2 * dpr, lut: lutData });
+        { time, mode: agentMode, energy: FREEZE ? 0 : clamp01(energy), aspect: AGENT.w / AGENT.h,
+          cell: Math.max(1, Math.round(s)), quant: QUANT, lut: lutData });
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
     return root;
   }
 
-  function setBoxStyle(style) {
-    rootEl.classList.remove('bs-flat', 'bs-solid', 'bs-iso');
-    rootEl.classList.add('bs-' + style);
+  /* ===== ビュー（回転XYZ + 拡大率）=====
+     普通(0,0,0)ならカンプそのまま。傾いている時は白キューブの3D表示に切り替わる */
+  const view = { x: 0, y: 0, z: 0, s: 1, billboard: '' };
+  function setView(v) {
+    Object.assign(view, v);
+    /* ドットをカメラへ向ける = ワールド回転の逆順・逆符号 */
+    view.billboard = (view.x || view.y || view.z)
+      ? `rotateZ(${-view.z}deg) rotateY(${-view.y}deg) rotateX(${-view.x}deg)` : '';
+    const world = rootEl.querySelector('.kv-world');
+    world.style.transform =
+      `rotateX(${view.x}deg) rotateY(${view.y}deg) rotateZ(${view.z}deg) scale(${view.s})`;
+    rootEl.classList.toggle('mode-3d', !!(view.x || view.y || view.z));
+    rootEl.classList.toggle('mode-flat', !(view.x || view.y || view.z));
   }
+  const VIEWS = {
+    flat: { x: 0,  y: 0, z: 0,   s: 1.00 },
+    d3:   { x: 26, y: 0, z: -14, s: 1.06 },   /* 3D ライト（浅い俯瞰） */
+    iso1: { x: 54, y: 0, z: -42, s: 1.26 },   /* アイソメ標準 */
+    iso2: { x: 40, y: 0, z: -28, s: 1.14 },   /* アイソメ浅め */
+    iso3: { x: 62, y: 0, z: -45, s: 1.32 },   /* アイソメ深め */
+    iso4: { x: 54, y: 0, z: 42,  s: 1.26 },   /* アイソメ右流し */
+  };
   function setAgentMode(m) { agentMode = (m === 'halftone') ? 1 : 0; }
 
-  global.KV = { start, setBoxStyle, setAgentMode, STAGE, AGENT };
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, STAGE, AGENT };
 })(window);
