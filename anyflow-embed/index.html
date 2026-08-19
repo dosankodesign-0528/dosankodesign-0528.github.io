@@ -4404,11 +4404,25 @@ function updateDev(pRaw) {
       ? seg(pRaw, Math.min(0.9, params.sections.common.driveWin + 0.02),
                   Math.min(0.98, params.sections.common.driveWin + 0.16), easeIO)
       : finPlay;
-  /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
-  devFin = fin;
+  /* ===== 開発者体験 → 導入事例 の受け渡し (2026-08-19 ヒデさん指定) =====
+     ⚠️ 以前は「コンテンツを消す」と「背景を暗い→明るいに変える」を
+        まったく同じ進み具合(fin)で動かしていた。
+        すると途中で【両方が半透明】になる瞬間ができ、
+        モックも文字も背景も全部が薄くなって重なり、透けて見えていた。
+     いまは順番を分ける: 先にコンテンツを消しきる → そのあと背景を変える。
+        finC  = コンテンツの消え具合   (fin 0 → 0.45 で消しきる)
+        finBg = 背景の切り替わり具合   (fin 0.40 → 1.00 で変わる)
+     0.05 だけ重ねてあるのは、完全に切ると「何も起きない間」ができて
+     カクッと段付きに見えるため。 */
+  const finC  = clamp01(fin / 0.45);
+  const finBg = clamp01((fin - 0.40) / 0.60);
+  /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する。
+     ⚠️ ここは背景側(finBg)を渡すこと。コンテンツ側を渡すと、
+        まだ背景が暗いうちに「導入事例」の文字が出てしまう */
+  devFin = finBg;
 
   devHeading(devEls.h1, in1, o1);
-  devHeading(devEls.h2, in2, fin);
+  devHeading(devEls.h2, in2, finC);
 
   /* ---- 表示する画面 ---- */
   /* 章②の頭でいったん空に戻す (2つ目の見出しが出るまで中身を見せない) */
@@ -4432,7 +4446,7 @@ function updateDev(pRaw) {
   /* ---- モック ---- */
   /* 【2026-08-15】モックは章をまたいでも消さない。中央 → 左へスライドするだけ */
   const cx = mockCenterX(), mk = mockK();
-  const op = Math.min(1, inM1 * 4) * (1 - fin);
+  const op = Math.min(1, inM1 * 4) * (1 - finC);   /* 先に消える側 */
   const sc = (0.82 + 0.18 * inM1) * mk;
   const tx = cx * (1 - mv);
   const ty = (1 - inM1) * 120;
@@ -4495,7 +4509,7 @@ function updateDev(pRaw) {
   });
 
   /* 最後にスクロールで背景がグラデーションで明るい元の背景へ戻る */
-  devBg2.style.opacity = fin.toFixed(3);
+  devBg2.style.opacity = finBg.toFixed(3);   /* あとから変わる側 */
 
   /* ---- 右のリスト: 順にブラーで出る → 以降はホバーで選択が動く ---- */
   /* 【2026-08-15】ディレイをやめて3つ一括で出す */
@@ -4506,7 +4520,7 @@ function updateDev(pRaw) {
     it.classList.toggle('is-on', on);
     /* ⚠️ 以前は毎フレーム少しずつ寄せていたのでホバーの反応が鈍かった。
        いまは CSS の transition に任せて即座に切り替える */
-    it.style.opacity = (k * (on ? 1 : 0.2) * (1 - fin)).toFixed(3);
+    it.style.opacity = (k * (on ? 1 : 0.2) * (1 - finC)).toFixed(3);
     it.style.filter = k < 1 ? `blur(${((1 - k) * 10).toFixed(2)}px)` : '';
   });
 
