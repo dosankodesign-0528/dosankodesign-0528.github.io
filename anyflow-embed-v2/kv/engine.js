@@ -627,6 +627,14 @@ void main(){
       pth.style.stroke = (m === 'grad') ? `url(#kvlg${i})` : '';
     });
   }
+  /* ===== 線の色味（2026-08-20 第2弾）=====
+     ヒデさん指定: 形は 実線(plain)/流れる破線(dash) を残し、色味・ライトの入り具合だけ変える。
+     now=白60%(カンプ) / w95=白くっきり / glow1=白発光弱 / glow2=白発光強 /
+     cyan=水色ライト / navy=淡ネイビー。形と色味は自由に組合せ可 */
+  function setLineColor(m) {
+    ['now', 'w95', 'glow1', 'glow2', 'cyan', 'navy'].forEach(k =>
+      rootEl.classList.toggle('line-c-' + k, k === m));
+  }
   let agentFlowRef = { v: 0 };
   function setAgentMode(m) {
     if (m === 'halftone') { agentMode = 1; return; }
@@ -675,5 +683,5 @@ void main(){
   }
 
   function setParam(k, v) { if (k in PARAMS) PARAMS[k] = +v; }
-  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setLineStyle, setIconColor, setIconAnim, isIconAnimOn: () => icoOn, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setLineStyle, setLineColor, setIconColor, setIconAnim, isIconAnimOn: () => icoOn, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
 })(window);

@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=11">
+<link rel="stylesheet" href="kv.css?v=12">
 </head>
 <body>
 
@@ -66,13 +66,17 @@
     <button data-ia="off">オフ</button>
   </div>
   <div class="rowL">
-    線:
-    <button data-ls="plain" class="on">いま（白）</button>
-    <button data-ls="bold">濃いめ</button>
+    線の形:
+    <button data-ls="plain" class="on">実線（いま）</button>
     <button data-ls="dash">流れる破線</button>
-    <button data-ls="grad">グラデ</button>
-    <button data-ls="pipe">パイプ</button>
-    <button data-ls="glow">通過で光る</button>
+    <span class="sep"></span>
+    色味:
+    <button data-lc="now" class="on">白60%（いま）</button>
+    <button data-lc="w95">白くっきり</button>
+    <button data-lc="glow1">白 発光弱</button>
+    <button data-lc="glow2">白 発光強</button>
+    <button data-lc="cyan">水色ライト</button>
+    <button data-lc="navy">淡ネイビー</button>
   </div>
   <div class="row2">
     角度
@@ -92,7 +96,7 @@
   </div>
 </div>
 
-<script src="engine.js?v=11"></script>
+<script src="engine.js?v=12"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -149,10 +153,14 @@
   });
   buildFlowRow('flow0');
 
-  /* 線の見せ方 5案（2026-08-20 ヒデさん依頼） */
+  /* 線: 形(実線/破線)×色味5案（2026-08-20 第2弾）。自由に組合せ可 */
   document.querySelectorAll('.kv-bar [data-ls]').forEach(b => b.onclick = () => {
     KV.setLineStyle(b.dataset.ls);
     document.querySelectorAll('.kv-bar [data-ls]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  document.querySelectorAll('.kv-bar [data-lc]').forEach(b => b.onclick = () => {
+    KV.setLineColor(b.dataset.lc);
+    document.querySelectorAll('.kv-bar [data-lc]').forEach(x => x.classList.toggle('on', x === b));
   });
 
   /* アイコンのループアニメ オン/オフ（2026-08-19 ヒデさん指定。オフ＝カンプの静止状態） */

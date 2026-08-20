@@ -163,8 +163,9 @@ body {
 .kv-line-track, .kv-line-glow { display: none; }
 /* ① 濃いめ: 白60%→ブルーグレーで地味に強く */
 .line-bold .kv-line { stroke: rgba(100, 116, 139, .6); }
-/* ② 流れる破線: エージェントへ向かってゆっくり流れる（データの流れの隠喩） */
-.line-dash .kv-line { stroke: rgba(120, 144, 180, .65); stroke-dasharray: 7 7; animation: kvdash .9s linear infinite; }
+/* ② 流れる破線: エージェントへ向かってゆっくり流れる（データの流れの隠喩）
+   【2026-08-20 第2弾】色は持たない＝「色味」の選択(line-c-*)がそのまま乗る */
+.line-dash .kv-line { stroke-dasharray: 7 7; animation: kvdash .9s linear infinite; }
 @keyframes kvdash { from { stroke-dashoffset: 14; } to { stroke-dashoffset: 0; } }
 /* ③ ブランドグラデ: 線ごとに 箱=シアン→エージェント=ピンク（stroke はJSが書く） */
 .line-grad .kv-line { stroke-width: 2.5; }
@@ -175,3 +176,14 @@ body {
 .line-glow .kv-line { stroke: rgba(148, 163, 184, .5); }
 .line-glow .kv-line-glow { display: block; stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 4px currentColor); }
 .kv-bar .rowL { display: flex; align-items: center; gap: 8px; }
+
+/* ===== 線の色味 5案（2026-08-20 第2弾: 形は実線/破線のまま色とライトだけ変える） =====
+   ⚠️ 必ずファイル末尾（.line-dash .kv-line より後）。色味が形の色を上書きする設計 */
+.line-c-w95 .kv-line { stroke: rgba(255, 255, 255, .95); }                       /* 白くっきり: 光なし */
+.line-c-glow1 .kv-line { stroke: rgba(255, 255, 255, .9);                         /* 白 発光弱: ほんのり */
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, .75)); }
+.line-c-glow2 .kv-line { stroke: #fff;                                            /* 白 発光強: ライト管 */
+  filter: drop-shadow(0 0 2.5px rgba(255, 255, 255, .9)) drop-shadow(0 0 7px rgba(255, 255, 255, .85)); }
+.line-c-cyan .kv-line { stroke: rgba(150, 225, 255, .85);                         /* 水色ライト: 冷たい光 */
+  filter: drop-shadow(0 0 4px rgba(130, 232, 255, .55)); }
+.line-c-navy .kv-line { stroke: rgba(14, 68, 151, .34); }                         /* 淡ネイビー: 光なしの対案 */
