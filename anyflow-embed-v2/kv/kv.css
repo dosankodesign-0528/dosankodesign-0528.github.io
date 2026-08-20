@@ -157,3 +157,21 @@ body {
 .kv-bar .row4 .fl { display: inline-flex; align-items: center; gap: 5px; }
 .kv-bar .row4 input[type=range] { width: 84px; accent-color: #090909; }
 .kv-bar .row4 em { font-style: normal; min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ===== 線の見せ方 5案（2026-08-20 ヒデさん依頼・比較mock） =====
+   ファイル末尾に置くこと（.mode-3d .kv-line より後＝3Dビューでも案の色が勝つ） */
+.kv-line-track, .kv-line-glow { display: none; }
+/* ① 濃いめ: 白60%→ブルーグレーで地味に強く */
+.line-bold .kv-line { stroke: rgba(100, 116, 139, .6); }
+/* ② 流れる破線: エージェントへ向かってゆっくり流れる（データの流れの隠喩） */
+.line-dash .kv-line { stroke: rgba(120, 144, 180, .65); stroke-dasharray: 7 7; animation: kvdash .9s linear infinite; }
+@keyframes kvdash { from { stroke-dashoffset: 14; } to { stroke-dashoffset: 0; } }
+/* ③ ブランドグラデ: 線ごとに 箱=シアン→エージェント=ピンク（stroke はJSが書く） */
+.line-grad .kv-line { stroke-width: 2.5; }
+/* ④ パイプ: 淡い受け皿の上に白線＝ドットが管の中を通って見える */
+.line-pipe .kv-line-track { display: block; stroke: rgba(203, 213, 229, .55); stroke-width: 7; stroke-linecap: round; }
+.line-pipe .kv-line { stroke: rgba(255, 255, 255, .95); }
+/* ⑤ 通過で光る: 本線は淡く、ドットの後ろの軌道がドット色で発光 */
+.line-glow .kv-line { stroke: rgba(148, 163, 184, .5); }
+.line-glow .kv-line-glow { display: block; stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 4px currentColor); }
+.kv-bar .rowL { display: flex; align-items: center; gap: 8px; }

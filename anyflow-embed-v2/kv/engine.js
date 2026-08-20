@@ -435,9 +435,27 @@ void main(){
     svg.setAttribute('width', STAGE.w); svg.setAttribute('height', STAGE.h);
     world.appendChild(svg);
     const dots = [];
+    /* 【2026-08-20 ヒデさん依頼】線の見せ方5案の比較用。
+       各線は track(パイプ案の受け皿)/main(本線)/glow(通過グロー案) の3層で作り、
+       KV.setLineStyle() のクラス切替でどの層を見せるか決める。
+       グラデ案用に「各線の始点(箱)→終点(エージェント)」のブランド色グラデも defs に用意 */
+    const lineDefs = el('defs', {});
+    svg.appendChild(lineDefs);
+    LINES.forEach((ln, i) => {
+      const p0 = ln.pts[0], pe = ln.pts[ln.pts.length - 1];
+      const g = el('linearGradient', { id: 'kvlg' + i, gradientUnits: 'userSpaceOnUse',
+        x1: p0[0], y1: p0[1], x2: pe[0], y2: pe[1] });
+      g.appendChild(el('stop', { offset: '0', 'stop-color': '#0EBBFF' }));
+      g.appendChild(el('stop', { offset: '1', 'stop-color': '#FF5D97' }));
+      lineDefs.appendChild(g);
+    });
     LINES.forEach((ln, i) => {
       const d = 'M' + ln.pts.map(p => `${p[0]} ${p[1]}`).join(' L');
+      svg.appendChild(el('path', { d, class: 'kv-line-track', fill: 'none' }));
       svg.appendChild(el('path', { d, class: 'kv-line', fill: 'none' }));
+      const glowP = el('path', { d, class: 'kv-line-glow', fill: 'none' });
+      glowP.style.stroke = ln.dot; glowP.style.color = ln.dot;   /* currentColor で発光色も同じに */
+      svg.appendChild(glowP);
       /* 【2026-08-19 ヒデさん指定】ドットは SVG の円だとアイソメで床ごと倒れて
          平べったく見える。div の球体（ラジアルグラデ＋影）にして、
          傾けたビューでは常にカメラへ向ける（ビルボード）。 */
@@ -448,7 +466,7 @@ void main(){
          床ごと倒れないので楕円に潰れず、カンプの見た目のまま立体空間に馴染む */
       c.style.setProperty('--dc', ln.dot);
       world.appendChild(c);
-      dots.push({ ln, node: c, t: (i * 0.37) % 1, speed: 0.14 * (0.9 + 0.25 * (i % 3) / 2) });
+      dots.push({ ln, node: c, t: (i * 0.37) % 1, speed: 0.14 * (0.9 + 0.25 * (i % 3) / 2), len: polyLen(ln.pts), glow: glowP });
     });
 
     /* 白キューブの厚み（Blender風）。z=0 が天面、下へ layers 枚重ねて側面を作る。
@@ -552,6 +570,14 @@ void main(){
         /* 【2026-08-19 ヒデさん指定】道中は完全不透明（下の線が透けない）。
            フェードは出はじめと取り込まれる端だけ */
         d.node.style.opacity = (fadeIn * fadeOut).toFixed(2);
+        /* 線スタイル「通過で光る」: ドットの後ろ34pxぶんの軌道をドット色で光らせる。
+           dasharray [光る長さ, 線全長+α] で光る区間は常に1つ。offset=G-s で位置追従 */
+        if (lineStyle === 'glow') {
+          const G = 34, sAlong = d.t * d.len;
+          d.glow.style.strokeDasharray = G + ' ' + Math.ceil(d.len + G);
+          d.glow.style.strokeDashoffset = (G - sAlong).toFixed(1);
+          d.glow.style.opacity = d.node.style.opacity;
+        }
       });
       energy = Math.max(0, energy - dt * 1.4);
       const s = (root._scale || 1) * dpr;
@@ -588,6 +614,19 @@ void main(){
     iso3: { x: 62, y: 0, z: -45, s: 1.32 },   /* アイソメ深め */
     iso4: { x: 54, y: 0, z: 42,  s: 1.26 },   /* アイソメ右流し */
   };
+  /* ===== 線の見せ方（2026-08-20 ヒデさん依頼の5案比較）=====
+     plain=いま(カンプの白60%) / bold=濃いめ / dash=流れる破線 /
+     grad=ブランドグラデ / pipe=パイプ / glow=通過で光る */
+  let lineStyle = 'plain';
+  function setLineStyle(m) {
+    lineStyle = m;
+    ['plain', 'bold', 'dash', 'grad', 'pipe', 'glow'].forEach(k =>
+      rootEl.classList.toggle('line-' + k, k === m));
+    /* グラデ案だけ各線に個別の stroke(始点→終点グラデ) を書く。他はCSSに任せる */
+    rootEl.querySelectorAll('.kv-line').forEach((pth, i) => {
+      pth.style.stroke = (m === 'grad') ? `url(#kvlg${i})` : '';
+    });
+  }
   let agentFlowRef = { v: 0 };
   function setAgentMode(m) {
     if (m === 'halftone') { agentMode = 1; return; }
@@ -636,5 +675,5 @@ void main(){
   }
 
   function setParam(k, v) { if (k in PARAMS) PARAMS[k] = +v; }
-  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setIconColor, setIconAnim, isIconAnimOn: () => icoOn, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
+  global.KV = { start, setView, getView: () => ({ ...view }), VIEWS, setAgentMode, setLineStyle, setIconColor, setIconAnim, isIconAnimOn: () => icoOn, setParam, getParams: () => ({ ...PARAMS }), STAGE, AGENT };
 })(window);
