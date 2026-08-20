@@ -7,7 +7,7 @@
 <title>キービジュアル V2 — カンプ忠実版</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="kv.css?v=9">
+<link rel="stylesheet" href="kv.css?v=10">
 </head>
 <body>
 
@@ -83,7 +83,7 @@
   </div>
 </div>
 
-<script src="engine.js?v=9"></script>
+<script src="engine.js?v=10"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -106,14 +106,18 @@
   }));
   /* ===== フローごとの調整スライダー（2026-08-19 ヒデさん指定）=====
      選んだフローに関係する項目だけを row4 に出す */
+  /* DITHER = ディザ系フロー共通の2本（2026-08-20 ガタつきレポート対応）
+     ドットのなじみ: ドットのフェード点灯幅。0に近いほどカンプの2値(ガタつきも戻る)
+     網点の角度: 0=カンプどおり。15°前後で「行単位の一斉点滅」が個別セルに散る */
+  const DITHER = [['ditherAA','ドットのなじみ',0.01,0.4,0.01],['gridAngle','網点の角度',0,45,1]];
   const FLOW_SLIDERS = {
-    flow0: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05]],
+    flow0: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05]].concat(DITHER),
     flow1: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
-            ['mixAmp','混ざり強さ',0,1.2,0.05],['mixSpeed','混ざり速さ',0.01,0.3,0.01]],
-    flow2: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]],
+            ['mixAmp','混ざり強さ',0,1.2,0.05],['mixSpeed','混ざり速さ',0.01,0.3,0.01]].concat(DITHER),
+    flow2: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]].concat(DITHER),
     flow3: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
-            ['swayAmp','揺れ幅',0,1.0,0.05],['swaySpeed','揺れ速さ',0.02,0.5,0.01]],
-    flow4: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]],
+            ['swayAmp','揺れ幅',0,1.0,0.05],['swaySpeed','揺れ速さ',0.02,0.5,0.01]].concat(DITHER),
+    flow4: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]].concat(DITHER),
     halftone: [['htSpeed','波の速さ',0.05,0.9,0.05],['htSwell','うねり',0,0.9,0.05]],
   };
   function buildFlowRow(mode) {

@@ -245,6 +245,7 @@ uniform float uCell;
 uniform vec4  uPA;      /* x=速度 y=帯の広がり z=混ざり強さ w=混ざり速さ */
 uniform vec4  uPB;      /* x=揺れ幅(rad) y=揺れ速さ z=放射の速度 w=放射の密度 */
 uniform vec2  uPC;      /* x=ハーフトーン波速 y=うねり */
+uniform vec2  uPD;      /* x=ドットのなじみ(AA幅) y=網点の角度(度) */
 uniform sampler2D uLUT; /* 512×2: row0=対角の循環帯 / row1=放射の循環帯 */
 
 /* Figma のレイヤー効果 実測: Bayer16×16 / Size1 / Levels3 / 明るさ104% / コントラスト1.38 */
@@ -284,29 +285,26 @@ void main(){
 
   vec3 col;
   if (uMode < 0.5) {
-    float e = uEnergy, tm = uTime;
+    float tm = uTime;
     float speed = uPA.x, scale = uPA.y;
     vec2 DIR = vec2(-0.75512, 0.65559);      /* カンプ 229.049° */
     float L = 2.0*hs.x*0.75512 + 2.0*hs.y*0.65559;
 
-    /* ===== ガクつき対策の本体 =====
-       以前はディザの網点がキャンバスに固定で、色だけが下を流れていた。
-       すると点が「その場でパタパタ切り替わる」ように見えてガタつく。
-       網点そのものを流れと同じ速度で滑らせる（印刷されたテクスチャごと動く）と滑らか。
-       shift = サンプル空間の移動量を、スクリーンpxに換算したもの。 */
+    /* ===== ガタつき対策（2026-08-20 フレーム解析レポート反映）=====
+       ・位相は performance.now 由来の時刻だけで決める完全単調。
+         以前あった「ドット到着エネルギーで位相を-0.04*eズラす」演出は、
+         不規則な逆行(実測35%)とランダムウォーク的な揺れの主因だったので廃止。
+       ・網点セルへの量子化(セル中心での色再計算)も廃止。色はピクセル単位の連続値。
+       ・「動きが絵に出ない」問題は下の AA付き量子化で解決する。 */
     float row = 0.25;
     float sample_;
-    vec2 shiftPx = vec2(0.0);
-
     if (uFlow < 0.5) {          /* ① 一方向 */
       float t = 0.5 + dot(vec2(P0.x, -P0.y), DIR)/L;
       sample_ = t*scale + tm*speed;
-      shiftPx = vec2(DIR.x, -DIR.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
-    } else if (uFlow < 1.5) {   /* ② 混ざり合い */
+    } else if (uFlow < 1.5) {   /* ② 混ざり合い（ノイズ項はこのモードの意図的表現） */
       float t = 0.5 + dot(vec2(P0.x, -P0.y), DIR)/L;
       float w = vnoise(vec2(P0.x, -P0.y)*1.6 + tm*uPA.w) - 0.5;
       sample_ = t*scale + tm*speed + w*uPA.z;
-      shiftPx = vec2(DIR.x, -DIR.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
     } else if (uFlow < 2.5) {   /* ③ 端→中央（カンプ15332） */
       row = 0.75;
       float rr = length(vec2(P0.x/uAspect, P0.y)) / 1.42;
@@ -316,39 +314,32 @@ void main(){
       vec2 D2 = vec2(DIR.x*cos(ang) - DIR.y*sin(ang), DIR.x*sin(ang) + DIR.y*cos(ang));
       float t2 = 0.5 + dot(vec2(P0.x, -P0.y), D2)/L;
       sample_ = t2*scale + tm*speed;
-      shiftPx = vec2(D2.x, -D2.y) * (-tm*speed*L/scale) * (uRes.y*0.5);
     } else {                    /* ⑤ 中央→端 */
       row = 0.75;
       float rr = length(vec2(P0.x/uAspect, P0.y)) / 1.42;
       sample_ = rr*uPB.w - tm*uPB.z;
     }
-    sample_ -= 0.04*e;
 
-    /* 網点は shiftPx ぶんズラした座標で刻む＝流れと一緒に滑る */
-    vec2 cell = floor((fc - shiftPx)/uCell);
-    float dith = bayer16(cell);
-    /* サンプル位置もセル中心に合わせて量子化（網点と色が同じ格子で動く） */
-    vec2 fcc = (cell + 0.5)*uCell + shiftPx;
-    vec2 Pq = (fcc*2.0 - uRes)/uRes.y;
-    if (uFlow < 0.5 || (uFlow >= 0.5 && uFlow < 1.5) || (uFlow >= 2.5 && uFlow < 3.5)) {
-      /* 方向系: 量子化した座標で計算し直す（色と網点の格子を一致させる） */
-      vec2 DU = DIR;
-      if (uFlow >= 2.5 && uFlow < 3.5) {
-        float ang = sin(tm*uPB.y)*uPB.x;
-        DU = vec2(DIR.x*cos(ang) - DIR.y*sin(ang), DIR.x*sin(ang) + DIR.y*cos(ang));
-      }
-      float tq = 0.5 + dot(vec2(Pq.x, -Pq.y), DU)/L;
-      sample_ = tq*scale + tm*speed - 0.04*e;
-      if (uFlow >= 0.5 && uFlow < 1.5) {
-        float w = vnoise(vec2(Pq.x, -Pq.y)*1.6 + tm*uPA.w) - 0.5;
-        sample_ += w*uPA.z;
-      }
-    }
+    /* 網点は画面固定。uPD.y で格子だけ回転できる（0°=カンプどおり軸平行。
+       レポート指摘: グラデ45°×格子0°は行単位で一斉点滅する最悪の組合せ。
+       15°前後にずらすと切替が個別セルに分散する） */
+    float ga = radians(uPD.y);
+    mat2 GR = mat2(cos(ga), -sin(ga), sin(ga), cos(ga));
+    float dith = bayer16(floor(GR*fc/uCell));
 
     vec3 src = texture2D(uLUT, vec2(fract(sample_), row)).rgb;
     src = clamp(src * 1.04, 0.0, 1.0);
     src = clamp((src - 0.5) * 1.38 + 0.5, 0.0, 1.0);
-    col = clamp(floor(src * 2.0 + dith) / 2.0, 0.0, 1.0);   /* Levels 3 */
+
+    /* ===== AA付き Levels3 量子化（レポート修正案Aの核心）=====
+       旧: floor(x)/2 の完全二値 → 1フレーム0.2pxの進みが7フレームに1回の
+           「ドット一斉点灯」に丸められ、体感8.7Hzだった。
+       新: 段が上がる手前 aa ぶんを smoothstep で滑らかに繋ぐ。
+           各ドットが数フレームかけてフェード点灯するので、60fpsぶん全部絵に出る。
+       aa(uPD.x)はパネルの「ドットのなじみ」。小さくするほどカンプの2値に近づく */
+    vec3 xq = src * 2.0 + vec3(dith);
+    float aa = clamp(uPD.x, 0.005, 0.6);
+    col = clamp((floor(xq) + smoothstep(vec3(1.0 - aa), vec3(1.0), fract(xq))) / 2.0, 0.0, 1.0);
   } else {
     /* V1.0 ハーフトーン（ディザ無し・滑らか） */
     vec2 pc = vec2(P0.x, -P0.y);
@@ -384,7 +375,7 @@ void main(){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const U = n => gl.getUniformLocation(p, n);
-    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uFlow: U('uFlow'), uPA: U('uPA'), uPB: U('uPB'), uPC: U('uPC'), uLUT: U('uLUT') };
+    const u = { uRes: U('uRes'), uTime: U('uTime'), uMode: U('uMode'), uEnergy: U('uEnergy'), uAspect: U('uAspect'), uCell: U('uCell'), uFlow: U('uFlow'), uPA: U('uPA'), uPB: U('uPB'), uPC: U('uPC'), uPD: U('uPD'), uLUT: U('uLUT') };
     gl.uniform1i(u.uLUT, 0);
     /* LUT は静的（循環グラデ2本）。ここで1回だけ焼き込む */
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, LUT_N, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, lutData);
@@ -398,6 +389,7 @@ void main(){
         gl.uniform4f(u.uPA, PARAMS.speed, PARAMS.scale, PARAMS.mixAmp, PARAMS.mixSpeed);
         gl.uniform4f(u.uPB, PARAMS.swayAmp, PARAMS.swaySpeed, PARAMS.radSpeed, PARAMS.radScale);
         gl.uniform2f(u.uPC, PARAMS.htSpeed, PARAMS.htSwell);
+        gl.uniform2f(u.uPD, PARAMS.ditherAA, PARAMS.gridAngle);
         gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
       }
@@ -426,6 +418,8 @@ void main(){
     radScale: 0.80,   /* 同: リングの密度 */
     htSpeed: 0.30,    /* ハーフトーン: 波の速さ */
     htSwell: 0.28,    /* ハーフトーン: うねり */
+    ditherAA: 0.06,   /* ドットのなじみ(AA幅)。0に近いほどカンプの2値に近い(=ガタつきも戻る) */
+    gridAngle: 0,     /* 網点の角度(度)。0=カンプどおり。15前後で行単位の一斉点滅が散る */
   };
   function start(cfg) {
     cfg = cfg || {};
