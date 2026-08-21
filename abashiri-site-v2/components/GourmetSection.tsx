@@ -144,8 +144,8 @@ export default function GourmetSection() {
           <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-ink">
             もっと見る
           </span>
-          {/* カンプ 15412:21447 のシェブロン（白線0.5）。黒地では brightness-0 で黒に落とす */}
-          <img src="/img/icon-view-more.svg" alt="" className="size-[18px] brightness-0" />
+          {/* 黒シェブロン・線幅1.0（2026-08-22 ヒデさん指定。白版は線幅0.5のまま） */}
+          <img src="/img/icon-view-more-black.svg" alt="" className="size-[18px]" />
         </a>
       </motion.div>
 
