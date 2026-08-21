@@ -835,7 +835,14 @@ export default function ExperienceFlow({
         <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} />
       )}
 
-      <GlobalNav theme="light" />
+      {/* ナビは常に最前面（動画再生中の操作パネルが z-30 の全画面レイヤーなので、
+          その上に載せないとメニューが押せない。2026-08-22 ヒデさん指摘）。
+          TopPage と同じ「pointer-events-none の器 ＋ 中身だけ auto」方式 */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-40">
+        <div className="pointer-events-auto">
+          <GlobalNav theme="light" />
+        </div>
+      </div>
     </div>
   );
 }
