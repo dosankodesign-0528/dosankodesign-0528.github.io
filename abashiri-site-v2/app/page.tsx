@@ -8,6 +8,7 @@ import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
 import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
+import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 
 export default function Home() {
   /* 右下の調整パネルからもらう値。位置・大きさは CSS 変数側で直接反映されるので、
@@ -21,6 +22,7 @@ export default function Home() {
     face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
     kvExit: DEFAULT_KV_EXIT,
+    hero: DEFAULT_HERO_ENTER,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -46,7 +48,14 @@ export default function Home() {
       >
         {/* 決定版：吹き出し→な〜んにもない→たまらない を順にブラー
             →ボタン→イラスト（ブラー後にクルンと一回転） */}
-        <TopPage intro={2} blurSeq waitConsent spotTune={tune.spot} kvExit={tune.kvExit} />
+        <TopPage
+          intro={2}
+          blurSeq
+          waitConsent
+          spotTune={tune.spot}
+          kvExit={tune.kvExit}
+          heroEnter={tune.hero}
+        />
       </Stage>
 
       {/* ⚠️ 公開前に外す：確認用の調整パネル（右下・たたんだ状態） */}

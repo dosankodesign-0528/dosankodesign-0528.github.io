@@ -29,6 +29,7 @@ import {
   KV_EXIT_PATTERNS,
   type KvExit,
 } from "./kvExitConfig";
+import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -43,6 +44,8 @@ export type TopTuneValues = {
   spot: SpotTransition;
   /** 作字の消え方（kvExitConfig.ts） */
   kvExit: KvExit;
+  /** 作字の登場のしかた（heroEnterConfig.ts） */
+  hero: HeroEnter;
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -103,6 +106,7 @@ type Params = {
   sparkle: { period: number };
   spot: SpotTransition;
   kvExit: KvExit;
+  hero: HeroEnter;
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -141,6 +145,7 @@ export default function TopTunePanel({
       sparkle: { period: 1.2 },
       spot: { ...DEFAULT_SPOT_TRANSITION },
       kvExit: { ...DEFAULT_KV_EXIT },
+      hero: { ...DEFAULT_HERO_ENTER },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -173,6 +178,7 @@ export default function TopTunePanel({
         face: { ...params.face },
         spot: { ...params.spot },
         kvExit: { ...params.kvExit },
+        hero: { ...params.hero },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -202,8 +208,12 @@ export default function TopTunePanel({
            v13: 切替はブラーで確定しピルを撤去。余韻＝白フェードの長さに（2026-08-22）
            v14: グルメが5場面目（場面ごとブラー切替）になり、白フェードを廃止（2026-08-22）
            v15: 作字の「スクロールでの消え方」を追加（ゆったり系5案＋距離・ブラー・
-                縮小・縦移動・ゆったり度、2026-08-21 ヒデさん依頼） */
-        version: 15,
+                縮小・縦移動・ゆったり度、2026-08-21 ヒデさん依頼）
+           v16: 作字の「登場のしかた」を追加（一括出現・ブラー弱め9px・
+                たまらないまでの間、2026-08-21 ヒデさん指示）
+           v17: 人物イラストの登場を「短いスパン＋バウンス」5案に刷新
+                （案番号の意味が変わったため。2026-08-21 ヒデさん指示） */
+        version: 17,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -231,6 +241,37 @@ export default function TopTunePanel({
           {
             cat: "🏠 トップページ",
             items: [
+              /* ── 作字の登場（2026-08-21 ヒデさん指示：一括出現・ブラー弱め） ── */
+              { sub: "作字｜登場のしかた" },
+              {
+                note: "吹き出しと「な〜んにもない」が一括でブラー出現 → しっぽが伸びる → 「たまらない」。値を変えると、その場で登場をもう一度再生します。",
+              },
+              {
+                slider: "出だしのブラーの強さ",
+                path: "hero.blur",
+                min: 0,
+                max: 30,
+                step: 1,
+                fmt: "px",
+                hint: "以前は16px。弱め(9px)が今の既定。0でブラーなしのフェードだけ。",
+              },
+              {
+                slider: "出るのにかける時間",
+                path: "hero.duration",
+                min: 300,
+                max: 2500,
+                step: 50,
+                fmt: "ms",
+              },
+              {
+                slider: "たまらないまでの間",
+                path: "hero.tamaGap",
+                min: 0,
+                max: 1500,
+                step: 50,
+                fmt: "ms",
+                hint: "しっぽが伸びきってから「たまらない」が出るまでの間。",
+              },
               /* ── 作字の消え方（2026-08-21 ヒデさん依頼：ゆったり系5案） ── */
               { sub: "作字｜スクロールでの消え方" },
               {
@@ -571,16 +612,10 @@ export default function TopTunePanel({
                 hint: "このぶんスクロールするごとに次の写真へ。982でちょうど1画面ぶんです。",
               },
               { sub: "キービジュアル → ぼーっとスポット（入り）" },
-              { sub: "① 作字", deep: true },
               {
-                slider: "消えきる位置",
-                path: "spot.kvOut",
-                min: 100,
-                max: 1200,
-                step: 10,
-                fmt: "px",
+                note: "作字の消え方は上の「作字｜スクロールでの消え方」にまとめました（同じ項目が2つあったため統合。2026-08-21）。",
               },
-              { sub: "② 背景写真", deep: true },
+              { sub: "① 背景写真", deep: true },
               {
                 slider: "ボケ始める位置",
                 path: "spot.bgFrom",
@@ -605,7 +640,7 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "③ スポット写真", deep: true },
+              { sub: "② スポット写真", deep: true },
               {
                 slider: "出はじめる位置",
                 path: "spot.spotFrom",
@@ -631,7 +666,7 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "④ グルメ場面のあとの余白", deep: true },
+              { sub: "③ グルメ場面のあとの余白", deep: true },
               {
                 slider: "ページ末尾までの長さ",
                 path: "spot.hold",
@@ -741,7 +776,8 @@ export default function TopTunePanel({
           /* 登場のしかた（案切替・たまらねーの披露タイミング）を触ったら、
              Anyflow のパネルと同じく、その場で登場アニメを再生し直して見せる */
           const p = info?.path || "";
-          if (p.startsWith("anim.") || p.startsWith("intro.")) onReplay?.();
+          if (p.startsWith("anim.") || p.startsWith("intro.") || p.startsWith("hero."))
+            onReplay?.();
         },
       });
       /* 保存されていた値を最初の1回だけ反映する */

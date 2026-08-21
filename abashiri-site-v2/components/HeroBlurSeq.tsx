@@ -416,6 +416,7 @@ export default function HeroBlurSeq({
   gate = false,
   bubbleAnim = 0,
   bubbleTune = DEFAULT_BUBBLE,
+  tamaGap = 100,
   onScheduled,
 }: {
   timing?: HeroTiming;
@@ -425,6 +426,8 @@ export default function HeroBlurSeq({
   bubbleAnim?: number;
   /** 吹き出しの平滑化・ぷにぷに呼吸のパラメーター（bubbleConfig.ts） */
   bubbleTune?: BubbleTune;
+  /** しっぽが伸びきってから「たまらない」が出るまでの間(ms)。heroEnterConfig.ts */
+  tamaGap?: number;
   /** 全体の完了予定時刻(ms)を通知（ボタン・イラスト出現の起点） */
   onScheduled?: (endMs: number) => void;
 }) {
@@ -493,9 +496,16 @@ export default function HeroBlurSeq({
         });
       };
 
-      /* 1. 吹き出し（しっぽは引っ込んだ丸い形で出てくる） */
+      /* 1. 吹き出し＋「な〜んにもない」を一括でブラー出現
+         （2026-08-21 ヒデさん指示。以前は吹き出しが先、文字が650ms後だった）
+         しっぽは引っ込んだ丸い形のまま出てくる */
       const t0 = timing.start;
-      blurIn(bubble ? [bubble] : [], t0, 900, 16);
+      blurIn(
+        [...(bubble ? [bubble] : []), ...upper.map((i) => i.p)],
+        t0,
+        timing.kotoba.duration,
+        timing.kotoba.blur
+      );
 
       /* 1.5 しっぽがじわーっと下へ伸びる（＝しゃべり出す） */
       let tailEndAt = t0 + 950;
@@ -524,16 +534,8 @@ export default function HeroBlurSeq({
           if (!aborted) startBubbleAnim(bubble, svg, bubbleAnim, bubbleTune);
         }, tailEndAt);
       }
-      /* 2. な〜んにもない */
-      const t1 = t0 + 650;
-      blurIn(
-        upper.map((i) => i.p),
-        t1,
-        timing.kotoba.duration,
-        timing.kotoba.blur
-      );
-      /* 3. たまらない（あしらい込み） */
-      const t2 = t1 + Math.max(400, timing.kotoba.duration * 0.55);
+      /* 2. たまらない（あしらい込み）。しっぽが伸びきってから、間を置いて出る */
+      const t2 = tailEndAt + tamaGap;
       blurIn(
         lower.map((i) => i.p),
         t2,

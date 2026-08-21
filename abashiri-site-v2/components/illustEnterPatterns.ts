@@ -28,87 +28,129 @@ export type IllustEnterPattern = {
   swingAfter: boolean;
 };
 
+/* 2026-08-21 ヒデさん指示で刷新：
+   「枠外から画面へ入ってくるスパンをもっと短く。そこにバウンスを乗せる」
+   → 全案とも移動そのものは速く（0.5〜0.75秒）、性格の違いは着地後の弾み方で出す */
 export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
   {
-    key: "pyokon",
-    label: "案1  ぴょこん（採用中の標準）",
-    note: "下から跳ね上がって、行き過ぎてから収まる。今までの動きそのまま",
+    key: "quick-hitohazumi",
+    label: "案1  スッ→ひと弾み",
+    note: "短い時間でスッと入って、着地でひとつだけ軽く弾む。いちばん素直",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
       opacity: 1,
       filter: "blur(0px)",
       x: 0,
-      y: [240, -18, 6, 0],
+      y: [240, -20, 5, 0],
       rotate: [0, -2, 1, 0],
     },
     transition: {
-      duration: 1.0,
-      times: [0, 0.62, 0.82, 1],
+      duration: 0.55,
+      times: [0, 0.55, 0.8, 1],
       ease: ["easeOut", "easeInOut", "easeOut"],
     },
     swingAfter: true,
   },
   {
-    key: "pyokon-sharp",
-    label: "案2  ビュンッ→ピタッ",
-    note: "速く大きく飛び出して、一気に着地。いちばんキレのあるメリハリ",
+    key: "quick-double",
+    label: "案2  ビュンッ→2度弾み",
+    note: "速く飛び出して、大→小の2回バウンド。リズム感と元気さ",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
       opacity: 1,
       filter: "blur(0px)",
       x: 0,
-      y: [240, -34, 4, 0],
-      rotate: [0, -5, 2, 0],
+      y: [240, -28, 8, -10, 3, 0],
+      rotate: [0, -4, 2, -2, 1, 0],
     },
     transition: {
-      duration: 0.66,
-      times: [0, 0.48, 0.76, 1],
-      ease: ["easeOut", "easeInOut", "easeOut"],
-    },
-    swingAfter: true,
-  },
-  {
-    key: "pyokon-tame",
-    label: "案3  タメて→ドンッ",
-    note: "一瞬タメてから爆発的に跳ぶ。高く行き過ぎて、弾んで収まる",
-    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      x: 0,
-      y: [240, 240, -30, 8, -4, 0],
-      rotate: [0, 0, -4, 2, -1, 0],
-    },
-    transition: {
-      duration: 1.0,
-      times: [0, 0.18, 0.5, 0.72, 0.86, 1],
-      ease: ["linear", "easeOut", "easeInOut", "easeInOut", "easeOut"],
-    },
-    swingAfter: true,
-  },
-  {
-    key: "pyokon-dandan",
-    label: "案4  ダンダンッと2度弾み",
-    note: "強く1回・小さく1回、リズムよく2度弾んで止まる。歯切れ重視",
-    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      x: 0,
-      y: [240, -26, 6, -12, 2, 0],
-      rotate: [0, -3, 1.5, -2, 1, 0],
-    },
-    transition: {
-      duration: 0.9,
-      times: [0, 0.4, 0.6, 0.78, 0.92, 1],
+      duration: 0.65,
+      times: [0, 0.38, 0.58, 0.76, 0.9, 1],
       ease: ["easeOut", "easeIn", "easeOut", "easeIn", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "quick-purun",
+    label: "案3  ポンッ→プルン",
+    note: "着地の瞬間にからだが少しつぶれて戻る（ゼリー感）。かわいさ重視",
+    initial: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: 240,
+      rotate: 0,
+      scaleX: 1,
+      scaleY: 1,
+      originY: 1,
+    },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      originY: 1,
+      y: [240, -18, 0, 0, 0],
+      scaleY: [1, 1.05, 0.9, 1.04, 1],
+      scaleX: [1, 0.97, 1.07, 0.98, 1],
+      rotate: 0,
+    },
+    transition: {
+      duration: 0.6,
+      times: [0, 0.45, 0.66, 0.85, 1],
+      ease: ["easeOut", "easeIn", "easeOut", "easeInOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "quick-sutatto",
+    label: "案4  スタッ→小刻み",
+    note: "最速でスタッと着地して、ごく小さく2回だけ震える。キレ重視",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, -8, 0, -4, 0, 0],
+      rotate: [0, -1, 0.5, -0.5, 0, 0],
+    },
+    transition: {
+      duration: 0.5,
+      times: [0, 0.5, 0.66, 0.8, 0.92, 1],
+      ease: ["easeOut", "easeIn", "easeOut", "easeIn", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "quick-boyon",
+    label: "案5  高めジャンプ→ボヨンボヨン",
+    note: "高く飛んで、だんだん小さく3回弾んで収まる。いちばん遊び心あり",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, -40, 10, -16, 4, -6, 2, 0],
+      rotate: [0, -5, 2, -3, 1.5, -1, 0.5, 0],
+    },
+    transition: {
+      duration: 0.75,
+      times: [0, 0.3, 0.46, 0.6, 0.72, 0.84, 0.93, 1],
+      ease: [
+        "easeOut",
+        "easeIn",
+        "easeOut",
+        "easeIn",
+        "easeOut",
+        "easeIn",
+        "easeOut",
+      ],
     },
     swingAfter: true,
   },
 ];
 
-/* 採用案：案1「ぴょこん（標準）」（2026-08-21 ヒデさん確定）。
-   案2〜4 はメリハリ強めのバリエーション。乗り換えるならここを差し替える */
+/* 既定は案1「スッ→ひと弾み」（旧・ぴょこん標準の短縮版）。
+   採用が決まったらここを差し替える */
 export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[0];
 
 export function findIllustEnter(key?: string | number | null): IllustEnterPattern {

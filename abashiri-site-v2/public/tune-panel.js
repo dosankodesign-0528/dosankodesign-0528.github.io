@@ -861,9 +861,10 @@
     box.className = 'tp-btns';
     box.style.marginTop = '0';
 
+    /* 「📥 読み込み」は 2026-08-21 ヒデさん指示で撤去（使わないため）。
+       importPrompt() 自体は残してあるので、必要なら footer で足せる */
     var defs = [
       { label: '📋 設定をコピー', onClick: function () { self.copy(); } },
-      { label: '📥 読み込み', onClick: function () { self.importPrompt(); } },
       { label: '↺ 初期値', onClick: function () { self.reset(); } }
     ];
     /* 保存ボタン方式（既定）：先頭に「💾 保存」。未保存の変更があるとピンクになる */

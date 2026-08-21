@@ -1,7 +1,7 @@
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { preload } from "react-dom";
 import Link from "next/link";
 import {
@@ -175,6 +175,7 @@ import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { mergeSpotTransition, type SpotTransition } from "./spotTransition";
 import { mergeKvExit, type KvExit } from "./kvExitConfig";
+import { mergeHeroEnter, type HeroEnter } from "./heroEnterConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -202,6 +203,7 @@ export default function TopPage({
   layout,
   spotTune,
   kvExit,
+  heroEnter,
 }: {
   intro?: number;
   kv?: number;
@@ -243,6 +245,8 @@ export default function TopPage({
   spotTune?: Partial<SpotTransition> | null;
   /** 作字の「消え方」（kvExitConfig.ts。案5つ＋細かい数値を調整パネルから） */
   kvExit?: Partial<KvExit> | null;
+  /** 作字の「登場のしかた」（heroEnterConfig.ts。ブラーの強さ・速さ・たまらないまでの間） */
+  heroEnter?: Partial<HeroEnter> | null;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -298,15 +302,25 @@ export default function TopPage({
      スクロール量に応じてその場で変化しながら消え、
      下からコンテンツがすべり込んで交代する */
   const { scrollY } = useScroll({ container: scrollerRef });
-  /* 作字が消えきるまでの距離。
-     トップページは spotTransition.ts 側で「作字 → 背景 → スポット → 固定」の
-     順番ごと管理しているので、そこの kvOut を使う。
+  /* 作字が消えきるまでの距離は kvExitConfig（パネルの「消え方」）が持つ。
+     旧 spotTransition.kvOut は 2026-08-21 に統合済み。
      /mock/kv/[n] のようにパターンを見比べる時だけ、そのパターンの range を使う */
   /* 本番(kv=1)は kvExitConfig の「消え方」で計算する。
      ease>1 だと「最初はその場にとどまり、あとからすっと消える」ゆったり曲線になる。
      /mock/kv/[n] の比較パターンだけ従来の kvPatterns の値のまま */
   const E = mergeKvExit(kvExit);
   const useExit = kv === 1;
+  /* 作字の登場（ブラー弱め・一括出現）。timing の kotoba へ上書きして HeroBlurSeq へ渡す。
+     ⚠️ useMemo で識別を保つ（毎レンダー新オブジェクトだと HeroBlurSeq の
+        effect が走り直して、パネルの無関係な操作でも登場が再生されてしまう） */
+  const HE = mergeHeroEnter(heroEnter);
+  const timing2: HeroTiming = useMemo(
+    () => ({
+      ...timing,
+      kotoba: { ...timing.kotoba, blur: HE.blur, duration: HE.duration },
+    }),
+    [timing, HE.blur, HE.duration]
+  );
   const kvRange = useExit ? E.range : kp.range;
   const exitT = (v: number) =>
     Math.pow(Math.min(1, Math.max(0, v / Math.max(1, E.range))), E.ease);
@@ -631,17 +645,21 @@ export default function TopPage({
                 src="/img/text-kanko-site.svg"
                 alt="網走市観光サイト"
                 /* 出るタイミングは吹き出しと同じ（duration 900ms / blur 16px も揃えてある） */
-                className={`absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
-                  animated && !kankoIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
-                }`}
+                className="absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px] transition-all ease-standard"
+                style={{
+                  transitionDuration: `${HE.duration}ms`,
+                  opacity: animated && !kankoIn ? 0 : 1,
+                  filter: animated && !kankoIn ? `blur(${HE.blur}px)` : "blur(0px)",
+                }}
               />
               <div className="absolute left-[-28px] top-[13.1px]">
               {blurSeq ? (
                 <HeroBlurSeq
-                  timing={timing}
+                  timing={timing2}
                   gate={waitConsent}
                   bubbleAnim={bubbleAnim}
                   bubbleTune={bubbleTune}
+                  tamaGap={HE.tamaGap}
                   onScheduled={handleScheduled}
                 />
               ) : combo ? (

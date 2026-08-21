@@ -8,6 +8,7 @@ import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
 import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
+import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
@@ -23,6 +24,7 @@ export default function ExperiencePage() {
     face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
     kvExit: DEFAULT_KV_EXIT,
+    hero: DEFAULT_HERO_ENTER,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
