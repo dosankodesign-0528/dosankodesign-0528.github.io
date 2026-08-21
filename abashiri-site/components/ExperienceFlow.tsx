@@ -170,7 +170,9 @@ function GlassButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-[220px] cursor-pointer items-center justify-center rounded-full border-2 border-white bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white backdrop-blur-65 transition-transform hover:scale-105"
+      /* v1.2: トップの「ぼーっとしてみる」とスタイル統一（ヒデさん指示 2026-08-21）。
+         白2px枠 → 白40%・1pxの内側リング。地 white/10・blur65 は共通 */
+      className="flex w-[220px] cursor-pointer items-center justify-center rounded-full bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white ring-1 ring-inset ring-white/40 backdrop-blur-65 transition-transform hover:scale-105"
     >
       {children}
     </button>
@@ -230,7 +232,8 @@ function SliderButton({
             ? "translate(calc(-50% - 389px), -50%)"
             : "translate(calc(-50% + 389px), -50%)",
       }}
-      className="absolute top-1/2 z-20 flex size-[68px] cursor-pointer items-center justify-center rounded-full border border-white/60 bg-white/20 backdrop-blur-65 transition-colors duration-300 ease-standard hover:bg-white/35"
+      /* v1.2: 地・枠をボタン共通仕様（white/10 + 白40%リング）に統一 */
+      className="absolute top-1/2 z-20 flex size-[68px] cursor-pointer items-center justify-center rounded-full bg-white/10 ring-1 ring-inset ring-white/40 backdrop-blur-65 transition-colors duration-300 ease-standard hover:bg-white/25"
     >
       <Chevron dir={dir} />
     </button>
