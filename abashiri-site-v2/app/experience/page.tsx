@@ -7,6 +7,7 @@ import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
 import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
 import { DEFAULT_FACE } from "@/components/faceConfig";
+import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
@@ -21,6 +22,7 @@ export default function ExperiencePage() {
     preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
+    kvExit: DEFAULT_KV_EXIT,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 

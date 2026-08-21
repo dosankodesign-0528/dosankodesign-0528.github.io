@@ -24,6 +24,11 @@ import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 import { TAMARANEE_PATTERNS } from "./tamaraneePatterns";
+import {
+  DEFAULT_KV_EXIT,
+  KV_EXIT_PATTERNS,
+  type KvExit,
+} from "./kvExitConfig";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -36,6 +41,8 @@ export type TopTuneValues = {
   preview: { faceOn: boolean; patchRed: boolean };
   face: FaceConfig;
   spot: SpotTransition;
+  /** 作字の消え方（kvExitConfig.ts） */
+  kvExit: KvExit;
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -95,6 +102,7 @@ type Params = {
   face: FaceConfig;
   sparkle: { period: number };
   spot: SpotTransition;
+  kvExit: KvExit;
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -132,6 +140,7 @@ export default function TopTunePanel({
       /* キラキラの切替周期（秒）。CSS 変数へは applyVars とは別に書く */
       sparkle: { period: 1.2 },
       spot: { ...DEFAULT_SPOT_TRANSITION },
+      kvExit: { ...DEFAULT_KV_EXIT },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -163,9 +172,10 @@ export default function TopTunePanel({
         preview: { ...params.preview },
         face: { ...params.face },
         spot: { ...params.spot },
+        kvExit: { ...params.kvExit },
       });
 
-    let panel: { destroy: () => void } | null = null;
+    let panel: { destroy: () => void; sync?: () => void } | null = null;
 
     const build = () => {
       const lib = window.TunePanel;
@@ -190,8 +200,10 @@ export default function TopTunePanel({
            v12: スポットが「1スクロールごとに切替」になり、切替の見せ方5案と
                 1枚あたりのスクロール量を追加（2026-08-21）
            v13: 切替はブラーで確定しピルを撤去。余韻＝白フェードの長さに（2026-08-22）
-           v14: グルメが5場面目（場面ごとブラー切替）になり、白フェードを廃止（2026-08-22） */
-        version: 14,
+           v14: グルメが5場面目（場面ごとブラー切替）になり、白フェードを廃止（2026-08-22）
+           v15: 作字の「スクロールでの消え方」を追加（ゆったり系5案＋距離・ブラー・
+                縮小・縦移動・ゆったり度、2026-08-21 ヒデさん依頼） */
+        version: 15,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -219,6 +231,74 @@ export default function TopTunePanel({
           {
             cat: "🏠 トップページ",
             items: [
+              /* ── 作字の消え方（2026-08-21 ヒデさん依頼：ゆったり系5案） ── */
+              { sub: "作字｜スクロールでの消え方" },
+              {
+                pills: "案",
+                path: "kvExit.pattern",
+                immediate: true,
+                options: Object.entries(KV_EXIT_PATTERNS).map(([v, p]) => ({
+                  name: p.name,
+                  value: Number(v),
+                  swatch: "#0070c9",
+                  desc: p.note,
+                })),
+              },
+              {
+                note: "案を押すと下の数値がその案の値に入れ替わります。そこから微調整してください。スクロールすると確認できます。",
+              },
+              {
+                slider: "消えきるまでの距離",
+                path: "kvExit.range",
+                min: 200,
+                max: 1400,
+                step: 10,
+                fmt: "px",
+                hint: "大きいほどゆっくり消える。今までは320px。",
+              },
+              {
+                slider: "フェード本格化の位置",
+                path: "kvExit.fadeStart",
+                min: 5,
+                max: 95,
+                step: 1,
+                fmt: "%",
+                hint: "ここまでは薄くなるだけで残り、ここから先で消えていく。",
+              },
+              {
+                slider: "最大ブラー",
+                path: "kvExit.blurMax",
+                min: 0,
+                max: 40,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "消えた時の大きさ",
+                path: "kvExit.scaleTo",
+                min: 60,
+                max: 130,
+                step: 1,
+                fmt: "%",
+                hint: "100で等倍のまま。80で2割縮む。110で少しふくらみながら消える。",
+              },
+              {
+                slider: "縦の移動",
+                path: "kvExit.yTo",
+                min: -120,
+                max: 120,
+                step: 1,
+                fmt: "px",
+                hint: "マイナスで上へ抜けていく。プラスで下へ沈む。",
+              },
+              {
+                slider: "ゆったり度",
+                path: "kvExit.ease",
+                min: 1,
+                max: 2.5,
+                step: 0.05,
+                hint: "1で一定の速さ。大きいほど「最初はその場にとどまり、あとからすっと消える」。",
+              },
               /* ── 人物イラスト ─────────────────── */
               { sub: "人物イラスト｜登場のしかた" },
               {
@@ -647,6 +727,14 @@ export default function TopTunePanel({
           applyVolume();
         },
         onSettle: (info?: { path?: string }) => {
+          /* 消え方の案ピルを押したら、その案のプリセット値をスライダーへ流し込む */
+          if (info?.path === "kvExit.pattern") {
+            const preset = KV_EXIT_PATTERNS[params.kvExit.pattern];
+            if (preset) {
+              Object.assign(params.kvExit, preset.values);
+              panel?.sync?.();
+            }
+          }
           applyVars();
           applyVolume();
           pushValues();

@@ -174,6 +174,7 @@ import { type BubbleTune } from "./bubbleConfig";
 import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { mergeSpotTransition, type SpotTransition } from "./spotTransition";
+import { mergeKvExit, type KvExit } from "./kvExitConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -200,6 +201,7 @@ export default function TopPage({
   shadowTune,
   layout,
   spotTune,
+  kvExit,
 }: {
   intro?: number;
   kv?: number;
@@ -239,6 +241,8 @@ export default function TopPage({
   layout?: Partial<LayoutTune> | null;
   /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
   spotTune?: Partial<SpotTransition> | null;
+  /** 作字の「消え方」（kvExitConfig.ts。案5つ＋細かい数値を調整パネルから） */
+  kvExit?: Partial<KvExit> | null;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -298,19 +302,36 @@ export default function TopPage({
      トップページは spotTransition.ts 側で「作字 → 背景 → スポット → 固定」の
      順番ごと管理しているので、そこの kvOut を使う。
      /mock/kv/[n] のようにパターンを見比べる時だけ、そのパターンの range を使う */
-  const kvRange = kv === 1 ? T.kvOut : kp.range;
-  const heroBlur = useTransform(
-    scrollY,
-    [0, kvRange * 0.45, kvRange],
-    [0, kp.blurMax * 0.35, kp.blurMax]
+  /* 本番(kv=1)は kvExitConfig の「消え方」で計算する。
+     ease>1 だと「最初はその場にとどまり、あとからすっと消える」ゆったり曲線になる。
+     /mock/kv/[n] の比較パターンだけ従来の kvPatterns の値のまま */
+  const E = mergeKvExit(kvExit);
+  const useExit = kv === 1;
+  const kvRange = useExit ? E.range : kp.range;
+  const exitT = (v: number) =>
+    Math.pow(Math.min(1, Math.max(0, v / Math.max(1, E.range))), E.ease);
+  /* 従来の折れ線（0 → a → 1 の3点を直線でつなぐ） */
+  const pw = (v: number, mid: number, v0: number, v1: number, v2: number) => {
+    const t = Math.min(1, Math.max(0, v / kvRange));
+    return t < mid ? v0 + ((v1 - v0) * t) / mid : v1 + ((v2 - v1) * (t - mid)) / (1 - mid);
+  };
+  const heroBlur = useTransform(scrollY, (v) =>
+    useExit ? E.blurMax * exitT(v) : pw(v, 0.45, 0, kp.blurMax * 0.35, kp.blurMax)
   );
-  const heroOpacity = useTransform(
-    scrollY,
-    [0, kvRange * kp.fadeStart, kvRange],
-    [1, 0.55, 0]
+  const heroOpacity = useTransform(scrollY, (v) => {
+    if (!useExit) return pw(v, kp.fadeStart, 1, 0.55, 0);
+    const fs = Math.min(0.95, Math.max(0.05, E.fadeStart / 100));
+    const te = exitT(v);
+    return te < fs ? 1 - 0.45 * (te / fs) : 0.55 * (1 - (te - fs) / (1 - fs));
+  });
+  const heroScale = useTransform(scrollY, (v) =>
+    useExit
+      ? 1 + (E.scaleTo / 100 - 1) * exitT(v)
+      : pw(v, 0.5, kp.scale[0], (kp.scale[0] + kp.scale[1]) / 2, kp.scale[1])
   );
-  const heroScale = useTransform(scrollY, [0, kvRange], kp.scale);
-  const heroY = useTransform(scrollY, [0, kvRange], kp.y);
+  const heroY = useTransform(scrollY, (v) =>
+    useExit ? E.yTo * exitT(v) : pw(v, 0.5, kp.y[0], (kp.y[0] + kp.y[1]) / 2, kp.y[1])
+  );
   const buttonY = useTransform(scrollY, [0, kvRange], [0, kp.buttonParallax ?? 0]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
@@ -326,7 +347,8 @@ export default function TopPage({
   /* 人物イラストは KV だけのもの。ぼーっとスポットのカンプ（15191:2178）には
      いないので、作字が消えるのに合わせて見送る */
   useMotionValueEvent(scrollY, "change", (v) => {
-    const t = Math.max(0, Math.min(1, (v - T.kvOut * 0.4) / (T.kvOut * 0.6)));
+    /* 人物の見送りも「消え方」の距離に追従させる（作字と一緒に消えていく） */
+    const t = Math.max(0, Math.min(1, (v - kvRange * 0.4) / (kvRange * 0.6)));
     window.dispatchEvent(
       new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
     );
