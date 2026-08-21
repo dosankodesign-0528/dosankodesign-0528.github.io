@@ -9,6 +9,7 @@ import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
 import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
+import { DEFAULT_MSG } from "@/components/msgConfig";
 
 export default function Home() {
   /* 右下の調整パネルからもらう値。位置・大きさは CSS 変数側で直接反映されるので、
@@ -16,6 +17,7 @@ export default function Home() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 1,
+    hoverBounce: 1,
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
@@ -23,6 +25,7 @@ export default function Home() {
     spot: DEFAULT_SPOT_TRANSITION,
     kvExit: DEFAULT_KV_EXIT,
     hero: DEFAULT_HERO_ENTER,
+    msg: DEFAULT_MSG,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -39,6 +42,7 @@ export default function Home() {
         illustration="tamannee"
         illustEntrance
         illustEnter={tune.illustEnter}
+        hoverBounce={tune.hoverBounce}
         bo={tune.boPattern}
         face={tune.face}
         tamaranee={tune.tamaranee}
@@ -55,6 +59,7 @@ export default function Home() {
           spotTune={tune.spot}
           kvExit={tune.kvExit}
           heroEnter={tune.hero}
+          msgTune={tune.msg}
         />
       </Stage>
 

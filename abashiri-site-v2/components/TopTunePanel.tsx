@@ -30,10 +30,14 @@ import {
   type KvExit,
 } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
+import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
+import { HOVER_BOUNCE_PATTERNS } from "./hoverBouncePatterns";
 
 export type TopTuneValues = {
   boPattern: number;
   illustEnter: number;
+  /** 0=なし / 1〜5: ホバー時の縦バウンス（hoverBouncePatterns.ts） */
+  hoverBounce: number;
   /** 1〜5: たまらねーの出方（tamaraneePatterns.ts） */
   tamaranee: number;
   /** 初回の「たまらねー」お披露目（ms） */
@@ -46,6 +50,8 @@ export type TopTuneValues = {
   kvExit: KvExit;
   /** 作字の登場のしかた（heroEnterConfig.ts） */
   hero: HeroEnter;
+  /** メッセージセクション（msgConfig.ts） */
+  msg: MsgTune;
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -98,7 +104,7 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 
 type Params = {
   pos: typeof POS_DEFAULTS;
-  anim: { boPattern: number; illustEnter: number; tamaranee: number };
+  anim: { boPattern: number; illustEnter: number; tamaranee: number; hoverBounce: number };
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
@@ -107,6 +113,7 @@ type Params = {
   spot: SpotTransition;
   kvExit: KvExit;
   hero: HeroEnter;
+  msg: MsgTune;
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -135,7 +142,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 1, tamaranee: 1 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 1, tamaranee: 1, hoverBounce: 1 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -146,6 +153,7 @@ export default function TopTunePanel({
       spot: { ...DEFAULT_SPOT_TRANSITION },
       kvExit: { ...DEFAULT_KV_EXIT },
       hero: { ...DEFAULT_HERO_ENTER },
+      msg: { ...DEFAULT_MSG },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -172,6 +180,7 @@ export default function TopTunePanel({
       onSettleValues({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
+        hoverBounce: params.anim.hoverBounce,
         tamaranee: params.anim.tamaranee,
         tamaIntro: { ...params.intro },
         preview: { ...params.preview },
@@ -179,6 +188,7 @@ export default function TopTunePanel({
         spot: { ...params.spot },
         kvExit: { ...params.kvExit },
         hero: { ...params.hero },
+        msg: { ...params.msg },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -212,8 +222,11 @@ export default function TopTunePanel({
            v16: 作字の「登場のしかた」を追加（一括出現・ブラー弱め9px・
                 たまらないまでの間、2026-08-21 ヒデさん指示）
            v17: 人物イラストの登場を「短いスパン＋バウンス」5案に刷新
-                （案番号の意味が変わったため。2026-08-21 ヒデさん指示） */
-        version: 17,
+                （案番号の意味が変わったため。2026-08-21 ヒデさん指示）
+           v18: メッセージセクション新設（KV直下・カンプ 15480:22896。出方5案＋
+                距離・出はじめ・文字の薄さ。2026-08-21 ヒデさん依頼）
+           v19: ホバー時の縦バウンス5案を追加（2026-08-21 ヒデさん依頼） */
+        version: 19,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -340,6 +353,49 @@ export default function TopTunePanel({
                 step: 0.05,
                 hint: "1で一定の速さ。大きいほど「最初はその場にとどまり、あとからすっと消える」。",
               },
+              /* ── メッセージ（KV直下・カンプ 15480:22896。2026-08-21） ── */
+              { sub: "メッセージ（作字のあと）" },
+              {
+                note: "作字が消えたあと、ブラーの背景の上に「網走は何もない。」の文章が出ます。スクロールで読み進み、読み終わるとぼーっとスポットへ。",
+              },
+              {
+                pills: "出方の案",
+                path: "msg.pattern",
+                immediate: true,
+                options: Object.entries(MSG_PATTERNS).map(([v, p]) => ({
+                  name: p.name,
+                  value: Number(v),
+                  swatch: "#0070c9",
+                  desc: p.note,
+                })),
+              },
+              {
+                slider: "読み終わるまでの距離",
+                path: "msg.len",
+                min: 800,
+                max: 5000,
+                step: 100,
+                fmt: "px",
+                hint: "このぶんスクロールする間に文章を読み進めます。大きいほどゆっくり。",
+              },
+              {
+                slider: "出はじめの間",
+                path: "msg.fadeIn",
+                min: 0,
+                max: 600,
+                step: 20,
+                fmt: "px",
+                hint: "作字が消えきってから、メッセージが出はじめるまでの間。",
+              },
+              {
+                slider: "読む前の文字の薄さ",
+                path: "msg.minOpacity",
+                min: 0,
+                max: 60,
+                step: 1,
+                fmt: "%",
+                hint: "案2（浮かび上がり）と案4（なぞり読み）で、まだ読んでいない文字の薄さ。",
+              },
               /* ── 人物イラスト ─────────────────── */
               { sub: "人物イラスト｜登場のしかた" },
               {
@@ -403,6 +459,23 @@ export default function TopTunePanel({
               },
               /* ── 表情 ─────────────────────────── */
               { sub: "表情（カーソルを乗せた時）" },
+              {
+                pills: "縦バウンス",
+                path: "anim.hoverBounce",
+                immediate: true,
+                options: [
+                  { name: "なし", value: 0, swatch: "#999", desc: "表情だけ変わる（従来）" },
+                  ...HOVER_BOUNCE_PATTERNS.map((p, i) => ({
+                    name: `案${i + 1}`,
+                    value: i + 1,
+                    swatch: "#0070c9",
+                    desc: p.note,
+                  })),
+                ],
+              },
+              {
+                note: "カーソルを乗せるたびに、表情の変化と同時にからだが縦に弾みます。人物に乗せて確かめてください。",
+              },
               {
                 note: "眉が上がり、口がぽかんと開きます（切替はパキッと・フェード無し）。位置調整は下の「出しっぱなし」をONにするとラクです。",
               },

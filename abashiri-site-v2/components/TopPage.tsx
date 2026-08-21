@@ -176,6 +176,8 @@ import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { mergeSpotTransition, type SpotTransition } from "./spotTransition";
 import { mergeKvExit, type KvExit } from "./kvExitConfig";
 import { mergeHeroEnter, type HeroEnter } from "./heroEnterConfig";
+import MessageSection from "./MessageSection";
+import { mergeMsg, type MsgTune } from "./msgConfig";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -204,6 +206,7 @@ export default function TopPage({
   spotTune,
   kvExit,
   heroEnter,
+  msgTune,
 }: {
   intro?: number;
   kv?: number;
@@ -247,6 +250,8 @@ export default function TopPage({
   kvExit?: Partial<KvExit> | null;
   /** 作字の「登場のしかた」（heroEnterConfig.ts。ブラーの強さ・速さ・たまらないまでの間） */
   heroEnter?: Partial<HeroEnter> | null;
+  /** メッセージセクション（msgConfig.ts。KV直下・カンプ 15480:22896） */
+  msgTune?: Partial<MsgTune> | null;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -310,6 +315,11 @@ export default function TopPage({
      /mock/kv/[n] の比較パターンだけ従来の kvPatterns の値のまま */
   const E = mergeKvExit(kvExit);
   const useExit = kv === 1;
+  /* メッセージセクション（本番トップのみ）。作字が消えきってから読みはじめ、
+     読み終わったぶんだけ「ぼーっとスポット」をうしろへずらす */
+  const M = mergeMsg(msgTune);
+  const msgStart = (useExit ? E.range : 320) + M.fadeIn;
+  const msgEnd = msgStart + M.len;
   /* 作字の登場（ブラー弱め・一括出現）。timing の kotoba へ上書きして HeroBlurSeq へ渡す。
      ⚠️ useMemo で識別を保つ（毎レンダー新オブジェクトだと HeroBlurSeq の
         effect が走り直して、パネルの無関係な操作でも登場が再生されてしまう） */
@@ -358,11 +368,13 @@ export default function TopPage({
     [0, T.bgBlur * 0.5, T.bgBlur]
   );
 
-  /* 人物イラストは KV だけのもの。ぼーっとスポットのカンプ（15191:2178）には
-     いないので、作字が消えるのに合わせて見送る */
+  /* 人物イラストは KV とメッセージまでは居続けて、
+     ぼーっとスポットへ入れ替わる時に見送る（2026-08-21 ヒデさん指示。
+     カンプ 15480:22896 でもメッセージ画面の右下に人物がいる） */
   useMotionValueEvent(scrollY, "change", (v) => {
-    /* 人物の見送りも「消え方」の距離に追従させる（作字と一緒に消えていく） */
-    const t = Math.max(0, Math.min(1, (v - kvRange * 0.4) / (kvRange * 0.6)));
+    const from = useExit ? msgEnd : kvRange * 0.4;
+    const span = useExit ? 400 : kvRange * 0.6;
+    const t = Math.max(0, Math.min(1, (v - from) / span));
     window.dispatchEvent(
       new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
     );
@@ -582,7 +594,9 @@ export default function TopPage({
         data-abashiri-scroller=""
         /* ナビの「グルメ」が飛ぶ先（スクロール量）。グルメは5場面目なので
            spotTo + 1枚あたりのスクロール量 × 写真4枚ぶん */
-        data-gourmet-at={Math.round(T.spotTo + T.stepLen * 4 + 1)}
+        data-gourmet-at={Math.round(
+          (useExit ? msgEnd + (T.spotTo - T.spotFrom) : T.spotTo) + T.stepLen * 4 + 1
+        )}
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
@@ -726,7 +740,25 @@ export default function TopPage({
         {/* ぼーっとスポット。KV がブラーで奥へ引くのと入れ替わりに写真が合ってきて、
             1スクロールごとに4枚が切り替わる。5場面目はグルメが
             「場面ごとブラーで」現れる（下スクロールでは送らない。2026-08-22） */}
-        <SpotShowcase scrollY={scrollY} tune={spotTune} finale={<GourmetSection />} />
+        {/* メッセージ（本番トップのみ）。ブラーの背景の上にカンプ 15480:22896 の文章 */}
+        {useExit && (
+          <MessageSection scrollY={scrollY} start={msgStart} tune={msgTune} />
+        )}
+
+        <SpotShowcase
+          scrollY={scrollY}
+          /* メッセージを読み終えたぶんだけ、スポットの登場をうしろへずらす */
+          tune={
+            useExit
+              ? {
+                  ...T,
+                  spotFrom: msgEnd,
+                  spotTo: msgEnd + (T.spotTo - T.spotFrom),
+                }
+              : spotTune ?? undefined
+          }
+          finale={<GourmetSection />}
+        />
 
         {/* v1.1 の プロモ／旧グルメ／体験・イベント は撤去済み。
             旧部品（Card / CardRow 等）はこのファイル上部に残っている。

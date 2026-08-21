@@ -12,6 +12,7 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { findTamaranee } from "./tamaraneePatterns";
+import { findHoverBounce } from "./hoverBouncePatterns";
 import { findBo } from "./boPatterns";
 import { findIllustEnter } from "./illustEnterPatterns";
 
@@ -128,6 +129,8 @@ type StageProps = {
   bo?: number | string | null;
   /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
   illustEnter?: number | string | null;
+  /** 0=なし / 1〜5: ホバー時の縦バウンス（hoverBouncePatterns.ts） */
+  hoverBounce?: number | null;
   /** 初回の「たまらねー」お披露目のタイミング(ms)。調整パネルから */
   tamaIntro?: { delay: number; hold: number };
   /** true: 眉・口・たまらねーを出しっぱなしにする（調整パネルの確認用） */
@@ -156,6 +159,7 @@ export default function Stage({
   tamaranee,
   bo,
   illustEnter,
+  hoverBounce = 1,
   tamaIntro = TAMA_INTRO_DEFAULT,
   forceFace = false,
   patchRed = false,
@@ -204,6 +208,18 @@ export default function Stage({
 
   /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ パネルの出しっぱなし */
   const showTama = over || introTama || forceFace;
+
+  /* ホバーした瞬間に、からだが縦に弾む（2026-08-21 ヒデさん依頼。5案から選ぶ）。
+     スイングとは別ラッパーに WAAPI で掛けるので干渉しない */
+  const bounceRef = useRef<HTMLDivElement>(null);
+  const prevOverRef = useRef(false);
+  useEffect(() => {
+    if (over && !prevOverRef.current) {
+      const hb = findHoverBounce(hoverBounce);
+      if (hb && bounceRef.current) bounceRef.current.animate(hb.keyframes, hb.options);
+    }
+    prevOverRef.current = over;
+  }, [over, hoverBounce]);
   /* 表情（眉が上がる・口が開く）も「たまらねー」と同じ条件でそろえる。
      初回のお披露目でも顔が動いた方が「言っている」感じが出る（🟡仮判断） */
   const faceLift = over ? browLift : showTama ? fc.browLift : 0;
@@ -394,6 +410,11 @@ export default function Stage({
                     画像側に焼き込んであるので、ここでは枠いっぱいに出すだけでよい。
                     眉だけは新しい絵からトレースし直してある
                     （scripts/illust-brow-trace.py → illustMainPaths.ts）。 */}
+                <div
+                  ref={bounceRef}
+                  className="size-full"
+                  style={{ transformOrigin: "50% 100%" }}
+                >
                 <IllustTamannee
                   lift={faceLift}
                   browX={fc.browX}
@@ -407,15 +428,21 @@ export default function Stage({
                   debugPatch={patchRed}
                   className="size-full"
                 />
+                </div>
               </motion.div>
               {/* キラキラ（2コマのGIF風）。絵から切り出して独立させた（2026-08-20）。
-                  位置・2コマ目のずらし・速さは globals.css の --illust-sparkle-* から */}
+                  位置・2コマ目のずらし・速さは globals.css の --illust-sparkle-* から。
+                  2026-08-21 ヒデさん指示：最初から出しっぱなしにせず、
+                  「たまらねー」が出る時に一緒に出す */}
               <div
                 className="sparkle-2f absolute"
                 style={{
                   left: "var(--illust-sparkle-x)",
                   top: "var(--illust-sparkle-y)",
                   width: "var(--illust-sparkle-w)",
+                  opacity: showTama ? 1 : 0,
+                  transition: `opacity ${tp.text.duration}ms ${tp.text.ease}`,
+                  transitionDelay: `${showTama ? tp.text.delay : 0}ms`,
                 }}
               >
                 <img src="/img/sparkle-2f.png" alt="" className="w-full" />
