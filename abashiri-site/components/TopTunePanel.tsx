@@ -149,8 +149,9 @@ export default function TopTunePanel({
            v3: カンプ更新でイラストが差し替わり、キラキラの項目が無くなった（2026-08-19）
            v4: 環境音の音量を追加（2026-08-19）
            v5: 眉毛（持ち上げ量・位置）を追加、たまらねーの既定位置を変更（2026-08-20）
-           v6: キラキラ（2コマ）を追加（2026-08-20） */
-        version: 6,
+           v6: キラキラ（2コマ）を追加（2026-08-20）
+           v7: 口元（開いた口の位置・大きさ・線の太さ）を追加（2026-08-20） */
+        version: 7,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -318,6 +319,48 @@ export default function TopTunePanel({
                 step: 0.1,
                 fmt: "s",
                 hint: "1往復にかかる時間。小さいほどせわしなく光ります。",
+              },
+            ],
+          },
+          {
+            cat: "👄 口元（カーソルを乗せた時）",
+            items: [
+              {
+                note: "人物にカーソルを乗せると、口がぽかんと開きます。乗せながら動かしてください。",
+              },
+              {
+                slider: "横ずれ",
+                path: "face.mouthX",
+                min: 30,
+                max: 70,
+                step: 0.5,
+                fmt: "px",
+              },
+              {
+                slider: "縦ずれ",
+                path: "face.mouthY",
+                min: 60,
+                max: 100,
+                step: 0.5,
+                fmt: "px",
+              },
+              {
+                slider: "大きさ",
+                path: "face.mouthW",
+                min: 4,
+                max: 20,
+                step: 0.5,
+                fmt: "px",
+                hint: "横幅。縦は元の比率のまま付いてきます。カンプは 8px です。",
+              },
+              {
+                slider: "線の太さ",
+                path: "face.mouthStroke",
+                min: 0.5,
+                max: 4,
+                step: 0.25,
+                fmt: "px",
+                hint: "カンプは 1.5px です。",
               },
             ],
           },

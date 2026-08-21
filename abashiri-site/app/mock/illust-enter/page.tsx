@@ -10,7 +10,7 @@ export default function IllustEnterIndex() {
           ABASHIRI v1.1 / KEY VISUAL
         </p>
         <h1 className="mt-2 text-[28px] font-light leading-[1.4] text-[#0b3c69]">
-          人物イラストの登場演出　2案
+          人物イラストの登場演出　{ILLUST_ENTER_PATTERNS.length}案
         </h1>
         <p className="mt-3 text-[15px] font-light leading-[1.8] text-[#3c4a57]">
           キービジュアルの演出が全部終わったあと（開いてから約4.5秒後）に人物が出てきます。
@@ -24,7 +24,7 @@ export default function IllustEnterIndex() {
         >
           <p className="text-[18px] font-medium">🎛 調整パネルで見比べる（おすすめ）</p>
           <p className="mt-1 text-[14px] font-light leading-[1.7] opacity-85">
-            ページを移動せずに2案を切り替えて、何度でも見返せます。
+            ページを移動せずに各案を切り替えて、何度でも見返せます。
           </p>
         </Link>
 

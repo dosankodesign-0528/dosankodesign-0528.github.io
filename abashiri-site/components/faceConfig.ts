@@ -13,6 +13,15 @@ export type FaceConfig = {
   browY: number;
   /** 反応する範囲をイラストの外にどれだけ広げるか(px) */
   hoverPad: number;
+  /* ── 口元（ホバーで開いた口になる。カンプ 15410:21336） ── */
+  /** 口の左上の横位置(px)。イラスト枠(162x226.8)の中の座標 */
+  mouthX: number;
+  /** 口の左上の縦位置(px) */
+  mouthY: number;
+  /** 口の幅(px)。高さは元の比率(10.39:7.96)のまま付いてくる */
+  mouthW: number;
+  /** 口の黒い線の太さ(px) */
+  mouthStroke: number;
 };
 
 /* ヒデさん調整値。
@@ -23,6 +32,11 @@ export const DEFAULT_FACE: FaceConfig = {
   browX: 0,
   browY: 0,
   hoverPad: 0,
+  /* カンプ 15410:21336 の実測値 */
+  mouthX: 49.9,
+  mouthY: 81.2,
+  mouthW: 8,
+  mouthStroke: 1.5,
 };
 
 export function mergeFace(partial?: Partial<FaceConfig> | null): FaceConfig {

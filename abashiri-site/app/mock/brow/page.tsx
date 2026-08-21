@@ -83,7 +83,7 @@ export default function BrowMockPage() {
           ABASHIRI v1.2 / 人物イラスト
         </p>
         <h1 className="mt-2 text-[28px] font-light leading-[1.4] text-[#0b3c69]">
-          眉毛のホバー演出（新しい絵）
+          眉毛と口元のホバー演出（新しい絵）
         </h1>
         <p className="mt-3 text-[15px] font-light leading-[1.8] text-[#3c4a57]">
           新しいイラストから眉だけをトレースし直しました。
@@ -104,9 +104,9 @@ export default function BrowMockPage() {
             <div style={{ width: w, height: h }}>
               <IllustTamannee
                 lift={hover ? lift : 0}
-                renderH={h}
                 patchSpread={spread}
                 debugPatch={debugPatch}
+                mouthOpen={hover}
                 className="size-full"
               />
             </div>

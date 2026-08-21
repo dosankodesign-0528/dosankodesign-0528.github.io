@@ -28,9 +28,10 @@ import type { Transition } from "framer-motion";
 const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%" };
 
 /* 初回だけ「たまらねー」を自分から見せる時間（ミリ秒）
-   delay … ぴょこんと出きってから出すまでの間
-   hold  … 出したまま留めておく長さ。このあと引っ込む */
-const TAMA_INTRO = { delay: 450, hold: 1700 } as const;
+   delay … 登場アニメが終わってから出すまでの間
+   hold  … 出したまま留めておく長さ。このあと引っ込む
+   2026-08-20 ヒデさん指示で hold を 1700 → 3000 に延長 */
+const TAMA_INTRO = { delay: 350, hold: 3000 } as const;
 
 type IllustAnim = {
   animate: Record<string, number[]>;
@@ -175,9 +176,12 @@ export default function Stage({
   /* 初回の登場（ぴょこん）が収まったあと、「たまらねー」を一度だけ自分から出して
      すぐ引っ込める。2回目以降はカーソルを乗せた時だけ出る（ヒデさん指示 2026-08-20） */
   const [introTama, setIntroTama] = useState(false);
+  /* 登場アニメが終わったか。案ごとに長さが違う（0.72〜1.6秒）ので、
+     開始時刻からではなく onAnimationComplete を起点にする */
+  const [entranceDone, setEntranceDone] = useState(false);
 
   useEffect(() => {
-    if (!illustEntrance || !illustIn) return;
+    if (!illustEntrance || !entranceDone) return;
     const a = window.setTimeout(() => setIntroTama(true), TAMA_INTRO.delay);
     const b = window.setTimeout(
       () => setIntroTama(false),
@@ -187,10 +191,13 @@ export default function Stage({
       window.clearTimeout(a);
       window.clearTimeout(b);
     };
-  }, [illustEntrance, illustIn]);
+  }, [illustEntrance, entranceDone]);
 
   /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 */
   const showTama = over || introTama;
+  /* 表情（眉が上がる・口が開く）も「たまらねー」と同じ条件でそろえる。
+     初回のお披露目でも顔が動いた方が「言っている」感じが出る（🟡仮判断） */
+  const faceLift = over ? browLift : introTama ? fc.browLift : 0;
 
   /* 調整パネル用：カモメをドラッグで動かす */
   const dragBird = (key: "skyTopLeft" | "skyRight") => (e: React.PointerEvent) => {
@@ -330,7 +337,9 @@ export default function Stage({
           animate={illustIn ? iep.animate : undefined}
           transition={iep.transition}
           onAnimationComplete={() => {
-            if (illustEntrance && illustIn && iep.swingAfter) setSpin(true);
+            if (!illustEntrance || !illustIn) return;
+            if (iep.swingAfter) setSpin(true);
+            setEntranceDone(true); /* ここから初回の「たまらねー」の時計が動く */
           }}
         >
           <div className="relative h-full w-full">
@@ -359,9 +368,14 @@ export default function Stage({
                     眉だけは新しい絵からトレースし直してある
                     （scripts/illust-brow-trace.py → illustMainPaths.ts）。 */}
                 <IllustTamannee
-                  lift={browLift}
+                  lift={faceLift}
                   browX={fc.browX}
                   browY={fc.browY}
+                  mouthOpen={showTama}
+                  mouthX={fc.mouthX}
+                  mouthY={fc.mouthY}
+                  mouthW={fc.mouthW}
+                  mouthStroke={fc.mouthStroke}
                   className="size-full"
                 />
               </motion.div>

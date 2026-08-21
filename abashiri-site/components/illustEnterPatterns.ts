@@ -2,7 +2,9 @@
  * キービジュアルの演出が終わったあと、人物イラストが登場する時の案。
  * /mock/illust-enter で並べて比べられる。
  *
- * 5案のうち「テクテク歩いてくる」「下からぴょこん」の2案が残った（2026-08-17 ヒデさん選定）。
+ * 2026-08-17 に「テクテク歩いてくる」「下からぴょこん」の2案に絞られたあと、
+ * 2026-08-20 に「ぴょこんのバリエーションを5つ」との指示で案2〜案6を用意した。
+ * どれも画面の下（見えない位置）から跳ね上がる。違うのは跳ね方の性格だけ。
  *
  * 共通ルール
  * - 出るタイミングは「全部そろった一番最後」（TopPage の合図を待つ）
@@ -48,8 +50,8 @@ export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
   },
   {
     key: "pyokon",
-    label: "案2  下からぴょこん",
-    note: "画面の下から跳ね上がって、行き過ぎてから収まる。不意に顔を出す感じ",
+    label: "案2  ぴょこん（標準）",
+    note: "下から跳ね上がって、行き過ぎてから収まる。今までの動きそのまま",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
       opacity: 1,
@@ -65,12 +67,87 @@ export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
     },
     swingAfter: true,
   },
+  {
+    key: "pyokon-snap",
+    label: "案3  ビュンと出てピタッ（メリハリ）",
+    note: "速く飛び出して大きく行き過ぎ、一気に着地。キレのあるメリハリ重視",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, -30, 3, 0],
+      rotate: [0, -4, 1.5, 0],
+    },
+    transition: {
+      duration: 0.72,
+      times: [0, 0.5, 0.78, 1],
+      ease: ["easeOut", "easeInOut", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "pyokon-double",
+    label: "案4  トントンッと2段跳ね",
+    note: "小さく1回・大きく1回の2段階で跳ねる。リズム感・コミカル",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, -8, 4, -18, 3, 0],
+      rotate: [0, -1.5, 0.5, -2.5, 1, 0],
+    },
+    transition: {
+      duration: 1.25,
+      times: [0, 0.3, 0.46, 0.68, 0.86, 1],
+      ease: ["easeOut", "easeIn", "easeOut", "easeIn", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "pyokon-peek",
+    label: "案5  ちら見してからぴょこん",
+    note: "頭だけちょこっと出して一拍ため、それから勢いよく飛び出す。じらし",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, 150, 150, -22, 5, 0],
+      rotate: [0, 0, 0, -3, 1, 0],
+    },
+    transition: {
+      duration: 1.6,
+      times: [0, 0.2, 0.48, 0.74, 0.9, 1],
+      ease: ["easeOut", "linear", "easeInOut", "easeInOut", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "pyokon-soft",
+    label: "案6  ゆったりせり上がって最後にぴょこ",
+    note: "ゆっくりせり上がってきて、最後だけ小さく跳ねて着地。おだやか",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, 26, -10, 0],
+      rotate: [0, 0, -1.5, 0],
+    },
+    transition: {
+      duration: 1.5,
+      times: [0, 0.6, 0.85, 1],
+      ease: ["easeInOut", "easeInOut", "easeOut"],
+    },
+    swingAfter: true,
+  },
 ];
 
-/* 採用案：案2「下からぴょこん」。
-   2026-08-18 にヒデさんが案1（テクテク歩いてくる）から差し替えを指示。
-   トップページは illustEnter を渡していないので、ここが本番の見た目になる。
-   案1は /mock/illust-enter/1 で今も見比べられる。 */
+/* 採用案：案2「ぴょこん（標準）」（2026-08-18 ヒデさん指示）。
+   案3〜案6 は 2026-08-20 に追加したバリエーション。/mock/illust-enter で見比べて、
+   決まったらここを差し替える。 */
 export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[1];
 
 export function findIllustEnter(key?: string | number | null): IllustEnterPattern {
