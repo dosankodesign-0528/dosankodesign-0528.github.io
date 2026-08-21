@@ -56,6 +56,10 @@ const POS_DEFAULTS = {
   sparkleW: 18,
   sparkle2Dx: -5,
   sparkle2Dy: -5,
+  birdExpX: 150,
+  birdExpY: 380,
+  birdExpW: 84,
+  birdExpRot: -8,
 };
 
 /* params のキー → CSS 変数名 */
@@ -76,6 +80,10 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
   sparkleW: "--illust-sparkle-w",
   sparkle2Dx: "--illust-sparkle2-dx",
   sparkle2Dy: "--illust-sparkle2-dy",
+  birdExpX: "--bird-exp-x",
+  birdExpY: "--bird-exp-y",
+  birdExpW: "--bird-exp-w",
+  birdExpRot: "--bird-exp-rotate",
 };
 
 type Params = {
@@ -128,7 +136,9 @@ export default function TopTunePanel({
     const applyVars = () => {
       const root = document.documentElement;
       for (const k of Object.keys(VAR_OF) as (keyof typeof POS_DEFAULTS)[]) {
-        root.style.setProperty(VAR_OF[k], `${params.pos[k]}px`);
+        /* Rot で終わるキーだけ単位が deg（カモメの傾きなど） */
+        const unit = k.endsWith("Rot") ? "deg" : "px";
+        root.style.setProperty(VAR_OF[k], `${params.pos[k]}${unit}`);
       }
       root.style.setProperty("--illust-sparkle-period", `${params.sparkle.period}s`);
     };
@@ -172,8 +182,9 @@ export default function TopTunePanel({
                眉の動き方5案を追加（2026-08-21）
            v9: 全パターンを本番パネルに集約（2026-08-21）
            v10: 「ページ＞セクション＞細目」の3階層に再設計。スイング＝案4固定・
-                眉の動き方（パキッと固定）でピルを撤去。登場はぴょこん4案に（2026-08-21） */
-        version: 10,
+                眉の動き方（パキッと固定）でピルを撤去。登場はぴょこん4案に（2026-08-21）
+           v11: 体験ページ左のカモメ（位置・大きさ・傾き）を追加（2026-08-21） */
+        version: 11,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -571,6 +582,42 @@ export default function TopTunePanel({
                 max: 180,
                 step: 1,
                 fmt: "px",
+              },
+              { sub: "左のカモメ" },
+              {
+                note: "右のカモメと対になる、左側のカモメです（体験ページだけに出ます）。動かすとその場で反映・自動保存されます。",
+              },
+              {
+                slider: "左からの距離",
+                path: "pos.birdExpX",
+                min: 0,
+                max: 700,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "上からの距離",
+                path: "pos.birdExpY",
+                min: 0,
+                max: 950,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "大きさ",
+                path: "pos.birdExpW",
+                min: 30,
+                max: 200,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "傾き",
+                path: "pos.birdExpRot",
+                min: -45,
+                max: 45,
+                step: 1,
+                fmt: "°",
               },
             ],
           },

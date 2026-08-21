@@ -139,6 +139,11 @@
   --illust-sparkle2-dx: -5px; /* ヒデさん調整値 2026-08-21 */
   --illust-sparkle2-dy: -5px;
   --illust-sparkle-period: 1.2s;
+  /* ぼーっと体験ページ・左側のカモメ（🟡仮置き。右下パネルから調整・保存） */
+  --bird-exp-x: 150px;
+  --bird-exp-y: 380px;
+  --bird-exp-w: 84px;
+  --bird-exp-rotate: -8deg;
 }
 
 html,

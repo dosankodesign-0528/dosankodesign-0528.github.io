@@ -318,6 +318,24 @@ export default function Stage({
           />
         </div>
 
+        {/* ぼーっと体験ページだけ、左側にもカモメ（2026-08-21 ヒデさん指示）。
+            位置・大きさは globals.css の --bird-exp-*。右下パネルから動かすと
+            CSS 変数がその場で書き換わる＝即反映・自動保存 */}
+        {illustration === "bo" && (
+          <div
+            className="absolute"
+            style={{
+              left: "var(--bird-exp-x)",
+              top: "var(--bird-exp-y)",
+              width: "var(--bird-exp-w)",
+              height: "calc(var(--bird-exp-w) * 0.58)",
+              transform: "rotate(var(--bird-exp-rotate))",
+            }}
+          >
+            <Bird flapDuration={0.55} driftDuration={9} delay={0.6} strokeWidth={6} />
+          </div>
+        )}
+
         {children}
 
         {/* 人物イラスト（たまらねー・キラキラ込み）。常に最前面。
