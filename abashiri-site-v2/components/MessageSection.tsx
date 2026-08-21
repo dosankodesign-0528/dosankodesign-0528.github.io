@@ -122,14 +122,15 @@ export default function MessageSection({
         className="absolute left-[140px] top-[172px] w-[720px] text-white"
         style={{ opacity: shellOpacity, filter: `blur(${shellBlur}px)` }}
       >
+        {/* 見出し：カンプ 15481:23022 の実測（Noto Sans JP Thin / Hero_90px / 行間1 / 白80%） */}
         <p
-          className="font-thin leading-none text-[90px] whitespace-nowrap"
+          className="font-thin leading-none text-hero-90 whitespace-nowrap"
           style={titleStyle()}
         >
           {TITLE}
         </p>
         {/* 本文：カンプ 15480:23019 の実測（Noto Sans JP Light 20px / 行間2 / 字間0.4px / 白） */}
-        <div className="mt-[120px] font-light text-[20px] leading-[2] tracking-[0.4px]">
+        <div className="mt-[120px] font-light text-body-20 leading-[2] tracking-[0.4px]">
           {BLOCKS.map((lines, bi) => (
             <div key={bi} className={bi === 0 ? "" : "mt-[40px]"}>
               {lines.map((l) => {

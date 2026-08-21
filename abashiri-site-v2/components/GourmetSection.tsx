@@ -11,14 +11,15 @@
  *     文字（小見出し・店名・もっと見る・説明）が出る
  *     ＝カンプの「ラーメンだるまや」のカードがホバー時の見本
  *
- * カンプ実測（1512x982 ステージ上の px）
- *   見出し … Noto Sans JP Thin 36px / 行間1.8 / 黒 / 2行
- *   見出し行の幅 1280・右端に「もっと見る」（ExtraLight 17px ＋ 18px アイコン）
- *   見出し → カルーセルの間 165px
- *   カード … 586.73 x 504.38 / 白フチ8px(白70%) / 間 8px / 角丸なし
+ * カンプ実測（v2.0 / 15490:21764。2026-08-22 更新版に差し替え）
+ *   見出し … Noto Sans JP Thin 36px (Title_36px) / 行間1.8 / 黒 / 2行
+ *   見出し行の幅 1300・右端に「もっと見る」（ExtraLight 16px ＋ 18px アイコン・間4）
+ *   見出し → カルーセルの間 140px
+ *   カード … 588 x 504（カンプ 586.73x504.38 を4の倍数に丸め）/ 枠線なし・角丸なし / 間 8px
  *   ホバー … 黒グラデ rgba(0,0,0,0.2)→0.8 / 余白 左右44・上下24
- *     小見出し「素朴なグルメ」Thin 18px（cap詰め）/ 店名 Thin 28px / 間8px
- *     もっと見る ExtraLight 17px 白 / 説明 ExtraLight 14px 行間2 字間0.7px
+ *     小見出し「素朴なグルメ 03」ExtraLight 16px（cap詰め）/ 店名 Thin 28px (Title_28px) / 間8px
+ *     もっと見る ExtraLight 16px 白 / 説明 ExtraLight 14px (Body_14px) 行間2 字間0.7px
+ *   ※「もっと見る」はカンプ 17px → 偶数ルールで 16px に丸め（Body_16px に統一）
  *
  * 2026-08-22 改修（ヒデさん指示）
  *   ・白背景。ページを下に送るのではなく、スポットの5場面目として
@@ -75,7 +76,7 @@ const CARDS: GourmetCard[] = [
 
 function Card({ card }: { card: GourmetCard }) {
   return (
-    <div className="group relative h-[504.4px] w-[586.7px] shrink-0 overflow-hidden border-8 border-white/70">
+    <div className="group relative h-[504px] w-[588px] shrink-0 overflow-hidden">
       <img
         src={card.img}
         alt={card.title}
@@ -85,20 +86,20 @@ function Card({ card }: { card: GourmetCard }) {
       <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-black/20 to-black/80 px-11 py-6 opacity-0 transition-opacity duration-500 ease-standard group-hover:opacity-100">
         <div className="flex w-full translate-y-[18px] flex-col gap-4 opacity-0 transition-all delay-75 duration-500 ease-standard group-hover:translate-y-0 group-hover:opacity-100">
           <div className="flex w-full items-end justify-between">
-            <div className="flex flex-col gap-2 font-thin leading-[1.2] text-white">
-              <p className="whitespace-nowrap text-body-18 [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]">
+            <div className="flex flex-col gap-2 leading-[1.2] text-white">
+              <p className="whitespace-nowrap text-body-16 font-extralight [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]">
                 素朴なグルメ {card.no}
               </p>
-              <p className="whitespace-nowrap text-[28px]">{card.title}</p>
+              <p className="whitespace-nowrap text-title-28 font-thin">{card.title}</p>
             </div>
             <span className="flex shrink-0 items-center gap-1">
-              <span className="whitespace-nowrap text-[17px] font-extralight leading-[1.2] text-white">
+              <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-white">
                 もっと見る
               </span>
               <img src="/img/icon-more-circle.svg" alt="" className="size-[18px]" />
             </span>
           </div>
-          <p className="w-full text-control-14 font-extralight leading-[2] tracking-[0.7px] text-white">
+          <p className="w-full text-body-14 font-extralight leading-[2] tracking-[0.7px] text-white">
             {card.body}
           </p>
         </div>
@@ -117,7 +118,7 @@ export default function GourmetSection() {
     >
       {/* 見出し行（幅1280・中央）。場面が替わってから一拍おいて出る */}
       <motion.div
-        className="mx-auto flex w-[1280px] max-w-full items-end justify-between px-4"
+        className="mx-auto flex w-[1300px] max-w-full items-end justify-between px-4"
         initial="hidden"
         animate="show"
         variants={{
@@ -130,7 +131,7 @@ export default function GourmetSection() {
           },
         }}
       >
-        <p className="whitespace-nowrap text-[36px] font-thin leading-[1.8] text-ink">
+        <p className="whitespace-nowrap text-title-36 font-thin leading-[1.8] text-ink">
           なーんにもない、道東の土地、網走。
           <br />
           そこの味が沁みちゃうんです。
@@ -140,7 +141,7 @@ export default function GourmetSection() {
           onClick={(e) => e.preventDefault()}
           className="group flex cursor-pointer items-center gap-1 pb-2 transition-opacity hover:opacity-70"
         >
-          <span className="whitespace-nowrap text-[17px] font-extralight leading-[1.2] text-ink">
+          <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-ink">
             もっと見る
           </span>
           {/* 白アイコンしか無いので黒に落として使う（🟡専用アイコンが来たら差し替え） */}
@@ -151,7 +152,7 @@ export default function GourmetSection() {
       {/* カルーセル：右から左へゆっくり流れ続ける。
           2セット並べて -50% まで動かすと、切れ目なく無限に回る */}
       <motion.div
-        className="mt-[110px] w-full overflow-hidden"
+        className="mt-[140px] w-full overflow-hidden"
         initial="hidden"
         animate="show"
         /* 文字よりさらに一拍あとに出る（場面 → 文字 → カルーセル の順） */
