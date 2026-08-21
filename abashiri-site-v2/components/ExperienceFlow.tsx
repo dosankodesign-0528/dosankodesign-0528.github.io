@@ -790,7 +790,11 @@ export default function ExperienceFlow({
   return (
     <div ref={rootRef} className="absolute inset-0 overflow-hidden">
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する */}
-      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
+      <div
+        id="abashiri-sound-slot"
+        /* カンプ x=34。ヘッダー（top32・高さ51）と上下中央ぞろえ（2026-08-22 ヒデさん指示） */
+        className="absolute left-[34px] top-[32px] z-40 flex h-[51px] items-center"
+      />
 
       {/* 遷移中は、まわりの世界だけ外へ押し出して奥へ流す。
           動画画面はこの外に出しておく。中に入れると、窓をくぐり終わったあとに

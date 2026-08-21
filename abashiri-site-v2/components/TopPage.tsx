@@ -786,7 +786,11 @@ export default function TopPage({
       </div>
 
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
-      <div id="abashiri-sound-slot" className="absolute left-[32px] top-[32px] z-40" />
+      <div
+        id="abashiri-sound-slot"
+        /* カンプ x=34。ヘッダー（top32・高さ51）と上下中央ぞろえ（2026-08-22 ヒデさん指示） */
+        className="absolute left-[34px] top-[32px] z-40 flex h-[51px] items-center"
+      />
     </div>
   );
 }
