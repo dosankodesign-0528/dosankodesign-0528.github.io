@@ -125,6 +125,18 @@
         "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed-v2' && exec python3 -m http.server 8774"
       ],
       "port": 8774
+    },
+    {
+      "name": "abashiri-v2-start",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "start",
+        "-p",
+        "3457"
+      ],
+      "port": 3457,
+      "cwd": "abashiri-site-v2"
     }
   ]
 }
