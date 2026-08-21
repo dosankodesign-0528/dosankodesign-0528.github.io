@@ -146,10 +146,8 @@ function findTailRange(pts: Pt[]): { i0: number; len: number } | null {
 type TailPlan = {
   /** 本来の輪郭（伸びきった状態） */
   full: Pt[];
-  /** 開始時の輪郭。カンプの形なら全点、従来方式ならしっぽの範囲だけ */
+  /** しっぽを引っ込めた輪郭（しっぽの範囲だけ差し替え） */
   retracted: (Pt | undefined)[];
-  /** true: 開始形状がカンプのパス（＝全点を補間する） */
-  fromComp?: boolean;
 };
 
 /**
@@ -185,15 +183,6 @@ function prepareBubble(bubble: SVGPathElement, tune: BubbleTune): TailPlan | nul
   const full = smoothPts(raw, tune.smooth.passes, strengthAt);
   bubble.setAttribute("d", ptsToPath(full));
 
-  /* 開始形状：カンプのなめらかな形（15415:21517）。
-     取れなかった時だけ、従来の「しっぽを底で引き直す」方式に落ちる */
-  const svg = bubble.ownerSVGElement;
-  const startPts = svg ? sampleStartShape(svg, N) : null;
-  if (startPts) {
-    const fitted = fitToFull(full, startPts);
-    return { full, retracted: alignToFull(full, fitted), fromComp: true };
-  }
-
   if (!range) return null;
   /* しっぽの外側2点ずつを使って、しっぽがなかった場合の底を引き直す */
   const a2 = full[at(range.i0 - 2)];
@@ -215,85 +204,6 @@ function drawTail(bubble: SVGPathElement, plan: TailPlan, p: number) {
     return { x: r.x + (pt.x - r.x) * p, y: r.y + (pt.y - r.y) * p };
   });
   bubble.setAttribute("d", ptsToPath(pts));
-}
-
-/* ───────── 登場時の吹き出しの形（カンプ 15415:21517） ─────────
- * 「最初は機械的にパツッと切れて見える」（2026-08-21 ヒデさん指摘）ため、
- * 開始形状を〈しっぽの範囲だけ底で切った形〉から、デザイナーが引いた
- * なめらかな閉じたパスに差し替えた。しっぽが伸びる演出は、この形から
- * 本来の形へ「輪郭の全点」を補間する形に変わる。
- * 座標系はカンプ基準・吹き出しパスはSVG内でローカル座標を持つため、
- * 実行時に「本来の輪郭の bbox」へ幅合わせでフィットさせて使う
- * （開始形と完成形はデザイン上、左上をそろえて描かれている） */
-const BUBBLE_START_D =
-  "M85.7756 0.275168C86.6746 0.0264741 93.9436 0.0171968 95.409 0.00379658C127.538 -0.272591 158.097 14.615 189.5 20.6633C195.467 21.8125 204.446 23.0691 210.436 23.3831C227.367 24.3102 244.331 23.4725 261.136 20.8798C265.885 20.1284 270.605 18.9999 275.331 18.0742C314.415 10.4201 370.821 -0.409996 400.122 40.5001C410.454 54.7885 415.583 73.3392 414.39 92.0936C413.333 106.947 408.326 122.479 399.397 133.126C380.258 155.947 352.088 165.875 326.778 163.35C314.075 162.079 301.433 159.265 288.887 156.624C272.085 152.9 255.237 149.484 238.348 146.38C213.837 141.976 188.806 140.418 164.005 142.63C141.877 144.604 119.204 150.504 97.2555 154.503C72.3869 159.035 38.1577 161.111 16.4979 138.826C8.08426 131.447 1.53887 119.388 0.397457 107.053C-4.23088 57.028 32.291 12.2638 71.995 2.68318C76.5415 1.58612 81.2358 1.1313 85.7756 0.275168Z";
-/** 開始形状を同じ点数でなぞる（svg に一時的に入れて長さを測る） */
-function sampleStartShape(svg: SVGSVGElement, n: number): Pt[] | null {
-  try {
-    const tmp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    tmp.setAttribute("d", BUBBLE_START_D);
-    tmp.setAttribute("fill", "none");
-    tmp.style.visibility = "hidden";
-    svg.appendChild(tmp);
-    const L = tmp.getTotalLength();
-    if (!L) {
-      tmp.remove();
-      return null;
-    }
-    const pts: Pt[] = [];
-    for (let i = 0; i < n; i++) {
-      const q = tmp.getPointAtLength((L * i) / n);
-      pts.push({ x: q.x, y: q.y });
-    }
-    tmp.remove();
-    return pts;
-  } catch {
-    return null;
-  }
-}
-
-function bboxOf(pts: Pt[]) {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const p of pts) {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  }
-  return { minX, minY, maxX, maxY };
-}
-
-/** 開始形状を本来の輪郭の座標系へ移す（幅を合わせ、左上をそろえる） */
-function fitToFull(full: Pt[], start: Pt[]): Pt[] {
-  const fb = bboxOf(full);
-  const sb = bboxOf(start);
-  const sc = (fb.maxX - fb.minX) / Math.max(1, sb.maxX - sb.minX);
-  return start.map((p) => ({
-    x: fb.minX + (p.x - sb.minX) * sc,
-    y: fb.minY + (p.y - sb.minY) * sc,
-  }));
-}
-
-/** 開始形状の点列を、本来の輪郭と「近い点同士」が対になるよう並べ直す
-    （開始位置と回り方向がズレたまま補間すると、輪郭がねじれるため） */
-function alignToFull(full: Pt[], start: Pt[]): Pt[] {
-  const n = full.length;
-  let best = { d: Infinity, k: 0, rev: false };
-  for (const rev of [false, true]) {
-    const cand = rev ? [...start].reverse() : start;
-    for (let k = 0; k < n; k++) {
-      let d = 0;
-      for (let i = 0; i < n; i += 4) {
-        const a = full[i];
-        const b = cand[(i + k) % n];
-        d += (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-        if (d > best.d) break;
-      }
-      if (d < best.d) best = { d, k, rev };
-    }
-  }
-  const cand = best.rev ? [...start].reverse() : start;
-  return full.map((_, i) => cand[(i + best.k) % n]);
 }
 
 /**
@@ -445,13 +355,10 @@ export default function HeroBlurSeq({
       const { bubble, rest } = collect(svg);
       /* 吹き出しの歪みをならしつつ、しっぽを引っ込めた形も用意する */
       const tail = bubbleTune.tail;
-      const tailStart0 = Math.max(0, 1 - tail.retract / 100);
+      const tailStart = Math.max(0, 1 - tail.retract / 100);
       const plan = bubble ? prepareBubble(bubble, bubbleTune) : null;
       const tailPlan = tail.duration > 0 && tail.retract > 0 ? plan : null;
       /* まずしっぽが引っ込んだ形にしておく */
-      /* カンプの開始形状（fromComp）の時は 0 ＝ 完全にその形から始める。
-         従来方式の時だけ retract% ぶん引っ込めた位置から */
-      const tailStart = tailPlan?.fromComp ? 0 : tailStart0;
       if (bubble && tailPlan) drawTail(bubble, tailPlan, tailStart);
       /* 上下の振り分けは高さではなくSVGのグループ構造で行う
          （高さだと「たまらない」の上に飛び出た点が上段に混ざる） */

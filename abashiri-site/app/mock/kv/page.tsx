@@ -4,7 +4,7 @@ import { KV_PATTERNS } from "@/components/kvPatterns";
 /* キービジュアル後退演出 比較mock 一覧 */
 export default function KvMockIndex() {
   return (
-    <main className="h-dvh overflow-y-auto bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
+    <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
           キービジュアル交代演出 比較mock（5案）

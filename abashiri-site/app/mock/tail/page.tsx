@@ -4,7 +4,7 @@ import { TAIL_PRESETS } from "./presets";
 /* しっぽの先の角丸の強さ 比較 mock 一覧 */
 export default function TailMockIndex() {
   return (
-    <main className="h-dvh overflow-y-auto bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
+    <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
           しっぽの先の角丸 比較mock（5案）

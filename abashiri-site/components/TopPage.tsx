@@ -8,7 +8,6 @@ import {
   useScroll,
   useTransform,
   useMotionTemplate,
-  useMotionValueEvent,
   type Variants,
 } from "framer-motion";
 import Bird from "./Bird";
@@ -32,8 +31,13 @@ const stagger: Variants = {
 
 type CardData = { src: string; alt: string; title: string };
 
-/* タイトルは仮のものあり。正式名称が決まったら差し替える。
-   v1.1: スポットのカード列は SpotShowcase（KV直下の全画面セクション）に置き換わった */
+/* タイトルは仮のものあり。正式名称が決まったら差し替える */
+const SPOT_CARDS: CardData[] = [
+  { src: "/img/spot-1.jpg", alt: "天都山展望台", title: "天都山展望台" },
+  { src: "/img/spot-2.jpg", alt: "ひまわり畑", title: "ひまわり畑" },
+  { src: "/img/spot-3.jpg", alt: "能取岬", title: "能取岬" },
+  { src: "/img/spot-4.jpg", alt: "オホーツクの海", title: "オホーツクの海" },
+];
 const GOURMET_CARDS: CardData[] = [
   { src: "/img/gourmet-1.jpg", alt: "わかさぎの唐揚げ", title: "わかさぎの唐揚げ" },
   { src: "/img/gourmet-2.jpg", alt: "浜の海鮮焼き", title: "浜の海鮮焼き" },
@@ -165,14 +169,11 @@ import HeroWriting from "./HeroWriting";
 import HeroKamishibai from "./HeroKamishibai";
 import HeroCombo from "./HeroCombo";
 import HeroBlurSeq from "./HeroBlurSeq";
-import SpotShowcase from "./SpotShowcase";
-import GourmetSection from "./GourmetSection";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
 import { buildShadow, mergeShadow, type ShadowTune } from "./shadowConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
-import { mergeSpotTransition, type SpotTransition } from "./spotTransition";
 import { waitForConsent } from "./consentGate";
 
 /** イラスト出現の合図（Stage が拾う） */
@@ -198,7 +199,6 @@ export default function TopPage({
   frameShadow,
   shadowTune,
   layout,
-  spotTune,
 }: {
   intro?: number;
   kv?: number;
@@ -236,14 +236,12 @@ export default function TopPage({
   shadowTune?: Partial<ShadowTune>;
   /** タブレットの位置ずらし（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
-  /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
-  spotTune?: Partial<SpotTransition> | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  /* 「ぼーっと過ごせるスポット」見出し（オーバーレイ混色のため出現後に filter を外す） */
+  const spotHeadRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
-  /* 入れ替わりのタイミング（作字が消える → 背景ブラー → スポットが晴れる → 固定） */
-  const T = mergeSpotTransition(spotTune);
 
   /* アニメが終わってから「ぼーっとしてみる」ボタンをふわっと出す */
   const animated = Boolean(write || kami || combo || blurSeq);
@@ -262,18 +260,6 @@ export default function TopPage({
     };
   }, [waitConsent]);
 
-  /* v1.2: 「網走市観光サイト」は吹き出しと同時に出す（ヒデさん指示 2026-08-19）。
-     以前はボタンと一緒（＝書き終わったあと）だったが、吹き出しに添えた見出しなので
-     吹き出しと同じ瞬間に、同じ 900ms・ブラー16px で現れる方が自然。
-     HeroBlurSeq 側の吹き出しも「環境音の確認が済んでから timing.start 後」に
-     始まるので、同じ条件で合わせている */
-  const [kankoIn, setKankoIn] = useState(!animated);
-  useEffect(() => {
-    if (!animated || !go) return;
-    const id = window.setTimeout(() => setKankoIn(true), timing.start);
-    return () => window.clearTimeout(id);
-  }, [animated, go, timing.start]);
-
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
   const handleScheduled = (writingEnd: number) => {
     const buttonAt = writingEnd + timing.button.gap;
@@ -288,53 +274,36 @@ export default function TopPage({
      スクロール量に応じてその場で変化しながら消え、
      下からコンテンツがすべり込んで交代する */
   const { scrollY } = useScroll({ container: scrollerRef });
-  /* 作字が消えきるまでの距離。
-     トップページは spotTransition.ts 側で「作字 → 背景 → スポット → 固定」の
-     順番ごと管理しているので、そこの kvOut を使う。
-     /mock/kv/[n] のようにパターンを見比べる時だけ、そのパターンの range を使う */
-  const kvRange = kv === 1 ? T.kvOut : kp.range;
   const heroBlur = useTransform(
     scrollY,
-    [0, kvRange * 0.45, kvRange],
+    [0, kp.range * 0.45, kp.range],
     [0, kp.blurMax * 0.35, kp.blurMax]
   );
   const heroOpacity = useTransform(
     scrollY,
-    [0, kvRange * kp.fadeStart, kvRange],
+    [0, kp.range * kp.fadeStart, kp.range],
     [1, 0.55, 0]
   );
-  const heroScale = useTransform(scrollY, [0, kvRange], kp.scale);
-  const heroY = useTransform(scrollY, [0, kvRange], kp.y);
-  const buttonY = useTransform(scrollY, [0, kvRange], [0, kp.buttonParallax ?? 0]);
+  const heroScale = useTransform(scrollY, [0, kp.range], kp.scale);
+  const heroY = useTransform(scrollY, [0, kp.range], kp.y);
+  const buttonY = useTransform(scrollY, [0, kp.range], [0, kp.buttonParallax ?? 0]);
   const heroFilter = useMotionTemplate`blur(${heroBlur}px)`;
   const heroPointer = useTransform(heroOpacity, (v) => (v < 0.06 ? "none" : "auto"));
 
-  /* 背景写真：作字が消えていく流れに続いてブラーがかかっていく（spotTransition の ②）。
+  /* 背景写真：スクロールすると早めに濃いめのブラーがかかっていく。
      ボケた時に端が透けないよう、ブラー量に応じて少しだけ拡大して補正 */
-  const bgBlur = useTransform(
-    scrollY,
-    [0, T.bgFrom, T.bgTo],
-    [0, T.bgBlur * 0.5, T.bgBlur]
-  );
-
-  /* 人物イラストは KV だけのもの。ぼーっとスポットのカンプ（15191:2178）には
-     いないので、作字が消えるのに合わせて見送る */
-  useMotionValueEvent(scrollY, "change", (v) => {
-    const t = Math.max(0, Math.min(1, (v - T.kvOut * 0.4) / (T.kvOut * 0.6)));
-    window.dispatchEvent(
-      new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
-    );
-  });
+  const bgBlur = useTransform(scrollY, [0, 160, 400], [0, 8, 16]);
   const bgFilter = useMotionTemplate`blur(${bgBlur}px)`;
   const bgZoom = kp.bgZoom ?? [1, 1];
   /* ブラー時に端が透けないよう、ズームに少し上乗せ（+0.08まで） */
   const bgScale = useTransform(
     scrollY,
-    [0, T.bgFrom, T.bgTo],
+    [0, 160, 400, kp.range],
     [
       bgZoom[0],
       bgZoom[0] + 0.04,
       Math.max(bgZoom[0], bgZoom[1]) + 0.08,
+      bgZoom[1] + 0.08,
     ]
   );
 
@@ -528,25 +497,20 @@ export default function TopPage({
 
   return (
     <div
-      /* v1.1: タブレットのモック枠をやめて画面いっぱいに。
-         白ベゼル30px・角丸60px・浮遊シャドウはカンプ 15071:24641 から無くなった */
-      className="absolute inset-0"
+      className={`absolute left-[76px] right-[206px] top-[87px] h-[1005px] rounded-t-60 border-[30px] border-white ${frameShadow ?? ""}`}
+      style={{
+        ...(frameShadow ? {} : { boxShadow: buildShadow(mergeShadow(shadowTune)) }),
+        transform: `translate(${L.tabletX}px, ${L.tabletY}px)`,
+      }}
     >
       <div
         ref={scrollerRef}
-        /* data-abashiri-scroller: ヘッダーの「ホーム」がここを探して一番上へ戻す。
-           このページは window ではなくこの箱の中がスクロールするので、
-           普通の「/」リンクでは何も起きない */
-        data-abashiri-scroller=""
-        /* ナビの「グルメ」が飛ぶ先（スクロール量）。グルメは5場面目なので
-           spotTo + 1枚あたりのスクロール量 × 写真4枚ぶん */
-        data-gourmet-at={Math.round(T.spotTo + T.stepLen * 4 + 1)}
-        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain bg-sky-bottom [container-type:inline-size]"
+        className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain rounded-t-30 bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
             パターンによってはスクロールに合わせてゆっくりズーム。
             下地を写真上端と同じ空色にして、角や継ぎ目が出ないようにする */}
-        <div className="pointer-events-none sticky top-0 h-[982px] w-full overflow-hidden bg-brand">
+        <div className="pointer-events-none sticky top-0 h-[945px] w-full overflow-hidden bg-brand">
           {/* Figmaのトリミング・色加工を焼き込み、角丸の縁を切り落とした四角い書き出し画像。
               角丸はCSS側だけで付けるので、継ぎ目やズレが出ない */}
           <motion.img
@@ -559,9 +523,9 @@ export default function TopPage({
 
         {/* キービジュアル：画面中央に固定されたまま、ブラーで登場 →
             スクロールでその場から奥へ引いて消える */}
-        <div className="pointer-events-none sticky top-0 -mt-[982px] h-[982px]">
+        <div className="pointer-events-none sticky top-0 -mt-[945px] h-[865px]">
           <motion.div
-            className="flex h-full flex-col items-center pt-[150px]"
+            className="flex h-full flex-col items-center pt-30"
             initial={
               animated
                 ? { opacity: 1 } /* 手書き/紙芝居アニメ時は書く動き自体が登場演出 */
@@ -576,7 +540,7 @@ export default function TopPage({
             transition={{ duration: ip.heroDur, ease: ip.ease, delay: ip.heroDelay }}
           >
             <motion.div
-              className="flex flex-col items-center gap-8"
+              className="flex flex-col items-center gap-6"
               style={{
                 filter: heroFilter,
                 opacity: heroOpacity,
@@ -585,26 +549,6 @@ export default function TopPage({
                 pointerEvents: heroPointer,
               }}
             >
-              {/* v1.2 カンプ 15332:21660（更新版）の実測
-                    作字ブロック Frame1000007277 … 415 x 379
-                    作字 Group1137              … (0.22, 37.47) 414.56 x 341.34
-                    網走市観光サイト Group1143   … (215.73, 8.34) 188.16 x 36.28
-                    ボタンとの間                … gap 32px（ボタンは上から411px）
-                  ⚠️ 書き出し済みの hero-message.svg は 471x390 で、絵の外側に
-                     左右28.22 / 上下24.33 の余白を持っている。
-                     そのぶん左上へずらして、絵がカンプの座標に来るようにしている
-                     （SVGを作り直すと blurSeq のグループ構造に依存した演出が壊れるため、
-                      SVGはそのままで置き方だけ合わせる） */}
-              <div className="relative h-[379px] w-[415px]">
-              <img
-                src="/img/text-kanko-site.svg"
-                alt="網走市観光サイト"
-                /* 出るタイミングは吹き出しと同じ（duration 900ms / blur 16px も揃えてある） */
-                className={`absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px] transition-all duration-[900ms] ease-standard ${
-                  animated && !kankoIn ? "opacity-0 blur-[16px]" : "opacity-100 blur-0"
-                }`}
-              />
-              <div className="absolute left-[-28px] top-[13.1px]">
               {blurSeq ? (
                 <HeroBlurSeq
                   timing={timing}
@@ -639,8 +583,6 @@ export default function TopPage({
                   className="h-[390px] w-[471px]"
                 />
               )}
-              </div>
-              </div>
               <motion.div style={{ y: buttonY }}>
                 {/* 手書きが終わったあと、ブラーがふわっと晴れて出てくる */}
                 <motion.div
@@ -655,16 +597,9 @@ export default function TopPage({
                     ease: [0.22, 1, 0.36, 1],
                   }}
                 >
-                  {/* v1.2 カンプ 15071:24707（4倍で書き出して実測）
-                      枠 … 1px・白40%（地 rgb86 に対して枠 rgb154 → (154-86)/169 = 0.40）
-                      地 … 白10%（外 rgb68 に対して rgb86 ＝ 68+187*0.1）・backdrop-blur 65px
-                      文字は Noto Sans JP Medium 16px 白・行間 1.2・左右44px/上下16px
-                      枠は v1.1 では 2px と読んでいたが、更新版のカンプでは 1px。
-                      border ではなく内側のリングにしているのは、border だと枠のぶん
-                      ボタンが 218x53.2 に太り、カンプの 216x51 とずれるため */}
                   <Link
                     href="/experience"
-                    className="flex items-center justify-center rounded-full bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white ring-1 ring-inset ring-white/40 backdrop-blur-65 transition-transform hover:scale-105"
+                    className="rounded-full bg-white/90 px-11 py-4 text-control-20 font-black text-brand backdrop-blur-6 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
                   </Link>
@@ -674,14 +609,194 @@ export default function TopPage({
           </motion.div>
         </div>
 
-        {/* ぼーっとスポット。KV がブラーで奥へ引くのと入れ替わりに写真が合ってきて、
-            1スクロールごとに4枚が切り替わる。5場面目はグルメが
-            「場面ごとブラーで」現れる（下スクロールでは送らない。2026-08-22） */}
-        <SpotShowcase scrollY={scrollY} tune={spotTune} finale={<GourmetSection />} />
+        {/* z-index は付けない：付けると独立した重なりグループになり、
+            見出しの「ぼーっ」のオーバーレイ混色が背景写真まで届かなくなる。
+            KV より後ろのDOM順なので、relative だけで手前に描画される */}
+        <div className="pointer-events-none relative -mt-[865px]">
 
-        {/* v1.1 の プロモ／旧グルメ／体験・イベント は撤去済み。
-            旧部品（Card / CardRow 等）はこのファイル上部に残っている。
-            グルメは v1.2 で GourmetSection として新設した */}
+          <div className="mx-auto flex w-[980px] flex-col items-center pb-50 pt-[1005px]">
+            <div className="pointer-events-auto relative flex w-full flex-col gap-75">
+              {/* ぼーっと過ごせるスポット ＋ プロモ */}
+              <div className="flex w-full flex-col gap-20">
+                <motion.section
+                  id="spot"
+                  className="flex w-full flex-col gap-30"
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={viewport}
+                  variants={stagger}
+                >
+                  <motion.div
+                    ref={spotHeadRef}
+                    variants={reveal}
+                    className="flex w-full items-end justify-between"
+                    /* 登場アニメが残す filter/transform はスタッキングコンテキストを
+                       作ってしまい、「ぼーっ」のオーバーレイ混色が背景写真に届かない。
+                       出現し終わったら消して、カンプ通り写真と混ざるようにする */
+                    onAnimationComplete={() => {
+                      const el = spotHeadRef.current;
+                      if (el) {
+                        el.style.filter = "none";
+                        el.style.transform = "none";
+                      }
+                    }}
+                  >
+                    <div className="flex items-start">
+                      <div className="mix-blend-overlay">
+                        <img
+                          src="/img/header-botto.svg"
+                          alt="ぼーっ"
+                          className="w-[140px] -rotate-[0.42deg]"
+                        />
+                      </div>
+                      <p className="ml-[3px] mt-2 text-title-48 font-medium leading-[1.2] text-white">
+                        と過ごせるスポット
+                      </p>
+                    </div>
+                    <ViewMore anim={moreAnim} />
+                  </motion.div>
+                  <CardRow cards={SPOT_CARDS} rowIndex={0} registerRow={registerRow} hover={cardHover} />
+                </motion.section>
+
+                {/* ぼーっとする、やってみない？ */}
+                <motion.div
+                  initial="hidden"
+                  whileInView="show"
+                  viewport={viewport}
+                  variants={reveal}
+                >
+                  <Link
+                    href="/experience"
+                    className="relative flex w-full flex-col items-center justify-center gap-8 overflow-clip rounded-30 bg-brand/90 px-4 py-15 backdrop-blur-30 transition-transform duration-500 hover:scale-[1.01]"
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <p className="text-body-18 font-bold leading-[1.4] text-white">
+                        旅行する前に
+                      </p>
+                      <div className="flex items-end justify-center gap-1">
+                        <img
+                          src="/img/header-botto-sm.svg"
+                          alt="ぼーっ"
+                          className="w-[103px] -rotate-[0.42deg]"
+                        />
+                        <p className="text-title-34 font-bold leading-[1.4] text-white">
+                          とする、やってみない？
+                        </p>
+                      </div>
+                    </div>
+                    <span className="flex w-[200px] items-center justify-center rounded-full bg-white px-6 py-3 text-control-14 font-black text-brand">
+                      さっそく体験する
+                    </span>
+                    <div
+                      className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+                      onPointerDown={dragPromoBird("promo1")}
+                      onClickCapture={(e) => {
+                        if (birdsEditable) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      style={{
+                        left: `${birds.promo1.x}%`,
+                        top: `${birds.promo1.y}%`,
+                        width: birds.promo1.w,
+                        height: birds.promo1.w * 0.58,
+                        transform: `rotate(${birds.promo1.rotate}deg)`,
+                      }}
+                    >
+                      <Bird
+                        flapDuration={birds.promo1.flap}
+                        driftDuration={birds.promo1.drift}
+                        delay={birds.promo1.delay}
+                        strokeWidth={birds.promo1.stroke}
+                      />
+                    </div>
+                    <div
+                      className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
+                      onPointerDown={dragPromoBird("promo2")}
+                      onClickCapture={(e) => {
+                        if (birdsEditable) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
+                      style={{
+                        left: `${birds.promo2.x}%`,
+                        top: `${birds.promo2.y}%`,
+                        width: birds.promo2.w,
+                        height: birds.promo2.w * 0.58,
+                        transform: `rotate(${birds.promo2.rotate}deg)`,
+                      }}
+                    >
+                      <Bird
+                        flapDuration={birds.promo2.flap}
+                        driftDuration={birds.promo2.drift}
+                        delay={birds.promo2.delay}
+                        strokeWidth={birds.promo2.stroke}
+                      />
+                    </div>
+                  </Link>
+                </motion.div>
+              </div>
+
+              {/* 素朴なグルメ */}
+              <motion.section
+                id="gourmet"
+                className="flex w-full flex-col gap-30"
+                initial="hidden"
+                whileInView="show"
+                viewport={viewport}
+                variants={stagger}
+              >
+                <motion.div
+                  variants={reveal}
+                  className="flex w-full items-end justify-between"
+                >
+                  <div className="flex flex-col items-start gap-4">
+                    <img
+                      src="/img/bubble-gourmet.svg"
+                      alt="地味だけど、美味い"
+                      className="w-[304px]"
+                    />
+                    <p className="text-title-48 font-medium leading-[1.2] text-white">
+                      素朴なグルメ
+                    </p>
+                  </div>
+                  <ViewMore anim={moreAnim} />
+                </motion.div>
+                <CardRow cards={GOURMET_CARDS} rowIndex={1} registerRow={registerRow} hover={cardHover} />
+              </motion.section>
+
+              {/* 体験・イベント */}
+              <motion.section
+                id="event"
+                className="flex w-full flex-col gap-30"
+                initial="hidden"
+                whileInView="show"
+                viewport={viewport}
+                variants={stagger}
+              >
+                <motion.div
+                  variants={reveal}
+                  className="flex w-full items-end justify-between"
+                >
+                  <div className="flex flex-col items-start gap-4">
+                    <img
+                      src="/img/bubble-event.svg"
+                      alt="気が向いたら、これ"
+                      className="w-[287px]"
+                    />
+                    <p className="text-title-48 font-medium leading-[1.2] text-white">
+                      体験・イベント
+                    </p>
+                  </div>
+                  <ViewMore anim={moreAnim} />
+                </motion.div>
+                <CardRow cards={EVENT_CARDS} rowIndex={2} registerRow={registerRow} hover={cardHover} />
+              </motion.section>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 追従ヘッダー：スクロールの外に置いて常に表示 */}

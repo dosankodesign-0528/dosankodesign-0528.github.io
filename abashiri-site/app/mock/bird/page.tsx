@@ -20,7 +20,7 @@ export default function BirdMockIndex() {
     },
   ];
   return (
-    <main className="h-dvh overflow-y-auto bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
+    <main className="min-h-screen bg-gradient-to-b from-[#35c3ea] to-[#b5d7ff] px-6 py-14">
       <div className="mx-auto max-w-[640px]">
         <h1 className="mb-2 text-[28px] font-black text-white">
           カモメ羽ばたき 比較mock

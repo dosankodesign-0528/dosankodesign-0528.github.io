@@ -11,27 +11,16 @@ import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
-import { findTamaranee } from "./tamaraneePatterns";
-import { findBo } from "./boPatterns";
-import { findIllustEnter } from "./illustEnterPatterns";
 
 /*
  * 人物イラストのスイング（/mock/illust で5パターン比較）
  * 共通ルール：回転軸はイラストの下辺中央（transformOrigin 50% 100%）、
- * 角度は −4°〜+4° の範囲だけ。その中で緩急（メリハリ）の付け方を変えている。約15秒に1回。
- *
- * v1.1: 位置はカンプ側で決まるので、ここでは transformOrigin だけを持つ。
- * （v1.0 にあった top:72 の下げは、全画面化でカンプ位置とずれるため撤去）
+ * 角度は −4°〜+4° の範囲だけ。その中で緩急（メリハリ）の付け方を変えている。
+ * 約15秒に1回。下端の切れ目対策でイラストは28px下げてある（top:72）
  */
 import type { Transition } from "framer-motion";
 
-const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%" };
-
-/* 初回だけ「たまらねー」を自分から見せる時間（ミリ秒）
-   delay … 登場アニメが終わってから出すまでの間
-   hold  … 出したまま留めておく長さ。このあと引っ込む
-   2026-08-20 ヒデさん指示で hold を 1700 → 3000 に延長 */
-const TAMA_INTRO_DEFAULT = { delay: 350, hold: 3000 } as const;
+const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%", top: 72 };
 
 type IllustAnim = {
   animate: Record<string, number[]>;
@@ -122,20 +111,6 @@ type StageProps = {
   face?: Partial<FaceConfig> | null;
   /** 右カラムなどの位置（layoutConfig.ts） */
   layout?: Partial<LayoutTune> | null;
-  /** 1〜5: ホバー時に「たまらねー」が出るパターン（tamaraneePatterns.ts） */
-  tamaranee?: number | string | null;
-  /** 1〜5: 動画再生中の「ぼーっ」の出方（boPatterns.ts / illustration="bo" の時だけ効く） */
-  bo?: number | string | null;
-  /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
-  illustEnter?: number | string | null;
-  /** 初回の「たまらねー」お披露目のタイミング(ms)。調整パネルから */
-  tamaIntro?: { delay: number; hold: number };
-  /** true: 眉・口・たまらねーを出しっぱなしにする（調整パネルの確認用） */
-  forceFace?: boolean;
-  /** true: 眉と口のパッチを赤くする（覆い残しの確認用） */
-  patchRed?: boolean;
-  /** true: 人物イラストを出さない（カンプにイラストが無い画面用） */
-  hideIllust?: boolean;
 };
 
 /**
@@ -153,13 +128,6 @@ export default function Stage({
   illustAnim = 4,
   face,
   layout,
-  tamaranee,
-  bo,
-  illustEnter,
-  tamaIntro = TAMA_INTRO_DEFAULT,
-  forceFace = false,
-  patchRed = false,
-  hideIllust = false,
 }: StageProps) {
   const L = mergeLayout(layout);
   const fc = mergeFace(face);
@@ -167,46 +135,12 @@ export default function Stage({
      カーソルの座標を見て自前で判定する（詳細は useFaceReaction.ts） */
   const illustRef = useRef<HTMLDivElement>(null);
   const browLift = useFaceReaction(illustRef, fc);
-  /* browLift が 0 より大きい＝カーソルがイラストに乗っている */
-  const over = browLift > 0;
-  const tp = findTamaranee(tamaranee);
-  const bp = findBo(bo);
-  const iep = findIllustEnter(illustEnter);
   const ia = ILLUST_ANIMS[illustAnim] ?? ILLUST_ANIMS[4];
   const [fit, setFit] = useState<{ scale: number; stageW: number; top: number } | null>(
     null
   );
   const [illustIn, setIllustIn] = useState(!illustEntrance);
-  /* スクロールでイラストを引っ込める量（1=そのまま 0=消える）。
-     カンプ 15191:2178 のぼーっとスポットには人物がいないので、
-     KV から下へ送ると同時に見送る */
-  const [illustFade, setIllustFade] = useState(1);
   const [spin, setSpin] = useState(false);
-  /* 初回の登場（ぴょこん）が収まったあと、「たまらねー」を一度だけ自分から出して
-     すぐ引っ込める。2回目以降はカーソルを乗せた時だけ出る（ヒデさん指示 2026-08-20） */
-  const [introTama, setIntroTama] = useState(false);
-  /* 登場アニメが終わったか。案ごとに長さが違う（0.72〜1.6秒）ので、
-     開始時刻からではなく onAnimationComplete を起点にする */
-  const [entranceDone, setEntranceDone] = useState(false);
-
-  useEffect(() => {
-    if (!illustEntrance || !entranceDone) return;
-    const a = window.setTimeout(() => setIntroTama(true), tamaIntro.delay);
-    const b = window.setTimeout(
-      () => setIntroTama(false),
-      tamaIntro.delay + tamaIntro.hold
-    );
-    return () => {
-      window.clearTimeout(a);
-      window.clearTimeout(b);
-    };
-  }, [illustEntrance, entranceDone, tamaIntro.delay, tamaIntro.hold]);
-
-  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ パネルの出しっぱなし */
-  const showTama = over || introTama || forceFace;
-  /* 表情（眉が上がる・口が開く）も「たまらねー」と同じ条件でそろえる。
-     初回のお披露目でも顔が動いた方が「言っている」感じが出る（🟡仮判断） */
-  const faceLift = over ? browLift : showTama ? fc.browLift : 0;
 
   /* 調整パネル用：カモメをドラッグで動かす */
   const dragBird = (key: "skyTopLeft" | "skyRight") => (e: React.PointerEvent) => {
@@ -245,14 +179,6 @@ export default function Stage({
     calc();
     window.addEventListener("resize", calc);
     return () => window.removeEventListener("resize", calc);
-  }, []);
-
-  /* TopPage がスクロール量に応じて送ってくる、イラストの見送り量 */
-  useEffect(() => {
-    const fade = (e: Event) =>
-      setIllustFade((e as CustomEvent<{ v: number }>).detail?.v ?? 1);
-    window.addEventListener("abashiri:illust-fade", fade);
-    return () => window.removeEventListener("abashiri:illust-fade", fade);
   }, []);
 
   /* TopPage からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
@@ -318,55 +244,24 @@ export default function Stage({
           />
         </div>
 
-        {/* ぼーっと体験ページだけ、左側にもカモメ（2026-08-21 ヒデさん指示）。
-            位置・大きさは globals.css の --bird-exp-*。右下パネルから動かすと
-            CSS 変数がその場で書き換わる＝即反映・自動保存 */}
-        {illustration === "bo" && (
-          <div
-            className="absolute"
-            style={{
-              left: "var(--bird-exp-x)",
-              top: "var(--bird-exp-y)",
-              width: "var(--bird-exp-w)",
-              height: "calc(var(--bird-exp-w) * 0.58)",
-              transform: "rotate(var(--bird-exp-rotate))",
-            }}
-          >
-            <Bird flapDuration={0.55} driftDuration={9} delay={0.6} strokeWidth={6} />
-          </div>
-        )}
-
         {children}
 
-        {/* 人物イラスト（たまらねー・キラキラ込み）。常に最前面。
-            キービジュアルの演出が全部終わってから登場する（出方は illustEnterPatterns.ts の5案）
-
-            ⚠️ フェードは外側のこの div が持つ。中の motion.div は framer-motion が
-               opacity を握っているので、そこに style で opacity を書いても効かない。 */}
-        <div
-          /* v1.1 カンプ 15071:24641: イラストは (1244.56, 764) / 162x226.8、
-             「たまらねー」は (1380.05, 749.94) / 75.2x53.3。
-             右づけ。ステージは画面が横長だと 1512px より広がるので、左からの絶対位置ではなく
-             右端からの距離で置く（カンプ 1512 幅での右端 1455px ＝ 右から 57px） */
-          className="pointer-events-none absolute z-30 h-[241px] w-[210px]"
-          style={{
-            /* 位置は globals.css の --illust-* から。調整パネルがそこを書き換える */
-            right: "var(--illust-frame-right)",
-            top: "var(--illust-frame-top)",
-            visibility: hideIllust ? "hidden" : "visible",
-            opacity: hideIllust ? 0 : illustFade,
-            transition: "opacity 700ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        >
+        {/* 人物イラスト（たまんねーっ・キラキラ込み）。常に最前面。
+            ブラーで出たあと、一回だけクルンと一回転（軽いバウンスつき）して目立たせる */}
         <motion.div
-          className="size-full"
-          initial={illustEntrance ? iep.initial : false}
-          animate={illustIn ? iep.animate : undefined}
-          transition={iep.transition}
+          className="pointer-events-none absolute right-0 top-[600px] z-30 h-[401px] w-[366px] overflow-clip"
+          initial={
+            illustEntrance
+              ? { opacity: 0, filter: `blur(${timing.illust.blur}px)` }
+              : false
+          }
+          animate={illustIn ? { opacity: 1, filter: "blur(0px)" } : undefined}
+          transition={{
+            duration: timing.illust.duration / 1000,
+            ease: [0.22, 1, 0.36, 1],
+          }}
           onAnimationComplete={() => {
-            if (!illustEntrance || !illustIn) return;
-            if (iep.swingAfter) setSpin(true);
-            setEntranceDone(true); /* ここから初回の「たまらねー」の時計が動く */
+            if (illustEntrance && illustIn) setSpin(true);
           }}
         >
           <div className="relative h-full w-full">
@@ -375,70 +270,21 @@ export default function Stage({
               {/* 人物だけ、15秒に1回クルンと一回転（文字とキラキラは回さない） */}
               <motion.div
                 ref={illustRef}
-                className="absolute drop-shadow-illust"
-                style={{
-                  left: "var(--illust-person-x)",
-                  top: "var(--illust-person-y)",
-                  width: "var(--illust-person-w)",
-                  /* 648x1067 の比率。絵そのものは 648x907 で、下 160px は
-                     「跳ねた時に切れ目が見えない」ための延長ぶん（画面の下に隠れる） */
-                  height: "calc(var(--illust-person-w) * 1.6466)",
-                  ...ia.style,
-                }}
+                className="absolute left-[1px] top-[44px] h-[357px] w-[284px] drop-shadow-illust"
+                style={ia.style}
                 animate={spin ? ia.animate : undefined}
                 transition={spin ? ia.transition : undefined}
               >
-                {/* v1.2（カンプ 15332:21660 で絵が差し替わった）
-                    新しい絵は 1枚のPNG で、キラキラも頬の赤みも描き込み済み。
-                    カンプの置き方（枠162x226.8 の中で (3.30, 11.99) に 139.2x216.44）は
-                    画像側に焼き込んであるので、ここでは枠いっぱいに出すだけでよい。
-                    眉だけは新しい絵からトレースし直してある
-                    （scripts/illust-brow-trace.py → illustMainPaths.ts）。 */}
-                <IllustTamannee
-                  lift={faceLift}
-                  browX={fc.browX}
-                  browY={fc.browY}
-                  mouthOpen={showTama}
-                  mouthX={fc.mouthX}
-                  mouthY={fc.mouthY}
-                  mouthW={fc.mouthW}
-                  mouthStroke={fc.mouthStroke}
-                  patchSpread={fc.patchSpread}
-                  debugPatch={patchRed}
-                  className="size-full"
-                />
+                <IllustTamannee lift={browLift} className="size-full" />
               </motion.div>
-              {/* キラキラ（2コマのGIF風）。絵から切り出して独立させた（2026-08-20）。
-                  位置・2コマ目のずらし・速さは globals.css の --illust-sparkle-* から */}
-              <div
-                className="sparkle-2f absolute"
-                style={{
-                  left: "var(--illust-sparkle-x)",
-                  top: "var(--illust-sparkle-y)",
-                  width: "var(--illust-sparkle-w)",
-                }}
-              >
-                <img src="/img/sparkle-2f.png" alt="" className="w-full" />
+              {/* キラキラ：GIF風に2箇所をパキッと行き来（フェード無し） */}
+              <div className="sparkle-hop absolute left-[14px] top-[116px] w-[30px]">
+                <img src="/img/sparkle.svg" alt="" className="w-full" />
               </div>
-              {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
-                 出方は tamaraneePatterns.ts の5案から選べる（/mock/tamaranee で比較） */}
               <img
-                src="/img/text-tamaranee.svg"
-                alt="たまらねー"
-                className="absolute will-change-transform"
-                style={{
-                  left: "var(--illust-tamaranee-x)",
-                  top: "var(--illust-tamaranee-y)",
-                  width: "var(--illust-tamaranee-w)",
-                  /* 75:53 の比率を保つ */
-                  height: "calc(var(--illust-tamaranee-w) * 0.7067)",
-                  transformOrigin: tp.text.origin,
-                  transitionProperty: "opacity, transform, filter",
-                  transitionDuration: `${tp.text.duration}ms`,
-                  transitionTimingFunction: tp.text.ease,
-                  transitionDelay: `${showTama ? tp.text.delay : 0}ms`,
-                  ...(showTama ? tp.text.on : tp.text.off),
-                }}
+                src="/img/text-tamannee.svg"
+                alt="たまんねーっ"
+                className="absolute left-[213px] top-[29px] w-[127px]"
               />
             </>
           ) : (
@@ -446,49 +292,45 @@ export default function Stage({
               <img
                 src="/img/illust-video.png"
                 alt=""
-                className="absolute object-contain object-bottom drop-shadow-illust"
-                style={{
-                  left: "var(--illust-person-x)",
-                  top: "var(--illust-person-y)",
-                  width: "var(--illust-person-w)",
-                  height: "calc(var(--illust-person-w) * 1.6466)",
-                }}
+                className="absolute left-[-9px] top-[34px] h-[387px] w-[268px] object-cover drop-shadow-illust"
               />
-              {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts）。
-                  採用は案4「息を吐くように抜ける」。1回目だけ3秒で出し、以降は5秒おき。
-                  ⚠️ 位置（left/top/w）はカンプ採寸なので触らない。動きだけを案で差し替える */}
-              <motion.img
+              <img
                 src="/img/text-bo.svg"
                 alt="ぼーっ"
-                /* ⚠️ 仮置き: 文字は白（カンプのまま）なので、流氷のような明るい映像の上では
-                   ほぼ見えない。人物と同じ Shadow_Illust を掛けて最低限浮かせている。
-                   見せ方（影／すりガラスの地／文字色）はヒデさん確認待ち */
-                className="absolute drop-shadow-illust"
-                style={{
-                  left: "var(--illust-bo-x)",
-                  top: "var(--illust-bo-y)",
-                  width: "var(--illust-bo-w)",
-                  transformOrigin: bp.origin,
-                }}
-                initial={{ opacity: 0 }}
-                animate={bp.keyframes}
-                transition={{
-                  duration: bp.cycle,
-                  times: bp.times,
-                  ease: bp.ease,
-                  repeat: Infinity,
-                  delay: bp.startDelay,
-                }}
+                className="absolute left-[246px] top-[42px] w-[65px]"
               />
             </>
           )}
           </div>
         </motion.div>
-        </div>
 
-        {/* v1.1: 右レール（縦書き「網走 観光サイト」＋SNS 3つ）はカンプから無くなった。
-            サイト名は吹き出しの上の手書き「網走市観光サイト」に置き換わっている。
-            アセット（logo-abashiri.svg / sns-*.svg）はフッター用に残してある。 */}
+        {/* 右レール：ロゴ・SNS・縦書き「観光サイト」。位置は layoutConfig で調整できる */}
+        <div
+          className="absolute flex items-start gap-3"
+          style={{ right: L.railX, top: L.railY }}
+        >
+          <div className="flex flex-col items-center gap-15">
+            <Link href="/" aria-label="ホームへ戻る" className="transition-opacity hover:opacity-70">
+              <img src="/img/logo-abashiri.svg" alt="網走" className="h-[159px] w-[75px]" />
+            </Link>
+            <div className="flex flex-col gap-4 opacity-70">
+              <a href="#" aria-label="Instagram" className="relative block size-[44px] transition-transform hover:scale-110">
+                <img src="/img/sns-ig-frame.svg" alt="" className="absolute inset-0 size-full" />
+                <img src="/img/sns-ig-circle.svg" alt="" className="absolute inset-[24.32%]" />
+                <img src="/img/sns-ig-dot.svg" alt="" className="absolute right-[17.3%] top-[17.3%] size-[12%]" />
+              </a>
+              <a href="#" aria-label="X" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
+                <img src="/img/sns-x.svg" alt="" className="w-[40px]" />
+              </a>
+              <a href="#" aria-label="YouTube" className="flex size-[44px] items-center justify-center transition-transform hover:scale-110">
+                <img src="/img/sns-yt.svg" alt="" className="w-[44px]" />
+              </a>
+            </div>
+          </div>
+          <p className="text-center text-body-18 font-black leading-[1.3] tracking-[2.3px] text-white [writing-mode:vertical-rl]">
+            観光サイト
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -18,13 +18,9 @@
   /* ---------- 書体 ----------
      実体は next/font が html に注入する --font-zen / --font-rounded。
      inline にしているのは、その実行時変数を展開して埋め込むため。 */
-  --font-body: var(--font-noto), "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+  --font-body: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN",
     sans-serif;
-  --font-num: var(--font-inter), "Inter", "SF Pro Text", sans-serif;
-  /* v1.0 の書体。まだ差し替えていないセクションが参照している */
-  --font-zen-body: var(--font-zen), "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN",
-    sans-serif;
-  --font-rounded-num: var(--font-rounded), "M PLUS Rounded 1c", sans-serif;
+  --font-num: var(--font-rounded), "M PLUS Rounded 1c", "SF Pro Rounded", sans-serif;
 }
 
 @theme {
@@ -75,21 +71,6 @@
   --text-number-80: 80px;
   --text-number-28: 28px;
 
-  /* ══════════ v1.1 のテキストサイズ ══════════
-     キービジュアル／ぼーっと体験のカンプ（15071:24641・15176:2415）から。
-     Noto Sans JP の Thin 100 / Light 300 / Regular 400 / Medium 500 だけを使う。 */
-  --text-title-44: 44px; /* Title_44px   「ぼーっと体験」「どこでぼーっとする？」 Thin */
-  --text-number-120: 120px; /* Number_120px ぼーっとタイマー Inter Thin */
-  /* Body_16px / Body_18px は上の既存トークンと同値なのでそのまま使う */
-
-  /* v1.1 の角丸・ブラー。すりガラスの面が 65px、背景の引きが 32/42px に変わった */
-  --radius-16: 16px; /* Radius_16px  タイマーの札 */
-  --radius-120: 120px; /* Radius_120px カルーセルのカード */
-  --blur-32: 32px; /* Blur_32px  ぼーっと体験の背景（手前） */
-  --blur-42: 42px; /* Blur_42px  ぼーっと体験の背景（奥） */
-  --blur-65: 65px; /* Blur_65px  すりガラスのボタン・タイマー */
-  --blur-90: 90px; /* Blur_90px  タイマーのラベル札 */
-
   /* ══════════ ブラー（4 段） ══════════ */
   --blur-6: 6px; /* Blur_6px  触れた時のうっすら。ボタン・カードの幕・タイマー札 */
   --blur-16: 16px; /* Blur_16px 登場時にピントが合う。KV・カード・STEP 切り替え */
@@ -107,43 +88,6 @@
   /* ══════════ イージング ══════════ */
   --ease-standard: cubic-bezier(0.22, 1, 0.36, 1); /* Ease_Standard 動くものは全部これ */
   /* Ease_Linear（カモメ・キラキラのコマ送り）は Tailwind 既定の ease-linear */
-}
-
-/* ══════════ 人物イラストまわりの位置・大きさ ══════════
-   既定値はカンプ 15071:24641 の採寸。
-   画面右下の調整パネル（TopTunePanel）がここを直接書き換えるので、
-   ドラッグ中も React を通さずその場で動く。
-   ⚠️ 数値を変えたい時はここを直す（コンポーネント側に生の px を書かない） */
-:root {
-  /* 210x241 の枠。右端・上端からの距離 */
-  --illust-frame-right: 57px;
-  --illust-frame-top: 750px;
-  /* 人物（648x1067。絵は上 907 ぶんで、下 160 は跳ねた時に切れ目を見せないための延長） */
-  --illust-person-x: 0px;
-  --illust-person-y: 14px;
-  --illust-person-w: 162px;
-  /* 「たまらねー」（縦横比 75:53）。ヒデさん調整値 2026-08-20 */
-  --illust-tamaranee-x: 107px;
-  --illust-tamaranee-y: -10px;
-  --illust-tamaranee-w: 75px;
-  /* 「ぼーっ」（動画視聴中。高さは元の比率まかせ） */
-  --illust-bo-x: 135px;
-  --illust-bo-y: 8px;
-  --illust-bo-w: 62px;
-  /* キラキラ（2コマのGIF風）。ヒデさん指示 2026-08-20 で独立要素として復活。
-     絵から切り出した sparkle-2f.png を、1コマ目=この位置 → 2コマ目=ずらした位置 で
-     パキッと切り替える。位置・ずらし・速さは調整パネルから */
-  --illust-sparkle-x: 4px;
-  --illust-sparkle-y: 53px;
-  --illust-sparkle-w: 18px;
-  --illust-sparkle2-dx: -5px; /* ヒデさん調整値 2026-08-21 */
-  --illust-sparkle2-dy: -5px;
-  --illust-sparkle-period: 1.2s;
-  /* ぼーっと体験ページ・左側のカモメ（🟡仮置き。右下パネルから調整・保存） */
-  --bird-exp-x: 150px;
-  --bird-exp-y: 380px;
-  --bird-exp-w: 84px;
-  --bird-exp-rotate: -8deg;
 }
 
 html,
@@ -245,34 +189,17 @@ body {
   will-change: transform;
 }
 
-/* ===== キラキラ（2コマのGIF風。フェード無しでパキッと切替） =====
-   コマは2つだけ：基準の位置 → --illust-sparkle2-dx/dy だけずれた位置。
-   位置・ずらし量・切替の速さは :root の変数（＝調整パネル）から */
-@keyframes sparkle-2f {
-  0%, 49.99% {
-    transform: translate(0, 0);
+/* ===== キラキラ（GIF風：2箇所をパキッと行き来するだけ。フェード無し） ===== */
+@keyframes sparkle-hop {
+  0%, 49.9% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
   }
   50%, 100% {
-    transform: translate(var(--illust-sparkle2-dx), var(--illust-sparkle2-dy));
+    transform: translate(24px, -32px) scale(0.82) rotate(18deg);
   }
 }
-.sparkle-2f {
-  animation: sparkle-2f var(--illust-sparkle-period) linear infinite;
-}
-
-/* ===== グルメのカルーセル（右から左へゆっくり流れ続ける） =====
-   2セット並べた列を半分だけ動かしてループ。速さはカンプに指定が無く仮の40秒 */
-@keyframes gourmet-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.gourmet-marquee {
-  animation: gourmet-marquee 40s linear infinite;
-  will-change: transform;
-}
-/* カーソルを乗せている間は流れを止める（ホバーの文字を読ませるため） */
-.gourmet-marquee:hover {
-  animation-play-state: paused;
+.sparkle-hop {
+  animation: sparkle-hop 1.5s linear infinite;
 }
 
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */
@@ -287,17 +214,4 @@ body {
 .kenburns {
   animation: kenburns 36s ease-in-out infinite alternate;
   will-change: transform;
-}
-
-/* ===== ぼーっと体験のカルーセル（右から左へゆっくり自動送り） ===== */
-@keyframes botto-marquee {
-  from { transform: translateX(0); }
-  /* 同じ並びを2周ぶん置いてあるので、半分流れたら先頭に戻る＝継ぎ目なく回る */
-  to   { transform: translateX(-50%); }
-}
-
-/* 窓枠が出た瞬間のカクつきを吸収する、ごく短いフェード */
-@keyframes botto-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
