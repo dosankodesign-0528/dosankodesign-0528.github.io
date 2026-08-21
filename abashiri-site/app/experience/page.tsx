@@ -6,6 +6,7 @@ import ExperienceFlow, { type Step } from "@/components/ExperienceFlow";
 import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
 import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
+import { DEFAULT_FACE } from "@/components/faceConfig";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
@@ -15,6 +16,7 @@ export default function ExperiencePage() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 2,
+    face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);

@@ -25,7 +25,7 @@ import {
 
 /* 本番の表示サイズ（162x227）。ここでは倍率をかけて大きく見せる */
 const BASE_W = 162;
-const BASE_H = 227;
+const BASE_H = 266.75; /* 下 40px は画面外へ隠す延長ぶん */
 
 function Row({
   label,

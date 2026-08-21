@@ -22,10 +22,10 @@ import {
 
 /*
  * 持ち上げ量は画面px で受け取るが、SVG の中の transform は viewBox の単位で効く。
- * 本番（カンプ 15332:21660）の表示サイズは 162x227 なので、それを基準に換算する。
+ * 本番の表示サイズは 162x266.75（絵は上 227 ぶん、下は画面外へ隠す延長）。
  * 拡大して見せる調整用ページは renderH に実際の高さを渡すこと。
  */
-export const ILLUST_RENDER = { w: 162, h: 227 } as const;
+export const ILLUST_RENDER = { w: 162, h: 266.75 } as const;
 
 const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
 /* <img> が object-cover なので、重ねる SVG も同じ詰め方に合わせる */
@@ -33,10 +33,19 @@ const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
    slice（＝cover）だと元PNGの縦横比の差で白フチが左右で切れる */
 const FIT = "xMidYMax meet";
 
-function Brows({ fill, spread }: { fill: string; spread?: number }) {
+function Brows({
+  fill,
+  spread,
+  shift,
+}: {
+  fill: string;
+  spread?: number;
+  /** viewBox 単位でのずらし量（動く眉だけに掛ける） */
+  shift?: { x: number; y: number };
+}) {
   return (
     <g
-      transform={ILLUST_FLIP}
+      transform={`${shift ? `translate(${shift.x},${shift.y}) ` : ""}${ILLUST_FLIP}`}
       fill={fill}
       stroke={spread ? fill : "none"}
       strokeWidth={spread ?? 0}
@@ -59,6 +68,9 @@ type Props = {
   patchSpread?: number;
   /** true: パッチを赤くして、元の眉を覆えているか確かめる（調整用ページから） */
   debugPatch?: boolean;
+  /** 眉そのものの位置ずらし（画面px）。＋で右／下 */
+  browX?: number;
+  browY?: number;
   /** 外枠（サイズ・影・位置）に当てるクラス */
   className?: string;
 };
@@ -68,9 +80,14 @@ export default function IllustTamannee({
   renderH = ILLUST_RENDER.h,
   patchSpread = PATCH_SPREAD,
   debugPatch = false,
+  browX = 0,
+  browY = 0,
   className,
 }: Props) {
   const unit = ILLUST_VIEWBOX.h / renderH;
+  /* 位置ずらしは「静止時の眉の置き場所」。パッチは動かさない
+     （動かすと元の眉が顔を出してしまう） */
+  const shift = { x: browX * unit, y: browY * unit };
   return (
     <div className={`relative ${className ?? ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,7 +109,7 @@ export default function IllustTamannee({
           className="transition-transform duration-300 ease-standard"
           style={{ transform: `translateY(${-lift * unit}px)` }}
         >
-          <Brows fill={BROW_FILL} />
+          <Brows fill={BROW_FILL} shift={shift} />
         </g>
       </svg>
     </div>

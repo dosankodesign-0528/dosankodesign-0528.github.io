@@ -27,6 +27,11 @@ import type { Transition } from "framer-motion";
 
 const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%" };
 
+/* 初回だけ「たまらねー」を自分から見せる時間（ミリ秒）
+   delay … ぴょこんと出きってから出すまでの間
+   hold  … 出したまま留めておく長さ。このあと引っ込む */
+const TAMA_INTRO = { delay: 450, hold: 1700 } as const;
+
 type IllustAnim = {
   animate: Record<string, number[]>;
   transition: Transition;
@@ -167,6 +172,25 @@ export default function Stage({
      KV から下へ送ると同時に見送る */
   const [illustFade, setIllustFade] = useState(1);
   const [spin, setSpin] = useState(false);
+  /* 初回の登場（ぴょこん）が収まったあと、「たまらねー」を一度だけ自分から出して
+     すぐ引っ込める。2回目以降はカーソルを乗せた時だけ出る（ヒデさん指示 2026-08-20） */
+  const [introTama, setIntroTama] = useState(false);
+
+  useEffect(() => {
+    if (!illustEntrance || !illustIn) return;
+    const a = window.setTimeout(() => setIntroTama(true), TAMA_INTRO.delay);
+    const b = window.setTimeout(
+      () => setIntroTama(false),
+      TAMA_INTRO.delay + TAMA_INTRO.hold
+    );
+    return () => {
+      window.clearTimeout(a);
+      window.clearTimeout(b);
+    };
+  }, [illustEntrance, illustIn]);
+
+  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 */
+  const showTama = over || introTama;
 
   /* 調整パネル用：カモメをドラッグで動かす */
   const dragBird = (key: "skyTopLeft" | "skyRight") => (e: React.PointerEvent) => {
@@ -320,8 +344,9 @@ export default function Stage({
                   left: "var(--illust-person-x)",
                   top: "var(--illust-person-y)",
                   width: "var(--illust-person-w)",
-                  /* 新素材 648x907 の比率（162:226.8 ＝ カンプの枠と同じ） */
-                  height: "calc(var(--illust-person-w) * 1.4)",
+                  /* 648x1067 の比率。絵そのものは 648x907 で、下 160px は
+                     「跳ねた時に切れ目が見えない」ための延長ぶん（画面の下に隠れる） */
+                  height: "calc(var(--illust-person-w) * 1.6466)",
                   ...ia.style,
                 }}
                 animate={spin ? ia.animate : undefined}
@@ -333,8 +358,25 @@ export default function Stage({
                     画像側に焼き込んであるので、ここでは枠いっぱいに出すだけでよい。
                     眉だけは新しい絵からトレースし直してある
                     （scripts/illust-brow-trace.py → illustMainPaths.ts）。 */}
-                <IllustTamannee lift={browLift} className="size-full" />
+                <IllustTamannee
+                  lift={browLift}
+                  browX={fc.browX}
+                  browY={fc.browY}
+                  className="size-full"
+                />
               </motion.div>
+              {/* キラキラ（2コマのGIF風）。絵から切り出して独立させた（2026-08-20）。
+                  位置・2コマ目のずらし・速さは globals.css の --illust-sparkle-* から */}
+              <div
+                className="sparkle-2f absolute"
+                style={{
+                  left: "var(--illust-sparkle-x)",
+                  top: "var(--illust-sparkle-y)",
+                  width: "var(--illust-sparkle-w)",
+                }}
+              >
+                <img src="/img/sparkle-2f.png" alt="" className="w-full" />
+              </div>
               {/* v1.1: 「たまらねー」はホバーした時だけ、ひょこっと出る。
                  出方は tamaraneePatterns.ts の5案から選べる（/mock/tamaranee で比較） */}
               <img
@@ -351,8 +393,8 @@ export default function Stage({
                   transitionProperty: "opacity, transform, filter",
                   transitionDuration: `${tp.text.duration}ms`,
                   transitionTimingFunction: tp.text.ease,
-                  transitionDelay: `${over ? tp.text.delay : 0}ms`,
-                  ...(over ? tp.text.on : tp.text.off),
+                  transitionDelay: `${showTama ? tp.text.delay : 0}ms`,
+                  ...(showTama ? tp.text.on : tp.text.off),
                 }}
               />
             </>
@@ -366,7 +408,7 @@ export default function Stage({
                   left: "var(--illust-person-x)",
                   top: "var(--illust-person-y)",
                   width: "var(--illust-person-w)",
-                  height: "calc(var(--illust-person-w) * 1.4)",
+                  height: "calc(var(--illust-person-w) * 1.6466)",
                 }}
               />
               {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts）。

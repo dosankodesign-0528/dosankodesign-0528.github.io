@@ -19,10 +19,12 @@ import { BO_PATTERNS, DEFAULT_BO } from "./boPatterns";
 import { ILLUST_ENTER_PATTERNS } from "./illustEnterPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
+import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 
 export type TopTuneValues = {
   boPattern: number;
   illustEnter: number;
+  face: FaceConfig;
   spot: SpotTransition;
 };
 
@@ -33,12 +35,17 @@ const POS_DEFAULTS = {
   personX: 0,
   personY: 14,
   personW: 162,
-  tamaraneeX: 135,
-  tamaraneeY: 0,
+  tamaraneeX: 107,
+  tamaraneeY: -10,
   tamaraneeW: 75,
   boX: 135,
   boY: 8,
   boW: 62,
+  sparkleX: 4,
+  sparkleY: 53,
+  sparkleW: 18,
+  sparkle2Dx: 6,
+  sparkle2Dy: -5,
 };
 
 /* params のキー → CSS 変数名 */
@@ -54,12 +61,19 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
   boX: "--illust-bo-x",
   boY: "--illust-bo-y",
   boW: "--illust-bo-w",
+  sparkleX: "--illust-sparkle-x",
+  sparkleY: "--illust-sparkle-y",
+  sparkleW: "--illust-sparkle-w",
+  sparkle2Dx: "--illust-sparkle2-dx",
+  sparkle2Dy: "--illust-sparkle2-dy",
 };
 
 type Params = {
   pos: typeof POS_DEFAULTS;
   anim: { boPattern: number; illustEnter: number };
   sound: { volume: number };
+  face: FaceConfig;
+  sparkle: { period: number };
   spot: SpotTransition;
 };
 
@@ -89,6 +103,9 @@ export default function TopTunePanel({
       anim: { boPattern: DEFAULT_BO, illustEnter: 2 },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
       sound: { volume: Math.round(DEFAULT_BGM_VOLUME * 100) },
+      face: { ...DEFAULT_FACE },
+      /* キラキラの切替周期（秒）。CSS 変数へは applyVars とは別に書く */
+      sparkle: { period: 1.2 },
       spot: { ...DEFAULT_SPOT_TRANSITION },
     };
     const params: Params = structuredClone(DEFAULTS);
@@ -99,6 +116,7 @@ export default function TopTunePanel({
       for (const k of Object.keys(VAR_OF) as (keyof typeof POS_DEFAULTS)[]) {
         root.style.setProperty(VAR_OF[k], `${params.pos[k]}px`);
       }
+      root.style.setProperty("--illust-sparkle-period", `${params.sparkle.period}s`);
     };
     /* 音量は SoundUi へイベントで直接渡す（鳴っている最中でもその場で変わる） */
     const applyVolume = () =>
@@ -113,6 +131,7 @@ export default function TopTunePanel({
       onSettleValues({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
+        face: { ...params.face },
         spot: { ...params.spot },
       });
 
@@ -128,8 +147,10 @@ export default function TopTunePanel({
         /* ⚠️ 既定値の意味を変えたら必ず上げる（古い保存値が自動で捨てられる）。
            v2: 「ぼーっ」の採用案を 案1 → 案4 に変更（2026-08-18）
            v3: カンプ更新でイラストが差し替わり、キラキラの項目が無くなった（2026-08-19）
-           v4: 環境音の音量を追加（2026-08-19） */
-        version: 4,
+           v4: 環境音の音量を追加（2026-08-19）
+           v5: 眉毛（持ち上げ量・位置）を追加、たまらねーの既定位置を変更（2026-08-20）
+           v6: キラキラ（2コマ）を追加（2026-08-20） */
+        version: 6,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -200,6 +221,103 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
                 hint: "横幅。縦は元の比率のまま付いてきます。",
+              },
+            ],
+          },
+          {
+            cat: "🙂 眉毛（カーソルを乗せた時）",
+            items: [
+              {
+                note: "人物にカーソルを乗せると眉が持ち上がります。触っている間だけ見えるので、乗せながら動かしてください。",
+              },
+              {
+                slider: "持ち上げる量",
+                path: "face.browLift",
+                min: 0,
+                max: 20,
+                step: 1,
+                fmt: "px",
+                hint: "0 で動かなくなります。",
+              },
+              { sub: "眉そのものの置き場所" },
+              {
+                slider: "横ずれ",
+                path: "face.browX",
+                min: -20,
+                max: 20,
+                step: 1,
+                fmt: "px",
+                hint: "＋で右へ。元の眉を隠す肌色パッチは動かないので、ずらしすぎると下から元の眉が出ます。",
+              },
+              {
+                slider: "縦ずれ",
+                path: "face.browY",
+                min: -20,
+                max: 20,
+                step: 1,
+                fmt: "px",
+                hint: "＋で下へ。",
+              },
+            ],
+          },
+          {
+            cat: "✨ キラキラ（2コマ）",
+            items: [
+              {
+                note: "顔の横のキラキラです。2つの位置をパキッと行き来します（GIF風・フェード無し）。",
+              },
+              { sub: "1コマ目（基準の位置）" },
+              {
+                slider: "横ずれ",
+                path: "pos.sparkleX",
+                min: -40,
+                max: 160,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "縦ずれ",
+                path: "pos.sparkleY",
+                min: -40,
+                max: 240,
+                step: 1,
+                fmt: "px",
+              },
+              {
+                slider: "大きさ",
+                path: "pos.sparkleW",
+                min: 6,
+                max: 60,
+                step: 1,
+                fmt: "px",
+              },
+              { sub: "2コマ目（どこへ跳ぶか）" },
+              {
+                slider: "横のずらし",
+                path: "pos.sparkle2Dx",
+                min: -30,
+                max: 30,
+                step: 1,
+                fmt: "px",
+                hint: "＋で右へ。1コマ目からの相対位置です。",
+              },
+              {
+                slider: "縦のずらし",
+                path: "pos.sparkle2Dy",
+                min: -30,
+                max: 30,
+                step: 1,
+                fmt: "px",
+                hint: "−で上へ。",
+              },
+              {
+                slider: "切替の速さ",
+                path: "sparkle.period",
+                min: 0.3,
+                max: 4,
+                step: 0.1,
+                fmt: "s",
+                hint: "1往復にかかる時間。小さいほどせわしなく光ります。",
               },
             ],
           },
