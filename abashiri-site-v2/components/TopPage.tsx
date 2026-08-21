@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import Link from "next/link";
 import {
   motion,
@@ -239,6 +240,11 @@ export default function TopPage({
   /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
   spotTune?: Partial<SpotTransition> | null;
 }) {
+  /* 背景写真はファーストビューの土台。読み込みが他と同列だと
+     空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
+     （2026-08-21 ヒデさん指摘：立ち上げ時のグラデ画面をなくす） */
+  preload("/img/bg-hero.jpg", { as: "image", fetchPriority: "high" });
+
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
@@ -552,6 +558,9 @@ export default function TopPage({
           <motion.img
             src="/img/bg-hero.jpg"
             alt=""
+            loading="eager"
+            fetchPriority="high"
+            decoding="sync"
             className="h-full w-full object-cover"
             style={{ scale: bgScale, filter: bgFilter }}
           />

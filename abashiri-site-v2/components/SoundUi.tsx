@@ -79,7 +79,10 @@ export default function SoundUi({
   const duckRef = useRef(false); /* 動画再生中フラグ（動画の音声優先） */
   /* 環境音の音量（0〜1）。既定は bgmConfig.ts。調整パネルから変えられる */
   const volRef = useRef(DEFAULT_BGM_VOLUME);
-  const [showDialog, setShowDialog] = useState(false);
+  /* 最初のHTML（JSが動く前）からモーダルを出しておく。
+     「立ち上げ直後にグラデの画面だけが見える」（2026-08-21 ヒデさん指摘）の対策。
+     同じタブで2回目以降（記憶あり）の時は、下の初期化ですぐ閉じる */
+  const [showDialog, setShowDialog] = useState(askConsent);
 
   /* ボタンの見た目（白の濃さ・背景ブラー）。調整パネルからライブで変えられる */
   const [btnTune, setBtnTune] = useState<SoundBtnTune>(DEFAULT_SOUND_BTN);
@@ -161,6 +164,7 @@ export default function SoundUi({
       setShowDialog(true);
     } else {
       /* ダイアログを出さない時は、すぐアニメーション開始してよい */
+      setShowDialog(false);
       markConsentDone();
     }
     if (saved === "on") {
