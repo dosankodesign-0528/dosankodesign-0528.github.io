@@ -319,7 +319,8 @@ export default function TopPage({
      読み終わったぶんだけ「ぼーっとスポット」をうしろへずらす */
   const M = mergeMsg(msgTune);
   const msgStart = (useExit ? E.range : 320) + M.fadeIn;
-  const msgEnd = msgStart + M.len;
+  /* 読み(len)のあとに余韻(tail)を挟んでから、スポットへ入れ替わる */
+  const msgEnd = msgStart + M.len + M.tail;
   /* 作字の登場（ブラー弱め・一括出現）。timing の kotoba へ上書きして HeroBlurSeq へ渡す。
      ⚠️ useMemo で識別を保つ（毎レンダー新オブジェクトだと HeroBlurSeq の
         effect が走り直して、パネルの無関係な操作でも登場が再生されてしまう） */

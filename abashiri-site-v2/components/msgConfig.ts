@@ -18,14 +18,19 @@ export type MsgTune = {
   /** にじみ幅（ゆったり度）。1つの行・段落が出るのに使うスクロールの深さの倍率。
       大きいほど、パッと切り替わらず ゆーっくり にじみながら出る */
   soft: number;
+  /** 余韻(px)。最後の段落が出そろってから、次のセクションへ行くまでのスクロール量。
+      これが小さいと、最後の文章を読む前に切り替わってしまう（2026-08-22 ヒデさん指摘） */
+  tail: number;
 };
 
 export const DEFAULT_MSG: MsgTune = {
   pattern: 1,
-  len: 3200,
+  len: 2400,
   fadeIn: 120,
   minOpacity: 15,
-  soft: 3,
+  /* 3 にしたら「ゆったりしすぎ」（2026-08-22 ヒデさん）。最初のテンポ相当へ戻した */
+  soft: 1.3,
+  tail: 600,
 };
 
 export const MSG_PATTERNS: Record<number, { name: string; note: string }> = {

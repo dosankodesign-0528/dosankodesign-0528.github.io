@@ -123,14 +123,14 @@ function Intro({ onNext }: { onNext: () => void }) {
         initial="hidden"
         animate="show"
       >
-        <div className="flex w-full flex-col items-center gap-[77px]">
+        <div className="flex w-full flex-col items-center gap-[76px]">
           {/* 見出しは最初から出しておく（2026-08-21 ヒデさん指示。
               段落だけが順にブラー出現する） */}
           <div className="flex flex-col items-center leading-[1.6] whitespace-nowrap">
             <p className="text-body-18 font-light">網走に来る前に、まずやってみよう</p>
             <p className="text-title-44 font-thin">ぼーっと体験</p>
           </div>
-          <div className="flex w-full flex-col items-center gap-[33px] text-body-16 font-light leading-[1.8]">
+          <div className="flex w-full flex-col items-center gap-8 text-body-16 font-light leading-[1.8]">
             <motion.p variants={INTRO_BLOCK}>網走は何もないけど、それがたまらない。</motion.p>
             <motion.p variants={INTRO_BLOCK}>
               忙しなく過ごす、あなたの日常からそっと離れて、

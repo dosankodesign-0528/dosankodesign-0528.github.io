@@ -231,7 +231,7 @@ export default function SoundUi({
       {showDialog && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-shadow/30 backdrop-blur-22">
           <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-30 bg-white/90 p-8 text-center shadow-modal">
-            <p className="mb-6 text-body-15 font-bold leading-[1.6] text-ink">
+            <p className="mb-6 text-body-16 font-bold leading-[1.6] text-ink">
               網走の環境音を楽しむことができます。
               <br />
               再生しますか？
@@ -239,14 +239,14 @@ export default function SoundUi({
             <div className="flex w-full items-center gap-3">
               <button
                 onClick={() => answer(true)}
-                className="flex-1 cursor-pointer rounded-full bg-brand py-3 text-body-15 font-black text-white transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full bg-brand py-3 text-body-16 font-black text-white transition-transform hover:scale-105"
               >
                 ON
               </button>
               {/* v1.2: OFF は塗りなし（ヒデさん指示 2026-08-21。白ベタをやめて文字だけ） */}
               <button
                 onClick={() => answer(false)}
-                className="flex-1 cursor-pointer rounded-full py-3 text-body-15 font-black text-ink transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full py-3 text-body-16 font-black text-ink transition-transform hover:scale-105"
               >
                 OFF
               </button>

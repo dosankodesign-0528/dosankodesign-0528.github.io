@@ -72,7 +72,7 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
   return (
     <nav
       /* v1.1 カンプ 15071:24709: top 32px / gap 42px / Noto Sans JP Light 300 / 16px / 行間 1.2 */
-      className={`absolute left-1/2 top-[32px] z-20 flex -translate-x-1/2 items-center gap-[42px] whitespace-nowrap font-light leading-[1.2] ${color} ${fontSize}`}
+      className={`absolute left-1/2 top-[32px] z-20 flex -translate-x-1/2 items-center gap-10 whitespace-nowrap font-light leading-[1.2] ${color} ${fontSize}`}
     >
       {ITEMS.map((item) =>
         item.href ? (

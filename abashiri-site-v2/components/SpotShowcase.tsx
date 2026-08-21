@@ -207,19 +207,19 @@ export default function SpotShowcase({
                 <p className="whitespace-nowrap text-body-18 [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]">
                   ぼーっとスポット {spot.no}
                 </p>
-                <p className="whitespace-nowrap text-[36px]">{spot.title}</p>
+                <p className="whitespace-nowrap text-title-36">{spot.title}</p>
               </div>
               <button
                 type="button"
                 className="flex shrink-0 cursor-pointer items-center gap-1 transition-opacity hover:opacity-70"
               >
-                <span className="whitespace-nowrap text-right text-[17px] font-extralight leading-[1.2] text-white">
+                <span className="whitespace-nowrap text-right text-body-16 font-extralight leading-[1.2] text-white">
                   もっと見る
                 </span>
                 <img src="/img/icon-more-circle.svg" alt="" className="size-[18px]" />
               </button>
             </div>
-            <p className="w-full text-control-14 font-extralight leading-[2.2] tracking-[0.7px] text-white">
+            <p className="w-full text-body-14 font-extralight leading-[2.2] tracking-[0.7px] text-white">
               {spot.body}
             </p>
           </motion.div>
@@ -232,7 +232,7 @@ export default function SpotShowcase({
         {!isFinale && (
         <motion.div
           key="thumbs"
-          className="absolute left-[40px] top-[805px] flex items-center gap-[14.4px]"
+          className="absolute left-[40px] top-[805px] flex items-center gap-4"
           initial={SWITCH.initial}
           animate={SWITCH.animate}
           exit={SWITCH.exit}

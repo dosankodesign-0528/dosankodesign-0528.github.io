@@ -50,11 +50,13 @@ export default function MessageSection({
   const [v, setV] = useState(0);
   useMotionValueEvent(scrollY, "change", (val) => setV(val));
 
-  /* 読みの進捗 0〜1（超えても計算は続く＝退場に使う） */
+  /* 読みの進捗 0〜1（超えても計算は続く）。
+     読み終わったあとは M.tail ぶんの「余韻」区間：最後の段落を見せたまま
+     スクロールが進み、余韻が尽きてからブラーで退場する（2026-08-22 ヒデさん指摘） */
   const p = (v - start) / Math.max(1, M.len);
-  /* 出はじめ：ふわっと。読み終わり：スポットに譲りながらブラーで退場 */
+  /* 出はじめ：ふわっと。退場：余韻のあとにスポットへ譲る */
   const enter = seg(p, 0, 0.05);
-  const exit = seg(p, 1.0, 300 / M.len);
+  const exit = seg(v, start + M.len + M.tail, 300);
   const shellOpacity = enter * (1 - exit);
   const shellBlur = (1 - enter) * 10 + exit * 14;
   const minOp = M.minOpacity / 100;
