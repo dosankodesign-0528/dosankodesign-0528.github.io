@@ -18,17 +18,12 @@
  * ⚠️ 公開前にこのパネルは外すこと（本番の見た目に出てしまうため）
  */
 import { useEffect, useRef } from "react";
-import { BO_PATTERNS, DEFAULT_BO } from "./boPatterns";
-import { ILLUST_ENTER_PATTERNS } from "./illustEnterPatterns";
+import { DEFAULT_BO } from "./boPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 import { TAMARANEE_PATTERNS } from "./tamaraneePatterns";
-import {
-  DEFAULT_KV_EXIT,
-  KV_EXIT_PATTERNS,
-  type KvExit,
-} from "./kvExitConfig";
+import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
 import { HOVER_BOUNCE_PATTERNS } from "./hoverBouncePatterns";
@@ -142,7 +137,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 1, tamaranee: 1, hoverBounce: 1 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, hoverBounce: 1 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -225,8 +220,10 @@ export default function TopTunePanel({
                 （案番号の意味が変わったため。2026-08-21 ヒデさん指示）
            v18: メッセージセクション新設（KV直下・カンプ 15480:22896。出方5案＋
                 距離・出はじめ・文字の薄さ。2026-08-21 ヒデさん依頼）
-           v19: ホバー時の縦バウンス5案を追加（2026-08-21 ヒデさん依頼） */
-        version: 19,
+           v19: ホバー時の縦バウンス5案を追加（2026-08-21 ヒデさん依頼）
+           v20: 作字（登場・消え方）の項目を撤去し既定値で固定／メッセージは案1〜3＋
+                にじみ幅／人物登場は案3固定・ぼーは現状固定でピル撤去（2026-08-21） */
+        version: 20,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -254,105 +251,8 @@ export default function TopTunePanel({
           {
             cat: "🏠 トップページ",
             items: [
-              /* ── 作字の登場（2026-08-21 ヒデさん指示：一括出現・ブラー弱め） ── */
-              { sub: "作字｜登場のしかた" },
-              {
-                note: "吹き出しと「な〜んにもない」が一括でブラー出現 → しっぽが伸びる → 「たまらない」。値を変えると、その場で登場をもう一度再生します。",
-              },
-              {
-                slider: "出だしのブラーの強さ",
-                path: "hero.blur",
-                min: 0,
-                max: 30,
-                step: 1,
-                fmt: "px",
-                hint: "以前は16px。弱め(9px)が今の既定。0でブラーなしのフェードだけ。",
-              },
-              {
-                slider: "出るのにかける時間",
-                path: "hero.duration",
-                min: 300,
-                max: 2500,
-                step: 50,
-                fmt: "ms",
-              },
-              {
-                slider: "たまらないまでの間",
-                path: "hero.tamaGap",
-                min: 0,
-                max: 1500,
-                step: 50,
-                fmt: "ms",
-                hint: "しっぽが伸びきってから「たまらない」が出るまでの間。",
-              },
-              /* ── 作字の消え方（2026-08-21 ヒデさん依頼：ゆったり系5案） ── */
-              { sub: "作字｜スクロールでの消え方" },
-              {
-                pills: "案",
-                path: "kvExit.pattern",
-                immediate: true,
-                options: Object.entries(KV_EXIT_PATTERNS).map(([v, p]) => ({
-                  name: p.name,
-                  value: Number(v),
-                  swatch: "#0070c9",
-                  desc: p.note,
-                })),
-              },
-              {
-                note: "案を押すと下の数値がその案の値に入れ替わります。そこから微調整してください。スクロールすると確認できます。",
-              },
-              {
-                slider: "消えきるまでの距離",
-                path: "kvExit.range",
-                min: 200,
-                max: 1400,
-                step: 10,
-                fmt: "px",
-                hint: "大きいほどゆっくり消える。今までは320px。",
-              },
-              {
-                slider: "フェード本格化の位置",
-                path: "kvExit.fadeStart",
-                min: 5,
-                max: 95,
-                step: 1,
-                fmt: "%",
-                hint: "ここまでは薄くなるだけで残り、ここから先で消えていく。",
-              },
-              {
-                slider: "最大ブラー",
-                path: "kvExit.blurMax",
-                min: 0,
-                max: 40,
-                step: 1,
-                fmt: "px",
-              },
-              {
-                slider: "消えた時の大きさ",
-                path: "kvExit.scaleTo",
-                min: 60,
-                max: 130,
-                step: 1,
-                fmt: "%",
-                hint: "100で等倍のまま。80で2割縮む。110で少しふくらみながら消える。",
-              },
-              {
-                slider: "縦の移動",
-                path: "kvExit.yTo",
-                min: -120,
-                max: 120,
-                step: 1,
-                fmt: "px",
-                hint: "マイナスで上へ抜けていく。プラスで下へ沈む。",
-              },
-              {
-                slider: "ゆったり度",
-                path: "kvExit.ease",
-                min: 1,
-                max: 2.5,
-                step: 0.05,
-                hint: "1で一定の速さ。大きいほど「最初はその場にとどまり、あとからすっと消える」。",
-              },
+              /* 作字（登場・消え方）のパネル項目は 2026-08-21 ヒデさん指示で撤去。
+                 数値は heroEnterConfig.ts / kvExitConfig.ts の既定値で固定 */
               /* ── メッセージ（KV直下・カンプ 15480:22896。2026-08-21） ── */
               { sub: "メッセージ（作字のあと）" },
               {
@@ -394,24 +294,19 @@ export default function TopTunePanel({
                 max: 60,
                 step: 1,
                 fmt: "%",
-                hint: "案2（浮かび上がり）と案4（なぞり読み）で、まだ読んでいない文字の薄さ。",
+                hint: "案2（浮かび上がり）で、まだ読んでいない文字の薄さ。",
+              },
+              {
+                slider: "にじみ幅（ゆったり度）",
+                path: "msg.soft",
+                min: 1,
+                max: 6,
+                step: 0.1,
+                hint: "1つの行・段落が出るのに使うスクロールの深さ。大きいほどパッと切り替わらず、ゆーっくりにじみながら出ます。",
               },
               /* ── 人物イラスト ─────────────────── */
-              { sub: "人物イラスト｜登場のしかた" },
-              {
-                pills: "案",
-                path: "anim.illustEnter",
-                immediate: true,
-                options: ILLUST_ENTER_PATTERNS.map((p, i) => ({
-                  name: `案${i + 1}`,
-                  value: i + 1,
-                  swatch: "#0070c9",
-                  desc: p.note,
-                })),
-              },
-              {
-                note: "切り替えたらページを読み込み直すと、その出方でもう一度登場します。",
-              },
+              /* 登場のしかたは案3「ポンッ→プルン」で確定（2026-08-21 ヒデさん指示。
+                 案ピルは撤去。パターン本体は illustEnterPatterns.ts） */
               { sub: "人物イラスト｜置き場所" },
               { sub: "枠ごと動かす", deep: true },
               {
@@ -755,17 +650,8 @@ export default function TopTunePanel({
             cat: "🎬 ぼーっと体験ページ",
             items: [
               { sub: "「ぼーっ」の吹き出し（動画再生中）" },
-              {
-                pills: "出方の案",
-                path: "anim.boPattern",
-                immediate: true,
-                options: BO_PATTERNS.map((p, i) => ({
-                  name: `案${i + 1}`,
-                  value: i + 1,
-                  swatch: "#0070c9",
-                  desc: `${p.note}（${p.nuance}）`,
-                })),
-              },
+              /* 出方は現状の案で確定（2026-08-21 ヒデさん指示。案ピルは撤去。
+                 パターン本体は boPatterns.ts の DEFAULT_BO） */
               { sub: "位置と大きさ", deep: true },
               {
                 slider: "横ずれ",
@@ -835,14 +721,6 @@ export default function TopTunePanel({
           applyVolume();
         },
         onSettle: (info?: { path?: string }) => {
-          /* 消え方の案ピルを押したら、その案のプリセット値をスライダーへ流し込む */
-          if (info?.path === "kvExit.pattern") {
-            const preset = KV_EXIT_PATTERNS[params.kvExit.pattern];
-            if (preset) {
-              Object.assign(params.kvExit, preset.values);
-              panel?.sync?.();
-            }
-          }
           applyVars();
           applyVolume();
           pushValues();

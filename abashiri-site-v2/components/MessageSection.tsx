@@ -61,22 +61,21 @@ export default function MessageSection({
 
   if (shellOpacity <= 0.001) return null;
 
-  /* 「読む順」の通し番号：見出し=0、本文の行=1〜。案ごとの出しどころに使う */
+  /* 「読む順」の通し番号：見出し=0、本文の行=1〜。案ごとの出しどころに使う。
+     soft（にじみ幅）が大きいほど、1つの行が出るのに深いスクロールを使う
+     ＝パッと切り替わらず、ゆーっくり にじみながら流れてくる（2026-08-21 ヒデさん指示） */
   const unitCount = 1 + ALL_LINES.length;
   /* 進捗の 0〜0.88 を読みに使い、残りは余韻（最後の行を読んでから間ができる） */
   const bandAt = (unit: number) => (unit / unitCount) * 0.88;
   const bandSpan = 0.88 / unitCount;
+  const soft = Math.max(0.5, M.soft);
 
   /* 案別：見出しと各行のスタイル */
   const titleStyle = (): React.CSSProperties => {
-    const b = seg(p, bandAt(0), bandSpan * 1.4);
+    const b = seg(p, bandAt(0), bandSpan * soft);
     switch (M.pattern) {
       case 2:
         return { opacity: 0.8 * (minOp + (1 - minOp) * b) };
-      case 4:
-        return { opacity: 0.8 * (minOp + (1 - minOp) * b) };
-      case 5:
-        return { opacity: 0.8 * b };
       default: /* 1・3: ブラーで登場 */
         return {
           opacity: 0.8 * b,
@@ -91,37 +90,22 @@ export default function MessageSection({
     switch (M.pattern) {
       case 2: {
         /* 浮かび上がり：全文うっすら置いてあり、読む順に濃くなる */
-        const b = seg(p, bandAt(unit), bandSpan * 1.6);
+        const b = seg(p, bandAt(unit), bandSpan * soft * 1.2);
         return { opacity: minOp + (1 - minOp) * b };
       }
       case 3: {
         /* 行ごとに流れ込む */
-        const b = seg(p, bandAt(unit), bandSpan * 1.3);
+        const b = seg(p, bandAt(unit), bandSpan * soft);
         return {
           opacity: b,
           filter: `blur(${(1 - b) * 8}px)`,
           transform: `translateY(${(1 - b) * 26}px)`,
         };
       }
-      case 4: {
-        /* なぞり読み：行の中を左→右に文字が光る */
-        const b = seg(p, bandAt(unit), bandSpan * 1.5);
-        const x = Math.round(b * 100);
-        return {
-          backgroundImage: `linear-gradient(90deg, rgba(255,255,255,1) ${Math.max(0, x - 6)}%, rgba(255,255,255,${minOp}) ${Math.min(100, x + 6)}%)`,
-          WebkitBackgroundClip: "text",
-          backgroundClip: "text",
-          color: "transparent",
-        };
-      }
-      case 5: {
-        /* ひと場面ずつ：段落が入れ替わりで出る（下のブロック側で制御） */
-        return {};
-      }
       default: {
         /* 案1: 段落ごとにブラー出現（段落内は同時） */
         const firstUnit = 1 + BLOCKS.slice(0, blockIdx).flat().length;
-        const b = seg(p, bandAt(firstUnit), bandSpan * 1.8);
+        const b = seg(p, bandAt(firstUnit), bandSpan * soft * 1.4);
         return {
           opacity: b,
           filter: `blur(${(1 - b) * 10}px)`,
@@ -130,14 +114,6 @@ export default function MessageSection({
       }
     }
   };
-
-  /* 案5：いま見せる段落番号。0=見出しだけ、1〜=その段落（1つずつ入れ替わり） */
-  const sceneSpan = 0.88 / (BLOCKS.length + 1);
-  const scene = Math.max(
-    0,
-    Math.min(BLOCKS.length, Math.floor(Math.min(p, 0.879) / sceneSpan))
-  );
-  const sceneProgress = seg(p, sceneSpan * scene, sceneSpan * 0.35);
 
   let lineNo = -1;
   return (
@@ -152,42 +128,21 @@ export default function MessageSection({
         >
           {TITLE}
         </p>
-        {M.pattern === 5 ? (
-          /* 案5：見出しの下の同じ場所で、段落が1つずつ入れ替わる */
-          <div className="relative mt-[120px] h-[240px]">
-            {BLOCKS.map((lines, bi) =>
-              bi + 1 === scene ? (
-                <div
-                  key={bi}
-                  className="absolute inset-x-0 top-0 font-light text-[20px] leading-[2] tracking-[0.4px]"
-                  style={{
-                    opacity: sceneProgress,
-                    filter: `blur(${(1 - sceneProgress) * 10}px)`,
-                  }}
-                >
-                  {lines.map((l) => (
-                    <p key={l}>{l}</p>
-                  ))}
-                </div>
-              ) : null
-            )}
-          </div>
-        ) : (
-          <div className="mt-[120px] font-light text-[20px] leading-[2] tracking-[0.4px]">
-            {BLOCKS.map((lines, bi) => (
-              <div key={bi} className={bi === 0 ? "" : "mt-[40px]"}>
-                {lines.map((l) => {
-                  lineNo += 1;
-                  return (
-                    <p key={l} style={lineStyle(lineNo, bi)}>
-                      {l}
-                    </p>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* 本文：カンプ 15480:23019 の実測（Noto Sans JP Light 20px / 行間2 / 字間0.4px / 白） */}
+        <div className="mt-[120px] font-light text-[20px] leading-[2] tracking-[0.4px]">
+          {BLOCKS.map((lines, bi) => (
+            <div key={bi} className={bi === 0 ? "" : "mt-[40px]"}>
+              {lines.map((l) => {
+                lineNo += 1;
+                return (
+                  <p key={l} style={lineStyle(lineNo, bi)}>
+                    {l}
+                  </p>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

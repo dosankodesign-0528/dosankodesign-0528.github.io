@@ -16,7 +16,7 @@ export default function Home() {
      ここで持つのは「案の切り替え」と「スクロール連動の値」だけ */
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
-    illustEnter: 1,
+    illustEnter: 3,
     hoverBounce: 1,
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },

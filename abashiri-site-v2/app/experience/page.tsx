@@ -18,7 +18,7 @@ export default function ExperiencePage() {
   /* 「ぼーっ」はこの画面にしか出ないので、調整パネルもここに置く */
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
-    illustEnter: 1,
+    illustEnter: 3,
     hoverBounce: 1,
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },

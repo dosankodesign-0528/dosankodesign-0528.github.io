@@ -206,8 +206,29 @@ export default function Stage({
     };
   }, [illustEntrance, entranceDone, tamaIntro.delay, tamaIntro.hold]);
 
-  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ パネルの出しっぱなし */
-  const showTama = over || introTama || forceFace;
+  /* 周期アニメ（2026-08-21 ヒデさん指示）：約15秒おきに、登場と同じ
+     プルンのバウンスをして、その動きと一緒に「たまらねー」とキラキラが出る。
+     （旧・回転スイング ILLUST_ANIMS は廃止。動きを登場時と統一） */
+  const [periodicTama, setPeriodicTama] = useState(false);
+  useEffect(() => {
+    if (!spin) return;
+    const CYCLE = 15000;
+    const SHOW = 2600; /* たまらねーを見せておく長さ */
+    let hideT = 0;
+    const id = window.setInterval(() => {
+      const hb = findHoverBounce(3); /* 案3プルン＝登場の既定と同じ */
+      if (hb && bounceRef.current) bounceRef.current.animate(hb.keyframes, hb.options);
+      setPeriodicTama(true);
+      hideT = window.setTimeout(() => setPeriodicTama(false), SHOW);
+    }, CYCLE);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(hideT);
+    };
+  }, [spin]);
+
+  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ 周期アニメ ＋ 出しっぱなし */
+  const showTama = over || introTama || periodicTama || forceFace;
 
   /* ホバーした瞬間に、からだが縦に弾む（2026-08-21 ヒデさん依頼。5案から選ぶ）。
      スイングとは別ラッパーに WAAPI で掛けるので干渉しない */
@@ -401,8 +422,8 @@ export default function Stage({
                   height: "calc(var(--illust-person-w) * 1.6466)",
                   ...ia.style,
                 }}
-                animate={spin ? ia.animate : undefined}
-                transition={spin ? ia.transition : undefined}
+                /* 旧・回転スイングは廃止（2026-08-21）。周期アニメは上の
+                   setInterval がバウンス＋たまらねー＋キラキラをまとめて出す */
               >
                 {/* v1.2（カンプ 15332:21660 で絵が差し替わった）
                     新しい絵は 1枚のPNG で、キラキラも頬の赤みも描き込み済み。

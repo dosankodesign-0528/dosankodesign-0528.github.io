@@ -149,9 +149,8 @@ export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
   },
 ];
 
-/* 既定は案1「スッ→ひと弾み」（旧・ぴょこん標準の短縮版）。
-   採用が決まったらここを差し替える */
-export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[0];
+/* 採用：案3「ポンッ→プルン」（2026-08-21 ヒデさん確定。パネルの案ピルは撤去済み） */
+export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[2];
 
 export function findIllustEnter(key?: string | number | null): IllustEnterPattern {
   if (key == null) return DEFAULT_ILLUST_ENTER;

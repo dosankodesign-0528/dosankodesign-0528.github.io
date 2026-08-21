@@ -372,8 +372,10 @@ export default function TopPage({
      ぼーっとスポットへ入れ替わる時に見送る（2026-08-21 ヒデさん指示。
      カンプ 15480:22896 でもメッセージ画面の右下に人物がいる） */
   useMotionValueEvent(scrollY, "change", (v) => {
+    /* 人物はスポット写真の入れ替わりと「同時に」消える（2026-08-21 ヒデさん指示。
+       時間差はつけない＝スポットのブラーが晴れる区間そのものでフェード） */
     const from = useExit ? msgEnd : kvRange * 0.4;
-    const span = useExit ? 400 : kvRange * 0.6;
+    const span = useExit ? Math.max(1, T.spotTo - T.spotFrom) : kvRange * 0.6;
     const t = Math.max(0, Math.min(1, (v - from) / span));
     window.dispatchEvent(
       new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })

@@ -64,8 +64,8 @@ const CARD_GAP = 60;
 
 /* 導入の文字は、上から順に1ブロックずつブラーが晴れて出てくる。
    ヒデさん指示（2026-08-18）で「もっとゆったり、順番に」見せる方向へ緩めた。
-   ブロックは6つ（見出し＋本文4つ＋ボタン）なので、
-   最後のボタンが出はじめるのは startDelay + stagger*5 になる。
+   2026-08-21 ヒデさん指示で、見出しと「次へ進む」ボタンは最初から表示に変更。
+   順に出るのは本文の段落4つだけ。
    ⚠️ 速さの好みが出るところなので、ここだけ触れば全体のテンポが変わるようにしてある */
 const INTRO_PACE = {
   /** 景色のブラーが晴れるのを待つ時間(秒) */
@@ -124,13 +124,12 @@ function Intro({ onNext }: { onNext: () => void }) {
         animate="show"
       >
         <div className="flex w-full flex-col items-center gap-[77px]">
-          <motion.div
-            variants={INTRO_BLOCK}
-            className="flex flex-col items-center leading-[1.6] whitespace-nowrap"
-          >
+          {/* 見出しは最初から出しておく（2026-08-21 ヒデさん指示。
+              段落だけが順にブラー出現する） */}
+          <div className="flex flex-col items-center leading-[1.6] whitespace-nowrap">
             <p className="text-body-18 font-light">網走に来る前に、まずやってみよう</p>
             <p className="text-title-44 font-thin">ぼーっと体験</p>
-          </motion.div>
+          </div>
           <div className="flex w-full flex-col items-center gap-[33px] text-body-16 font-light leading-[1.8]">
             <motion.p variants={INTRO_BLOCK}>網走は何もないけど、それがたまらない。</motion.p>
             <motion.p variants={INTRO_BLOCK}>
@@ -150,9 +149,10 @@ function Intro({ onNext }: { onNext: () => void }) {
             </motion.p>
           </div>
         </div>
-        <motion.div variants={INTRO_BLOCK}>
+        {/* 「次へ進む」も最初から出しておく（2026-08-21 ヒデさん指示） */}
+        <div>
           <GlassButton onClick={onNext}>次へ進む</GlassButton>
-        </motion.div>
+        </div>
       </motion.div>
     </motion.div>
   );
