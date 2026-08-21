@@ -20,6 +20,7 @@ import { ILLUST_ENTER_PATTERNS } from "./illustEnterPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
+import { BROW_ANIMS } from "./browAnimPatterns";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -150,8 +151,10 @@ export default function TopTunePanel({
            v4: 環境音の音量を追加（2026-08-19）
            v5: 眉毛（持ち上げ量・位置）を追加、たまらねーの既定位置を変更（2026-08-20）
            v6: キラキラ（2コマ）を追加（2026-08-20）
-           v7: 口元（開いた口の位置・大きさ・線の太さ）を追加（2026-08-20） */
-        version: 7,
+           v7: 口元（開いた口の位置・大きさ・線の太さ）を追加（2026-08-20）
+           v8: 口の形をカンプ更新（Vector 8）に差し替え・既定位置を変更、
+               眉の動き方5案を追加（2026-08-21） */
+        version: 8,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -230,6 +233,17 @@ export default function TopTunePanel({
             items: [
               {
                 note: "人物にカーソルを乗せると眉が持ち上がります。触っている間だけ見えるので、乗せながら動かしてください。",
+              },
+              {
+                pills: "動き方",
+                path: "face.browAnim",
+                immediate: true,
+                options: BROW_ANIMS.map((p, i) => ({
+                  name: `案${i + 1}`,
+                  value: i + 1,
+                  swatch: "#0070c9",
+                  desc: `${p.label.replace(/^案\d+\s*/, "")}　${p.note}`,
+                })),
               },
               {
                 slider: "持ち上げる量",

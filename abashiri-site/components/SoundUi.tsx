@@ -239,9 +239,10 @@ export default function SoundUi({
               >
                 ON
               </button>
+              {/* v1.2: OFF は塗りなし（ヒデさん指示 2026-08-21。白ベタをやめて文字だけ） */}
               <button
                 onClick={() => answer(false)}
-                className="flex-1 cursor-pointer rounded-full bg-white py-3 text-body-15 font-black text-ink transition-transform hover:scale-105"
+                className="flex-1 cursor-pointer rounded-full py-3 text-body-15 font-black text-ink transition-transform hover:scale-105"
               >
                 OFF
               </button>

@@ -11,6 +11,8 @@ export type FaceConfig = {
   browX: number;
   /** 眉そのものの置き場所を縦にずらす(px)。＋で下 */
   browY: number;
+  /** 1〜5: 眉が上がる時の動き方（browAnimPatterns.ts） */
+  browAnim: number;
   /** 反応する範囲をイラストの外にどれだけ広げるか(px) */
   hoverPad: number;
   /* ── 口元（ホバーで開いた口になる。カンプ 15410:21336） ── */
@@ -18,7 +20,7 @@ export type FaceConfig = {
   mouthX: number;
   /** 口の左上の縦位置(px) */
   mouthY: number;
-  /** 口の幅(px)。高さは元の比率(10.39:7.96)のまま付いてくる */
+  /** 口の幅(px)。高さは元の比率(9.95:11.15)のまま付いてくる */
   mouthW: number;
   /** 口の黒い線の太さ(px) */
   mouthStroke: number;
@@ -31,11 +33,12 @@ export const DEFAULT_FACE: FaceConfig = {
   browLift: 6,
   browX: 0,
   browY: 0,
+  browAnim: 1,
   hoverPad: 0,
-  /* カンプ 15410:21336 の実測値 */
-  mouthX: 49.9,
-  mouthY: 81.2,
-  mouthW: 8,
+  /* カンプ 15410:21336 の実測値（2026-08-21 更新版。Vector 8 の形） */
+  mouthX: 47.9,
+  mouthY: 79,
+  mouthW: 11.2,
   mouthStroke: 1.5,
 };
 

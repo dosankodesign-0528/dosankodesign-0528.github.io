@@ -11,6 +11,7 @@
  *
  * 止まっている時はパッチの上にぴったり眉が乗るので、見た目は元の PNG と変わらない。
  */
+import { findBrowAnim } from "./browAnimPatterns";
 import {
   BROW_ALL,
   BROW_FILL,
@@ -35,10 +36,18 @@ const VIEW_BOX = `0 0 ${ILLUST_VIEWBOX.w} ${ILLUST_VIEWBOX.h}`;
 const FIT = "xMidYMax meet";
 
 /* 口まわりのカンプ実測（15410:21336。162x226.8 の枠内の px）
-   PATCH … 元の口（への字の線）を覆う肌色の四角
-   RATIO … 開いた口の縦横比 10.39 / 7.96 */
-const MOUTH_PATCH = { x: 43.17, y: 77.45, w: 26.49, h: 12.79 } as const;
-const MOUTH_RATIO = 10.39 / 7.96;
+   PATCH … 元の口（への字の線）を覆う肌色の四角（角丸2px）
+   PATH  … 開いた口の形。2026-08-21 にカンプが楕円 →「ぽかん」の形（Vector 8）に
+           変わったので、Figma のパスをそのまま使う。座標系は 11.1533 x 9.9526。
+           黒フチはこのパスに stroke を掛けて描く（太さを調整パネルで変えるため。
+           カンプの Stroke ノードは太さ焼き込みなので使わない） */
+const MOUTH_PATCH = { x: 43.17, y: 77.45, w: 26.49, h: 12.79, r: 2 } as const;
+const MOUTH_PATH = {
+  d: "M9.58566 1.63769L2.43549 0.0490967C0.984125 -0.273362 -0.299193 1.04427 0.0614422 2.48662L1.45427 8.05721C1.90507 9.86015 4.09561 10.5584 5.50662 9.34891L10.4535 5.10858C11.7048 4.03598 11.1945 1.99515 9.58566 1.63769Z",
+  w: 11.1533,
+  h: 9.9526,
+} as const;
+const MOUTH_RATIO = MOUTH_PATH.h / MOUTH_PATH.w;
 
 function Brows({
   fill,
@@ -76,6 +85,8 @@ type Props = {
   /** 眉そのものの位置ずらし（画面px）。＋で右／下 */
   browX?: number;
   browY?: number;
+  /** 1〜5: 眉が上がる時の動き方（browAnimPatterns.ts） */
+  browAnim?: number;
   /** true: 口を「開いた口」に差し替える（ホバー中） */
   mouthOpen?: boolean;
   /** 口の位置・大きさ・線の太さ（画面px。カンプ 15410:21336 が既定） */
@@ -93,14 +104,17 @@ export default function IllustTamannee({
   debugPatch = false,
   browX = 0,
   browY = 0,
+  browAnim = 1,
   mouthOpen = false,
-  mouthX = 49.9,
-  mouthY = 81.2,
-  mouthW = 8,
+  /* 既定値は faceConfig.ts の DEFAULT_FACE と必ずそろえる（カンプ 15410:21336 実測） */
+  mouthX = 47.9,
+  mouthY = 79,
+  mouthW = 11.2,
   mouthStroke = 1.5,
   className,
 }: Props) {
   const unit = COMP_UNIT;
+  const ba = findBrowAnim(browAnim);
   /* 位置ずらしは「静止時の眉の置き場所」。パッチは動かさない
      （動かすと元の眉が顔を出してしまう） */
   const shift = { x: browX * unit, y: browY * unit };
@@ -121,9 +135,18 @@ export default function IllustTamannee({
         {/* 元の眉を隠しておく。眉が上がった時にここが額として見える */}
         <Brows fill={debugPatch ? "#FF3B30" : SKIN_FILL} spread={patchSpread} />
         {/* 動く眉 */}
+        {/* 動く眉。上がる時の動き方は browAnimPatterns.ts の5案。
+            戻る時はどの案も共通で 300ms ですっと戻る（transition が受け持つ）。
+            keyframes 系の案は --brow-shift（上がった位置）を参照して跳ねる */}
         <g
-          className="transition-transform duration-300 ease-standard"
-          style={{ transform: `translateY(${-lift * unit}px)` }}
+          style={{
+            ["--brow-shift" as string]: `${-lift * unit}px`,
+            transform: `translateY(${-lift * unit}px)`,
+            transition: `transform ${
+              lift > 0 ? (ba.duration ?? 300) : 300
+            }ms ${lift > 0 ? (ba.ease ?? "cubic-bezier(0.22, 1, 0.36, 1)") : "cubic-bezier(0.22, 1, 0.36, 1)"}`,
+            animation: lift > 0 ? ba.animation : undefined,
+          }}
         >
           <Brows fill={BROW_FILL} shift={shift} />
         </g>
@@ -142,17 +165,24 @@ export default function IllustTamannee({
             y={MOUTH_PATCH.y * unit}
             width={MOUTH_PATCH.w * unit}
             height={MOUTH_PATCH.h * unit}
+            rx={MOUTH_PATCH.r * unit}
             fill={debugPatch ? "#FF3B30" : SKIN_FILL}
           />
-          <ellipse
-            cx={(mouthX + mouthW / 2) * unit}
-            cy={(mouthY + (mouthW * MOUTH_RATIO) / 2) * unit}
-            rx={((mouthW - mouthStroke) / 2) * unit}
-            ry={((mouthW * MOUTH_RATIO - mouthStroke) / 2) * unit}
-            fill="#FFFFFF"
-            stroke="#000000"
-            strokeWidth={mouthStroke * unit}
-          />
+          {/* 大きさは幅で指定し、パスごと拡大する。線はあとから掛けるので
+              拡大率で割って「見た目の太さ」を一定にする */}
+          <g
+            transform={`translate(${mouthX * unit}, ${mouthY * unit}) scale(${
+              (mouthW * unit) / MOUTH_PATH.w
+            })`}
+          >
+            <path
+              d={MOUTH_PATH.d}
+              fill="#FFFFFF"
+              stroke="#000000"
+              strokeWidth={(mouthStroke * unit) / ((mouthW * unit) / MOUTH_PATH.w)}
+              strokeLinejoin="round"
+            />
+          </g>
         </g>
       </svg>
     </div>
