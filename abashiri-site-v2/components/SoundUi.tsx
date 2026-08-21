@@ -227,55 +227,71 @@ export default function SoundUi({
     <>
       <audio ref={audioRef} src="/audio/cape-sound.mp4" loop preload="auto" />
 
-      {/* 初回のON/OFF確認（白カードのモーダル） */}
+      {/* 初回のBGM確認モーダル（2026-08-22 ヒデさん指示で刷新）
+          ・説明文は無し（ボタンだけで伝わる）
+          ・白がきつかったので地を white/90 → white/40 に下げた
+          ・ボタンは「BGMあり」「BGMなし」 */}
       {showDialog && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-shadow/30 backdrop-blur-22">
-          <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-30 bg-white/90 p-8 text-center shadow-modal">
-            <p className="mb-6 text-body-16 font-bold leading-[1.6] text-ink">
-              網走の環境音を楽しむことができます。
-              <br />
-              再生しますか？
-            </p>
+          <div className="mx-4 flex w-[400px] max-w-full flex-col items-center rounded-30 bg-white/40 p-8 text-center shadow-modal backdrop-blur-65">
             <div className="flex w-full items-center gap-3">
               <button
                 onClick={() => answer(true)}
-                className="flex-1 cursor-pointer rounded-full bg-brand py-3 text-body-16 font-black text-white transition-transform hover:scale-105"
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-brand py-3 text-body-16 font-light text-white transition-transform hover:scale-105"
               >
-                ON
+                <img src="/img/icon-bgm-on.svg" alt="" className="size-[22px]" />
+                BGMあり
               </button>
-              {/* v1.2: OFF は塗りなし（ヒデさん指示 2026-08-21。白ベタをやめて文字だけ） */}
               <button
                 onClick={() => answer(false)}
-                className="flex-1 cursor-pointer rounded-full py-3 text-body-16 font-black text-ink transition-transform hover:scale-105"
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full py-3 text-body-16 font-light text-ink transition-transform hover:scale-105"
               >
-                OFF
+                BGMなし
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 常設のON/OFF切り替え（スピーカーのピクトグラム）
+      {/* 常設のBGMスイッチ（カンプ 15492:21886。2026-08-22 ヒデさん指示でスイッチ式へ）
+          白40%のすりガラスの器に「BGMあり／BGMなし」の2択。今の状態の側が青く塗られる。
           白モック内の置き場があればそこ（左上）、無いページでは画面左下 */}
       {!showDialog &&
         (() => {
+          const seg = (on: boolean, label: string, icon: string) => {
+            const active = on === audible;
+            return (
+              <button
+                key={label}
+                onClick={() => {
+                  if (active) return;
+                  if (on) {
+                    saveIntent(true);
+                    play();
+                  } else {
+                    saveIntent(false);
+                    audioRef.current?.pause();
+                  }
+                }}
+                aria-pressed={active}
+                className={`flex w-[140px] cursor-pointer items-center justify-center gap-2 rounded-[8px] p-[10px] text-body-16 font-light leading-[1.2] transition-colors duration-300 ease-standard ${
+                  active ? "bg-brand text-white" : "text-white/50 hover:text-white/80"
+                }`}
+              >
+                <img src={icon} alt="" className="size-[22px]" />
+                {label}
+              </button>
+            );
+          };
           const btn = (
-            <button
-              onClick={toggle}
-              aria-label={audible ? "環境音をOFFにする" : "環境音をONにする"}
-              style={{
-                backgroundColor: `rgba(255,255,255,${btnTune.opacity / 100})`,
-                backdropFilter: `blur(${btnTune.blur}px)`,
-                WebkitBackdropFilter: `blur(${btnTune.blur}px)`,
-              }}
+            <div
               className={`${
                 slot ? "" : "fixed bottom-4 left-4 z-50 "
-              }flex h-11 w-11 cursor-pointer items-center justify-center rounded-full shadow-floating transition-transform hover:scale-110 ${
-                audible ? "text-brand" : "text-ink-muted"
-              }`}
+              }flex items-center justify-center rounded-[8px] bg-white/40 p-[2px] backdrop-blur-[62px]`}
             >
-              <SpeakerIcon on={audible} />
-            </button>
+              {seg(true, "BGMあり", "/img/icon-bgm-on.svg")}
+              {seg(false, "BGMなし", "/img/icon-bgm-off.svg")}
+            </div>
           );
           return slot ? createPortal(btn, slot) : btn;
         })()}
