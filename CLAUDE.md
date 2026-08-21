@@ -248,7 +248,8 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | **anyflow-embed（V1.0・公開中）** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
 | **anyflow-embed-v2（アップデート案）** | **https://anyflow-embed-v2.vercel.app** | 親リポ subdir (main) | anyflow-embed-v2 | 手動（`vercel --prod`） |
-| **abashiri-site（網走）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✅ main push で自動（Root Directory: `abashiri-site`）<br>v1.0 は `abashiri-v1.0` ブランチのプレビューURLで見られる |
+| **abashiri-site（網走 V1.0・公開中）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✅ main push で自動（Root Directory: `abashiri-site`）<br>⚠️ 2026-08-21 から **V1.0 凍結**。フォルダを触って push すると即本番に出るので注意 |
+| **abashiri-site-v2（網走 アップデート案）** | **https://abashiri-site-v2.vercel.app** | 親リポ subdir (main) | abashiri-site-v2 | 手動（`vercel --prod`） |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
 
@@ -259,6 +260,11 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | ポータル本体 | https://hideyuki-yamanaka.github.io/ | 親リポ `.github/workflows/deploy.yml` |
 
 注意事項：
+- 🔒 **abashiri-site も V1.0（公開中）と V2（アップデート案）の2本立て**（2026-08-21 から。Anyflow と同じ方式）。
+  - `abashiri-site/` = **V1.0。凍結**（2026-08-16 凍結時点のデザインに巻き戻し済み）。バグ修正以外は触らない
+  - `abashiri-site-v2/` = アップデート作業場（旧 v1.1〜v1.2 の内容はこちらに移行済み）
+  - ⚠️ V1.0 側は main push の**自動デプロイが生きている**。`abashiri-site/` を触って push すると即本番反映されるので、作業は必ず `abashiri-site-v2/` で行う
+  - V2 は手動デプロイ（`abashiri-site-v2/` 内で `npx vercel --prod --yes`）
 - 🔒 **anyflow-embed は V1.0（公開中）と V2（アップデート案）の2本立て**（2026-08-19 から）。
   - `anyflow-embed/` = **V1.0。凍結**。バグ修正以外は足さない。URL は変えない
   - `anyflow-embed-v2/` = アップデート案の作業場。ここはいくら壊してよい
