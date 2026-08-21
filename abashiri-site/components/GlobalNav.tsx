@@ -48,6 +48,27 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
     };
     requestAnimationFrame(step);
   };
+  /* 「グルメ」はトップの5場面目（スクロールで到達する画面）なので、
+     アンカーではなく scroller のスクロール量ジャンプで飛ぶ。
+     行き先は TopPage が data-gourmet-at に入れている */
+  const onGourmetClick = (e: React.MouseEvent) => {
+    const sc = document.querySelector<HTMLElement>("[data-abashiri-scroller]");
+    const at = sc?.dataset.gourmetAt;
+    if (!sc || !at) return; /* トップ以外では今まで通り（何もしない） */
+    e.preventDefault();
+    const target = Number(at);
+    const step = () => {
+      const dy = target - sc.scrollTop;
+      if (Math.abs(dy) < 0.5) {
+        sc.scrollTop = target;
+        return;
+      }
+      sc.scrollTop += dy * 0.12;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
   return (
     <nav
       /* v1.1 カンプ 15071:24709: top 32px / gap 42px / Noto Sans JP Light 300 / 16px / 行間 1.2 */
@@ -69,6 +90,7 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
             href={item.anchor ?? "#"}
             onClick={(e) => {
               if (!item.anchor) e.preventDefault();
+              else if (item.anchor === "#gourmet") onGourmetClick(e);
             }}
             className="transition-opacity hover:opacity-70"
           >

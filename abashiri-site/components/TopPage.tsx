@@ -538,6 +538,9 @@ export default function TopPage({
            このページは window ではなくこの箱の中がスクロールするので、
            普通の「/」リンクでは何も起きない */
         data-abashiri-scroller=""
+        /* ナビの「グルメ」が飛ぶ先（スクロール量）。グルメは5場面目なので
+           spotTo + 1枚あたりのスクロール量 × 写真4枚ぶん */
+        data-gourmet-at={Math.round(T.spotTo + T.stepLen * 4 + 1)}
         className="no-scrollbar h-full w-full overflow-y-auto overflow-x-clip overscroll-contain bg-sky-bottom [container-type:inline-size]"
       >
         {/* 固定背景（灯台の写真）：中身だけがその上をスクロールする。
@@ -672,11 +675,9 @@ export default function TopPage({
         </div>
 
         {/* ぼーっとスポット。KV がブラーで奥へ引くのと入れ替わりに写真が合ってきて、
-            1スクロールごとに4枚が切り替わる。終わるとグルメへ進める */}
-        <SpotShowcase scrollY={scrollY} tune={spotTune} />
-
-        {/* 素朴なグルメ（カンプ 15415:21597）。v1.2 で新設 */}
-        <GourmetSection />
+            1スクロールごとに4枚が切り替わる。5場面目はグルメが
+            「場面ごとブラーで」現れる（下スクロールでは送らない。2026-08-22） */}
+        <SpotShowcase scrollY={scrollY} tune={spotTune} finale={<GourmetSection />} />
 
         {/* v1.1 の プロモ／旧グルメ／体験・イベント は撤去済み。
             旧部品（Card / CardRow 等）はこのファイル上部に残っている。

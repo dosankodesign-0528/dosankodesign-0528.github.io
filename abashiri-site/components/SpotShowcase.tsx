@@ -11,8 +11,8 @@
  *   ・「1スクロールごと」に写真が次へ切り替わる（4枚 → 3回切り替わる）
  *   ・切替はブラーで確定。写真と右下のテキスト群は「同時に」ブラーで出入りする
  *     （テキストを遅らせる仕様は廃止）
- *   ・4枚目のあとは、コンテンツごと白へ溶けて（ホワイトフェード）、
- *     白背景のグルメセクションへ自然につながる
+ *   ・4枚目のあとは、下へスクロールで送るのではなく「場面ごとブラーで切替」。
+ *     5場面目としてグルメ（白背景）がその場に現れる（2026-08-22 ヒデさん指示）
  *   ・サムネイルを押すと、その写真の位置までスクロールが飛ぶ
  *
  * 登場の仕方（従来どおり）
@@ -92,12 +92,17 @@ const SWITCH = {
 export default function SpotShowcase({
   scrollY,
   tune,
+  finale,
 }: {
   scrollY: MotionValue<number>;
   /** 入れ替わりのタイミング（spotTransition.ts / 右下パネルで調整） */
   tune?: Partial<SpotTransition> | null;
+  /** 5場面目（グルメ）。写真と同じブラーで場面ごと切り替わる */
+  finale?: React.ReactNode;
 }) {
   const t = mergeSpotTransition(tune);
+  /* 場面数 ＝ 写真4枚 ＋ グルメ */
+  const sceneCount = SPOTS.length + (finale ? 1 : 0);
 
   /* いま何枚目か。spotTo（1枚目が晴れきる位置）から stepLen ごとに次へ */
   const [index, setIndex] = useState(0);
@@ -107,10 +112,12 @@ export default function SpotShowcase({
     const idx =
       v < t.spotTo
         ? 0
-        : Math.min(SPOTS.length - 1, Math.floor((v - t.spotTo) / t.stepLen));
+        : Math.min(sceneCount - 1, Math.floor((v - t.spotTo) / t.stepLen));
     if (idx !== index) setIndex(idx);
   });
-  const spot = SPOTS[index];
+  /* 最後の場面（グルメ）かどうか。spot はグルメ中も最後の写真を指したままにする */
+  const isFinale = finale != null && index === SPOTS.length;
+  const spot = SPOTS[Math.min(index, SPOTS.length - 1)];
   /* サムネイルは「今出ていないもの」を並び順のまま3枚 */
   const thumbs = SPOTS.filter((_, i) => i !== index);
 
@@ -122,12 +129,6 @@ export default function SpotShowcase({
     [0, t.spotFrom, t.spotTo],
     [`blur(${t.spotBlur}px)`, `blur(${t.spotBlur}px)`, "blur(0px)"]
   );
-  /* 4枚目が出そろったあと、余韻(hold)の間にコンテンツごと白へ溶ける。
-     次のグルメセクションが白背景なので、そのまま自然につながる */
-  const fadeStartY = t.spotTo + t.stepLen * (SPOTS.length - 1) + t.hold * 0.15;
-  const fadeEndY = t.spotTo + t.stepLen * (SPOTS.length - 1) + t.hold * 0.95;
-  const whiteOut = useTransform(scrollY, [fadeStartY, fadeEndY], [0, 1]);
-
   /* ほぼ晴れるまでは触れないようにして、KV のボタンを邪魔しない */
   const pointerEvents = useTransform(scrollY, (v) =>
     v > t.spotFrom + (t.spotTo - t.spotFrom) * 0.75 ? "auto" : "none"
@@ -159,34 +160,40 @@ export default function SpotShowcase({
          付け忘れると透明なまま KV の「ぼーっとしてみる」ボタンのクリックを
          飲み込んでしまう（v1.1 で実際に起きた） */
       className="pointer-events-none relative"
-      style={{ marginTop: -982, height: 982 + totalScroll(t, SPOTS.length) }}
+      style={{ marginTop: -982, height: 982 + totalScroll(t, sceneCount) }}
     >
       <motion.section
         id="spot"
         className="sticky top-0 h-[982px] w-full overflow-hidden"
         style={{ opacity, filter, pointerEvents }}
       >
-        {/* 全画面の写真。1スクロールごとに次の1枚へ、ブラーで切替 */}
+        {/* 全画面の場面。1スクロールごとに次へ、ブラーで切替。
+            写真1〜4枚目のあと、5場面目はグルメ（白背景）が同じ切替で現れる */}
         <AnimatePresence initial={false}>
           <motion.div
-            key={spot.id}
+            key={isFinale ? "finale" : spot.id}
             className="absolute inset-0"
             initial={SWITCH.initial}
             animate={SWITCH.animate}
             exit={SWITCH.exit}
             transition={SWITCH.transition}
           >
-            <img
-              src={spot.img}
-              alt={spot.title}
-              className="size-full object-cover"
-            />
+            {isFinale ? (
+              finale
+            ) : (
+              <img
+                src={spot.img}
+                alt={spot.title}
+                className="size-full object-cover"
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 
         {/* すりガラスの説明パネル。カンプ 15152:29490。
             写真と「同時に」同じブラーで出入りする（遅れて出す仕様は廃止） */}
         <AnimatePresence initial={false}>
+          {!isFinale && (
           <motion.div
             key={spot.id}
             className="absolute right-[41px] top-[684px] flex h-[238px] w-[712px] flex-col justify-center gap-6 bg-white/10 p-11 backdrop-blur-65"
@@ -216,10 +223,21 @@ export default function SpotShowcase({
               {spot.body}
             </p>
           </motion.div>
+          )}
         </AnimatePresence>
 
-        {/* 左下のサムネイル。押すとその写真の位置までスクロールが飛ぶ */}
-        <div className="absolute left-[40px] top-[805px] flex items-center gap-[14.4px]">
+        {/* 左下のサムネイル。押すとその写真の位置までスクロールが飛ぶ。
+            グルメ場面ではブラーで見送る */}
+        <AnimatePresence initial={false}>
+        {!isFinale && (
+        <motion.div
+          key="thumbs"
+          className="absolute left-[40px] top-[805px] flex items-center gap-[14.4px]"
+          initial={SWITCH.initial}
+          animate={SWITCH.animate}
+          exit={SWITCH.exit}
+          transition={SWITCH.transition}
+        >
           {thumbs.map((th) => (
             <button
               key={th.id}
@@ -231,13 +249,9 @@ export default function SpotShowcase({
               <img src={th.img} alt={th.title} className="size-full object-cover" />
             </button>
           ))}
-        </div>
-        {/* 余韻の間に全部を白へ溶かす膜（一番手前）。
-            グルメ側が白背景なので、切れ目なくつながる */}
-        <motion.div
-          className="pointer-events-none absolute inset-0 bg-white"
-          style={{ opacity: whiteOut }}
-        />
+        </motion.div>
+        )}
+        </AnimatePresence>
       </motion.section>
     </div>
   );

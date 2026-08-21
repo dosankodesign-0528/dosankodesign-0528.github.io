@@ -21,26 +21,17 @@
  *     もっと見る ExtraLight 17px 白 / 説明 ExtraLight 14px 行間2 字間0.7px
  *
  * 2026-08-22 改修（ヒデさん指示）
- *   ・白背景に（スポット側の白フェードとつながる）
+ *   ・白背景。ページを下に送るのではなく、スポットの5場面目として
+ *     「場面ごとブラーで切り替わって」現れる（SpotShowcase の finale として描画）
  *   ・店名・説明文はカンプ 15421:23369 の実文言（4店ぶん）
  *   ・小見出しに「素朴なグルメ 01」のナンバリング
- *   ・出る順番：白へ移動 → 見出しの文字 → カルーセル
+ *   ・出る順番：場面がブラーで替わる → 見出しの文字 → カルーセル
  *
  * 🟡仮置き
  *   ・カルーセルの速さ（1周40秒）はカンプに指定が無いため仮
  *   ・番号の表記はスポットの「ぼーっとスポット 01」に合わせて半角スペース入り
  */
-import { motion, type Variants } from "framer-motion";
-
-const reveal: Variants = {
-  hidden: { opacity: 0, y: 32, filter: "blur(16px)" },
-  show: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
-  },
-};
+import { motion } from "framer-motion";
 
 type GourmetCard = {
   id: string;
@@ -118,15 +109,26 @@ function Card({ card }: { card: GourmetCard }) {
 
 export default function GourmetSection() {
   return (
-    /* 背景は白（2026-08-22）。スポット側の白フェードからそのままつながる */
-    <section id="gourmet" className="relative w-full bg-white pb-40 pt-[200px]">
-      {/* 見出し行（幅1280・中央）。ブラーで出てくる */}
+    /* 全画面の1場面（982の中に収まる）。スポットからブラーで切り替わって現れる。
+       中身は「見出しの文字 → カルーセル」の順で出る（場面が出てから時間差） */
+    <section
+      id="gourmet"
+      className="flex size-full flex-col justify-center bg-white pb-10 pt-6"
+    >
+      {/* 見出し行（幅1280・中央）。場面が替わってから一拍おいて出る */}
       <motion.div
         className="mx-auto flex w-[1280px] max-w-full items-end justify-between px-4"
         initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.4 }}
-        variants={reveal}
+        animate="show"
+        variants={{
+          hidden: { opacity: 0, y: 24, filter: "blur(14px)" },
+          show: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.55 },
+          },
+        }}
       >
         <p className="whitespace-nowrap text-[36px] font-thin leading-[1.8] text-ink">
           なーんにもない、道東の土地、網走。
@@ -149,18 +151,17 @@ export default function GourmetSection() {
       {/* カルーセル：右から左へゆっくり流れ続ける。
           2セット並べて -50% まで動かすと、切れ目なく無限に回る */}
       <motion.div
-        className="mt-[165px] w-full overflow-hidden"
+        className="mt-[110px] w-full overflow-hidden"
         initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-        /* 文字より一拍あとに出る（白へ移動 → 文字 → カルーセル の順） */
+        animate="show"
+        /* 文字よりさらに一拍あとに出る（場面 → 文字 → カルーセル の順） */
         variants={{
           hidden: { opacity: 0, y: 32, filter: "blur(16px)" },
           show: {
             opacity: 1,
             y: 0,
             filter: "blur(0px)",
-            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 },
+            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 1.0 },
           },
         }}
       >
