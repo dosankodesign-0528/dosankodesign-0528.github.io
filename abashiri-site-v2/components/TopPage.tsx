@@ -597,6 +597,8 @@ export default function TopPage({
         data-abashiri-scroller=""
         /* ナビの「グルメ」が飛ぶ先（スクロール量）。グルメは5場面目なので
            spotTo + 1枚あたりのスクロール量 × 写真4枚ぶん */
+        /* ナビの「ぼーっとスポット」が飛ぶ先＝1枚目のブラーが晴れきる位置 */
+        data-spot-at={Math.round(useExit ? msgEnd + (T.spotTo - T.spotFrom) : T.spotTo)}
         data-gourmet-at={Math.round(
           (useExit ? msgEnd + (T.spotTo - T.spotFrom) : T.spotTo) + T.stepLen * 4 + 1
         )}
