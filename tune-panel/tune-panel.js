@@ -171,6 +171,9 @@
     '.tp-btns button:hover{background:#f2f2f2;}',
     '.tp-btns button.primary{background:#090909;color:#fff;border-color:#090909;}',
     '.tp-btns button.primary:hover{background:#333;}',
+    /* 未保存の変更があることを目立たせる（Anyflow のパネルと同じピンク） */
+    '.tp-btns button.primary.dirty{background:#FF5D97;border-color:#FF5D97;}',
+    '.tp-btns button.primary.dirty:hover{background:#ff4487;}',
     '.tp-toast{position:absolute;left:0;right:0;bottom:0;padding:7px 12px;background:#090909;color:#fff;',
     '  font-size:11px;opacity:0;transform:translateY(100%);transition:opacity .2s,transform .2s;pointer-events:none;}',
     '.tp-toast.show{opacity:1;transform:translateY(0);}',
@@ -212,6 +215,12 @@
     this.version = cfg.version === undefined ? 1 : cfg.version;
     this.storageKey = cfg.storageKey || null;
     this.settleDelay = cfg.settleDelay === undefined ? 250 : cfg.settleDelay;
+    /* 保存のしかた（2026-08-21 ヒデさん指示で Anyflow のパネルに統一）
+       'button'（既定）: 触った値はその場で反映されるが localStorage には書かない。
+                         未保存の変更があると「💾 保存」がピンクになり、押した時だけ確定する
+       'auto'          : 従来どおり、触るたびに自動保存 */
+    this.saveMode = cfg.saveMode === undefined ? 'button' : cfg.saveMode;
+    this._dirty = false;
     this.autoCenter = cfg.autoCenter !== false;
     this.rows = [];
     this.catOpen = {};
@@ -411,10 +420,17 @@
 
   /* ---------- 通知 ---------- */
 
+  Panel.prototype._markDirty = function (on) {
+    this._dirty = !!on;
+    if (this._saveBtn) this._saveBtn.classList.toggle('dirty', this._dirty);
+  };
+
   Panel.prototype._changed = function (info) {
     var self = this;
     if (this._muted) return;
-    this.save();
+    /* 保存ボタン方式では、触っただけでは書かない（保存を押した時だけ確定） */
+    if (this.saveMode === 'button') this._markDirty(true);
+    else this.save();
     if (this.cfg.onChange) this.cfg.onChange(info);
     clearTimeout(this._settleTimer);
     if (info && info.immediate) {
@@ -850,12 +866,24 @@
       { label: '📥 読み込み', onClick: function () { self.importPrompt(); } },
       { label: '↺ 初期値', onClick: function () { self.reset(); } }
     ];
+    /* 保存ボタン方式（既定）：先頭に「💾 保存」。未保存の変更があるとピンクになる */
+    if (this.saveMode === 'button' && this.storageKey) {
+      defs.unshift({
+        label: '💾 保存', primary: true, isSave: true,
+        onClick: function () {
+          self.save();
+          self._markDirty(false);
+          self.flash('保存しました（リロードしてもこの設定で出ます）');
+        }
+      });
+    }
     var list = (this.cfg.footer || []).concat(this.cfg.footerDefaults === false ? [] : defs);
     list.forEach(function (b) {
       var el = document.createElement('button');
       el.type = 'button';
       el.textContent = b.label;
       if (b.primary) el.className = 'primary';
+      if (b.isSave) { self._saveBtn = el; el.classList.toggle('dirty', self._dirty); }
       el.addEventListener('click', function () { b.onClick && b.onClick(self); });
       box.appendChild(el);
     });
@@ -879,9 +907,15 @@
 
   Panel.prototype.reset = function () {
     assignDeep(this.params, this.defaults);
-    this.save();
+    if (this.saveMode === 'button') {
+      /* 保存ボタン方式：保存値ごと消して「まっさら」に戻す（戻した直後は未保存扱いにしない） */
+      if (this.storageKey) { try { localStorage.removeItem(this._pKey()); } catch (e) {} }
+    } else {
+      this.save();
+    }
     this.rebuild();
     this._changed({ reset: true, immediate: true });
+    this._markDirty(false);
     this.flash('初期値に戻しました');
     return this;
   };

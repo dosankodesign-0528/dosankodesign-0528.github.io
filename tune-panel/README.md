@@ -131,6 +131,7 @@ const panel = TunePanel.create({
 | `startClosed` | `false` | たたんだ状態で出す |
 | `search` | `true` | 検索ボックス |
 | `hotkey` | `'.'` | 隠す / 出すキー。`null` で無効 |
+| `saveMode` | `'button'` | **保存のしかた（Anyflowのパネルと同じ仕様）。** `'button'`: 触った値はその場で反映されるが保存はされず、未保存の変更があると「💾 保存」がピンクになる。押した時だけ localStorage に確定（リロード後も残る）。`'auto'`: 触るたびに自動保存（旧来の挙動） |
 | `secret` | `true` | **隠しモード。** パネルは最初は見えず、画面右上の透明ボックス（64px）をクリックすると出る/隠れる。出した状態は同じタブの間だけ記憶。`false` で従来どおり常時表示（2026-08-21 ヒデさん指示で既定ON） |
 | `settleDelay` | `250`(ms) | `onSettle` を呼ぶまでの「手が止まった」判定 |
 | `footer` | `[]` | 足すボタン。`footerDefaults:false` で既定3つを消す |

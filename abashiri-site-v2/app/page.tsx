@@ -22,9 +22,16 @@ export default function Home() {
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
+  /* 登場アニメに関わる値を触ったら、ページを作り直して登場を再生し直す
+     （Anyflow のパネルと同じ「変えたらその場でアニメが見られる」挙動。
+      環境音のON/OFF確認は済んだ記憶が残っているので、再生はすぐ始まる） */
+  const [replayEpoch, setReplayEpoch] = useState(0);
+  const onReplay = useCallback(() => setReplayEpoch((e) => e + 1), []);
+
   return (
     <>
       <Stage
+        key={replayEpoch}
         illustration="tamannee"
         illustEntrance
         illustEnter={tune.illustEnter}
@@ -41,7 +48,7 @@ export default function Home() {
       </Stage>
 
       {/* ⚠️ 公開前に外す：確認用の調整パネル（右下・たたんだ状態） */}
-      <TopTunePanel onSettleValues={onSettleValues} />
+      <TopTunePanel onSettleValues={onSettleValues} onReplay={onReplay} />
     </>
   );
 }

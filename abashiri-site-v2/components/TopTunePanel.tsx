@@ -109,9 +109,12 @@ declare global {
 
 export default function TopTunePanel({
   onSettleValues,
+  onReplay,
 }: {
   /** 手が止まった時に、案の切り替えとスクロール連動の値を渡す */
   onSettleValues: (v: TopTuneValues) => void;
+  /** 登場アニメに関わる値が変わって手が止まった時（Anyflow同様、その場で再生し直す用） */
+  onReplay?: () => void;
 }) {
   const madeRef = useRef(false);
 
@@ -643,10 +646,14 @@ export default function TopTunePanel({
           applyVars();
           applyVolume();
         },
-        onSettle: () => {
+        onSettle: (info?: { path?: string }) => {
           applyVars();
           applyVolume();
           pushValues();
+          /* 登場のしかた（案切替・たまらねーの披露タイミング）を触ったら、
+             Anyflow のパネルと同じく、その場で登場アニメを再生し直して見せる */
+          const p = info?.path || "";
+          if (p.startsWith("anim.") || p.startsWith("intro.")) onReplay?.();
         },
       });
       /* 保存されていた値を最初の1回だけ反映する */

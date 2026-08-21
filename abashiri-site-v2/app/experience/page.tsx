@@ -24,6 +24,15 @@ export default function ExperiencePage() {
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
+  /* 登場アニメに関わる値を触ったら、体験フローを最初から再生し直す
+     （Anyflow のパネルと同じ「変えたらその場でアニメが見られる」挙動） */
+  const [replayEpoch, setReplayEpoch] = useState(0);
+  const onReplay = useCallback(() => {
+    setStep(1);
+    setPicked(false);
+    setReplayEpoch((e) => e + 1);
+  }, []);
+
   /* ?step=2 / ?step=3 で途中のステップから開始できる（動作確認・デモ用） */
   useEffect(() => {
     const s = new URLSearchParams(window.location.search).get("step");
@@ -36,7 +45,7 @@ export default function ExperiencePage() {
           導入（step1）と場所えらび（step2）にはイラストを出さない。
           「この場所にする」を押した瞬間に所定の位置でフェードインして、
           そのまま人物ごと窓の中へ入っていく */}
-      <Stage illustration="bo" hideIllust={!picked} bo={tune.boPattern}>
+      <Stage key={replayEpoch} illustration="bo" hideIllust={!picked} bo={tune.boPattern}>
         <ExperienceFlow
           step={step}
           setStep={setStep}
@@ -45,7 +54,7 @@ export default function ExperiencePage() {
       </Stage>
 
       {/* ⚠️ 公開前に外す：確認用の調整パネル（右下・たたんだ状態） */}
-      <TopTunePanel onSettleValues={onSettleValues} />
+      <TopTunePanel onSettleValues={onSettleValues} onReplay={onReplay} />
     </>
   );
 }
