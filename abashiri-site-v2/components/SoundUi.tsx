@@ -262,8 +262,14 @@ export default function SoundUi({
           白モック内の置き場があればそこ（左上・ヘッダーと上下中央ぞろえ）、無いページでは画面左下 */}
       {!showDialog &&
         (() => {
-          const seg = (on: boolean, label: string, icon: string) => {
+          const seg = (
+            on: boolean,
+            label: string,
+            iconActive: string,
+            iconInactive: string
+          ) => {
             const active = on === audible;
+            const icon = active ? iconActive : iconInactive;
             return (
               <button
                 key={label}
@@ -293,8 +299,9 @@ export default function SoundUi({
                 slot ? "" : "fixed bottom-4 left-4 z-50 "
               }flex items-center justify-center rounded-full bg-white/40 p-[2px] backdrop-blur-[62px]`}
             >
-              {seg(true, "ON", "/img/icon-bgm-on.svg")}
-              {seg(false, "OFF", "/img/icon-bgm-off.svg")}
+              {/* アイコンは状態ごとに別アセット（カンプ 15492:21886=ON時 / 15492:22168=OFF時） */}
+              {seg(true, "ON", "/img/icon-bgm-on.svg", "/img/icon-bgm-on-dim.svg")}
+              {seg(false, "OFF", "/img/icon-bgm-off-active.svg", "/img/icon-bgm-off.svg")}
             </div>
           );
           return slot ? createPortal(btn, slot) : btn;
