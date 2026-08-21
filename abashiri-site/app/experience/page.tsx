@@ -17,7 +17,6 @@ export default function ExperiencePage() {
     boPattern: DEFAULT_BO,
     illustEnter: 1,
     tamaranee: 1,
-    spotSwitch: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,

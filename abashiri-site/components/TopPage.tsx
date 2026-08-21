@@ -199,7 +199,6 @@ export default function TopPage({
   shadowTune,
   layout,
   spotTune,
-  spotSwitch,
 }: {
   intro?: number;
   kv?: number;
@@ -239,8 +238,6 @@ export default function TopPage({
   layout?: Partial<LayoutTune> | null;
   /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
   spotTune?: Partial<SpotTransition> | null;
-  /** 1〜5: スポット写真の切替の見せ方（spotSwitchPatterns.ts） */
-  spotSwitch?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -676,7 +673,7 @@ export default function TopPage({
 
         {/* ぼーっとスポット。KV がブラーで奥へ引くのと入れ替わりに写真が合ってきて、
             1スクロールごとに4枚が切り替わる。終わるとグルメへ進める */}
-        <SpotShowcase scrollY={scrollY} tune={spotTune} switchPattern={spotSwitch} />
+        <SpotShowcase scrollY={scrollY} tune={spotTune} />
 
         {/* 素朴なグルメ（カンプ 15415:21597）。v1.2 で新設 */}
         <GourmetSection />

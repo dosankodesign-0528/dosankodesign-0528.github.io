@@ -24,7 +24,6 @@ import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 import { TAMARANEE_PATTERNS } from "./tamaraneePatterns";
-import { SPOT_SWITCH_PATTERNS, DEFAULT_SPOT_SWITCH } from "./spotSwitchPatterns";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -35,8 +34,6 @@ export type TopTuneValues = {
   tamaIntro: { delay: number; hold: number };
   /** パネルの確認用スイッチ */
   preview: { faceOn: boolean; patchRed: boolean };
-  /** 1〜5: スポット写真の切替の見せ方（spotSwitchPatterns.ts） */
-  spotSwitch: number;
   face: FaceConfig;
   spot: SpotTransition;
 };
@@ -91,7 +88,7 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 
 type Params = {
   pos: typeof POS_DEFAULTS;
-  anim: { boPattern: number; illustEnter: number; tamaranee: number; spotSwitch: number };
+  anim: { boPattern: number; illustEnter: number; tamaranee: number };
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
@@ -123,7 +120,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 1, tamaranee: 1, spotSwitch: DEFAULT_SPOT_SWITCH },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 1, tamaranee: 1 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -159,7 +156,6 @@ export default function TopTunePanel({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
         tamaranee: params.anim.tamaranee,
-        spotSwitch: params.anim.spotSwitch,
         tamaIntro: { ...params.intro },
         preview: { ...params.preview },
         face: { ...params.face },
@@ -189,8 +185,9 @@ export default function TopTunePanel({
                 眉の動き方（パキッと固定）でピルを撤去。登場はぴょこん4案に（2026-08-21）
            v11: 体験ページ左のカモメ（位置・大きさ・傾き）を追加（2026-08-21）
            v12: スポットが「1スクロールごとに切替」になり、切替の見せ方5案と
-                1枚あたりのスクロール量を追加（2026-08-21） */
-        version: 12,
+                1枚あたりのスクロール量を追加（2026-08-21）
+           v13: 切替はブラーで確定しピルを撤去。余韻＝白フェードの長さに（2026-08-22） */
+        version: 13,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -478,15 +475,7 @@ export default function TopTunePanel({
               /* ── KV → ぼーっとスポット ─────────── */
               { sub: "ぼーっとスポット｜写真の切替" },
               {
-                pills: "切替の見せ方",
-                path: "anim.spotSwitch",
-                immediate: true,
-                options: SPOT_SWITCH_PATTERNS.map((p, i) => ({
-                  name: `案${i + 1}`,
-                  value: i + 1,
-                  swatch: "#0070c9",
-                  desc: `${p.label.replace(/^案\d+\s*/, "")}　${p.note}`,
-                })),
+                note: "切替はブラーで確定（2026-08-21）。写真とテキストが同時に切り替わります。",
               },
               {
                 slider: "1枚あたりのスクロール量",
@@ -558,15 +547,15 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "④ 余韻", deep: true },
+              { sub: "④ 白フェード（グルメへの継ぎ目）", deep: true },
               {
-                slider: "最後の写真のあとの余韻",
+                slider: "白へ溶ける長さ",
                 path: "spot.hold",
-                min: 0,
+                min: 200,
                 max: 3000,
                 step: 10,
                 fmt: "px",
-                hint: "4枚目が出そろってから、グルメへ進めるようになるまでの間。",
+                hint: "4枚目のあと、このぶんスクロールする間に全体が白へ溶けて、グルメへつながります。",
               },
             ],
           },

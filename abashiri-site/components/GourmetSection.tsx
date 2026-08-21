@@ -20,10 +20,15 @@
  *     小見出し「素朴なグルメ」Thin 18px（cap詰め）/ 店名 Thin 28px / 間8px
  *     もっと見る ExtraLight 17px 白 / 説明 ExtraLight 14px 行間2 字間0.7px
  *
+ * 2026-08-22 改修（ヒデさん指示）
+ *   ・白背景に（スポット側の白フェードとつながる）
+ *   ・店名・説明文はカンプ 15421:23369 の実文言（4店ぶん）
+ *   ・小見出しに「素朴なグルメ 01」のナンバリング
+ *   ・出る順番：白へ移動 → 見出しの文字 → カルーセル
+ *
  * 🟡仮置き
- *   ・店名はカンプに「ラーメンだるまや」しか無いため、他の3枚は写真から推測した仮名
- *   ・説明文はカンプの文言（ちぎり揚げの説明）を4枚共通で使用（カンプ通り）
  *   ・カルーセルの速さ（1周40秒）はカンプに指定が無いため仮
+ *   ・番号の表記はスポットの「ぼーっとスポット 01」に合わせて半角スペース入り
  */
 import { motion, type Variants } from "framer-motion";
 
@@ -39,22 +44,43 @@ const reveal: Variants = {
 
 type GourmetCard = {
   id: string;
-  /** 店名。だるまや以外は🟡仮（カンプに無い） */
+  no: string;
   title: string;
   img: string;
-  placeholder?: boolean;
+  body: string;
 };
 
+/* 店名・説明文はカンプ 15421:23369 の実文言（左から順） */
 const CARDS: GourmetCard[] = [
-  { id: "tsukune", title: "炭火のつくね串", img: "/img/gourmet-new-1.jpg", placeholder: true },
-  { id: "jingisukan", title: "網走ジンギスカン", img: "/img/gourmet-new-2.jpg", placeholder: true },
-  { id: "darumaya", title: "ラーメンだるまや", img: "/img/gourmet-new-3.jpg" },
-  { id: "sakana", title: "地魚の煮つけ御膳", img: "/img/gourmet-new-4.jpg", placeholder: true },
+  {
+    id: "yokoyama",
+    no: "01",
+    title: "横山蒲鉾店",
+    img: "/img/gourmet-new-1.jpg",
+    body: "近海で水揚げされるお魚と厳選された食材を使用し、手作りにこだわる小さなかまぼこ工場で作られるちぎり揚げが特に人気です。おかずに、おやつに食べやすい一口サイズが嬉しいですね。",
+  },
+  {
+    id: "matsuo",
+    no: "02",
+    title: "松尾ジンギスカン 呼人支店",
+    img: "/img/gourmet-new-2.jpg",
+    body: "昭和45年創業。現在は札幌で積んだ3代目店主が切り盛りするジンギスカン店です。にんにく不使用の特製甘だれは、果物の自然な甘みが肉の旨味を引き立て、幅広い客層に支持されています。",
+  },
+  {
+    id: "darumaya",
+    no: "03",
+    title: "ラーメンだるまや",
+    img: "/img/gourmet-new-3.jpg",
+    body: "2015年にオープンの人気ラーメン店。カウンター席、テーブル席、小上がり席を備え、お一人様からファミリー、女性グループなど幅広い客層に人気です。イチオシは、麺に絡みつくほど濃厚な醤油とんこつの「どろらーめん」です。",
+  },
+  {
+    id: "tonton",
+    no: "04",
+    title: "酒縁酒場 屯々",
+    img: "/img/gourmet-new-4.jpg",
+    body: "2013年にオープンした居酒屋「屯々（とんとん）」。店名は「たむろ」と読む「屯」と、新しい扉を開くノックの音「トントン」に由来し、「人が集まり、ご縁やチャンスが生まれる場所」として「人との繋がり」を大切にしています。",
+  },
 ];
-
-/* カンプの説明文（4枚共通） */
-const CARD_BODY =
-  "近海で水揚げされるお魚と厳選された食材を使用し、手作りにこだわる小さなかまぼこ工場で作られるちぎり揚げが特に人気です。おかずに、おやつに食べやすい一口サイズが嬉しいですね。";
 
 function Card({ card }: { card: GourmetCard }) {
   return (
@@ -70,7 +96,7 @@ function Card({ card }: { card: GourmetCard }) {
           <div className="flex w-full items-end justify-between">
             <div className="flex flex-col gap-2 font-thin leading-[1.2] text-white">
               <p className="whitespace-nowrap text-body-18 [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]">
-                素朴なグルメ
+                素朴なグルメ {card.no}
               </p>
               <p className="whitespace-nowrap text-[28px]">{card.title}</p>
             </div>
@@ -82,7 +108,7 @@ function Card({ card }: { card: GourmetCard }) {
             </span>
           </div>
           <p className="w-full text-control-14 font-extralight leading-[2] tracking-[0.7px] text-white">
-            {CARD_BODY}
+            {card.body}
           </p>
         </div>
       </div>
@@ -92,7 +118,8 @@ function Card({ card }: { card: GourmetCard }) {
 
 export default function GourmetSection() {
   return (
-    <section id="gourmet" className="relative w-full pb-40 pt-[200px]">
+    /* 背景は白（2026-08-22）。スポット側の白フェードからそのままつながる */
+    <section id="gourmet" className="relative w-full bg-white pb-40 pt-[200px]">
       {/* 見出し行（幅1280・中央）。ブラーで出てくる */}
       <motion.div
         className="mx-auto flex w-[1280px] max-w-full items-end justify-between px-4"
@@ -126,7 +153,16 @@ export default function GourmetSection() {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, amount: 0.2 }}
-        variants={reveal}
+        /* 文字より一拍あとに出る（白へ移動 → 文字 → カルーセル の順） */
+        variants={{
+          hidden: { opacity: 0, y: 32, filter: "blur(16px)" },
+          show: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 },
+          },
+        }}
       >
         <div className="gourmet-marquee flex w-max items-center gap-2 pr-2">
           {[...CARDS, ...CARDS].map((c, i) => (
