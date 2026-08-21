@@ -14,6 +14,10 @@ export default function Home() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 2,
+    tamaranee: 1,
+    illustAnim: 4,
+    tamaIntro: { delay: 350, hold: 3000 },
+    preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
   });
@@ -27,6 +31,11 @@ export default function Home() {
         illustEnter={tune.illustEnter}
         bo={tune.boPattern}
         face={tune.face}
+        tamaranee={tune.tamaranee}
+        illustAnim={tune.illustAnim}
+        tamaIntro={tune.tamaIntro}
+        forceFace={tune.preview.faceOn}
+        patchRed={tune.preview.patchRed}
       >
         {/* 決定版：吹き出し→な〜んにもない→たまらない を順にブラー
             →ボタン→イラスト（ブラー後にクルンと一回転） */}

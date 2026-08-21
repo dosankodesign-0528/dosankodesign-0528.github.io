@@ -16,6 +16,10 @@ export default function ExperiencePage() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 2,
+    tamaranee: 1,
+    illustAnim: 4,
+    tamaIntro: { delay: 350, hold: 3000 },
+    preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,
     spot: DEFAULT_SPOT_TRANSITION,
   });

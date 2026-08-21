@@ -136,7 +136,7 @@
   --illust-sparkle-x: 4px;
   --illust-sparkle-y: 53px;
   --illust-sparkle-w: 18px;
-  --illust-sparkle2-dx: 6px;
+  --illust-sparkle2-dx: -5px; /* ヒデさん調整値 2026-08-21 */
   --illust-sparkle2-dy: -5px;
   --illust-sparkle-period: 1.2s;
 }

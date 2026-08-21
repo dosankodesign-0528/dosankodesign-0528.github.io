@@ -31,7 +31,7 @@ const SWING_STYLE: React.CSSProperties = { transformOrigin: "50% 100%" };
    delay … 登場アニメが終わってから出すまでの間
    hold  … 出したまま留めておく長さ。このあと引っ込む
    2026-08-20 ヒデさん指示で hold を 1700 → 3000 に延長 */
-const TAMA_INTRO = { delay: 350, hold: 3000 } as const;
+const TAMA_INTRO_DEFAULT = { delay: 350, hold: 3000 } as const;
 
 type IllustAnim = {
   animate: Record<string, number[]>;
@@ -128,6 +128,12 @@ type StageProps = {
   bo?: number | string | null;
   /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
   illustEnter?: number | string | null;
+  /** 初回の「たまらねー」お披露目のタイミング(ms)。調整パネルから */
+  tamaIntro?: { delay: number; hold: number };
+  /** true: 眉・口・たまらねーを出しっぱなしにする（調整パネルの確認用） */
+  forceFace?: boolean;
+  /** true: 眉と口のパッチを赤くする（覆い残しの確認用） */
+  patchRed?: boolean;
   /** true: 人物イラストを出さない（カンプにイラストが無い画面用） */
   hideIllust?: boolean;
 };
@@ -150,6 +156,9 @@ export default function Stage({
   tamaranee,
   bo,
   illustEnter,
+  tamaIntro = TAMA_INTRO_DEFAULT,
+  forceFace = false,
+  patchRed = false,
   hideIllust = false,
 }: StageProps) {
   const L = mergeLayout(layout);
@@ -182,22 +191,22 @@ export default function Stage({
 
   useEffect(() => {
     if (!illustEntrance || !entranceDone) return;
-    const a = window.setTimeout(() => setIntroTama(true), TAMA_INTRO.delay);
+    const a = window.setTimeout(() => setIntroTama(true), tamaIntro.delay);
     const b = window.setTimeout(
       () => setIntroTama(false),
-      TAMA_INTRO.delay + TAMA_INTRO.hold
+      tamaIntro.delay + tamaIntro.hold
     );
     return () => {
       window.clearTimeout(a);
       window.clearTimeout(b);
     };
-  }, [illustEntrance, entranceDone]);
+  }, [illustEntrance, entranceDone, tamaIntro.delay, tamaIntro.hold]);
 
-  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 */
-  const showTama = over || introTama;
+  /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ パネルの出しっぱなし */
+  const showTama = over || introTama || forceFace;
   /* 表情（眉が上がる・口が開く）も「たまらねー」と同じ条件でそろえる。
      初回のお披露目でも顔が動いた方が「言っている」感じが出る（🟡仮判断） */
-  const faceLift = over ? browLift : introTama ? fc.browLift : 0;
+  const faceLift = over ? browLift : showTama ? fc.browLift : 0;
 
   /* 調整パネル用：カモメをドラッグで動かす */
   const dragBird = (key: "skyTopLeft" | "skyRight") => (e: React.PointerEvent) => {
@@ -377,6 +386,8 @@ export default function Stage({
                   mouthY={fc.mouthY}
                   mouthW={fc.mouthW}
                   mouthStroke={fc.mouthStroke}
+                  patchSpread={fc.patchSpread}
+                  debugPatch={patchRed}
                   className="size-full"
                 />
               </motion.div>

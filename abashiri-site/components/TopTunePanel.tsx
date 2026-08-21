@@ -21,10 +21,19 @@ import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 import { BROW_ANIMS } from "./browAnimPatterns";
+import { TAMARANEE_PATTERNS } from "./tamaraneePatterns";
 
 export type TopTuneValues = {
   boPattern: number;
   illustEnter: number;
+  /** 1〜5: たまらねーの出方（tamaraneePatterns.ts） */
+  tamaranee: number;
+  /** 1〜5: 15秒おきのスイング（Stage の ILLUST_ANIMS） */
+  illustAnim: number;
+  /** 初回の「たまらねー」お披露目（ms） */
+  tamaIntro: { delay: number; hold: number };
+  /** パネルの確認用スイッチ */
+  preview: { faceOn: boolean; patchRed: boolean };
   face: FaceConfig;
   spot: SpotTransition;
 };
@@ -45,7 +54,7 @@ const POS_DEFAULTS = {
   sparkleX: 4,
   sparkleY: 53,
   sparkleW: 18,
-  sparkle2Dx: 6,
+  sparkle2Dx: -5,
   sparkle2Dy: -5,
 };
 
@@ -71,7 +80,9 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 
 type Params = {
   pos: typeof POS_DEFAULTS;
-  anim: { boPattern: number; illustEnter: number };
+  anim: { boPattern: number; illustEnter: number; tamaranee: number; illustAnim: number };
+  intro: { delay: number; hold: number };
+  preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
   face: FaceConfig;
   sparkle: { period: number };
@@ -101,7 +112,9 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 2 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 2, tamaranee: 1, illustAnim: 4 },
+      intro: { delay: 350, hold: 3000 },
+      preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
       sound: { volume: Math.round(DEFAULT_BGM_VOLUME * 100) },
       face: { ...DEFAULT_FACE },
@@ -132,6 +145,10 @@ export default function TopTunePanel({
       onSettleValues({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
+        tamaranee: params.anim.tamaranee,
+        illustAnim: params.anim.illustAnim,
+        tamaIntro: { ...params.intro },
+        preview: { ...params.preview },
         face: { ...params.face },
         spot: { ...params.spot },
       });
@@ -153,8 +170,10 @@ export default function TopTunePanel({
            v6: キラキラ（2コマ）を追加（2026-08-20）
            v7: 口元（開いた口の位置・大きさ・線の太さ）を追加（2026-08-20）
            v8: 口の形をカンプ更新（Vector 8）に差し替え・既定位置を変更、
-               眉の動き方5案を追加（2026-08-21） */
-        version: 8,
+               眉の動き方5案を追加（2026-08-21）
+           v9: 全パターンを本番パネルに集約（たまらねー出方・スイング・初回タイミング・
+               パッチ・確認用スイッチ）。キラキラ2コマ目 dx=-5、眉1px（2026-08-21） */
+        version: 9,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -226,6 +245,19 @@ export default function TopTunePanel({
                 fmt: "px",
                 hint: "横幅。縦は元の比率のまま付いてきます。",
               },
+              { sub: "たまに揺れる動き（約15秒おき）" },
+              {
+                pills: "スイング",
+                path: "anim.illustAnim",
+                immediate: true,
+                options: [
+                  { name: "案1", value: 1, swatch: "#0070c9", desc: "タメて→スナップ。左へゆっくり傾いてから右へ一気" },
+                  { name: "案2", value: 2, swatch: "#0070c9", desc: "速い2往復→ふわっと収束。出だし全力" },
+                  { name: "案3", value: 3, swatch: "#0070c9", desc: "ワイパー。じっくりため→ビュッ→ゆっくり中央へ" },
+                  { name: "案4", value: 4, swatch: "#0070c9", desc: "小刻みシェイク→ピタッ（今の採用案）" },
+                  { name: "案5", value: 5, swatch: "#0070c9", desc: "タメ静止つきワンモーション" },
+                ],
+              },
             ],
           },
           {
@@ -272,6 +304,27 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
                 hint: "＋で下へ。",
+              },
+              { sub: "元の眉を隠すパッチ" },
+              {
+                slider: "パッチの太らせ",
+                path: "face.patchSpread",
+                min: 0,
+                max: 300,
+                step: 5,
+                fmt: "",
+                hint: "眉を上げた時に元の眉がはみ出したら、ここを上げます。",
+              },
+              { sub: "確認用（保存されても本番の見た目には出ません）" },
+              {
+                toggle: "眉と口を出しっぱなしにする",
+                path: "preview.faceOn",
+                hint: "カーソルを乗せなくても、上がった眉・開いた口・たまらねーが出ます。位置調整に。",
+              },
+              {
+                toggle: "パッチを赤くする",
+                path: "preview.patchRed",
+                hint: "元の眉と口をちゃんと覆えているかが一目で分かります。",
               },
             ],
           },
@@ -382,7 +435,37 @@ export default function TopTunePanel({
             cat: "💬 たまらねー",
             items: [
               {
-                note: "トップで人物にカーソルを乗せた時に出る文字です。位置を見るには人物にカーソルを乗せてください。",
+                note: "人物にカーソルを乗せた時と、登場直後の1回だけ出る文字です。「眉と口を出しっぱなしにする」をONにすると位置調整がラクです。",
+              },
+              {
+                pills: "出方",
+                path: "anim.tamaranee",
+                immediate: true,
+                options: TAMARANEE_PATTERNS.map((p, i) => ({
+                  name: `案${i + 1}`,
+                  value: i + 1,
+                  swatch: "#0070c9",
+                  desc: `${p.label.replace(/^案\d+\s*/, "")}　${p.note}`,
+                })),
+              },
+              { sub: "初回のお披露目（登場のあと1回だけ）" },
+              {
+                slider: "出すまでの間",
+                path: "intro.delay",
+                min: 0,
+                max: 2000,
+                step: 50,
+                fmt: "ms",
+                hint: "ぴょこんと登場し終わってから、たまらねーが出るまで。",
+              },
+              {
+                slider: "見せる時間",
+                path: "intro.hold",
+                min: 500,
+                max: 8000,
+                step: 100,
+                fmt: "ms",
+                hint: "出したまま留めておく長さ。このあと引っ込みます。",
               },
               {
                 slider: "横ずれ",

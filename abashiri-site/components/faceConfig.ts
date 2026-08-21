@@ -24,13 +24,15 @@ export type FaceConfig = {
   mouthW: number;
   /** 口の黒い線の太さ(px) */
   mouthStroke: number;
+  /** 元の眉を隠す肌色パッチの太らせ量（illustMainPaths の単位。120で表示上約3px） */
+  patchSpread: number;
 };
 
 /* ヒデさん調整値。
-   持ち上げ量は 12px だと上がりすぎとの指摘があり 6px に下げた（2026-08-20）。
+   持ち上げ量 12px → 6px（2026-08-20）→ 1px（2026-08-21 パネルで決定）。
    右下の調整パネルでその場で変えられる。 */
 export const DEFAULT_FACE: FaceConfig = {
-  browLift: 6,
+  browLift: 1,
   browX: 0,
   browY: 0,
   browAnim: 1,
@@ -40,6 +42,7 @@ export const DEFAULT_FACE: FaceConfig = {
   mouthY: 79,
   mouthW: 11.2,
   mouthStroke: 1.5,
+  patchSpread: 120,
 };
 
 export function mergeFace(partial?: Partial<FaceConfig> | null): FaceConfig {
