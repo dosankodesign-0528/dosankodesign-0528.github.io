@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { preload } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   motion,
   useScroll,
@@ -259,6 +260,20 @@ export default function TopPage({
   preload("/img/bg-hero.jpg", { as: "image", fetchPriority: "high" });
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  /* 「ぼーっとしてみる」→ 体験ページの遷移をディゾルブに（2026-08-22 ヒデさん指摘。
+     即切替だとガタついて見えるため、青いグラデ＋ブラーの幕がふわっとかぶってから遷移する。
+     体験ページ側も同じ青グラデから始まるので、幕がそのまま次のページにつながる） */
+  const router = useRouter();
+  const [leaving, setLeaving] = useState(false);
+  const onGoExperience = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (leaving) return;
+    setLeaving(true);
+    router.prefetch("/experience");
+    window.setTimeout(() => router.push("/experience"), 800);
+  };
+
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
   /* 入れ替わりのタイミング（作字が消える → 背景ブラー → スポットが晴れる → 固定） */
@@ -732,6 +747,7 @@ export default function TopPage({
                       ボタンが 218x53.2 に太り、カンプの 216x51 とずれるため */}
                   <Link
                     href="/experience"
+                    onClick={onGoExperience}
                     className="flex items-center justify-center rounded-full bg-white/10 px-11 py-4 text-body-16 font-medium leading-[1.2] text-white ring-1 ring-inset ring-white/40 backdrop-blur-65 transition-transform hover:scale-105"
                   >
                     ぼーっとしてみる
@@ -769,6 +785,17 @@ export default function TopPage({
             旧部品（Card / CardRow 等）はこのファイル上部に残っている。
             グルメは v1.2 で GourmetSection として新設した */}
       </div>
+
+      {/* 体験ページへのディゾルブの幕。後ろの画面をブラーで溶かしながら
+          青グラデ（体験ページの下地と同じ）でふんわり覆う */}
+      {leaving && (
+        <motion.div
+          className="absolute inset-0 z-40 bg-gradient-to-b from-brand via-brand/70 to-sky-bottom"
+          initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          animate={{ opacity: 1, backdropFilter: "blur(22px)" }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        />
+      )}
 
       {/* 追従ヘッダー：スクロールの外に置いて常に表示 */}
       <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
