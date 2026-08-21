@@ -127,6 +127,8 @@
     '.tp-cat-body{padding:0 12px 12px;}',
     '.tp-cat.closed .tp-cat-body{display:none;}',
     '.tp-hidden{display:none !important;}',
+    /* 隠しスイッチ（画面右上の透明ボックス）。見た目は何もないが、クリックでパネルが出る */
+    '.tp-secret-hot{position:fixed;top:0;right:0;width:64px;height:64px;z-index:2147483001;background:transparent;}',
     /* 小見出し */
     '.tp-grp{margin-top:10px;padding-top:10px;border-top:1px solid #ececec;}',
     '.tp-cat-body>.tp-grp:first-child{border-top:none;margin-top:6px;}',
@@ -373,6 +375,26 @@
       self._scT = setTimeout(function () { self._saveUI(); }, 300);
     });
 
+    /* 隠しモード（既定ON。cfg.secret:false で常時表示に戻せる）
+       パネルは最初は見えない。画面右上の透明ボックス（64px）をクリックすると
+       出る/隠れる（2026-08-21 ヒデさん指示：関係者に見せる時はパネルを隠したい）。
+       出した状態は同じタブの間だけ覚える（調整中にリロードしても消えない） */
+    var secret = this.cfg.secret === undefined ? true : this.cfg.secret;
+    var setShown = this._setShown = function (on) {
+      el.style.display = on ? '' : 'none';
+      if (!secret) return;
+      try { sessionStorage.setItem('tp-secret-' + (self.cfg.storageKey || 'panel'), on ? '1' : '0'); } catch (e) {}
+    };
+    if (secret) {
+      var shown0 = false;
+      try { shown0 = sessionStorage.getItem('tp-secret-' + (this.cfg.storageKey || 'panel')) === '1'; } catch (e) {}
+      setShown(shown0);
+      var hot = this._hot = document.createElement('div');
+      hot.className = 'tp-secret-hot';
+      (this.cfg.mount || document.body).appendChild(hot);
+      hot.addEventListener('click', function () { setShown(el.style.display === 'none'); });
+    }
+
     /* ショートカット（既定 "." キー）でパネルを隠す/出す */
     var key = this.cfg.hotkey === undefined ? '.' : this.cfg.hotkey;
     if (key) {
@@ -380,7 +402,7 @@
         var t = e.target;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
         if (e.key === key && !e.metaKey && !e.ctrlKey && !e.altKey) {
-          el.style.display = el.style.display === 'none' ? '' : 'none';
+          setShown(el.style.display === 'none');
         }
       };
       window.addEventListener('keydown', this._onKey);
@@ -934,6 +956,7 @@
 
   Panel.prototype.destroy = function () {
     if (this._onKey) window.removeEventListener('keydown', this._onKey);
+    if (this._hot) this._hot.remove();
     this.el.remove();
     return this;
   };

@@ -1139,6 +1139,18 @@
     bottom: 16px;
     z-index: 50;
   }
+  /* 隠しモード（2026-08-21 ヒデさん指示）：パネルは最初は見えない。
+     画面右上の透明ボックス（.tools-secret-hot）をクリックすると出る/隠れる */
+  .tools.tools-hidden { display: none; }
+  .tools-secret-hot {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 64px;
+    height: 64px;
+    z-index: 60;
+    background: transparent;
+  }
   .switcher {
     position: relative;
     width: 360px;
@@ -5941,6 +5953,25 @@ document.getElementById('panelHead').addEventListener('click', () => {
   /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
   keepPanelInView();
 });
+
+/* ===== 隠しモード（2026-08-21 ヒデさん指示） =====
+   パネルは最初は見えない。画面右上の透明ボックスをクリックすると出る/隠れる。
+   出した状態は同じタブの間だけ覚える（調整中にリロードしても消えない） */
+(() => {
+  const SKEY = 'anyflow-tools-secret';
+  let shown = false;
+  try { shown = sessionStorage.getItem(SKEY) === '1'; } catch (e) {}
+  const apply = () => toolsEl.classList.toggle('tools-hidden', !shown);
+  apply();
+  const hot = document.createElement('div');
+  hot.className = 'tools-secret-hot';
+  document.body.appendChild(hot);
+  hot.addEventListener('click', () => {
+    shown = !shown;
+    try { sessionStorage.setItem(SKEY, shown ? '1' : '0'); } catch (e) {}
+    apply();
+  });
+})();
 /* カテゴリの開閉では外寸は変わらない作りだが、
    ヒデさんが右下のつまみで背を伸ばしている場合に備えて、ここでも押し戻しておく */
 document.getElementById('panelBody').addEventListener('click', () => {

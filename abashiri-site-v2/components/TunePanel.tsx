@@ -5,9 +5,14 @@
  * - ヘッダーをドラッグして好きな位置に移動できる
  * - 右下の「◢」をドラッグしてサイズを変えられる（中身が長い時はスクロール）
  * - 「たたむ/ひらく」で折りたためる
+ * - 隠しモード（2026-08-21 ヒデさん指示）：最初は見えない。
+ *   画面右上の透明ボックス（64px）をクリックすると出る/隠れる。
+ *   出した状態は同じタブの間だけ覚える（調整中のリロードで消えない）
  * 今後の調整パネルは必ずこれで作る（ヒデさんルール）
  */
 import { useRef, useState } from "react";
+
+const SECRET_KEY = "tp-secret-react";
 
 export default function TunePanel({
   title,
@@ -17,6 +22,22 @@ export default function TunePanel({
   children: React.ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem(SECRET_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleShown = () => {
+    setShown((s) => {
+      try {
+        sessionStorage.setItem(SECRET_KEY, s ? "0" : "1");
+      } catch {}
+      return !s;
+    });
+  };
   const [open, setOpen] = useState(true);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [size, setSize] = useState<{ w: number; h: number | null }>({
@@ -69,6 +90,14 @@ export default function TunePanel({
   };
 
   return (
+    <>
+      {/* 隠しスイッチ：画面右上の透明ボックス。見た目は何もないがクリックでパネルが出る */}
+      <div
+        onClick={toggleShown}
+        className="fixed right-0 top-0 z-[81] h-16 w-16"
+        aria-hidden
+      />
+      {shown && (
     <div
       ref={panelRef}
       className="fixed z-[80]"
@@ -113,5 +142,7 @@ export default function TunePanel({
         )}
       </div>
     </div>
+      )}
+    </>
   );
 }
