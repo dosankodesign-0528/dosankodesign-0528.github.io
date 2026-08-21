@@ -11,7 +11,6 @@
  *
  * 止まっている時はパッチの上にぴったり眉が乗るので、見た目は元の PNG と変わらない。
  */
-import { findBrowAnim } from "./browAnimPatterns";
 import {
   BROW_ALL,
   BROW_FILL,
@@ -85,8 +84,6 @@ type Props = {
   /** 眉そのものの位置ずらし（画面px）。＋で右／下 */
   browX?: number;
   browY?: number;
-  /** 1〜5: 眉が上がる時の動き方（browAnimPatterns.ts） */
-  browAnim?: number;
   /** true: 口を「開いた口」に差し替える（ホバー中） */
   mouthOpen?: boolean;
   /** 口の位置・大きさ・線の太さ（画面px。カンプ 15410:21336 が既定） */
@@ -104,7 +101,6 @@ export default function IllustTamannee({
   debugPatch = false,
   browX = 0,
   browY = 0,
-  browAnim = 1,
   mouthOpen = false,
   /* 既定値は faceConfig.ts の DEFAULT_FACE と必ずそろえる（カンプ 15410:21336 実測） */
   mouthX = 47.9,
@@ -114,7 +110,6 @@ export default function IllustTamannee({
   className,
 }: Props) {
   const unit = COMP_UNIT;
-  const ba = findBrowAnim(browAnim);
   /* 位置ずらしは「静止時の眉の置き場所」。パッチは動かさない
      （動かすと元の眉が顔を出してしまう） */
   const shift = { x: browX * unit, y: browY * unit };
@@ -135,31 +130,17 @@ export default function IllustTamannee({
         {/* 元の眉を隠しておく。眉が上がった時にここが額として見える */}
         <Brows fill={debugPatch ? "#FF3B30" : SKIN_FILL} spread={patchSpread} />
         {/* 動く眉 */}
-        {/* 動く眉。上がる時の動き方は browAnimPatterns.ts の5案。
-            戻る時はどの案も共通で 300ms ですっと戻る（transition が受け持つ）。
-            keyframes 系の案は --brow-shift（上がった位置）を参照して跳ねる */}
-        <g
-          style={{
-            ["--brow-shift" as string]: `${-lift * unit}px`,
-            transform: `translateY(${-lift * unit}px)`,
-            transition: `transform ${
-              lift > 0 ? (ba.duration ?? 300) : 300
-            }ms ${lift > 0 ? (ba.ease ?? "cubic-bezier(0.22, 1, 0.36, 1)") : "cubic-bezier(0.22, 1, 0.36, 1)"}`,
-            animation: lift > 0 ? ba.animation : undefined,
-          }}
-        >
+        {/* 動く眉。切替はトランジション無しの「パキッと1コマ」
+            （2026-08-21 ヒデさん指示。GIF風のコマ切替に統一） */}
+        <g style={{ transform: `translateY(${-lift * unit}px)` }}>
           <Brows fill={BROW_FILL} shift={shift} />
         </g>
         {/* 口：ホバー中だけ「開いた口」に差し替える（カンプ 15410:21336）。
             肌色の四角で元の口（への字の線）を覆い、その上に白地・黒線の縦長楕円を描く。
             四角の位置はイラストに焼き付いた元の口を隠すためのものなので動かさない。
             楕円だけが調整パネルで動く */}
-        <g
-          style={{
-            opacity: mouthOpen ? 1 : 0,
-            transition: "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        >
+        {/* 口も同じくパキッと切替（フェード無し） */}
+        <g style={{ opacity: mouthOpen ? 1 : 0 }}>
           <rect
             x={MOUTH_PATCH.x * unit}
             y={MOUTH_PATCH.y * unit}

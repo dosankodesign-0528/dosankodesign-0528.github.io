@@ -16,7 +16,6 @@ import Link from "next/link";
 import TunePanel from "@/components/TunePanel";
 import IllustTamannee from "@/components/IllustTamannee";
 import { DEFAULT_FACE } from "@/components/faceConfig";
-import { BROW_ANIMS } from "@/components/browAnimPatterns";
 import {
   BROW_FILL,
   ILLUST_VIEWBOX,
@@ -72,7 +71,6 @@ export default function BrowMockPage() {
   const [spread, setSpread] = useState(PATCH_SPREAD);
   const [zoom, setZoom] = useState(3);
   const [debugPatch, setDebugPatch] = useState(false);
-  const [anim, setAnim] = useState(1);
   const [hover, setHover] = useState(true);
 
   const w = BASE_W * zoom;
@@ -106,7 +104,6 @@ export default function BrowMockPage() {
             <div style={{ width: w, height: h }}>
               <IllustTamannee
                 lift={hover ? lift : 0}
-                browAnim={anim}
                 patchSpread={spread}
                 debugPatch={debugPatch}
                 mouthOpen={hover}
@@ -153,28 +150,6 @@ export default function BrowMockPage() {
         </div>
 
         <TunePanel title="🙂 眉毛の調整">
-          <div className="py-1 pl-3">
-            <p className="text-[12px] font-bold text-[#1e1e1e]">動き方（上がる時）</p>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {BROW_ANIMS.map((p, i) => (
-                <button
-                  key={p.key}
-                  onClick={() => setAnim(i + 1)}
-                  title={p.note}
-                  className={`cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                    anim === i + 1
-                      ? "bg-[#0070c9] text-white"
-                      : "bg-[#e6f3ff] text-[#0070c9]"
-                  }`}
-                >
-                  案{i + 1}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1 text-[10px] font-bold leading-relaxed text-[#7ba7cc]">
-              {BROW_ANIMS[anim - 1].note}。「眉を上げた状態にする」を入れ直すと動きを見返せます
-            </p>
-          </div>
           <Row
             label="持ち上げる量"
             value={lift}

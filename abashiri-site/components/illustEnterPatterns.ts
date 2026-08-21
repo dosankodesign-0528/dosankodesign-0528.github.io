@@ -2,8 +2,10 @@
  * キービジュアルの演出が終わったあと、人物イラストが登場する時の案。
  * /mock/illust-enter で並べて比べられる。
  *
- * 2026-08-17 に「テクテク歩いてくる」「下からぴょこん」の2案に絞られたあと、
- * 2026-08-20 に「ぴょこんのバリエーションを5つ」との指示で案2〜案6を用意した。
+ * 変遷：
+ *   2026-08-17 「歩き」「ぴょこん」の2案に絞る → 2026-08-20 ぴょこん5案
+ *   2026-08-21 ぴょこん（旧案2）で確定。歩き・旧案3〜6は削除し、
+ *              「メリハリの強いバウンス」系のバリエーション3つを追加した
  * どれも画面の下（見えない位置）から跳ね上がる。違うのは跳ね方の性格だけ。
  *
  * 共通ルール
@@ -28,29 +30,8 @@ export type IllustEnterPattern = {
 
 export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
   {
-    key: "walk",
-    label: "案1  テクテク歩いてくる",
-    note: "右端の外から歩いて入ってくる。一歩ごとに体が浮いて、左右に振れながら進む",
-    initial: { opacity: 1, filter: "blur(0px)", x: 260, y: 0, rotate: 0 },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      x: [260, 195, 130, 68, 18, 0],
-      /* 一歩ごとに体が浮いて落ちる */
-      y: [0, -9, 0, -9, 0, 0],
-      /* 重心の入れ替え。左右に振れながら進む */
-      rotate: [0, -3.5, 3, -3, 1.5, 0],
-    },
-    transition: {
-      duration: 2.0,
-      times: [0, 0.2, 0.4, 0.6, 0.82, 1],
-      ease: ["easeOut", "easeInOut", "easeInOut", "easeInOut", "easeOut"],
-    },
-    swingAfter: true,
-  },
-  {
     key: "pyokon",
-    label: "案2  ぴょこん（標準）",
+    label: "案1  ぴょこん（採用中の標準）",
     note: "下から跳ね上がって、行き過ぎてから収まる。今までの動きそのまま",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
@@ -68,87 +49,67 @@ export const ILLUST_ENTER_PATTERNS: IllustEnterPattern[] = [
     swingAfter: true,
   },
   {
-    key: "pyokon-snap",
-    label: "案3  ビュンと出てピタッ（メリハリ）",
-    note: "速く飛び出して大きく行き過ぎ、一気に着地。キレのあるメリハリ重視",
+    key: "pyokon-sharp",
+    label: "案2  ビュンッ→ピタッ",
+    note: "速く大きく飛び出して、一気に着地。いちばんキレのあるメリハリ",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
       opacity: 1,
       filter: "blur(0px)",
       x: 0,
-      y: [240, -30, 3, 0],
-      rotate: [0, -4, 1.5, 0],
+      y: [240, -34, 4, 0],
+      rotate: [0, -5, 2, 0],
     },
     transition: {
-      duration: 0.72,
-      times: [0, 0.5, 0.78, 1],
+      duration: 0.66,
+      times: [0, 0.48, 0.76, 1],
       ease: ["easeOut", "easeInOut", "easeOut"],
     },
     swingAfter: true,
   },
   {
-    key: "pyokon-double",
-    label: "案4  トントンッと2段跳ね",
-    note: "小さく1回・大きく1回の2段階で跳ねる。リズム感・コミカル",
+    key: "pyokon-tame",
+    label: "案3  タメて→ドンッ",
+    note: "一瞬タメてから爆発的に跳ぶ。高く行き過ぎて、弾んで収まる",
     initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
     animate: {
       opacity: 1,
       filter: "blur(0px)",
       x: 0,
-      y: [240, -8, 4, -18, 3, 0],
-      rotate: [0, -1.5, 0.5, -2.5, 1, 0],
+      y: [240, 240, -30, 8, -4, 0],
+      rotate: [0, 0, -4, 2, -1, 0],
     },
     transition: {
-      duration: 1.25,
-      times: [0, 0.3, 0.46, 0.68, 0.86, 1],
+      duration: 1.0,
+      times: [0, 0.18, 0.5, 0.72, 0.86, 1],
+      ease: ["linear", "easeOut", "easeInOut", "easeInOut", "easeOut"],
+    },
+    swingAfter: true,
+  },
+  {
+    key: "pyokon-dandan",
+    label: "案4  ダンダンッと2度弾み",
+    note: "強く1回・小さく1回、リズムよく2度弾んで止まる。歯切れ重視",
+    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
+    animate: {
+      opacity: 1,
+      filter: "blur(0px)",
+      x: 0,
+      y: [240, -26, 6, -12, 2, 0],
+      rotate: [0, -3, 1.5, -2, 1, 0],
+    },
+    transition: {
+      duration: 0.9,
+      times: [0, 0.4, 0.6, 0.78, 0.92, 1],
       ease: ["easeOut", "easeIn", "easeOut", "easeIn", "easeOut"],
-    },
-    swingAfter: true,
-  },
-  {
-    key: "pyokon-peek",
-    label: "案5  ちら見してからぴょこん",
-    note: "頭だけちょこっと出して一拍ため、それから勢いよく飛び出す。じらし",
-    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      x: 0,
-      y: [240, 150, 150, -22, 5, 0],
-      rotate: [0, 0, 0, -3, 1, 0],
-    },
-    transition: {
-      duration: 1.6,
-      times: [0, 0.2, 0.48, 0.74, 0.9, 1],
-      ease: ["easeOut", "linear", "easeInOut", "easeInOut", "easeOut"],
-    },
-    swingAfter: true,
-  },
-  {
-    key: "pyokon-soft",
-    label: "案6  ゆったりせり上がって最後にぴょこ",
-    note: "ゆっくりせり上がってきて、最後だけ小さく跳ねて着地。おだやか",
-    initial: { opacity: 1, filter: "blur(0px)", x: 0, y: 240, rotate: 0 },
-    animate: {
-      opacity: 1,
-      filter: "blur(0px)",
-      x: 0,
-      y: [240, 26, -10, 0],
-      rotate: [0, 0, -1.5, 0],
-    },
-    transition: {
-      duration: 1.5,
-      times: [0, 0.6, 0.85, 1],
-      ease: ["easeInOut", "easeInOut", "easeOut"],
     },
     swingAfter: true,
   },
 ];
 
-/* 採用案：案2「ぴょこん（標準）」（2026-08-18 ヒデさん指示）。
-   案3〜案6 は 2026-08-20 に追加したバリエーション。/mock/illust-enter で見比べて、
-   決まったらここを差し替える。 */
-export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[1];
+/* 採用案：案1「ぴょこん（標準）」（2026-08-21 ヒデさん確定）。
+   案2〜4 はメリハリ強めのバリエーション。乗り換えるならここを差し替える */
+export const DEFAULT_ILLUST_ENTER = ILLUST_ENTER_PATTERNS[0];
 
 export function findIllustEnter(key?: string | number | null): IllustEnterPattern {
   if (key == null) return DEFAULT_ILLUST_ENTER;

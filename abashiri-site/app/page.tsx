@@ -13,9 +13,8 @@ export default function Home() {
      ここで持つのは「案の切り替え」と「スクロール連動の値」だけ */
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
-    illustEnter: 2,
+    illustEnter: 1,
     tamaranee: 1,
-    illustAnim: 4,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,
@@ -32,7 +31,6 @@ export default function Home() {
         bo={tune.boPattern}
         face={tune.face}
         tamaranee={tune.tamaranee}
-        illustAnim={tune.illustAnim}
         tamaIntro={tune.tamaIntro}
         forceFace={tune.preview.faceOn}
         patchRed={tune.preview.patchRed}

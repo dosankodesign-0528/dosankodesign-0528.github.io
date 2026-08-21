@@ -380,7 +380,6 @@ export default function Stage({
                   lift={faceLift}
                   browX={fc.browX}
                   browY={fc.browY}
-                  browAnim={fc.browAnim}
                   mouthOpen={showTama}
                   mouthX={fc.mouthX}
                   mouthY={fc.mouthY}

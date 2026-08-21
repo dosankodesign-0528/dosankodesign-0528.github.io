@@ -255,31 +255,6 @@ body {
   animation: sparkle-2f var(--illust-sparkle-period) linear infinite;
 }
 
-/* ===== 眉のホバー（動き方の案は browAnimPatterns.ts） =====
-   --brow-shift は IllustTamannee が入れる「上がった位置」（負のpx）。 */
-@keyframes brow-hop {
-  0% { transform: translateY(0); }
-  45% { transform: translateY(calc(var(--brow-shift) * 1.35)); }
-  65% { transform: translateY(calc(var(--brow-shift) * 0.85)); }
-  82% { transform: translateY(calc(var(--brow-shift) * 1.1)); }
-  100% { transform: translateY(var(--brow-shift)); }
-}
-@keyframes brow-in {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(var(--brow-shift)); }
-}
-@keyframes brow-float {
-  0%, 100% { transform: translateY(var(--brow-shift)); }
-  50% { transform: translateY(calc(var(--brow-shift) - 4px)); }
-}
-@keyframes brow-two {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(calc(var(--brow-shift) * 0.5)); }
-  55% { transform: translateY(calc(var(--brow-shift) * 0.5)); }
-  78% { transform: translateY(calc(var(--brow-shift) * 1.08)); }
-  100% { transform: translateY(var(--brow-shift)); }
-}
-
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */
 @keyframes kenburns {
   0% {
