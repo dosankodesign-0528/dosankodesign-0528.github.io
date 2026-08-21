@@ -30,6 +30,7 @@
 |---|---|
 | [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md) | 完成したデザインシステム（色・文字・余白のトークン一覧） |
 | [abashiri-site/V1.1-STATUS.md](abashiri-site/V1.1-STATUS.md) | v1.1 のいまの状態・仮置き一覧・実装の地雷・次にやること（引き継ぎ用） |
+| [abashiri-site/TASKS.md](abashiri-site/TASKS.md) | ヒデさんからの依頼台帳（依頼・進捗・概算時間。受けたら即追記） |
 
 ### anyflow-embed
 | ファイル | 中身 |

@@ -166,6 +166,7 @@ import HeroKamishibai from "./HeroKamishibai";
 import HeroCombo from "./HeroCombo";
 import HeroBlurSeq from "./HeroBlurSeq";
 import SpotShowcase from "./SpotShowcase";
+import GourmetSection from "./GourmetSection";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
 import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { type BubbleTune } from "./bubbleConfig";
@@ -198,6 +199,7 @@ export default function TopPage({
   shadowTune,
   layout,
   spotTune,
+  spotSwitch,
 }: {
   intro?: number;
   kv?: number;
@@ -237,6 +239,8 @@ export default function TopPage({
   layout?: Partial<LayoutTune> | null;
   /** KV → ぼーっとスポットの入れ替わりのタイミング（spotTransition.ts） */
   spotTune?: Partial<SpotTransition> | null;
+  /** 1〜5: スポット写真の切替の見せ方（spotSwitchPatterns.ts） */
+  spotSwitch?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
@@ -670,17 +674,16 @@ export default function TopPage({
           </motion.div>
         </div>
 
-        {/* ぼーっとスポット（カンプ 15191:2178）。
-            KV がブラーで奥へ引くのと入れ替わりに、ここの写真がブラーから合ってくる。
-            晴れきったところで固定ビューになり、そのあと下へ進める（spotTransition.ts） */}
-        <SpotShowcase scrollY={scrollY} tune={spotTune} />
+        {/* ぼーっとスポット。KV がブラーで奥へ引くのと入れ替わりに写真が合ってきて、
+            1スクロールごとに4枚が切り替わる。終わるとグルメへ進める */}
+        <SpotShowcase scrollY={scrollY} tune={spotTune} switchPattern={spotSwitch} />
 
-        {/* v1.1: ここから下にあった3つ（プロモ「ぼーっとする、やってみない？」／
-            素朴なグルメ／体験・イベント）は、作り直しのため 2026-08-18 に画面から外した。
-            消したのは JSX だけ。Card / CardRow / ViewMore / GOURMET_CARDS / EVENT_CARDS
-            などの部品はこのファイルに残してある（復活させる時にそのまま使える）。
-            外す前の見た目は v1.0 の URL（https://abashiri-v1.vercel.app）と
-            git の ab75656 で確認できる。 */}
+        {/* 素朴なグルメ（カンプ 15415:21597）。v1.2 で新設 */}
+        <GourmetSection />
+
+        {/* v1.1 の プロモ／旧グルメ／体験・イベント は撤去済み。
+            旧部品（Card / CardRow 等）はこのファイル上部に残っている。
+            グルメは v1.2 で GourmetSection として新設した */}
       </div>
 
       {/* 追従ヘッダー：スクロールの外に置いて常に表示 */}

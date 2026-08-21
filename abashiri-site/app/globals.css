@@ -260,6 +260,21 @@ body {
   animation: sparkle-2f var(--illust-sparkle-period) linear infinite;
 }
 
+/* ===== グルメのカルーセル（右から左へゆっくり流れ続ける） =====
+   2セット並べた列を半分だけ動かしてループ。速さはカンプに指定が無く仮の40秒 */
+@keyframes gourmet-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.gourmet-marquee {
+  animation: gourmet-marquee 40s linear infinite;
+  will-change: transform;
+}
+/* カーソルを乗せている間は流れを止める（ホバーの文字を読ませるため） */
+.gourmet-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* ===== 疑似ムービー（ゆっくりズーム） ===== */
 @keyframes kenburns {
   0% {

@@ -33,9 +33,11 @@ export type SpotTransition = {
   /** スポット写真の最初のブラー(px) */
   spotBlur: number;
 
-  /* ── ④ 固定ビュー ─────────────────────── */
-  /** ブラーが解けたあと、画面に留まっている長さ(px)。
-   *  総スクロール量 = spotTo + hold になる */
+  /* ── ④ 写真の切替と余韻 ─────────────────── */
+  /** 1枚の写真から次の写真へ進むのに必要なスクロール量(px)。
+   *  「1スクロールごとに切替」＝およそ1画面ぶん(982)が基準 */
+  stepLen: number;
+  /** 最後の写真が出そろってから、セクションを抜けるまでの余韻(px) */
   hold: number;
 };
 
@@ -53,7 +55,8 @@ export const DEFAULT_SPOT_TRANSITION: SpotTransition = {
   spotTo: 620,
   spotBlur: 30,
 
-  hold: 700,
+  stepLen: 982,
+  hold: 500,
 };
 
 export function mergeSpotTransition(
@@ -62,9 +65,9 @@ export function mergeSpotTransition(
   return { ...DEFAULT_SPOT_TRANSITION, ...partial };
 }
 
-/** 総スクロール量(px)。ブラーが解けるまで＋固定ビューの長さ */
-export function totalScroll(t: SpotTransition): number {
-  return t.spotTo + t.hold;
+/** 総スクロール量(px)。ブラーが解けるまで ＋ (枚数-1)回の切替 ＋ 余韻 */
+export function totalScroll(t: SpotTransition, photoCount = 1): number {
+  return t.spotTo + t.stepLen * Math.max(0, photoCount - 1) + t.hold;
 }
 
 export const SPOT_TRANSITION_STORAGE_KEY = "abashiri-spot-transition";

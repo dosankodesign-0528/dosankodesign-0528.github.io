@@ -15,6 +15,7 @@ export default function Home() {
     boPattern: DEFAULT_BO,
     illustEnter: 1,
     tamaranee: 1,
+    spotSwitch: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
     face: DEFAULT_FACE,
@@ -37,7 +38,7 @@ export default function Home() {
       >
         {/* 決定版：吹き出し→な〜んにもない→たまらない を順にブラー
             →ボタン→イラスト（ブラー後にクルンと一回転） */}
-        <TopPage intro={2} blurSeq waitConsent spotTune={tune.spot} />
+        <TopPage intro={2} blurSeq waitConsent spotTune={tune.spot} spotSwitch={tune.spotSwitch} />
       </Stage>
 
       {/* ⚠️ 公開前に外す：確認用の調整パネル（右下・たたんだ状態） */}
