@@ -96,7 +96,7 @@ function Card({ card }: { card: GourmetCard }) {
               <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-white">
                 もっと見る
               </span>
-              <img src="/img/icon-more-circle.svg" alt="" className="size-[18px]" />
+              <img src="/img/icon-view-more.svg" alt="" className="size-[18px]" />
             </span>
           </div>
           <p className="w-full text-body-14 font-extralight leading-[2] tracking-[0.7px] text-white">
@@ -144,8 +144,8 @@ export default function GourmetSection() {
           <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-ink">
             もっと見る
           </span>
-          {/* 白アイコンしか無いので黒に落として使う（🟡専用アイコンが来たら差し替え） */}
-          <img src="/img/icon-more-circle.svg" alt="" className="size-[18px] brightness-0" />
+          {/* カンプ 15412:21447 のシェブロン（白線0.5）。黒地では brightness-0 で黒に落とす */}
+          <img src="/img/icon-view-more.svg" alt="" className="size-[18px] brightness-0" />
         </a>
       </motion.div>
 
