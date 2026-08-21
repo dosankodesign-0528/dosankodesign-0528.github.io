@@ -788,8 +788,9 @@ export default function TopPage({
       {/* サウンドON/OFFの置き場：SoundUi がここへ描画する（白モック内の左上） */}
       <div
         id="abashiri-sound-slot"
-        /* カンプ x=34。ヘッダー（top32・高さ51）と上下中央ぞろえ（2026-08-22 ヒデさん指示） */
-        className="absolute left-[34px] top-[32px] z-40 flex h-[51px] items-center"
+        /* カンプ x=34。ヘッダーの文字行（top32・高さ19px）と上下中央ぞろえ
+           （2026-08-22 ヒデさん指示。ナビは帯ではなく素の文字なので、その実寸に合わせる） */
+        className="absolute left-[34px] top-[32px] z-40 flex h-[19px] items-center"
       />
     </div>
   );
