@@ -277,11 +277,13 @@ body {
   to { transform: translateX(-50%); }
 }
 .gourmet-marquee {
-  animation: gourmet-marquee 40s linear infinite;
+  /* 1周の秒数は調整パネル「グルメ｜カルーセル」から（--gourmet-speed） */
+  animation: gourmet-marquee var(--gourmet-speed, 40s) linear infinite;
   will-change: transform;
 }
-/* カーソルを乗せている間は流れを止める（ホバーの文字を読ませるため） */
-.gourmet-marquee:hover {
+/* カーソルを乗せている間は流れを止める（ホバーの文字を読ませるため）。
+   止めるかどうかは調整パネルのスイッチ（html[data-gourmet-pause]）で切り替え */
+html[data-gourmet-pause="1"] .gourmet-marquee:hover {
   animation-play-state: paused;
 }
 

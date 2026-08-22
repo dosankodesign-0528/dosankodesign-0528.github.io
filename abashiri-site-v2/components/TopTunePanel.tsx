@@ -109,6 +109,7 @@ type Params = {
   kvExit: KvExit;
   hero: HeroEnter;
   msg: MsgTune;
+  gourmet: { speed: number; pauseOnHover: boolean };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -149,12 +150,17 @@ export default function TopTunePanel({
       kvExit: { ...DEFAULT_KV_EXIT },
       hero: { ...DEFAULT_HERO_ENTER },
       msg: { ...DEFAULT_MSG },
+      /* グルメのカルーセル。1周40秒は🟡仮置きのまま既定に */
+      gourmet: { speed: 40, pauseOnHover: true },
     };
     const params: Params = structuredClone(DEFAULTS);
 
     /* ① 位置・大きさは CSS 変数へ直書き */
     const applyVars = () => {
       const root = document.documentElement;
+      /* グルメのカルーセル：1周の秒数とホバー停止（その場で反映） */
+      root.style.setProperty("--gourmet-speed", `${params.gourmet.speed}s`);
+      root.dataset.gourmetPause = params.gourmet.pauseOnHover ? "1" : "0";
       for (const k of Object.keys(VAR_OF) as (keyof typeof POS_DEFAULTS)[]) {
         /* Rot で終わるキーだけ単位が deg（カモメの傾きなど） */
         const unit = k.endsWith("Rot") ? "deg" : "px";
@@ -224,8 +230,10 @@ export default function TopTunePanel({
            v20: 作字（登場・消え方）の項目を撤去し既定値で固定／メッセージは案1〜3＋
                 にじみ幅／人物登場は案3固定・ぼーは現状固定でピル撤去（2026-08-21）
            v21: メッセージに「読み終わってからの余韻」を追加。テンポは最初の設定へ
-                戻した（len2400・にじみ幅1.3。2026-08-22 ヒデさん指示） */
-        version: 21,
+                戻した（len2400・にじみ幅1.3。2026-08-22 ヒデさん指示）
+           v22: グルメのカルーセルに「1周の速さ」「ホバーで止める」を追加
+                （2026-08-22 ヒデさん依頼） */
+        version: 22,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -575,6 +583,22 @@ export default function TopTunePanel({
                 max: 4,
                 step: 0.1,
                 fmt: "s",
+              },
+              /* ── グルメ｜カルーセル（2026-08-22 ヒデさん依頼） ── */
+              { sub: "グルメ｜カルーセル" },
+              {
+                slider: "1周の速さ",
+                path: "gourmet.speed",
+                min: 10,
+                max: 120,
+                step: 1,
+                fmt: "s",
+                hint: "写真の列がひと回りするのにかける秒数。大きいほどゆっくり。その場で反映されます。",
+              },
+              {
+                toggle: "カーソルを乗せたら止める",
+                path: "gourmet.pauseOnHover",
+                hint: "ONだと、カードにカーソルを乗せている間は流れが止まり、ホバーの文字をゆっくり読めます。",
               },
               /* ── KV → ぼーっとスポット ─────────── */
               { sub: "ぼーっとスポット｜写真の切替" },
