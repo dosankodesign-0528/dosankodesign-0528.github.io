@@ -382,10 +382,12 @@ function SpotCard({
           }`}
         />
       )}
-      {/* カンプ 15152:29231: カード内 top 464。中央のカードにだけ出す */}
+      {/* カンプ 15152:29231: カード内 top 464。中央のカードにだけ出す。
+          2026-08-22 ヒデさん指示：動画が実在するスポット（いまは流氷クルーズだけ）に
+          限定して出す。動画の無いカードは選んでも先の再生画面が成立しないため */}
       <div
         className={`absolute left-1/2 top-[464px] z-10 -translate-x-1/2 transition-all duration-500 ease-standard ${
-          active
+          active && spot.video
             ? "translate-y-0 opacity-100"
             : "pointer-events-none translate-y-2 opacity-0"
         }`}
