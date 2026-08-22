@@ -34,7 +34,7 @@ export type TopTuneValues = {
   bouncePattern: number;
   /** バウンスの強さ%（100が基準） */
   bounceStrength: number;
-  /** ボタンが出てから人物が出るまでの間(ms) */
+  /** ボタンが出てから人物が出るまでのディレイ(秒) */
   illustDelay: number;
   /** 周期ループ：間隔・見せる長さ(秒)・swayFirst=横揺れしてからバウンス */
   loop: { cycle: number; show: number; swayFirst: boolean };
@@ -151,7 +151,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bouncePattern: 3, bounceStrength: 100, illustDelay: 250 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bouncePattern: 3, bounceStrength: 100, illustDelay: 0.5 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -262,8 +262,12 @@ export default function TopTunePanel({
            v25: バウンス5案ピル復活・ループ前の横揺れON/OFF・人物が出るまでの間を追加
                 （2026-08-23 ヒデさん依頼）
            v26: 場所えらびカルーセルの登場5案＋メッセージ「出はじめの深さ」を2000pxまで拡大
-                （2026-08-23 ヒデさん依頼） */
-        version: 26,
+                （2026-08-23 ヒデさん依頼）
+           v27: 用語を一般用語（不透明度・ディレイ等）に統一。人物の登場ディレイを秒単位に。
+                刻みを「ざっくり検証できる粗さ」へ総点検（2026-08-23 ヒデさん指示）
+           v28: 場所えらびの登場を「その場でブラー」5案に総入れ替え（移動なし。
+                2026-08-23 ヒデさん指示） */
+        version: 28,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -314,7 +318,7 @@ export default function TopTunePanel({
                 path: "msg.len",
                 min: 800,
                 max: 5000,
-                step: 100,
+                step: 200,
                 fmt: "px",
                 hint: "このぶんスクロールする間に文章を読み進めます。大きいほどゆっくり。",
               },
@@ -323,7 +327,7 @@ export default function TopTunePanel({
                 path: "msg.tail",
                 min: 0,
                 max: 2000,
-                step: 50,
+                step: 100,
                 fmt: "px",
                 hint: "最後の段落が出そろってから、次のセクションへ行くまでのスクロール量。小さいと最後の文章をゆっくり読めません。",
               },
@@ -332,7 +336,7 @@ export default function TopTunePanel({
                 path: "msg.fadeIn",
                 min: 0,
                 max: 2000,
-                step: 20,
+                step: 100,
                 fmt: "px",
                 hint: "作字が消えきってから、メッセージが出はじめるまでのスクロール量。大きいほどゆったり見えます（2026-08-23 上限を600→2000に拡大）。",
               },
@@ -350,7 +354,7 @@ export default function TopTunePanel({
                 path: "msg.soft",
                 min: 1,
                 max: 6,
-                step: 0.1,
+                step: 0.5,
                 hint: "1つの行・段落のアニメーション時間の倍率。大きいほどゆっくりにじみながら出ます。",
               },
               { sub: "メッセージ｜見た目", deep: true },
@@ -376,7 +380,7 @@ export default function TopTunePanel({
                 path: "msg.titleLeading",
                 min: 0.8,
                 max: 1.6,
-                step: 0.05,
+                step: 0.1,
               },
               {
                 slider: "本文のフォントウェイト",
@@ -391,7 +395,7 @@ export default function TopTunePanel({
                 path: "msg.bodyLeading",
                 min: 1.2,
                 max: 3,
-                step: 0.05,
+                step: 0.1,
               },
               /* ── 人物イラスト ─────────────────── */
               /* 登場のしかたは案3「ポンッ→プルン」で確定（2026-08-21 ヒデさん指示。
@@ -401,10 +405,10 @@ export default function TopTunePanel({
                 slider: "人物の登場ディレイ",
                 path: "anim.illustDelay",
                 min: 0,
-                max: 3000,
-                step: 50,
-                fmt: "ms",
-                hint: "「ぼーっとしてみる」ボタンが出てから、人物がプルンと登場するまでの間。値を変えるとその場で登場を再生し直します。",
+                max: 5,
+                step: 0.5,
+                fmt: "s",
+                hint: "ボタンが出てから人物が登場するまでの待ち時間。上げると登場が遅くなり「間」ができ、下げるとすぐ出ます。変えると人物登場の直前から再生し直します。",
               },
               { sub: "人物イラスト｜バウンスとループ" },
               {
@@ -435,7 +439,7 @@ export default function TopTunePanel({
                 path: "anim.bounceStrength",
                 min: 20,
                 max: 250,
-                step: 5,
+                step: 10,
                 fmt: "%",
                 hint: "100が基準。大きいほど高く跳ねて、つぶれ方も大きくなります。人物にカーソルを乗せると確かめられます。",
               },
@@ -444,7 +448,7 @@ export default function TopTunePanel({
                 path: "loop.cycle",
                 min: 5,
                 max: 60,
-                step: 1,
+                step: 5,
                 fmt: "s",
                 hint: "この間隔で、バウンス＋たまらねー＋キラキラが自動で出ます。",
               },
@@ -453,7 +457,7 @@ export default function TopTunePanel({
                 path: "loop.show",
                 min: 0.5,
                 max: 6,
-                step: 0.1,
+                step: 0.5,
                 fmt: "s",
               },
               { sub: "人物イラスト｜置き場所" },
@@ -697,7 +701,7 @@ export default function TopTunePanel({
                 path: "gourmet.speed",
                 min: 10,
                 max: 120,
-                step: 1,
+                step: 5,
                 fmt: "s",
                 hint: "写真の列がひと回りする時間。大きいほどゆっくり。その場で反映されます。",
               },
@@ -799,16 +803,16 @@ export default function TopTunePanel({
                 path: "expIntro.startDelay",
                 min: 0,
                 max: 5,
-                step: 0.1,
+                step: 0.5,
                 fmt: "s",
                 hint: "ページが出てから、最初の段落が出はじめるまでの待ち。",
               },
               {
                 slider: "段落の間隔",
                 path: "expIntro.stagger",
-                min: 0.2,
+                min: 0.25,
                 max: 3,
-                step: 0.05,
+                step: 0.25,
                 fmt: "s",
                 hint: "段落と段落の間。大きいほどゆっくり順に出ます。",
               },
@@ -817,7 +821,7 @@ export default function TopTunePanel({
                 path: "expIntro.duration",
                 min: 0.4,
                 max: 4,
-                step: 0.1,
+                step: 0.2,
                 fmt: "s",
               },
               {
@@ -835,11 +839,11 @@ export default function TopTunePanel({
                 path: "expPick.pattern",
                 immediate: true,
                 options: [
-                  { name: "案1", value: 1, swatch: "#0070c9", desc: "ふわり浮上。全体が下からゆっくり浮かび上がる" },
-                  { name: "案2", value: 2, swatch: "#0070c9", desc: "左から順に流れ込む。1枚ずつゆっくり滑り込む" },
-                  { name: "案3", value: 3, swatch: "#0070c9", desc: "ブラーが晴れる。動かずピントがゆっくり合う" },
-                  { name: "案4", value: 4, swatch: "#0070c9", desc: "奥からゆっくり。少し小さい状態から静かに寄る" },
-                  { name: "案5", value: 5, swatch: "#0070c9", desc: "寄り集まる。左右は外から・中央は下から集まる" },
+                  { name: "案1", value: 1, swatch: "#0070c9", desc: "一斉にブラー解除。全体が同時にゆっくりピントが合う" },
+                  { name: "案2", value: 2, swatch: "#0070c9", desc: "中央から順に。真ん中が先に晴れて両隣が続く" },
+                  { name: "案3", value: 3, swatch: "#0070c9", desc: "左から順に。1枚ずつ順番に晴れていく" },
+                  { name: "案4", value: 4, swatch: "#0070c9", desc: "見出し→カードの二段階で晴れる" },
+                  { name: "案5", value: 5, swatch: "#0070c9", desc: "濃いブラー＋ほんの少し縮んで収まる（動きなし）" },
                 ],
               },
               {

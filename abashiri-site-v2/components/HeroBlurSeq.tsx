@@ -417,6 +417,7 @@ export default function HeroBlurSeq({
   bubbleAnim = 0,
   bubbleTune = DEFAULT_BUBBLE,
   tamaGap = 100,
+  instant = false,
   onScheduled,
 }: {
   timing?: HeroTiming;
@@ -428,6 +429,8 @@ export default function HeroBlurSeq({
   bubbleTune?: BubbleTune;
   /** しっぽが伸びきってから「たまらない」が出るまでの間(ms)。heroEnterConfig.ts */
   tamaGap?: number;
+  /** true: 演出を飛ばして完成形で置く（人物まわりの調整リプレイ用。2026-08-23） */
+  instant?: boolean;
   /** 全体の完了予定時刻(ms)を通知（ボタン・イラスト出現の起点） */
   onScheduled?: (endMs: number) => void;
 }) {
@@ -465,6 +468,18 @@ export default function HeroBlurSeq({
         ? rest.filter((i) => upperG.contains(i.p)) // な〜んにもない
         : rest.filter((i) => i.midY < 205);
       const lower = rest.filter((i) => !upper.includes(i)); // たまらない＋あしらい
+
+      /* 人物まわりの調整リプレイ：作字は完成形で置いて、すぐ次（ボタン→人物）へ */
+      if (instant) {
+        if (bubble && plan) drawTail(bubble, plan, 1);
+        [...(bubble ? [bubble] : []), ...rest.map((i) => i.p)].forEach((p) => {
+          p.style.opacity = "1";
+          p.style.filter = "none";
+        });
+        if (bubble && bubbleAnim) startBubbleAnim(bubble, svg, bubbleAnim, bubbleTune);
+        onScheduled?.(0);
+        return;
+      }
 
       /* 先に全部隠しておき、ON/OFFの選択が済んでから始める */
       [...(bubble ? [bubble] : []), ...rest.map((i) => i.p)].forEach(
@@ -558,7 +573,7 @@ export default function HeroBlurSeq({
       aborted = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timing, gate, bubbleAnim, bubbleTune]);
+  }, [timing, gate, bubbleAnim, bubbleTune, instant]);
 
   return (
     <div ref={ref} className="h-[390px] w-[471px]" aria-label="な〜んにもない たまらない" />

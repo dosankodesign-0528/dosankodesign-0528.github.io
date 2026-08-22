@@ -20,7 +20,7 @@ export default function Home() {
     illustEnter: 3,
     bouncePattern: 3,
     bounceStrength: 100,
-    illustDelay: 250,
+    illustDelay: 0.5,
     loop: { cycle: 15, show: 2.6, swayFirst: false },
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
@@ -39,7 +39,13 @@ export default function Home() {
      （Anyflow のパネルと同じ「変えたらその場でアニメが見られる」挙動。
       環境音のON/OFF確認は済んだ記憶が残っているので、再生はすぐ始まる） */
   const [replayEpoch, setReplayEpoch] = useState(0);
-  const onReplay = useCallback(() => setReplayEpoch((e) => e + 1), []);
+  const [fastReplay, setFastReplay] = useState(false);
+  const onReplay = useCallback((path?: string) => {
+    /* 人物まわり（登場・ループ・お披露目）は、作字を完成形で置いて
+       人物登場の直前から再生し直す（2026-08-23 ヒデさん指示） */
+    setFastReplay(Boolean(path && (path.startsWith("anim.") || path.startsWith("intro."))));
+    setReplayEpoch((e) => e + 1);
+  }, []);
 
   return (
     <>
@@ -68,7 +74,8 @@ export default function Home() {
           kvExit={tune.kvExit}
           heroEnter={tune.hero}
           msgTune={tune.msg}
-          illustDelay={tune.illustDelay}
+          illustDelay={tune.illustDelay * 1000}
+          fastIntro={fastReplay}
         />
       </Stage>
 

@@ -264,78 +264,77 @@ export const PICK_ENTER_PATTERNS: Record<
   number,
   { name: string; note: string; heading: Variants; card: (d: number) => Variants }
 > = {
+  /* 2026-08-23 ヒデさん指示で総入れ替え：左右の移動はなし。
+     どれも「その場でブラーが晴れて登場」。違いは順番と質感だけ */
   1: {
     name: "案1",
-    note: "ふわり浮上。全体が下からゆっくり浮かび上がる（見出し→カードの順）",
+    note: "一斉にブラー解除。全体が同時に、ゆっくりピントが合う",
     heading: {
-      hidden: { opacity: 0, y: 16, filter: "blur(8px)" },
-      show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
+      hidden: { opacity: 0, filter: "blur(14px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.8, ease: PICK_EASE } },
     },
-    card: (d) => ({
-      hidden: { opacity: 0, y: 48, filter: "blur(10px)" },
-      show: {
-        opacity: 1, y: 0, filter: "blur(0px)",
-        transition: { duration: 1.8, ease: PICK_EASE, delay: 0.3 + Math.abs(d) * 0.18 },
-      },
+    card: () => ({
+      hidden: { opacity: 0, filter: "blur(16px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.8, ease: PICK_EASE } },
     }),
   },
   2: {
     name: "案2",
-    note: "左から順に流れ込む。カードが1枚ずつゆっくり滑り込んでくる",
+    note: "中央から順に。真ん中のカードが先に晴れて、両隣が続く",
     heading: {
-      hidden: { opacity: 0, filter: "blur(8px)" },
-      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.2, ease: PICK_EASE } },
+      hidden: { opacity: 0, filter: "blur(10px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
     },
     card: (d) => ({
-      hidden: { opacity: 0, x: 160, filter: "blur(6px)" },
+      hidden: { opacity: 0, filter: "blur(16px)" },
       show: {
-        opacity: 1, x: 0, filter: "blur(0px)",
-        transition: { duration: 1.6, ease: PICK_EASE, delay: 0.2 + (d + 2) * 0.22 },
+        opacity: 1, filter: "blur(0px)",
+        transition: { duration: 1.6, ease: PICK_EASE, delay: 0.2 + Math.abs(d) * 0.35 },
       },
     }),
   },
   3: {
     name: "案3",
-    note: "ブラーが晴れる。動かず、ピントがゆっくり合ってくる",
+    note: "左から順に。カードが1枚ずつ順番に晴れていく",
     heading: {
-      hidden: { opacity: 0, filter: "blur(12px)" },
-      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.6, ease: PICK_EASE } },
+      hidden: { opacity: 0, filter: "blur(10px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
     },
-    card: () => ({
-      hidden: { opacity: 0, filter: "blur(18px)", scale: 1.03 },
+    card: (d) => ({
+      hidden: { opacity: 0, filter: "blur(16px)" },
       show: {
-        opacity: 1, filter: "blur(0px)", scale: 1,
-        transition: { duration: 2.0, ease: PICK_EASE, delay: 0.25 },
+        opacity: 1, filter: "blur(0px)",
+        transition: { duration: 1.6, ease: PICK_EASE, delay: 0.2 + (d + 2) * 0.3 },
       },
     }),
   },
   4: {
     name: "案4",
-    note: "奥からゆっくり。少し小さい状態から静かに寄ってくる",
+    note: "見出し→カードの二段階。見出しが晴れてから、カードがまとめて晴れる",
     heading: {
-      hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
-      show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
+      hidden: { opacity: 0, filter: "blur(12px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.2, ease: PICK_EASE } },
     },
     card: () => ({
-      hidden: { opacity: 0, scale: 0.9, y: 24, filter: "blur(8px)" },
+      hidden: { opacity: 0, filter: "blur(18px)" },
       show: {
-        opacity: 1, scale: 1, y: 0, filter: "blur(0px)",
-        transition: { duration: 1.8, ease: PICK_EASE, delay: 0.3 },
+        opacity: 1, filter: "blur(0px)",
+        transition: { duration: 1.8, ease: PICK_EASE, delay: 0.9 },
       },
     }),
   },
   5: {
     name: "案5",
-    note: "寄り集まる。左右のカードは外から、中央は下から、ひとつに集まる",
+    note: "濃いブラー＋ほんの少し縮んで収まる。動かないまま奥行きを感じる",
     heading: {
-      hidden: { opacity: 0, filter: "blur(8px)" },
-      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE, delay: 0.5 } },
+      hidden: { opacity: 0, filter: "blur(12px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.6, ease: PICK_EASE } },
     },
-    card: (d) => ({
-      hidden: { opacity: 0, x: d * 140, y: d === 0 ? 60 : 0, filter: "blur(8px)" },
+    card: () => ({
+      hidden: { opacity: 0, filter: "blur(24px)", scale: 1.04 },
       show: {
-        opacity: 1, x: 0, y: 0, filter: "blur(0px)",
-        transition: { duration: 1.7, ease: PICK_EASE, delay: 0.2 },
+        opacity: 1, filter: "blur(0px)", scale: 1,
+        transition: { duration: 2.0, ease: PICK_EASE, delay: 0.2 },
       },
     }),
   },

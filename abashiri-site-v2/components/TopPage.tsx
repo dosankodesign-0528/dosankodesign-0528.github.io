@@ -209,6 +209,7 @@ export default function TopPage({
   heroEnter,
   msgTune,
   illustDelay,
+  fastIntro = false,
 }: {
   intro?: number;
   kv?: number;
@@ -256,6 +257,8 @@ export default function TopPage({
   msgTune?: Partial<MsgTune> | null;
   /** ボタンが出てから人物イラストが出るまでの間(ms)。調整パネルから */
   illustDelay?: number;
+  /** true: 作字の演出を飛ばして完成形から始める（人物まわりの調整リプレイ用） */
+  fastIntro?: boolean;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -304,12 +307,12 @@ export default function TopPage({
      吹き出しと同じ瞬間に、同じ 900ms・ブラー16px で現れる方が自然。
      HeroBlurSeq 側の吹き出しも「環境音の確認が済んでから timing.start 後」に
      始まるので、同じ条件で合わせている */
-  const [kankoIn, setKankoIn] = useState(!animated);
+  const [kankoIn, setKankoIn] = useState(!animated || fastIntro);
   useEffect(() => {
-    if (!animated || !go) return;
+    if (!animated || !go || fastIntro) return;
     const id = window.setTimeout(() => setKankoIn(true), timing.start);
     return () => window.clearTimeout(id);
-  }, [animated, go, timing.start]);
+  }, [animated, go, timing.start, fastIntro]);
 
   /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ。
      人物までの間は調整パネルから（illustDelay。既定は timing.illust.gap） */
@@ -731,6 +734,7 @@ export default function TopPage({
               {blurSeq ? (
                 <HeroBlurSeq
                   timing={timing2}
+                  instant={fastIntro}
                   gate={waitConsent}
                   bubbleAnim={bubbleAnim}
                   bubbleTune={bubbleTune}
