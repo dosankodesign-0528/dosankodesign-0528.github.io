@@ -74,17 +74,31 @@ export default function MessageSection({
   const bandSpan = 0.88 / unitCount;
   const soft = Math.max(0.5, M.soft);
 
-  /* 案別：見出しと各行のスタイル */
+  /* ── 出現のさせ方（2026-08-23 作り直し） ──
+     以前はスクロール量をそのまま透明度・位置に割り当てていた（スクラブ方式）。
+     するとホイールの細かい進み戻りが文字の動きに直結して「上下にガタガタ」した。
+     いまは「読み位置がしきい値を越えたら、時間ベースのトランジションでふわっと出す」。
+     スクロールで順番に出る体験は同じで、スクロールのノイズは文字に乗らない。
+     にじみ幅(soft)は「出るのにかける時間」として効く */
+  const dur = Math.round(500 + soft * 350); /* soft1.3 ≒ 0.95秒 */
+  const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const trans = `opacity ${dur}ms ${ease}, filter ${dur}ms ${ease}, transform ${dur}ms ${ease}`;
+
+  /* 案別：見出しと各行のスタイル（on/off の2状態＋トランジション） */
+  const titleOn = p >= bandAt(0);
   const titleStyle = (): React.CSSProperties => {
-    const b = seg(p, bandAt(0), bandSpan * soft);
     switch (M.pattern) {
       case 2:
-        return { opacity: titleBase * (minOp + (1 - minOp) * b) };
+        return {
+          opacity: titleBase * (titleOn ? 1 : minOp),
+          transition: trans,
+        };
       default: /* 1・3: ブラーで登場 */
         return {
-          opacity: titleBase * b,
-          filter: `blur(${(1 - b) * 12}px)`,
-          transform: `translateY(${(1 - b) * 20}px)`,
+          opacity: titleOn ? titleBase : 0,
+          filter: titleOn ? "none" : "blur(12px)",
+          transform: titleOn ? "translateY(0)" : "translateY(20px)",
+          transition: trans,
         };
     }
   };
@@ -94,26 +108,28 @@ export default function MessageSection({
     switch (M.pattern) {
       case 2: {
         /* 浮かび上がり：全文うっすら置いてあり、読む順に濃くなる */
-        const b = seg(p, bandAt(unit), bandSpan * soft * 1.2);
-        return { opacity: minOp + (1 - minOp) * b };
+        const on = p >= bandAt(unit);
+        return { opacity: on ? 1 : minOp, transition: trans };
       }
       case 3: {
         /* 行ごとに流れ込む */
-        const b = seg(p, bandAt(unit), bandSpan * soft);
+        const on = p >= bandAt(unit);
         return {
-          opacity: b,
-          filter: `blur(${(1 - b) * 8}px)`,
-          transform: `translateY(${(1 - b) * 26}px)`,
+          opacity: on ? 1 : 0,
+          filter: on ? "none" : "blur(8px)",
+          transform: on ? "translateY(0)" : "translateY(26px)",
+          transition: trans,
         };
       }
       default: {
         /* 案1: 段落ごとにブラー出現（段落内は同時） */
         const firstUnit = 1 + BLOCKS.slice(0, blockIdx).flat().length;
-        const b = seg(p, bandAt(firstUnit), bandSpan * soft * 1.4);
+        const on = p >= bandAt(firstUnit);
         return {
-          opacity: b,
-          filter: `blur(${(1 - b) * 10}px)`,
-          transform: `translateY(${(1 - b) * 18}px)`,
+          opacity: on ? 1 : 0,
+          filter: on ? "none" : "blur(10px)",
+          transform: on ? "translateY(0)" : "translateY(18px)",
+          transition: trans,
         };
       }
     }
