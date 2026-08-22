@@ -310,7 +310,7 @@ export default function TopTunePanel({
                 })),
               },
               {
-                slider: "読み終わるまでの距離",
+                slider: "読み終わりまでのスクロール量",
                 path: "msg.len",
                 min: 800,
                 max: 5000,
@@ -319,7 +319,7 @@ export default function TopTunePanel({
                 hint: "このぶんスクロールする間に文章を読み進めます。大きいほどゆっくり。",
               },
               {
-                slider: "読み終わってからの余韻",
+                slider: "読み終わり後のスクロール量",
                 path: "msg.tail",
                 min: 0,
                 max: 2000,
@@ -328,7 +328,7 @@ export default function TopTunePanel({
                 hint: "最後の段落が出そろってから、次のセクションへ行くまでのスクロール量。小さいと最後の文章をゆっくり読めません。",
               },
               {
-                slider: "出はじめまでの距離",
+                slider: "表示開始のスクロール量",
                 path: "msg.fadeIn",
                 min: 0,
                 max: 2000,
@@ -337,34 +337,34 @@ export default function TopTunePanel({
                 hint: "作字が消えきってから、メッセージが出はじめるまでのスクロール量。大きいほどゆったり見えます（2026-08-23 上限を600→2000に拡大）。",
               },
               {
-                slider: "読む前の文字の薄さ",
+                slider: "未読テキストの不透明度",
                 path: "msg.minOpacity",
                 min: 0,
                 max: 60,
                 step: 1,
                 fmt: "%",
-                hint: "案2（浮かび上がり）で、まだ読んでいない文字の薄さ。",
+                hint: "案2（浮かび上がり）で、まだ読んでいない文字の不透明度。",
               },
               {
-                slider: "にじみ幅（ゆったり度）",
+                slider: "アニメーション時間の倍率",
                 path: "msg.soft",
                 min: 1,
                 max: 6,
                 step: 0.1,
-                hint: "1つの行・段落が出るのにかける時間の倍率。大きいほどゆっくりにじみながら出ます。",
+                hint: "1つの行・段落のアニメーション時間の倍率。大きいほどゆっくりにじみながら出ます。",
               },
               { sub: "メッセージ｜見た目", deep: true },
               {
-                slider: "見出しの透過率",
+                slider: "見出しの不透明度",
                 path: "msg.titleOpacity",
                 min: 10,
                 max: 100,
                 step: 1,
                 fmt: "%",
-                hint: "「網走は何もない。」の濃さ。カンプは80%。",
+                hint: "「網走は何もない。」の不透明度。カンプは80%。",
               },
               {
-                slider: "見出しの太さ",
+                slider: "見出しのフォントウェイト",
                 path: "msg.titleWeight",
                 min: 100,
                 max: 500,
@@ -379,7 +379,7 @@ export default function TopTunePanel({
                 step: 0.05,
               },
               {
-                slider: "本文の太さ",
+                slider: "本文のフォントウェイト",
                 path: "msg.bodyWeight",
                 min: 100,
                 max: 500,
@@ -398,7 +398,7 @@ export default function TopTunePanel({
                  案ピルは撤去。パターン本体は illustEnterPatterns.ts） */
               { sub: "人物イラスト｜登場のタイミング" },
               {
-                slider: "人物が出るまでの間",
+                slider: "人物の登場ディレイ",
                 path: "anim.illustDelay",
                 min: 0,
                 max: 3000,
@@ -449,7 +449,7 @@ export default function TopTunePanel({
                 hint: "この間隔で、バウンス＋たまらねー＋キラキラが自動で出ます。",
               },
               {
-                slider: "たまらねーを見せる長さ",
+                slider: "たまらねーの表示時間",
                 path: "loop.show",
                 min: 0.5,
                 max: 6,
@@ -620,7 +620,7 @@ export default function TopTunePanel({
               },
               { sub: "初回のお披露目（登場のあと1回だけ）", deep: true },
               {
-                slider: "出すまでの間",
+                slider: "表示ディレイ",
                 path: "intro.delay",
                 min: 0,
                 max: 2000,
@@ -628,7 +628,7 @@ export default function TopTunePanel({
                 fmt: "ms",
               },
               {
-                slider: "見せる時間",
+                slider: "表示時間",
                 path: "intro.hold",
                 min: 500,
                 max: 8000,
@@ -693,16 +693,16 @@ export default function TopTunePanel({
               /* ── グルメ｜カルーセル（2026-08-22 ヒデさん依頼） ── */
               { sub: "グルメ｜カルーセル" },
               {
-                slider: "1周の速さ",
+                slider: "1周の時間",
                 path: "gourmet.speed",
                 min: 10,
                 max: 120,
                 step: 1,
                 fmt: "s",
-                hint: "写真の列がひと回りするのにかける秒数。大きいほどゆっくり。その場で反映されます。",
+                hint: "写真の列がひと回りする時間。大きいほどゆっくり。その場で反映されます。",
               },
               {
-                toggle: "カーソルを乗せたら止める",
+                toggle: "ホバーで一時停止",
                 path: "gourmet.pauseOnHover",
                 hint: "ONだと、カードにカーソルを乗せている間は流れが止まり、ホバーの文字をゆっくり読めます。",
               },
@@ -726,7 +726,7 @@ export default function TopTunePanel({
               },
               { sub: "① 背景写真", deep: true },
               {
-                slider: "ボケ始める位置",
+                slider: "ブラーが始まる位置",
                 path: "spot.bgFrom",
                 min: 0,
                 max: 800,
@@ -734,7 +734,7 @@ export default function TopTunePanel({
                 fmt: "px",
               },
               {
-                slider: "ボケが最大になる位置",
+                slider: "ブラーが最大になる位置",
                 path: "spot.bgTo",
                 min: 100,
                 max: 1400,
@@ -742,7 +742,7 @@ export default function TopTunePanel({
                 fmt: "px",
               },
               {
-                slider: "最大のボケ量",
+                slider: "最大ブラー",
                 path: "spot.bgBlur",
                 min: 0,
                 max: 60,
@@ -768,7 +768,7 @@ export default function TopTunePanel({
                 hint: "ここから「固定ビュー」が始まります。",
               },
               {
-                slider: "最初のボケ量",
+                slider: "最初のブラー",
                 path: "spot.spotBlur",
                 min: 0,
                 max: 80,
@@ -795,7 +795,7 @@ export default function TopTunePanel({
                 note: "見出しとボタンは最初から出ていて、本文の段落4つが順にブラーで出てきます。値を変えると、その場で最初から再生し直します。",
               },
               {
-                slider: "出はじめの間",
+                slider: "開始ディレイ",
                 path: "expIntro.startDelay",
                 min: 0,
                 max: 5,
@@ -813,7 +813,7 @@ export default function TopTunePanel({
                 hint: "段落と段落の間。大きいほどゆっくり順に出ます。",
               },
               {
-                slider: "1段落が出る時間",
+                slider: "1段落のアニメーション時間",
                 path: "expIntro.duration",
                 min: 0.4,
                 max: 4,

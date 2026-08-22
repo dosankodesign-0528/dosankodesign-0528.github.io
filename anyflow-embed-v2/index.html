@@ -5417,13 +5417,13 @@ function buildPanel() {
      ここは書いた上限をそのまま使う（fixedMax）。 */
   const sectionLenSlider = (key, maxVh) => {
     if (params.drive === 'scroll') {
-      rows.push(slider('見せる長さ', 1, 12, 0.25,
+      rows.push(slider('表示時間', 1, 12, 0.25,
         () => sv()[key].driveLen, v => { sv()[key].driveLen = v; fit(); },
         v => '×' + v.toFixed(2),
         '見終わるのに必要なスクロール量。大きいほどゆっくり、じっくり見せます。',
         { fixedMax: true }));
     } else {
-      rows.push(slider('見せる長さ', 110, maxVh, 10,
+      rows.push(slider('表示時間', 110, maxVh, 10,
         () => sv()[key].lenVh, v => { sv()[key].lenVh = v; fit(); },
         v => (v / 100).toFixed(1) + '画面',
         'モーションが終わってから次へ抜けるまでの長さ。大きいほど余韻が残ります。',
@@ -5473,11 +5473,11 @@ function buildPanel() {
     'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
   rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
     '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
-  rows.push(slider('1行目を打つ速さ', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
+  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
     '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
-  rows.push(slider('2行目を打つ速さ', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
+  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
     'ゆっくりにすると、最後の一言が印象に残ります。'));
-  rows.push(slider('打つ速さの変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
+  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
     '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
   rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
     '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
@@ -5485,7 +5485,7 @@ function buildPanel() {
     '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
   rows.push(slider('→ 惑星と輪が出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
     'その一言が出てから、右側の惑星と輪が現れるまで。'));
-  rows.push(slider('ぼけから現れる速さ', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
+  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
   /* ---------- 🪐 惑星 ----------
@@ -5520,7 +5520,7 @@ function buildPanel() {
   segRow('回る向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; markDirty(); });
   rows.push(slider('軸の傾き', -180, 180, 1, () => params.sphere.tilt, v => params.sphere.tilt = v, v => v + '°',
     '柄のどこが正面に来るかがずれます。速さは変わりません。'));
-  rows.push(slider('速さのムラ', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
+  rows.push(slider('速度のムラ', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
     '大きいほど速さが不規則に伸び縮みし、繰り返しに見えにくくなります。'));
   rows.push(slider('転がり感', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%',
     '大きいほど縦にも回り、コロコロ転がる感じに。0で横だけ。'));
@@ -5556,7 +5556,7 @@ function buildPanel() {
   rows.push(slider('動き出しの加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + '秒',
     'この秒数をかけてじわっと本来の速さまで上がります。0で即。'));
   segRow('回る向き', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; markDirty(); });
-  rows.push(slider('速さの波', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
+  rows.push(slider('速度の波', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
     '大きいほど、速い⇄遅いを繰り返します。0で一定。'));
   rows.push(slider('波の周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + '秒',
     '速い→遅い→速い が1往復する時間。'));
@@ -5629,7 +5629,7 @@ function buildPanel() {
   note('「つなぐことが、」「強みになる時代へ。」の2行です。');
   rows.push(slider('1行目が出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
     'セクションが始まってから1行目が出るまでの時間。'));
-  rows.push(slider('2行目までの間', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + '秒',
+  rows.push(slider('2行目のディレイ', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + '秒',
     '大きいほど、ひと呼吸おいてから2行目が出ます。'));
   rows.push(slider('1行が出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
     '1行がぼけた状態から出きるまでの時間。'));
@@ -5672,7 +5672,7 @@ function buildPanel() {
   note('コネクタ・監査などの玉が、1つずつ膨らみながら出てきます。');
   rows.push(slider('1個目が出るまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + '秒',
     '輪が出てから1個目が出るまで。0で輪と同時。'));
-  rows.push(slider('次の玉までの間', 0, 0.5, 0.01, () => sv().vision.dotsInStagger, v => sv().vision.dotsInStagger = v, v => v.toFixed(2) + '秒',
+  rows.push(slider('次の玉のディレイ', 0, 0.5, 0.01, () => sv().vision.dotsInStagger, v => sv().vision.dotsInStagger = v, v => v.toFixed(2) + '秒',
     '大きいほど「1つずつ順に」。0で全部いっぺんに。'));
   rows.push(slider('1個が出きるまで', 0.1, 2, 0.05, () => sv().vision.dotsInDur, v => sv().vision.dotsInDur = v, v => v.toFixed(2) + '秒',
     '長いほど、ゆっくり膨らんで濃くなります。'));
@@ -5724,7 +5724,7 @@ function buildPanel() {
   sub(catRes, '出てくる順番とタイミング');
   rows.push(slider('打ち始めるまで', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + '秒後',
     '案Bのみ。セクションが始まってから打ち始めるまで。'));
-  rows.push(slider('見出しを打つ速さ', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's/字',
+  rows.push(slider('見出しの1文字の時間', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's/字',
     '案Bのみ。1文字あたりの時間。小さいほど速く打ちます。'));
   rows.push(slider('数字が出るまで', 0, 1.2, 0.05, () => sv().results.numsGap, v => sv().results.numsGap = v, v => Math.round(v * 100) + '%',
     '見出しが何割出たら数字が出るか。大きいほど後から出ます。'));
@@ -5743,7 +5743,7 @@ function buildPanel() {
     'セクションが始まってから回り出すまで。0で即。'));
   rows.push(slider('1桁が止まるまで', 0.3, 3, 0.05, () => sv().results.slotDur, v => sv().results.slotDur = v, v => v.toFixed(2) + '秒',
     '長いほどゆっくり回って止まります。'));
-  rows.push(slider('次の桁までの間', 0, 0.4, 0.01, () => sv().results.slotStagger, v => sv().results.slotStagger = v, v => v.toFixed(2) + '秒',
+  rows.push(slider('次の桁のディレイ', 0, 0.4, 0.01, () => sv().results.slotStagger, v => sv().results.slotStagger = v, v => v.toFixed(2) + '秒',
     '大きいほど「左からパタパタ」に。0で全桁同時。'));
   rows.push(slider('何周まわすか', 1, 6, 1, () => sv().results.slotCycles, v => sv().results.slotCycles = v, v => v + '周',
     '0〜9 を何回流すか。多いほど勢いよく見えます。'));
@@ -5815,7 +5815,7 @@ function buildPanel() {
     '「導入事例」の文字がぼけから出きるまでの時間。'));
   rows.push(slider('1枚目が出る', 0, 1, 0.02, () => sv().cases.cardAt, v => sv().cases.cardAt = v, v => Math.round(v * 100) + '%',
     '1枚目が出はじめる時点。見出しより後にすると読んでから出ます。'));
-  rows.push(slider('次のカードまでの間', 0, 0.2, 0.01, () => sv().cases.cardGap, v => sv().cases.cardGap = v, v => v.toFixed(2),
+  rows.push(slider('次のカードのディレイ', 0, 0.2, 0.01, () => sv().cases.cardGap, v => sv().cases.cardGap = v, v => v.toFixed(2),
     '大きいほど「1枚ずつ順に」。0で3枚同時。'));
   rows.push(slider('1枚が出きるまで', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
     '1枚がぼけから出きるまでの長さ。'));
