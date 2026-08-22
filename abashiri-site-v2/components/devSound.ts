@@ -1,12 +1,9 @@
 /*
- * 開発中（localhost）はサウンドを鳴らさないための共通スイッチ。
- * 本番（Vercel）では常に false。
- * ローカルで音も確認したい時だけ URL に ?sound を付ける（例: localhost:3096/?sound）。
+ * 開発中（localhost）はサウンドを鳴らさない…という仕組みだったが、
+ * 2026-08-23 ヒデさん指示で廃止。BGMスイッチ（ON/OFF）ができたので、
+ * ローカルでも本番と同じに鳴らし、切りたい時はスイッチで切る運用に。
+ * 呼び出し側を残したまま挙動だけ止めるため、常に false を返す。
  */
 export function devSilent(): boolean {
-  if (typeof window === "undefined") return false;
-  return (
-    window.location.hostname === "localhost" &&
-    !new URLSearchParams(window.location.search).has("sound")
-  );
+  return false;
 }
