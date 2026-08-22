@@ -13,6 +13,7 @@ import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { findTamaranee } from "./tamaraneePatterns";
 import { findHoverBounce } from "./hoverBouncePatterns";
+import { VIDEO_AUDIO_EVENT } from "./SoundUi";
 import { findBo } from "./boPatterns";
 import { findIllustEnter } from "./illustEnterPatterns";
 
@@ -229,6 +230,30 @@ export default function Stage({
 
   /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ 周期アニメ ＋ 出しっぱなし */
   const showTama = over || introTama || periodicTama || forceFace;
+
+  /* 「ぼーっ」は動画の再生ボタンを押してから登場（2026-08-22 ヒデさん指示）。
+     まずスポットの文字と同じブラー出現でふわっと現れ、そのあと従来の周期に入る。
+     動画が止まったら引っ込める。再生状態は SoundUi と同じイベントで受け取る */
+  const [boPhase, setBoPhase] = useState<0 | 1 | 2>(0);
+  useEffect(() => {
+    let t = 0;
+    const onVideo = (e: Event) => {
+      const active = Boolean((e as CustomEvent).detail?.active);
+      window.clearTimeout(t);
+      if (!active) {
+        setBoPhase(0);
+        return;
+      }
+      setBoPhase(1);
+      /* 登場（0.9s）＋ひと呼吸見せてから、いつもの周期へ */
+      t = window.setTimeout(() => setBoPhase(2), 2200);
+    };
+    window.addEventListener(VIDEO_AUDIO_EVENT, onVideo);
+    return () => {
+      window.removeEventListener(VIDEO_AUDIO_EVENT, onVideo);
+      window.clearTimeout(t);
+    };
+  }, []);
 
   /* ホバーした瞬間に、からだが縦に弾む（2026-08-21 ヒデさん依頼。5案から選ぶ）。
      スイングとは別ラッパーに WAAPI で掛けるので干渉しない */
@@ -505,29 +530,41 @@ export default function Stage({
               {/* v1.1: 「ぼーっ」は5秒に1回くらいのペースで出入りする（boPatterns.ts）。
                   採用は案4「息を吐くように抜ける」。1回目だけ3秒で出し、以降は5秒おき。
                   ⚠️ 位置（left/top/w）はカンプ採寸なので触らない。動きだけを案で差し替える */}
-              <motion.img
-                src="/img/text-bo.svg"
-                alt="ぼーっ"
-                /* ⚠️ 仮置き: 文字は白（カンプのまま）なので、流氷のような明るい映像の上では
-                   ほぼ見えない。人物と同じ Shadow_Illust を掛けて最低限浮かせている。
-                   見せ方（影／すりガラスの地／文字色）はヒデさん確認待ち */
-                className="absolute drop-shadow-illust"
-                style={{
-                  left: "var(--illust-bo-x)",
-                  top: "var(--illust-bo-y)",
-                  width: "var(--illust-bo-w)",
-                  transformOrigin: bp.origin,
-                }}
-                initial={{ opacity: 0 }}
-                animate={bp.keyframes}
-                transition={{
-                  duration: bp.cycle,
-                  times: bp.times,
-                  ease: bp.ease,
-                  repeat: Infinity,
-                  delay: bp.startDelay,
-                }}
-              />
+              {boPhase !== 0 && (
+                <motion.img
+                  key={boPhase === 1 ? "bo-enter" : "bo-cycle"}
+                  src="/img/text-bo.svg"
+                  alt="ぼーっ"
+                  /* ⚠️ 仮置き: 文字は白（カンプのまま）なので、流氷のような明るい映像の上では
+                     ほぼ見えない。人物と同じ Shadow_Illust を掛けて最低限浮かせている。
+                     見せ方（影／すりガラスの地／文字色）はヒデさん確認待ち */
+                  className="absolute drop-shadow-illust"
+                  style={{
+                    left: "var(--illust-bo-x)",
+                    top: "var(--illust-bo-y)",
+                    width: "var(--illust-bo-w)",
+                    transformOrigin: bp.origin,
+                  }}
+                  {...(boPhase === 1
+                    ? {
+                        /* 登場：スポットの文字と同じブラー出現 */
+                        initial: { opacity: 0, filter: "blur(16px)", y: 14 },
+                        animate: { opacity: 1, filter: "blur(0px)", y: 0 },
+                        transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+                      }
+                    : {
+                        /* 周期：従来の案（登場済みなので最初の待ちは無し） */
+                        initial: { opacity: 1 },
+                        animate: bp.keyframes,
+                        transition: {
+                          duration: bp.cycle,
+                          times: bp.times,
+                          ease: bp.ease,
+                          repeat: Infinity,
+                        },
+                      })}
+                />
+              )}
             </>
           )}
           </div>

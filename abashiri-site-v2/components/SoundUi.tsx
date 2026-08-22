@@ -285,7 +285,9 @@ export default function SoundUi({
                 }}
                 aria-pressed={active}
                 className={`font-num flex w-[90px] cursor-pointer items-center justify-center gap-1 rounded-full px-[10px] py-[5px] text-body-16 font-light leading-[1.2] transition-colors duration-300 ease-standard ${
-                  active ? "bg-brand text-white" : "text-white/50 hover:text-white/80"
+                  active
+                    ? "bgm-seg-active bg-brand text-white"
+                    : "bgm-seg-inactive text-white/50 hover:text-white/80"
                 }`}
               >
                 <img src={icon} alt="" className="size-[18px]" />
@@ -297,7 +299,7 @@ export default function SoundUi({
             <div
               className={`${
                 slot ? "" : "fixed bottom-4 left-4 z-50 "
-              }flex items-center justify-center rounded-full bg-white/40 p-[2px] backdrop-blur-[62px]`}
+              }bgm-switch flex items-center justify-center rounded-full bg-white/40 p-[2px] backdrop-blur-[62px] transition-colors duration-500 ease-standard`}
             >
               {/* アイコンは状態ごとに別アセット（カンプ 15492:21886=ON時 / 15492:22168=OFF時） */}
               {seg(true, "ON", "/img/icon-bgm-on.svg", "/img/icon-bgm-on-dim.svg")}

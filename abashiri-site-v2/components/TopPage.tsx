@@ -387,6 +387,17 @@ export default function TopPage({
   /* 人物イラストは KV とメッセージまでは居続けて、
      ぼーっとスポットへ入れ替わる時に見送る（2026-08-21 ヒデさん指示。
      カンプ 15480:22896 でもメッセージ画面の右下に人物がいる） */
+  /* グルメ（白背景の場面）に入ったらヘッダーを黒に（2026-08-22 ヒデさん依頼）。
+     BGMスイッチは CSS 側（html[data-header-dark] の上書き）が拾う */
+  const gourmetStart =
+    (useExit ? msgEnd + (T.spotTo - T.spotFrom) : T.spotTo) + T.stepLen * 4;
+  const [navDark, setNavDark] = useState(false);
+  useEffect(
+    () => () => {
+      delete document.documentElement.dataset.headerDark;
+    },
+    []
+  );
   useMotionValueEvent(scrollY, "change", (v) => {
     /* 人物はスポット写真の入れ替わりと「同時に」消える（2026-08-21 ヒデさん指示。
        時間差はつけない＝スポットのブラーが晴れる区間そのものでフェード） */
@@ -396,6 +407,9 @@ export default function TopPage({
     window.dispatchEvent(
       new CustomEvent("abashiri:illust-fade", { detail: { v: 1 - t } })
     );
+    const dark = v >= gourmetStart;
+    setNavDark(dark);
+    document.documentElement.dataset.headerDark = dark ? "1" : "0";
   });
   const bgFilter = useMotionTemplate`blur(${bgBlur}px)`;
   const bgZoom = kp.bgZoom ?? [1, 1];
@@ -810,7 +824,7 @@ export default function TopPage({
             delay: animated ? (timing.start + timing.header.extraDelay) / 1000 : 0,
           }}
         >
-          <GlobalNav theme="light" />
+          <GlobalNav theme={navDark ? "dark" : "light"} />
         </motion.div>
       </div>
 
