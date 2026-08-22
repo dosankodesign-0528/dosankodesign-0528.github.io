@@ -697,7 +697,8 @@ export default function TopPage({
                 style={{
                   transitionDuration: `${HE.duration}ms`,
                   opacity: animated && !kankoIn ? 0 : 1,
-                  filter: animated && !kankoIn ? `blur(${HE.blur}px)` : "blur(0px)",
+                  /* 出たあとはフィルターを外す（blur(0px)残しはにじみの元） */
+                  filter: animated && !kankoIn ? `blur(${HE.blur}px)` : "none",
                 }}
               />
               <div className="absolute left-[-28px] top-[13.1px]">

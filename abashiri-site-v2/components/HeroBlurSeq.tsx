@@ -481,7 +481,7 @@ export default function HeroBlurSeq({
       ) => {
         paths.forEach((p) => {
           p.style.opacity = "0";
-          p.animate(
+          const anim = p.animate(
             [
               { opacity: 0, filter: `blur(${blur}px)` },
               { opacity: 1, filter: "blur(0px)" },
@@ -493,6 +493,14 @@ export default function HeroBlurSeq({
               easing: "cubic-bezier(0.22, 1, 0.36, 1)",
             }
           );
+          /* 終わったらフィルターを完全に外す（2026-08-22 画質改善）。
+             blur(0px) でもフィルターが残っていると別レイヤーに描かれて
+             文字がわずかににじむことがある */
+          anim.onfinish = () => {
+            p.style.opacity = "1";
+            p.style.filter = "none";
+            anim.cancel();
+          };
         });
       };
 
