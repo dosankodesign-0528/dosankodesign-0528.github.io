@@ -76,6 +76,10 @@ const POS_DEFAULTS = {
   sparkleW: 18,
   sparkle2Dx: -5,
   sparkle2Dy: -5,
+  birdSky1X: -20,
+  birdSky1Y: 16,
+  birdSky2X: 50,
+  birdSky2Y: 535,
   birdExpX: 150,
   birdExpY: 380,
   birdExpW: 84,
@@ -100,6 +104,10 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
   sparkleW: "--illust-sparkle-w",
   sparkle2Dx: "--illust-sparkle2-dx",
   sparkle2Dy: "--illust-sparkle2-dy",
+  birdSky1X: "--bird-sky1-x",
+  birdSky1Y: "--bird-sky1-y",
+  birdSky2X: "--bird-sky2-x",
+  birdSky2Y: "--bird-sky2-y",
   birdExpX: "--bird-exp-x",
   birdExpY: "--bird-exp-y",
   birdExpW: "--bird-exp-w",
@@ -112,6 +120,7 @@ type Params = {
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
+  bird: { opacity: number };
   face: FaceConfig;
   sparkle: { period: number };
   spot: SpotTransition;
@@ -156,6 +165,8 @@ export default function TopTunePanel({
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
       sound: { volume: Math.round(DEFAULT_BGM_VOLUME * 100) },
+      /* カモメ共通の不透明度(%)。全ページのカモメに効く */
+      bird: { opacity: 100 },
       face: { ...DEFAULT_FACE },
       /* キラキラの切替周期（秒）。CSS 変数へは applyVars とは別に書く */
       sparkle: { period: 1.2 },
@@ -184,6 +195,7 @@ export default function TopTunePanel({
         root.style.setProperty(VAR_OF[k], `${params.pos[k]}${unit}`);
       }
       root.style.setProperty("--illust-sparkle-period", `${params.sparkle.period}s`);
+      root.style.setProperty("--bird-opacity", String(params.bird.opacity / 100));
     };
     /* 音量は SoundUi へイベントで直接渡す（鳴っている最中でもその場で変わる） */
     const applyVolume = () =>
@@ -266,8 +278,12 @@ export default function TopTunePanel({
            v27: 用語を一般用語（不透明度・ディレイ等）に統一。人物の登場ディレイを秒単位に。
                 刻みを「ざっくり検証できる粗さ」へ総点検（2026-08-23 ヒデさん指示）
            v28: 場所えらびの登場を「その場でブラー」5案に総入れ替え（移動なし。
-                2026-08-23 ヒデさん指示） */
-        version: 28,
+                2026-08-23 ヒデさん指示）
+           v29: カモメを全ページ共通で調整可に（左上・右の位置＋共通の不透明度。
+                2026-08-23 ヒデさん依頼）
+           v30: パネルの情報整理：トップをページの流れ順（メッセージ→スポット→グルメ→
+                人物）に並び替え。用語の残り（ホバー時・切替の間隔）を統一（2026-08-23） */
+        version: 30,
         /* ⚠️ autoCenter（既定値を真ん中に置くための自動上限調整）は切る。
            既定が範囲の下寄りの項目で、書いた上限が勝手に縮む
            （人物の登場ディレイが max5秒 → 1秒に見えていた事故。2026-08-23） */
@@ -293,6 +309,54 @@ export default function TopTunePanel({
               },
               {
                 note: "その場で反映されます。開発中(localhost)は既定で無音なので、URLに ?sound を付けて開いてください。",
+              },
+              { sub: "カモメ（全ページ共通）" },
+              {
+                slider: "不透明度",
+                path: "bird.opacity",
+                min: 0,
+                max: 100,
+                step: 5,
+                fmt: "%",
+                hint: "全ページのカモメ（左上・右・体験ページ左）の濃さ。下げるほど薄く景色になじみ、0で見えなくなります。",
+              },
+              { sub: "左上のカモメの位置", deep: true },
+              {
+                slider: "左からの距離",
+                path: "pos.birdSky1X",
+                min: -100,
+                max: 1400,
+                step: 5,
+                fmt: "px",
+                hint: "左上のカモメの横位置。上げると右へ動きます。",
+              },
+              {
+                slider: "上からの距離",
+                path: "pos.birdSky1Y",
+                min: -50,
+                max: 900,
+                step: 5,
+                fmt: "px",
+                hint: "左上のカモメの縦位置。上げると下へ動きます。",
+              },
+              { sub: "右のカモメの位置", deep: true },
+              {
+                slider: "右からの距離",
+                path: "pos.birdSky2X",
+                min: -100,
+                max: 1400,
+                step: 5,
+                fmt: "px",
+                hint: "右のカモメの横位置。上げると左へ動きます（右端からの距離のため）。",
+              },
+              {
+                slider: "上からの距離",
+                path: "pos.birdSky2Y",
+                min: -50,
+                max: 900,
+                step: 5,
+                fmt: "px",
+                hint: "右のカモメの縦位置。上げると下へ動きます。",
               },
             ],
           },
@@ -404,6 +468,101 @@ export default function TopTunePanel({
               /* ── 人物イラスト ─────────────────── */
               /* 登場のしかたは案3「ポンッ→プルン」で確定（2026-08-21 ヒデさん指示。
                  案ピルは撤去。パターン本体は illustEnterPatterns.ts） */
+              /* ── KV → ぼーっとスポット ─────────── */
+              { sub: "キービジュアル → ぼーっとスポット（入り）" },
+              {
+                note: "作字の消え方は上の「作字｜スクロールでの消え方」にまとめました（同じ項目が2つあったため統合。2026-08-21）。",
+              },
+              { sub: "① 背景写真", deep: true },
+              {
+                slider: "ブラーが始まる位置",
+                path: "spot.bgFrom",
+                min: 0,
+                max: 800,
+                step: 10,
+                fmt: "px",
+              },
+              {
+                slider: "ブラーが最大になる位置",
+                path: "spot.bgTo",
+                min: 100,
+                max: 1400,
+                step: 10,
+                fmt: "px",
+              },
+              {
+                slider: "最大ブラー",
+                path: "spot.bgBlur",
+                min: 0,
+                max: 60,
+                step: 1,
+                fmt: "px",
+              },
+              { sub: "② スポット写真", deep: true },
+              {
+                slider: "出はじめる位置",
+                path: "spot.spotFrom",
+                min: 0,
+                max: 1400,
+                step: 10,
+                fmt: "px",
+              },
+              {
+                slider: "ブラーが晴れきる位置",
+                path: "spot.spotTo",
+                min: 200,
+                max: 2000,
+                step: 10,
+                fmt: "px",
+                hint: "ここから「固定ビュー」が始まります。",
+              },
+              {
+                slider: "最初のブラー",
+                path: "spot.spotBlur",
+                min: 0,
+                max: 80,
+                step: 1,
+                fmt: "px",
+              },
+              { sub: "③ グルメ場面のあとの余白", deep: true },
+              {
+                slider: "ページ末尾までの長さ",
+                path: "spot.hold",
+                min: 0,
+                max: 2000,
+                step: 10,
+                fmt: "px",
+                hint: "グルメが出たあと、下に残しておくスクロールの余白です。",
+              },
+              { sub: "ぼーっとスポット｜写真の切替" },
+              {
+                note: "切替はブラーで確定（2026-08-21）。写真とテキストが同時に切り替わります。",
+              },
+              {
+                slider: "1枚あたりのスクロール量",
+                path: "spot.stepLen",
+                min: 300,
+                max: 1600,
+                step: 20,
+                fmt: "px",
+                hint: "このぶんスクロールするごとに次の写真へ。982でちょうど1画面ぶんです。",
+              },
+              /* ── グルメ｜カルーセル（2026-08-22 ヒデさん依頼） ── */
+              { sub: "グルメ｜カルーセル" },
+              {
+                slider: "1周の時間",
+                path: "gourmet.speed",
+                min: 10,
+                max: 120,
+                step: 5,
+                fmt: "s",
+                hint: "写真の列がひと回りする時間。大きいほどゆっくり。その場で反映されます。",
+              },
+              {
+                toggle: "ホバーで一時停止",
+                path: "gourmet.pauseOnHover",
+                hint: "ONだと、カードにカーソルを乗せている間は流れが止まり、ホバーの文字をゆっくり読めます。",
+              },
               { sub: "人物イラスト｜登場のタイミング" },
               {
                 slider: "人物の登場ディレイ",
@@ -510,7 +669,7 @@ export default function TopTunePanel({
                 hint: "横幅。縦は元の比率のまま付いてきます。",
               },
               /* ── 表情 ─────────────────────────── */
-              { sub: "表情（カーソルを乗せた時）" },
+              { sub: "表情（ホバー時）" },
               /* ホバーの縦バウンスは既定（案1 ぴょこっ）で確定（2026-08-22 ヒデさん指示。
                  案ピルは撤去。パターン本体は hoverBouncePatterns.ts） */
               {
@@ -691,107 +850,12 @@ export default function TopTunePanel({
                 hint: "−で上へ。",
               },
               {
-                slider: "切替の速さ",
+                slider: "切替の間隔",
                 path: "sparkle.period",
                 min: 0.3,
                 max: 4,
                 step: 0.1,
                 fmt: "s",
-              },
-              /* ── グルメ｜カルーセル（2026-08-22 ヒデさん依頼） ── */
-              { sub: "グルメ｜カルーセル" },
-              {
-                slider: "1周の時間",
-                path: "gourmet.speed",
-                min: 10,
-                max: 120,
-                step: 5,
-                fmt: "s",
-                hint: "写真の列がひと回りする時間。大きいほどゆっくり。その場で反映されます。",
-              },
-              {
-                toggle: "ホバーで一時停止",
-                path: "gourmet.pauseOnHover",
-                hint: "ONだと、カードにカーソルを乗せている間は流れが止まり、ホバーの文字をゆっくり読めます。",
-              },
-              /* ── KV → ぼーっとスポット ─────────── */
-              { sub: "ぼーっとスポット｜写真の切替" },
-              {
-                note: "切替はブラーで確定（2026-08-21）。写真とテキストが同時に切り替わります。",
-              },
-              {
-                slider: "1枚あたりのスクロール量",
-                path: "spot.stepLen",
-                min: 300,
-                max: 1600,
-                step: 20,
-                fmt: "px",
-                hint: "このぶんスクロールするごとに次の写真へ。982でちょうど1画面ぶんです。",
-              },
-              { sub: "キービジュアル → ぼーっとスポット（入り）" },
-              {
-                note: "作字の消え方は上の「作字｜スクロールでの消え方」にまとめました（同じ項目が2つあったため統合。2026-08-21）。",
-              },
-              { sub: "① 背景写真", deep: true },
-              {
-                slider: "ブラーが始まる位置",
-                path: "spot.bgFrom",
-                min: 0,
-                max: 800,
-                step: 10,
-                fmt: "px",
-              },
-              {
-                slider: "ブラーが最大になる位置",
-                path: "spot.bgTo",
-                min: 100,
-                max: 1400,
-                step: 10,
-                fmt: "px",
-              },
-              {
-                slider: "最大ブラー",
-                path: "spot.bgBlur",
-                min: 0,
-                max: 60,
-                step: 1,
-                fmt: "px",
-              },
-              { sub: "② スポット写真", deep: true },
-              {
-                slider: "出はじめる位置",
-                path: "spot.spotFrom",
-                min: 0,
-                max: 1400,
-                step: 10,
-                fmt: "px",
-              },
-              {
-                slider: "ブラーが晴れきる位置",
-                path: "spot.spotTo",
-                min: 200,
-                max: 2000,
-                step: 10,
-                fmt: "px",
-                hint: "ここから「固定ビュー」が始まります。",
-              },
-              {
-                slider: "最初のブラー",
-                path: "spot.spotBlur",
-                min: 0,
-                max: 80,
-                step: 1,
-                fmt: "px",
-              },
-              { sub: "③ グルメ場面のあとの余白", deep: true },
-              {
-                slider: "ページ末尾までの長さ",
-                path: "spot.hold",
-                min: 0,
-                max: 2000,
-                step: 10,
-                fmt: "px",
-                hint: "グルメが出たあと、下に残しておくスクロールの余白です。",
               },
             ],
           },

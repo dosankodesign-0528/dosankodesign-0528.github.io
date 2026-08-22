@@ -449,11 +449,13 @@ export default function Stage({
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
           onPointerDown={dragBird("skyTopLeft")}
           style={{
-            left: birds.skyTopLeft.x,
-            top: birds.skyTopLeft.y,
+            /* 位置と不透明度は調整パネルのCSS変数から（既定はbirdConfig）。2026-08-23 */
+            left: `var(--bird-sky1-x, ${birds.skyTopLeft.x}px)`,
+            top: `var(--bird-sky1-y, ${birds.skyTopLeft.y}px)`,
             width: birds.skyTopLeft.w,
             height: birds.skyTopLeft.w * 0.58,
             transform: `rotate(${birds.skyTopLeft.rotate}deg)`,
+            opacity: "var(--bird-opacity, 1)",
           }}
         >
           <Bird
@@ -467,8 +469,9 @@ export default function Stage({
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
           onPointerDown={dragBird("skyRight")}
           style={{
-            right: birds.skyRight.x,
-            top: birds.skyRight.y,
+            right: `var(--bird-sky2-x, ${birds.skyRight.x}px)`,
+            top: `var(--bird-sky2-y, ${birds.skyRight.y}px)`,
+            opacity: "var(--bird-opacity, 1)",
             width: birds.skyRight.w,
             height: birds.skyRight.w * 0.58,
             transform: `rotate(${birds.skyRight.rotate}deg)`,
@@ -489,6 +492,7 @@ export default function Stage({
           <div
             className="absolute"
             style={{
+              opacity: "var(--bird-opacity, 1)",
               left: "var(--bird-exp-x)",
               top: "var(--bird-exp-y)",
               width: "var(--bird-exp-w)",
