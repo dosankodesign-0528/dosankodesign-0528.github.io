@@ -137,6 +137,21 @@ const panel = TunePanel.create({
 | `footer` | `[]` | 足すボタン。既定は「💾 保存」「↺ リセット」の2つ（`footerDefaults:false` で消す） |
 | `onChange(info)` | — | 動かすたび（毎フレーム相当）。**軽い処理だけ** |
 | `onSettle(info)` | — | 手が止まって0.25秒後。**リプレイなど重い処理はこっち** |
+| `onSave(params, panel)` | — | 「💾 保存」を押した直後のフック。指定するとフラッシュ表示も自前になる（`panel.flash('...')` を呼ぶ）。**保存の自動焼き込み**（下記）に使う |
+
+### 保存の自動焼き込み（デプロイに引き継ぐ仕組み・2026-08-23 ヒデさん依頼）
+
+localStorage の保存は**そのブラウザ・そのURL限り**で、デプロイには載らない。
+そこで網走V2では「ローカルで💾保存 → デプロイで全員の既定値になる」を自動化した：
+
+1. `onSave` フックで、ローカル（hostname が localhost）の時だけ全数値を `/api/tune-save` へ POST
+2. 受け口（Next.js の API ルート）が `public/tune-defaults.json` に書き込む。**本番（VERCEL 環境変数あり）では 403 で拒否**
+3. サイト側はパネル生成前に `/tune-defaults.json` を fetch し、初期値の形に合わせて重ねる（`shapeMerge`：知らないキー・型違いは捨てるので、古いファイルが残っても安全）
+4. 上書きの優先順位は **コードの初期値 ＜ 焼き込みファイル ＜ そのブラウザの保存値**
+5. JSON は git に載るので、次のデプロイで全員に反映される。`version` を上げてブラウザ保存が飛んでも焼き込みは残る
+
+実装例は abashiri-site-v2 の `app/api/tune-save/route.ts` と `components/TopTunePanel.tsx`（shapeMerge・onSave）。
+他プロジェクトに移植する時はこの3点セット（受け口・fetchマージ・onSave）をコピーする。
 
 ### メソッド
 
