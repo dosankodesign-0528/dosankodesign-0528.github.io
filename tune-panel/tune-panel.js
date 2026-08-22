@@ -75,7 +75,14 @@
     s: function (v) { return (+v).toFixed(2) + 's'; },
     sec: function (v) { return (+v).toFixed(2) + 's'; },
     ms: function (v) { return Math.round(v) + 'ms'; },
-    '%': function (v) { return Math.round(v * 100) + '%'; },
+    /* '%' は2通りの持ち方に対応する（2026-08-23 ヒデさん指摘：8000%のような表示になっていた）
+       ・0〜1 の割合で持つ値（Anyflowのシェーダー系）… 100倍して % に
+       ・0〜100 の%そのもので持つ値（網走の音量・透過率など）… そのまま % に
+       スライダーの max が 1 以下かどうかで自動判別する */
+    '%': function (v, item) {
+      var asIs = item && typeof item.max === 'number' && item.max > 1;
+      return Math.round(asIs ? +v : v * 100) + '%';
+    },
     px: function (v) { return Math.round(v) + 'px'; },
     deg: function (v) { return Math.round(v) + '°'; },
     '°': function (v) { return Math.round(v) + '°'; },
@@ -85,9 +92,12 @@
     n1: function (v) { return (+v).toFixed(1); },
     n2: function (v) { return (+v).toFixed(2); }
   };
-  function toFmt(f, step) {
+  function toFmt(f, step, item) {
     if (typeof f === 'function') return f;
-    if (typeof f === 'string' && FMT[f]) return FMT[f];
+    if (typeof f === 'string' && FMT[f]) {
+      var base = FMT[f];
+      return function (v) { return base(v, item); };
+    }
     var dec = String(step || 1).indexOf('.') >= 0 ? String(step).split('.')[1].length : 0;
     return function (v) { return (+v).toFixed(dec); };
   }
@@ -618,7 +628,7 @@
     input.value = this._get(item);
     var val = document.createElement('span');
     val.className = 'tp-val';
-    var fmt = toFmt(item.fmt, step);
+    var fmt = toFmt(item.fmt, step, item);
     val.textContent = fmt(this._get(item));
 
     input.addEventListener('input', function () {
