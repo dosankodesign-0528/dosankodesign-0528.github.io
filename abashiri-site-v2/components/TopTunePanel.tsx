@@ -22,11 +22,10 @@ import { DEFAULT_BO } from "./boPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
 import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
-import { TAMARANEE_PATTERNS } from "./tamaraneePatterns";
 import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
-import { HOVER_BOUNCE_PATTERNS } from "./hoverBouncePatterns";
+import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -47,6 +46,8 @@ export type TopTuneValues = {
   hero: HeroEnter;
   /** メッセージセクション（msgConfig.ts） */
   msg: MsgTune;
+  /** 体験ページの導入メッセージの出方（ExperienceFlow.ts の IntroPace） */
+  expIntro: IntroPace;
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -110,6 +111,7 @@ type Params = {
   hero: HeroEnter;
   msg: MsgTune;
   gourmet: { speed: number; pauseOnHover: boolean };
+  expIntro: IntroPace;
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -152,6 +154,7 @@ export default function TopTunePanel({
       msg: { ...DEFAULT_MSG },
       /* グルメのカルーセル。1周40秒は🟡仮置きのまま既定に */
       gourmet: { speed: 40, pauseOnHover: true },
+      expIntro: { ...DEFAULT_INTRO_PACE },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -190,6 +193,7 @@ export default function TopTunePanel({
         kvExit: { ...params.kvExit },
         hero: { ...params.hero },
         msg: { ...params.msg },
+        expIntro: { ...params.expIntro },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -232,8 +236,10 @@ export default function TopTunePanel({
            v21: メッセージに「読み終わってからの余韻」を追加。テンポは最初の設定へ
                 戻した（len2400・にじみ幅1.3。2026-08-22 ヒデさん指示）
            v22: グルメのカルーセルに「1周の速さ」「ホバーで止める」を追加
-                （2026-08-22 ヒデさん依頼） */
-        version: 22,
+                （2026-08-22 ヒデさん依頼）
+           v23: 縦バウンス・たまらねーの案ピルを撤去（既定で確定）。体験ページの
+                導入メッセージ（間・間隔・時間・ブラー）を追加（2026-08-22） */
+        version: 23,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -373,23 +379,8 @@ export default function TopTunePanel({
               },
               /* ── 表情 ─────────────────────────── */
               { sub: "表情（カーソルを乗せた時）" },
-              {
-                pills: "縦バウンス",
-                path: "anim.hoverBounce",
-                immediate: true,
-                options: [
-                  { name: "なし", value: 0, swatch: "#999", desc: "表情だけ変わる（従来）" },
-                  ...HOVER_BOUNCE_PATTERNS.map((p, i) => ({
-                    name: `案${i + 1}`,
-                    value: i + 1,
-                    swatch: "#0070c9",
-                    desc: p.note,
-                  })),
-                ],
-              },
-              {
-                note: "カーソルを乗せるたびに、表情の変化と同時にからだが縦に弾みます。人物に乗せて確かめてください。",
-              },
+              /* ホバーの縦バウンスは既定（案1 ぴょこっ）で確定（2026-08-22 ヒデさん指示。
+                 案ピルは撤去。パターン本体は hoverBouncePatterns.ts） */
               {
                 note: "眉が上がり、口がぽかんと開きます（切替はパキッと・フェード無し）。位置調整は下の「出しっぱなし」をONにするとラクです。",
               },
@@ -476,17 +467,8 @@ export default function TopTunePanel({
               },
               /* ── たまらねー ────────────────────── */
               { sub: "たまらねー" },
-              {
-                pills: "出方",
-                path: "anim.tamaranee",
-                immediate: true,
-                options: TAMARANEE_PATTERNS.map((p, i) => ({
-                  name: `案${i + 1}`,
-                  value: i + 1,
-                  swatch: "#0070c9",
-                  desc: `${p.label.replace(/^案\d+\s*/, "")}　${p.note}`,
-                })),
-              },
+              /* 出方は現状の案で確定（2026-08-22 ヒデさん指示。案ピルは撤去。
+                 パターン本体は tamaraneePatterns.ts） */
               { sub: "位置と大きさ", deep: true },
               {
                 slider: "横ずれ",
@@ -684,6 +666,45 @@ export default function TopTunePanel({
           {
             cat: "🎬 ぼーっと体験ページ",
             items: [
+              { sub: "導入メッセージ（1画面目）" },
+              {
+                note: "見出しとボタンは最初から出ていて、本文の段落4つが順にブラーで出てきます。値を変えると、その場で最初から再生し直します。",
+              },
+              {
+                slider: "出はじめの間",
+                path: "expIntro.startDelay",
+                min: 0,
+                max: 5,
+                step: 0.1,
+                fmt: "s",
+                hint: "ページが出てから、最初の段落が出はじめるまでの待ち。",
+              },
+              {
+                slider: "段落の間隔",
+                path: "expIntro.stagger",
+                min: 0.2,
+                max: 3,
+                step: 0.05,
+                fmt: "s",
+                hint: "段落と段落の間。大きいほどゆっくり順に出ます。",
+              },
+              {
+                slider: "1段落が出る時間",
+                path: "expIntro.duration",
+                min: 0.4,
+                max: 4,
+                step: 0.1,
+                fmt: "s",
+              },
+              {
+                slider: "ブラーの強さ",
+                path: "expIntro.blur",
+                min: 0,
+                max: 40,
+                step: 1,
+                fmt: "px",
+                hint: "出はじめのにじみ具合。0でフェードだけ。",
+              },
               { sub: "「ぼーっ」の吹き出し（動画再生中）" },
               /* 出方は現状の案で確定（2026-08-21 ヒデさん指示。案ピルは撤去。
                  パターン本体は boPatterns.ts の DEFAULT_BO） */
@@ -762,7 +783,12 @@ export default function TopTunePanel({
           /* 登場のしかた（案切替・たまらねーの披露タイミング）を触ったら、
              Anyflow のパネルと同じく、その場で登場アニメを再生し直して見せる */
           const p = info?.path || "";
-          if (p.startsWith("anim.") || p.startsWith("intro.") || p.startsWith("hero."))
+          if (
+            p.startsWith("anim.") ||
+            p.startsWith("intro.") ||
+            p.startsWith("hero.") ||
+            p.startsWith("expIntro.")
+          )
             onReplay?.();
         },
       });

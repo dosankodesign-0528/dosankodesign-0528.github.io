@@ -10,6 +10,7 @@ import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 import { DEFAULT_MSG } from "@/components/msgConfig";
+import { DEFAULT_INTRO_PACE } from "@/components/ExperienceFlow";
 
 export default function Home() {
   /* 右下の調整パネルからもらう値。位置・大きさは CSS 変数側で直接反映されるので、
@@ -26,6 +27,7 @@ export default function Home() {
     kvExit: DEFAULT_KV_EXIT,
     hero: DEFAULT_HERO_ENTER,
     msg: DEFAULT_MSG,
+    expIntro: DEFAULT_INTRO_PACE,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 

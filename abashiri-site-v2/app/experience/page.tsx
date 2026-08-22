@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Stage from "@/components/Stage";
-import ExperienceFlow, { type Step } from "@/components/ExperienceFlow";
+import ExperienceFlow, { DEFAULT_INTRO_PACE, type Step } from "@/components/ExperienceFlow";
 import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
 import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
@@ -28,6 +28,7 @@ export default function ExperiencePage() {
     kvExit: DEFAULT_KV_EXIT,
     hero: DEFAULT_HERO_ENTER,
     msg: DEFAULT_MSG,
+    expIntro: DEFAULT_INTRO_PACE,
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -57,6 +58,7 @@ export default function ExperiencePage() {
           step={step}
           setStep={setStep}
           onPicked={() => setPicked(true)}
+          introPace={tune.expIntro}
         />
       </Stage>
 

@@ -67,38 +67,50 @@ const CARD_GAP = 60;
    2026-08-21 ヒデさん指示で、見出しと「次へ進む」ボタンは最初から表示に変更。
    順に出るのは本文の段落4つだけ。
    ⚠️ 速さの好みが出るところなので、ここだけ触れば全体のテンポが変わるようにしてある */
-const INTRO_PACE = {
+export type IntroPace = {
   /** 景色のブラーが晴れるのを待つ時間(秒) */
+  startDelay: number;
+  /** 1段落ずつずらす間隔(秒) */
+  stagger: number;
+  /** 1段落が出きるまで(秒) */
+  duration: number;
+  /** ブラーの掛かり具合(px) */
+  blur: number;
+};
+/* 2026-08-22 ヒデさん依頼で調整パネルから触れるようにした。ここは既定値 */
+export const DEFAULT_INTRO_PACE: IntroPace = {
   startDelay: 1.8,
-  /** 1ブロックずつずらす間隔(秒)。旧 0.55 */
   stagger: 0.9,
-  /** 1ブロックが出きるまで(秒)。旧 1.1 */
   duration: 1.7,
-  /** ブラーの掛かり具合(px)。ゆっくりになった分、少し強めでも重くならない */
   blur: 18,
 };
 
-const INTRO_STAGGER: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      delayChildren: INTRO_PACE.startDelay,
-      staggerChildren: INTRO_PACE.stagger,
-    },
-  },
-};
-const INTRO_BLOCK: Variants = {
-  hidden: { opacity: 0, filter: `blur(${INTRO_PACE.blur}px)`, y: 14 },
-  show: {
-    opacity: 1,
-    filter: "blur(0px)",
-    y: 0,
-    transition: { duration: INTRO_PACE.duration, ease: [0.22, 1, 0.36, 1] },
-  },
-};
-
 /* ═══════════ 導入 ═══════════ */
-function Intro({ onNext }: { onNext: () => void }) {
+function Intro({
+  onNext,
+  pace = DEFAULT_INTRO_PACE,
+}: {
+  onNext: () => void;
+  pace?: IntroPace;
+}) {
+  const INTRO_STAGGER: Variants = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: pace.startDelay,
+        staggerChildren: pace.stagger,
+      },
+    },
+  };
+  const INTRO_BLOCK: Variants = {
+    hidden: { opacity: 0, filter: `blur(${pace.blur}px)`, y: 14 },
+    show: {
+      opacity: 1,
+      filter: "blur(0px)",
+      y: 0,
+      transition: { duration: pace.duration, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
   return (
     <motion.div
       key="intro"
@@ -732,6 +744,7 @@ export default function ExperienceFlow({
   setStep,
   enter,
   onPicked,
+  introPace,
 }: {
   step: Step;
   setStep: (s: Step) => void;
@@ -739,6 +752,8 @@ export default function ExperienceFlow({
   enter?: number | string | null;
   /** 「この場所にする」を押した合図。人物イラストはここから出す */
   onPicked?: () => void;
+  /** 導入メッセージの出方（ブラー・速度・タイミング）。調整パネルから */
+  introPace?: IntroPace;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
@@ -820,7 +835,9 @@ export default function ExperienceFlow({
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           />
           <AnimatePresence mode="wait">
-            {step === 1 && <Intro key="intro" onNext={() => setStep(2)} />}
+            {step === 1 && (
+              <Intro key="intro" onNext={() => setStep(2)} pace={introPace} />
+            )}
             {step === 2 && <Pick key="pick" onPick={handlePick} />}
           </AnimatePresence>
         </WorldPush>
