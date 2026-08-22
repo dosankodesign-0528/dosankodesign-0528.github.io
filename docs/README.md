@@ -19,6 +19,7 @@
 | ファイル | 中身 | いつ読む |
 |---|---|---|
 | [general/WORKING-RULES.md](general/WORKING-RULES.md) | 推測・質問・報告の共通ルール（🔴最重要・持ち運び用） | **作業に着手する前に必ず** |
+| [SCROLL-RULES.md](general/SCROLL-RULES.md) | スクロール事故の防止（1画面超えは必ずスクロールバー・実測してから渡す） |
 | [general/DESIGN-SYSTEM-RULES.md](general/DESIGN-SYSTEM-RULES.md) | Figma カンプの読み方（数値を推測で埋めない） | カンプ通りに実装する時 |
 | [general/DESIGN-SYSTEM-WORKFLOW.md](general/DESIGN-SYSTEM-WORKFLOW.md) | 既存サイトを棚卸ししてデザインシステムに整える手順 | スタイルを整理する時 |
 | [general/VERCEL-PROJECTS.md](general/VERCEL-PROJECTS.md) | 各プロジェクトの本番 URL・Vercel 設定・デプロイ手順 | デプロイ・本番反映の確認 |

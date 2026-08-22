@@ -69,7 +69,8 @@ function More({
 
 export default function ViewMoreMock() {
   return (
-    <main className="min-h-screen bg-[#f4f6f8] pb-40 font-sans">
+    /* サイト全体は overflow:hidden（独自スクロール前提）なので、mockは自前でスクロールする */
+    <main className="h-screen overflow-y-auto bg-[#f4f6f8] pb-40 font-sans">
       <style>{`
         .vm-label { position: relative; display: inline-block; }
         .vm-ico-clip { display: inline-flex; }
