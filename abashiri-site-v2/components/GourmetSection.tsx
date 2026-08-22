@@ -92,7 +92,8 @@ function Card({ card }: { card: GourmetCard }) {
               </p>
               <p className="whitespace-nowrap text-title-28 font-thin">{card.title}</p>
             </div>
-            <span className="flex shrink-0 items-center gap-1">
+            {/* ホバー＝まるごと右へ10px（案1採用。2026-08-23 ヒデさん決定） */}
+            <span className="flex shrink-0 cursor-pointer items-center gap-1 transition-transform duration-300 ease-standard hover:translate-x-[10px]">
               <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-white">
                 もっと見る
               </span>
@@ -139,7 +140,7 @@ export default function GourmetSection() {
         <a
           href="#"
           onClick={(e) => e.preventDefault()}
-          className="group flex cursor-pointer items-center gap-1 pb-2 transition-opacity hover:opacity-70"
+          className="group flex cursor-pointer items-center gap-1 pb-2 transition-transform duration-300 ease-standard hover:translate-x-[10px]"
         >
           <span className="whitespace-nowrap text-body-16 font-extralight leading-[1.2] text-ink">
             もっと見る

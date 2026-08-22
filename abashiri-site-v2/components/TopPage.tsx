@@ -136,12 +136,9 @@ function CardRow({
   );
 }
 
-/* もっと見る（採用案：アイコンが右へ 10px スッと動いて戻る） */
+/* もっと見る（案1採用：まるごと右へ10pxスライド。2026-08-23 ヒデさん決定） */
 export type MoreAnim = { text: string; icon: string };
-const MORE_ANIM: MoreAnim = {
-  text: "",
-  icon: "transition-transform duration-300 ease-standard group-hover:translate-x-[10px]",
-};
+const MORE_ANIM: MoreAnim = { text: "", icon: "" };
 
 function ViewMore({ anim = MORE_ANIM }: { anim?: MoreAnim }) {
   const a = anim;
@@ -149,7 +146,7 @@ function ViewMore({ anim = MORE_ANIM }: { anim?: MoreAnim }) {
     <a
       href="#"
       onClick={(e) => e.preventDefault()}
-      className="group flex cursor-pointer items-center gap-6 text-control-20 font-medium text-white"
+      className="group flex cursor-pointer items-center gap-6 text-control-20 font-medium text-white transition-transform duration-300 ease-standard hover:translate-x-[10px]"
     >
       <span className={a.text}>もっと見る</span>
       <img
