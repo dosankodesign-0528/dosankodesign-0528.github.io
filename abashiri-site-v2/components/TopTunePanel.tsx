@@ -288,6 +288,8 @@ export default function TopTunePanel({
            既定が範囲の下寄りの項目で、書いた上限が勝手に縮む
            （人物の登場ディレイが max5秒 → 1秒に見えていた事故。2026-08-23） */
         autoCenter: false,
+        /* ページごとのタブ切替（2026-08-23 ヒデさん依頼。タブの中はセクションの折りたたみ） */
+        tabs: true,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,

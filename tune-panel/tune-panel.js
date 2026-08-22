@@ -137,6 +137,20 @@
     '.tp-cat-body{padding:0 12px 12px;}',
     '.tp-cat.closed .tp-cat-body{display:none;}',
     '.tp-hidden{display:none !important;}',
+    /* タブ（ページ切替。cfg.tabs:true で cat がタブになる） */
+    '.tp-tabs{display:flex;gap:4px;margin:10px 0 2px;flex-wrap:wrap;}',
+    '.tp-tab{flex:1 1 auto;padding:6px 8px;border:1px solid #e2e2e2;border-radius:8px;background:#fff;',
+    '  cursor:pointer;font-family:inherit;font-size:11px;color:#555;white-space:nowrap;}',
+    '.tp-tab.on{background:#090909;color:#fff;border-color:#090909;}',
+    /* セクション（タブの中の折りたたみ。フォルダのインデックス風） */
+    '.tp-sec{border:1px solid #e8e8e8;border-radius:8px;margin-top:10px;overflow:hidden;background:#fff;}',
+    '.tp-sec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;',
+    '  font-weight:500;font-size:11.5px;background:#fafafa;cursor:pointer;user-select:none;}',
+    '.tp-sec-head:hover{background:#f2f2f2;}',
+    '.tp-sec-chev{font-size:10px;color:#888;transition:transform .2s;}',
+    '.tp-sec.closed .tp-sec-chev{transform:rotate(-90deg);}',
+    '.tp-sec-body{padding:0 12px 12px;}',
+    '.tp-sec.closed .tp-sec-body{display:none;}',
     /* 隠しスイッチ（画面右上の透明ボックス）。見た目は何もないが、クリックでパネルが出る */
     '.tp-secret-hot{position:fixed;top:0;right:0;width:64px;height:64px;z-index:2147483001;background:transparent;}',
     /* 小見出し */
@@ -234,6 +248,8 @@
     this.autoCenter = cfg.autoCenter !== false;
     this.rows = [];
     this.catOpen = {};
+    this.secOpen = {};
+    this.activeTab = null;
     this._settleTimer = 0;
     this._muted = false;
 
@@ -276,6 +292,8 @@
     if (!innerWidth || !innerHeight || r.width < 120 || (!this.el.classList.contains('closed') && r.height < 80)) return;
     try {
       localStorage.setItem(this._uKey(), JSON.stringify({
+        tab: this.activeTab,
+        secs: this.secOpen,
         x: r.left, y: r.top,
         w: this.el.classList.contains('closed') ? this._openW : r.width,
         h: this.el.classList.contains('closed') ? this._openH : r.height,
@@ -311,6 +329,8 @@
       if (pos.top !== undefined) { this.el.style.top = pos.top + 'px'; this.el.style.bottom = 'auto'; }
     }
     if (ui && ui.cats) this.catOpen = ui.cats;
+    if (ui && ui.secs) this.secOpen = ui.secs;
+    if (ui && ui.tab) this.activeTab = ui.tab;
     var startClosed = ui ? ui.closed : !!this.cfg.startClosed;
     this.el.classList.toggle('closed', !!startClosed);
     this._restoreScroll = (ui && ui.scroll) || 0;
@@ -517,16 +537,80 @@
     }
 
     var schema = typeof this.cfg.schema === 'function' ? this.cfg.schema(this.params) : (this.cfg.schema || []);
-    schema.forEach(function (cat) {
-      if (cat.when && !cat.when(self.params)) return;
-      self._renderCat(cat);
-    });
+    var cats = schema.filter(function (cat) { return !(cat.when && !cat.when(self.params)); });
+
+    if (this.cfg.tabs) {
+      /* タブモード（2026-08-23 ヒデさん依頼）：カテゴリ＝ページをタブで切り替え、
+         タブの中はセクション（小見出し単位）の折りたたみで並ぶ */
+      var titles = cats.map(function (c) { return c.cat || c.title || ''; });
+      if (!this.activeTab || titles.indexOf(this.activeTab) < 0) this.activeTab = titles[0];
+      var bar = document.createElement('div');
+      bar.className = 'tp-tabs';
+      titles.forEach(function (t) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tp-tab' + (t === self.activeTab ? ' on' : '');
+        b.textContent = t;
+        b.addEventListener('click', function () {
+          if (self.activeTab === t) return;
+          self.activeTab = t;
+          self._saveUI();
+          self.rebuild();
+        });
+        bar.appendChild(b);
+      });
+      this.body.appendChild(bar);
+      var activeCat = cats[titles.indexOf(this.activeTab)];
+      if (activeCat) this._renderCatSections(activeCat);
+    } else {
+      cats.forEach(function (cat) { self._renderCat(cat); });
+    }
 
     this._renderFoot();
     this.body.scrollTop = keepScroll;
     this._restoreScroll = 0;
     if (this._query) this._filter(this._query);
     return this;
+  };
+
+  /* タブモード用：非deepの小見出しを「折りたたみセクション」に昇格して並べる */
+  Panel.prototype._renderCatSections = function (cat) {
+    var self = this;
+    var root = document.createElement('div');
+    this.body.appendChild(root);
+    var currentBody = root;
+    this._mount = root;
+    (cat.items || []).forEach(function (item) {
+      if (!item) return;
+      if (item.when && !item.when(self.params)) return;
+      if (item.sub !== undefined && !item.deep) {
+        var title = String(item.sub);
+        var key = (cat.cat || '') + '|' + title;
+        var isOpen = self.secOpen[key] === true; /* 既定は閉じる＝目次として見える */
+        var sec = document.createElement('div');
+        sec.className = 'tp-sec' + (isOpen ? '' : ' closed');
+        var head = document.createElement('div');
+        head.className = 'tp-sec-head';
+        head.innerHTML = '<span></span><span class="tp-sec-chev">▾</span>';
+        head.firstChild.textContent = title;
+        var secBody = document.createElement('div');
+        secBody.className = 'tp-sec-body';
+        head.addEventListener('click', function () {
+          self.secOpen[key] = !sec.classList.toggle('closed');
+          self._saveUI();
+        });
+        sec.append(head, secBody);
+        root.appendChild(sec);
+        currentBody = secBody;
+        self._mount = secBody;
+        return;
+      }
+      self._renderItem(item, currentBody);
+      if (!(item.sub !== undefined && item.deep)) {
+        /* deep見出しは _renderItem が _mount を切り替える。それ以外は現セクションへ戻す */
+        if (item.sub === undefined) return;
+      }
+    });
   };
 
   Panel.prototype._renderCat = function (cat) {
@@ -974,6 +1058,33 @@
   Panel.prototype._filter = function (q) {
     this._query = q;
     var key = (q || '').trim().toLowerCase();
+    var self = this;
+    /* タブモードではセクション（.tp-sec）を対象にする */
+    var secs = this.body.querySelectorAll('.tp-sec');
+    if (secs.length) {
+      secs.forEach(function (sec) {
+        var hit = 0;
+        sec.querySelectorAll('.tp-row, .tp-pills, .tp-btns').forEach(function (row) {
+          var host = row.classList.contains('tp-pills') ? row.parentNode : row;
+          var text = (host.textContent || '') + ' ' + (host._label || '');
+          var on = !key || text.toLowerCase().indexOf(key) >= 0;
+          host.classList.toggle('tp-hidden', !on);
+          var hint = host.nextSibling;
+          if (hint && hint.classList && hint.classList.contains('tp-hint')) hint.classList.toggle('tp-hidden', !on);
+          if (on) hit++;
+        });
+        if (key) {
+          sec.classList.toggle('tp-hidden', hit === 0);
+          sec.classList.remove('closed');
+        } else {
+          sec.classList.remove('tp-hidden');
+          var title = sec.querySelector('.tp-sec-head span').textContent;
+          var k2 = (self.activeTab || '') + '|' + title;
+          sec.classList.toggle('closed', self.secOpen[k2] !== true);
+        }
+      });
+      return this;
+    }
     var cats = this.body.querySelectorAll('.tp-cat');
     cats.forEach(function (cat) {
       var hit = 0;
