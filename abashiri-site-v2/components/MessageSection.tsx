@@ -84,21 +84,27 @@ export default function MessageSection({
   const ease = "cubic-bezier(0.22, 1, 0.36, 1)";
   const trans = `opacity ${dur}ms ${ease}, filter ${dur}ms ${ease}, transform ${dur}ms ${ease}`;
 
-  /* 案別：見出しと各行のスタイル（on/off の2状態＋トランジション） */
-  const titleOn = p >= bandAt(0);
+  /* 案別：見出しと各行のスタイル（on/off の2状態＋トランジション）。
+     見出しは本文と同じふわっとした出方のまま、
+     ・出るタイミング（titleDelay: メッセージ開始からのスクロール量）
+     ・アニメーション時間（titleAppearSec: 秒）
+     を独立して調整できる（2026-08-23 ヒデさん指示：急に出るのでゆったりに） */
+  const titleOn = p >= bandAt(0) + M.titleDelay / Math.max(1, M.len);
+  const titleDur = Math.round(M.titleAppearSec * 1000);
+  const titleTrans = `opacity ${titleDur}ms ${ease}, filter ${titleDur}ms ${ease}, transform ${titleDur}ms ${ease}`;
   const titleStyle = (): React.CSSProperties => {
     switch (M.pattern) {
       case 2:
         return {
           opacity: titleBase * (titleOn ? 1 : minOp),
-          transition: trans,
+          transition: titleTrans,
         };
-      default: /* 1・3: ブラーで登場 */
+      default: /* 1・3: 本文と同じブラーで登場 */
         return {
           opacity: titleOn ? titleBase : 0,
-          filter: titleOn ? "none" : "blur(12px)",
-          transform: titleOn ? "translateY(0)" : "translateY(20px)",
-          transition: trans,
+          filter: titleOn ? "none" : "blur(10px)",
+          transform: titleOn ? "translateY(0)" : "translateY(18px)",
+          transition: titleTrans,
         };
     }
   };

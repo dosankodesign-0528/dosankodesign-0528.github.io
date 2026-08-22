@@ -24,6 +24,10 @@ export type MsgTune = {
   /* ── 見た目（2026-08-23 ヒデさん依頼でパネルから触れるように） ── */
   /** 見出し「網走は何もない。」の透過率(%)。カンプは80 */
   titleOpacity: number;
+  /** メッセージが出はじめてから見出しが出るまでのスクロール量(px) */
+  titleDelay: number;
+  /** 見出しのアニメーション時間(秒)。本文と同じふわっとした出方で、これだけ独立して変えられる */
+  titleAppearSec: number;
   /** 見出しのフォントウェイト。カンプは Thin(100) */
   titleWeight: number;
   /** 見出しの行間。カンプは1 */
@@ -43,6 +47,8 @@ export const DEFAULT_MSG: MsgTune = {
   soft: 1.3,
   tail: 600,
   titleOpacity: 80,
+  titleDelay: 200,
+  titleAppearSec: 1.4,
   titleWeight: 100,
   titleLeading: 1,
   bodyWeight: 300,

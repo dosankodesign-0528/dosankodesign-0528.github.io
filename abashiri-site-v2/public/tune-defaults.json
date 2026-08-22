@@ -20,10 +20,16 @@
     "birdTopSky1Y": 16,
     "birdTopSky2X": 50,
     "birdTopSky2Y": 535,
+    "birdTopSky1W": 64,
+    "birdTopSky1Rot": -14,
+    "birdTopSky2W": 105,
+    "birdTopSky2Rot": 0,
     "birdExpSky1X": -20,
     "birdExpSky1Y": 16,
     "birdExpSky2X": 50,
     "birdExpSky2Y": 115,
+    "birdExpSky2W": 105,
+    "birdExpSky2Rot": 0,
     "birdExpX": 150,
     "birdExpY": 92,
     "birdExpW": 84,
@@ -33,8 +39,8 @@
     "boPattern": 4,
     "illustEnter": 3,
     "tamaranee": 1,
-    "bouncePattern": 3,
-    "bounceStrength": 100,
+    "bouncePattern": 1,
+    "bounceStrength": 50,
     "illustDelay": 0.5
   },
   "intro": {
@@ -100,6 +106,8 @@
     "soft": 1.3,
     "tail": 600,
     "titleOpacity": 80,
+    "titleDelay": 200,
+    "titleAppearSec": 1.4,
     "titleWeight": 100,
     "titleLeading": 1,
     "bodyWeight": 300,
@@ -118,9 +126,12 @@
   "expPick": {
     "pattern": 3
   },
+  "scrollSpd": {
+    "kvToMsg": 40
+  },
   "loop": {
     "cycle": 15,
     "show": 2.6,
-    "swayFirst": false
+    "swayFirst": true
   }
 }
