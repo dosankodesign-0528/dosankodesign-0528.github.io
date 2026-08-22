@@ -33,6 +33,7 @@ export default function ExperiencePage() {
     msg: DEFAULT_MSG,
     expIntro: DEFAULT_INTRO_PACE,
     expPick: { pattern: 1 },
+    scrollSpd: { kvToMsg: 100 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 

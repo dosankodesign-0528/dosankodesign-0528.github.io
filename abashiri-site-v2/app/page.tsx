@@ -32,6 +32,7 @@ export default function Home() {
     msg: DEFAULT_MSG,
     expIntro: DEFAULT_INTRO_PACE,
     expPick: { pattern: 1 },
+    scrollSpd: { kvToMsg: 100 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -74,6 +75,7 @@ export default function Home() {
           kvExit={tune.kvExit}
           heroEnter={tune.hero}
           msgTune={tune.msg}
+          msgScrollSpeed={tune.scrollSpd.kvToMsg}
           illustDelay={tune.illustDelay * 1000}
           fastIntro={fastReplay}
         />

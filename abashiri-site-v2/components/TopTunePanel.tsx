@@ -56,6 +56,8 @@ export type TopTuneValues = {
   expIntro: IntroPace;
   /** 体験ページ・場所えらびカルーセルの登場（1〜5） */
   expPick: { pattern: number };
+  /** KV→メッセージ区間のスクロール速度（%）。100=標準（2026-08-23 ヒデさん依頼） */
+  scrollSpd: { kvToMsg: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -151,6 +153,7 @@ type Params = {
   expIntro: IntroPace;
   expPick: { pattern: number };
   loop: { cycle: number; show: number; swayFirst: boolean };
+  scrollSpd: { kvToMsg: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -198,6 +201,7 @@ export default function TopTunePanel({
       gourmet: { speed: 40, pauseOnHover: true },
       expIntro: { ...DEFAULT_INTRO_PACE },
       expPick: { pattern: 1 },
+      scrollSpd: { kvToMsg: 100 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -246,6 +250,7 @@ export default function TopTunePanel({
         msg: { ...params.msg },
         expIntro: { ...params.expIntro },
         expPick: { ...params.expPick },
+        scrollSpd: { ...params.scrollSpd },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -417,6 +422,15 @@ export default function TopTunePanel({
                   swatch: "#0070c9",
                   desc: p.note,
                 })),
+              },
+              {
+                slider: "スクロール速度（KV→メッセージ）",
+                path: "scrollSpd.kvToMsg",
+                min: 20,
+                max: 300,
+                step: 10,
+                fmt: "%",
+                hint: "キービジュアルからメッセージまでの区間で、ホイール/スワイプ1回に進む量。100%が標準。下げるほどゆっくり進み（同じ距離に多くのスクロールが必要）、上げると速く進みます。",
               },
               {
                 slider: "読み終わりまでのスクロール量",

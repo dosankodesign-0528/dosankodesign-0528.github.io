@@ -207,6 +207,7 @@ export default function TopPage({
   msgTune,
   illustDelay,
   fastIntro = false,
+  msgScrollSpeed = 100,
 }: {
   intro?: number;
   kv?: number;
@@ -256,6 +257,9 @@ export default function TopPage({
   illustDelay?: number;
   /** true: 作字の演出を飛ばして完成形から始める（人物まわりの調整リプレイ用） */
   fastIntro?: boolean;
+  /** KV→メッセージ区間のスクロール速度（%）。100=標準。
+      ホイール/スワイプの deltaY にこの倍率をかける（2026-08-23 ヒデさん依頼） */
+  msgScrollSpeed?: number;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -263,6 +267,10 @@ export default function TopPage({
   preload("/img/bg-hero.jpg", { as: "image", fetchPriority: "high" });
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  /* KV→メッセージ区間のスクロール速度。until（区間の終わり）と gain（倍率）を
+     毎レンダーで更新し、wheel ハンドラは ref から読む */
+  const wheelGainRef = useRef({ until: 0, gain: 1 });
 
   /* 「ぼーっとしてみる」→ 体験ページの遷移をディゾルブに（2026-08-22 ヒデさん指摘。
      即切替だとガタついて見えるため、青いグラデ＋ブラーの幕がふわっとかぶってから遷移する。
@@ -340,6 +348,11 @@ export default function TopPage({
   const msgStart = (useExit ? E.range : 320) + M.fadeIn;
   /* 読み(len)のあとに余韻(tail)を挟んでから、スポットへ入れ替わる */
   const msgEnd = msgStart + M.len + M.tail;
+  /* KV→メッセージ区間（0〜メッセージが出はじめるまで）のスクロール速度 */
+  wheelGainRef.current = {
+    until: useExit ? msgStart : 0,
+    gain: Math.max(0.1, msgScrollSpeed / 100),
+  };
   /* 作字の登場（ブラー弱め・一括出現）。timing の kotoba へ上書きして HeroBlurSeq へ渡す。
      ⚠️ useMemo で識別を保つ（毎レンダー新オブジェクトだと HeroBlurSeq の
         effect が走り直して、パネルの無関係な操作でも登場が再生されてしまう） */
@@ -562,13 +575,17 @@ export default function TopPage({
         }
       }
 
+      /* KV→メッセージ区間はスクロール速度の倍率をかける（パネル「スクロール速度」） */
+      const g = wheelGainRef.current;
+      const dY = targetY < g.until ? e.deltaY * g.gain : e.deltaY;
+
       /* 帯の外に出たらロック解除して、縦は慣性スクロール */
       if (!row) {
         lock = null;
         e.preventDefault();
         targetY = Math.max(
           0,
-          Math.min(sc.scrollHeight - sc.clientHeight, targetY + e.deltaY)
+          Math.min(sc.scrollHeight - sc.clientHeight, targetY + dY)
         );
         kick();
         return;
@@ -593,7 +610,7 @@ export default function TopPage({
         e.preventDefault();
         targetY = Math.max(
           0,
-          Math.min(sc.scrollHeight - sc.clientHeight, targetY + e.deltaY)
+          Math.min(sc.scrollHeight - sc.clientHeight, targetY + dY)
         );
         kick();
         return;
