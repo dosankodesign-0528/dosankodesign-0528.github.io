@@ -238,10 +238,41 @@ export default function TopTunePanel({
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
 
-    const build = () => {
+    /* 保存値を初期値の形に合わせて重ねる（知らないキー・型違いは捨てる） */
+    const shapeMerge = (def: unknown, saved: unknown): unknown => {
+      if (saved === undefined) return def;
+      if (def !== null && typeof def === "object" && !Array.isArray(def)) {
+        if (saved === null || typeof saved !== "object" || Array.isArray(saved)) return def;
+        const out: Record<string, unknown> = {};
+        for (const k of Object.keys(def as Record<string, unknown>)) {
+          out[k] = shapeMerge(
+            (def as Record<string, unknown>)[k],
+            (saved as Record<string, unknown>)[k]
+          );
+        }
+        return out;
+      }
+      return typeof saved === typeof def ? saved : def;
+    };
+
+    const build = async () => {
       const lib = window.TunePanel;
       if (!lib) return;
       madeRef.current = true;
+
+      /* デプロイ用の既定値ファイル（💾保存の自動引き継ぎ先）。
+         ローカルで保存 → public/tune-defaults.json に書き込み → git経由でデプロイに載り、
+         ここで読み込まれて全員の既定値になる（2026-08-23 ヒデさん依頼） */
+      try {
+        const res = await fetch("/tune-defaults.json", { cache: "no-store" });
+        if (res.ok) {
+          const baked = await res.json();
+          const merged = shapeMerge(DEFAULTS, baked) as Params;
+          Object.assign(DEFAULTS, merged);
+          Object.assign(params, structuredClone(merged));
+        }
+      } catch {}
+
       panel = lib.create({
         title: "⚙️ 網走サイト 調整パネル",
         storageKey: "abashiri-top-tune",
@@ -1064,6 +1095,27 @@ export default function TopTunePanel({
         onChange: () => {
           applyVars();
           applyVolume();
+        },
+        onSave: (p: Params, panelRef: { flash?: (m: string) => void }) => {
+          /* ローカルで保存したら、デプロイ用ファイルにも自動で書き込む（自動焼き込み）。
+             本番では従来どおりブラウザ保存のみ */
+          if (window.location.hostname === "localhost") {
+            fetch("/api/tune-save", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(p),
+            })
+              .then((r) =>
+                panelRef.flash?.(
+                  r.ok
+                    ? "保存しました（次のデプロイで全員に反映されます）"
+                    : "保存しました（デプロイ用ファイルへの書き込みは失敗）"
+                )
+              )
+              .catch(() => panelRef.flash?.("保存しました（デプロイ用ファイルへの書き込みは失敗）"));
+          } else {
+            panelRef.flash?.("保存しました（このブラウザだけ。全員に反映するのはローカルで保存）");
+          }
         },
         onSettle: (info?: { path?: string }) => {
           applyVars();

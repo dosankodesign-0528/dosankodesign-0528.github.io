@@ -968,7 +968,12 @@
         onClick: function () {
           self.save();
           self._markDirty(false);
-          self.flash('保存しました（リロードしてもこの設定で出ます）');
+          /* cfg.onSave: 保存後のフック（ローカルの「デプロイ用ファイルへの自動書き込み」等に使う） */
+          if (self.cfg.onSave) {
+            try { self.cfg.onSave(self.params, self); } catch (e) {}
+          } else {
+            self.flash('保存しました（リロードしてもこの設定で出ます）');
+          }
         }
       });
     }
