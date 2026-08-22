@@ -268,6 +268,10 @@ export default function TopTunePanel({
            v28: 場所えらびの登場を「その場でブラー」5案に総入れ替え（移動なし。
                 2026-08-23 ヒデさん指示） */
         version: 28,
+        /* ⚠️ autoCenter（既定値を真ん中に置くための自動上限調整）は切る。
+           既定が範囲の下寄りの項目で、書いた上限が勝手に縮む
+           （人物の登場ディレイが max5秒 → 1秒に見えていた事故。2026-08-23） */
+        autoCenter: false,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -405,7 +409,7 @@ export default function TopTunePanel({
                 slider: "人物の登場ディレイ",
                 path: "anim.illustDelay",
                 min: 0,
-                max: 5,
+                max: 10,
                 step: 0.5,
                 fmt: "s",
                 hint: "ボタンが出てから人物が登場するまでの待ち時間。上げると登場が遅くなり「間」ができ、下げるとすぐ出ます。変えると人物登場の直前から再生し直します。",
