@@ -256,7 +256,100 @@ function SliderButton({
    動画があり「この場所にする」ボタンが出る唯一のカードなので、入口で迷わせない） */
 const START_INDEX = Math.max(0, SPOTS.findIndex((s) => s.id === "ryuhyo"));
 
-function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => void }) {
+/* ── カルーセルの登場5案（2026-08-23 ヒデさん依頼：急すぎるのでゆったりと） ──
+   d はカードの位置（中央=0、左が負、右が正）。案ごとに出方の性格を変える。
+   どれも 1.4〜2.0秒・サイト共通イージングで、せかさない */
+const PICK_EASE = [0.22, 1, 0.36, 1] as const;
+export const PICK_ENTER_PATTERNS: Record<
+  number,
+  { name: string; note: string; heading: Variants; card: (d: number) => Variants }
+> = {
+  1: {
+    name: "案1",
+    note: "ふわり浮上。全体が下からゆっくり浮かび上がる（見出し→カードの順）",
+    heading: {
+      hidden: { opacity: 0, y: 16, filter: "blur(8px)" },
+      show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
+    },
+    card: (d) => ({
+      hidden: { opacity: 0, y: 48, filter: "blur(10px)" },
+      show: {
+        opacity: 1, y: 0, filter: "blur(0px)",
+        transition: { duration: 1.8, ease: PICK_EASE, delay: 0.3 + Math.abs(d) * 0.18 },
+      },
+    }),
+  },
+  2: {
+    name: "案2",
+    note: "左から順に流れ込む。カードが1枚ずつゆっくり滑り込んでくる",
+    heading: {
+      hidden: { opacity: 0, filter: "blur(8px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.2, ease: PICK_EASE } },
+    },
+    card: (d) => ({
+      hidden: { opacity: 0, x: 160, filter: "blur(6px)" },
+      show: {
+        opacity: 1, x: 0, filter: "blur(0px)",
+        transition: { duration: 1.6, ease: PICK_EASE, delay: 0.2 + (d + 2) * 0.22 },
+      },
+    }),
+  },
+  3: {
+    name: "案3",
+    note: "ブラーが晴れる。動かず、ピントがゆっくり合ってくる",
+    heading: {
+      hidden: { opacity: 0, filter: "blur(12px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.6, ease: PICK_EASE } },
+    },
+    card: () => ({
+      hidden: { opacity: 0, filter: "blur(18px)", scale: 1.03 },
+      show: {
+        opacity: 1, filter: "blur(0px)", scale: 1,
+        transition: { duration: 2.0, ease: PICK_EASE, delay: 0.25 },
+      },
+    }),
+  },
+  4: {
+    name: "案4",
+    note: "奥からゆっくり。少し小さい状態から静かに寄ってくる",
+    heading: {
+      hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
+      show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE } },
+    },
+    card: () => ({
+      hidden: { opacity: 0, scale: 0.9, y: 24, filter: "blur(8px)" },
+      show: {
+        opacity: 1, scale: 1, y: 0, filter: "blur(0px)",
+        transition: { duration: 1.8, ease: PICK_EASE, delay: 0.3 },
+      },
+    }),
+  },
+  5: {
+    name: "案5",
+    note: "寄り集まる。左右のカードは外から、中央は下から、ひとつに集まる",
+    heading: {
+      hidden: { opacity: 0, filter: "blur(8px)" },
+      show: { opacity: 1, filter: "blur(0px)", transition: { duration: 1.4, ease: PICK_EASE, delay: 0.5 } },
+    },
+    card: (d) => ({
+      hidden: { opacity: 0, x: d * 140, y: d === 0 ? 60 : 0, filter: "blur(8px)" },
+      show: {
+        opacity: 1, x: 0, y: 0, filter: "blur(0px)",
+        transition: { duration: 1.7, ease: PICK_EASE, delay: 0.2 },
+      },
+    }),
+  },
+};
+
+function Pick({
+  onPick,
+  enter = 1,
+}: {
+  onPick: (spot: Spot, rect: DOMRect, at: number) => void;
+  /** 1〜5: カルーセルの登場（PICK_ENTER_PATTERNS） */
+  enter?: number;
+}) {
+  const EP = PICK_ENTER_PATTERNS[enter] ?? PICK_ENTER_PATTERNS[1];
   const [index, setIndex] = useState(START_INDEX);
   const go = (d: number) => setIndex((i) => i + d);
 
@@ -285,16 +378,18 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => v
     <motion.div
       key="pick"
       className="absolute inset-0"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      initial="hidden"
+      animate="show"
+      exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }}
     >
       {/* 背景の青グラデは ExperienceFlow 本体側に1枚だけ（導入と共通で敷いてある） */}
 
-      <p className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white">
+      <motion.p
+        variants={EP.heading}
+        className="absolute left-1/2 top-[110px] -translate-x-1/2 whitespace-nowrap text-title-44 font-thin leading-[1.6] text-white"
+      >
         どこでぼーっとする？
-      </p>
+      </motion.p>
 
       {/* カンプ 15152:29228: top 239 / h 586。拡大しないのでカンプの実寸そのまま */}
       <div className="absolute left-0 top-[239px] h-[586px] w-full">
@@ -305,13 +400,14 @@ function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => v
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
             {slots.map(({ pos, spot }) => (
-              <SpotCard
-                key={pos}
-                spot={spot}
-                active={pos === index}
-                left={pos * STEP - CARD_W / 2}
-                onPick={onPick}
-              />
+              <motion.div key={pos} variants={EP.card(pos - START_INDEX)}>
+                <SpotCard
+                  spot={spot}
+                  active={pos === index}
+                  left={pos * STEP - CARD_W / 2}
+                  onPick={onPick}
+                />
+              </motion.div>
             ))}
           </motion.div>
         </div>
@@ -745,6 +841,7 @@ export default function ExperienceFlow({
   enter,
   onPicked,
   introPace,
+  pickEnter,
 }: {
   step: Step;
   setStep: (s: Step) => void;
@@ -754,6 +851,8 @@ export default function ExperienceFlow({
   onPicked?: () => void;
   /** 導入メッセージの出方（ブラー・速度・タイミング）。調整パネルから */
   introPace?: IntroPace;
+  /** 1〜5: 場所えらびのカルーセルの登場（PICK_ENTER_PATTERNS）。調整パネルから */
+  pickEnter?: number;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
@@ -838,7 +937,7 @@ export default function ExperienceFlow({
             {step === 1 && (
               <Intro key="intro" onNext={() => setStep(2)} pace={introPace} />
             )}
-            {step === 2 && <Pick key="pick" onPick={handlePick} />}
+            {step === 2 && <Pick key="pick" onPick={handlePick} enter={pickEnter} />}
           </AnimatePresence>
         </WorldPush>
       )}

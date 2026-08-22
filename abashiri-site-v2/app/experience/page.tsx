@@ -32,14 +32,16 @@ export default function ExperiencePage() {
     hero: DEFAULT_HERO_ENTER,
     msg: DEFAULT_MSG,
     expIntro: DEFAULT_INTRO_PACE,
+    expPick: { pattern: 1 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
   /* 登場アニメに関わる値を触ったら、体験フローを最初から再生し直す
      （Anyflow のパネルと同じ「変えたらその場でアニメが見られる」挙動） */
   const [replayEpoch, setReplayEpoch] = useState(0);
-  const onReplay = useCallback(() => {
-    setStep(1);
+  const onReplay = useCallback((path?: string) => {
+    /* カルーセルの登場を触った時は、場所えらびの画面から再生し直す */
+    setStep(path?.startsWith("expPick.") ? 2 : 1);
     setPicked(false);
     setReplayEpoch((e) => e + 1);
   }, []);
@@ -62,6 +64,7 @@ export default function ExperiencePage() {
           setStep={setStep}
           onPicked={() => setPicked(true)}
           introPace={tune.expIntro}
+          pickEnter={tune.expPick.pattern}
         />
       </Stage>
 

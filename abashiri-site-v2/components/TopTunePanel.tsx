@@ -54,6 +54,8 @@ export type TopTuneValues = {
   msg: MsgTune;
   /** 体験ページの導入メッセージの出方（ExperienceFlow.ts の IntroPace） */
   expIntro: IntroPace;
+  /** 体験ページ・場所えらびカルーセルの登場（1〜5） */
+  expPick: { pattern: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -118,6 +120,7 @@ type Params = {
   msg: MsgTune;
   gourmet: { speed: number; pauseOnHover: boolean };
   expIntro: IntroPace;
+  expPick: { pattern: number };
   loop: { cycle: number; show: number; swayFirst: boolean };
 };
 
@@ -137,8 +140,9 @@ export default function TopTunePanel({
 }: {
   /** 手が止まった時に、案の切り替えとスクロール連動の値を渡す */
   onSettleValues: (v: TopTuneValues) => void;
-  /** 登場アニメに関わる値が変わって手が止まった時（Anyflow同様、その場で再生し直す用） */
-  onReplay?: () => void;
+  /** 登場アニメに関わる値が変わって手が止まった時（Anyflow同様、その場で再生し直す用）。
+      どの値を触ったかを path で渡す（ページ側で再生位置を変えるのに使う） */
+  onReplay?: (path?: string) => void;
 }) {
   const madeRef = useRef(false);
 
@@ -162,6 +166,7 @@ export default function TopTunePanel({
       /* グルメのカルーセル。1周40秒は🟡仮置きのまま既定に */
       gourmet: { speed: 40, pauseOnHover: true },
       expIntro: { ...DEFAULT_INTRO_PACE },
+      expPick: { pattern: 1 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -206,6 +211,7 @@ export default function TopTunePanel({
         hero: { ...params.hero },
         msg: { ...params.msg },
         expIntro: { ...params.expIntro },
+        expPick: { ...params.expPick },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -254,8 +260,10 @@ export default function TopTunePanel({
            v24: メッセージの見た目（見出し透過・太さ・行間／本文太さ・行間）と、
                 バウンス統一（プルン・強さ%）＋ループの間隔・長さを追加（2026-08-23）
            v25: バウンス5案ピル復活・ループ前の横揺れON/OFF・人物が出るまでの間を追加
+                （2026-08-23 ヒデさん依頼）
+           v26: 場所えらびカルーセルの登場5案＋メッセージ「出はじめの深さ」を2000pxまで拡大
                 （2026-08-23 ヒデさん依頼） */
-        version: 25,
+        version: 26,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -291,7 +299,7 @@ export default function TopTunePanel({
                 note: "作字が消えたあと、ブラーの背景の上に「網走は何もない。」の文章が出ます。スクロールで読み進み、読み終わるとぼーっとスポットへ。",
               },
               {
-                pills: "出方の案",
+                pills: "登場の案",
                 path: "msg.pattern",
                 immediate: true,
                 options: Object.entries(MSG_PATTERNS).map(([v, p]) => ({
@@ -320,13 +328,13 @@ export default function TopTunePanel({
                 hint: "最後の段落が出そろってから、次のセクションへ行くまでのスクロール量。小さいと最後の文章をゆっくり読めません。",
               },
               {
-                slider: "出はじめの間",
+                slider: "出はじめまでの距離",
                 path: "msg.fadeIn",
                 min: 0,
-                max: 600,
+                max: 2000,
                 step: 20,
                 fmt: "px",
-                hint: "作字が消えきってから、メッセージが出はじめるまでの間。",
+                hint: "作字が消えきってから、メッセージが出はじめるまでのスクロール量。大きいほどゆったり見えます（2026-08-23 上限を600→2000に拡大）。",
               },
               {
                 slider: "読む前の文字の薄さ",
@@ -821,6 +829,22 @@ export default function TopTunePanel({
                 fmt: "px",
                 hint: "出はじめのにじみ具合。0でフェードだけ。",
               },
+              { sub: "場所えらび｜カルーセルの登場" },
+              {
+                pills: "案",
+                path: "expPick.pattern",
+                immediate: true,
+                options: [
+                  { name: "案1", value: 1, swatch: "#0070c9", desc: "ふわり浮上。全体が下からゆっくり浮かび上がる" },
+                  { name: "案2", value: 2, swatch: "#0070c9", desc: "左から順に流れ込む。1枚ずつゆっくり滑り込む" },
+                  { name: "案3", value: 3, swatch: "#0070c9", desc: "ブラーが晴れる。動かずピントがゆっくり合う" },
+                  { name: "案4", value: 4, swatch: "#0070c9", desc: "奥からゆっくり。少し小さい状態から静かに寄る" },
+                  { name: "案5", value: 5, swatch: "#0070c9", desc: "寄り集まる。左右は外から・中央は下から集まる" },
+                ],
+              },
+              {
+                note: "案を押すと、その場で場所えらびの画面から登場を再生し直します。",
+              },
               { sub: "「ぼーっ」の吹き出し（動画再生中）" },
               /* 出方は現状の案で確定（2026-08-21 ヒデさん指示。案ピルは撤去。
                  パターン本体は boPatterns.ts の DEFAULT_BO） */
@@ -903,9 +927,10 @@ export default function TopTunePanel({
             p.startsWith("anim.") ||
             p.startsWith("intro.") ||
             p.startsWith("hero.") ||
-            p.startsWith("expIntro.")
+            p.startsWith("expIntro.") ||
+            p.startsWith("expPick.")
           )
-            onReplay?.();
+            onReplay?.(p);
         },
       });
       /* 保存されていた値を最初の1回だけ反映する */

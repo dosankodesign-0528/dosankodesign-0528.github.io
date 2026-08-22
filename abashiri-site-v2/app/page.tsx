@@ -31,6 +31,7 @@ export default function Home() {
     hero: DEFAULT_HERO_ENTER,
     msg: DEFAULT_MSG,
     expIntro: DEFAULT_INTRO_PACE,
+    expPick: { pattern: 1 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
