@@ -21,6 +21,17 @@ export type MsgTune = {
   /** 余韻(px)。最後の段落が出そろってから、次のセクションへ行くまでのスクロール量。
       これが小さいと、最後の文章を読む前に切り替わってしまう（2026-08-22 ヒデさん指摘） */
   tail: number;
+  /* ── 見た目（2026-08-23 ヒデさん依頼でパネルから触れるように） ── */
+  /** 見出し「網走は何もない。」の透過率(%)。カンプは80 */
+  titleOpacity: number;
+  /** 見出しのフォントウェイト。カンプは Thin(100) */
+  titleWeight: number;
+  /** 見出しの行間。カンプは1 */
+  titleLeading: number;
+  /** 本文のフォントウェイト。カンプは Light(300) */
+  bodyWeight: number;
+  /** 本文の行間。カンプは2 */
+  bodyLeading: number;
 };
 
 export const DEFAULT_MSG: MsgTune = {
@@ -31,6 +42,11 @@ export const DEFAULT_MSG: MsgTune = {
   /* 3 にしたら「ゆったりしすぎ」（2026-08-22 ヒデさん）。最初のテンポ相当へ戻した */
   soft: 1.3,
   tail: 600,
+  titleOpacity: 80,
+  titleWeight: 100,
+  titleLeading: 1,
+  bodyWeight: 300,
+  bodyLeading: 2,
 };
 
 export const MSG_PATTERNS: Record<number, { name: string; note: string }> = {

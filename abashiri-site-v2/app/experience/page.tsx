@@ -19,7 +19,8 @@ export default function ExperiencePage() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 3,
-    hoverBounce: 1,
+    bounceStrength: 100,
+    loop: { cycle: 15, show: 2.6 },
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },

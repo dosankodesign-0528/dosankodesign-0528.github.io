@@ -60,6 +60,8 @@ export default function MessageSection({
   const shellOpacity = enter * (1 - exit);
   const shellBlur = (1 - enter) * 10 + exit * 14;
   const minOp = M.minOpacity / 100;
+  /* 見た目（透過率・ウェイト・行間）はパネルから（2026-08-23 ヒデさん依頼） */
+  const titleBase = M.titleOpacity / 100;
 
   if (shellOpacity <= 0.001) return null;
 
@@ -77,10 +79,10 @@ export default function MessageSection({
     const b = seg(p, bandAt(0), bandSpan * soft);
     switch (M.pattern) {
       case 2:
-        return { opacity: 0.8 * (minOp + (1 - minOp) * b) };
+        return { opacity: titleBase * (minOp + (1 - minOp) * b) };
       default: /* 1・3: ブラーで登場 */
         return {
-          opacity: 0.8 * b,
+          opacity: titleBase * b,
           filter: `blur(${(1 - b) * 12}px)`,
           transform: `translateY(${(1 - b) * 20}px)`,
         };
@@ -126,13 +128,20 @@ export default function MessageSection({
       >
         {/* 見出し：カンプ 15481:23022 の実測（Noto Sans JP Thin / Hero_90px / 行間1 / 白80%） */}
         <p
-          className="font-thin leading-none text-hero-90 whitespace-nowrap"
-          style={titleStyle()}
+          className="text-hero-90 whitespace-nowrap"
+          style={{
+            fontWeight: M.titleWeight,
+            lineHeight: M.titleLeading,
+            ...titleStyle(),
+          }}
         >
           {TITLE}
         </p>
         {/* 本文：カンプ 15480:23019 の実測（Noto Sans JP Light 20px / 行間2 / 字間0.4px / 白） */}
-        <div className="mt-[120px] font-light text-body-20 leading-[2] tracking-[0.4px]">
+        <div
+          className="mt-[120px] text-body-20 tracking-[0.4px]"
+          style={{ fontWeight: M.bodyWeight, lineHeight: M.bodyLeading }}
+        >
           {BLOCKS.map((lines, bi) => (
             <div key={bi} className={bi === 0 ? "" : "mt-[40px]"}>
               {lines.map((l) => {

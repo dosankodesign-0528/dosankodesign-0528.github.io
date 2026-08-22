@@ -18,7 +18,8 @@ export default function Home() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 3,
-    hoverBounce: 1,
+    bounceStrength: 100,
+    loop: { cycle: 15, show: 2.6 },
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
@@ -44,7 +45,8 @@ export default function Home() {
         illustration="tamannee"
         illustEntrance
         illustEnter={tune.illustEnter}
-        hoverBounce={tune.hoverBounce}
+        bounceStrength={tune.bounceStrength / 100}
+        tamaLoop={tune.loop}
         bo={tune.boPattern}
         face={tune.face}
         tamaranee={tune.tamaranee}

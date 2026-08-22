@@ -30,8 +30,10 @@ import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
 export type TopTuneValues = {
   boPattern: number;
   illustEnter: number;
-  /** 0=なし / 1〜5: ホバー時の縦バウンス（hoverBouncePatterns.ts） */
-  hoverBounce: number;
+  /** バウンス（ホバー・ループ共通のプルン）の強さ%（100が基準） */
+  bounceStrength: number;
+  /** 周期ループ（バウンス＋たまらねー＋キラキラ）の間隔と見せる長さ(秒) */
+  loop: { cycle: number; show: number };
   /** 1〜5: たまらねーの出方（tamaraneePatterns.ts） */
   tamaranee: number;
   /** 初回の「たまらねー」お披露目（ms） */
@@ -100,7 +102,7 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 
 type Params = {
   pos: typeof POS_DEFAULTS;
-  anim: { boPattern: number; illustEnter: number; tamaranee: number; hoverBounce: number };
+  anim: { boPattern: number; illustEnter: number; tamaranee: number; bounceStrength: number };
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
@@ -112,6 +114,7 @@ type Params = {
   msg: MsgTune;
   gourmet: { speed: number; pauseOnHover: boolean };
   expIntro: IntroPace;
+  loop: { cycle: number; show: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -140,7 +143,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, hoverBounce: 1 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bounceStrength: 100 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -155,6 +158,8 @@ export default function TopTunePanel({
       /* グルメのカルーセル。1周40秒は🟡仮置きのまま既定に */
       gourmet: { speed: 40, pauseOnHover: true },
       expIntro: { ...DEFAULT_INTRO_PACE },
+      /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
+      loop: { cycle: 15, show: 2.6 },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -184,7 +189,8 @@ export default function TopTunePanel({
       onSettleValues({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
-        hoverBounce: params.anim.hoverBounce,
+        bounceStrength: params.anim.bounceStrength,
+        loop: { ...params.loop },
         tamaranee: params.anim.tamaranee,
         tamaIntro: { ...params.intro },
         preview: { ...params.preview },
@@ -238,8 +244,10 @@ export default function TopTunePanel({
            v22: グルメのカルーセルに「1周の速さ」「ホバーで止める」を追加
                 （2026-08-22 ヒデさん依頼）
            v23: 縦バウンス・たまらねーの案ピルを撤去（既定で確定）。体験ページの
-                導入メッセージ（間・間隔・時間・ブラー）を追加（2026-08-22） */
-        version: 23,
+                導入メッセージ（間・間隔・時間・ブラー）を追加（2026-08-22）
+           v24: メッセージの見た目（見出し透過・太さ・行間／本文太さ・行間）と、
+                バウンス統一（プルン・強さ%）＋ループの間隔・長さを追加（2026-08-23） */
+        version: 24,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -329,9 +337,79 @@ export default function TopTunePanel({
                 step: 0.1,
                 hint: "1つの行・段落が出るのに使うスクロールの深さ。大きいほどパッと切り替わらず、ゆーっくりにじみながら出ます。",
               },
+              { sub: "メッセージ｜見た目", deep: true },
+              {
+                slider: "見出しの透過率",
+                path: "msg.titleOpacity",
+                min: 10,
+                max: 100,
+                step: 1,
+                fmt: "%",
+                hint: "「網走は何もない。」の濃さ。カンプは80%。",
+              },
+              {
+                slider: "見出しの太さ",
+                path: "msg.titleWeight",
+                min: 100,
+                max: 500,
+                step: 100,
+                hint: "100=Thin（カンプ）〜500=Medium。",
+              },
+              {
+                slider: "見出しの行間",
+                path: "msg.titleLeading",
+                min: 0.8,
+                max: 1.6,
+                step: 0.05,
+              },
+              {
+                slider: "本文の太さ",
+                path: "msg.bodyWeight",
+                min: 100,
+                max: 500,
+                step: 100,
+                hint: "300=Light がカンプ。",
+              },
+              {
+                slider: "本文の行間",
+                path: "msg.bodyLeading",
+                min: 1.2,
+                max: 3,
+                step: 0.05,
+              },
               /* ── 人物イラスト ─────────────────── */
               /* 登場のしかたは案3「ポンッ→プルン」で確定（2026-08-21 ヒデさん指示。
                  案ピルは撤去。パターン本体は illustEnterPatterns.ts） */
+              { sub: "人物イラスト｜バウンスとループ" },
+              {
+                note: "バウンスは「プルン」1本に統一（ホバーもループも同じ動き。2026-08-23）。ループでは、たまらねーとキラキラも一緒に出ます。",
+              },
+              {
+                slider: "バウンスの強さ",
+                path: "anim.bounceStrength",
+                min: 20,
+                max: 250,
+                step: 5,
+                fmt: "%",
+                hint: "100が基準。大きいほど高く跳ねて、つぶれ方も大きくなります。人物にカーソルを乗せると確かめられます。",
+              },
+              {
+                slider: "ループの間隔",
+                path: "loop.cycle",
+                min: 5,
+                max: 60,
+                step: 1,
+                fmt: "s",
+                hint: "この間隔で、バウンス＋たまらねー＋キラキラが自動で出ます。",
+              },
+              {
+                slider: "たまらねーを見せる長さ",
+                path: "loop.show",
+                min: 0.5,
+                max: 6,
+                step: 0.1,
+                fmt: "s",
+              },
               { sub: "人物イラスト｜置き場所" },
               { sub: "枠ごと動かす", deep: true },
               {

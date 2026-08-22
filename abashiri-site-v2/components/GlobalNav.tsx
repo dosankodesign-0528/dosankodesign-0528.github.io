@@ -32,21 +32,13 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
   const onHomeClick = (e: React.MouseEvent) => {
     if (pathname !== "/") return; /* 別ページなら普通に遷移させる */
     e.preventDefault();
-    const sc = document.querySelector<HTMLElement>("[data-abashiri-scroller]");
-    if (!sc) return;
-    /* scrollTo({behavior:"smooth"}) ではなく自前で動かしている理由は、
-       トップページ側の慣性スクロール（TopPage の tick）と同じ追従率 0.12 にして、
-       サイト全体で戻り方の速さ・減速のしかたをそろえるため。 */
-    const step = () => {
-      const dy = -sc.scrollTop;
-      if (Math.abs(dy) < 0.5) {
-        sc.scrollTop = 0;
-        return;
-      }
-      sc.scrollTop += dy * 0.12;
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    /* ⚠️ 以前はここで自前の rAF ループが scrollTop を書いていたが、
+       TopPage の慣性スクロール（targetY へ毎フレーム追従）と取り合いになり、
+       直前にスクロールしていると効かないことがあった（2026-08-23 ヒデさん指摘）。
+       いまは「行き先」をイベントで渡して、動かすのは TopPage 一本にしている */
+    window.dispatchEvent(
+      new CustomEvent("abashiri:scroll-to", { detail: { y: 0 } })
+    );
   };
   /* 「ぼーっとスポット」「グルメ」はトップのスクロールで到達する画面なので、
      アンカーではなく scroller のスクロール量ジャンプで飛ぶ。
@@ -56,17 +48,10 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
     const at = sc?.dataset[key];
     if (!sc || !at) return; /* トップ以外では今まで通り（何もしない） */
     e.preventDefault();
-    const target = Number(at);
-    const step = () => {
-      const dy = target - sc.scrollTop;
-      if (Math.abs(dy) < 0.5) {
-        sc.scrollTop = target;
-        return;
-      }
-      sc.scrollTop += dy * 0.12;
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    /* 動かすのは TopPage の慣性スクロール一本（上の onHomeClick と同じ理由） */
+    window.dispatchEvent(
+      new CustomEvent("abashiri:scroll-to", { detail: { y: Number(at) } })
+    );
   };
 
   return (

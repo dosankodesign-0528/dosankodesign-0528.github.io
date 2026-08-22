@@ -513,6 +513,18 @@ export default function TopPage({
     };
     sc.addEventListener("scroll", onScroll, { passive: true });
 
+    /* ナビ（ホーム・スポット・グルメ）のジャンプ先を受け取る。
+       ここで targetY を差し替えれば、いつもの慣性でなめらかに移動する
+       （2026-08-23 ヒデさん指摘：自前ループとの取り合いでナビが効かないことがあった） */
+    const onJump = (e: Event) => {
+      const y = (e as CustomEvent<{ y: number }>).detail?.y;
+      if (typeof y !== "number") return;
+      lock = null; /* カルーセルの横送りロックも解除してから飛ぶ */
+      targetY = Math.max(0, Math.min(sc.scrollHeight - sc.clientHeight, y));
+      kick();
+    };
+    window.addEventListener("abashiri:scroll-to", onJump);
+
     const onWheel = (e: WheelEvent) => {
       /* トラックパッドの横ジェスチャはネイティブの横スクロールに任せる */
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
@@ -606,6 +618,7 @@ export default function TopPage({
     return () => {
       sc.removeEventListener("wheel", onWheel);
       sc.removeEventListener("scroll", onScroll);
+      window.removeEventListener("abashiri:scroll-to", onJump);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
