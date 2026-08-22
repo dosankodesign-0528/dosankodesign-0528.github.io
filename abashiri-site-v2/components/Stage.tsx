@@ -457,7 +457,9 @@ export default function Stage({
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
         )}
 
-        {/* 空のカモメ（左上・右中）。位置や線幅は birdConfig で調整できる */}
+        {/* 空のカモメ（左上・右中）。位置や線幅は birdConfig で調整できる。
+            左上は体験ページでは出さない（3匹は多い。2026-08-23 ヒデさん指示） */}
+        {birdVar !== "exp" && (
         <div
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
           onPointerDown={dragBird("skyTopLeft")}
@@ -465,9 +467,9 @@ export default function Stage({
             /* 位置と不透明度は調整パネルのCSS変数から（既定はbirdConfig）。2026-08-23 */
             left: `var(--bird-sky1-x-${birdVar}, ${birds.skyTopLeft.x}px)`,
             top: `var(--bird-sky1-y-${birdVar}, ${birds.skyTopLeft.y}px)`,
-            width: birds.skyTopLeft.w,
-            height: birds.skyTopLeft.w * 0.58,
-            transform: `rotate(${birds.skyTopLeft.rotate}deg)`,
+            width: `var(--bird-sky1-w-${birdVar}, ${birds.skyTopLeft.w}px)`,
+            height: `calc(var(--bird-sky1-w-${birdVar}, ${birds.skyTopLeft.w}px) * 0.58)`,
+            transform: `rotate(var(--bird-sky1-rot-${birdVar}, ${birds.skyTopLeft.rotate}deg))`,
             opacity: "var(--bird-opacity, 1)",
           }}
         >
@@ -478,6 +480,7 @@ export default function Stage({
             strokeWidth={birds.skyTopLeft.stroke}
           />
         </div>
+        )}
         <div
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
           onPointerDown={dragBird("skyRight")}
@@ -485,9 +488,9 @@ export default function Stage({
             right: `var(--bird-sky2-x-${birdVar}, ${birds.skyRight.x}px)`,
             top: `var(--bird-sky2-y-${birdVar}, ${birds.skyRight.y}px)`,
             opacity: "var(--bird-opacity, 1)",
-            width: birds.skyRight.w,
-            height: birds.skyRight.w * 0.58,
-            transform: `rotate(${birds.skyRight.rotate}deg)`,
+            width: `var(--bird-sky2-w-${birdVar}, ${birds.skyRight.w}px)`,
+            height: `calc(var(--bird-sky2-w-${birdVar}, ${birds.skyRight.w}px) * 0.58)`,
+            transform: `rotate(var(--bird-sky2-rot-${birdVar}, ${birds.skyRight.rotate}deg))`,
           }}
         >
           <Bird
