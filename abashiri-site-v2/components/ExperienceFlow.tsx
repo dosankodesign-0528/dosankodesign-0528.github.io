@@ -240,8 +240,12 @@ function SliderButton({
   );
 }
 
+/* 最初に中央へ置くスポット＝流氷クルーズ（2026-08-22 ヒデさん指示。
+   動画があり「この場所にする」ボタンが出る唯一のカードなので、入口で迷わせない） */
+const START_INDEX = Math.max(0, SPOTS.findIndex((s) => s.id === "ryuhyo"));
+
 function Pick({ onPick }: { onPick: (spot: Spot, rect: DOMRect, at: number) => void }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(START_INDEX);
   const go = (d: number) => setIndex((i) => i + d);
 
   const active = ((index % SPOTS.length) + SPOTS.length) % SPOTS.length;
