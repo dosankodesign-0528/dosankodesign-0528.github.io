@@ -476,19 +476,25 @@ export default function TopPage({
     };
     let lock: Lock | null = null;
     let raf = 0;
-    /* 縦スクロールも慣性化：目標値へなめらかに追いかける */
+    /* 縦スクロールも慣性化：目標値へなめらかに追いかける。
+       ⚠️ scrollTop に小数を書き続けると、sticky のレイヤー（メッセージの文字など）が
+       ピクセルの間で毎フレーム揺れて「上下にガタガタ」して見える（2026-08-23 ヒデさん指摘）。
+       内部の計算は小数のまま posY に持ち、DOM へ書くときだけ整数に丸める */
     let targetY = sc.scrollTop;
+    let posY = sc.scrollTop;
 
     const tick = () => {
       raf = 0;
       let busy = false;
       /* 縦の慣性 */
-      const dy = targetY - sc.scrollTop;
+      const dy = targetY - posY;
       if (Math.abs(dy) > 0.5) {
-        sc.scrollTop += dy * 0.12;
+        posY += dy * 0.12;
+        sc.scrollTop = Math.round(posY);
         busy = true;
       } else if (dy !== 0) {
-        sc.scrollTop = targetY;
+        posY = targetY;
+        sc.scrollTop = Math.round(targetY);
       }
       /* カルーセルの横の慣性 */
       if (lock) {
@@ -509,7 +515,10 @@ export default function TopPage({
 
     /* アンカージャンプなど外部からのスクロールに目標値を同期 */
     const onScroll = () => {
-      if (!raf) targetY = sc.scrollTop;
+      if (!raf) {
+        targetY = sc.scrollTop;
+        posY = sc.scrollTop;
+      }
     };
     sc.addEventListener("scroll", onScroll, { passive: true });
 
