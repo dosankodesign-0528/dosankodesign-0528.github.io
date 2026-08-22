@@ -120,7 +120,7 @@ type Params = {
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
-  bird: { opacity: number };
+  bird: { opacity: number; color: string; stroke: number };
   face: FaceConfig;
   sparkle: { period: number };
   spot: SpotTransition;
@@ -166,7 +166,7 @@ export default function TopTunePanel({
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
       sound: { volume: Math.round(DEFAULT_BGM_VOLUME * 100) },
       /* カモメ共通の不透明度(%)。全ページのカモメに効く */
-      bird: { opacity: 100 },
+      bird: { opacity: 100, color: "#ffffff", stroke: 100 },
       face: { ...DEFAULT_FACE },
       /* キラキラの切替周期（秒）。CSS 変数へは applyVars とは別に書く */
       sparkle: { period: 1.2 },
@@ -196,6 +196,8 @@ export default function TopTunePanel({
       }
       root.style.setProperty("--illust-sparkle-period", `${params.sparkle.period}s`);
       root.style.setProperty("--bird-opacity", String(params.bird.opacity / 100));
+      root.style.setProperty("--bird-color", params.bird.color);
+      root.style.setProperty("--bird-stroke", String(params.bird.stroke / 100));
     };
     /* 音量は SoundUi へイベントで直接渡す（鳴っている最中でもその場で変わる） */
     const applyVolume = () =>
@@ -282,8 +284,9 @@ export default function TopTunePanel({
            v29: カモメを全ページ共通で調整可に（左上・右の位置＋共通の不透明度。
                 2026-08-23 ヒデさん依頼）
            v30: パネルの情報整理：トップをページの流れ順（メッセージ→スポット→グルメ→
-                人物）に並び替え。用語の残り（ホバー時・切替の間隔）を統一（2026-08-23） */
-        version: 30,
+                人物）に並び替え。用語の残り（ホバー時・切替の間隔）を統一（2026-08-23）
+           v31: カモメに「色」「線の太さ」を追加（白×明るい空で薄く見える対策。2026-08-23） */
+        version: 31,
         /* ⚠️ autoCenter（既定値を真ん中に置くための自動上限調整）は切る。
            既定が範囲の下寄りの項目で、書いた上限が勝手に縮む
            （人物の登場ディレイが max5秒 → 1秒に見えていた事故。2026-08-23） */
@@ -321,6 +324,20 @@ export default function TopTunePanel({
                 step: 5,
                 fmt: "%",
                 hint: "全ページのカモメ（左上・右・体験ページ左）の濃さ。下げるほど薄く景色になじみ、0で見えなくなります。",
+              },
+              {
+                color: "色",
+                path: "bird.color",
+                hint: "カモメの線の色。真っ白だと明るい空の上で薄く見えるので、濃くしたい時は少しグレー寄り（例 #e0e8f0 → #c0ccd8）にすると輪郭が立ちます。",
+              },
+              {
+                slider: "線の太さ",
+                path: "bird.stroke",
+                min: 50,
+                max: 250,
+                step: 10,
+                fmt: "%",
+                hint: "線の太さの倍率（100%が今まで）。上げるほど太く濃く見え、下げるほど細く繊細になります。",
               },
               { sub: "左上のカモメの位置", deep: true },
               {

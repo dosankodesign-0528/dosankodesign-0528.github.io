@@ -64,10 +64,13 @@ export default function Bird({
           <g key={i} className={classes[i]} style={frameStyle}>
             <path
               d={d}
-              stroke={color}
-              strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeLinejoin="round"
+              /* 色と太さは調整パネルのCSS変数で上書きできる（既定は従来値）。2026-08-23 */
+              style={{
+                stroke: `var(--bird-color, ${color})`,
+                strokeWidth: `calc(${strokeWidth}px * var(--bird-stroke, 1))`,
+              }}
             />
           </g>
         ))}
