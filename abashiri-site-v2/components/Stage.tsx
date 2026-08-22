@@ -262,6 +262,9 @@ export default function Stage({
   brandOverlay = false,
 }: StageProps) {
   const L = mergeLayout(layout);
+  /* カモメの位置はページごとに調整できる（2026-08-23 ヒデさん指示）。
+     トップ系（tamannee）と体験ページ（bo）でCSS変数の名前を分ける */
+  const birdVar = illustration === "bo" ? "exp" : "top";
   const fc = mergeFace(face);
   /* イラストは pointer-events-none のままにしたいので、:hover ではなく
      カーソルの座標を見て自前で判定する（詳細は useFaceReaction.ts） */
@@ -460,8 +463,8 @@ export default function Stage({
           onPointerDown={dragBird("skyTopLeft")}
           style={{
             /* 位置と不透明度は調整パネルのCSS変数から（既定はbirdConfig）。2026-08-23 */
-            left: `var(--bird-sky1-x, ${birds.skyTopLeft.x}px)`,
-            top: `var(--bird-sky1-y, ${birds.skyTopLeft.y}px)`,
+            left: `var(--bird-sky1-x-${birdVar}, ${birds.skyTopLeft.x}px)`,
+            top: `var(--bird-sky1-y-${birdVar}, ${birds.skyTopLeft.y}px)`,
             width: birds.skyTopLeft.w,
             height: birds.skyTopLeft.w * 0.58,
             transform: `rotate(${birds.skyTopLeft.rotate}deg)`,
@@ -479,8 +482,8 @@ export default function Stage({
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}
           onPointerDown={dragBird("skyRight")}
           style={{
-            right: `var(--bird-sky2-x, ${birds.skyRight.x}px)`,
-            top: `var(--bird-sky2-y, ${birds.skyRight.y}px)`,
+            right: `var(--bird-sky2-x-${birdVar}, ${birds.skyRight.x}px)`,
+            top: `var(--bird-sky2-y-${birdVar}, ${birds.skyRight.y}px)`,
             opacity: "var(--bird-opacity, 1)",
             width: birds.skyRight.w,
             height: birds.skyRight.w * 0.58,
