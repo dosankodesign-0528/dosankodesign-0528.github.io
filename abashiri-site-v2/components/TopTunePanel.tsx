@@ -30,10 +30,14 @@ import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
 export type TopTuneValues = {
   boPattern: number;
   illustEnter: number;
-  /** バウンス（ホバー・ループ共通のプルン）の強さ%（100が基準） */
+  /** 1〜5: バウンスの動き（ホバー・ループ共通） */
+  bouncePattern: number;
+  /** バウンスの強さ%（100が基準） */
   bounceStrength: number;
-  /** 周期ループ（バウンス＋たまらねー＋キラキラ）の間隔と見せる長さ(秒) */
-  loop: { cycle: number; show: number };
+  /** ボタンが出てから人物が出るまでの間(ms) */
+  illustDelay: number;
+  /** 周期ループ：間隔・見せる長さ(秒)・swayFirst=横揺れしてからバウンス */
+  loop: { cycle: number; show: number; swayFirst: boolean };
   /** 1〜5: たまらねーの出方（tamaraneePatterns.ts） */
   tamaranee: number;
   /** 初回の「たまらねー」お披露目（ms） */
@@ -102,7 +106,7 @@ const VAR_OF: Record<keyof typeof POS_DEFAULTS, string> = {
 
 type Params = {
   pos: typeof POS_DEFAULTS;
-  anim: { boPattern: number; illustEnter: number; tamaranee: number; bounceStrength: number };
+  anim: { boPattern: number; illustEnter: number; tamaranee: number; bouncePattern: number; bounceStrength: number; illustDelay: number };
   intro: { delay: number; hold: number };
   preview: { faceOn: boolean; patchRed: boolean };
   sound: { volume: number };
@@ -114,7 +118,7 @@ type Params = {
   msg: MsgTune;
   gourmet: { speed: number; pauseOnHover: boolean };
   expIntro: IntroPace;
-  loop: { cycle: number; show: number };
+  loop: { cycle: number; show: number; swayFirst: boolean };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -143,7 +147,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bounceStrength: 100 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bouncePattern: 3, bounceStrength: 100, illustDelay: 250 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -159,7 +163,7 @@ export default function TopTunePanel({
       gourmet: { speed: 40, pauseOnHover: true },
       expIntro: { ...DEFAULT_INTRO_PACE },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
-      loop: { cycle: 15, show: 2.6 },
+      loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
     const params: Params = structuredClone(DEFAULTS);
 
@@ -189,7 +193,9 @@ export default function TopTunePanel({
       onSettleValues({
         boPattern: params.anim.boPattern,
         illustEnter: params.anim.illustEnter,
+        bouncePattern: params.anim.bouncePattern,
         bounceStrength: params.anim.bounceStrength,
+        illustDelay: params.anim.illustDelay,
         loop: { ...params.loop },
         tamaranee: params.anim.tamaranee,
         tamaIntro: { ...params.intro },
@@ -246,8 +252,10 @@ export default function TopTunePanel({
            v23: 縦バウンス・たまらねーの案ピルを撤去（既定で確定）。体験ページの
                 導入メッセージ（間・間隔・時間・ブラー）を追加（2026-08-22）
            v24: メッセージの見た目（見出し透過・太さ・行間／本文太さ・行間）と、
-                バウンス統一（プルン・強さ%）＋ループの間隔・長さを追加（2026-08-23） */
-        version: 24,
+                バウンス統一（プルン・強さ%）＋ループの間隔・長さを追加（2026-08-23）
+           v25: バウンス5案ピル復活・ループ前の横揺れON/OFF・人物が出るまでの間を追加
+                （2026-08-23 ヒデさん依頼） */
+        version: 25,
         startClosed: true /* たたんだ状態で置く（ヒデさん指示） */,
         position: { right: 20, bottom: 20 },
         params,
@@ -380,9 +388,39 @@ export default function TopTunePanel({
               /* ── 人物イラスト ─────────────────── */
               /* 登場のしかたは案3「ポンッ→プルン」で確定（2026-08-21 ヒデさん指示。
                  案ピルは撤去。パターン本体は illustEnterPatterns.ts） */
+              { sub: "人物イラスト｜登場のタイミング" },
+              {
+                slider: "人物が出るまでの間",
+                path: "anim.illustDelay",
+                min: 0,
+                max: 3000,
+                step: 50,
+                fmt: "ms",
+                hint: "「ぼーっとしてみる」ボタンが出てから、人物がプルンと登場するまでの間。値を変えるとその場で登場を再生し直します。",
+              },
               { sub: "人物イラスト｜バウンスとループ" },
               {
-                note: "バウンスは「プルン」1本に統一（ホバーもループも同じ動き。2026-08-23）。ループでは、たまらねーとキラキラも一緒に出ます。",
+                note: "バウンスはホバーもループも同じ動き。ループでは、たまらねーとキラキラも一緒に出ます。",
+              },
+              {
+                pills: "バウンスの動き",
+                path: "anim.bouncePattern",
+                immediate: true,
+                options: [
+                  { name: "案1", value: 1, swatch: "#0070c9", desc: "ぴょこっ。ひとつだけ素直に弾む" },
+                  { name: "案2", value: 2, swatch: "#0070c9", desc: "ぴょこぴょこ。大→小と2回弾む" },
+                  { name: "案3", value: 3, swatch: "#0070c9", desc: "プルン。着地でつぶれて戻る（登場と同じ・いままでの既定）" },
+                  { name: "案4", value: 4, swatch: "#0070c9", desc: "ちょんちょん。小さく速く2回" },
+                  { name: "案5", value: 5, swatch: "#0070c9", desc: "大きくジャンプ。高く跳んで弾んで収まる" },
+                ],
+              },
+              {
+                note: "人物にカーソルを乗せると、その場で試せます。",
+              },
+              {
+                toggle: "ループの前に横揺れ",
+                path: "loop.swayFirst",
+                hint: "ONにすると、ループの時だけ左右に小刻みに揺れてからバウンスします（以前のスイングの復活）。",
               },
               {
                 slider: "バウンスの強さ",

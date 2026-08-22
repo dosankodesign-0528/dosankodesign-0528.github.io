@@ -12,20 +12,91 @@ import { DEFAULT_BIRDS, type BirdsConfig } from "./birdConfig";
 import { mergeFace, type FaceConfig } from "./faceConfig";
 import { mergeLayout, type LayoutTune } from "./layoutConfig";
 import { findTamaranee } from "./tamaraneePatterns";
-/* バウンスは「プルン」1本に統一（2026-08-23 ヒデさん指示。ホバーもループも同じ動き）。
-   強さ(strength)は 1 が基準。旧5案は hoverBouncePatterns.ts に参照用で残っている */
-const purunBounce = (strength: number): { keyframes: Keyframe[]; options: KeyframeAnimationOptions } => {
-  const k = strength;
-  return {
-    keyframes: [
-      { transform: "translateY(0) scale(1, 1)" },
-      { transform: `translateY(${-10 * k}px) scale(${1 - 0.03 * k}, ${1 + 0.04 * k})`, offset: 0.35 },
-      { transform: `translateY(0) scale(${1 + 0.05 * k}, ${1 - 0.06 * k})`, offset: 0.6 },
-      { transform: `translateY(0) scale(${1 - 0.01 * k}, ${1 + 0.02 * k})`, offset: 0.8 },
-      { transform: "translateY(0) scale(1, 1)" },
-    ],
-    options: { duration: 550, easing: "ease-out" },
-  };
+/* バウンス5案（2026-08-23 ヒデさん依頼で復活）。ホバーもループも同じ動きを使う。
+   強さ k は 1 が基準で、跳ぶ高さ・つぶれ方がそのまま倍率で効く */
+type BounceAnim = { keyframes: Keyframe[]; options: KeyframeAnimationOptions };
+const BOUNCES: Record<number, { note: string; make: (k: number) => BounceAnim }> = {
+  1: {
+    note: "ぴょこっ。ひとつだけ素直に弾む",
+    make: (k) => ({
+      keyframes: [
+        { transform: "translateY(0)" },
+        { transform: `translateY(${-14 * k}px)`, offset: 0.4 },
+        { transform: `translateY(${3 * k}px)`, offset: 0.75 },
+        { transform: "translateY(0)" },
+      ],
+      options: { duration: 450, easing: "ease-out" },
+    }),
+  },
+  2: {
+    note: "ぴょこぴょこ。大→小と2回弾む",
+    make: (k) => ({
+      keyframes: [
+        { transform: "translateY(0)" },
+        { transform: `translateY(${-16 * k}px)`, offset: 0.28 },
+        { transform: "translateY(0)", offset: 0.52 },
+        { transform: `translateY(${-7 * k}px)`, offset: 0.72 },
+        { transform: "translateY(0)" },
+      ],
+      options: { duration: 620, easing: "ease-in-out" },
+    }),
+  },
+  3: {
+    note: "プルン。着地でからだがつぶれて戻る（登場と同じ）",
+    make: (k) => ({
+      keyframes: [
+        { transform: "translateY(0) scale(1, 1)" },
+        { transform: `translateY(${-10 * k}px) scale(${1 - 0.03 * k}, ${1 + 0.04 * k})`, offset: 0.35 },
+        { transform: `translateY(0) scale(${1 + 0.05 * k}, ${1 - 0.06 * k})`, offset: 0.6 },
+        { transform: `translateY(0) scale(${1 - 0.01 * k}, ${1 + 0.02 * k})`, offset: 0.8 },
+        { transform: "translateY(0) scale(1, 1)" },
+      ],
+      options: { duration: 550, easing: "ease-out" },
+    }),
+  },
+  4: {
+    note: "ちょんちょん。小さく速く2回",
+    make: (k) => ({
+      keyframes: [
+        { transform: "translateY(0)" },
+        { transform: `translateY(${-6 * k}px)`, offset: 0.25 },
+        { transform: "translateY(0)", offset: 0.5 },
+        { transform: `translateY(${-3 * k}px)`, offset: 0.72 },
+        { transform: "translateY(0)" },
+      ],
+      options: { duration: 350, easing: "ease-in-out" },
+    }),
+  },
+  5: {
+    note: "大きくジャンプ。高く跳んで弾んで収まる",
+    make: (k) => ({
+      keyframes: [
+        { transform: "translateY(0) rotate(0deg)" },
+        { transform: `translateY(${-24 * k}px) rotate(${-2 * k}deg)`, offset: 0.32 },
+        { transform: `translateY(${4 * k}px) rotate(${1 * k}deg)`, offset: 0.62 },
+        { transform: `translateY(${-8 * k}px) rotate(${-0.5 * k}deg)`, offset: 0.8 },
+        { transform: "translateY(0) rotate(0deg)" },
+      ],
+      options: { duration: 700, easing: "ease-in-out" },
+    }),
+  },
+};
+const makeBounce = (pattern: number, k: number): BounceAnim =>
+  (BOUNCES[pattern] ?? BOUNCES[3]).make(k);
+
+/* ループ限定の「横揺れ」（旧スイング案4「小刻みシェイク」の復活。
+   ONにすると、これを揺れてからバウンスに入る） */
+const SWAY_ANIM: BounceAnim = {
+  keyframes: [
+    { transform: "rotate(0deg)" },
+    { transform: "rotate(4deg)", offset: 0.12 },
+    { transform: "rotate(-3.5deg)", offset: 0.24 },
+    { transform: "rotate(3deg)", offset: 0.36 },
+    { transform: "rotate(-2.5deg)", offset: 0.5 },
+    { transform: "rotate(1.5deg)", offset: 0.68 },
+    { transform: "rotate(0deg)" },
+  ],
+  options: { duration: 1600, easing: "ease-in-out" },
 };
 import { VIDEO_AUDIO_EVENT } from "./SoundUi";
 import { findBo } from "./boPatterns";
@@ -144,10 +215,12 @@ type StageProps = {
   bo?: number | string | null;
   /** 1〜5: 人物イラストの登場パターン（illustEnterPatterns.ts） */
   illustEnter?: number | string | null;
-  /** バウンス（ホバー・ループ共通のプルン）の強さ。1が基準（2026-08-23 統一） */
+  /** 1〜5: バウンスの動き（ホバー・ループ共通） */
+  bouncePattern?: number;
+  /** バウンスの強さ。1が基準 */
   bounceStrength?: number;
-  /** 周期ループ（バウンス＋たまらねー＋キラキラ）の間隔と見せる長さ(秒) */
-  tamaLoop?: { cycle: number; show: number };
+  /** 周期ループ：間隔と見せる長さ(秒)、swayFirst=横揺れしてからバウンス */
+  tamaLoop?: { cycle: number; show: number; swayFirst?: boolean };
   /** 初回の「たまらねー」お披露目のタイミング(ms)。調整パネルから */
   tamaIntro?: { delay: number; hold: number };
   /** true: 眉・口・たまらねーを出しっぱなしにする（調整パネルの確認用） */
@@ -176,8 +249,9 @@ export default function Stage({
   tamaranee,
   bo,
   illustEnter,
+  bouncePattern = 3,
   bounceStrength = 1,
-  tamaLoop = { cycle: 15, show: 2.6 },
+  tamaLoop = { cycle: 15, show: 2.6, swayFirst: false },
   tamaIntro = TAMA_INTRO_DEFAULT,
   forceFace = false,
   patchRed = false,
@@ -234,16 +308,27 @@ export default function Stage({
     const SHOW = Math.max(0.5, tamaLoop.show) * 1000; /* たまらねーを見せておく長さ */
     let hideT = 0;
     const id = window.setInterval(() => {
-      const hb = purunBounce(bounceStrength);
-      if (bounceRef.current) bounceRef.current.animate(hb.keyframes, hb.options);
-      setPeriodicTama(true);
-      hideT = window.setTimeout(() => setPeriodicTama(false), SHOW);
+      const el = bounceRef.current;
+      if (!el) return;
+      const doBounce = () => {
+        const hb = makeBounce(bouncePattern, bounceStrength);
+        el.animate(hb.keyframes, hb.options);
+        setPeriodicTama(true);
+        hideT = window.setTimeout(() => setPeriodicTama(false), SHOW);
+      };
+      if (tamaLoop.swayFirst) {
+        /* 横揺れ→バウンス（2026-08-23 ヒデさん依頼。ONの時だけ） */
+        const sway = el.animate(SWAY_ANIM.keyframes, SWAY_ANIM.options);
+        sway.onfinish = doBounce;
+      } else {
+        doBounce();
+      }
     }, CYCLE);
     return () => {
       window.clearInterval(id);
       window.clearTimeout(hideT);
     };
-  }, [spin, tamaLoop.cycle, tamaLoop.show, bounceStrength]);
+  }, [spin, tamaLoop.cycle, tamaLoop.show, tamaLoop.swayFirst, bouncePattern, bounceStrength]);
 
   /* 出す条件：カーソルが乗っている間 ＋ 初回の自動お披露目 ＋ 周期アニメ ＋ 出しっぱなし */
   const showTama = over || introTama || periodicTama || forceFace;
@@ -278,11 +363,11 @@ export default function Stage({
   const prevOverRef = useRef(false);
   useEffect(() => {
     if (over && !prevOverRef.current) {
-      const hb = purunBounce(bounceStrength);
+      const hb = makeBounce(bouncePattern, bounceStrength);
       if (bounceRef.current) bounceRef.current.animate(hb.keyframes, hb.options);
     }
     prevOverRef.current = over;
-  }, [over, bounceStrength]);
+  }, [over, bouncePattern, bounceStrength]);
   /* 表情（眉が上がる・口が開く）も「たまらねー」と同じ条件でそろえる。
      初回のお披露目でも顔が動いた方が「言っている」感じが出る（🟡仮判断） */
   const faceLift = over ? browLift : showTama ? fc.browLift : 0;

@@ -18,8 +18,10 @@ export default function Home() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 3,
+    bouncePattern: 3,
     bounceStrength: 100,
-    loop: { cycle: 15, show: 2.6 },
+    illustDelay: 250,
+    loop: { cycle: 15, show: 2.6, swayFirst: false },
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },
@@ -45,6 +47,7 @@ export default function Home() {
         illustration="tamannee"
         illustEntrance
         illustEnter={tune.illustEnter}
+        bouncePattern={tune.bouncePattern}
         bounceStrength={tune.bounceStrength / 100}
         tamaLoop={tune.loop}
         bo={tune.boPattern}
@@ -64,6 +67,7 @@ export default function Home() {
           kvExit={tune.kvExit}
           heroEnter={tune.hero}
           msgTune={tune.msg}
+          illustDelay={tune.illustDelay}
         />
       </Stage>
 

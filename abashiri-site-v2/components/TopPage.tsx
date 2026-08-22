@@ -208,6 +208,7 @@ export default function TopPage({
   kvExit,
   heroEnter,
   msgTune,
+  illustDelay,
 }: {
   intro?: number;
   kv?: number;
@@ -253,6 +254,8 @@ export default function TopPage({
   heroEnter?: Partial<HeroEnter> | null;
   /** メッセージセクション（msgConfig.ts。KV直下・カンプ 15480:22896） */
   msgTune?: Partial<MsgTune> | null;
+  /** ボタンが出てから人物イラストが出るまでの間(ms)。調整パネルから */
+  illustDelay?: number;
 }) {
   /* 背景写真はファーストビューの土台。読み込みが他と同列だと
      空色グラデの下地だけが先に見えてしまうため、最優先で先読みする
@@ -308,10 +311,11 @@ export default function TopPage({
     return () => window.clearTimeout(id);
   }, [animated, go, timing.start]);
 
-  /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ */
+  /* 書き終わり → ボタン → 一番最後にイラスト、の順で出す共通ハンドラ。
+     人物までの間は調整パネルから（illustDelay。既定は timing.illust.gap） */
   const handleScheduled = (writingEnd: number) => {
     const buttonAt = writingEnd + timing.button.gap;
-    const illustAt = buttonAt + timing.button.duration + timing.illust.gap;
+    const illustAt = buttonAt + timing.button.duration + (illustDelay ?? timing.illust.gap);
     window.setTimeout(() => setButtonIn(true), buttonAt);
     window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent(ILLUST_IN_EVENT));
