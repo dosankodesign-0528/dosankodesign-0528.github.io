@@ -58,7 +58,7 @@ export default function ExperiencePage() {
           導入（step1）と場所えらび（step2）にはイラストを出さない。
           「この場所にする」を押した瞬間に所定の位置でフェードインして、
           そのまま人物ごと窓の中へ入っていく */}
-      <Stage key={replayEpoch} illustration="bo" hideIllust={!picked} bo={tune.boPattern}>
+      <Stage key={replayEpoch} illustration="bo" hideIllust={!picked} bo={tune.boPattern} brandOverlay>
         <ExperienceFlow
           step={step}
           setStep={setStep}

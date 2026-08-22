@@ -229,6 +229,9 @@ type StageProps = {
   patchRed?: boolean;
   /** true: 人物イラストを出さない（カンプにイラストが無い画面用） */
   hideIllust?: boolean;
+  /** true: 青グラデ（brand→透明）をカモメの下に敷く（体験ページの下地。
+      以前は ExperienceFlow 側にあり、カモメがグラデの後ろに隠れて薄く見えていた。2026-08-23） */
+  brandOverlay?: boolean;
 };
 
 /**
@@ -256,6 +259,7 @@ export default function Stage({
   forceFace = false,
   patchRed = false,
   hideIllust = false,
+  brandOverlay = false,
 }: StageProps) {
   const L = mergeLayout(layout);
   const fc = mergeFace(face);
@@ -444,6 +448,12 @@ export default function Stage({
           opacity: fit ? 1 : 0,
         }}
       >
+        {/* 体験ページの青い下地。カモメより下・空グラデより上に敷く
+            （カモメが青グラデの後ろで薄く見えていた問題の修正。2026-08-23 ヒデさん指摘） */}
+        {brandOverlay && (
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent" />
+        )}
+
         {/* 空のカモメ（左上・右中）。位置や線幅は birdConfig で調整できる */}
         <div
           className={`absolute ${birdsEditable ? "z-40 cursor-move" : ""}`}

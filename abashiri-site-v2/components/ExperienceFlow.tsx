@@ -921,17 +921,8 @@ export default function ExperienceFlow({
           WorldPush が元の大きさへ戻る動きが余計に走ってしまう */}
       {step !== 3 && (
         <WorldPush active={!!entering} pattern={enter}>
-          {/* 背景の青グラデはここに1枚だけ置く（2026-08-18 ヒデさん指示）。
-              導入・場所えらびの両方で同じ色味を出しっぱなしにするのが目的。
-              以前は Intro / Pick がそれぞれ持っていたため、切り替わる一瞬だけ
-              両方が消えて下地の空グラデ（別の青）が顔を出していた。
-              入ってきた最初だけふわっと出し、そのあとは切り替えでも触らない */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-b from-brand via-brand/45 to-transparent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          />
+          {/* 背景の青グラデは Stage の brandOverlay に移動（2026-08-23）。
+              ここに置くとカモメがグラデの後ろに隠れて薄く見えるため */}
           <AnimatePresence mode="wait">
             {step === 1 && (
               <Intro key="intro" onNext={() => setStep(2)} pace={introPace} />
