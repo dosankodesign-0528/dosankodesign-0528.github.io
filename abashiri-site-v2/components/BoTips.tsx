@@ -125,43 +125,60 @@ export default function BoTips({
 
   if (phase === "hidden") return null;
 
+  /* 登場アニメ（本体とピルに同じものを当てて同時に動かす） */
+  const anim: React.CSSProperties = {
+    ...(phase === "in" ? SHOWN : FROM[tune.pattern] || FROM[1]),
+    transition: `opacity ${tune.fade}s cubic-bezier(0.22,1,0.36,1), filter ${tune.fade}s cubic-bezier(0.22,1,0.36,1), transform ${tune.fade}s cubic-bezier(0.22,1,0.36,1)`,
+  };
+
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
-      <div
-        className="pointer-events-auto relative w-[700px] max-w-[86vw] rounded-2xl bg-white/10 p-[44px] backdrop-blur-[65px]"
-        style={{
-          ...(phase === "in" ? SHOWN : FROM[tune.pattern] || FROM[1]),
-          transition: `opacity ${tune.fade}s cubic-bezier(0.22,1,0.36,1), filter ${tune.fade}s cubic-bezier(0.22,1,0.36,1), transform ${tune.fade}s cubic-bezier(0.22,1,0.36,1)`,
-        }}
-      >
-        {/* 上部ピル（カンプ 15564:22024。本体の上端に半分乗る） */}
-        <div className="absolute -top-[22px] left-1/2 flex w-[186px] -translate-x-1/2 items-center justify-center rounded-full bg-white/40 px-4 py-[6px] backdrop-blur-[90px]">
-          <p className="text-body-16 font-normal leading-[1.2] text-white">
-            ぼーっとTips
-          </p>
-        </div>
-        {/* ×：案2「内側右上のシンプル×」で採用（2026-08-23 ヒデさん決定） */}
-        <button
-          type="button"
-          onClick={close}
-          aria-label="とじる"
-          className="absolute right-4 top-4 flex size-8 cursor-pointer items-center justify-center text-white/70 transition-colors duration-300 hover:text-white"
+      {/* ⚠️ ピルは本体（backdrop-blur を持つ）の外に出す。本体の中に置くと、
+          本体が「背景ぼかしの起点」になり、ピルの backdrop-blur は景色ではなく
+          本体の描画結果をぼかすため、はみ出し部分ではほぼ効かない
+          （2026-08-24 ヒデさん指摘の帯のブラーが効かない件の真因） */}
+      <div className="pointer-events-auto relative w-[700px] max-w-[86vw]">
+        {/* 本体 */}
+        <div
+          className="relative rounded-2xl bg-white/10 p-[44px] backdrop-blur-[65px]"
+          style={anim}
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
-        </button>
-        <div className="flex flex-col items-center gap-6 text-center text-white">
-          <div className="flex flex-col items-center gap-2 leading-[1.2]">
-            {/* 見出しサイズはカンプ実測（20px/46px。トークン外のためそのまま） */}
-            <p className="text-[20px] font-extralight">五感を使おう</p>
-            <p className="whitespace-nowrap text-[46px] font-extralight">
-              今、何が聞こえる？
+          {/* ×：案2「内側右上のシンプル×」で採用（2026-08-23 ヒデさん決定） */}
+          <button
+            type="button"
+            onClick={close}
+            aria-label="とじる"
+            className="absolute right-4 top-4 flex size-8 cursor-pointer items-center justify-center text-white/70 transition-colors duration-300 hover:text-white"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div className="flex flex-col items-center gap-6 text-center text-white">
+            <div className="flex flex-col items-center gap-2 leading-[1.2]">
+              {/* 見出しサイズはカンプ実測（20px/46px。トークン外のためそのまま） */}
+              <p className="text-[20px] font-extralight">五感を使おう</p>
+              <p className="whitespace-nowrap text-[46px] font-extralight">
+                今、何が聞こえる？
+              </p>
+            </div>
+            <p className="text-left text-body-14 font-light leading-[1.8]">
+              音に集中して、耳を澄ませましょう。どんな音が聞こえてくるでしょうか。船のエンジン音、鳥のなく声、流氷が軋む音などでも構いません。その音に集中してみよう。
             </p>
           </div>
-          <p className="text-left text-body-14 font-light leading-[1.8]">
-            音に集中して、耳を澄ませましょう。どんな音が聞こえてくるでしょうか。船のエンジン音、鳥のなく声、流氷が軋む音などでも構いません。その音に集中してみよう。
-          </p>
+        </div>
+
+        {/* 上部ピル（カンプ 15564:22024。本体の上端に半分乗る・白40%・ブラー100）。
+            中央寄せは外側のラッパー（transform）、登場アニメは内側に分けて当てる */}
+        <div className="absolute -top-[22px] left-1/2 -translate-x-1/2">
+          <div
+            className="flex w-[186px] items-center justify-center rounded-full bg-white/40 px-4 py-[6px] backdrop-blur-[100px]"
+            style={anim}
+          >
+            <p className="text-body-16 font-normal leading-[1.2] text-white">
+              ぼーっとTips
+            </p>
+          </div>
         </div>
       </div>
     </div>

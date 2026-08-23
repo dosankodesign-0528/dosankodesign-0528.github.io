@@ -4,16 +4,16 @@
 
 ## 📚 ドキュメントの置き場所（必須）
 
-> **📄 索引は [docs/README.md](docs/README.md)。資料を探す時も足す時もまずここ。**
+> **📄 索引は [settings/docs/README.md](settings/docs/README.md)。資料を探す時も足す時もまずここ。**
 
-- **全プロダクト共通の資料 → `docs/general/`**（進め方・カンプの読み方・デプロイ運用）
-- **特定プロダクトの資料 → `docs/<プロダクト名>/`**（フォルダ名はプロダクトのフォルダ名とそろえる）
-- 新しく `.md` を作る時は**プロダクト直下に置かず `docs/` の下に置く**。
+- **全プロダクト共通の資料 → `settings/docs/general/`**（進め方・カンプの読み方・デプロイ運用）
+- **特定プロダクトの資料 → `settings/docs/<プロダクト名>/`**（フォルダ名はプロダクトのフォルダ名とそろえる）
+- 新しく `.md` を作る時は**プロダクト直下に置かず `settings/docs/` の下に置く**。
   例外は下の3つだけ:
   1. `CLAUDE.md` / `AGENTS.md`（Claude Code がその場所から読むので動かせない）
   2. 各プロダクトの `README.md`（GitHub がフォルダを開いた時に出す定位置）
   3. 納品物としてフォルダごと渡すもの（例: `anyflow-embed/framer-handoff/`）
-- **ファイルを足したら [docs/README.md](docs/README.md) の表にも1行足す**（索引が古くなると意味がない）
+- **ファイルを足したら [settings/docs/README.md](settings/docs/README.md) の表にも1行足す**（索引が古くなると意味がない）
 
 ## 🎨 UI 提案ルール（必須）
 
@@ -32,8 +32,8 @@ URL を一緒に渡すこと**。
 
 ## 🧭 進め方の共通ルール（推測・質問・報告）🔴最重要
 
-> **📄 全文は [docs/general/WORKING-RULES.md](docs/general/WORKING-RULES.md)（持ち運び用）。着手前に必ず読む。**
-> 根拠となった実測と経緯は [docs/anyflow-embed/anyflow-postmortem.md](docs/anyflow-embed/anyflow-postmortem.md)。
+> **📄 全文は [settings/docs/general/WORKING-RULES.md](settings/docs/general/WORKING-RULES.md)（持ち運び用）。着手前に必ず読む。**
+> 根拠となった実測と経緯は [settings/docs/anyflow-embed/anyflow-postmortem.md](settings/docs/anyflow-embed/anyflow-postmortem.md)。
 
 ### 大原則
 
@@ -56,7 +56,7 @@ URL を一緒に渡すこと**。
 
 - 🟡 が**5件を超えたら**、個別に進めず一度まとめて確認する
 - 🔴 は `AskUserQuestion` で**選択肢＋おすすめ＋理由**。「どうしますか？」の丸投げは禁止
-- **見た目・動きは言葉で聞かない。** mock か [tune-panel](tune-panel/) を出して触ってもらう
+- **見た目・動きは言葉で聞かない。** mock か [tune-panel](settings/tune-panel/) を出して触ってもらう
   （実測: 選択肢を出した割合 12% の案件と 40% の案件で、繰り返し修正が 4件 vs 1件）
 
 ### 絶対にやらないこと
@@ -74,11 +74,11 @@ URL を一緒に渡すこと**。
 
 ## 📐 Figma カンプ参照ルール（必須・違反したら作り直し）
 
-> **📄 詳細は [docs/general/DESIGN-SYSTEM-RULES.md](docs/general/DESIGN-SYSTEM-RULES.md) に全文がある。**
+> **📄 詳細は [settings/docs/general/DESIGN-SYSTEM-RULES.md](settings/docs/general/DESIGN-SYSTEM-RULES.md) に全文がある。**
 > **📄 既存サイトのスタイルを棚卸ししてデザインシステムに整える手順は
-> [docs/general/DESIGN-SYSTEM-WORKFLOW.md](docs/general/DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
+> [settings/docs/general/DESIGN-SYSTEM-WORKFLOW.md](settings/docs/general/DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
 > abashiri-site で実際に通した工程。完成物の実例は
-> [docs/abashiri-site/DESIGN-SYSTEM.md](docs/abashiri-site/DESIGN-SYSTEM.md)）。
+> [settings/docs/abashiri-site/DESIGN-SYSTEM.md](settings/docs/abashiri-site/DESIGN-SYSTEM.md)）。
 > フォントだけでなく **角丸・padding・margin・gap・レイアウト・制約・影・ブラー・
 > グラデ・不透明度・線** など、デザインシステムと呼ばれるもの全般が対象。
 > 他の Claude アカウント／他プロジェクトで使う時は、あのファイルを持っていけばよい。

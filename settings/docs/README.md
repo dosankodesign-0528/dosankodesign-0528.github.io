@@ -2,15 +2,19 @@
 
 「あの資料どこやったっけ？」を無くすための入口。**まずここを見る。**
 
+> 📁 このフォルダは 2026-08-23 から **`settings/docs/`** に置いています（旧: リポジトリ直下 `docs/`）。
+> 調整パネルのライブラリも **`settings/tune-panel/`** に移動しました。
+> `CLAUDE.md` / `AGENTS.md` は Claude Code が直下から自動で読むので**動かしていません**。
+
 ## 置き方のルール（迷ったらこれ）
 
 | 種類 | 置き場所 | 例 |
 |---|---|---|
-| **どのプロダクトにも効く話** | `docs/general/` | 進め方のルール・カンプの読み方・Vercel の運用 |
-| **特定のプロダクトの話** | `docs/<プロダクト名>/` | 網走サイトのデザインシステム・anyflow の引き継ぎ書 |
+| **どのプロダクトにも効く話** | `settings/docs/general/` | 進め方のルール・カンプの読み方・Vercel の運用 |
+| **特定のプロダクトの話** | `settings/docs/<プロダクト名>/` | 網走サイトのデザインシステム・anyflow の引き継ぎ書 |
 
-- フォルダ名は**プロダクトのフォルダ名とそろえる**（`abashiri-site/` の資料 → `docs/abashiri-site/`）
-- 新しいプロダクトの資料が出てきたら、`docs/` に同じ名前のフォルダを作って入れる
+- フォルダ名は**プロダクトのフォルダ名とそろえる**（`abashiri-site/` の資料 → `settings/docs/abashiri-site/`）
+- 新しいプロダクトの資料が出てきたら、`settings/docs/` に同じ名前のフォルダを作って入れる
 - ⚠️ **プロダクト別フォルダの中で `index.html` `app/globals.css` のように書かれている相対パスは、
   そのプロダクトのフォルダ（例: `../../anyflow-embed/`）を基準に読む**
 
@@ -23,6 +27,7 @@
 | [general/DESIGN-SYSTEM-RULES.md](general/DESIGN-SYSTEM-RULES.md) | Figma カンプの読み方（数値を推測で埋めない） | カンプ通りに実装する時 |
 | [general/DESIGN-SYSTEM-WORKFLOW.md](general/DESIGN-SYSTEM-WORKFLOW.md) | 既存サイトを棚卸ししてデザインシステムに整える手順 | スタイルを整理する時 |
 | [general/VERCEL-PROJECTS.md](general/VERCEL-PROJECTS.md) | 各プロジェクトの本番 URL・Vercel 設定・デプロイ手順 | デプロイ・本番反映の確認 |
+| [general/FOLDER-RESTRUCTURE-RUNBOOK.md](general/FOLDER-RESTRUCTURE-RUNBOOK.md) | フォルダ構成の整理手順（settings/ への集約・バージョンフォルダの親子化。Vercel 設定の直し方つき） | フォルダを動かす時 |
 
 ## 📦 プロダクト別
 

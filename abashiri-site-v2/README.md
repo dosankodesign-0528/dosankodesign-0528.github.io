@@ -25,7 +25,7 @@ npx vercel redeploy abashiri-site.vercel.app
 ```
 
 > ⚠️ このディレクトリの中で `npx vercel --prod` を叩くと、Vercel 側の Root Directory と
-> 二重になって失敗する。詳細は [../docs/general/VERCEL-PROJECTS.md](../docs/general/VERCEL-PROJECTS.md)。
+> 二重になって失敗する。詳細は [../settings/docs/general/VERCEL-PROJECTS.md](../settings/docs/general/VERCEL-PROJECTS.md)。
 
 ## 演出まわりの調整ファイル
 

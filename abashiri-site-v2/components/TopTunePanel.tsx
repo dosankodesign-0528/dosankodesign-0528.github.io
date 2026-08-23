@@ -4,11 +4,11 @@
  * トップページに常時出しておく調整パネル（ヒデさん指示 2026-08-18）
  *
  * ・右下にアコーディオンをたたんだ状態で置く（startClosed）
- * ・仕様は tune-panel/README.md のライブラリ（public/tune-panel.js）に準拠
+ * ・仕様は settings/tune-panel/README.md のライブラリ（public/tune-panel.js）に準拠
  *   アコーディオン2階層・検索・localStorage保存・「設定をコピー」・`.`キーで隠す
  *
  * カテゴリの並びは「ページ ＞ セクション ＞ 細目」の3階層（2026-08-21 ヒデさん指示。
- * AnyFlow のパネルと同じ考え方。全部を並列に並べない。全文は tune-panel/README.md）
+ * AnyFlow のパネルと同じ考え方。全部を並列に並べない。全文は settings/tune-panel/README.md）
  *
  * 反映のしかたを2つに分けている
  *   ① 位置・大きさ … globals.css の --illust-* を直接書き換える（React を通さないので

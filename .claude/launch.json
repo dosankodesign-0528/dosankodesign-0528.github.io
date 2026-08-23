@@ -113,7 +113,7 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd '/Users/hideyuki/Developer/Claude Code/tune-panel' && exec python3 -m http.server 8774"
+        "cd '/Users/hideyuki/Developer/Claude Code/settings/tune-panel' && exec python3 -m http.server 8774"
       ],
       "port": 8774
     },

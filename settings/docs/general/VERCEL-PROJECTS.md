@@ -103,7 +103,7 @@ Redeploy は**同じソースを再生するだけ**で、既存デプロイの�
    - `.env.local` または `dotenvx decrypt .env.production` で値を取得
    - `npx vercel env add KEY production --value "..." --no-sensitive --yes` で1つずつ登録
 5. **DB 復元**（Supabase 使用アプリのみ）
-   - `docs/SUPABASE-RESTORE.md` 参照（Phase 1 で追加予定）
+   - `settings/docs/SUPABASE-RESTORE.md` 参照（Phase 1 で追加予定）
 6. **デプロイ**
    - submodule (houmon-app, nittei-chousei): `git push` で自動 build
    - 親リポ subdir 系: 該当ディレクトリで `npx vercel --prod --yes`
