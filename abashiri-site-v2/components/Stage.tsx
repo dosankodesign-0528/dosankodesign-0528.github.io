@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Bird from "./Bird";
+import { waitForConsent } from "./consentGate";
 import IllustTamannee from "./IllustTamannee";
 import { useFaceReaction } from "./useFaceReaction";
 import { DEFAULT_HERO_TIMING, type HeroTiming } from "./heroTiming";
@@ -426,13 +427,21 @@ export default function Stage({
     return () => window.removeEventListener("abashiri:illust-fade", fade);
   }, []);
 
-  /* TopPage からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す */
+  /* TopPage からの合図（一番最後）でイラストを出す。保険で12秒後には必ず出す。
+     ⚠️ 保険の12秒は「環境音の確認モーダルに答えてから」数える。
+     以前はページ表示から数えていたため、モーダルを12秒以上放置すると
+     モーダルの裏で人物が先に出てしまっていた（2026-08-23 ヒデさん報告） */
   useEffect(() => {
     if (!illustEntrance) return;
     const show = () => setIllustIn(true);
     window.addEventListener("abashiri:illust-in", show);
-    const fallback = window.setTimeout(show, 12000);
+    let fallback = 0;
+    let alive = true;
+    waitForConsent().then(() => {
+      if (alive) fallback = window.setTimeout(show, 12000);
+    });
     return () => {
+      alive = false;
       window.removeEventListener("abashiri:illust-in", show);
       window.clearTimeout(fallback);
     };
