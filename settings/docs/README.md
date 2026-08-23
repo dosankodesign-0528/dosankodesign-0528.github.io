@@ -43,6 +43,7 @@
 | ファイル | 中身 |
 |---|---|
 | [anyflow/HANDOFF.md](anyflow/HANDOFF.md) | 実装の引き継ぎ書（一番厚い。実測値と経緯が全部ここ） |
+| [anyflow/BLENDER-3D-HERO-HANDOFF.md](anyflow/BLENDER-3D-HERO-HANDOFF.md) | TOPキービジュアルを Blender で3D立体化する引き継ぎ（構図の実測座標・ガラス質感・Figmaノード番号つき。ローカルClaude＋Blender MCP 向け） |
 | [anyflow/DESIGN-TOKENS.md](anyflow/DESIGN-TOKENS.md) | デザイントークン一覧 |
 | [anyflow/STORYBOARD-NOTES.md](anyflow/STORYBOARD-NOTES.md) | 絵コンテのメモ |
 | [anyflow/FRAMER-AGENT-BRIEF.md](anyflow/FRAMER-AGENT-BRIEF.md) | Framer 側の担当者／AI 向けの依頼書 |
