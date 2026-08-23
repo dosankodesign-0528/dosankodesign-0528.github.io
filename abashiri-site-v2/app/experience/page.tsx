@@ -34,6 +34,7 @@ export default function ExperiencePage() {
     expIntro: DEFAULT_INTRO_PACE,
     expPick: { pattern: 1 },
     scrollSpd: { kvToMsg: 100 },
+    tips: { delay: 5, fade: 1.2 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -66,6 +67,7 @@ export default function ExperiencePage() {
           onPicked={() => setPicked(true)}
           introPace={tune.expIntro}
           pickEnter={tune.expPick.pattern}
+          tips={tune.tips}
         />
       </Stage>
 

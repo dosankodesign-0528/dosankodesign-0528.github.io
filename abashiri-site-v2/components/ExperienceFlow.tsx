@@ -14,6 +14,7 @@
  * 2→3 の間に「窓枠をくぐって向こう側の世界に入る」遷移が挟まる（enterPatterns.ts の5案）。
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import BoTips, { DEFAULT_BO_TIPS, type BoTipsTune } from "./BoTips";
 import {
   animate,
   AnimatePresence,
@@ -584,12 +585,15 @@ function Watch({
   spot,
   videoRef,
   seamless,
+  tips = DEFAULT_BO_TIPS,
 }: {
   spot: Spot;
   /* 動画そのものは MediaLayer が持つ。ここは操作するだけ */
   videoRef: React.RefObject<HTMLVideoElement | null>;
   /* カルーセルから続けて入って来たか。true なら止めずにそのまま流す */
   seamless: boolean;
+  /** ぼーっとTips（再生後に出るモーダル）のタイミング。調整パネルから */
+  tips?: BoTipsTune;
 }) {
   const [playing, setPlaying] = useState(!spot.video || seamless);
   const [remaining, setRemaining] = useState(3 * 60);
@@ -653,6 +657,8 @@ function Watch({
       className="absolute inset-0 z-30"
       onPointerMove={() => playing && pokeUi()}
     >
+      {/* ぼーっとTips：再生して数秒たつと中央にふわっと出る（カンプ 15564:22022） */}
+      {spot.video && <BoTips playing={playing} tune={tips} />}
       {spot.video && (
         <button
           type="button"
@@ -841,6 +847,7 @@ export default function ExperienceFlow({
   onPicked,
   introPace,
   pickEnter,
+  tips,
 }: {
   step: Step;
   setStep: (s: Step) => void;
@@ -852,6 +859,8 @@ export default function ExperienceFlow({
   introPace?: IntroPace;
   /** 1〜5: 場所えらびのカルーセルの登場（PICK_ENTER_PATTERNS）。調整パネルから */
   pickEnter?: number;
+  /** ぼーっとTips（動画再生ページのモーダル）のタイミング。調整パネルから */
+  tips?: BoTipsTune;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
@@ -949,7 +958,7 @@ export default function ExperienceFlow({
       {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる。
           Watch は操作パネルだけで、映像そのものには触らない */}
       {step === 3 && (
-        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} />
+        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} tips={tips} />
       )}
 
       {/* ナビは常に最前面（動画再生中の操作パネルが z-30 の全画面レイヤーなので、

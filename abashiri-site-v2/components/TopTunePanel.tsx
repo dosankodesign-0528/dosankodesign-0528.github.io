@@ -58,6 +58,8 @@ export type TopTuneValues = {
   expPick: { pattern: number };
   /** KV→メッセージ区間のスクロール速度（%）。100=標準（2026-08-23 ヒデさん依頼） */
   scrollSpd: { kvToMsg: number };
+  /** ぼーっとTips（動画再生ページのモーダル）のタイミング（2026-08-23 ヒデさん依頼） */
+  tips: { delay: number; fade: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -154,6 +156,7 @@ type Params = {
   expPick: { pattern: number };
   loop: { cycle: number; show: number; swayFirst: boolean };
   scrollSpd: { kvToMsg: number };
+  tips: { delay: number; fade: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -202,6 +205,7 @@ export default function TopTunePanel({
       expIntro: { ...DEFAULT_INTRO_PACE },
       expPick: { pattern: 1 },
       scrollSpd: { kvToMsg: 100 },
+      tips: { delay: 5, fade: 1.2 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -251,6 +255,7 @@ export default function TopTunePanel({
         expIntro: { ...params.expIntro },
         expPick: { ...params.expPick },
         scrollSpd: { ...params.scrollSpd },
+        tips: { ...params.tips },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -1094,6 +1099,28 @@ export default function TopTunePanel({
                 fmt: "px",
               },
 
+              { sub: "ぼーっとTips（動画再生中のモーダル）" },
+              {
+                note: "流氷クルーズの動画を再生してしばらくすると、中央に「今、何が聞こえる？」のモーダルがふわっと出ます（カンプ 15564:22022）。×で閉じられます。",
+              },
+              {
+                slider: "出るまでの時間",
+                path: "tips.delay",
+                min: 1,
+                max: 20,
+                step: 0.5,
+                fmt: "s",
+                hint: "再生ボタンを押してからモーダルが出るまでの時間。長いほど、映像に浸ってから出ます。",
+              },
+              {
+                slider: "アニメーション時間",
+                path: "tips.fade",
+                min: 0.2,
+                max: 3,
+                step: 0.2,
+                fmt: "s",
+                hint: "フェードイン/アウトにかける時間。長いほどふわーっと出入りします。",
+              },
               { sub: "カモメ（このページの2匹）" },
               {
                 note: "このページのカモメは「右」「左」の2匹（左上は多かったので廃止・2026-08-23）。色や濃さは 🌐サイト共通 の「カモメの見た目」にあります。",
