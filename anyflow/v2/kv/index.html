@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
+<link rel="stylesheet" href="patterns.css?v=3">
 </head>
 <body>
 
@@ -25,6 +26,7 @@
 </div>
 
 <div id="kv"></div>
+<div id="kvp"></div>
 
 <div class="kv-ticker">
   <div class="track">
@@ -42,6 +44,16 @@
 </div>
 
 <div class="kv-bar">
+  <div class="row0">
+    <b>デザイン</b>
+    <button data-design="agent" class="on">エージェント版(現行)</button>
+    <span class="sep"></span>
+    右グラフィック4案:
+    <button data-design="p1">①フラット×回路線</button>
+    <button data-design="p2">②フラット×同心円</button>
+    <button data-design="p3">③アイソメ×回路線</button>
+    <button data-design="p4">④アイソメ×軌道</button>
+  </div>
   <div class="row1">
     <b>KV V2</b>
     <span class="sep"></span>
@@ -97,6 +109,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
+<script src="patterns.js?v=2"></script>
 <script>
   KV.start({ mount: 'kv' });
 
@@ -191,6 +204,21 @@
       document.querySelector(`[data-ih="${id}"]`).value = '#379FFF';
     });
   };
+
+  /* ===== 右グラフィック4案（KVP）とエージェント版(現行)の切替 =====
+     4案を選ぶと現行KVを隠し、その案のプリセットに切替。
+     エージェント専用の操作行(row1/rowL/row2/row4/row3)は関係ないので畳む */
+  KVP.start({ mount: 'kvp' });
+  const kvHost = document.getElementById('kv');
+  const agentRows = document.querySelectorAll('.kv-bar .row1, .kv-bar .rowL, .kv-bar .row2, .kv-bar .row4, .kv-bar .row3');
+  document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
+    const d = b.dataset.design, isAgent = d === 'agent';
+    kvHost.style.display = isAgent ? '' : 'none';
+    agentRows.forEach(r => r.style.display = isAgent ? '' : 'none');
+    if (isAgent) KVP.hide();
+    else { KVP.show(); KVP.setPattern(d); }
+  });
 </script>
 </body>
 </html>

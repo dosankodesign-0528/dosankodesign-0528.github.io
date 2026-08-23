@@ -1,0 +1,133 @@
+/* ============================================================
+   キービジュアル V2 — 右側グラフィック 4案（ダッシュボード中心）
+   ChatGPT生成画像4枚を忠実再現。中央=本番ダッシュmock / 周囲=Figmaアイコン部品
+   P1 フラット×回路線×白い立体アイコン
+   P2 フラット×同心円グロー×すりガラス
+   P3 アイソメ×回路線×すりガラス
+   P4 アイソメ×単一軌道×白い立体アイコン
+   ・アイコンのガラス質感/グラデ/内側の光は Figma書き出しSVGをそのまま使用（似せない）
+   ・engine.js（エージェント版）とは独立。#kvp に別ステージで描く
+   ============================================================ */
+
+/* ---- ステージ（engine と同じ 1440×920 スケール方式） ---- */
+.kvp-root { position: fixed; inset: 0; perspective: none; pointer-events: none; }
+.kvp-stage { position: absolute; left: 0; top: 0; width: 1440px; height: 920px;
+  transform-origin: 0 0; transform-style: preserve-3d; }
+.kvp-world { position: absolute; inset: 0; transform-origin: 1030px 440px;
+  transform-style: preserve-3d; transition: transform .7s cubic-bezier(.22,1,.36,1); }
+
+/* 案ごとの視点（engine の VIEWS と同系。perspective無し＝軸測投影のきれいなアイソメ） */
+.kvp-world.view-flat { transform: none; }
+.kvp-world.view-iso  { transform: rotateX(52deg) rotateZ(-40deg) scale(1.16); }
+
+/* ============ 中央ダッシュボード（本番mockの簡易・静止版） ============ */
+.kvp-dash {
+  position: absolute; width: 600px; height: 360px; border-radius: 16px;
+  background: linear-gradient(157deg, #ffffff 0%, #f5f7fa 100%);
+  box-shadow: 0 30px 60px rgba(16,24,40,.16), 0 2px 6px rgba(16,24,40,.06);
+  overflow: hidden; transform-style: preserve-3d; display: flex;
+  border: 1px solid rgba(255,255,255,.9);
+}
+/* アイソメ時は接地影を別に敷いて浮かせる */
+.kvp-dash-shadow {
+  position: absolute; width: 600px; height: 360px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(16,24,40,.22), rgba(16,24,40,0) 70%);
+  filter: blur(14px); display: none;
+}
+.view-iso .kvp-dash-shadow { display: block; }
+
+/* 左：コード風の色バー */
+.kvp-dash .dash-code { flex: 1 1 58%; padding: 30px 26px; display: flex; flex-direction: column; gap: 13px; }
+.kvp-dash .cbar { height: 7px; border-radius: 4px; }
+/* 右：サイドリスト（ロゴ＋色玉＋グレー行） */
+.kvp-dash .dash-side {
+  flex: 0 0 42%; padding: 26px 24px; border-left: 1px solid #eef1f5;
+  background: linear-gradient(180deg, #fbfcfe 0%, #f4f6f9 100%);
+  display: flex; flex-direction: column; gap: 18px;
+}
+.kvp-dash .dash-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.kvp-dash .dash-logo img { height: 18px; width: auto; display: block; }
+.kvp-dash .dash-logo b { font-size: 13px; font-weight: 600; color: #101828; letter-spacing: .2px; }
+.kvp-dash .srow { display: flex; align-items: center; gap: 12px; }
+.kvp-dash .sdot { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto;
+  box-shadow: 0 3px 8px rgba(14,187,255,.28); }
+.kvp-dash .slines { flex: 1 1 auto; display: flex; flex-direction: column; gap: 7px; }
+.kvp-dash .slines i { display: block; height: 6px; border-radius: 4px; background: #e4e8ee; }
+.kvp-dash .slines i.short { width: 55%; }
+
+/* ============ アイコン箱 ============ */
+.kvp-ico { position: absolute; width: 100px; height: 100px; transform-style: preserve-3d; }
+.kvp-ico-face { position: absolute; inset: 0; border-radius: 20px; overflow: hidden;
+  transform-style: preserve-3d; }
+.kvp-ico-glyph { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.kvp-ico-glyph > span { position: absolute; }
+.kvp-ico-glyph svg { display: block; width: 100%; height: 100%; }
+/* 上からのソフトライトのツヤ（Blender風の面の光り）。全アイコン共通 */
+.kvp-ico-face::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
+  background: linear-gradient(158deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.08) 34%, rgba(255,255,255,0) 60%);
+  pointer-events: none;
+}
+
+/* すりガラス箱（Figmaアイコン: bg白30% / 枠白 / backdrop-blur / r10 実測）
+   後ろのアンビエント光を blur+saturate で拾って「すりガラス」に見せる */
+.kvp-ico--glass .kvp-ico-face {
+  background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.92); border-radius: 12px;
+  backdrop-filter: blur(30px) saturate(1.35); -webkit-backdrop-filter: blur(30px) saturate(1.35);
+  box-shadow: 0 16px 36px rgba(16,24,40,.13), inset 0 1px 1px rgba(255,255,255,.75);
+}
+/* 白い立体箱（neumorphic。P1=平ら / P4=厚み） */
+.kvp-ico--white .kvp-ico-face {
+  background: linear-gradient(150deg, #ffffff 0%, #eef2f7 100%);
+  border-radius: 22px; border: 1px solid #fff;
+  box-shadow: 0 14px 30px rgba(16,24,40,.16), inset 0 2px 3px rgba(255,255,255,.9),
+    inset 0 -6px 12px rgba(16,24,40,.05);
+}
+/* 白い立体箱の厚み（アイソメ用スラブ）。translateZで下へ積む */
+.kvp-slab { position: absolute; inset: 0; border-radius: 22px; display: none; }
+.view-iso .kvp-ico--white .kvp-slab { display: block; }
+.kvp-ico-shadow { position: absolute; inset: -10px; border-radius: 50%; display: none;
+  background: radial-gradient(closest-side, rgba(16,24,40,.28), rgba(16,24,40,0) 72%);
+  filter: blur(6px); }
+.view-iso .kvp-ico-shadow { display: block; }
+
+/* ============ 接続：回路線（P1・P3） ============ */
+.kvp-lines { position: absolute; left: 0; top: 0; overflow: visible; }
+.kvp-line { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 2;
+  filter: drop-shadow(0 1px 2px rgba(16,24,40,.10)); }
+.view-iso .kvp-line { stroke: rgba(148,163,184,.6); filter: none; }
+.kvp-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%;
+  will-change: transform; box-shadow: 0 2px 5px rgba(16,24,40,.28); }
+
+/* シーンのアンビエント光（ガラスが blur で拾う下地＋Blender風のソフトライト）。
+   ガラス案(P2/P3)でダッシュボード中心に敷く */
+.kvp-ambient {
+  position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none;
+  background: radial-gradient(closest-side, rgba(120,206,255,.30), rgba(150,190,255,.14) 55%, rgba(255,255,255,0) 72%);
+}
+
+/* ============ 接続：同心円グロー（P2） ============ */
+.kvp-ring { position: absolute; border-radius: 50%; border: 2px solid rgba(120,224,255,.75);
+  box-shadow: 0 0 50px 6px rgba(90,208,255,.38), inset 0 0 60px rgba(90,208,255,.22);
+  will-change: transform, opacity; }
+.kvp-ring.soft { border-color: rgba(255,255,255,.85); box-shadow: 0 0 36px 4px rgba(255,255,255,.6); }
+
+/* ============ 接続：単一軌道（P4） ============ */
+.kvp-orbit { position: absolute; border-radius: 50%;
+  border: 1.5px solid rgba(148,163,184,.45); }
+
+/* 案の出し分け（表示するレイヤーだけ見せる） */
+.kvp-lines, .kvp-rings, .kvp-orbit { display: none; }
+.pat-p1 .kvp-lines, .pat-p3 .kvp-lines { display: block; }
+.pat-p2 .kvp-rings { display: block; }
+.pat-p4 .kvp-orbit { display: block; }
+.kvp-root.hidden { display: none; }
+
+/* パネルの「デザイン/4案」行（既存 .kv-bar の行と同じ並び） */
+.kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* 同心円グローの呼吸（P2） */
+@keyframes kvpBreath {
+  0%, 100% { opacity: .5; transform: scale(1); }
+  50%      { opacity: .9; transform: scale(1.035); }
+}
