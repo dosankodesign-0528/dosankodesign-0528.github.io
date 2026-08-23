@@ -353,14 +353,19 @@ function Pick({
   const [index, setIndex] = useState(START_INDEX);
   const go = (d: number) => setIndex((i) => i + d);
 
-  /* 登場アニメは「最初の1回」だけ。カルーセルを送って新しく入ってくるカードにまで
-     登場のブラーフェード（遅延つき）が付くと、横のカードがなかなか現れず
-     「無い」ように見える（2026-08-23 ヒデさん指摘）。登場が済んだら即表示に切り替える */
-  const [introDone, setIntroDone] = useState(false);
-  useEffect(() => {
-    const id = setTimeout(() => setIntroDone(true), 3500);
-    return () => clearTimeout(id);
-  }, []);
+  /* 登場アニメは「最初からあるカード」だけに付ける。カルーセルを送って
+     新しく入ってくるカードに毎回付くと、横のカードがなかなか現れない
+     （2026-08-23 ヒデさん指摘）。
+     ⚠️ 時間で variants を外す方式はNG：再生途中のカードのアニメがキャンセルされ
+     透明のまま固まる（2026-08-23 ヒデさん報告のバグ）。カードごとに
+     「最初からいたか」で固定し、途中で切り替えない */
+  const initialSlotsRef = useRef<Set<number> | null>(null);
+  if (initialSlotsRef.current === null) {
+    initialSlotsRef.current = new Set(
+      [-2, -1, 0, 1, 2].map((d) => START_INDEX + d)
+    );
+  }
+  const initialSlots = initialSlotsRef.current;
 
   const active = ((index % SPOTS.length) + SPOTS.length) % SPOTS.length;
   /* track の原点を「器の中央（left:50%）」に置き、カードは中心基準で並べる。
@@ -411,7 +416,9 @@ function Pick({
             {slots.map(({ pos, spot }) => (
               <motion.div
                 key={pos}
-                variants={introDone ? undefined : EP.card(pos - START_INDEX)}
+                variants={
+                  initialSlots.has(pos) ? EP.card(pos - START_INDEX) : undefined
+                }
               >
                 <SpotCard
                   spot={spot}
