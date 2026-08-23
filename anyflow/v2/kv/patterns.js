@@ -14,7 +14,7 @@
   const C = { x: 1030, y: 430 };                 /* ダッシュボード中心 */
   const DASH = { w: 600, h: 360 };
   const dashRect = { l: C.x - DASH.w / 2, r: C.x + DASH.w / 2, t: C.y - DASH.h / 2, b: C.y + DASH.h / 2 };
-  const ICO = 100;                                /* アイコン箱の一辺 */
+  const ICO = 112;                                /* アイコン箱の一辺 */
   const ICONS_DIR = 'assets/icons/';
 
   /* ---- Figmaアイコンの部品定義（inset:[top,right,bottom,left] % / 100×100内）----
@@ -74,22 +74,22 @@
   };
 
   /* ---- レイアウト（各アイコンの中心座標。世界座標＝フラット時の見た目そのまま）---- */
+  /* 添付①③準拠（chat左上/chart上/person右上/lock右/calendar下/folder左下） */
   const LAYOUT_CIRCUIT = [          /* P1 / P3 */
-    { id: 'chat',     x: 690,  y: 260 },
-    { id: 'chart',    x: 1010, y: 150 },
-    { id: 'person',   x: 1360, y: 250 },
-    { id: 'lock',     x: 1380, y: 500 },
-    { id: 'folder',   x: 690,  y: 500 },
-    { id: 'calendar', x: 1035, y: 705 },
+    { id: 'chat',     x: 705,  y: 245 },
+    { id: 'chart',    x: 1045, y: 150 },
+    { id: 'person',   x: 1375, y: 255 },
+    { id: 'lock',     x: 1385, y: 580 },
+    { id: 'calendar', x: 1070, y: 715 },
+    { id: 'folder',   x: 695,  y: 590 },
   ];
-  const LAYOUT_RINGS = [            /* P2 */
-    { id: 'cloud',    x: 735,  y: 210 },
-    { id: 'chart',    x: 1010, y: 130 },
-    { id: 'person',   x: 1330, y: 205 },
-    { id: 'folder',   x: 1400, y: 455 },
-    { id: 'calendar', x: 690,  y: 470 },
-    { id: 'chat',     x: 800,  y: 700 },
-    { id: 'lock',     x: 1130, y: 720 },
+  const LAYOUT_RINGS = [            /* P2（添付②準拠。同心円上に配置） */
+    { id: 'chat',     x: 715,  y: 255 },
+    { id: 'chart',    x: 1080, y: 150 },
+    { id: 'person',   x: 1400, y: 265 },
+    { id: 'lock',     x: 1400, y: 615 },
+    { id: 'calendar', x: 1085, y: 725 },
+    { id: 'folder',   x: 710,  y: 615 },
   ];
   const ORBIT_ICONS = ['chat', 'person', 'lock', 'calendar', 'folder', 'chart'];  /* P4（等間隔で公転）*/
   const ORBIT_R = 430;
@@ -210,15 +210,22 @@
       const [ax, ay] = anchorOnDash(it.x, it.y);
       /* L字: アイコン→縦→横→縁。向きは近い軸を後にする */
       const elbow = (Math.abs(it.x - ax) > Math.abs(it.y - ay)) ? [ax, it.y] : [it.x, ay];
-      const pts = [[it.x, it.y], elbow, [ax, ay]];
-      const d = 'M' + pts.map(p => p[0] + ' ' + p[1]).join(' L');
-      svg.appendChild(elS('path', { d, class: 'kvp-line' }));
-      const dot = document.createElement('div'); dot.className = 'kvp-dot';
-      dot.style.background = DOT_COLORS[i % DOT_COLORS.length];
-      dotLayer.appendChild(dot);
-      dots.push({ pts, node: dot, t: (i * 0.31) % 1, speed: 0.16 + 0.03 * (i % 3), len: polyLen(pts) });
+      const d = roundedL([it.x, it.y], elbow, [ax, ay], 18);            /* 角を丸めたL字（PCB風） */
+      svg.appendChild(elS('path', { d, class: 'kvp-line' }));           /* 白いPCBトレース */
+      const seg = elS('path', { d, class: 'kvp-line-seg' });             /* シアンの流れ（添付の区切り） */
+      seg.style.animationDelay = (-i * 0.42) + 's';
+      svg.appendChild(seg);
     });
     return svg;
+  }
+  /* 丸角L字パス: 中間点 e の角を半径 r で丸める（PCBトレース風） */
+  function roundedL(p0, e, p2, r) {
+    const v1x = e[0] - p0[0], v1y = e[1] - p0[1], l1 = Math.hypot(v1x, v1y) || 1;
+    const v2x = p2[0] - e[0], v2y = p2[1] - e[1], l2 = Math.hypot(v2x, v2y) || 1;
+    const rr = Math.min(r, l1 / 2, l2 / 2);
+    const a = [e[0] - v1x / l1 * rr, e[1] - v1y / l1 * rr];
+    const b = [e[0] + v2x / l2 * rr, e[1] + v2y / l2 * rr];
+    return `M${p0[0]} ${p0[1]} L${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${e[0]} ${e[1]} ${b[0].toFixed(1)} ${b[1].toFixed(1)} L${p2[0]} ${p2[1]}`;
   }
   function polyLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
   function polyAt(p, t) {
@@ -297,13 +304,14 @@
         });
       }
       if (p && p.conn === 'orbit') {
-        const bb = billboard('iso');
+        /* Zは戻すがXは18°残す＝箱が奥へ少し傾いて“厚み”が見える（添付④の立体チップ） */
+        const bb = `rotateZ(${-ISO.rz}deg) rotateX(${-(ISO.rx - 18)}deg)`;
         const ang = now / 1000 * 0.12;
         orbitNodes.forEach(o => {
           const a = o.base + ang;
           const x = C.x + Math.cos(a) * ORBIT_R - ICO / 2;
           const y = C.y + Math.sin(a) * ORBIT_R - ICO / 2;
-          o.node.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 14px) ${bb}`;
+          o.node.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 26px) ${bb}`;
         });
       }
       requestAnimationFrame(frame);

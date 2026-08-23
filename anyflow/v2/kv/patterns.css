@@ -56,7 +56,7 @@
 .kvp-dash .slines i.short { width: 55%; }
 
 /* ============ アイコン箱 ============ */
-.kvp-ico { position: absolute; width: 100px; height: 100px; transform-style: preserve-3d; }
+.kvp-ico { position: absolute; width: 112px; height: 112px; transform-style: preserve-3d; }
 .kvp-ico-face { position: absolute; inset: 0; border-radius: 20px; overflow: hidden;
   transform-style: preserve-3d; }
 .kvp-ico-glyph { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
@@ -76,12 +76,12 @@
   backdrop-filter: blur(30px) saturate(1.35); -webkit-backdrop-filter: blur(30px) saturate(1.35);
   box-shadow: 0 16px 36px rgba(16,24,40,.13), inset 0 1px 1px rgba(255,255,255,.75);
 }
-/* 白い立体箱（neumorphic。P1=平ら / P4=厚み） */
+/* 白い立体箱（neumorphic。P1=平ら / P4=厚み）。添付の“白い立体チップ”に寄せる */
 .kvp-ico--white .kvp-ico-face {
-  background: linear-gradient(150deg, #ffffff 0%, #eef2f7 100%);
-  border-radius: 22px; border: 1px solid #fff;
-  box-shadow: 0 14px 30px rgba(16,24,40,.16), inset 0 2px 3px rgba(255,255,255,.9),
-    inset 0 -6px 12px rgba(16,24,40,.05);
+  background: linear-gradient(155deg, #ffffff 0%, #eef1f6 100%);
+  border-radius: 24px; border: 1px solid #fff;
+  box-shadow: 0 22px 38px -10px rgba(16,24,40,.26), 0 6px 14px rgba(16,24,40,.10),
+    inset 0 2px 3px rgba(255,255,255,.95), inset 0 -10px 18px rgba(16,24,40,.06);
 }
 /* 白い立体箱の厚み（アイソメ用スラブ）。translateZで下へ積む */
 .kvp-slab { position: absolute; inset: 0; border-radius: 22px; display: none; }
@@ -93,9 +93,15 @@
 
 /* ============ 接続：回路線（P1・P3） ============ */
 .kvp-lines { position: absolute; left: 0; top: 0; overflow: visible; }
-.kvp-line { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 2;
-  filter: drop-shadow(0 1px 2px rgba(16,24,40,.10)); }
-.view-iso .kvp-line { stroke: rgba(148,163,184,.6); filter: none; }
+.kvp-line { fill: none; stroke: rgba(255,255,255,.96); stroke-width: 2.5;
+  stroke-linejoin: round; stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px rgba(16,24,40,.08)); }
+.view-iso .kvp-line { stroke: rgba(255,255,255,.92); }
+/* シアンの流れ（添付①③のトレース上の区切り）。ハッキリ見せる */
+.kvp-line-seg { fill: none; stroke: #16B4F5; stroke-width: 4.5; stroke-linecap: round;
+  stroke-dasharray: 20 88; animation: kvpFlow 2.0s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(22,180,245,.7)); }
+@keyframes kvpFlow { to { stroke-dashoffset: -108; } }
 .kvp-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%;
   will-change: transform; box-shadow: 0 2px 5px rgba(16,24,40,.28); }
 
@@ -107,10 +113,11 @@
 }
 
 /* ============ 接続：同心円グロー（P2） ============ */
-.kvp-ring { position: absolute; border-radius: 50%; border: 2px solid rgba(120,224,255,.75);
-  box-shadow: 0 0 50px 6px rgba(90,208,255,.38), inset 0 0 60px rgba(90,208,255,.22);
+/* 細い光の線（添付②の同心円）。太いモヤっとした影でなく、くっきりした発光ライン */
+.kvp-ring { position: absolute; border-radius: 50%; border: 1.6px solid rgba(150,230,255,.95);
+  box-shadow: 0 0 22px 1px rgba(60,196,255,.55), inset 0 0 22px rgba(60,196,255,.3);
   will-change: transform, opacity; }
-.kvp-ring.soft { border-color: rgba(255,255,255,.85); box-shadow: 0 0 36px 4px rgba(255,255,255,.6); }
+.kvp-ring.soft { border-color: rgba(255,255,255,.92); box-shadow: 0 0 18px 1px rgba(255,255,255,.6); }
 
 /* ============ 接続：単一軌道（P4） ============ */
 .kvp-orbit { position: absolute; border-radius: 50%;
