@@ -131,10 +131,13 @@ export const DEFAULT_ENTER_TUNE: EnterTune = {
 };
 
 export function buildEnter(t: EnterTune): EnterPattern {
-  const k = Math.max(0, Math.min(1, t.tame / 100));
-  const growEase = STANDARD.map((s, i) => s + (SUCK[i] - s) * k) as [
-    number, number, number, number,
-  ];
+  /* 100%超は SUCK を外挿してさらに強い「ため」に。
+     ベジェの x 成分（偶数番）は仕様上 0〜1 必須なのでクランプする */
+  const k = Math.max(0, t.tame / 100);
+  const growEase = STANDARD.map((s, i) => {
+    const v = s + (SUCK[i] - s) * k;
+    return i % 2 === 0 ? Math.max(0, Math.min(1, v)) : v;
+  }) as [number, number, number, number];
   return {
     ...DEFAULT_ENTER,
     duration: Math.max(200, t.durationSec * 1000),
