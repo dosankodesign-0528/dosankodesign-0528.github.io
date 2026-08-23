@@ -21,7 +21,7 @@
         "3096"
       ],
       "port": 3096,
-      "cwd": "abashiri-site"
+      "cwd": "abashiri/v1"
     },
     {
       "name": "design-gallery",
@@ -94,7 +94,7 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed' && exec python3 -m http.server ${PORT:-8773}"
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v1' && exec python3 -m http.server ${PORT:-8773}"
       ],
       "port": 8773,
       "autoPort": true
@@ -122,7 +122,7 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd '/Users/hideyuki/Developer/Claude Code/anyflow-embed-v2' && exec python3 -m http.server 8774"
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v2' && exec python3 -m http.server 8774"
       ],
       "port": 8774
     },
@@ -136,7 +136,7 @@
         "3457"
       ],
       "port": 3457,
-      "cwd": "abashiri-site-v2"
+      "cwd": "abashiri/v2"
     }
   ]
 }

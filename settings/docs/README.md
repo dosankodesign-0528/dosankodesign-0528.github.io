@@ -16,7 +16,7 @@
 - フォルダ名は**プロダクトのフォルダ名とそろえる**（`abashiri-site/` の資料 → `settings/docs/abashiri-site/`）
 - 新しいプロダクトの資料が出てきたら、`settings/docs/` に同じ名前のフォルダを作って入れる
 - ⚠️ **プロダクト別フォルダの中で `index.html` `app/globals.css` のように書かれている相対パスは、
-  そのプロダクトのフォルダ（例: `../../anyflow-embed/`）を基準に読む**
+  そのプロダクトのフォルダ（例: `../../anyflow/v1/`）を基準に読む**
 
 ## 🌐 general — 全プロダクト共通
 
@@ -60,7 +60,7 @@
 | ファイル | 場所 | 残す理由 |
 |---|---|---|
 | `CLAUDE.md` / `AGENTS.md` | リポジトリ直下 | Claude Code がその場所から自動で読み込む。動かすと効かなくなる |
-| `abashiri-site/CLAUDE.md` / `AGENTS.md` | 各プロダクト直下 | 同上（`next dev` が自動生成もする） |
+| `abashiri/v1/` `abashiri/v2/` などの `CLAUDE.md` / `AGENTS.md` | 各バージョン直下 | 同上（`next dev` が自動生成もする） |
 | 各プロダクトの `README.md` | 各プロダクト直下 | GitHub がフォルダを開いた時に表示する定位置。npm パッケージ（tune-panel）も同じ |
-| `anyflow-embed/framer-handoff/*.md` | 元の場所 | `assets/` `code/` とセットで zip にして渡す**納品物一式**。バラすと zip が作れない |
+| `anyflow/v1/framer-handoff/*.md` | 元の場所 | `assets/` `code/` とセットで zip にして渡す**納品物一式**。バラすと zip が作れない |
 | houmon-app / nittei-chousei の資料 | それぞれの別リポジトリ | submodule（このリポジトリの管理外） |

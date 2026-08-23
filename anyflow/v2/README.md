@@ -4,7 +4,7 @@
 
 | | 中身 | 本番 URL | 触る |
 |---|---|---|---|
-| **V1.0** | [`../anyflow-embed/`](../anyflow-embed/) | https://anyflow-embed.vercel.app | ❌ 凍結。バグ修正以外は足さない |
+| **V1.0** | [`../v1/`](../v1/) | https://anyflow-embed.vercel.app | 公開版（安定）。更新は V2 側で進める |
 | **V2** | このフォルダ | https://anyflow-embed-v2.vercel.app | ⭕ アップデート案はここで |
 
 - V2 は 2026-08-19 時点の V1.0 を丸ごとコピーしたものからスタートしています
@@ -20,7 +20,7 @@
 npx vercel --prod --yes
 ```
 
-⚠️ **`anyflow-embed/`（V1.0）の中で叩かないこと。** 公開中のサイトが上書きされます。
+⚠️ **`../v1/`（V1.0）の中で叩かないこと。** 公開中のサイトが上書きされます。
 デプロイ前に `cat .vercel/project.json` で `projectName` が `anyflow-embed-v2` か必ず確認。
 
 ## 検索エンジン

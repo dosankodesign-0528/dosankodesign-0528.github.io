@@ -12,7 +12,7 @@
   例外は下の3つだけ:
   1. `CLAUDE.md` / `AGENTS.md`（Claude Code がその場所から読むので動かせない）
   2. 各プロダクトの `README.md`（GitHub がフォルダを開いた時に出す定位置）
-  3. 納品物としてフォルダごと渡すもの（例: `anyflow-embed/framer-handoff/`）
+  3. 納品物としてフォルダごと渡すもの（例: `anyflow/v1/framer-handoff/`）
 - **ファイルを足したら [settings/docs/README.md](settings/docs/README.md) の表にも1行足す**（索引が古くなると意味がない）
 
 ## 🎨 UI 提案ルール（必須）
@@ -260,18 +260,17 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | ポータル本体 | https://hideyuki-yamanaka.github.io/ | 親リポ `.github/workflows/deploy.yml` |
 
 注意事項：
-- 🔒 **abashiri-site も V1.0（公開中）と V2（アップデート案）の2本立て**（2026-08-21 から。Anyflow と同じ方式）。
-  - `abashiri-site/` = **V1.0。凍結**（2026-08-16 凍結時点のデザインに巻き戻し済み）。バグ修正以外は触らない
-  - `abashiri-site-v2/` = アップデート作業場（旧 v1.1〜v1.2 の内容はこちらに移行済み）
-  - ✋ 2026-08-23 に abashiri-site の Git 自動デプロイを**解除（手動化）**。push しても本番は動かなくなった（旧: 触ると即本番の地雷 → 解消）。上げ直したい時だけ `npx vercel redeploy abashiri-site.vercel.app`
-  - V2 は手動デプロイ（`abashiri-site-v2/` 内で `npx vercel --prod --yes`）
-- 🔒 **anyflow-embed は V1.0（公開中）と V2（アップデート案）の2本立て**（2026-08-19 から）。
-  - `anyflow-embed/` = **V1.0。凍結**。バグ修正以外は足さない。URL は変えない
-  - `anyflow-embed-v2/` = アップデート案の作業場。ここはいくら壊してよい
-  - **Vercel プロジェクトが別**なので、V2 をデプロイしても V1.0 の URL は影響を受けない
-  - ⚠️ デプロイ前に必ず `cat .vercel/project.json` で projectName を確認する。
-    V2 のつもりで `anyflow-embed/` の中で叩くと**公開中のサイトが上書きされる**
-  - V1.0 のコードは `anyflow-v1.0` ブランチにも凍結済み（削除厳禁）
+- 📁 **バージョンはプロダクト親の下に `v1` / `v2` で置く**（2026-08-23 から）。「凍結（触るな）」の概念は廃止し、**V1.0＝公開版（安定）／ V2＝更新作業版**の対等な2バージョンとして扱う。両方とも手動デプロイ。
+- **abashiri（網走）＝ `abashiri/v1` と `abashiri/v2`**（別URL・別Vercelプロジェクトで公開）。
+  - `abashiri/v1/` = V1.0（公開版・安定）。Vercel `abashiri-site` → https://abashiri-site.vercel.app
+  - `abashiri/v2/` = V2（更新作業版）。Vercel `abashiri-site-v2` → https://abashiri-site-v2.vercel.app
+  - V1.0 は 2026-08-23 に Git 連携を解除（push しても本番は動かない）。上げ直しは `npx vercel redeploy abashiri-site.vercel.app`
+  - V2 は `abashiri/v2/` 内で `npx vercel --prod --yes`
+- **anyflow ＝ `anyflow/v1` と `anyflow/v2`**（別URL・別Vercelプロジェクト）。
+  - `anyflow/v1/` = V1.0（公開版）。Vercel `anyflow-embed` → https://anyflow-embed.vercel.app
+  - `anyflow/v2/` = V2（更新作業版）。Vercel `anyflow-embed-v2` → https://anyflow-embed-v2.vercel.app
+  - ⚠️ デプロイ前に必ず `cat .vercel/project.json` で projectName を確認（`anyflow/v1/` の中で叩くと**公開中サイトを上書き**してしまう）
+  - V1.0 のコードは `anyflow-v1.0` ブランチにも保存済み（削除厳禁の保険スナップショット）
 - **アプリは全部 Vercel 一本**（2026-04-23 統一）。以前は GH Pages にも複製 deploy されてたが、houmon-app の mock モード問題や design-gallery の swc バグなどトラブルの温床だった。現在は各 `hideyuki-yamanaka.github.io/<app>/` にアクセスすると Vercel へリダイレクトされるだけ。
 - **nittei-chousei だけデフォルトブランチが `master`**。他は `main`。
 - ポータルの `product.meta.json` の `path` が絶対 URL（`https://...`）なら Vercel、未指定 or 相対パスなら GH Pages。今は全アプリが絶対URL指定済み。
