@@ -26,7 +26,7 @@ import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
 import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
-import { ENTER_PATTERNS } from "./enterPatterns";
+import { DEFAULT_ENTER_TUNE, type EnterTune } from "./enterPatterns";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -63,8 +63,8 @@ export type TopTuneValues = {
   tips: { delay: number; fade: number; pattern: number };
   /** 動画の音量：徐々に大きくするか（2026-08-23 ヒデさん依頼） */
   videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
-  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の5案） */
-  expEnter: { pattern: number };
+  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の EnterTune） */
+  expEnter: EnterTune;
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -163,8 +163,8 @@ type Params = {
   scrollSpd: { kvToMsg: number };
   tips: { delay: number; fade: number; pattern: number };
   videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
-  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の5案） */
-  expEnter: { pattern: number };
+  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の EnterTune） */
+  expEnter: EnterTune;
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -215,7 +215,7 @@ export default function TopTunePanel({
       scrollSpd: { kvToMsg: 100 },
       tips: { delay: 5, fade: 1.2, pattern: 5 }, /* 出現は案5「下からゆっくり」で確定 */
       videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
-      expEnter: { pattern: 1 },
+      expEnter: { ...DEFAULT_ENTER_TUNE },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -1116,18 +1116,52 @@ export default function TopTunePanel({
 
               { sub: "動画への遷移（この場所にする → 再生画面）" },
               {
-                note: "選んだカードが窓になって、向こう側の世界へ入っていく遷移の5案。切り替えて、もう一度「この場所にする」を押すと新しい遷移で入れます。",
+                note: "選んだカードが窓になって向こう側へ入る遷移（吸い込まれる案がベース）。値を変えて手を止めると、場面選択に戻って自動でボタンが押され、その場で遷移をプレビューできます。",
               },
               {
-                pills: "遷移の案",
-                path: "expEnter.pattern",
-                immediate: true,
-                options: ENTER_PATTERNS.map((pt, i) => ({
-                  name: `案${i + 1} ${pt.label}`,
-                  value: i + 1,
-                  swatch: "#0070c9",
-                  desc: pt.note,
-                })),
+                slider: "アニメーション時間",
+                path: "expEnter.durationSec",
+                min: 0.5,
+                max: 4,
+                step: 0.1,
+                fmt: "s",
+                hint: "窓をくぐり終わるまでの時間。長いほどゆっくり入ります。",
+              },
+              {
+                slider: "ため（緩急）",
+                path: "expEnter.tame",
+                min: 0,
+                max: 100,
+                step: 5,
+                fmt: "%",
+                hint: "0%は最初から一定の速さ。上げるほど出だしを溜めて、終盤で一気に加速して吸い込まれます。",
+              },
+              {
+                slider: "奥行き（視差）",
+                path: "expEnter.parallax",
+                min: 0,
+                max: 15,
+                step: 1,
+                fmt: "%",
+                hint: "枠が迫るのに景色がほぼ動かない度合い。上げるほど遠くへ入っていく感じが強まります。",
+              },
+              {
+                slider: "まわりの暗さ",
+                path: "expEnter.dim",
+                min: 0,
+                max: 80,
+                step: 5,
+                fmt: "%",
+                hint: "遷移中に画面の外周を暗く落とす量。上げるほどトンネル感が出ます。",
+              },
+              {
+                slider: "途中のブラー",
+                path: "expEnter.blurMid",
+                min: 0,
+                max: 30,
+                step: 2,
+                fmt: "px",
+                hint: "くぐる途中で一度ピントがぼける量。0でオフ。上げると夢に入るような感触になります。",
               },
               { sub: "ぼーっとTips（動画再生中のモーダル）" },
               {
@@ -1290,7 +1324,8 @@ export default function TopTunePanel({
             p.startsWith("intro.") ||
             p.startsWith("hero.") ||
             p.startsWith("expIntro.") ||
-            p.startsWith("expPick.")
+            p.startsWith("expPick.") ||
+            p.startsWith("expEnter.")
           )
             onReplay?.(p);
         },

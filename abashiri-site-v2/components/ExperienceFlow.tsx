@@ -25,7 +25,14 @@ import {
 } from "framer-motion";
 import GlobalNav from "./GlobalNav";
 import { devSilent } from "./devSound";
-import { findEnter } from "./enterPatterns";
+import { findEnter, type EnterPattern } from "./enterPatterns";
+
+declare global {
+  interface Window {
+    /** 遷移プレビューの保留フラグ（experience/page.tsx が立てる） */
+    __abashiriAutoPick?: boolean;
+  }
+}
 
 export type Step = 1 | 2 | 3;
 
@@ -479,6 +486,31 @@ function SpotCard({
     }
   }, [active]);
 
+  /* 遷移プレビュー：パネルで遷移を調整すると、この合図で
+     「この場所にする」を自動で押す（2026-08-23 ヒデさん依頼のリアルタイム確認）。
+     合図が先に飛んでカードがまだ無い場合に備え、保留フラグも見る */
+  useEffect(() => {
+    if (!(active && spot.video)) return;
+    const fire = () => {
+      const r = ref.current?.getBoundingClientRect();
+      if (r) onPick(spot, r, videoRef.current?.currentTime ?? 0);
+    };
+    const h = () => {
+      window.__abashiriAutoPick = false;
+      fire();
+    };
+    window.addEventListener("abashiri:auto-pick", h);
+    let id = 0;
+    if (window.__abashiriAutoPick) {
+      window.__abashiriAutoPick = false;
+      id = window.setTimeout(fire, 400); /* マウント直後はレイアウト待ち */
+    }
+    return () => {
+      window.removeEventListener("abashiri:auto-pick", h);
+      window.clearTimeout(id);
+    };
+  }, [active, spot, onPick]);
+
   return (
     <div
       ref={ref}
@@ -781,7 +813,7 @@ function EnterWindow({
 }: {
   /** ステージ座標での、押した瞬間のカードの位置と大きさ＋器の実寸 */
   from: { x: number; y: number; w: number; h: number; stageW: number; stageH: number };
-  pattern: number | string | null | undefined;
+  pattern: number | string | EnterPattern | null | undefined;
   /** 拡大しきったか。くぐり終わったら暗幕を外して素の映像に戻す */
   landed: boolean;
   onDone: () => void;
@@ -831,6 +863,12 @@ function EnterWindow({
 
   const radius = useTransform(t, mix(p.radius[0], p.radius[1]));
   const border = useTransform(t, mix(p.border[0], p.border[1]));
+  /* 途中のブラー：中盤に山なりで一度ぼける（0なら効かない） */
+  const midBlur = useTransform(t, (v) =>
+    p.blur[1] > 0
+      ? `blur(${(p.blur[1] * Math.sin(Math.PI * Math.min(1, Math.max(0, v)))).toFixed(1)}px)`
+      : "none"
+  );
 
   return (
     <motion.div className="absolute inset-0 z-20 overflow-hidden" key="enter">
@@ -860,6 +898,7 @@ function EnterWindow({
             initial={{ scale: p.parallax }}
             animate={{ scale: 1 }}
             transition={{ duration: sec, ease: [0.33, 0, 0.5, 1] }}
+            style={{ filter: midBlur }}
           >
             {children}
           </motion.div>
@@ -877,7 +916,7 @@ function WorldPush({
 }: {
   children: React.ReactNode;
   active: boolean;
-  pattern: number | string | null | undefined;
+  pattern: number | string | EnterPattern | null | undefined;
 }) {
   const p = findEnter(pattern);
   return (
@@ -909,8 +948,8 @@ export default function ExperienceFlow({
 }: {
   step: Step;
   setStep: (s: Step) => void;
-  /** 1〜5: 窓枠をくぐる遷移のパターン（enterPatterns.ts） */
-  enter?: number | string | null;
+  /** 遷移のパターン。番号 or 調整パネルで組んだ EnterPattern そのもの（enterPatterns.ts） */
+  enter?: number | string | EnterPattern | null;
   /** 「この場所にする」を押した合図。人物イラストはここから出す */
   onPicked?: () => void;
   /** 導入メッセージの出方（ブラー・速度・タイミング）。調整パネルから */
@@ -972,6 +1011,17 @@ export default function ExperienceFlow({
     setLanded(true);
     setStep(3);
   }, [setStep]);
+
+  /* ブラウザバックや遷移プレビューで step1/2 へ戻ったら、
+     窓（entering）と映像の状態を片付ける（2026-08-23 ヒデさん依頼の階層バック対応） */
+  useEffect(() => {
+    if (step !== 3) {
+      setEntering(null);
+      setLanded(false);
+      setStartAt(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const media = (
     <MediaLayer spot={spot} videoRef={mediaRef} startAt={startAt} />

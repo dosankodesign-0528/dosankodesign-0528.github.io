@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Stage from "@/components/Stage";
 import ExperienceFlow, { DEFAULT_INTRO_PACE, type Step } from "@/components/ExperienceFlow";
 import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
@@ -10,6 +10,7 @@ import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 import { DEFAULT_MSG } from "@/components/msgConfig";
+import { buildEnter, DEFAULT_ENTER_TUNE } from "@/components/enterPatterns";
 
 export default function ExperiencePage() {
   const [step, setStep] = useState<Step>(1);
@@ -36,7 +37,7 @@ export default function ExperiencePage() {
     scrollSpd: { kvToMsg: 100 },
     tips: { delay: 5, fade: 1.2, pattern: 5 },
     videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
-    expEnter: { pattern: 1 },
+    expEnter: { ...DEFAULT_ENTER_TUNE },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -44,11 +45,59 @@ export default function ExperiencePage() {
      （Anyflow のパネルと同じ「変えたらその場でアニメが見られる」挙動） */
   const [replayEpoch, setReplayEpoch] = useState(0);
   const onReplay = useCallback((path?: string) => {
+    /* 遷移（動画への入り方）を触った時：場面選択に戻して自動で
+       「この場所にする」を押し、その場で遷移をプレビュー（2026-08-23 ヒデさん依頼） */
+    if (path?.startsWith("expEnter.")) {
+      setPicked(false);
+      setStep(2);
+      window.__abashiriAutoPick = true; /* カードがまだ無ければマウント時に拾われる */
+      window.setTimeout(
+        () => window.dispatchEvent(new CustomEvent("abashiri:auto-pick")),
+        1200
+      );
+      return;
+    }
     /* カルーセルの登場を触った時は、場所えらびの画面から再生し直す */
     setStep(path?.startsWith("expPick.") ? 2 : 1);
     setPicked(false);
     setReplayEpoch((e) => e + 1);
   }, []);
+
+  /* ブラウザバックの階層化（2026-08-23 ヒデさん依頼）：
+     導入(1) → 場面選択(2) → 動画(3) を履歴に積み、
+     戻るで 3→2→1→（前のページ）と1段ずつ戻れるようにする */
+  const stepRef = useRef(step);
+  const fromPop = useRef(false);
+  useEffect(() => {
+    const prev = stepRef.current;
+    stepRef.current = step;
+    if (fromPop.current) {
+      fromPop.current = false;
+      return;
+    }
+    /* 進んだ時だけ履歴を積む（プレビュー等でプログラム的に戻る時は積まない） */
+    if (step > prev) {
+      window.history.pushState({ expStep: step }, "", `?step=${step}`);
+    }
+  }, [step]);
+  useEffect(() => {
+    const onPop = (ev: PopStateEvent) => {
+      const s = (ev.state as { expStep?: number } | null)?.expStep;
+      fromPop.current = true;
+      if (s === 2 || s === 3) {
+        setStep(s as Step);
+        if (s !== 3) setPicked(false);
+      } else {
+        setStep(1);
+        setPicked(false);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  /* 遷移パターン：パネルの細密チューニング値から組み立てる */
+  const enterPattern = useMemo(() => buildEnter(tune.expEnter), [tune.expEnter]);
 
   /* ?step=2 / ?step=3 で途中のステップから開始できる（動作確認・デモ用） */
   useEffect(() => {
@@ -72,7 +121,7 @@ export default function ExperiencePage() {
           tips={tune.tips}
           videoVol={tune.videoVol}
           videoUiHideSec={tune.videoVol.uiHideSec}
-          enter={tune.expEnter.pattern}
+          enter={enterPattern}
         />
       </Stage>
 

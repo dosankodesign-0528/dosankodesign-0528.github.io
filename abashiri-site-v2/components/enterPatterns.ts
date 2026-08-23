@@ -109,7 +109,46 @@ export const ENTER_PATTERNS: EnterPattern[] = [
 
 export const DEFAULT_ENTER = ENTER_PATTERNS[0];
 
-export function findEnter(key?: string | number | null): EnterPattern {
+/* 調整パネルの細密チューニング値（案1をベースに拡張。2026-08-23 ヒデさん依頼） */
+export type EnterTune = {
+  /** アニメーション時間（秒） */
+  durationSec: number;
+  /** ため（緩急）%：0=一定の速さ、100=終盤で一気に加速（今の吸い込まれ） */
+  tame: number;
+  /** 奥行き（視差）%：大きいほど枠だけが迫って見える */
+  parallax: number;
+  /** まわりの暗さ% */
+  dim: number;
+  /** 途中のブラー(px)：中盤に一度ぼける */
+  blurMid: number;
+};
+export const DEFAULT_ENTER_TUNE: EnterTune = {
+  durationSec: 1.6,
+  tame: 100,
+  parallax: 6,
+  dim: 55,
+  blurMid: 0,
+};
+
+export function buildEnter(t: EnterTune): EnterPattern {
+  const k = Math.max(0, Math.min(1, t.tame / 100));
+  const growEase = STANDARD.map((s, i) => s + (SUCK[i] - s) * k) as [
+    number, number, number, number,
+  ];
+  return {
+    ...DEFAULT_ENTER,
+    duration: Math.max(200, t.durationSec * 1000),
+    growEase,
+    parallax: 1 + t.parallax / 100,
+    dim: t.dim / 100,
+    blur: [0, t.blurMid, 0],
+  };
+}
+
+export function findEnter(
+  key?: string | number | EnterPattern | null
+): EnterPattern {
+  if (key != null && typeof key === "object") return key;
   if (key == null) return DEFAULT_ENTER;
   const byIndex = ENTER_PATTERNS[Number(key) - 1];
   return byIndex ?? ENTER_PATTERNS.find((p) => p.key === key) ?? DEFAULT_ENTER;

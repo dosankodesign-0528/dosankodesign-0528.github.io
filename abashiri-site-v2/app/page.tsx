@@ -10,6 +10,7 @@ import { DEFAULT_FACE } from "@/components/faceConfig";
 import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 import { DEFAULT_MSG } from "@/components/msgConfig";
+import { DEFAULT_ENTER_TUNE } from "@/components/enterPatterns";
 import { DEFAULT_INTRO_PACE } from "@/components/ExperienceFlow";
 
 export default function Home() {
@@ -35,7 +36,7 @@ export default function Home() {
     scrollSpd: { kvToMsg: 100 },
     tips: { delay: 5, fade: 1.2, pattern: 5 },
     videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
-    expEnter: { pattern: 1 },
+    expEnter: { ...DEFAULT_ENTER_TUNE },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
