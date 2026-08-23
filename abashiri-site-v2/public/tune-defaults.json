@@ -129,6 +129,23 @@
   "scrollSpd": {
     "kvToMsg": 40
   },
+  "tips": {
+    "delay": 5,
+    "fade": 1.2,
+    "pattern": 5
+  },
+  "videoVol": {
+    "fadeIn": true,
+    "fadeSec": 3,
+    "uiHideSec": 2
+  },
+  "expEnter": {
+    "durationSec": 1.6,
+    "tame": 100,
+    "parallax": 6,
+    "dim": 55,
+    "blurMid": 0
+  },
   "loop": {
     "cycle": 15,
     "show": 2.6,
