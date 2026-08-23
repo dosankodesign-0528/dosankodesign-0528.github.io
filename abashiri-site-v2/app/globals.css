@@ -151,7 +151,7 @@
   --illust-sparkle-period: 1.2s;
   /* ぼーっと体験ページ・左側のカモメ（🟡仮置き。右下パネルから調整・保存） */
   --bird-exp-x: 150px;
-  --bird-exp-y: 380px;
+  --bird-exp-y: 180px;
   --bird-exp-w: 84px;
   --bird-exp-rotate: -8deg;
 }

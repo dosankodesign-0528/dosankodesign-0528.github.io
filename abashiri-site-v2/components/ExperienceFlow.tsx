@@ -586,6 +586,7 @@ function Watch({
   videoRef,
   seamless,
   tips = DEFAULT_BO_TIPS,
+  vol = { fadeIn: true, fadeSec: 3 },
 }: {
   spot: Spot;
   /* 動画そのものは MediaLayer が持つ。ここは操作するだけ */
@@ -594,6 +595,8 @@ function Watch({
   seamless: boolean;
   /** ぼーっとTips（再生後に出るモーダル）のタイミング。調整パネルから */
   tips?: BoTipsTune;
+  /** 動画の音量：徐々に大きくするか・何秒かけるか。調整パネルから */
+  vol?: { fadeIn: boolean; fadeSec: number };
 }) {
   const [playing, setPlaying] = useState(!spot.video || seamless);
   const [remaining, setRemaining] = useState(3 * 60);
@@ -614,17 +617,31 @@ function Watch({
   );
   const controlsShown = uiVisible || !playing;
 
-  /* playing の状態と <video> の再生を同期する */
+  /* playing の状態と <video> の再生を同期する。
+     再生開始時は音量を0から徐々に上げる（いきなり鳴らない。2026-08-23 ヒデさん依頼） */
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     if (playing) {
       v.muted = devSilent(); /* 開発中(localhost)は無音 */
       v.play().catch(() => setPlaying(false));
+      if (vol.fadeIn && vol.fadeSec > 0) {
+        /* 動画自身の再生時計を基準に上げる（rAFはタブが裏だと止まるため使わない） */
+        v.volume = 0;
+        const start = v.currentTime;
+        const onTime = () => {
+          const p = Math.min(1, (v.currentTime - start) / vol.fadeSec);
+          v.volume = p;
+          if (p >= 1) v.removeEventListener("timeupdate", onTime);
+        };
+        v.addEventListener("timeupdate", onTime);
+        return () => v.removeEventListener("timeupdate", onTime);
+      }
+      v.volume = 1;
     } else {
       v.pause();
     }
-  }, [playing, videoRef]);
+  }, [playing, videoRef, vol.fadeIn, vol.fadeSec]);
 
   /* 動画が始まったらぼーっとタイマーがカウントダウン */
   useEffect(() => {
@@ -848,6 +865,7 @@ export default function ExperienceFlow({
   introPace,
   pickEnter,
   tips,
+  videoVol,
 }: {
   step: Step;
   setStep: (s: Step) => void;
@@ -861,6 +879,8 @@ export default function ExperienceFlow({
   pickEnter?: number;
   /** ぼーっとTips（動画再生ページのモーダル）のタイミング。調整パネルから */
   tips?: BoTipsTune;
+  /** 動画の音量フェードイン。調整パネルから */
+  videoVol?: { fadeIn: boolean; fadeSec: number };
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
@@ -958,7 +978,7 @@ export default function ExperienceFlow({
       {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる。
           Watch は操作パネルだけで、映像そのものには触らない */}
       {step === 3 && (
-        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} tips={tips} />
+        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} tips={tips} vol={videoVol} />
       )}
 
       {/* ナビは常に最前面（動画再生中の操作パネルが z-30 の全画面レイヤーなので、

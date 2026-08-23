@@ -34,7 +34,8 @@ export default function ExperiencePage() {
     expIntro: DEFAULT_INTRO_PACE,
     expPick: { pattern: 1 },
     scrollSpd: { kvToMsg: 100 },
-    tips: { delay: 5, fade: 1.2 },
+    tips: { delay: 5, fade: 1.2, pattern: 1 },
+    videoVol: { fadeIn: true, fadeSec: 3 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -68,6 +69,7 @@ export default function ExperiencePage() {
           introPace={tune.expIntro}
           pickEnter={tune.expPick.pattern}
           tips={tune.tips}
+          videoVol={tune.videoVol}
         />
       </Stage>
 

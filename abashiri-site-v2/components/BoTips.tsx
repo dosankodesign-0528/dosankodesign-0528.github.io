@@ -20,8 +20,33 @@ export type BoTipsTune = {
   delay: number;
   /** フェードイン/アウトのアニメーション時間（秒） */
   fade: number;
+  /** 1〜5: 出現のしかた（TIPS_PATTERNS） */
+  pattern: number;
 };
-export const DEFAULT_BO_TIPS: BoTipsTune = { delay: 5, fade: 1.2 };
+export const DEFAULT_BO_TIPS: BoTipsTune = { delay: 5, fade: 1.2, pattern: 1 };
+
+/* 出現のしかた5案（2026-08-23 ヒデさん依頼。パネルのピルで切替） */
+export const TIPS_PATTERNS: Record<number, { name: string; note: string }> = {
+  1: { name: "フェード", note: "透明→そのままふわっと。いちばんシンプル。" },
+  2: { name: "ブラーで出現", note: "ぼやけた状態からピントが合うように現れます。" },
+  3: { name: "ブラー＋下から", note: "ぼやけたまま下からふわっと浮かび上がります。" },
+  4: { name: "ブラー＋少し拡大", note: "小さくぼやけた状態から、ピントと大きさが同時に合います。" },
+  5: { name: "下からゆっくり", note: "ブラーなしで、下からゆっくり浮かび上がります。" },
+};
+
+/* 各案の「出る前」の状態。出たあとは全案共通（透明度1・ブラー0・移動なし） */
+const FROM: Record<number, React.CSSProperties> = {
+  1: { opacity: 0, filter: "blur(0px)", transform: "none" },
+  2: { opacity: 0, filter: "blur(18px)", transform: "none" },
+  3: { opacity: 0, filter: "blur(12px)", transform: "translateY(26px)" },
+  4: { opacity: 0, filter: "blur(10px)", transform: "scale(0.95)" },
+  5: { opacity: 0, filter: "blur(0px)", transform: "translateY(40px)" },
+};
+const SHOWN: React.CSSProperties = {
+  opacity: 1,
+  filter: "blur(0px)",
+  transform: "none",
+};
 
 export default function BoTips({
   playing,
@@ -33,6 +58,7 @@ export default function BoTips({
 }) {
   /* hidden: 出ていない / in: 表示中 / out: フェードアウト中 */
   const [phase, setPhase] = useState<"hidden" | "in" | "out">("hidden");
+  const firstPattern = useRef(true);
   const [closed, setClosed] = useState(false); /* ×で閉じたら滞在中は出さない */
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -52,6 +78,20 @@ export default function BoTips({
     };
   }, [playing, closed, tune.delay]);
 
+  /* パネルで出現パターンを切り替えたら、その場で出し直して比較できるようにする */
+  useEffect(() => {
+    if (firstPattern.current) {
+      firstPattern.current = false;
+      return;
+    }
+    if (!playing) return;
+    setClosed(false);
+    setPhase("hidden");
+    const id = setTimeout(() => setPhase("in"), 400);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tune.pattern]);
+
   /* フェードアウトが終わったら DOM から下ろす */
   useEffect(() => {
     if (phase !== "out") return;
@@ -67,21 +107,21 @@ export default function BoTips({
   if (phase === "hidden") return null;
 
   return (
-    <div
-      className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
-      style={{
-        opacity: phase === "in" ? 1 : 0,
-        transition: `opacity ${tune.fade}s cubic-bezier(0.22, 1, 0.36, 1)`,
-      }}
-    >
-      <div className="pointer-events-auto relative w-[700px] max-w-[86vw] rounded-2xl bg-white/10 p-[44px] backdrop-blur-[65px]">
+    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+      <div
+        className="pointer-events-auto relative w-[700px] max-w-[86vw] rounded-2xl bg-white/10 p-[44px] backdrop-blur-[65px]"
+        style={{
+          ...(phase === "in" ? SHOWN : FROM[tune.pattern] || FROM[1]),
+          transition: `opacity ${tune.fade}s cubic-bezier(0.22,1,0.36,1), filter ${tune.fade}s cubic-bezier(0.22,1,0.36,1), transform ${tune.fade}s cubic-bezier(0.22,1,0.36,1)`,
+        }}
+      >
         {/* 上部ピル（カンプ 15564:22024。本体の上端に半分乗る） */}
         <div className="absolute -top-[22px] left-1/2 flex w-[186px] -translate-x-1/2 items-center justify-center rounded-full bg-white/40 px-4 py-[6px] backdrop-blur-[90px]">
           <p className="text-body-16 font-normal leading-[1.2] text-white">
             ぼーっとTips
           </p>
         </div>
-        {/* ×（🟡仮置き：案2 右上のシンプル×。5案の比較は /mock/tips-close） */}
+        {/* ×：案2「内側右上のシンプル×」で採用（2026-08-23 ヒデさん決定） */}
         <button
           type="button"
           onClick={close}

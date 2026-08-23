@@ -26,6 +26,7 @@ import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
 import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
+import { TIPS_PATTERNS } from "./BoTips";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -59,7 +60,9 @@ export type TopTuneValues = {
   /** KV→メッセージ区間のスクロール速度（%）。100=標準（2026-08-23 ヒデさん依頼） */
   scrollSpd: { kvToMsg: number };
   /** ぼーっとTips（動画再生ページのモーダル）のタイミング（2026-08-23 ヒデさん依頼） */
-  tips: { delay: number; fade: number };
+  tips: { delay: number; fade: number; pattern: number };
+  /** 動画の音量：徐々に大きくするか（2026-08-23 ヒデさん依頼） */
+  videoVol: { fadeIn: boolean; fadeSec: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -91,11 +94,11 @@ const POS_DEFAULTS = {
   birdExpSky1X: -20,
   birdExpSky1Y: 16,
   birdExpSky2X: 50,
-  birdExpSky2Y: 535,
+  birdExpSky2Y: 64, /* カルーセルにかぶらない高い位置（2026-08-23 ヒデさん指示） */
   birdExpSky2W: 105,
   birdExpSky2Rot: 0,
   birdExpX: 150,
-  birdExpY: 380,
+  birdExpY: 180, /* 右のカモメと高低差をつけた低め位置（カード上端にかぶらない） */
   birdExpW: 84,
   birdExpRot: -8,
 };
@@ -156,7 +159,8 @@ type Params = {
   expPick: { pattern: number };
   loop: { cycle: number; show: number; swayFirst: boolean };
   scrollSpd: { kvToMsg: number };
-  tips: { delay: number; fade: number };
+  tips: { delay: number; fade: number; pattern: number };
+  videoVol: { fadeIn: boolean; fadeSec: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -205,7 +209,8 @@ export default function TopTunePanel({
       expIntro: { ...DEFAULT_INTRO_PACE },
       expPick: { pattern: 1 },
       scrollSpd: { kvToMsg: 100 },
-      tips: { delay: 5, fade: 1.2 },
+      tips: { delay: 5, fade: 1.2, pattern: 1 },
+      videoVol: { fadeIn: true, fadeSec: 3 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -256,6 +261,7 @@ export default function TopTunePanel({
         expPick: { ...params.expPick },
         scrollSpd: { ...params.scrollSpd },
         tips: { ...params.tips },
+        videoVol: { ...params.videoVol },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -1120,6 +1126,35 @@ export default function TopTunePanel({
                 step: 0.2,
                 fmt: "s",
                 hint: "フェードイン/アウトにかける時間。長いほどふわーっと出入りします。",
+              },
+              {
+                pills: "出現の案",
+                path: "tips.pattern",
+                immediate: true,
+                options: Object.entries(TIPS_PATTERNS).map(([v, p]) => ({
+                  name: p.name,
+                  value: Number(v),
+                  swatch: "#0070c9",
+                  desc: p.note,
+                })),
+              },
+              {
+                note: "動画を再生した状態で案を切り替えると、その場でモーダルが出直して比較できます。",
+              },
+              { sub: "動画の音" },
+              {
+                toggle: "音量を徐々に大きくする",
+                path: "videoVol.fadeIn",
+                hint: "ONだと再生時に音量0から静かに立ち上がります。OFFで最初から通常音量。",
+              },
+              {
+                slider: "フェード時間",
+                path: "videoVol.fadeSec",
+                min: 0.5,
+                max: 10,
+                step: 0.5,
+                fmt: "s",
+                hint: "音量が最大になるまでの時間。長いほどゆっくり大きくなります。",
               },
               { sub: "カモメ（このページの2匹）" },
               {
