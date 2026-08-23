@@ -414,7 +414,10 @@ function Pick({
 
       {/* カンプ 15152:29228: top 239 / h 586。拡大しないのでカンプの実寸そのまま */}
       <div className="absolute left-0 top-[239px] h-[586px] w-full">
-        <div className="absolute inset-0 overflow-hidden">
+        {/* ⚠️ ここに overflow-hidden を付けない：ホバーの拡大分が上下で
+            見切れる（2026-08-23 ヒデさん報告）。横のはみ出しはステージの
+            ルート（ExperienceFlow直下の overflow-hidden）が刈ってくれる */}
+        <div className="absolute inset-0">
           <motion.div
             className="absolute left-1/2 top-0 h-full"
             animate={{ x: trackX }}
