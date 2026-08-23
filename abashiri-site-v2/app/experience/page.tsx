@@ -80,6 +80,18 @@ export default function ExperiencePage() {
       window.history.pushState({ expStep: step }, "", `?step=${step}`);
     }
   }, [step]);
+  /* ヘッダーの「体験」から：導入（1画面目）へ戻す */
+  useEffect(() => {
+    const onReset = () => {
+      fromPop.current = true; /* 戻し方向なので履歴は積まない */
+      setStep(1);
+      setPicked(false);
+      window.history.replaceState(null, "", "/experience");
+    };
+    window.addEventListener("abashiri:exp-reset", onReset);
+    return () => window.removeEventListener("abashiri:exp-reset", onReset);
+  }, []);
+
   useEffect(() => {
     const onPop = (ev: PopStateEvent) => {
       const s = (ev.state as { expStep?: number } | null)?.expStep;

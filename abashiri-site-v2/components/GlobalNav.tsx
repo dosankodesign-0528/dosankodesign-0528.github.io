@@ -44,14 +44,30 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
      アンカーではなく scroller のスクロール量ジャンプで飛ぶ。
      行き先は TopPage が data-spot-at / data-gourmet-at に入れている */
   const jumpTo = (e: React.MouseEvent, key: "spotAt" | "gourmetAt") => {
+    e.preventDefault();
     const sc = document.querySelector<HTMLElement>("[data-abashiri-scroller]");
     const at = sc?.dataset[key];
-    if (!sc || !at) return; /* トップ以外では今まで通り（何もしない） */
-    e.preventDefault();
+    if (!sc || !at) {
+      /* トップ以外（体験ページなど）から押された：行き先を覚えてトップへ移動し、
+         トップ側が着いてからその位置へスクロールする（2026-08-23 ヒデさん報告の修正） */
+      try {
+        sessionStorage.setItem("abashiri-goto", key);
+      } catch {}
+      window.location.href = "/";
+      return;
+    }
     /* 動かすのは TopPage の慣性スクロール一本（上の onHomeClick と同じ理由） */
     window.dispatchEvent(
       new CustomEvent("abashiri:scroll-to", { detail: { y: Number(at) } })
     );
+  };
+
+  /* 「体験」：すでに体験ページにいる時は、導入（1画面目）へ戻す
+     （同じURLへのリンクは何も起きないため。2026-08-23 ヒデさん指示） */
+  const onExpClick = (e: React.MouseEvent) => {
+    if (pathname !== "/experience") return; /* 別ページなら普通に遷移 */
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent("abashiri:exp-reset"));
   };
 
   return (
@@ -64,7 +80,13 @@ export default function GlobalNav({ theme, size = "md" }: GlobalNavProps) {
           <Link
             key={item.label}
             href={item.href}
-            onClick={item.href === "/" ? onHomeClick : undefined}
+            onClick={
+              item.href === "/"
+                ? onHomeClick
+                : item.href === "/experience"
+                  ? onExpClick
+                  : undefined
+            }
             className="transition-opacity hover:opacity-70"
           >
             {item.label}

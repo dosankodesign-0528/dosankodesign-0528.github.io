@@ -268,6 +268,32 @@ export default function TopPage({
 
   const scrollerRef = useRef<HTMLDivElement>(null);
 
+  /* 体験ページなど別ページのヘッダーから「ぼーっとスポット/グルメ」で来た時：
+     覚えておいた行き先へ、着いてからスクロールする（2026-08-23） */
+  useEffect(() => {
+    let key: string | null = null;
+    try {
+      key = sessionStorage.getItem("abashiri-goto");
+      if (key) sessionStorage.removeItem("abashiri-goto");
+    } catch {}
+    if (key !== "spotAt" && key !== "gourmetAt") return;
+    let tries = 0;
+    const id = window.setInterval(() => {
+      const sc = document.querySelector<HTMLElement>("[data-abashiri-scroller]");
+      const at = sc?.dataset[key as "spotAt" | "gourmetAt"];
+      tries += 1;
+      if (at) {
+        window.dispatchEvent(
+          new CustomEvent("abashiri:scroll-to", { detail: { y: Number(at) } })
+        );
+        window.clearInterval(id);
+      } else if (tries > 40) {
+        window.clearInterval(id);
+      }
+    }, 200);
+    return () => window.clearInterval(id);
+  }, []);
+
   /* KV→メッセージ区間のスクロール速度。until（区間の終わり）と gain（倍率）を
      毎レンダーで更新し、wheel ハンドラは ref から読む */
   const wheelGainRef = useRef({ until: 0, gain: 1 });
