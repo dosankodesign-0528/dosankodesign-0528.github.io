@@ -27,9 +27,15 @@ Vercel ダッシュボードで設定している各プロジェクトの状態�
 | `prj_0PFWbicnMhDclphX9PtiF49XEsXU` | design-gallery | 親リポ subdir (`design-gallery`, main) | `.` | Next.js | https://design-gallery-puce.vercel.app | 🛠 手動 |
 | `prj_mkKya8Hr3XlH3li3dwspClOLSS8G` | akijikan-mitsukeru-kun | 親リポ subdir (`akijikan-mitsukeru-kun`, main) | `.` | Other (静的) | https://akijikan-mitsukeru-kun.vercel.app | 🛠 手動 |
 | `prj_quCYKGmCeVVY5dymibs8CxbYeQ1E` | retro-games | 親リポ subdir (`Retro Games`, main) | `.` | Other (静的) | https://retro-games-one.vercel.app | 🛠 手動 |
-| `prj_OIXN98ujgsQn3JlUZjkevUOOJhnz` | abashiri-site | 親リポ subdir (`abashiri-site`, main) | `abashiri-site` | Next.js | https://abashiri-site.vercel.app | 🤖 git push で自動（2026-08-14 設定） |
+| `prj_OIXN98ujgsQn3JlUZjkevUOOJhnz` | abashiri-site | 親リポ subdir (`abashiri-site`, main) | `abashiri-site` | Next.js | https://abashiri-site.vercel.app | 🛠 手動（2026-08-23 に Git 連携を解除。旧: 2026-08-14〜自動） |
 
-### ⚠️ abashiri-site を Git 自動デプロイに切り替えた話（2026-08-14）
+### ⚠️ abashiri-site を Git 自動デプロイに切り替えた話（2026-08-14）→ 2026-08-23 に手動へ戻した
+
+> 🔄 **2026-08-23 更新：この自動デプロイは解除した（`vercel git disconnect`）。**
+> V1.0 と V2 をそれぞれ別 URL で公開する形にしたので、abashiri-site も他プロジェクトと同じ手動運用にそろえた。
+> push しても本番は動かない。上げ直す時は `npx vercel redeploy abashiri-site.vercel.app`（Root Directory が残っているため。
+> フォルダ整理で Root Directory を消せば `vercel --prod` 運用にできる → [FOLDER-RESTRUCTURE-RUNBOOK.md](FOLDER-RESTRUCTURE-RUNBOOK.md)）。
+> 以下は当時の経緯の記録として残す。
 
 もともと **Git 未連携**（Settings > Git が「Connect Git Repository」のまま）で、
 Mac から `npx vercel --prod` を叩いた時だけ更新されるプロジェクトだった。
