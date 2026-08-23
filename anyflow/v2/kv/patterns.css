@@ -1,147 +1,107 @@
 /* ============================================================
-   キービジュアル V2 — 右側グラフィック 4案（ダッシュボード中心）
-   ChatGPT生成画像4枚を忠実再現。中央=本番ダッシュmock / 周囲=Figmaアイコン部品
-   P1 フラット×回路線×白い立体アイコン
-   P2 フラット×同心円グロー×すりガラス
-   P3 アイソメ×回路線×すりガラス
-   P4 アイソメ×単一軌道×白い立体アイコン
-   ・アイコンのガラス質感/グラデ/内側の光は Figma書き出しSVGをそのまま使用（似せない）
-   ・engine.js（エージェント版）とは独立。#kvp に別ステージで描く
+   キービジュアル V2 — 右側グラフィック 4案 v2
+   ・アイコン＝本物の3D箱（前面グリフ＋厚みスラブ）。ビルボードやめ、自前3D
+   ・①③=白い回線ネットワーク＋青データ光 / ②=同心円グロー / ④=単一軌道
    ============================================================ */
 
-/* ---- ステージ（engine と同じ 1440×920 スケール方式） ---- */
-.kvp-root { position: fixed; inset: 0; perspective: none; pointer-events: none; }
+/* ---- ステージ（1440×920スケール。3Dは平行投影＝perspective無しでアイソメ風）---- */
+.kvp-root { position: fixed; inset: 0; pointer-events: none; }
+.kvp-root.hidden { display: none; }
 .kvp-stage { position: absolute; left: 0; top: 0; width: 1440px; height: 920px;
   transform-origin: 0 0; transform-style: preserve-3d; }
-.kvp-world { position: absolute; inset: 0; transform-origin: 1030px 440px;
-  transform-style: preserve-3d; transition: transform .7s cubic-bezier(.22,1,.36,1); }
+.kvp-world { position: absolute; inset: 0; transform-style: preserve-3d; }
 
-/* 案ごとの視点（engine の VIEWS と同系。perspective無し＝軸測投影のきれいなアイソメ） */
-.kvp-world.view-flat { transform: none; }
-.kvp-world.view-iso  { transform: rotateX(52deg) rotateZ(-40deg) scale(1.16); }
-
-/* ============ 中央ダッシュボード（本番mockの簡易・静止版） ============ */
+/* ============ 中央ダッシュボード ============ */
+.kvp-dash-wrap { position: absolute; transform-style: preserve-3d; }
+.kvp-dash-shadow { position: absolute; left: 6%; top: 66%; width: 88%; height: 40%;
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(16,24,40,.20), rgba(16,24,40,0) 70%);
+  filter: blur(16px); }
+.is-iso .kvp-dash-shadow { top: 78%; left: 2%; width: 96%; }
 .kvp-dash {
-  position: absolute; width: 600px; height: 360px; border-radius: 16px;
+  position: absolute; inset: 0; border-radius: 16px; overflow: hidden; display: flex;
   background: linear-gradient(157deg, #ffffff 0%, #f5f7fa 100%);
-  box-shadow: 0 30px 60px rgba(16,24,40,.16), 0 2px 6px rgba(16,24,40,.06);
-  overflow: hidden; transform-style: preserve-3d; display: flex;
-  border: 1px solid rgba(255,255,255,.9);
+  box-shadow: 0 30px 60px rgba(16,24,40,.14), 0 2px 6px rgba(16,24,40,.06);
+  border: 1px solid rgba(255,255,255,.9); transform-origin: 50% 50%;
+  transition: transform .5s cubic-bezier(.22,1,.36,1);
 }
-/* アイソメ時は接地影を別に敷いて浮かせる */
-.kvp-dash-shadow {
-  position: absolute; width: 600px; height: 360px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(16,24,40,.22), rgba(16,24,40,0) 70%);
-  filter: blur(14px); display: none;
-}
-.view-iso .kvp-dash-shadow { display: block; }
-
-/* 左：コード風の色バー */
-.kvp-dash .dash-code { flex: 1 1 58%; padding: 30px 26px; display: flex; flex-direction: column; gap: 13px; }
+/* アイソメ時：タブレットを寝かせる（画面を上に向けて奥へ傾ける） */
+.is-iso .kvp-dash { transform: rotateX(46deg) rotateZ(-11deg); }
+.kvp-dash .dash-code { flex: 1 1 58%; padding: 28px 24px; display: flex; flex-direction: column; gap: 12px; }
 .kvp-dash .cbar { height: 7px; border-radius: 4px; }
-/* 右：サイドリスト（ロゴ＋色玉＋グレー行） */
-.kvp-dash .dash-side {
-  flex: 0 0 42%; padding: 26px 24px; border-left: 1px solid #eef1f5;
+.kvp-dash .dash-side { flex: 0 0 42%; padding: 26px 22px; border-left: 1px solid #eef1f5;
   background: linear-gradient(180deg, #fbfcfe 0%, #f4f6f9 100%);
-  display: flex; flex-direction: column; gap: 18px;
-}
-.kvp-dash .dash-logo { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.kvp-dash .dash-logo img { height: 18px; width: auto; display: block; }
-.kvp-dash .dash-logo b { font-size: 13px; font-weight: 600; color: #101828; letter-spacing: .2px; }
-.kvp-dash .srow { display: flex; align-items: center; gap: 12px; }
-.kvp-dash .sdot { width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto;
+  display: flex; flex-direction: column; gap: 17px; }
+.kvp-dash .dash-logo { display: flex; align-items: center; margin-bottom: 4px; }
+.kvp-dash .dash-logo img { height: 17px; width: auto; display: block; }
+.kvp-dash .srow { display: flex; align-items: center; gap: 11px; }
+.kvp-dash .sdot { width: 25px; height: 25px; border-radius: 50%; flex: 0 0 auto;
   box-shadow: 0 3px 8px rgba(14,187,255,.28); }
 .kvp-dash .slines { flex: 1 1 auto; display: flex; flex-direction: column; gap: 7px; }
 .kvp-dash .slines i { display: block; height: 6px; border-radius: 4px; background: #e4e8ee; }
 .kvp-dash .slines i.short { width: 55%; }
 
-/* ============ アイコン箱 ============ */
+/* ============ アイコン＝3D箱 ============ */
 .kvp-ico { position: absolute; width: 112px; height: 112px; transform-style: preserve-3d; }
-.kvp-ico-face { position: absolute; inset: 0; border-radius: 20px; overflow: hidden;
-  transform-style: preserve-3d; }
+.kvp-ico-box { position: absolute; inset: 0; transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.22,1,.36,1); }
+.kvp-slab { position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; }
+.kvp-ico-face { position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
+  transform: translateZ(1px); }
 .kvp-ico-glyph { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .kvp-ico-glyph > span { position: absolute; }
 .kvp-ico-glyph svg { display: block; width: 100%; height: 100%; }
-/* 上からのソフトライトのツヤ（Blender風の面の光り）。全アイコン共通 */
-.kvp-ico-face::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
-  background: linear-gradient(158deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.08) 34%, rgba(255,255,255,0) 60%);
-  pointer-events: none;
-}
+/* 上からのソフトライトのツヤ */
+.kvp-ico-face::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
+  background: linear-gradient(158deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.06) 36%, rgba(255,255,255,0) 62%);
+  pointer-events: none; }
+/* 接地影 */
+.kvp-ico-shadow { position: absolute; left: 50%; bottom: -8px; width: 78%; height: 20px;
+  transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(16,24,40,.30), rgba(16,24,40,0) 72%); filter: blur(5px); }
+.is-iso .kvp-ico-shadow { bottom: -16px; width: 86%; height: 24px; }
 
-/* すりガラス箱（Figmaアイコン: bg白30% / 枠白 / backdrop-blur / r10 実測）
-   後ろのアンビエント光を blur+saturate で拾って「すりガラス」に見せる */
-.kvp-ico--glass .kvp-ico-face {
-  background: rgba(255,255,255,.22); border: 1px solid rgba(255,255,255,.92); border-radius: 12px;
-  backdrop-filter: blur(30px) saturate(1.35); -webkit-backdrop-filter: blur(30px) saturate(1.35);
-  box-shadow: 0 16px 36px rgba(16,24,40,.13), inset 0 1px 1px rgba(255,255,255,.75);
-}
-/* 白い立体箱（neumorphic。P1=平ら / P4=厚み）。添付の“白い立体チップ”に寄せる */
-.kvp-ico--white .kvp-ico-face {
-  background: linear-gradient(155deg, #ffffff 0%, #eef1f6 100%);
-  border-radius: 24px; border: 1px solid #fff;
-  box-shadow: 0 22px 38px -10px rgba(16,24,40,.26), 0 6px 14px rgba(16,24,40,.10),
-    inset 0 2px 3px rgba(255,255,255,.95), inset 0 -10px 18px rgba(16,24,40,.06);
-}
-/* 白い立体箱の厚み（アイソメ用スラブ）。translateZで下へ積む */
-.kvp-slab { position: absolute; inset: 0; border-radius: 22px; display: none; }
-.view-iso .kvp-ico--white .kvp-slab { display: block; }
-.kvp-ico-shadow { position: absolute; inset: -10px; border-radius: 50%; display: none;
-  background: radial-gradient(closest-side, rgba(16,24,40,.28), rgba(16,24,40,0) 72%);
-  filter: blur(6px); }
-.view-iso .kvp-ico-shadow { display: block; }
+/* 材質：白い立体チップ */
+.kvp-ico--white .kvp-ico-face { background: linear-gradient(155deg, #ffffff 0%, #eef1f6 100%);
+  border: 1px solid #fff; box-shadow: inset 0 2px 3px rgba(255,255,255,.95); }
+/* 材質：すりガラス */
+.kvp-ico--glass .kvp-ico-face { background: rgba(255,255,255,.24); border: 1px solid rgba(255,255,255,.92);
+  backdrop-filter: blur(26px) saturate(1.3); -webkit-backdrop-filter: blur(26px) saturate(1.3);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.7); }
 
-/* ============ 接続：回路線（P1・P3） ============ */
+/* 箱の向き：フラット①②＝浅い立体 / アイソメ③④＝上面・側面が見える */
+.is-flat .kvp-ico-box { transform: rotateX(10deg) rotateY(-7deg); }
+.is-iso  .kvp-ico-box { transform: rotateX(20deg) rotateY(-18deg); }
+
+/* ============ 回線ネットワーク（①③）＋青データ光 ============ */
+.kvp-net { position: absolute; inset: 0; }
 .kvp-lines { position: absolute; left: 0; top: 0; overflow: visible; }
 .kvp-line { fill: none; stroke: rgba(255,255,255,.96); stroke-width: 2.5;
-  stroke-linejoin: round; stroke-linecap: round;
-  filter: drop-shadow(0 1px 2px rgba(16,24,40,.08)); }
-.view-iso .kvp-line { stroke: rgba(255,255,255,.92); }
-/* シアンの流れ（添付①③のトレース上の区切り）。ハッキリ見せる */
-.kvp-line-seg { fill: none; stroke: #16B4F5; stroke-width: 4.5; stroke-linecap: round;
-  stroke-dasharray: 20 88; animation: kvpFlow 2.0s linear infinite;
-  filter: drop-shadow(0 0 5px rgba(22,180,245,.7)); }
-@keyframes kvpFlow { to { stroke-dashoffset: -108; } }
-.kvp-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%;
-  will-change: transform; box-shadow: 0 2px 5px rgba(16,24,40,.28); }
+  stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 1px 2px rgba(16,24,40,.08)); }
+.is-iso .kvp-line { stroke: rgba(255,255,255,.9); }
+.kvp-node { fill: #ffffff; stroke: rgba(53,196,255,.9); stroke-width: 2; }
+/* 青データ光（線に沿って走る） */
+.kvp-data-layer { position: absolute; inset: 0; }
+.kvp-data { position: absolute; left: 0; top: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border-radius: 50%; background: radial-gradient(circle at 50% 38%, #d6f4ff, #16B4F5 72%);
+  box-shadow: 0 0 12px 3px rgba(22,180,245,.85), 0 0 4px #7fdcff;
+  offset-rotate: 0deg; animation: kvpData 2.6s linear infinite; }
+@keyframes kvpData { from { offset-distance: 0%; } to { offset-distance: 100%; } }
 
-/* シーンのアンビエント光（ガラスが blur で拾う下地＋Blender風のソフトライト）。
-   ガラス案(P2/P3)でダッシュボード中心に敷く */
-.kvp-ambient {
-  position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none;
-  background: radial-gradient(closest-side, rgba(120,206,255,.30), rgba(150,190,255,.14) 55%, rgba(255,255,255,0) 72%);
-}
-
-/* ============ 接続：同心円グロー（P2） ============ */
-/* 細い光の線（添付②の同心円）。太いモヤっとした影でなく、くっきりした発光ライン */
+/* ============ 同心円グロー（②） ============ */
+.kvp-rings { position: absolute; inset: 0; }
 .kvp-ring { position: absolute; border-radius: 50%; border: 1.6px solid rgba(150,230,255,.95);
-  box-shadow: 0 0 22px 1px rgba(60,196,255,.55), inset 0 0 22px rgba(60,196,255,.3);
+  box-shadow: 0 0 22px 1px rgba(60,196,255,.5), inset 0 0 26px rgba(60,196,255,.28);
   will-change: transform, opacity; }
-.kvp-ring.soft { border-color: rgba(255,255,255,.92); box-shadow: 0 0 18px 1px rgba(255,255,255,.6); }
+.kvp-ring.soft { border-color: rgba(255,255,255,.9); box-shadow: 0 0 18px 1px rgba(255,255,255,.6); }
+@keyframes kvpBreath { 0%,100% { opacity: .55; } 50% { opacity: .95; } }
 
-/* ============ 接続：単一軌道（P4） ============ */
-.kvp-orbit { position: absolute; border-radius: 50%;
-  border: 1.5px solid rgba(148,163,184,.45); }
+/* ============ 単一軌道（④） ============ */
+.kvp-orbit { position: absolute; border-radius: 50%; border: 1.6px solid rgba(148,163,184,.5); }
 
-/* 案の出し分け（表示するレイヤーだけ見せる） */
-.kvp-lines, .kvp-rings, .kvp-orbit { display: none; }
-.pat-p1 .kvp-lines, .pat-p3 .kvp-lines { display: block; }
-.pat-p2 .kvp-rings { display: block; }
-.pat-p4 .kvp-orbit { display: block; }
-.kvp-root.hidden { display: none; }
-
-/* Blender版（3D書き出しPNG）を右グラフィック領域に配置。ヘッダー/コピー/ティッカーは固定 */
+/* ============ パネル行・Blender版 ============ */
+.kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 #kvBlender { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 #kvBlender.hidden { display: none; }
 #kvBlender img { position: absolute; right: 0.5%; top: 51%; transform: translateY(-50%);
   width: 63%; max-width: 1120px; height: auto; display: block; }
 @media (max-width: 1280px) { #kvBlender img { width: 70%; right: 0; } }
-
-/* パネルの「デザイン/4案」行（既存 .kv-bar の行と同じ並び） */
-.kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-/* 同心円グローの呼吸（P2） */
-@keyframes kvpBreath {
-  0%, 100% { opacity: .5; transform: scale(1); }
-  50%      { opacity: .9; transform: scale(1.035); }
-}

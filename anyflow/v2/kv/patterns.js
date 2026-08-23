@@ -1,10 +1,9 @@
 /* ============================================================
-   キービジュアル V2 — 右側グラフィック 4案エンジン（KVP）
-   ChatGPT生成4枚を忠実再現。中央=ダッシュボード / 周囲=Figmaアイコン部品
-   ・engine.js（エージェント版）とは独立。#kvp に別ステージで描く
-   ・アイコンのガラス/グラデ/内側の光は Figma書き出しSVG（kv/assets/icons/*.svg）
-     をそのまま埋め込む＝「似せて作る」ではなく本物のデータを使う
-   ・立体ニュアンスは CSS の 3D transform / 厚みスラブ / 接地影で極力寄せる
+   キービジュアル V2 — 右側グラフィック 4案エンジン（KVP）v2
+   添付4枚を忠実再現。中央=ダッシュボード / 周囲=Figmaアイコン部品
+   ・アイコンは「本物の3D箱」（前面グリフ＋厚みスラブ＝上面/側面が見える）
+   ・①③=白い回線ネットワーク＋青いデータ光が流れる / ②=同心円グロー / ④=単一軌道
+   ・立体はビルボードをやめ、各要素が自前の3D transform を持つ（アイソメに乗る）
    切替: KVP.setPattern('p1'|'p2'|'p3'|'p4') / KVP.show() / KVP.hide()
    ============================================================ */
 (function (global) {
@@ -12,14 +11,11 @@
 
   const STAGE = { w: 1440, h: 920 };
   const C = { x: 1030, y: 430 };                 /* ダッシュボード中心 */
-  const DASH = { w: 600, h: 360 };
+  const DASH = { w: 600, h: 358 };
   const dashRect = { l: C.x - DASH.w / 2, r: C.x + DASH.w / 2, t: C.y - DASH.h / 2, b: C.y + DASH.h / 2 };
   const ICO = 112;                                /* アイコン箱の一辺 */
   const ICONS_DIR = 'assets/icons/';
 
-  /* ---- Figmaアイコンの部品定義（inset:[top,right,bottom,left] % / 100×100内）----
-     svg=ファイル埋め込み / css=スタイル直指定 / dot=白い小片
-     ※ inset値・SVGは Figma node 15673 の各アイコン実測（get_design_context） */
   const GLASS_BAR =
     'border-radius:6px;border:.5px solid #7EE5FF;' +
     'background-image:linear-gradient(108deg,rgba(130,232,255,.35),rgba(55,159,255,.35));' +
@@ -28,6 +24,7 @@
   const GRAD = 'background-image:linear-gradient(180deg,#58D0FF,#0EBBFF);';
   const CAL_CELL = 'background:#fff;border-radius:3px;box-shadow:inset 0 1px 1px rgba(255,255,255,.6);';
 
+  /* Figmaアイコンの部品（inset:[top,right,bottom,left]% / 100×100内） */
   const ICON_DEFS = {
     chat: [
       { svg: 'chat-body.svg',   inset: [18.57, 32.34, 31.79, 14.68] },
@@ -73,9 +70,8 @@
     ],
   };
 
-  /* ---- レイアウト（各アイコンの中心座標。世界座標＝フラット時の見た目そのまま）---- */
-  /* 添付①③準拠（chat左上/chart上/person右上/lock右/calendar下/folder左下） */
-  const LAYOUT_CIRCUIT = [          /* P1 / P3 */
+  /* ---- レイアウト（2D screen座標。各アイコン中心）---- */
+  const LAYOUT_CIRCUIT = [          /* P1 / P3（添付①③） */
     { id: 'chat',     x: 705,  y: 245 },
     { id: 'chart',    x: 1045, y: 150 },
     { id: 'person',   x: 1375, y: 255 },
@@ -83,7 +79,7 @@
     { id: 'calendar', x: 1070, y: 715 },
     { id: 'folder',   x: 695,  y: 590 },
   ];
-  const LAYOUT_RINGS = [            /* P2（添付②準拠。同心円上に配置） */
+  const LAYOUT_RINGS = [            /* P2（添付②） */
     { id: 'chat',     x: 715,  y: 255 },
     { id: 'chart',    x: 1080, y: 150 },
     { id: 'person',   x: 1400, y: 265 },
@@ -91,54 +87,66 @@
     { id: 'calendar', x: 1085, y: 725 },
     { id: 'folder',   x: 710,  y: 615 },
   ];
-  const ORBIT_ICONS = ['chat', 'person', 'lock', 'calendar', 'folder', 'chart'];  /* P4（等間隔で公転）*/
-  const ORBIT_R = 430;
+  const ORBIT = { rx: 405, ry: 250 };
+  const LAYOUT_ORBIT = [            /* P4（添付④・楕円軌道の上） */
+    { id: 'chat', a: -90 }, { id: 'person', a: -40 }, { id: 'lock', a: 6 },
+    { id: 'calendar', a: 52 }, { id: 'folder', a: 90 }, { id: 'chart', a: 140 }, { id: 'cloud', a: 200 },
+  ].map(o => ({ id: o.id, x: C.x + ORBIT.rx * Math.cos(o.a * Math.PI / 180), y: C.y + ORBIT.ry * Math.sin(o.a * Math.PI / 180) }));
 
   const PATTERNS = {
-    p1: { view: 'flat', conn: 'circuit', box: 'white', layout: LAYOUT_CIRCUIT },
-    p2: { view: 'flat', conn: 'rings',   box: 'glass', layout: LAYOUT_RINGS },
-    p3: { view: 'iso',  conn: 'circuit', box: 'glass', layout: LAYOUT_CIRCUIT },
-    p4: { view: 'iso',  conn: 'orbit',   box: 'white', layout: null },
+    p1: { conn: 'circuit', box: 'white', layout: LAYOUT_CIRCUIT, iso: false },
+    p2: { conn: 'rings',   box: 'glass', layout: LAYOUT_RINGS,   iso: false },
+    p3: { conn: 'circuit', box: 'glass', layout: LAYOUT_CIRCUIT, iso: true  },
+    p4: { conn: 'orbit',   box: 'white', layout: LAYOUT_ORBIT,   iso: true  },
   };
-  const DOT_COLORS = ['#0EBBFF', '#FF5D97', '#0E4497'];
 
   const SVGNS = 'http://www.w3.org/2000/svg';
   const elS = (t, a) => { const e = document.createElementNS(SVGNS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
-  const lerp = (a, b, t) => a + (b - a) * t;
   const svgCache = {};
-  function loadSVG(file, host) {                 /* Figma部品SVGを取ってきて埋め込む */
+  function loadSVG(file, host) {
     if (svgCache[file]) { host.innerHTML = svgCache[file]; return; }
     fetch(ICONS_DIR + file).then(r => r.text()).then(t => { svgCache[file] = t; host.innerHTML = t; });
   }
+  function insetToBox(ins) { const [t, r, b, l] = ins; return { left: l, top: t, width: 100 - l - r, height: 100 - t - b }; }
 
-  /* inset[t,r,b,l]% → left/top/width/height(px, 100×100内) */
-  function insetToBox(ins) {
-    const [t, r, b, l] = ins;
-    return { left: l, top: t, width: 100 - l - r, height: 100 - t - b };
+  /* 多点の丸角ポリライン（PCB風の配線）。全ての中間角を半径 r で丸める */
+  function roundedPoly(pts, r) {
+    if (pts.length < 3) return 'M' + pts.map(p => p[0] + ' ' + p[1]).join(' L');
+    let d = `M${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1], e = pts[i], p2 = pts[i + 1];
+      const v1x = e[0] - p0[0], v1y = e[1] - p0[1], l1 = Math.hypot(v1x, v1y) || 1;
+      const v2x = p2[0] - e[0], v2y = p2[1] - e[1], l2 = Math.hypot(v2x, v2y) || 1;
+      const rr = Math.min(r, l1 / 2, l2 / 2);
+      const a = [e[0] - v1x / l1 * rr, e[1] - v1y / l1 * rr];
+      const b = [e[0] + v2x / l2 * rr, e[1] + v2y / l2 * rr];
+      d += ` L${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${e[0]} ${e[1]} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
+    }
+    const last = pts[pts.length - 1];
+    d += ` L${last[0]} ${last[1]}`;
+    return d;
   }
+  const iconPos = (layout, id) => layout.find(i => i.id === id);
 
-  let rootEl, worldEl, dotLayer;
-  const dots = [];          /* 回路のドット */
-  const orbitNodes = [];    /* 公転アイコン */
-  let cur = null;
+  let rootEl, worldEl, cur = null;
 
-  /* ---------- アイコン1個を組む ---------- */
+  /* ---------- アイコン1個＝本物の3D箱 ---------- */
   function buildIcon(id, boxStyle) {
     const wrap = document.createElement('div');
     wrap.className = 'kvp-ico kvp-ico--' + boxStyle;
-
     const shadow = document.createElement('div'); shadow.className = 'kvp-ico-shadow';
     wrap.appendChild(shadow);
-    /* 白い立体箱の厚み（アイソメで側面を出す。多層で縞を消す） */
-    if (boxStyle === 'white') {
-      const LAYERS = 18, THICK = 26;
-      for (let i = LAYERS; i >= 1; i--) {
-        const L = document.createElement('div'); L.className = 'kvp-slab';
-        const k = i / LAYERS;
-        L.style.transform = `translateZ(${(-THICK * k).toFixed(2)}px)`;
-        L.style.background = `hsl(222 26% ${95 - 18 * k}%)`;
-        wrap.appendChild(L);
-      }
+    const box = document.createElement('div'); box.className = 'kvp-ico-box';
+    /* 厚みスラブ（前面の後ろに積む＝側面/上面になる。多層で角丸をなめらかに） */
+    const LAYERS = 16, THICK = 30;
+    for (let i = LAYERS; i >= 1; i--) {
+      const L = document.createElement('div'); L.className = 'kvp-slab';
+      const k = i / LAYERS;
+      L.style.transform = `translateZ(${(-THICK * k).toFixed(2)}px)`;
+      L.style.background = boxStyle === 'white'
+        ? `hsl(220 22% ${95 - 17 * k}%)`
+        : `hsla(202 100% ${90 - 12 * k}% / ${0.12 + 0.06 * k})`;
+      box.appendChild(L);
     }
     const face = document.createElement('div'); face.className = 'kvp-ico-face';
     const glyph = document.createElement('div'); glyph.className = 'kvp-ico-glyph';
@@ -152,28 +160,29 @@
       glyph.appendChild(s);
     });
     face.appendChild(glyph);
-    wrap.appendChild(face);
+    box.appendChild(face);
+    wrap.appendChild(box);
     return wrap;
   }
+  function placeIcon(node, x, y) {
+    node.style.left = (x - ICO / 2) + 'px';
+    node.style.top = (y - ICO / 2) + 'px';
+  }
 
-  /* ---------- ダッシュボード中央 ---------- */
+  /* ---------- 中央ダッシュボード ---------- */
   function buildDash() {
-    const dash = document.createElement('div');
-    dash.className = 'kvp-dash';
-    dash.style.left = dashRect.l + 'px'; dash.style.top = dashRect.t + 'px';
-    /* 左：コード風の色バー（カンプmockの配色: ピンク/シアン/青） */
+    const wrap = document.createElement('div'); wrap.className = 'kvp-dash-wrap';
+    wrap.style.left = dashRect.l + 'px'; wrap.style.top = dashRect.t + 'px';
+    wrap.style.width = DASH.w + 'px'; wrap.style.height = DASH.h + 'px';
+    const shadow = document.createElement('div'); shadow.className = 'kvp-dash-shadow'; wrap.appendChild(shadow);
+    const dash = document.createElement('div'); dash.className = 'kvp-dash';
     const code = document.createElement('div'); code.className = 'dash-code';
-    const bars = [
-      ['#FF5D97', 38], ['#0EBBFF', 62], ['#379FFF', 30],
-      ['#e4e8ee', 74], ['#0EBBFF', 46], ['#FF5D97', 34],
-      ['#379FFF', 58], ['#e4e8ee', 42], ['#0EBBFF', 68],
-    ];
-    bars.forEach(([c, w]) => {
+    [['#FF5D97', 38], ['#0EBBFF', 62], ['#379FFF', 30], ['#e4e8ee', 74], ['#0EBBFF', 46],
+     ['#FF5D97', 34], ['#379FFF', 58], ['#e4e8ee', 42], ['#0EBBFF', 68]].forEach(([c, w]) => {
       const el = document.createElement('div'); el.className = 'cbar';
       el.style.width = w + '%'; el.style.background = c; code.appendChild(el);
     });
     dash.appendChild(code);
-    /* 右：ロゴ＋色玉リスト */
     const side = document.createElement('div'); side.className = 'dash-side';
     const logo = document.createElement('div'); logo.className = 'dash-logo';
     logo.innerHTML = '<img src="assets/header-logo.svg" alt="">';
@@ -187,14 +196,14 @@
       row.appendChild(dot); row.appendChild(lines); side.appendChild(row);
     });
     dash.appendChild(side);
-    return dash;
+    wrap.appendChild(dash);
+    return wrap;
   }
 
-  /* ---------- 回路線（L字）＋ドット ---------- */
-  function anchorOnDash(ix, iy) {                 /* アイコン中心→ダッシュ枠の最寄り点 */
-    const ax = Math.max(dashRect.l + 24, Math.min(dashRect.r - 24, ix));
-    const ay = Math.max(dashRect.t + 24, Math.min(dashRect.b - 24, iy));
-    /* 外側の点はダッシュ縁にスナップ（PCBらしく縁で受ける） */
+  /* ---------- 回線ネットワーク（白線＋ジャンクション）＋青いデータ光 ---------- */
+  function anchorOnDash(ix, iy) {
+    const ax = Math.max(dashRect.l + 30, Math.min(dashRect.r - 30, ix));
+    const ay = Math.max(dashRect.t + 30, Math.min(dashRect.b - 30, iy));
     const dl = Math.abs(ix - dashRect.l), dr = Math.abs(ix - dashRect.r);
     const dt = Math.abs(iy - dashRect.t), db = Math.abs(iy - dashRect.b);
     const m = Math.min(dl, dr, dt, db);
@@ -204,73 +213,68 @@
     return [dashRect.r, ay];
   }
   function buildCircuit(layout) {
+    const box = document.createElement('div'); box.className = 'kvp-net';
     const svg = elS('svg', { class: 'kvp-lines', viewBox: `0 0 ${STAGE.w} ${STAGE.h}` });
     svg.setAttribute('width', STAGE.w); svg.setAttribute('height', STAGE.h);
-    layout.forEach((it, i) => {
-      const [ax, ay] = anchorOnDash(it.x, it.y);
-      /* L字: アイコン→縦→横→縁。向きは近い軸を後にする */
-      const elbow = (Math.abs(it.x - ax) > Math.abs(it.y - ay)) ? [ax, it.y] : [it.x, ay];
-      const d = roundedL([it.x, it.y], elbow, [ax, ay], 18);            /* 角を丸めたL字（PCB風） */
-      svg.appendChild(elS('path', { d, class: 'kvp-line' }));           /* 白いPCBトレース */
-      const seg = elS('path', { d, class: 'kvp-line-seg' });             /* シアンの流れ（添付の区切り） */
-      seg.style.animationDelay = (-i * 0.42) + 's';
-      svg.appendChild(seg);
+    const dataLayer = document.createElement('div'); dataLayer.className = 'kvp-data-layer';
+    const T = dashRect.t, B = dashRect.b, Lx = dashRect.l, Rx = dashRect.r;
+    const spineY = T - 42, botY = B + 46, h = ICO / 2;
+    const chat = iconPos(layout, 'chat'), chart = iconPos(layout, 'chart'), person = iconPos(layout, 'person');
+    const lock = iconPos(layout, 'lock'), cal = iconPos(layout, 'calendar'), folder = iconPos(layout, 'folder');
+    /* 配線網（多点ポリライン）＝ トップ/ボトムのスパイン＋分岐＋側面直結 */
+    const P = [];
+    const nodes = [];
+    /* ---- トップ・スパイン（chat/chart/person を束ねる横バス）＋ダッシュへの2本の縦リンク ---- */
+    P.push([[Lx + 48, spineY], [Rx - 48, spineY]]);
+    P.push([[Lx + 150, spineY], [Lx + 150, T]]);
+    P.push([[Rx - 150, spineY], [Rx - 150, T]]);
+    nodes.push([Lx + 48, spineY], [Rx - 48, spineY], [Lx + 150, T], [Rx - 150, T]);
+    if (chart)  { P.push([[chart.x, chart.y + h - 12], [chart.x, spineY]]); nodes.push([chart.x, spineY]); }
+    if (chat)   { P.push([[chat.x + h - 12, chat.y], [chat.x + h + 34, chat.y], [chat.x + h + 34, spineY]]); nodes.push([chat.x + h + 34, spineY]); }
+    if (person) { P.push([[person.x - h + 12, person.y], [person.x - h - 34, person.y], [person.x - h - 34, spineY]]); nodes.push([person.x - h - 34, spineY]); }
+    /* ---- 側面・下：直結の丸角L ---- */
+    if (lock)   { P.push([[Rx, lock.y], [lock.x - h + 12, lock.y]]); nodes.push([Rx, lock.y]); }
+    if (cal)    { P.push([[cal.x, B], [cal.x, cal.y - h + 12]]); nodes.push([cal.x, B]); }
+    if (folder) { P.push([[Lx + 80, B], [Lx + 80, botY], [folder.x, botY], [folder.x, folder.y + h - 12]]); nodes.push([Lx + 80, B]); }
+    /* ---- 左の入力線（データ流入。添付①の左側の短い線）---- */
+    P.push([[Lx - 150, T + 120], [Lx - 24, T + 120]]);
+    P.push([[Lx - 150, T + 162], [Lx - 24, T + 162]]);
+    P.push([[Lx - 128, T + 204], [Lx - 24, T + 204]]);
+    /* 描画：白トレース＋青データ光 */
+    P.forEach((pts, i) => {
+      const d = roundedPoly(pts, 18);
+      svg.appendChild(elS('path', { d, class: 'kvp-line' }));
+      const dot = document.createElement('div'); dot.className = 'kvp-data';
+      dot.style.offsetPath = `path('${d}')`; dot.style.webkitOffsetPath = `path('${d}')`;
+      dot.style.animationDelay = (-(i * 0.33)) + 's';
+      dataLayer.appendChild(dot);
     });
-    return svg;
-  }
-  /* 丸角L字パス: 中間点 e の角を半径 r で丸める（PCBトレース風） */
-  function roundedL(p0, e, p2, r) {
-    const v1x = e[0] - p0[0], v1y = e[1] - p0[1], l1 = Math.hypot(v1x, v1y) || 1;
-    const v2x = p2[0] - e[0], v2y = p2[1] - e[1], l2 = Math.hypot(v2x, v2y) || 1;
-    const rr = Math.min(r, l1 / 2, l2 / 2);
-    const a = [e[0] - v1x / l1 * rr, e[1] - v1y / l1 * rr];
-    const b = [e[0] + v2x / l2 * rr, e[1] + v2y / l2 * rr];
-    return `M${p0[0]} ${p0[1]} L${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${e[0]} ${e[1]} ${b[0].toFixed(1)} ${b[1].toFixed(1)} L${p2[0]} ${p2[1]}`;
-  }
-  function polyLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; }
-  function polyAt(p, t) {
-    let d = t * polyLen(p);
-    for (let i = 1; i < p.length; i++) {
-      const seg = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
-      if (d <= seg || i === p.length - 1) { const k = seg ? d / seg : 0; return [lerp(p[i - 1][0], p[i][0], k), lerp(p[i - 1][1], p[i][1], k)]; }
-      d -= seg;
-    }
-    return p[p.length - 1];
+    nodes.forEach(n => svg.appendChild(elS('circle', { cx: n[0], cy: n[1], r: 4, class: 'kvp-node' })));
+    box.appendChild(svg); box.appendChild(dataLayer);
+    return box;
   }
 
   /* ---------- 同心円グロー（P2） ---------- */
   function buildRings() {
-    const box = document.createElement('div'); box.className = 'kvp-rings';
-    box.style.position = 'absolute'; box.style.inset = '0';
-    const radii = [200, 300, 405, 470];           /* 半径(px) */
-    radii.forEach((r, i) => {
+    const wrap = document.createElement('div'); wrap.className = 'kvp-rings';
+    [235, 330, 425, 510].forEach((r, i) => {
       const ring = document.createElement('div');
-      ring.className = 'kvp-ring' + (i === radii.length - 1 ? ' soft' : '');
-      ring.style.left = (C.x - r) + 'px'; ring.style.top = (C.y - r * 0.72) + 'px';
-      ring.style.width = (r * 2) + 'px'; ring.style.height = (r * 2 * 0.72) + 'px';
+      ring.className = 'kvp-ring' + (i === 3 ? ' soft' : '');
+      const ry = r * 0.62;
+      ring.style.left = (C.x - r) + 'px'; ring.style.top = (C.y - ry) + 'px';
+      ring.style.width = (r * 2) + 'px'; ring.style.height = (ry * 2) + 'px';
       ring.style.animation = `kvpBreath ${4 + i * 0.6}s ease-in-out ${i * 0.3}s infinite`;
-      box.appendChild(ring);
+      wrap.appendChild(ring);
     });
-    return box;
+    return wrap;
   }
 
-  /* ---------- 単一軌道（P4） ---------- */
-  function buildOrbit(boxStyle) {
+  /* ---------- 単一軌道（P4）---------- */
+  function buildOrbitRing() {
     const ring = document.createElement('div'); ring.className = 'kvp-orbit';
-    ring.style.left = (C.x - ORBIT_R) + 'px'; ring.style.top = (C.y - ORBIT_R) + 'px';
-    ring.style.width = (ORBIT_R * 2) + 'px'; ring.style.height = (ORBIT_R * 2) + 'px';
-    worldEl.appendChild(ring);
-    ORBIT_ICONS.forEach((id, i) => {
-      const node = buildIcon(id, boxStyle);
-      worldEl.appendChild(node);
-      orbitNodes.push({ node, base: (i / ORBIT_ICONS.length) * Math.PI * 2 });
-    });
-  }
-
-  /* ---------- ビルボード（アイソメで箱を常にカメラへ向ける） ---------- */
-  const ISO = { rx: 52, rz: -40 };
-  function billboard(view) {
-    return view === 'iso' ? `rotateZ(${-ISO.rz}deg) rotateX(${-ISO.rx}deg)` : '';
+    ring.style.left = (C.x - ORBIT.rx) + 'px'; ring.style.top = (C.y - ORBIT.ry) + 'px';
+    ring.style.width = (ORBIT.rx * 2) + 'px'; ring.style.height = (ORBIT.ry * 2) + 'px';
+    return ring;
   }
 
   /* ---------- 構築 ---------- */
@@ -279,92 +283,33 @@
     rootEl = document.getElementById(cfg.mount || 'kvp');
     rootEl.classList.add('kvp-root', 'hidden');
     const stage = document.createElement('div'); stage.className = 'kvp-stage'; rootEl.appendChild(stage);
-    worldEl = document.createElement('div'); worldEl.className = 'kvp-world view-flat'; stage.appendChild(worldEl);
-
+    worldEl = document.createElement('div'); worldEl.className = 'kvp-world'; stage.appendChild(worldEl);
     function fit() {
       const rw = rootEl.clientWidth, rh = rootEl.clientHeight;
       const s = Math.min(rw / STAGE.w, rh / STAGE.h);
       stage.style.transform = `translate(${(rw - STAGE.w * s) / 2}px, ${(rh - STAGE.h * s) / 2}px) scale(${s})`;
     }
-    window.addEventListener('resize', fit); fit();
-    rootEl._fit = fit;
-
-    let last = performance.now();
-    function frame(now) {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      const p = cur && PATTERNS[cur];
-      if (p && p.conn === 'circuit') {
-        const bb = billboard(p.view);
-        dots.forEach(d => {
-          d.t += d.speed * dt; if (d.t >= 1) d.t -= 1;
-          const pos = polyAt(d.pts, d.t);
-          const fo = Math.min(1, (1 - d.t) / 0.14) * Math.min(1, d.t / 0.08);
-          d.node.style.transform = `translate3d(${(pos[0] - 6).toFixed(1)}px, ${(pos[1] - 6).toFixed(1)}px, 2px) ${bb}`;
-          d.node.style.opacity = fo.toFixed(2);
-        });
-      }
-      if (p && p.conn === 'orbit') {
-        /* Zは戻すがXは18°残す＝箱が奥へ少し傾いて“厚み”が見える（添付④の立体チップ） */
-        const bb = `rotateZ(${-ISO.rz}deg) rotateX(${-(ISO.rx - 18)}deg)`;
-        const ang = now / 1000 * 0.12;
-        orbitNodes.forEach(o => {
-          const a = o.base + ang;
-          const x = C.x + Math.cos(a) * ORBIT_R - ICO / 2;
-          const y = C.y + Math.sin(a) * ORBIT_R - ICO / 2;
-          o.node.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 26px) ${bb}`;
-        });
-      }
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
+    window.addEventListener('resize', fit); fit(); rootEl._fit = fit;
     return rootEl;
   }
 
-  /* ---------- パターン切替（毎回作り直し：状態を持ち越さない） ---------- */
-  function clearWorld() {
-    dots.length = 0; orbitNodes.length = 0;
-    worldEl.innerHTML = '';
-    dotLayer = document.createElement('div'); dotLayer.style.cssText = 'position:absolute;inset:0;';
-  }
   function setPattern(key) {
     const p = PATTERNS[key]; if (!p) return;
     cur = key;
-    clearWorld();
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4');
-    rootEl.classList.add('pat-' + key);
-    worldEl.className = 'kvp-world view-' + p.view;
+    worldEl.innerHTML = '';
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'is-iso', 'is-flat');
+    rootEl.classList.add('pat-' + key, p.iso ? 'is-iso' : 'is-flat');
 
-    /* アンビエント光（ガラス案でシーンに下地の光を敷く＝すりガラスが blur で拾う） */
-    if (p.box === 'glass') {
-      const amb = document.createElement('div'); amb.className = 'kvp-ambient';
-      const aw = 1080, ah = 820;
-      amb.style.left = (C.x - aw / 2) + 'px'; amb.style.top = (C.y - ah / 2) + 'px';
-      amb.style.width = aw + 'px'; amb.style.height = ah + 'px';
-      worldEl.appendChild(amb);
-    }
-
-    /* 接地影（アイソメ時） */
-    const dsh = document.createElement('div'); dsh.className = 'kvp-dash-shadow';
-    dsh.style.left = dashRect.l + 'px'; dsh.style.top = (dashRect.t + 30) + 'px';
-    worldEl.appendChild(dsh);
-
-    /* 接続レイヤー（ダッシュより後ろ／前は用途で分ける） */
-    if (p.conn === 'rings') worldEl.appendChild(buildRings());
+    if (p.conn === 'rings')  worldEl.appendChild(buildRings());
+    if (p.conn === 'orbit')  worldEl.appendChild(buildOrbitRing());
     worldEl.appendChild(buildDash());
-    if (p.conn === 'circuit') { worldEl.appendChild(buildCircuit(p.layout)); worldEl.appendChild(dotLayer); }
-    if (p.conn === 'orbit') buildOrbit(p.box);
+    if (p.conn === 'circuit') worldEl.appendChild(buildCircuit(p.layout));
 
-    /* アイコン（circuit/rings はレイアウト固定配置。orbit は frame で動かす） */
-    if (p.layout) {
-      p.layout.forEach(it => {
-        const node = buildIcon(it.id, p.box);
-        node.style.left = (it.x - ICO / 2) + 'px';
-        node.style.top = (it.y - ICO / 2) + 'px';
-        const z = p.view === 'iso' ? 14 : 0;
-        node.style.transform = `translateZ(${z}px) ${billboard(p.view)}`;
-        worldEl.appendChild(node);
-      });
-    }
+    p.layout.forEach(it => {
+      const node = buildIcon(it.id, p.box);
+      placeIcon(node, it.x, it.y);
+      worldEl.appendChild(node);
+    });
   }
 
   function show() { rootEl.classList.remove('hidden'); rootEl._fit && rootEl._fit(); }
