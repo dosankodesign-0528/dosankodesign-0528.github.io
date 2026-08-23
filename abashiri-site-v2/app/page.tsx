@@ -35,6 +35,7 @@ export default function Home() {
     scrollSpd: { kvToMsg: 100 },
     tips: { delay: 5, fade: 1.2, pattern: 1 },
     videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
+    expEnter: { pattern: 1 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 

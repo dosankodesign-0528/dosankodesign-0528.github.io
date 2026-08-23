@@ -80,8 +80,8 @@ export type IntroPace = {
 };
 /* 2026-08-22 ヒデさん依頼で調整パネルから触れるようにした。ここは既定値 */
 export const DEFAULT_INTRO_PACE: IntroPace = {
-  startDelay: 1.8,
-  stagger: 0.9,
+  startDelay: 0.8,
+  stagger: 0.5,
   duration: 1.7,
   blur: 18,
 };
@@ -618,13 +618,21 @@ function Watch({
     },
     []
   );
-  const controlsShown = uiVisible || !playing;
+  /* ぼーっとTipsが出ている間は再生UIを出さない（マウスが通ってもカウントしない）。
+     Tipsを閉じたあとは、クリックやマウス操作でまた再生UIが出る（2026-08-23 ヒデさん仕様） */
+  const [tipsVisible, setTipsVisible] = useState(false);
+  const controlsShown = !tipsVisible && (uiVisible || !playing);
 
   /* 再生が始まったら、操作していなくても uiHideSec 後に自動で消す
      （2026-08-23 ヒデさん指示：消えるタイミングを早く＋パネルで調整） */
   useEffect(() => {
     if (playing) pokeUi();
   }, [playing, pokeUi]);
+
+  /* Tips表示中はマウスを動かしても再生UIを出さない */
+  const pokeUiGuarded = useCallback(() => {
+    if (!tipsVisible) pokeUi();
+  }, [tipsVisible, pokeUi]);
 
   /* playing の状態と <video> の再生を同期する。
      再生開始時は音量を0から徐々に上げる（いきなり鳴らない。2026-08-23 ヒデさん依頼） */
@@ -681,10 +689,18 @@ function Watch({
     /* 動画の上に重なる操作パネルだけ。映像には一切触らない */
     <div
       className="absolute inset-0 z-30"
-      onPointerMove={() => playing && pokeUi()}
+      onPointerMove={() => playing && pokeUiGuarded()}
+      onPointerDown={() => playing && pokeUiGuarded()}
     >
-      {/* ぼーっとTips：再生して数秒たつと中央にふわっと出る（カンプ 15564:22022） */}
-      {spot.video && <BoTips playing={playing} tune={tips} />}
+      {/* ぼーっとTips：再生UIが消えて「何もない状態」になってからカウント開始し、
+          中央にふわっと出る（カンプ 15564:22022）。表示中は再生UIと排他 */}
+      {spot.video && (
+        <BoTips
+          active={playing && !controlsShown}
+          tune={tips}
+          onVisibleChange={setTipsVisible}
+        />
+      )}
       {spot.video && (
         <button
           type="button"

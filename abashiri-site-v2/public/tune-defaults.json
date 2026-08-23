@@ -118,8 +118,8 @@
     "pauseOnHover": true
   },
   "expIntro": {
-    "startDelay": 1.8,
-    "stagger": 0.9,
+    "startDelay": 0.8,
+    "stagger": 0.5,
     "duration": 1.7,
     "blur": 18
   },

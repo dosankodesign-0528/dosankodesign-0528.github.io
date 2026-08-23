@@ -49,34 +49,53 @@ const SHOWN: React.CSSProperties = {
 };
 
 export default function BoTips({
-  playing,
+  active,
   tune = DEFAULT_BO_TIPS,
+  onVisibleChange,
 }: {
-  /** 動画が再生中か（Watch の playing をそのまま渡す） */
-  playing: boolean;
+  /** true の間だけ出現カウントが進む（再生中かつ再生UIが消えている時。2026-08-23 仕様） */
+  active: boolean;
   tune?: BoTipsTune;
+  /** モーダルの表示中フラグを親（Watch）へ知らせる。表示中は再生UIを出さないため */
+  onVisibleChange?: (visible: boolean) => void;
 }) {
-  /* hidden: 出ていない / in: 表示中 / out: フェードアウト中 */
-  const [phase, setPhase] = useState<"hidden" | "in" | "out">("hidden");
+  /* hidden: 出ていない / pre: 出る直前の1コマ（アニメの出発点） / in: 表示中 / out: フェードアウト中 */
+  const [phase, setPhase] = useState<"hidden" | "pre" | "in" | "out">("hidden");
   const firstPattern = useRef(true);
   const [closed, setClosed] = useState(false); /* ×で閉じたら滞在中は出さない */
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
-    if (playing && !closed) {
+    if (active && !closed) {
+      /* 「何もない状態」になってからカウント開始（2026-08-23 ヒデさん仕様） */
       timer.current = setTimeout(
-        () => setPhase("in"),
+        () => setPhase("pre"),
         Math.max(0, tune.delay) * 1000
       );
-    } else if (!playing) {
-      /* 一時停止したらフェードアウト（閉じた扱いにはしない） */
-      setPhase((p) => (p === "in" ? "out" : p));
+    } else if (!active) {
+      /* 再生が止まった/再生UIが出た → 表示中ならフェードアウト（閉じた扱いにはしない） */
+      setPhase((p) => (p === "in" || p === "pre" ? "out" : p));
     }
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [playing, closed, tune.delay]);
+  }, [active, closed, tune.delay]);
+
+  /* pre（出発点の見た目）を1コマ描いてから in へ。
+     いきなり in で置くと、トランジションの出発点が描画されず
+     アニメなしでパッと出てしまう（2026-08-23 ヒデさん報告のバグ修正） */
+  useEffect(() => {
+    if (phase !== "pre") return;
+    const id = setTimeout(() => setPhase("in"), 50);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  /* 表示中かどうかを親へ通知（表示中は再生UIを出さない排他制御に使う） */
+  useEffect(() => {
+    onVisibleChange?.(phase === "pre" || phase === "in");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   /* パネルで出現パターンを切り替えたら、その場で出し直して比較できるようにする */
   useEffect(() => {
@@ -84,10 +103,10 @@ export default function BoTips({
       firstPattern.current = false;
       return;
     }
-    if (!playing) return;
+    if (!active) return;
     setClosed(false);
     setPhase("hidden");
-    const id = setTimeout(() => setPhase("in"), 400);
+    const id = setTimeout(() => setPhase("pre"), 400);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tune.pattern]);

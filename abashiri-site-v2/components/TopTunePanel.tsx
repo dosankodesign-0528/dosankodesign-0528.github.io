@@ -27,6 +27,7 @@ import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
 import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
 import { TIPS_PATTERNS } from "./BoTips";
+import { ENTER_PATTERNS } from "./enterPatterns";
 
 export type TopTuneValues = {
   boPattern: number;
@@ -63,6 +64,8 @@ export type TopTuneValues = {
   tips: { delay: number; fade: number; pattern: number };
   /** 動画の音量：徐々に大きくするか（2026-08-23 ヒデさん依頼） */
   videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
+  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の5案） */
+  expEnter: { pattern: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -161,6 +164,8 @@ type Params = {
   scrollSpd: { kvToMsg: number };
   tips: { delay: number; fade: number; pattern: number };
   videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
+  /** 「この場所にする」→動画再生画面への遷移（enterPatterns.ts の5案） */
+  expEnter: { pattern: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -211,6 +216,7 @@ export default function TopTunePanel({
       scrollSpd: { kvToMsg: 100 },
       tips: { delay: 5, fade: 1.2, pattern: 1 },
       videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
+      expEnter: { pattern: 1 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -262,6 +268,7 @@ export default function TopTunePanel({
         scrollSpd: { ...params.scrollSpd },
         tips: { ...params.tips },
         videoVol: { ...params.videoVol },
+        expEnter: { ...params.expEnter },
       });
 
     let panel: { destroy: () => void; sync?: () => void } | null = null;
@@ -1033,23 +1040,23 @@ export default function TopTunePanel({
                 path: "expIntro.startDelay",
                 min: 0,
                 max: 5,
-                step: 0.5,
+                step: 0.2,
                 fmt: "s",
                 hint: "ページが出てから、最初の段落が出はじめるまでの待ち。",
               },
               {
                 slider: "段落の間隔",
                 path: "expIntro.stagger",
-                min: 0.25,
+                min: 0.1,
                 max: 3,
-                step: 0.25,
+                step: 0.1,
                 fmt: "s",
                 hint: "段落と段落の間。大きいほどゆっくり順に出ます。",
               },
               {
                 slider: "1段落のアニメーション時間",
                 path: "expIntro.duration",
-                min: 0.4,
+                min: 0.2,
                 max: 4,
                 step: 0.2,
                 fmt: "s",
@@ -1108,6 +1115,21 @@ export default function TopTunePanel({
                 fmt: "px",
               },
 
+              { sub: "動画への遷移（この場所にする → 再生画面）" },
+              {
+                note: "選んだカードが窓になって、向こう側の世界へ入っていく遷移の5案。切り替えて、もう一度「この場所にする」を押すと新しい遷移で入れます。",
+              },
+              {
+                pills: "遷移の案",
+                path: "expEnter.pattern",
+                immediate: true,
+                options: ENTER_PATTERNS.map((pt, i) => ({
+                  name: `案${i + 1} ${pt.label}`,
+                  value: i + 1,
+                  swatch: "#0070c9",
+                  desc: pt.note,
+                })),
+              },
               { sub: "ぼーっとTips（動画再生中のモーダル）" },
               {
                 note: "流氷クルーズの動画を再生してしばらくすると、中央に「今、何が聞こえる？」のモーダルがふわっと出ます（カンプ 15564:22022）。×で閉じられます。",

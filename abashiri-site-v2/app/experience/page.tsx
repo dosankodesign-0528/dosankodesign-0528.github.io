@@ -36,6 +36,7 @@ export default function ExperiencePage() {
     scrollSpd: { kvToMsg: 100 },
     tips: { delay: 5, fade: 1.2, pattern: 1 },
     videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
+    expEnter: { pattern: 1 },
   });
   const onSettleValues = useCallback((v: TopTuneValues) => setTune(v), []);
 
@@ -71,6 +72,7 @@ export default function ExperiencePage() {
           tips={tune.tips}
           videoVol={tune.videoVol}
           videoUiHideSec={tune.videoVol.uiHideSec}
+          enter={tune.expEnter.pattern}
         />
       </Stage>
 
