@@ -221,12 +221,18 @@ html[data-header-dark="1"] .bgm-switch .bgm-seg-inactive img {
 .bird-frame-b {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  /* 開始ディレイ中もキーフレームの0%状態を適用する。
+     これが無いと、ディレイ中に全コマが素の不透明度1で重なって
+     「残像」に見える（2026-08-23 ヒデさん報告のバグ） */
+  animation-fill-mode: backwards;
 }
 .bird-frame-a {
   animation-name: bird-frame-a;
 }
 .bird-frame-b {
   animation-name: bird-frame-b;
+  /* アニメが走る前の保険：2コマ目は素の状態では見せない */
+  opacity: 0;
 }
 
 /* 3コマ版：上げ→中間→下げ→中間 のループ */
@@ -248,10 +254,13 @@ html[data-header-dark="1"] .bgm-switch .bgm-seg-inactive img {
 .bird3-a, .bird3-m, .bird3-b {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+  /* ディレイ中もキーフレームの0%状態を適用（残像防止。2026-08-23） */
+  animation-fill-mode: backwards;
 }
 .bird3-a { animation-name: bird3-a; }
-.bird3-m { animation-name: bird3-m; }
-.bird3-b { animation-name: bird3-b; }
+/* アニメが走る前の保険：2コマ目以降は素の状態では見せない */
+.bird3-m { animation-name: bird3-m; opacity: 0; }
+.bird3-b { animation-name: bird3-b; opacity: 0; }
 
 /* ふわふわ漂う */
 @keyframes bird-drift {
