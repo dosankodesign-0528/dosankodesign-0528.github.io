@@ -33,7 +33,7 @@ URL を一緒に渡すこと**。
 ## 🧭 進め方の共通ルール（推測・質問・報告）🔴最重要
 
 > **📄 全文は [settings/docs/general/WORKING-RULES.md](settings/docs/general/WORKING-RULES.md)（持ち運び用）。着手前に必ず読む。**
-> 根拠となった実測と経緯は [settings/docs/anyflow-embed/anyflow-postmortem.md](settings/docs/anyflow-embed/anyflow-postmortem.md)。
+> 根拠となった実測と経緯は [settings/docs/anyflow/anyflow-postmortem.md](settings/docs/anyflow/anyflow-postmortem.md)。
 
 ### 大原則
 
@@ -78,7 +78,7 @@ URL を一緒に渡すこと**。
 > **📄 既存サイトのスタイルを棚卸ししてデザインシステムに整える手順は
 > [settings/docs/general/DESIGN-SYSTEM-WORKFLOW.md](settings/docs/general/DESIGN-SYSTEM-WORKFLOW.md)**（洗い出し→統合→命名→トークン化→運用。
 > abashiri-site で実際に通した工程。完成物の実例は
-> [settings/docs/abashiri-site/DESIGN-SYSTEM.md](settings/docs/abashiri-site/DESIGN-SYSTEM.md)）。
+> [settings/docs/abashiri/DESIGN-SYSTEM.md](settings/docs/abashiri/DESIGN-SYSTEM.md)）。
 > フォントだけでなく **角丸・padding・margin・gap・レイアウト・制約・影・ブラー・
 > グラデ・不透明度・線** など、デザインシステムと呼ばれるもの全般が対象。
 > 他の Claude アカウント／他プロジェクトで使う時は、あのファイルを持っていけばよい。
@@ -248,7 +248,7 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | **anyflow-embed（V1.0・公開中）** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
 | **anyflow-embed-v2（アップデート案）** | **https://anyflow-embed-v2.vercel.app** | 親リポ subdir (main) | anyflow-embed-v2 | 手動（`vercel --prod`） |
-| **abashiri-site（網走 V1.0・公開中）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✋ 手動（2026-08-23 に Git 連携を解除）。push しても本番は動かない。上げ直しは `npx vercel redeploy abashiri-site.vercel.app` |
+| **abashiri-site（網走 V1.0・公開中）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✋ 手動（Git連携解除・Root Directory空）。push しても本番は動かない。上げ直しは `cd abashiri/v1 && npx vercel --prod --yes` |
 | **abashiri-site-v2（網走 アップデート案）** | **https://abashiri-site-v2.vercel.app** | 親リポ subdir (main) | abashiri-site-v2 | 手動（`vercel --prod`） |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
@@ -264,7 +264,7 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 - **abashiri（網走）＝ `abashiri/v1` と `abashiri/v2`**（別URL・別Vercelプロジェクトで公開）。
   - `abashiri/v1/` = V1.0（公開版・安定）。Vercel `abashiri-site` → https://abashiri-site.vercel.app
   - `abashiri/v2/` = V2（更新作業版）。Vercel `abashiri-site-v2` → https://abashiri-site-v2.vercel.app
-  - V1.0 は 2026-08-23 に Git 連携を解除（push しても本番は動かない）。上げ直しは `npx vercel redeploy abashiri-site.vercel.app`
+  - V1.0 は 2026-08-23 に Git 連携を解除＋Root Directory を空に（push しても本番は動かない）。上げ直しは `abashiri/v1/` 内で `npx vercel --prod --yes`
   - V2 は `abashiri/v2/` 内で `npx vercel --prod --yes`
 - **anyflow ＝ `anyflow/v1` と `anyflow/v2`**（別URL・別Vercelプロジェクト）。
   - `anyflow/v1/` = V1.0（公開版）。Vercel `anyflow-embed` → https://anyflow-embed.vercel.app

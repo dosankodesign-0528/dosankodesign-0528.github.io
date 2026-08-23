@@ -15,17 +15,16 @@ http://localhost:3000 を開く。
 ## 本番
 
 - URL: https://abashiri-site.vercel.app
-- Vercel Project: `abashiri-site`（フォルダ: `abashiri/v1`）
+- Vercel Project: `abashiri-site`（フォルダ: `abashiri/v1`・Root Directory は空）
 - ✋ **手動デプロイ**（2026-08-23 に Git 連携を解除）。`main` に push しても本番は動かない
 
-手動で上げ直したい時は、リポジトリのどこからでも:
+このフォルダの中で叩く:
 
 ```bash
-npx vercel redeploy abashiri-site.vercel.app
+npx vercel --prod --yes
 ```
 
-> ⚠️ Vercel 側の Root Directory が `abashiri-site`（旧パス）のままなので、`vercel --prod` は使わず
-> 上の `redeploy` を使う。詳細は [../../settings/docs/general/VERCEL-PROJECTS.md](../../settings/docs/general/VERCEL-PROJECTS.md)。
+> 詳細は [../../settings/docs/general/VERCEL-PROJECTS.md](../../settings/docs/general/VERCEL-PROJECTS.md)。
 
 ## 演出まわりの調整ファイル
 

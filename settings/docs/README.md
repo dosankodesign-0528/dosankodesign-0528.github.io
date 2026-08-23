@@ -13,7 +13,7 @@
 | **どのプロダクトにも効く話** | `settings/docs/general/` | 進め方のルール・カンプの読み方・Vercel の運用 |
 | **特定のプロダクトの話** | `settings/docs/<プロダクト名>/` | 網走サイトのデザインシステム・anyflow の引き継ぎ書 |
 
-- フォルダ名は**プロダクトのフォルダ名とそろえる**（`abashiri-site/` の資料 → `settings/docs/abashiri-site/`）
+- フォルダ名は**プロダクトのフォルダ名とそろえる**（`abashiri/` の資料 → `settings/docs/abashiri/`）
 - 新しいプロダクトの資料が出てきたら、`settings/docs/` に同じ名前のフォルダを作って入れる
 - ⚠️ **プロダクト別フォルダの中で `index.html` `app/globals.css` のように書かれている相対パスは、
   そのプロダクトのフォルダ（例: `../../anyflow/v1/`）を基準に読む**
@@ -31,22 +31,22 @@
 
 ## 📦 プロダクト別
 
-### abashiri-site（網走サイト）
+### abashiri（網走サイト）
 | ファイル | 中身 |
 |---|---|
-| [abashiri-site/DESIGN-SYSTEM.md](abashiri-site/DESIGN-SYSTEM.md) | 完成したデザインシステム（色・文字・余白のトークン一覧） |
-| [abashiri-site/DESIGN-SYSTEM-V2.md](abashiri-site/DESIGN-SYSTEM-V2.md) | V2.0 用に再整理したデザインシステム（4/8の倍数ルール・丸め表つき） |
-| [abashiri-site/V1.1-STATUS.md](abashiri-site/V1.1-STATUS.md) | v1.1 のいまの状態・仮置き一覧・実装の地雷・次にやること（引き継ぎ用） |
-| [abashiri-site/TASKS.md](abashiri-site/TASKS.md) | ヒデさんからの依頼台帳（依頼・進捗・概算時間。受けたら即追記） |
+| [abashiri/DESIGN-SYSTEM.md](abashiri/DESIGN-SYSTEM.md) | 完成したデザインシステム（色・文字・余白のトークン一覧） |
+| [abashiri/DESIGN-SYSTEM-V2.md](abashiri/DESIGN-SYSTEM-V2.md) | V2.0 用に再整理したデザインシステム（4/8の倍数ルール・丸め表つき） |
+| [abashiri/V1.1-STATUS.md](abashiri/V1.1-STATUS.md) | v1.1 のいまの状態・仮置き一覧・実装の地雷・次にやること（引き継ぎ用） |
+| [abashiri/TASKS.md](abashiri/TASKS.md) | ヒデさんからの依頼台帳（依頼・進捗・概算時間。受けたら即追記） |
 
-### anyflow-embed
+### anyflow
 | ファイル | 中身 |
 |---|---|
-| [anyflow-embed/HANDOFF.md](anyflow-embed/HANDOFF.md) | 実装の引き継ぎ書（一番厚い。実測値と経緯が全部ここ） |
-| [anyflow-embed/DESIGN-TOKENS.md](anyflow-embed/DESIGN-TOKENS.md) | デザイントークン一覧 |
-| [anyflow-embed/STORYBOARD-NOTES.md](anyflow-embed/STORYBOARD-NOTES.md) | 絵コンテのメモ |
-| [anyflow-embed/FRAMER-AGENT-BRIEF.md](anyflow-embed/FRAMER-AGENT-BRIEF.md) | Framer 側の担当者／AI 向けの依頼書 |
-| [anyflow-embed/anyflow-postmortem.md](anyflow-embed/anyflow-postmortem.md) | 事故の振り返り（[general/WORKING-RULES.md](general/WORKING-RULES.md) の根拠になった実測） |
+| [anyflow/HANDOFF.md](anyflow/HANDOFF.md) | 実装の引き継ぎ書（一番厚い。実測値と経緯が全部ここ） |
+| [anyflow/DESIGN-TOKENS.md](anyflow/DESIGN-TOKENS.md) | デザイントークン一覧 |
+| [anyflow/STORYBOARD-NOTES.md](anyflow/STORYBOARD-NOTES.md) | 絵コンテのメモ |
+| [anyflow/FRAMER-AGENT-BRIEF.md](anyflow/FRAMER-AGENT-BRIEF.md) | Framer 側の担当者／AI 向けの依頼書 |
+| [anyflow/anyflow-postmortem.md](anyflow/anyflow-postmortem.md) | 事故の振り返り（[general/WORKING-RULES.md](general/WORKING-RULES.md) の根拠になった実測） |
 
 ### travel-shiori（旅のしおり）
 | ファイル | 中身 |

@@ -5,7 +5,7 @@
 実測して再整理したもの。**フォーマットは [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md)（V1.0）を踏襲**しつつ、
 デザインが大きく変わった部分を V2.0 用に登録し直した。
 
-> トークンの実体は [abashiri-site-v2/app/globals.css](../../abashiri-site-v2/app/globals.css)。
+> トークンの実体は [abashiri/v2/app/globals.css](../../../abashiri/v2/app/globals.css)。
 > コンポーネント側に生の数値を書かないルールは V1 と同じ。
 
 ## 0. 数値の丸めルール（ヒデさん指定 2026-08-22）

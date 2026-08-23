@@ -27,14 +27,13 @@ Vercel ダッシュボードで設定している各プロジェクトの状態�
 | `prj_0PFWbicnMhDclphX9PtiF49XEsXU` | design-gallery | 親リポ subdir (`design-gallery`, main) | `.` | Next.js | https://design-gallery-puce.vercel.app | 🛠 手動 |
 | `prj_mkKya8Hr3XlH3li3dwspClOLSS8G` | akijikan-mitsukeru-kun | 親リポ subdir (`akijikan-mitsukeru-kun`, main) | `.` | Other (静的) | https://akijikan-mitsukeru-kun.vercel.app | 🛠 手動 |
 | `prj_quCYKGmCeVVY5dymibs8CxbYeQ1E` | retro-games | 親リポ subdir (`Retro Games`, main) | `.` | Other (静的) | https://retro-games-one.vercel.app | 🛠 手動 |
-| `prj_OIXN98ujgsQn3JlUZjkevUOOJhnz` | abashiri-site | 親リポ subdir (`abashiri-site`, main) | `abashiri-site` | Next.js | https://abashiri-site.vercel.app | 🛠 手動（2026-08-23 に Git 連携を解除。旧: 2026-08-14〜自動） |
+| `prj_OIXN98ujgsQn3JlUZjkevUOOJhnz` | abashiri-site | 親リポ subdir (`abashiri/v1`, main) | `.`（空・2026-08-23） | Next.js | https://abashiri-site.vercel.app | 🛠 手動（Git連携解除・Root Directory空。`cd abashiri/v1 && vercel --prod`） |
 
 ### ⚠️ abashiri-site を Git 自動デプロイに切り替えた話（2026-08-14）→ 2026-08-23 に手動へ戻した
 
 > 🔄 **2026-08-23 更新：この自動デプロイは解除した（`vercel git disconnect`）。**
 > V1.0 と V2 をそれぞれ別 URL で公開する形にしたので、abashiri-site も他プロジェクトと同じ手動運用にそろえた。
-> push しても本番は動かない。上げ直す時は `npx vercel redeploy abashiri-site.vercel.app`（Root Directory が残っているため。
-> フォルダ整理で Root Directory を消せば `vercel --prod` 運用にできる → [FOLDER-RESTRUCTURE-RUNBOOK.md](FOLDER-RESTRUCTURE-RUNBOOK.md)）。
+> push しても本番は動かない。**2026-08-23 に Root Directory も空に戻した**ので、上げ直しは `abashiri/v1/` の中で `npx vercel --prod --yes`。
 > 以下は当時の経緯の記録として残す。
 
 もともと **Git 未連携**（Settings > Git が「Connect Git Repository」のまま）で、
@@ -55,9 +54,9 @@ Redeploy は**同じソースを再生するだけ**で、既存デプロイの�
 `abashiri-site/` の中から上げたもの＝その中に `abashiri-site/` は無いため。
 切り替え後の初回は **Redeploy ではなく git push**（＝Git 由来のデプロイ）で走らせること。
 
-**手動デプロイのコマンドも変わる**: Root Directory 設定後に `abashiri-site/` の中で
-`npx vercel --prod` を叩くとパスが二重になって失敗する。手動で上げ直す時は
-`npx vercel redeploy abashiri-site.vercel.app` を使う（design-gallery と同じ）。
+**手動デプロイ（2026-08-23 以降）**: Root Directory を空に戻したので、`abashiri/v1/` の中で
+`npx vercel --prod --yes` を叩けば上がる。
+（旧: Root Directory=`abashiri-site` の時代は二重パスで失敗するため `vercel redeploy` を使っていた。）
 
 > **手動 deploy** が必要な理由: 親リポの subdir 変更は Vercel の Git Integration が拾えない（リポルートに `.vercel/project.json` が houmon-app 用のため）。subdir に cd してから `npx vercel --prod --yes` で叩く。
 
@@ -119,5 +118,5 @@ Redeploy は**同じソースを再生するだけ**で、既存デプロイの�
 
 ## 関連ファイル
 
-- [.github/workflows/supabase-keepalive.yml](../../.github/workflows/supabase-keepalive.yml) — Supabase 自動停止防止
-- [CLAUDE.md](../../CLAUDE.md) / [AGENTS.md](../../AGENTS.md) — AI 向け運用ルール（symlink で同一）
+- [.github/workflows/supabase-keepalive.yml](../../../.github/workflows/supabase-keepalive.yml) — Supabase 自動停止防止
+- [CLAUDE.md](../../../CLAUDE.md) / [AGENTS.md](../../../AGENTS.md) — AI 向け運用ルール（symlink で同一）

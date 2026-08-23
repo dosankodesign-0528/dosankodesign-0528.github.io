@@ -72,7 +72,7 @@
 
 - 元の実装: `../index.html`（HTML/CSS/JS 1ファイル・v61）
 - 図解つきの解説: Figma セクション「📘 Anyflow Embed ドキュメント」
-- デザイントークンの整理: `../../../settings/docs/anyflow-embed/DESIGN-TOKENS.md`
+- デザイントークンの整理: `../../../settings/docs/anyflow/DESIGN-TOKENS.md`
 
 ---
 
@@ -404,7 +404,7 @@
 > 上から順に読ませれば、1ページぶんの構造・値・アニメーション設定が揃います。
 > セクション単位で切り出して渡すこともできます（`## 5` の各ブロックが独立しています）。
 >
-> 元の実装: `anyflow-embed/index.html`（HTML/CSS/JS 1ファイル・v61）
+> 元の実装: `anyflow/v1/index.html`（HTML/CSS/JS 1ファイル・v61）
 > 対応する Figma: セクション「最新」内の `🎬 セクションごとの動きの解説` と `🔧 Framer 実装ガイド（7つの論点）`
 
 ---

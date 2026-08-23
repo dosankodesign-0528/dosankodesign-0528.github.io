@@ -8,7 +8,7 @@ Figma: [works — デザインシステム](https://www.figma.com/design/jSLFEub
 
 ## 0. このドキュメントの立ち位置
 
-- **値の唯一の出どころは [`app/globals.css`](../../abashiri-site/app/globals.css) の `@theme` ブロック。** ここに書いていない値をコンポーネントに直接書かない。
+- **値の唯一の出どころは [`app/globals.css`](../../../abashiri/v1/app/globals.css) の `@theme` ブロック。** ここに書いていない値をコンポーネントに直接書かない。
 - このドキュメントと Figma の板は、その `@theme` を人間が読める形に写したもの。**ずれていたらコードが正**。
 - **載せているのは本番の画面で実際に使っている値だけ。** 比較検討（`/mock/` 配下）でしか使わない値は、トークンにもドキュメントにも入れない。
 

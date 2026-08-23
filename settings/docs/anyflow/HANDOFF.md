@@ -11,9 +11,9 @@
 
 - **内容**: Anyflow Embed のトップページ（キービジュアル）。Figma カンプの忠実再現＋アニメーション実装
 - **本番 URL**: https://anyflow-embed.vercel.app
-- **場所**: 親リポ `hideyuki-yamanaka.github.io` の `anyflow-embed/` サブディレクトリ（submodule ではない）
+- **場所**: 親リポ `hideyuki-yamanaka.github.io` の `anyflow/v1/` サブディレクトリ（submodule ではない）
 - **構成**: `index.html` 単一ファイル（フレームワーク・ビルドなし）+ `assets/`
-- **デプロイ**: 手動。`anyflow-embed/` ディレクトリで `npx vercel --prod --yes`
+- **デプロイ**: 手動。`anyflow/v1/` ディレクトリで `npx vercel --prod --yes`
   （Vercel プロジェクト名: `anyflow-embed`。git push では自動デプロイされない）
 - **ブランチ運用**: main 一本。feature branch 禁止（親リポの CLAUDE.md 参照）
 - **ローカル確認**: `.claude/launch.json` の `anyflow-embed`（port 8773 の python http.server）
@@ -1057,7 +1057,7 @@ Apple の並びは Ultralight < Thin < Light なので、対応は
 | 2 | `updateDev` ごと開発者体験のJS全部（`updateResults`〜導入事例を置換した時） | `updateDev is not defined` で全停止 |
 | 3 | 開発者体験のCSS全部（実績のCSSを置換した時） | 暗背景も文字組みも消える |
 
-**復旧手順**: `git show HEAD:anyflow-embed/index.html` から該当ブロックを切り出して挿し直す。
+**復旧手順**: `git show HEAD:anyflow/v1/index.html` から該当ブロックを切り出して挿し直す。
 **予防**: 置換の開始・終了マーカーは**同じセクション内**で取る。セクションをまたぐ範囲指定は使わない。
 
 
