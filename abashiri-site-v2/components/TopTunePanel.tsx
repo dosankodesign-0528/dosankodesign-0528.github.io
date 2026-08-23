@@ -26,7 +26,6 @@ import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
 import { DEFAULT_MSG, MSG_PATTERNS, type MsgTune } from "./msgConfig";
 import { DEFAULT_INTRO_PACE, type IntroPace } from "./ExperienceFlow";
-import { TIPS_PATTERNS } from "./BoTips";
 import { ENTER_PATTERNS } from "./enterPatterns";
 
 export type TopTuneValues = {
@@ -214,7 +213,7 @@ export default function TopTunePanel({
       expIntro: { ...DEFAULT_INTRO_PACE },
       expPick: { pattern: 1 },
       scrollSpd: { kvToMsg: 100 },
-      tips: { delay: 5, fade: 1.2, pattern: 1 },
+      tips: { delay: 5, fade: 1.2, pattern: 5 }, /* 出現は案5「下からゆっくり」で確定 */
       videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
       expEnter: { pattern: 1 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
@@ -1151,20 +1150,6 @@ export default function TopTunePanel({
                 step: 0.2,
                 fmt: "s",
                 hint: "フェードイン/アウトにかける時間。長いほどふわーっと出入りします。",
-              },
-              {
-                pills: "出現の案",
-                path: "tips.pattern",
-                immediate: true,
-                options: Object.entries(TIPS_PATTERNS).map(([v, p]) => ({
-                  name: p.name,
-                  value: Number(v),
-                  swatch: "#0070c9",
-                  desc: p.note,
-                })),
-              },
-              {
-                note: "動画を再生した状態で案を切り替えると、その場でモーダルが出直して比較できます。",
               },
               { sub: "動画の音" },
               {

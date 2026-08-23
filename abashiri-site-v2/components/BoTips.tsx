@@ -23,7 +23,7 @@ export type BoTipsTune = {
   /** 1〜5: 出現のしかた（TIPS_PATTERNS） */
   pattern: number;
 };
-export const DEFAULT_BO_TIPS: BoTipsTune = { delay: 5, fade: 1.2, pattern: 1 };
+export const DEFAULT_BO_TIPS: BoTipsTune = { delay: 5, fade: 1.2, pattern: 5 }; /* 案5「下からゆっくり」で採用（2026-08-23 ヒデさん決定） */
 
 /* 出現のしかた5案（2026-08-23 ヒデさん依頼。パネルのピルで切替） */
 export const TIPS_PATTERNS: Record<number, { name: string; note: string }> = {

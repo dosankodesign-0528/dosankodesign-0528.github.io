@@ -353,6 +353,15 @@ function Pick({
   const [index, setIndex] = useState(START_INDEX);
   const go = (d: number) => setIndex((i) => i + d);
 
+  /* 登場アニメは「最初の1回」だけ。カルーセルを送って新しく入ってくるカードにまで
+     登場のブラーフェード（遅延つき）が付くと、横のカードがなかなか現れず
+     「無い」ように見える（2026-08-23 ヒデさん指摘）。登場が済んだら即表示に切り替える */
+  const [introDone, setIntroDone] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setIntroDone(true), 3500);
+    return () => clearTimeout(id);
+  }, []);
+
   const active = ((index % SPOTS.length) + SPOTS.length) % SPOTS.length;
   /* track の原点を「器の中央（left:50%）」に置き、カードは中心基準で並べる。
      ステージは横長の画面だと 1512px より広がるので、
@@ -400,7 +409,10 @@ function Pick({
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
             {slots.map(({ pos, spot }) => (
-              <motion.div key={pos} variants={EP.card(pos - START_INDEX)}>
+              <motion.div
+                key={pos}
+                variants={introDone ? undefined : EP.card(pos - START_INDEX)}
+              >
                 <SpotCard
                   spot={spot}
                   active={pos === index}
