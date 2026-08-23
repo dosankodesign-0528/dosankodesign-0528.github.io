@@ -311,6 +311,27 @@ export default function TopPage({
     window.setTimeout(() => router.push("/experience"), 800);
   };
 
+  /* ディゾルブ中は KV の演出（カモメ＝CSSアニメ／人物イラスト＝WAAPIループ）を
+     すべて一時停止して、背景を静止させる。
+     backdrop-filter のブラーは「背景が動くたびに全画面を再計算」するのが最も重く、
+     ここがガタつきの主因だった（2026-08-24 ヒデさん報告）。背景を止めれば、
+     固定ブラー＋透明度フェード（GPU合成）だけになり、確実になめらかになる。
+     幕（data-dissolve-veil）自身のフェードは止めないよう除外する */
+  useEffect(() => {
+    if (!leaving) return;
+    /* この効果は DOM コミット後に走るので幕は既に存在する。
+       同期で止める（rAF だと裏タブで発火せず、実機でも1フレーム遅れるだけ利点がない）。
+       幕自身のフェードは除外（幕の要素配下のアニメは止めない） */
+    const veil = document.querySelector("[data-dissolve-veil]");
+    document.getAnimations().forEach((a) => {
+      const target = (a.effect as KeyframeEffect | null)?.target as Node | null;
+      if (veil && target && veil.contains(target)) return;
+      try {
+        a.pause();
+      } catch {}
+    });
+  }, [leaving]);
+
   const ip = INTRO_PATTERNS[intro] ?? INTRO_PATTERNS[2];
   const kp = KV_PATTERNS[kv] ?? KV_PATTERNS[1];
   /* 入れ替わりのタイミング（作字が消える → 背景ブラー → スポットが晴れる → 固定） */
@@ -875,9 +896,13 @@ export default function TopPage({
           青グラデ（体験ページの下地と同じ）でふんわり覆う */}
       {leaving && (
         <motion.div
-          className="absolute inset-0 z-40 bg-gradient-to-b from-brand via-brand/70 to-sky-bottom"
-          initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-          animate={{ opacity: 1, backdropFilter: "blur(22px)" }}
+          data-dissolve-veil
+          /* ブラーは固定（backdrop-blur-[22px]）。透明度だけをアニメする。
+             以前は blur を 0→22px と毎フレーム変えていて、それ自体が最も重い処理だった。
+             背景は上の useEffect で静止させてあるので、固定ブラーは一度だけ合成され軽い */
+          className="absolute inset-0 z-40 bg-gradient-to-b from-brand via-brand/70 to-sky-bottom backdrop-blur-[22px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         />
       )}
