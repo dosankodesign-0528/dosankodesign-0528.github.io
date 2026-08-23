@@ -62,7 +62,7 @@ export type TopTuneValues = {
   /** ぼーっとTips（動画再生ページのモーダル）のタイミング（2026-08-23 ヒデさん依頼） */
   tips: { delay: number; fade: number; pattern: number };
   /** 動画の音量：徐々に大きくするか（2026-08-23 ヒデさん依頼） */
-  videoVol: { fadeIn: boolean; fadeSec: number };
+  videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
 };
 
 /* 位置・大きさ（px）。既定値は globals.css の :root と必ずそろえる */
@@ -160,7 +160,7 @@ type Params = {
   loop: { cycle: number; show: number; swayFirst: boolean };
   scrollSpd: { kvToMsg: number };
   tips: { delay: number; fade: number; pattern: number };
-  videoVol: { fadeIn: boolean; fadeSec: number };
+  videoVol: { fadeIn: boolean; fadeSec: number; uiHideSec: number };
 };
 
 /* tune-panel.js（依存ゼロの素のJS）の必要なところだけの型 */
@@ -210,7 +210,7 @@ export default function TopTunePanel({
       expPick: { pattern: 1 },
       scrollSpd: { kvToMsg: 100 },
       tips: { delay: 5, fade: 1.2, pattern: 1 },
-      videoVol: { fadeIn: true, fadeSec: 3 },
+      videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
       loop: { cycle: 15, show: 2.6, swayFirst: false },
     };
@@ -1155,6 +1155,16 @@ export default function TopTunePanel({
                 step: 0.5,
                 fmt: "s",
                 hint: "音量が最大になるまでの時間。長いほどゆっくり大きくなります。",
+              },
+              { sub: "再生ボタンとタイマー" },
+              {
+                slider: "表示時間",
+                path: "videoVol.uiHideSec",
+                min: 0.5,
+                max: 8,
+                step: 0.5,
+                fmt: "s",
+                hint: "再生開始やマウス操作のあと、再生マークとタイマーが消えるまでの時間。短いほど早く映像だけになります。",
               },
               { sub: "カモメ（このページの2匹）" },
               {

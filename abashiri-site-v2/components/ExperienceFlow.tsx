@@ -587,6 +587,7 @@ function Watch({
   seamless,
   tips = DEFAULT_BO_TIPS,
   vol = { fadeIn: true, fadeSec: 3 },
+  uiHideSec = 2,
 }: {
   spot: Spot;
   /* 動画そのものは MediaLayer が持つ。ここは操作するだけ */
@@ -597,6 +598,8 @@ function Watch({
   tips?: BoTipsTune;
   /** 動画の音量：徐々に大きくするか・何秒かけるか。調整パネルから */
   vol?: { fadeIn: boolean; fadeSec: number };
+  /** 再生ボタン・タイマーが自動で消えるまでの時間（秒）。調整パネルから */
+  uiHideSec?: number;
 }) {
   const [playing, setPlaying] = useState(!spot.video || seamless);
   const [remaining, setRemaining] = useState(3 * 60);
@@ -607,8 +610,8 @@ function Watch({
   const pokeUi = useCallback(() => {
     setUiVisible(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setUiVisible(false), 3000);
-  }, []);
+    hideTimer.current = setTimeout(() => setUiVisible(false), uiHideSec * 1000);
+  }, [uiHideSec]);
   useEffect(
     () => () => {
       if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -616,6 +619,12 @@ function Watch({
     []
   );
   const controlsShown = uiVisible || !playing;
+
+  /* 再生が始まったら、操作していなくても uiHideSec 後に自動で消す
+     （2026-08-23 ヒデさん指示：消えるタイミングを早く＋パネルで調整） */
+  useEffect(() => {
+    if (playing) pokeUi();
+  }, [playing, pokeUi]);
 
   /* playing の状態と <video> の再生を同期する。
      再生開始時は音量を0から徐々に上げる（いきなり鳴らない。2026-08-23 ヒデさん依頼） */
@@ -702,11 +711,6 @@ function Watch({
           controlsShown ? "opacity-100" : "opacity-0"
         }`}
       >
-        <div className="absolute left-[122.5px] top-[-22px] flex items-center justify-center rounded-full bg-white/40 px-4 py-1.5 backdrop-blur-90">
-          <p className="whitespace-nowrap text-body-16 font-normal leading-[1.2] text-white">
-            ぼーっとタイマー
-          </p>
-        </div>
         <p className="font-num whitespace-nowrap text-number-120 font-thin leading-none text-white">
           {mm}:{ss}
         </p>
@@ -866,6 +870,7 @@ export default function ExperienceFlow({
   pickEnter,
   tips,
   videoVol,
+  videoUiHideSec,
 }: {
   step: Step;
   setStep: (s: Step) => void;
@@ -881,6 +886,8 @@ export default function ExperienceFlow({
   tips?: BoTipsTune;
   /** 動画の音量フェードイン。調整パネルから */
   videoVol?: { fadeIn: boolean; fadeSec: number };
+  /** 再生ボタン・タイマーが消えるまでの時間（秒）。調整パネルから */
+  videoUiHideSec?: number;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   /* 映像はサイト内で1つだけ。ズームインも再生画面もこれを共有する */
@@ -978,7 +985,7 @@ export default function ExperienceFlow({
       {/* 窓をくぐったら、余計な演出をはさまずそのまま動画を見せる。
           Watch は操作パネルだけで、映像そのものには触らない */}
       {step === 3 && (
-        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} tips={tips} vol={videoVol} />
+        <Watch spot={spot} videoRef={mediaRef} seamless={startAt != null} tips={tips} vol={videoVol} uiHideSec={videoUiHideSec} />
       )}
 
       {/* ナビは常に最前面（動画再生中の操作パネルが z-30 の全画面レイヤーなので、
