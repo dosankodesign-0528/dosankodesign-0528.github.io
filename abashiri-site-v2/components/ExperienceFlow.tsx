@@ -51,8 +51,8 @@ const SPOTS: Spot[] = [
      scene-ryuhyo.jpg は船が写っていて動画と絵が違うため、遷移の途中で
      船の写真が挟まって見えてしまう。ice.jpg なら動画の絵とつながる */
   { id: "ryuhyo", label: "流氷クルーズ", src: "/img/ice.jpg", video: "/video/ryuhyo.mp4" },
-  { id: "tento", label: "天都山展望台", src: "/img/scene-tento.jpg", placeholder: true },
-  { id: "himawari", label: "ひまわり畑", src: "/img/scene-himawari.jpg" },
+  { id: "tento", label: "網走駅", src: "/img/scene-eki.jpg" }, /* 写真差し替えに伴い改名（2026-08-23 ヒデさん指定・Figma 15574:22389） */
+  { id: "himawari", label: "能取岬", src: "/img/scene-notoro.jpg" }, /* 灯台の写真へ差し替えに伴い改名（Figma 15574:22393） */
 ];
 
 const STAGE_W = 1512;
