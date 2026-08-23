@@ -123,6 +123,13 @@
 .pat-p4 .kvp-orbit { display: block; }
 .kvp-root.hidden { display: none; }
 
+/* Blender版（3D書き出しPNG）を右グラフィック領域に配置。ヘッダー/コピー/ティッカーは固定 */
+#kvBlender { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
+#kvBlender.hidden { display: none; }
+#kvBlender img { position: absolute; right: 0.5%; top: 51%; transform: translateY(-50%);
+  width: 63%; max-width: 1120px; height: auto; display: block; }
+@media (max-width: 1280px) { #kvBlender img { width: 70%; right: 0; } }
+
 /* パネルの「デザイン/4案」行（既存 .kv-bar の行と同じ並び） */
 .kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=3">
+<link rel="stylesheet" href="patterns.css?v=4">
 </head>
 <body>
 
@@ -27,6 +27,7 @@
 
 <div id="kv"></div>
 <div id="kvp"></div>
+<div id="kvBlender" class="hidden"><img src="assets/kv-hero-3d.png?v=1" alt="Blender 3D キービジュアル"></div>
 
 <div class="kv-ticker">
   <div class="track">
@@ -53,6 +54,8 @@
     <button data-design="p2">②フラット×同心円</button>
     <button data-design="p3">③アイソメ×回路線</button>
     <button data-design="p4">④アイソメ×軌道</button>
+    <span class="sep"></span>
+    <button data-design="blender">Blender版(3D)</button>
   </div>
   <div class="row1">
     <b>KV V2</b>
@@ -210,13 +213,15 @@
      エージェント専用の操作行(row1/rowL/row2/row4/row3)は関係ないので畳む */
   KVP.start({ mount: 'kvp' });
   const kvHost = document.getElementById('kv');
+  const kvBlender = document.getElementById('kvBlender');
   const agentRows = document.querySelectorAll('.kv-bar .row1, .kv-bar .rowL, .kv-bar .row2, .kv-bar .row4, .kv-bar .row3');
   document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
     document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
-    const d = b.dataset.design, isAgent = d === 'agent';
+    const d = b.dataset.design, isAgent = d === 'agent', isBlender = d === 'blender';
     kvHost.style.display = isAgent ? '' : 'none';
     agentRows.forEach(r => r.style.display = isAgent ? '' : 'none');
-    if (isAgent) KVP.hide();
+    kvBlender.classList.toggle('hidden', !isBlender);
+    if (isAgent || isBlender) KVP.hide();
     else { KVP.show(); KVP.setPattern(d); }
   });
 </script>
