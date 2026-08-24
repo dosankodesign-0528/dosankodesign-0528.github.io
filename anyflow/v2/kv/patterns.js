@@ -117,13 +117,13 @@
 
   /* ---- SVG忠実版（Figmaから書き出したSVGを実座標に配置。静止・ズレゼロ）---- */
   const SVG_DIR = 'assets/figma/';
-  /* [file, centerX, centerY, w, h]（w/h=書き出しviewBox。影込みなので実アイコンより一回り大きい） */
+  /* [file, centerX, centerY, w, h, figmaSize]（w/h=書き出しviewBox＝影込み。fs=実ガラス矩形の一辺）*/
   const SVG_ICONS = [
-    ['icon-4.svg', 667, 604, 198, 198],   // chart(大)
-    ['icon-3.svg', 675, 269, 124, 125],   // chat
-    ['icon-2.svg', 1282, 216, 117, 117],  // person
-    ['icon-1.svg', 1270, 617, 104, 104],  // calendar
-    ['icon.svg',   960, 209, 99, 99],     // cloud
+    ['icon-4.svg', 667, 604, 198, 198, 140],   // chart(大)
+    ['icon-3.svg', 675, 269, 124, 125, 85],    // chat
+    ['icon-2.svg', 1282, 216, 117, 117, 80],   // person
+    ['icon-1.svg', 1270, 617, 104, 104, 71],   // calendar
+    ['icon.svg',   960, 209, 99, 99, 68],      // cloud
   ];
   function buildSvgScene() {
     const box = document.createElement('div'); box.className = 'kvp-svgscene';
@@ -132,15 +132,26 @@
       el.src = SVG_DIR + f; el.style.left = left + 'px'; el.style.top = top + 'px';
       el.style.width = w + 'px'; el.style.height = h + 'px'; box.appendChild(el); return el;
     };
+    /* すりガラス（SVGに焼けないbackdrop-blurをライブで。矩形を実ガラス面に合わせ、後ろをぼかす）*/
+    const frost = (left, top, w, h, r, blur) => {
+      const d = document.createElement('div'); d.className = 'kvp-frost';
+      d.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-radius:${r}px;` +
+        `backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);`;
+      box.appendChild(d); return d;
+    };
     /* 同心円（Figma実座標の左上）*/
     put('ellipse-102.svg', 647, 115, 649, 649);
     put('ellipse-101.svg', 754, 222, 435, 435);
-    /* mock（中心970,435。書き出し600×387、影が右下なので少し上左に寄せて中心合わせ）*/
-    put('mock.svg', 970 - 300 - 12, 435 - 193 - 12, 600, 387);
+    /* mock: 背後にライブブラー → その上にSVG（形・中身・影）*/
+    frost(701, 274, 539, 323, 20, 38);
+    put('mock.svg', 680, 253, 600, 387);
     /* 周回ドット（Figmaの3点）*/
     [[1075, 249], [1187, 678], [816, 156]].forEach(([dx, dy]) => put('ellipse-88.svg', dx - 4.5, dy - 4.5, 9, 9));
-    /* アイコン（中心配置）*/
-    SVG_ICONS.forEach(([f, x, y, w, h]) => put(f, x - w / 2, y - h / 2, w, h));
+    /* アイコン: 背後にライブブラー(実ガラス面に少し内側) → その上にSVG */
+    SVG_ICONS.forEach(([f, x, y, w, h, fs]) => {
+      frost(x - fs / 2 + 3, y - fs / 2 + 3, fs - 6, fs - 6, fs * 0.09, Math.round(fs * 0.5));
+      put(f, x - w / 2, y - h / 2, w, h);
+    });
     return box;
   }
 

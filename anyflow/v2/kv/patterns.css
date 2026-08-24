@@ -4,6 +4,9 @@
    ・①③=白い回線ネットワーク＋青データ光 / ②=同心円グロー / ④=単一軌道
    ============================================================ */
 
+/* 背景色（Figma実測 #E7E7E7）*/
+body { background: #E7E7E7; }
+
 /* ---- ステージ（1440×920スケール。3Dは平行投影＝perspective無しでアイソメ風）---- */
 .kvp-root { position: fixed; inset: 0; pointer-events: none; }
 .kvp-root.hidden { display: none; }
@@ -110,6 +113,8 @@
 /* SVG忠実版（Figma書き出しをそのまま配置） */
 .kvp-svgscene { position: absolute; inset: 0; }
 .kvp-svgel { position: absolute; display: block; }
+/* SVGに焼けない backdrop-blur をライブで補うレイヤー（後ろをぼかす＝すりガラス） */
+.kvp-frost { position: absolute; }
 /* 浮遊アニメ（Eのみ・トグル）*/
 @keyframes kvpFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .pat-p5.float-on .kvp-e-icons .kvp-ico { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
