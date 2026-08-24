@@ -160,6 +160,10 @@
 .em-send img { width: 13px; height: 13px; opacity: .55; }
 
 /* ============ パネル行・Blender版 ============ */
+/* 隠しモード（網走と同じ）: 既定は非表示、右上の透明ボックスで出し入れ */
+.kv-bar { display: none; }
+.kv-bar.show { display: flex; }
+.kv-secret { position: fixed; top: 0; right: 0; width: 60px; height: 60px; z-index: 60; cursor: pointer; }
 .kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .kv-bar .rowE { display: flex; align-items: center; gap: 8px; }
 #kvBlender { position: fixed; inset: 0; z-index: 3; pointer-events: none; }

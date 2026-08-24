@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=10">
+<link rel="stylesheet" href="patterns.css?v=11">
 </head>
 <body>
 
@@ -44,6 +44,7 @@
   </div>
 </div>
 
+<div class="kv-secret" id="kvSecret" title="調整パネル"></div>
 <div class="kv-bar">
   <div class="row0">
     <b>案:</b>
@@ -142,6 +143,9 @@
     else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }
   });
   rowE.style.display = 'none';
+
+  /* 隠しモード: 右上の透明ボックスでパネルを出し入れ（網走と同じ仕様） */
+  document.getElementById('kvSecret').onclick = () => document.querySelector('.kv-bar').classList.toggle('show');
 </script>
 </body>
 </html>
