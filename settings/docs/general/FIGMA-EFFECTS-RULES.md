@@ -20,24 +20,27 @@ Figmaの「すりガラス」は、たいてい **Background blur（背景ブラ
 - SVG/PNG を使う場合は、その**背後に blur レイヤーを1枚敷く**（SVGは形・中身・影、CSSがブラー担当）。
 - 値は**Figma実測をそのまま**使う（下記の拾い方）。
 
-### 🔴🔴 一番ハマった真因：**祖先を「拡大縮小」すると backdrop-filter が描画されない**
-Chrome/Safari は、**backdrop-filter を持つ要素の祖先に `transform` / `filter` / `perspective` / `transform-style: preserve-3d`、そして“拡大縮小”があると、背景ブラーを描画しない**（＝せっかく付けたブラーが全部無効化されて透ける）。実際 anyflow v2 KV で、ステージ全体を縮小していたせいで**全アイコンのブラーが外れて透けた**。
-根拠: Chromium公式バグ [#415354762](https://issues.chromium.org/issues/415354762)「Scaling nested element with backdrop-filter within another element removes the filter」。
+### 🔴🔴 透けの2大原因：「ブラー値が弱い」＋「変形した祖先」
+anyflow v2 KV で「すりガラスが透ける」が何度も再発した。実測で分かった原因は**2つの合わせ技**だった。
 
-⚠️ **`zoom` に逃げてもダメ（ここ超重要・自分がハマった所）**。`transform: scale()` を避けて `zoom` にしても、**`zoom` も“拡大縮小”なので同じく backdrop-filter が消える**。**縮小そのものがアウト**。
+**原因1：ブラー値がFigma実測の半分だった（一番の実害）**
+`backdrop-filter: blur()` の値を推測で入れて、実測の約半分にしていた（mock 実測75px→38px、アイコン 実測≒1.19×サイズ→0.6×）。**ブラーが弱いと、効いていても「透けてる」ように見える**。→ 値は必ず `get_design_context` の実測をそのまま使う（下記）。
 
-**やりがちで全部アウトな例**：
-- 拡縮を `transform: scale()` でやる → ❌ 中の backdrop-filter 全滅
-- 拡縮を `zoom` でやる → ❌ これも全滅（scaleと同罪）
-- 浮遊アニメを `transform: translateY()` でやる → ❌
-- パララックスを `transform: translate()` でやる → ❌
-- 3D風に箱を `rotateX/Y` する → ❌（その箱の中のガラス面が透ける）
+**原因2：`transform` 等がかかった祖先の中では backdrop-filter が消えることがある**
+**backdrop-filter を持つ要素の祖先に `transform`（rotate/translate/scale）/ `filter` / `perspective` / `transform-style: preserve-3d` があると、ブラーが描画されないことがある**（ブラウザ・バージョン依存。scaleの例は Chromium [#415354762](https://issues.chromium.org/issues/415354762)）。anyflow では、浮遊(`translateY`)・パララックス(`translate`)・アイソメ箱(`rotateX/Y`) の transform が犯人だった。
 
-**対策（ブラー要素の祖先を“変形も拡縮もしない”）**：
-- **1:1で描く**のが大原則。ステージを丸ごと拡縮しない。画面フィットは「横幅fit・最大1倍（`zoom = min(1, 幅/設計幅)`）＋はみ出しは許容」か、**座標そのものを倍率で計算して置く**（＝拡縮ではなくレイアウトで縮める）。
-- 中央寄せは flex で。浮遊は **`margin`**、パララックスは **`left`/`top`** で動かす（transform禁止）。
-- ガラス（backdrop使用）の箱は**回転させない**。3D立体が要る箱は**不透明**にして backdrop を使わない。
-- 検証は必ず「別要素（できれば高コントラストの縞）に重ねて後ろがボケるか」＋「拡縮/アニメを入れた実際の状態で」確認する。**1個だけブラーを0にする対照実験**が一番はっきり分かる（他が滑らかなら効いてる）。
+⚠️ **`zoom` は実測OK・`transform: scale` は環境次第（重要な訂正）**：当初「zoomでも拡縮だから透ける」と書いたが**誤り**。実機テストで **`zoom` は縮小しても backdrop-filter が効いたまま**だと確認（zoom=0.7で対照実験）。`transform: scale` はこのChromeでは効いたが、上記バグ報告どおり**環境によっては消える**ので、**拡縮は `zoom` を使うのが安全**。
+
+**やりがちな地雷（frost要素の祖先に置かない）**：
+- 浮遊アニメを `transform: translateY()` → ❌（`margin` で動かす）
+- パララックスを `transform: translate()` → ❌（`left`/`top` で動かす）
+- 3D風に箱を `rotateX/Y` → ❌（その箱の中のガラス面が透ける。ガラス箱は回転させない／立体が要る箱は不透明にして backdrop を使わない）
+- 拡縮を `transform: scale()` → ⚠️環境次第。**`zoom` にしておくと安全**（レイアウト拡縮でフィット、中央寄せは flex）
+
+**検証（必須・ここを省くと再発する）**：
+- ガラス要素の**後ろに高コントラストの縞**を敷いて、縞がボケてるか見る（無地の上では判別不可）。
+- **1個だけ `blur(0)` にする対照実験**が最強。その1個だけ縞が戻り、他が滑らかなら「効いてる」と確定できる。
+- 拡縮/アニメを**入れた実状態**で確認する。
 
 ## 影・ブラーの種類と CSS 対応（get_design_context の表記→CSS）
 
