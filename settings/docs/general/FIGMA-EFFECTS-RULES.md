@@ -20,20 +20,24 @@ Figmaの「すりガラス」は、たいてい **Background blur（背景ブラ
 - SVG/PNG を使う場合は、その**背後に blur レイヤーを1枚敷く**（SVGは形・中身・影、CSSがブラー担当）。
 - 値は**Figma実測をそのまま**使う（下記の拾い方）。
 
-### 🔴🔴 さらに大事な罠：`transform` された祖先の中では backdrop-filter が“描画されない”
-Chrome/Safari は、**backdrop-filter を持つ要素の祖先に `transform` / `filter` / `perspective` / `transform-style: preserve-3d` があると、背景ブラーを描画しない**（＝せっかく付けたブラーが全部無効化されて透ける）。実際 anyflow v2 KV で、ステージ全体を `transform: scale()` で縮小していたせいで**全アイコンのブラーが外れて透けた**。
+### 🔴🔴 一番ハマった真因：**祖先を「拡大縮小」すると backdrop-filter が描画されない**
+Chrome/Safari は、**backdrop-filter を持つ要素の祖先に `transform` / `filter` / `perspective` / `transform-style: preserve-3d`、そして“拡大縮小”があると、背景ブラーを描画しない**（＝せっかく付けたブラーが全部無効化されて透ける）。実際 anyflow v2 KV で、ステージ全体を縮小していたせいで**全アイコンのブラーが外れて透けた**。
+根拠: Chromium公式バグ [#415354762](https://issues.chromium.org/issues/415354762)「Scaling nested element with backdrop-filter within another element removes the filter」。
+
+⚠️ **`zoom` に逃げてもダメ（ここ超重要・自分がハマった所）**。`transform: scale()` を避けて `zoom` にしても、**`zoom` も“拡大縮小”なので同じく backdrop-filter が消える**。**縮小そのものがアウト**。
 
 **やりがちで全部アウトな例**：
 - 拡縮を `transform: scale()` でやる → ❌ 中の backdrop-filter 全滅
+- 拡縮を `zoom` でやる → ❌ これも全滅（scaleと同罪）
 - 浮遊アニメを `transform: translateY()` でやる → ❌
 - パララックスを `transform: translate()` でやる → ❌
 - 3D風に箱を `rotateX/Y` する → ❌（その箱の中のガラス面が透ける）
 
-**対策（transformを“ブラー要素の祖先”に置かない）**：
-- 拡縮は **`zoom`**（レイアウト拡縮なのでOK）。中央寄せは flex で。
-- 浮遊は **`margin`**、パララックスは **`left`/`top`** で動かす。
+**対策（ブラー要素の祖先を“変形も拡縮もしない”）**：
+- **1:1で描く**のが大原則。ステージを丸ごと拡縮しない。画面フィットは「横幅fit・最大1倍（`zoom = min(1, 幅/設計幅)`）＋はみ出しは許容」か、**座標そのものを倍率で計算して置く**（＝拡縮ではなくレイアウトで縮める）。
+- 中央寄せは flex で。浮遊は **`margin`**、パララックスは **`left`/`top`** で動かす（transform禁止）。
 - ガラス（backdrop使用）の箱は**回転させない**。3D立体が要る箱は**不透明**にして backdrop を使わない。
-- 検証は必ず「別要素に重ねて後ろがボケるか」＋「拡縮/アニメを入れた状態で」確認する。
+- 検証は必ず「別要素（できれば高コントラストの縞）に重ねて後ろがボケるか」＋「拡縮/アニメを入れた実際の状態で」確認する。**1個だけブラーを0にする対照実験**が一番はっきり分かる（他が滑らかなら効いてる）。
 
 ## 影・ブラーの種類と CSS 対応（get_design_context の表記→CSS）
 
