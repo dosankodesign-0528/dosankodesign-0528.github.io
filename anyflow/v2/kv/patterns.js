@@ -157,7 +157,7 @@
     put(back, 'ellipse-101.svg', 754, 222, 435, 435);
     spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
     spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
-    frost(back, 701, 274, 539, 323, 20, 38);
+    frost(back, 701, 274, 539, 323, 20, 75);   /* Figma実測: mock backdrop-blur 75px */
     put(back, 'mock.svg', 680, 253, 600, 387);
     /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）--- */
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
@@ -167,7 +167,7 @@
       ico.style.setProperty('--fd', (i * 0.6) + 's');
       const fl = document.createElement('div'); fl.className = 'kvp-frost';
       fl.style.cssText = `left:${(w - fs) / 2 + 3}px;top:${(h - fs) / 2 + 3}px;width:${fs - 6}px;height:${fs - 6}px;` +
-        `border-radius:${(fs * 0.09).toFixed(1)}px;backdrop-filter:blur(${Math.round(fs * 0.5)}px);-webkit-backdrop-filter:blur(${Math.round(fs * 0.5)}px);`;
+        `border-radius:${(fs * 0.085).toFixed(1)}px;backdrop-filter:blur(${Math.round(fs * 1.19)}px);-webkit-backdrop-filter:blur(${Math.round(fs * 1.19)}px);`;
       const im = document.createElement('img'); im.className = 'kvp-svgel'; im.src = SVG_DIR + f;
       im.style.left = '0'; im.style.top = '0'; im.style.width = w + 'px'; im.style.height = h + 'px';
       ico.appendChild(fl); ico.appendChild(im); front.appendChild(ico);
@@ -218,9 +218,9 @@
     const wrap = document.createElement('div');
     wrap.className = 'kvp-ico kvp-ico--' + boxStyle;
     wrap.style.width = size + 'px'; wrap.style.height = size + 'px';
-    /* Figma実測比: 角丸=size×0.085 / ドロップシャドウ=(0.073,0.075,0.13)×size rgba(0,0,0,.2) */
-    wrap.style.setProperty('--ico-r', (size * 0.10).toFixed(1) + 'px');
-    wrap.style.setProperty('--blur', Math.round(size * 0.6) + 'px');
+    /* Figma実測比: 角丸=size×0.085 / backdrop-blur=size×1.19 / ドロップシャドウ=(0.073,0.075,0.13)×size rgba(0,0,0,.2) */
+    wrap.style.setProperty('--ico-r', (size * 0.085).toFixed(1) + 'px');
+    wrap.style.setProperty('--blur', Math.round(size * 1.19) + 'px');
     wrap.style.setProperty('--drop',
       `${(size * 0.073).toFixed(1)}px ${(size * 0.075).toFixed(1)}px ${(size * 0.13).toFixed(1)}px rgba(0,0,0,.2)`);
     const shadow = document.createElement('div'); shadow.className = 'kvp-ico-shadow';
