@@ -518,7 +518,7 @@
     function fit() {
       const rw = rootEl.clientWidth, rh = rootEl.clientHeight;
       const s = Math.min(rw / STAGE.w, rh / STAGE.h);
-      stage.style.transform = `translate(${(rw - STAGE.w * s) / 2}px, ${(rh - STAGE.h * s) / 2}px) scale(${s})`;
+      stage.style.zoom = s;   /* transformでなくzoom＝子のbackdrop-filterを生かす */
     }
     window.addEventListener('resize', fit); fit(); rootEl._fit = fit;
     window.addEventListener('pointermove', onPointer);

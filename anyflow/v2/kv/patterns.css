@@ -7,12 +7,12 @@
 /* 背景色（Figma実測 #E7E7E7）*/
 body { background: #E7E7E7; }
 
-/* ---- ステージ（1440×920スケール。3Dは平行投影＝perspective無しでアイソメ風）---- */
-.kvp-root { position: fixed; inset: 0; pointer-events: none; }
+/* ---- ステージ（1440×920）。拡大は zoom（transformだと子のbackdrop-filterが無効化されるため）---- */
+.kvp-root { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
 .kvp-root.hidden { display: none; }
-.kvp-stage { position: absolute; left: 0; top: 0; width: 1440px; height: 920px;
-  transform-origin: 0 0; transform-style: preserve-3d; }
-.kvp-world { position: absolute; inset: 0; transform-style: preserve-3d; }
+.kvp-stage { position: relative; width: 1440px; height: 920px; flex: 0 0 auto; }
+.kvp-world { position: absolute; inset: 0; }
+/* 3Dは各アイコン内で完結（stage/worldにpreserve-3dを置くとbackdrop-filterが死ぬため付けない） */
 
 /* ============ 中央ダッシュボード ============ */
 .kvp-dash-wrap { position: absolute; transform-style: preserve-3d; }
