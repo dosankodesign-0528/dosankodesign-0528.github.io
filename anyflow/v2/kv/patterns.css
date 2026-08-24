@@ -75,6 +75,9 @@ body { background: #E7E7E7; }
 /* 箱の向き：フラット①②＝浅い立体 / アイソメ③④＝上面・側面が見える */
 .is-flat .kvp-ico-box { transform: rotateX(10deg) rotateY(-7deg); }
 .is-iso  .kvp-ico-box { transform: rotateX(20deg) rotateY(-18deg); }
+/* ⚠️ ガラス箱は回転させない：transformが子の backdrop-filter(すりガラス)を無効化して透けるため。
+   白箱(不透明)は backdrop不使用なので回転して3Dのままでよい */
+.kvp-ico--glass .kvp-ico-box { transform: none; }
 
 /* ============ 回線ネットワーク（①③）＋青データ光 ============ */
 .kvp-net { position: absolute; inset: 0; }
@@ -103,8 +106,8 @@ body { background: #E7E7E7; }
 .kvp-orbit { position: absolute; border-radius: 50%; border: 1.6px solid rgba(148,163,184,.5); }
 
 /* ============ E案（Figma 15699）: 前向きmock＋同心円＋周回ドット＋大小ガラス ============ */
-.kvp-e-back { position: absolute; inset: 0; transition: transform .15s ease-out; }
-.kvp-e-icons { position: absolute; inset: 0; transition: transform .15s ease-out; }
+.kvp-e-back { position: absolute; inset: 0; transition: left .15s ease-out, top .15s ease-out; }
+.kvp-e-icons { position: absolute; inset: 0; transition: left .15s ease-out, top .15s ease-out; }
 .kvp-eorbits { position: absolute; inset: 0; }
 .kvp-eorbit { position: absolute; border-radius: 50%; border: 1px solid rgba(140,150,170,.3); }
 .kvp-espin { position: absolute; width: 0; height: 0; animation: kvpSpin linear infinite; }
@@ -119,7 +122,8 @@ body { background: #E7E7E7; }
 .kvp-ico-svg { position: absolute; }
 .pat-p6.float-on .kvp-e-icons .kvp-ico-svg { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
 /* 浮遊アニメ（Eのみ・トグル）*/
-@keyframes kvpFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+/* 浮遊は margin で動かす（transformだと子のbackdrop-filterが無効化されるため） */
+@keyframes kvpFloat { 0%,100% { margin-top: 0; } 50% { margin-top: -10px; } }
 .pat-p5.float-on .kvp-e-icons .kvp-ico { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
 
 /* --- E: アニメするmock（frosted glass・Figma実測の質感） --- */

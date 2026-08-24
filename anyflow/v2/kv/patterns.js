@@ -133,7 +133,7 @@
     defs.forEach(([ang, col]) => {
       const a = ang * Math.PI / 180; const d = document.createElement('div'); d.className = 'kvp-edot';
       d.style.left = (Math.cos(a) * r) + 'px'; d.style.top = (Math.sin(a) * r) + 'px';
-      d.style.background = col; d.style.boxShadow = `0 0 8px 2px ${col}99`; spin.appendChild(d);
+      d.style.background = col; spin.appendChild(d);   /* フラット（影/ブラー無し）*/
     });
     parent.appendChild(spin);
   }
@@ -384,7 +384,7 @@
         const d = document.createElement('div'); d.className = 'kvp-edot';
         const a = ang * Math.PI / 180;
         d.style.left = (Math.cos(a) * r) + 'px'; d.style.top = (Math.sin(a) * r) + 'px';
-        d.style.background = col; d.style.boxShadow = `0 0 8px 2px ${col}99`;
+        d.style.background = col;   /* フラット（影/ブラー無し）*/
         spin.appendChild(d);
       });
       box.appendChild(spin);
@@ -479,13 +479,16 @@
   }
   function onPointer(e) {
     if ((cur !== 'p5' && cur !== 'p6') || !parallaxOn || !eBack || !eFront) return;
+    /* transformを使うと子のbackdrop-filterが無効化されるので left/top で視差移動する */
     const ox = (e.clientX / window.innerWidth - 0.5), oy = (e.clientY / window.innerHeight - 0.5);
-    eBack.style.transform = `translate(${(ox * 10).toFixed(1)}px, ${(oy * 10).toFixed(1)}px)`;
-    eFront.style.transform = `translate(${(ox * 26).toFixed(1)}px, ${(oy * 26).toFixed(1)}px)`;
+    eBack.style.left = (ox * 10).toFixed(1) + 'px'; eBack.style.top = (oy * 10).toFixed(1) + 'px';
+    eFront.style.left = (ox * 26).toFixed(1) + 'px'; eFront.style.top = (oy * 26).toFixed(1) + 'px';
   }
   function applyParallax() {
     if (!eBack || !eFront) return;
-    if (!((cur === 'p5' || cur === 'p6') && parallaxOn)) { eBack.style.transform = ''; eFront.style.transform = ''; }
+    if (!((cur === 'p5' || cur === 'p6') && parallaxOn)) {
+      eBack.style.left = eBack.style.top = ''; eFront.style.left = eFront.style.top = '';
+    }
   }
   function applyTransform() {
     const c = (cur === 'p5' || cur === 'p6') ? EC : C;
