@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=12">
+<link rel="stylesheet" href="patterns.css?v=13">
 </head>
 <body>
 
@@ -81,7 +81,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=11"></script>
+<script src="patterns.js?v=12"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -137,7 +137,7 @@
     kvHost.style.display = isAgent ? '' : 'none';
     kvBlender.classList.toggle('hidden', !isBlender);
     row1.style.display = isBlender ? 'none' : '';         /* ビューはBlender以外で有効 */
-    rowE.style.display = (d === 'p5') ? '' : 'none';       /* 浮遊/パララックスはF(E案)のみ */
+    rowE.style.display = (d === 'p5' || d === 'p6') ? '' : 'none';   /* 浮遊/パララックスは F・H で */
     if (isAgent) { KVP.hide(); syncViewUI('flat'); }
     else if (isBlender) { KVP.hide(); }
     else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }

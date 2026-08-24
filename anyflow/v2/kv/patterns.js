@@ -125,34 +125,55 @@
     ['icon-1.svg', 1270, 617, 104, 104, 71],   // calendar
     ['icon.svg',   960, 209, 99, 99, 68],      // cloud
   ];
+  const SVG_OC = { x: 971.5, y: 439.5 };            /* 同心円の中心（ellipse実座標より） */
+  function spinDots(parent, cx, cy, r, defs, dur, rev) {
+    const spin = document.createElement('div'); spin.className = 'kvp-espin';
+    spin.style.left = cx + 'px'; spin.style.top = cy + 'px'; spin.style.animationDuration = dur + 's';
+    if (rev) spin.style.animationDirection = 'reverse';
+    defs.forEach(([ang, col]) => {
+      const a = ang * Math.PI / 180; const d = document.createElement('div'); d.className = 'kvp-edot';
+      d.style.left = (Math.cos(a) * r) + 'px'; d.style.top = (Math.sin(a) * r) + 'px';
+      d.style.background = col; d.style.boxShadow = `0 0 8px 2px ${col}99`; spin.appendChild(d);
+    });
+    parent.appendChild(spin);
+  }
   function buildSvgScene() {
-    const box = document.createElement('div'); box.className = 'kvp-svgscene';
-    const put = (f, left, top, w, h) => {
+    const scene = document.createElement('div'); scene.className = 'kvp-svgscene';
+    const back = document.createElement('div'); back.className = 'kvp-e-back';
+    const front = document.createElement('div'); front.className = 'kvp-e-icons';
+    const put = (parent, f, left, top, w, h) => {
       const el = document.createElement('img'); el.className = 'kvp-svgel';
       el.src = SVG_DIR + f; el.style.left = left + 'px'; el.style.top = top + 'px';
-      el.style.width = w + 'px'; el.style.height = h + 'px'; box.appendChild(el); return el;
+      el.style.width = w + 'px'; el.style.height = h + 'px'; parent.appendChild(el); return el;
     };
-    /* すりガラス（SVGに焼けないbackdrop-blurをライブで。矩形を実ガラス面に合わせ、後ろをぼかす）*/
-    const frost = (left, top, w, h, r, blur) => {
+    const frost = (parent, left, top, w, h, r, blur) => {
       const d = document.createElement('div'); d.className = 'kvp-frost';
       d.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-radius:${r}px;` +
         `backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);`;
-      box.appendChild(d); return d;
+      parent.appendChild(d); return d;
     };
-    /* 同心円（Figma実座標の左上）*/
-    put('ellipse-102.svg', 647, 115, 649, 649);
-    put('ellipse-101.svg', 754, 222, 435, 435);
-    /* mock: 背後にライブブラー → その上にSVG（形・中身・影）*/
-    frost(701, 274, 539, 323, 20, 38);
-    put('mock.svg', 680, 253, 600, 387);
-    /* 周回ドット（Figmaの3点）*/
-    [[1075, 249], [1187, 678], [816, 156]].forEach(([dx, dy]) => put('ellipse-88.svg', dx - 4.5, dy - 4.5, 9, 9));
-    /* アイコン: 背後にライブブラー(実ガラス面に少し内側) → その上にSVG */
-    SVG_ICONS.forEach(([f, x, y, w, h, fs]) => {
-      frost(x - fs / 2 + 3, y - fs / 2 + 3, fs - 6, fs - 6, fs * 0.09, Math.round(fs * 0.5));
-      put(f, x - w / 2, y - h / 2, w, h);
+    /* --- 背面: 同心円＋周回ドット＋mock --- */
+    put(back, 'ellipse-102.svg', 647, 115, 649, 649);
+    put(back, 'ellipse-101.svg', 754, 222, 435, 435);
+    spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
+    spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
+    frost(back, 701, 274, 539, 323, 20, 38);
+    put(back, 'mock.svg', 680, 253, 600, 387);
+    /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）--- */
+    SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
+      const ico = document.createElement('div'); ico.className = 'kvp-ico-svg';
+      ico.style.left = (x - w / 2) + 'px'; ico.style.top = (y - h / 2) + 'px';
+      ico.style.width = w + 'px'; ico.style.height = h + 'px';
+      ico.style.setProperty('--fd', (i * 0.6) + 's');
+      const fl = document.createElement('div'); fl.className = 'kvp-frost';
+      fl.style.cssText = `left:${(w - fs) / 2 + 3}px;top:${(h - fs) / 2 + 3}px;width:${fs - 6}px;height:${fs - 6}px;` +
+        `border-radius:${(fs * 0.09).toFixed(1)}px;backdrop-filter:blur(${Math.round(fs * 0.5)}px);-webkit-backdrop-filter:blur(${Math.round(fs * 0.5)}px);`;
+      const im = document.createElement('img'); im.className = 'kvp-svgel'; im.src = SVG_DIR + f;
+      im.style.left = '0'; im.style.top = '0'; im.style.width = w + 'px'; im.style.height = h + 'px';
+      ico.appendChild(fl); ico.appendChild(im); front.appendChild(ico);
     });
-    return box;
+    scene.appendChild(back); scene.appendChild(front);
+    return scene;
   }
 
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -454,17 +475,17 @@
 
   /* ============ 浮遊 / パララックス / XYZ変形 ============ */
   function applyFloat() {
-    rootEl.classList.toggle('float-on', floatOn && cur === 'p5');
+    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6'));
   }
   function onPointer(e) {
-    if (cur !== 'p5' || !parallaxOn || !eBack || !eFront) return;
+    if ((cur !== 'p5' && cur !== 'p6') || !parallaxOn || !eBack || !eFront) return;
     const ox = (e.clientX / window.innerWidth - 0.5), oy = (e.clientY / window.innerHeight - 0.5);
     eBack.style.transform = `translate(${(ox * 10).toFixed(1)}px, ${(oy * 10).toFixed(1)}px)`;
     eFront.style.transform = `translate(${(ox * 26).toFixed(1)}px, ${(oy * 26).toFixed(1)}px)`;
   }
   function applyParallax() {
     if (!eBack || !eFront) return;
-    if (!(cur === 'p5' && parallaxOn)) { eBack.style.transform = ''; eFront.style.transform = ''; }
+    if (!((cur === 'p5' || cur === 'p6') && parallaxOn)) { eBack.style.transform = ''; eFront.style.transform = ''; }
   }
   function applyTransform() {
     const c = (cur === 'p5' || cur === 'p6') ? EC : C;
@@ -513,9 +534,12 @@
     applyView();
     curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
 
-    if (key === 'p6') {                                  /* SVG忠実版（Figma書き出しを実座標配置） */
-      worldEl.appendChild(buildSvgScene());
-      applyTransform();
+    if (key === 'p6') {                                  /* SVG忠実版（背面=軌道+周回ドット+mock / 前面=浮遊アイコン） */
+      const scene = buildSvgScene();
+      worldEl.appendChild(scene);
+      eBack = scene.querySelector('.kvp-e-back');
+      eFront = scene.querySelector('.kvp-e-icons');
+      applyFloat(); applyParallax(); applyTransform();
       return;
     }
 

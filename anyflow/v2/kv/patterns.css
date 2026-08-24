@@ -115,6 +115,9 @@ body { background: #E7E7E7; }
 .kvp-svgel { position: absolute; display: block; }
 /* SVGに焼けない backdrop-blur をライブで補うレイヤー（後ろをぼかす＝すりガラス） */
 .kvp-frost { position: absolute; }
+/* H: アイコンwrapper（浮遊対象）*/
+.kvp-ico-svg { position: absolute; }
+.pat-p6.float-on .kvp-e-icons .kvp-ico-svg { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
 /* 浮遊アニメ（Eのみ・トグル）*/
 @keyframes kvpFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 .pat-p5.float-on .kvp-e-icons .kvp-ico { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
