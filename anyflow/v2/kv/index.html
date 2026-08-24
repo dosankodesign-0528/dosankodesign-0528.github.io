@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=8">
+<link rel="stylesheet" href="patterns.css?v=9">
 </head>
 <body>
 
@@ -47,15 +47,15 @@
 <div class="kv-bar">
   <div class="row0">
     <b>デザイン</b>
-    <button data-design="agent" class="on">エージェント版(現行)</button>
+    <button data-design="agent" class="on">エージェント版</button>
     <span class="sep"></span>
-    右グラフィック4案:
-    <button data-design="p1">①フラット×回路線</button>
-    <button data-design="p2">②フラット×同心円</button>
-    <button data-design="p3">③アイソメ×回路線</button>
-    <button data-design="p4">④アイソメ×軌道</button>
+    <button data-design="p1" title="フラット×回路線×白箱">A</button>
+    <button data-design="p2" title="フラット×同心円×ガラス">B</button>
+    <button data-design="p3" title="アイソメ×回路線×ガラス">C</button>
+    <button data-design="p4" title="アイソメ×軌道×白箱">D</button>
+    <button data-design="p5" title="同心円＋周回ドット＋アニメmock">E</button>
     <span class="sep"></span>
-    <button data-design="blender">Blender版(3D)</button>
+    <button data-design="blender">Blender版</button>
   </div>
   <div class="row1">
     <b>KV V2</b>
@@ -80,150 +80,88 @@
     <button data-ia="on" class="on">オン</button>
     <button data-ia="off">オフ</button>
   </div>
-  <div class="rowL">
-    線の形:
-    <button data-ls="plain" class="on">実線（いま）</button>
-    <button data-ls="dash">流れる破線</button>
+  <div class="rowE">
+    浮遊(E):
+    <button data-float="on" class="on">オン</button>
+    <button data-float="off">オフ</button>
     <span class="sep"></span>
-    色味:
-    <button data-lc="now" class="on">白60%（いま）</button>
-    <button data-lc="w95">白くっきり</button>
-    <button data-lc="glow1">白 発光弱</button>
-    <button data-lc="glow2">白 発光強</button>
-    <button data-lc="cyan">水色ライト</button>
-    <button data-lc="navy">淡ネイビー</button>
+    パララックス(E):
+    <button data-parallax="off" class="on">オフ</button>
+    <button data-parallax="on">オン</button>
   </div>
   <div class="row2">
     角度
-    X <input type="range" id="rx" min="0" max="72" step="1" value="0"><span id="rxv">0°</span>
+    X <input type="range" id="rx" min="-30" max="72" step="1" value="0"><span id="rxv">0°</span>
     Y <input type="range" id="ry" min="-45" max="45" step="1" value="0"><span id="ryv">0°</span>
     Z <input type="range" id="rz" min="-90" max="90" step="1" value="0"><span id="rzv">0°</span>
     大きさ <input type="range" id="rs" min="0.8" max="1.5" step="0.02" value="1"><span id="rsv">×1.00</span>
   </div>
-  <div class="row4" id="flowRow"></div>
-  <div class="row3">
-    アイコン色:
-    <label>📁<input type="color" data-ic="folder" value="#379FFF"><input type="text" data-ih="folder" value="#379FFF" maxlength="7"></label>
-    <label>✉️<input type="color" data-ic="mail" value="#379FFF"><input type="text" data-ih="mail" value="#379FFF" maxlength="7"></label>
-    <label>📅<input type="color" data-ic="cal" value="#379FFF"><input type="text" data-ih="cal" value="#379FFF" maxlength="7"></label>
-    <label>📊<input type="color" data-ic="chart" value="#379FFF"><input type="text" data-ih="chart" value="#379FFF" maxlength="7"></label>
-    <button id="icReset">元に戻す</button>
-  </div>
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=7"></script>
+<script src="patterns.js?v=9"></script>
 <script>
   KV.start({ mount: 'kv' });
+  KVP.start({ mount: 'kvp' });
 
-  const sliders = { x: rx, y: ry, z: rz, s: rs };
+  const kvHost = document.getElementById('kv');
+  const kvBlender = document.getElementById('kvBlender');
+  const row1 = document.querySelector('.kv-bar .row1');
+  const rowE = document.querySelector('.kv-bar .rowE');
+  let curDesign = 'agent';
+
   const labels = { x: rxv, y: ryv, z: rzv, s: rsv };
-  function syncSliders(v) {
-    sliders.x.value = v.x; sliders.y.value = v.y; sliders.z.value = v.z; sliders.s.value = v.s;
+  function syncLabels(v) {
     labels.x.textContent = v.x + '°'; labels.y.textContent = v.y + '°';
     labels.z.textContent = v.z + '°'; labels.s.textContent = '×' + (+v.s).toFixed(2);
   }
+  function readSliders() { return { x: +rx.value, y: +ry.value, z: +rz.value, s: +rs.value }; }
+  /* 角度XYZ・大きさ: エージェント版=KV.setView / A〜E=選択案の傾き・拡大(KVP.setTransform) */
+  [rx, ry, rz, rs].forEach(sl => sl.addEventListener('input', () => {
+    const v = readSliders(); syncLabels(v);
+    if (curDesign === 'agent') { KV.setView(v); document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.remove('on')); }
+    else if (curDesign !== 'blender') KVP.setTransform(v);
+  }));
+
+  /* エージェント版の操作（row1） */
   document.querySelectorAll('.kv-bar [data-view]').forEach(b => b.onclick = () => {
-    const v = KV.VIEWS[b.dataset.view];
-    KV.setView(v); syncSliders(v);
+    const v = KV.VIEWS[b.dataset.view]; KV.setView(v);
+    rx.value = v.x; ry.value = v.y; rz.value = v.z; rs.value = v.s; syncLabels(v);
     document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.toggle('on', x === b));
   });
-  Object.keys(sliders).forEach(k => sliders[k].addEventListener('input', () => {
-    const v = { x: +rx.value, y: +ry.value, z: +rz.value, s: +rs.value };
-    KV.setView(v); syncSliders(v);
-    document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.remove('on'));
-  }));
-  /* ===== フローごとの調整スライダー（2026-08-19 ヒデさん指定）=====
-     選んだフローに関係する項目だけを row4 に出す */
-  /* DITHER = ディザ系フロー共通の2本（2026-08-20 ガタつきレポート対応）
-     ドットのなじみ: ドットのフェード点灯幅。0に近いほどカンプの2値(ガタつきも戻る)
-     網点の角度: 0=カンプどおり。15°前後で「行単位の一斉点滅」が個別セルに散る */
-  const DITHER = [['ditherAA','ドットのなじみ',0.01,0.4,0.01],['gridAngle','網点の角度',0,45,1]];
-  const FLOW_SLIDERS = {
-    flow0: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05]].concat(DITHER),
-    flow1: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
-            ['mixAmp','混ざり強さ',0,1.2,0.05],['mixSpeed','混ざり速さ',0.01,0.3,0.01]].concat(DITHER),
-    flow2: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]].concat(DITHER),
-    flow3: [['speed','流れる速度',0.005,0.12,0.005],['scale','帯の広がり',0.3,1.6,0.05],
-            ['swayAmp','揺れ幅',0,1.0,0.05],['swaySpeed','揺れ速さ',0.02,0.5,0.01]].concat(DITHER),
-    flow4: [['radSpeed','流れる速度',0.005,0.1,0.005],['radScale','リング密度',0.3,1.6,0.05]].concat(DITHER),
-    halftone: [['htSpeed','波の速さ',0.05,0.9,0.05],['htSwell','うねり',0,0.9,0.05]],
-  };
-  function buildFlowRow(mode) {
-    const row = document.getElementById('flowRow');
-    const defs = FLOW_SLIDERS[mode] || [];
-    const P = KV.getParams();
-    row.innerHTML = defs.map(([k, label, min, max, step]) =>
-      `<span class="fl">${label}
-        <input type="range" data-fp="${k}" min="${min}" max="${max}" step="${step}" value="${P[k]}">
-        <em data-fv="${k}">${P[k]}</em></span>`).join('');
-    row.querySelectorAll('[data-fp]').forEach(inp => inp.addEventListener('input', () => {
-      KV.setParam(inp.dataset.fp, inp.value);
-      row.querySelector(`[data-fv="${inp.dataset.fp}"]`).textContent = (+inp.value).toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
-    }));
-  }
   document.querySelectorAll('.kv-bar [data-am]').forEach(b => b.onclick = () => {
     KV.setAgentMode(b.dataset.am);
-    buildFlowRow(b.dataset.am);
     document.querySelectorAll('.kv-bar [data-am]').forEach(x => x.classList.toggle('on', x === b));
   });
-  buildFlowRow('flow0');
-
-  /* 線: 形(実線/破線)×色味5案（2026-08-20 第2弾）。自由に組合せ可 */
-  document.querySelectorAll('.kv-bar [data-ls]').forEach(b => b.onclick = () => {
-    KV.setLineStyle(b.dataset.ls);
-    document.querySelectorAll('.kv-bar [data-ls]').forEach(x => x.classList.toggle('on', x === b));
-  });
-  document.querySelectorAll('.kv-bar [data-lc]').forEach(b => b.onclick = () => {
-    KV.setLineColor(b.dataset.lc);
-    document.querySelectorAll('.kv-bar [data-lc]').forEach(x => x.classList.toggle('on', x === b));
-  });
-
-  /* アイコンのループアニメ オン/オフ（2026-08-19 ヒデさん指定。オフ＝カンプの静止状態） */
   document.querySelectorAll('.kv-bar [data-ia]').forEach(b => b.onclick = () => {
     KV.setIconAnim(b.dataset.ia === 'on');
     document.querySelectorAll('.kv-bar [data-ia]').forEach(x => x.classList.toggle('on', x === b));
   });
 
-  /* アイコン色: カラーピッカー(直感) と HEX入力(コード指定) を同期 */
-  document.querySelectorAll('[data-ic]').forEach(p => p.addEventListener('input', () => {
-    const id = p.dataset.ic;
-    KV.setIconColor(id, p.value);
-    document.querySelector(`[data-ih="${id}"]`).value = p.value.toUpperCase();
-  }));
-  document.querySelectorAll('[data-ih]').forEach(t => t.addEventListener('change', () => {
-    const id = t.dataset.ih;
-    let v = t.value.trim(); if (v && v[0] !== '#') v = '#' + v;
-    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-      KV.setIconColor(id, v);
-      t.value = v.toUpperCase();
-      document.querySelector(`[data-ic="${id}"]`).value = v;
-    }
-  }));
-  document.getElementById('icReset').onclick = () => {
-    ['folder','mail','cal','chart'].forEach(id => {
-      KV.setIconColor(id, '');
-      document.querySelector(`[data-ic="${id}"]`).value = '#379FFF';
-      document.querySelector(`[data-ih="${id}"]`).value = '#379FFF';
-    });
-  };
+  /* 浮遊 / パララックス（E専用） */
+  document.querySelectorAll('.kv-bar [data-float]').forEach(b => b.onclick = () => {
+    KVP.setFloat(b.dataset.float === 'on');
+    document.querySelectorAll('.kv-bar [data-float]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  document.querySelectorAll('.kv-bar [data-parallax]').forEach(b => b.onclick = () => {
+    KVP.setParallax(b.dataset.parallax === 'on');
+    document.querySelectorAll('.kv-bar [data-parallax]').forEach(x => x.classList.toggle('on', x === b));
+  });
 
-  /* ===== 右グラフィック4案（KVP）とエージェント版(現行)の切替 =====
-     4案を選ぶと現行KVを隠し、その案のプリセットに切替。
-     エージェント専用の操作行(row1/rowL/row2/row4/row3)は関係ないので畳む */
-  KVP.start({ mount: 'kvp' });
-  const kvHost = document.getElementById('kv');
-  const kvBlender = document.getElementById('kvBlender');
-  const agentRows = document.querySelectorAll('.kv-bar .row1, .kv-bar .rowL, .kv-bar .row2, .kv-bar .row4, .kv-bar .row3');
+  /* デザイン切替（エージェント / A〜E / Blender版） */
+  function resetSliders() { rx.value = 0; ry.value = 0; rz.value = 0; rs.value = 1; syncLabels(readSliders()); }
   document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
     document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
-    const d = b.dataset.design, isAgent = d === 'agent', isBlender = d === 'blender';
+    const d = b.dataset.design; curDesign = d;
+    const isAgent = d === 'agent', isBlender = d === 'blender';
     kvHost.style.display = isAgent ? '' : 'none';
-    agentRows.forEach(r => r.style.display = isAgent ? '' : 'none');
     kvBlender.classList.toggle('hidden', !isBlender);
-    if (isAgent || isBlender) KVP.hide();
-    else { KVP.show(); KVP.setPattern(d); }
+    row1.style.display = isAgent ? '' : 'none';
+    rowE.style.display = (d === 'p5') ? '' : 'none';
+    if (isAgent || isBlender) { KVP.hide(); }
+    else { KVP.show(); KVP.setPattern(d); resetSliders(); KVP.setTransform(readSliders()); }
   });
+  rowE.style.display = 'none';
 </script>
 </body>
 </html>

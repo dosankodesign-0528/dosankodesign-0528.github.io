@@ -16,11 +16,12 @@
   const ICO = 112;                                /* アイコン箱の一辺 */
   const ICONS_DIR = 'assets/icons/';
 
+  /* Figma実測: ガラス棒＝border .5px #7EE5FF / backdrop-blur 10px / シアン2色グラデ+白10% / inner inset 0 3px 10px rgba(255,255,255,.4) */
   const GLASS_BAR =
-    'border-radius:6px;border:.5px solid #7EE5FF;' +
-    'background-image:linear-gradient(108deg,rgba(130,232,255,.35),rgba(55,159,255,.35));' +
-    'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
-    'box-shadow:inset 0 2px 5px rgba(255,255,255,.5);';
+    'border-radius:4px;border:.5px solid #7EE5FF;' +
+    'background-image:linear-gradient(96deg,rgba(130,232,255,.2),rgba(55,159,255,.2)),linear-gradient(rgba(241,241,241,.1),rgba(241,241,241,.1));' +
+    'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);' +
+    'box-shadow:inset 0 3px 10px rgba(255,255,255,.4);';
   const GRAD = 'background-image:linear-gradient(180deg,#58D0FF,#0EBBFF);';
   const CAL_CELL = 'background:#fff;border-radius:3px;box-shadow:inset 0 1px 1px rgba(255,255,255,.6);';
 
@@ -93,11 +94,24 @@
     { id: 'calendar', a: 52 }, { id: 'folder', a: 90 }, { id: 'chart', a: 140 }, { id: 'cloud', a: 200 },
   ].map(o => ({ id: o.id, x: C.x + ORBIT.rx * Math.cos(o.a * Math.PI / 180), y: C.y + ORBIT.ry * Math.sin(o.a * Math.PI / 180) }));
 
+  /* ---- E案（Figma 15699 準拠）: 前向きmock＋薄い同心円2本＋周回ドット＋大小ガラスアイコン ---- */
+  const EC = { x: 971, y: 435 };                 /* Eの中心（Figma実測） */
+  const E_MOCK = { w: 541, h: 325 };
+  const E_ORBITS = [217, 324];                    /* 同心円の半径（Figma実測） */
+  const LAYOUT_E = [                               /* Figma実測の中心座標＋サイズ */
+    { id: 'chart',    x: 668,  y: 605, size: 140 },
+    { id: 'chat',     x: 675,  y: 269, size: 85  },
+    { id: 'cloud',    x: 960,  y: 209, size: 68  },
+    { id: 'person',   x: 1282, y: 216, size: 80  },
+    { id: 'calendar', x: 1270, y: 617, size: 71  },
+  ];
+
   const PATTERNS = {
     p1: { conn: 'circuit', box: 'white', layout: LAYOUT_CIRCUIT, iso: false },
     p2: { conn: 'rings',   box: 'glass', layout: LAYOUT_RINGS,   iso: false },
     p3: { conn: 'circuit', box: 'glass', layout: LAYOUT_CIRCUIT, iso: true  },
     p4: { conn: 'orbit',   box: 'white', layout: LAYOUT_ORBIT,   iso: true  },
+    p5: { conn: 'econc',   box: 'glass', layout: LAYOUT_E,       iso: false },
   };
 
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -129,16 +143,26 @@
   const iconPos = (layout, id) => layout.find(i => i.id === id);
 
   let rootEl, worldEl, cur = null;
+  let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
+  let floatOn = true, parallaxOn = false;                 /* 浮遊/パララックス（Eのみ） */
+  let curTransform = { x: 0, y: 0, z: 0, s: 1 };          /* XYZ・大きさ（選択案の傾き/拡大） */
 
-  /* ---------- アイコン1個＝本物の3D箱 ---------- */
-  function buildIcon(id, boxStyle) {
+  /* ---------- アイコン1個＝本物の3D箱（size=一辺px。Eは大小バラバラ）---------- */
+  function buildIcon(id, boxStyle, size) {
+    size = size || ICO;
     const wrap = document.createElement('div');
     wrap.className = 'kvp-ico kvp-ico--' + boxStyle;
+    wrap.style.width = size + 'px'; wrap.style.height = size + 'px';
+    /* Figma実測比: 角丸=size×0.085 / ドロップシャドウ=(0.073,0.075,0.13)×size rgba(0,0,0,.2) */
+    wrap.style.setProperty('--ico-r', (size * 0.10).toFixed(1) + 'px');
+    wrap.style.setProperty('--blur', Math.round(size * 0.6) + 'px');
+    wrap.style.setProperty('--drop',
+      `${(size * 0.073).toFixed(1)}px ${(size * 0.075).toFixed(1)}px ${(size * 0.13).toFixed(1)}px rgba(0,0,0,.2)`);
     const shadow = document.createElement('div'); shadow.className = 'kvp-ico-shadow';
     wrap.appendChild(shadow);
     const box = document.createElement('div'); box.className = 'kvp-ico-box';
     /* 厚みスラブ（前面の後ろに積む＝側面/上面になる。多層で角丸をなめらかに） */
-    const LAYERS = 16, THICK = 30;
+    const LAYERS = 16, THICK = 30 * size / 112;
     for (let i = LAYERS; i >= 1; i--) {
       const L = document.createElement('div'); L.className = 'kvp-slab';
       const k = i / LAYERS;
@@ -164,9 +188,10 @@
     wrap.appendChild(box);
     return wrap;
   }
-  function placeIcon(node, x, y) {
-    node.style.left = (x - ICO / 2) + 'px';
-    node.style.top = (y - ICO / 2) + 'px';
+  function placeIcon(node, x, y, size) {
+    size = size || ICO;
+    node.style.left = (x - size / 2) + 'px';
+    node.style.top = (y - size / 2) + 'px';
   }
 
   /* ---------- 中央ダッシュボード ---------- */
@@ -277,6 +302,134 @@
     return ring;
   }
 
+  /* ============ E案: 同心円＋周回ドット ============ */
+  function buildEOrbits() {
+    const box = document.createElement('div'); box.className = 'kvp-eorbits';
+    E_ORBITS.forEach((r, i) => {
+      const c = document.createElement('div'); c.className = 'kvp-eorbit';
+      c.style.left = (EC.x - r) + 'px'; c.style.top = (EC.y - r) + 'px';
+      c.style.width = c.style.height = (r * 2) + 'px';
+      box.appendChild(c);
+      const spin = document.createElement('div'); spin.className = 'kvp-espin';
+      spin.style.left = EC.x + 'px'; spin.style.top = EC.y + 'px';
+      spin.style.animationDuration = (28 + i * 12) + 's';
+      if (i % 2) spin.style.animationDirection = 'reverse';
+      const dots = i === 0 ? [[10, '#0EBBFF']] : [[-30, '#FF5D97'], [150, '#0E4497']];
+      dots.forEach(([ang, col]) => {
+        const d = document.createElement('div'); d.className = 'kvp-edot';
+        const a = ang * Math.PI / 180;
+        d.style.left = (Math.cos(a) * r) + 'px'; d.style.top = (Math.sin(a) * r) + 'px';
+        d.style.background = col; d.style.boxShadow = `0 0 8px 2px ${col}99`;
+        spin.appendChild(d);
+      });
+      box.appendChild(spin);
+    });
+    return box;
+  }
+
+  /* ============ E案: アニメするmock（打つ→送る→コード生成→返答のループ） ============ */
+  const E_CODE_ROWS = [
+    [0, [[48, '#ff5d97'], [80, '#0ebbff']]],
+    [16, [[64, '#ffffff'], [110, '#0ebbff'], [36, '#ff5d97']]],
+    [32, [[92, '#0ebbff'], [44, '#ffffff']]],
+    [32, [[120, 'rgba(255,255,255,.5)']]],
+    [16, [[24, '#ffffff']]],
+    [0, [[36, '#ff5d97'], [100, '#0ebbff']]],
+    [16, [[80, '#ffffff'], [54, '#ff5d97']]],
+    [32, [[140, '#0ebbff'], [28, '#0ebbff']]],
+    [32, [[74, '#ffffff'], [52, 'rgba(255,255,255,.5)']]],
+    [48, [[36, '#ff5d97'], [98, '#0ebbff']]],
+    [32, [[48, '#ffffff']]],
+    [16, [[16, '#ff5d97']]],
+  ];
+  function eBubble(kind, cls, lines) {
+    const av = kind === 'user' ? 'em-av-user' : 'em-av-bot';
+    const icon = kind === 'user' ? 'user.svg' : 'bot.svg';
+    const li = lines.map(([w, o]) => `<span class="em-line" style="width:${w}px;opacity:${o}"></span>`).join('');
+    return `<div class="em-msg ${cls}"><span class="em-av ${av}"><img src="../assets/mock/${icon}" alt=""></span><div class="em-bub">${li}</div></div>`;
+  }
+  const E_MOCK_NAT = { w: 900, h: 540 };
+  function buildDashE() {
+    const slot = document.createElement('div'); slot.className = 'kvp-emock-slot';
+    slot.style.left = (EC.x - E_MOCK.w / 2) + 'px'; slot.style.top = (EC.y - E_MOCK.h / 2) + 'px';
+    slot.style.width = E_MOCK.w + 'px'; slot.style.height = E_MOCK.h + 'px';
+    const panel = document.createElement('div'); panel.className = 'kvp-emock';
+    panel.style.width = E_MOCK_NAT.w + 'px'; panel.style.height = E_MOCK_NAT.h + 'px';
+    panel.style.transform = `scale(${(E_MOCK.w / E_MOCK_NAT.w).toFixed(4)})`;
+    /* editor */
+    const editor = document.createElement('div'); editor.className = 'em-editor';
+    const side = document.createElement('div'); side.className = 'em-side';
+    side.innerHTML = '<img class="em-logo" src="../assets/mock/logo.svg" alt=""><div class="em-divider"></div>' +
+      '<div class="em-sicons"><img src="../assets/mock/side1.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""></div>';
+    const code = document.createElement('div'); code.className = 'em-code';
+    E_CODE_ROWS.forEach(([indent, bars]) => {
+      const r = document.createElement('div'); r.className = 'em-crow';
+      if (indent) { const s = document.createElement('span'); s.className = 'em-ind'; s.style.width = indent + 'px'; r.appendChild(s); }
+      bars.forEach(([w, c]) => { const b = document.createElement('span'); b.className = 'em-bar'; b.style.width = w + 'px'; b.style.background = c; r.appendChild(b); });
+      code.appendChild(r);
+    });
+    editor.appendChild(side); editor.appendChild(code);
+    /* chat */
+    const chat = document.createElement('div'); chat.className = 'em-chat';
+    chat.innerHTML =
+      '<div class="em-chead"><span class="em-ctitle"><img src="../assets/mock/sparkles.svg" alt="">AI Assistant</span><img class="em-ell" src="../assets/mock/ellipsis.svg" alt=""></div>' +
+      '<div class="em-hist">' +
+        eBubble('bot', 'on', [[180, .8], [220, .6], [140, .6]]) +
+        eBubble('user', 'em-bub-user', [[210, .8], [190, .6]]) +
+        eBubble('bot', 'em-bub-ans', [[110, .8], [150, .6]]) +
+      '</div>' +
+      '<div class="em-input"><span class="em-typed"></span><span class="em-caret"></span><span class="em-ph">Ask anything...</span><span class="em-send"><img src="../assets/mock/arrow-up.svg" alt=""></span></div>';
+    panel.appendChild(editor); panel.appendChild(chat);
+    slot.appendChild(panel);
+    return slot;
+  }
+  function startEMock(slot) {
+    if (!slot) return () => {};
+    const rows = [].slice.call(slot.querySelectorAll('.em-crow'));
+    const typed = slot.querySelector('.em-typed');
+    const ph = slot.querySelector('.em-ph');
+    const userB = slot.querySelector('.em-bub-user');
+    const ansB = slot.querySelector('.em-bub-ans');
+    const PROMPT = 'SlackとNotionを連携して';
+    const timers = [];
+    const T = (fn, ms) => timers.push(setTimeout(fn, ms));
+    function cycle() {
+      rows.forEach(r => r.classList.remove('on'));
+      userB.classList.remove('on'); ansB.classList.remove('on');
+      typed.textContent = ''; ph.style.opacity = '1';
+      for (let i = 0; i <= PROMPT.length; i++) T(() => { typed.textContent = PROMPT.slice(0, i); ph.style.opacity = '0'; }, 300 + i * 95);
+      const typeEnd = 300 + PROMPT.length * 95;
+      T(() => { typed.textContent = ''; ph.style.opacity = '1'; userB.classList.add('on'); }, typeEnd + 350);
+      rows.forEach((r, i) => T(() => r.classList.add('on'), typeEnd + 800 + i * 95));
+      T(() => ansB.classList.add('on'), typeEnd + 800 + rows.length * 95 + 450);
+    }
+    cycle();
+    const iv = setInterval(cycle, 9500); timers.push(() => clearInterval(iv));
+    return () => timers.forEach(t => (typeof t === 'function' ? t() : clearTimeout(t)));
+  }
+
+  /* ============ 浮遊 / パララックス / XYZ変形 ============ */
+  function applyFloat() {
+    rootEl.classList.toggle('float-on', floatOn && cur === 'p5');
+  }
+  function onPointer(e) {
+    if (cur !== 'p5' || !parallaxOn || !eBack || !eFront) return;
+    const ox = (e.clientX / window.innerWidth - 0.5), oy = (e.clientY / window.innerHeight - 0.5);
+    eBack.style.transform = `translate(${(ox * 10).toFixed(1)}px, ${(oy * 10).toFixed(1)}px)`;
+    eFront.style.transform = `translate(${(ox * 26).toFixed(1)}px, ${(oy * 26).toFixed(1)}px)`;
+  }
+  function applyParallax() {
+    if (!eBack || !eFront) return;
+    if (!(cur === 'p5' && parallaxOn)) { eBack.style.transform = ''; eFront.style.transform = ''; }
+  }
+  function applyTransform() {
+    const c = cur === 'p5' ? EC : C;
+    worldEl.style.transformOrigin = `${c.x}px ${c.y}px`;
+    const t = curTransform;
+    worldEl.style.transform = (t.x || t.y || t.z || t.s !== 1)
+      ? `rotateX(${t.x}deg) rotateY(${t.y}deg) rotateZ(${t.z}deg) scale(${t.s})` : '';
+  }
+
   /* ---------- 構築 ---------- */
   function start(cfg) {
     cfg = cfg || {};
@@ -290,30 +443,50 @@
       stage.style.transform = `translate(${(rw - STAGE.w * s) / 2}px, ${(rh - STAGE.h * s) / 2}px) scale(${s})`;
     }
     window.addEventListener('resize', fit); fit(); rootEl._fit = fit;
+    window.addEventListener('pointermove', onPointer);
     return rootEl;
   }
 
   function setPattern(key) {
     const p = PATTERNS[key]; if (!p) return;
+    if (eMockStop) { eMockStop(); eMockStop = null; }
+    eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'is-iso', 'is-flat');
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'is-iso', 'is-flat');
     rootEl.classList.add('pat-' + key, p.iso ? 'is-iso' : 'is-flat');
+
+    if (key === 'p5') {                              /* E: 前向きmock＋同心円＋周回ドット＋大小ガラス */
+      eBack = document.createElement('div'); eBack.className = 'kvp-e-back';
+      eBack.appendChild(buildEOrbits());
+      eBack.appendChild(buildDashE());
+      eFront = document.createElement('div'); eFront.className = 'kvp-e-icons';
+      p.layout.forEach((it, i) => {
+        const node = buildIcon(it.id, p.box, it.size);
+        placeIcon(node, it.x, it.y, it.size);
+        node.style.setProperty('--fd', (i * 0.6) + 's');
+        eFront.appendChild(node);
+      });
+      worldEl.appendChild(eBack); worldEl.appendChild(eFront);
+      eMockStop = startEMock(worldEl.querySelector('.kvp-emock-slot'));
+      applyFloat(); applyParallax(); applyTransform();
+      return;
+    }
 
     if (p.conn === 'rings')  worldEl.appendChild(buildRings());
     if (p.conn === 'orbit')  worldEl.appendChild(buildOrbitRing());
     worldEl.appendChild(buildDash());
     if (p.conn === 'circuit') worldEl.appendChild(buildCircuit(p.layout));
-
-    p.layout.forEach(it => {
-      const node = buildIcon(it.id, p.box);
-      placeIcon(node, it.x, it.y);
-      worldEl.appendChild(node);
-    });
+    p.layout.forEach(it => { const node = buildIcon(it.id, p.box); placeIcon(node, it.x, it.y); worldEl.appendChild(node); });
+    applyFloat(); applyTransform();
   }
 
+  function setFloat(on) { floatOn = !!on; applyFloat(); }
+  function setParallax(on) { parallaxOn = !!on; applyParallax(); }
+  function setTransform(v) { curTransform = Object.assign(curTransform, v); applyTransform(); }
   function show() { rootEl.classList.remove('hidden'); rootEl._fit && rootEl._fit(); }
   function hide() { rootEl.classList.add('hidden'); }
 
-  global.KVP = { start, setPattern, show, hide, get: () => cur, PATTERNS, C, STAGE };
+  global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform,
+    get: () => cur, getTransform: () => Object.assign({}, curTransform), PATTERNS, C, STAGE };
 })(window);

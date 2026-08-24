@@ -44,8 +44,8 @@
 .kvp-ico { position: absolute; width: 112px; height: 112px; transform-style: preserve-3d; }
 .kvp-ico-box { position: absolute; inset: 0; transform-style: preserve-3d;
   transition: transform .5s cubic-bezier(.22,1,.36,1); }
-.kvp-slab { position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; }
-.kvp-ico-face { position: absolute; inset: 0; border-radius: 26px; overflow: hidden;
+.kvp-slab { position: absolute; inset: 0; border-radius: var(--ico-r, 26px); backface-visibility: hidden; }
+.kvp-ico-face { position: absolute; inset: 0; border-radius: var(--ico-r, 26px); overflow: hidden;
   transform: translateZ(1px); }
 .kvp-ico-glyph { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .kvp-ico-glyph > span { position: absolute; }
@@ -54,19 +54,20 @@
 .kvp-ico-face::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 2;
   background: linear-gradient(158deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.06) 36%, rgba(255,255,255,0) 62%);
   pointer-events: none; }
-/* 接地影 */
-.kvp-ico-shadow { position: absolute; left: 50%; bottom: -8px; width: 78%; height: 20px;
+/* 接地影（アイソメ時のみ薄く。フラットはFigmaのドロップシャドウ--dropで表現） */
+.kvp-ico-shadow { display: none; position: absolute; left: 50%; bottom: -14px; width: 84%; height: 22px;
   transform: translateX(-50%); border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(16,24,40,.30), rgba(16,24,40,0) 72%); filter: blur(5px); }
-.is-iso .kvp-ico-shadow { bottom: -16px; width: 86%; height: 24px; }
+  background: radial-gradient(closest-side, rgba(16,24,40,.26), rgba(16,24,40,0) 72%); filter: blur(6px); }
+.is-iso .kvp-ico-shadow { display: block; }
 
-/* 材質：白い立体チップ */
+/* 材質：白い立体チップ（Figma: border1px白 / ドロップシャドウ--drop / 内側ハイライト） */
 .kvp-ico--white .kvp-ico-face { background: linear-gradient(155deg, #ffffff 0%, #eef1f6 100%);
-  border: 1px solid #fff; box-shadow: inset 0 2px 3px rgba(255,255,255,.95); }
-/* 材質：すりガラス */
-.kvp-ico--glass .kvp-ico-face { background: rgba(255,255,255,.24); border: 1px solid rgba(255,255,255,.92);
-  backdrop-filter: blur(26px) saturate(1.3); -webkit-backdrop-filter: blur(26px) saturate(1.3);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.7); }
+  border: 1px solid #fff;
+  box-shadow: var(--drop, 0 14px 30px rgba(16,24,40,.16)), inset 0 2px 3px rgba(255,255,255,.95); }
+/* 材質：すりガラス（Figma実測: bg白30% / border1px白 / backdrop-blur可変 / ドロップシャドウ+内側ハイライト） */
+.kvp-ico--glass .kvp-ico-face { background: rgba(255,255,255,.3); border: 1px solid #fff;
+  backdrop-filter: blur(var(--blur, 26px)) saturate(1.2); -webkit-backdrop-filter: blur(var(--blur, 26px)) saturate(1.2);
+  box-shadow: var(--drop, 0 14px 30px rgba(16,24,40,.12)), inset 1px 1px 2px rgba(255,255,255,.4); }
 
 /* 箱の向き：フラット①②＝浅い立体 / アイソメ③④＝上面・側面が見える */
 .is-flat .kvp-ico-box { transform: rotateX(10deg) rotateY(-7deg); }
@@ -98,8 +99,68 @@
 /* ============ 単一軌道（④） ============ */
 .kvp-orbit { position: absolute; border-radius: 50%; border: 1.6px solid rgba(148,163,184,.5); }
 
+/* ============ E案（Figma 15699）: 前向きmock＋同心円＋周回ドット＋大小ガラス ============ */
+.kvp-e-back { position: absolute; inset: 0; transition: transform .15s ease-out; }
+.kvp-e-icons { position: absolute; inset: 0; transition: transform .15s ease-out; }
+.kvp-eorbits { position: absolute; inset: 0; }
+.kvp-eorbit { position: absolute; border-radius: 50%; border: 1px solid rgba(140,150,170,.3); }
+.kvp-espin { position: absolute; width: 0; height: 0; animation: kvpSpin linear infinite; }
+@keyframes kvpSpin { to { transform: rotate(360deg); } }
+.kvp-edot { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; }
+/* E: アイコンは前向き・浅い立体 */
+.pat-p5 .kvp-ico-box { transform: rotateX(7deg) rotateY(-6deg); }
+/* 浮遊アニメ（Eのみ・トグル）*/
+@keyframes kvpFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.pat-p5.float-on .kvp-e-icons .kvp-ico { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
+
+/* --- E: アニメするmock（frosted glass・Figma実測の質感） --- */
+.kvp-emock-slot { position: absolute; }
+.kvp-emock { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: flex; overflow: hidden;
+  border-radius: 30px; background: rgba(255,255,255,.34);
+  backdrop-filter: blur(50px) saturate(1.1); -webkit-backdrop-filter: blur(50px) saturate(1.1);
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 42px 54px 72px rgba(0,0,0,.15), inset 2px 2px 3px rgba(255,255,255,.65); }
+.em-editor { flex: 1 1 0; min-width: 0; display: flex; }
+.em-side { width: 66px; flex: 0 0 auto; background: rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.5);
+  display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 32px 0; }
+.em-logo { width: 10px; height: 46px; border-radius: 5px; background: linear-gradient(#0EBBFF,#FF5D97); opacity: .9; }
+.em-divider { width: 30px; height: 1px; background: rgba(120,130,150,.25); }
+.em-sicons { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+.em-sicons img { width: 20px; height: 20px; opacity: .3; }
+.em-code { flex: 1 1 0; min-width: 0; padding: 36px 40px; display: flex; flex-direction: column; gap: 14px; }
+.em-crow { display: flex; align-items: center; gap: 7px; height: 8px; opacity: 0; transform: translateY(4px);
+  transition: opacity .3s ease, transform .3s ease; }
+.em-crow.on { opacity: 1; transform: none; }
+.em-ind { flex: 0 0 auto; height: 8px; }
+.em-bar { height: 8px; border-radius: 4px; flex: 0 0 auto; }
+.em-chat { flex: 0 0 360px; display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,.5); }
+.em-chead { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.5); }
+.em-ctitle { display: flex; align-items: center; gap: 9px; font: 600 15px/1 "Noto Sans JP", sans-serif; color: rgba(70,90,120,.85); }
+.em-ctitle img { width: 18px; height: 18px; opacity: .55; }
+.em-ell { width: 18px; height: 18px; opacity: .35; }
+.em-hist { flex: 1 1 0; min-height: 0; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+.em-msg { display: flex; gap: 13px; align-items: flex-start; opacity: 0; transform: translateY(6px);
+  transition: opacity .35s ease, transform .35s ease; }
+.em-msg.on { opacity: 1; transform: none; }
+.em-av { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.em-av img { width: 16px; height: 16px; }
+.em-av-bot { background: #0EBBFF; } .em-av-user { background: #FF5D97; }
+.em-bub { flex: 1 1 0; min-width: 0; background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.6);
+  border-radius: 13px; padding: 13px; display: flex; flex-direction: column; gap: 9px; }
+.em-line { height: 7px; border-radius: 4px; background: #96a2b4; }
+.em-input { display: flex; align-items: center; gap: 8px; padding: 20px 22px; border-top: 1px solid rgba(255,255,255,.7); position: relative; }
+.em-typed { font: 400 15px/1 "Noto Sans JP", sans-serif; color: rgba(70,90,120,.9); white-space: nowrap; }
+.em-caret { width: 2px; height: 16px; background: #0EBBFF; margin-left: 1px; animation: emCaret 1s step-end infinite; }
+@keyframes emCaret { 50% { opacity: 0; } }
+.em-ph { font: 400 15px/1 "Noto Sans JP", sans-serif; color: rgba(120,140,170,.5); position: absolute; left: 22px; }
+.em-send { margin-left: auto; width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,.6);
+  display: flex; align-items: center; justify-content: center; }
+.em-send img { width: 13px; height: 13px; opacity: .55; }
+
 /* ============ パネル行・Blender版 ============ */
 .kv-bar .row0 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kv-bar .rowE { display: flex; align-items: center; gap: 8px; }
 #kvBlender { position: fixed; inset: 0; z-index: 3; pointer-events: none; }
 #kvBlender.hidden { display: none; }
 #kvBlender img { position: absolute; right: 0.5%; top: 51%; transform: translateY(-50%);
