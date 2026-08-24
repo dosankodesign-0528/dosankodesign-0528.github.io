@@ -1,5 +1,33 @@
 [
   {
+    "id": "f57309f1ea26",
+    "title": "ニシザキ工芸株式会社 塗装部",
+    "url": "https://tosou.nishizaki.co.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/nishizakitosou_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-04T02:52:36.906Z"
+  },
+  {
+    "id": "1dfa5ac2526e",
+    "title": "株式会社ANDO Imagineering Group | AIG",
+    "url": "https://www.aig-japan.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/andoimagineeringgroup_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
     "id": "2bd3b3e66576",
     "title": "グループ展｢ま｣ 2026年8月22日（土）- 30日（日）STAYFUL LIFE STORE",
     "url": "https://mamamamamamama.com/",
@@ -8353,22 +8381,6 @@
     "lastCheckedAt": "2026-08-02T05:25:44.055Z"
   },
   {
-    "id": "5f7d3f6cb725",
-    "title": "【AWAJI EARTH MUSEUM（aem）】自然にあそび、地球を感じる",
-    "url": "https://awaji-earth-museum.com/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/awajiearthmuseum_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-08",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:25:41.128Z"
-  },
-  {
     "id": "4595b5facffd",
     "title": "採用情報 | Studio株式会社",
     "url": "https://studio.inc/career",
@@ -11618,22 +11630,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:26:21.520Z"
-  },
-  {
-    "id": "fd604e3138f3",
-    "title": "LAKOLE | コレ、ラコレ？プレゼントキャンペーン",
-    "url": "https://www.lakole-cp.jp/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/lakolecp_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-03",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:26:19.996Z"
   },
   {
     "id": "dc7efff31380",
@@ -15124,6 +15120,20 @@
     "firstSeen": "2026-06-13T04:08:32.368Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:27:12.099Z"
+  },
+  {
+    "id": "b29d73f2f1cb",
+    "title": "魔観光作法 | モテアマス三軒茶屋デジタルアーカイブ",
+    "url": "https://archive.moteamasu.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/moteamasuarchive_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2024-11",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
   },
   {
     "id": "05267d8d7196",
@@ -23185,20 +23195,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-08-06T02:52:56.956Z"
-  },
-  {
-    "id": "9c5ed0166224",
-    "title": "ニシザキ工芸株式会社 塗装部",
-    "url": "https://tosou.nishizaki.co.jp/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/08/0887-768x576.webp",
-    "source": "muuuuu",
-    "category": [
-      "interior"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-04T02:52:36.906Z"
   },
   {
     "id": "62e8698e5cf5",
@@ -56449,6 +56445,29 @@
     "lastCheckedAt": "2026-08-02T05:36:13.108Z"
   },
   {
+    "id": "8f2446d6c08a",
+    "title": "Kononenko Architectural Bureau",
+    "url": "https://kononenkogroup.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a3392c61d24a165067178.png",
+    "source": "awwwards",
+    "category": [
+      "Architecture",
+      "Business & Corporate",
+      "Animation",
+      "Clean",
+      "Minimal",
+      "Real Estate",
+      "Content architecture",
+      "Interaction Design",
+      "About Page",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
     "id": "dfa0f549d582",
     "title": "The state of the gallery",
     "url": "https://mesh3d.gallery/the-state-of-the-gallery",
@@ -56514,26 +56533,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-07-19T10:36:28.897Z"
-  },
-  {
-    "id": "b41f40c3e34b",
-    "title": "LIKOVA",
-    "url": "https://likova.space",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a4299ed3b1a5527175372.png",
-    "source": "awwwards",
-    "category": [
-      "Business & Corporate",
-      "Responsive Design",
-      "WebGL",
-      "Three.js",
-      "3D",
-      "Real Estate",
-      "Luxury"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-20T01:41:40.168Z"
   },
   {
     "id": "f6a7e3b274cc",
@@ -57322,26 +57321,91 @@
     "lastCheckedAt": "2026-08-02T05:36:20.510Z"
   },
   {
-    "id": "8a049f9a4a43",
-    "title": "Rurina Odani - Portfolio",
-    "url": "https://rurinaodani.com/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/oh27jinpmyec-2800x2100.webp",
+    "id": "3c874969e70e",
+    "title": "A daily life, like scrolling.",
+    "url": "https://a-daily-life-like-scrolling.studio.site/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/s3mx6trjihk2-2800x2100.webp",
     "source": "s5style",
     "category": [
-      "ポートフォリオ･アーティストサイト",
-      "IT･コンピューター･テクノロジー",
-      "その他"
+      "ランディングページ",
+      "その他",
+      "アート･芸術"
     ],
     "taste": [
-      "アイコン･ピクトグラム",
-      "タイポグラフィー･文字",
-      "スクロールエフェクト",
-      "モチーフ 円•曲線",
-      "グリッドデザイン"
+      "グラフィカル･コラージュ",
+      "イラスト"
     ],
     "date": "2026-08",
     "starred": false,
-    "firstSeen": "2026-08-23T01:36:59.215Z"
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
+    "id": "58376a138a1f",
+    "title": "北川太我｜イラストレーションサイト",
+    "url": "https://ktgw-illust-portfolio.studio.site/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/at039qjnuyd7-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "ポートフォリオ･アーティストサイト",
+      "その他",
+      "アート･芸術"
+    ],
+    "taste": [
+      "グラフィカル･コラージュ",
+      "イラスト"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
+    "id": "1c12b1b46006",
+    "title": "株式会社DEGINA",
+    "url": "https://degina.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/873q6i2egxkj-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "デザイン･制作･開発会社"
+    ],
+    "taste": [
+      "スクロールエフェクト"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
+    "id": "0158191667c9",
+    "title": "uotak - ウオタク",
+    "url": "https://uotak.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/dw3pqxm8e1kz-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "ポートフォリオ･アーティストサイト"
+    ],
+    "taste": [
+      "3Dアニメーション･3Dモデル"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
+    "id": "37ed2acbff15",
+    "title": "Toshiyuki Hashimoto",
+    "url": "https://toshiyukihashimoto.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ib4xk7q8lymt-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "デザイン･制作･開発会社"
+    ],
+    "taste": [
+      "スクロールエフェクト",
+      "モチーフ 線"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
   },
   {
     "id": "3bc3ec952076",
@@ -61918,86 +61982,6 @@
     "firstSeen": "2026-06-06T15:26:28.565Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:37:26.803Z"
-  },
-  {
-    "id": "27353d475d8c",
-    "title": "千葉県柏市のWeb制作会社の求人なら株式会社NOBU",
-    "url": "https://nobu-n.co.jp/recruit/?page=top",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/but1pmah7jyl-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "3Dアニメーション･3Dモデル",
-      "スクロールエフェクト"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-13T04:08:32.368Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:29.089Z"
-  },
-  {
-    "id": "9fd7f0531092",
-    "title": "TOKYO・ENTERTAINMENT & ART",
-    "url": "https://tokyo-art-festival.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/r7os4vpcy61l-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "キュレーションメディアサイト",
-      "美術館･イベント",
-      "アート･芸術"
-    ],
-    "taste": [
-      "モチーフ 円•曲線",
-      "グリッドデザイン"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:29.298Z"
-  },
-  {
-    "id": "6e7a42fc938d",
-    "title": "秀英予備校採用サイト｜学習塾の新卒・キャリア採用の求人募集",
-    "url": "https://www.shuei-yobiko.co.jp/corporate/recruit/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/lr1oixyjs06u-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "BtoCコーポレートサイト",
-      "学校･教育･医療･福祉"
-    ],
-    "taste": [
-      "モチーフ 斜め"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:27.993Z"
-  },
-  {
-    "id": "62d31881e4b8",
-    "title": "THE ZEBRAブランドサイト",
-    "url": "https://www.zebra.co.jp/sp/thezebra/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/wduzmstgaic4-1400x1050.webp",
-    "source": "s5style",
-    "category": [
-      "プロダクトサイト",
-      "インテリア･家具･雑貨",
-      "生活用品･物販"
-    ],
-    "taste": [
-      "写真･フォトディレクション",
-      "動画･映像"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:28.074Z"
   },
   {
     "id": "bbf78832ea79",
