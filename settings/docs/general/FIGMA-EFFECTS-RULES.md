@@ -20,6 +20,21 @@ Figmaの「すりガラス」は、たいてい **Background blur（背景ブラ
 - SVG/PNG を使う場合は、その**背後に blur レイヤーを1枚敷く**（SVGは形・中身・影、CSSがブラー担当）。
 - 値は**Figma実測をそのまま**使う（下記の拾い方）。
 
+### 🔴🔴 さらに大事な罠：`transform` された祖先の中では backdrop-filter が“描画されない”
+Chrome/Safari は、**backdrop-filter を持つ要素の祖先に `transform` / `filter` / `perspective` / `transform-style: preserve-3d` があると、背景ブラーを描画しない**（＝せっかく付けたブラーが全部無効化されて透ける）。実際 anyflow v2 KV で、ステージ全体を `transform: scale()` で縮小していたせいで**全アイコンのブラーが外れて透けた**。
+
+**やりがちで全部アウトな例**：
+- 拡縮を `transform: scale()` でやる → ❌ 中の backdrop-filter 全滅
+- 浮遊アニメを `transform: translateY()` でやる → ❌
+- パララックスを `transform: translate()` でやる → ❌
+- 3D風に箱を `rotateX/Y` する → ❌（その箱の中のガラス面が透ける）
+
+**対策（transformを“ブラー要素の祖先”に置かない）**：
+- 拡縮は **`zoom`**（レイアウト拡縮なのでOK）。中央寄せは flex で。
+- 浮遊は **`margin`**、パララックスは **`left`/`top`** で動かす。
+- ガラス（backdrop使用）の箱は**回転させない**。3D立体が要る箱は**不透明**にして backdrop を使わない。
+- 検証は必ず「別要素に重ねて後ろがボケるか」＋「拡縮/アニメを入れた状態で」確認する。
+
 ## 影・ブラーの種類と CSS 対応（get_design_context の表記→CSS）
 
 | Figma効果 | get_design_context表記 | CSS | 焼き込める？ |

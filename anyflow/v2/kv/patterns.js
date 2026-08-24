@@ -516,9 +516,11 @@
     const stage = document.createElement('div'); stage.className = 'kvp-stage'; rootEl.appendChild(stage);
     worldEl = document.createElement('div'); worldEl.className = 'kvp-world'; stage.appendChild(worldEl);
     function fit() {
-      const rw = rootEl.clientWidth, rh = rootEl.clientHeight;
-      const s = Math.min(rw / STAGE.w, rh / STAGE.h);
-      stage.style.zoom = s;   /* transformでなくzoom＝子のbackdrop-filterを生かす */
+      /* ⚠️ ステージを縮小(transform/zoom/scale)すると Chrome が子の backdrop-filter を描画しない
+         (Chromium #415354762)。なので拡大縮小は最大1倍・横幅fitのみ＝実質スケールしない。
+         高さは溢れさせる（中央のグラフィックは収まる）。狭い画面のフィットは移行時にレイアウトで対応。 */
+      const rw = rootEl.clientWidth;
+      stage.style.zoom = Math.min(1, rw / STAGE.w);
     }
     window.addEventListener('resize', fit); fit(); rootEl._fit = fit;
     window.addEventListener('pointermove', onPointer);

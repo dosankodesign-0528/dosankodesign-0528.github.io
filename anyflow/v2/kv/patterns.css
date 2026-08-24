@@ -112,7 +112,7 @@ body { background: #E7E7E7; }
 .kvp-eorbit { position: absolute; border-radius: 50%; border: 1px solid rgba(140,150,170,.3); }
 .kvp-espin { position: absolute; width: 0; height: 0; animation: kvpSpin linear infinite; }
 @keyframes kvpSpin { to { transform: rotate(360deg); } }
-.kvp-edot { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; }
+.kvp-edot { position: absolute; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; }
 /* SVG忠実版（Figma書き出しをそのまま配置） */
 .kvp-svgscene { position: absolute; inset: 0; }
 .kvp-svgel { position: absolute; display: block; }
