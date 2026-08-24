@@ -112,7 +112,37 @@
     p3: { conn: 'circuit', box: 'glass', layout: LAYOUT_CIRCUIT, iso: true  },
     p4: { conn: 'orbit',   box: 'white', layout: LAYOUT_ORBIT,   iso: true  },
     p5: { conn: 'econc',   box: 'glass', layout: LAYOUT_E,       iso: false },
+    p6: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false },
   };
+
+  /* ---- SVG忠実版（Figmaから書き出したSVGを実座標に配置。静止・ズレゼロ）---- */
+  const SVG_DIR = 'assets/figma/';
+  /* [file, centerX, centerY, w, h]（w/h=書き出しviewBox。影込みなので実アイコンより一回り大きい） */
+  const SVG_ICONS = [
+    ['icon-4.svg', 667, 604, 198, 198],   // chart(大)
+    ['icon-3.svg', 675, 269, 124, 125],   // chat
+    ['icon-2.svg', 1282, 216, 117, 117],  // person
+    ['icon-1.svg', 1270, 617, 104, 104],  // calendar
+    ['icon.svg',   960, 209, 99, 99],     // cloud
+  ];
+  function buildSvgScene() {
+    const box = document.createElement('div'); box.className = 'kvp-svgscene';
+    const put = (f, left, top, w, h) => {
+      const el = document.createElement('img'); el.className = 'kvp-svgel';
+      el.src = SVG_DIR + f; el.style.left = left + 'px'; el.style.top = top + 'px';
+      el.style.width = w + 'px'; el.style.height = h + 'px'; box.appendChild(el); return el;
+    };
+    /* 同心円（Figma実座標の左上）*/
+    put('ellipse-102.svg', 647, 115, 649, 649);
+    put('ellipse-101.svg', 754, 222, 435, 435);
+    /* mock（中心970,435。書き出し600×387、影が右下なので少し上左に寄せて中心合わせ）*/
+    put('mock.svg', 970 - 300 - 12, 435 - 193 - 12, 600, 387);
+    /* 周回ドット（Figmaの3点）*/
+    [[1075, 249], [1187, 678], [816, 156]].forEach(([dx, dy]) => put('ellipse-88.svg', dx - 4.5, dy - 4.5, 9, 9));
+    /* アイコン（中心配置）*/
+    SVG_ICONS.forEach(([f, x, y, w, h]) => put(f, x - w / 2, y - h / 2, w, h));
+    return box;
+  }
 
   const SVGNS = 'http://www.w3.org/2000/svg';
   const elS = (t, a) => { const e = document.createElementNS(SVGNS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
@@ -146,6 +176,9 @@
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
   let floatOn = true, parallaxOn = false;                 /* 浮遊/パララックス（Eのみ） */
   let curTransform = { x: 0, y: 0, z: 0, s: 1 };          /* XYZ・大きさ（選択案の傾き/拡大） */
+  let viewMode = 'flat';                                   /* 普通/アイソメ（全案共通） */
+  const ISO_PRESET = { x: 44, y: 0, z: -8, s: 1.04 };     /* アイソメの標準角度 */
+  const FLAT_PRESET = { x: 0, y: 0, z: 0, s: 1 };
 
   /* ---------- アイコン1個＝本物の3D箱（size=一辺px。Eは大小バラバラ）---------- */
   function buildIcon(id, boxStyle, size) {
@@ -423,11 +456,21 @@
     if (!(cur === 'p5' && parallaxOn)) { eBack.style.transform = ''; eFront.style.transform = ''; }
   }
   function applyTransform() {
-    const c = cur === 'p5' ? EC : C;
+    const c = (cur === 'p5' || cur === 'p6') ? EC : C;
     worldEl.style.transformOrigin = `${c.x}px ${c.y}px`;
     const t = curTransform;
     worldEl.style.transform = (t.x || t.y || t.z || t.s !== 1)
       ? `rotateX(${t.x}deg) rotateY(${t.y}deg) rotateZ(${t.z}deg) scale(${t.s})` : '';
+  }
+  function applyView() {
+    rootEl.classList.toggle('is-iso', viewMode === 'iso');
+    rootEl.classList.toggle('is-flat', viewMode !== 'iso');
+  }
+  function setView(m) {
+    viewMode = (m === 'iso') ? 'iso' : 'flat';
+    applyView();
+    curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
+    applyTransform();
   }
 
   /* ---------- 構築 ---------- */
@@ -453,8 +496,17 @@
     eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'is-iso', 'is-flat');
-    rootEl.classList.add('pat-' + key, p.iso ? 'is-iso' : 'is-flat');
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'is-iso', 'is-flat');
+    rootEl.classList.add('pat-' + key);
+    viewMode = p.iso ? 'iso' : 'flat';                  /* 案の既定ビュー（後で普通/アイソメで切替可） */
+    applyView();
+    curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
+
+    if (key === 'p6') {                                  /* SVG忠実版（Figma書き出しを実座標配置） */
+      worldEl.appendChild(buildSvgScene());
+      applyTransform();
+      return;
+    }
 
     if (key === 'p5') {                              /* E: 前向きmock＋同心円＋周回ドット＋大小ガラス */
       eBack = document.createElement('div'); eBack.className = 'kvp-e-back';
@@ -487,6 +539,6 @@
   function show() { rootEl.classList.remove('hidden'); rootEl._fit && rootEl._fit(); }
   function hide() { rootEl.classList.add('hidden'); }
 
-  global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform,
+  global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform, setView,
     get: () => cur, getTransform: () => Object.assign({}, curTransform), PATTERNS, C, STAGE };
 })(window);

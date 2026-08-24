@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=9">
+<link rel="stylesheet" href="patterns.css?v=10">
 </head>
 <body>
 
@@ -46,39 +46,20 @@
 
 <div class="kv-bar">
   <div class="row0">
-    <b>デザイン</b>
-    <button data-design="agent" class="on">エージェント版</button>
-    <span class="sep"></span>
-    <button data-design="p1" title="フラット×回路線×白箱">A</button>
-    <button data-design="p2" title="フラット×同心円×ガラス">B</button>
-    <button data-design="p3" title="アイソメ×回路線×ガラス">C</button>
-    <button data-design="p4" title="アイソメ×軌道×白箱">D</button>
-    <button data-design="p5" title="同心円＋周回ドット＋アニメmock">E</button>
-    <span class="sep"></span>
-    <button data-design="blender">Blender版</button>
+    <b>案:</b>
+    <button data-design="agent" class="on" title="エージェント版">A</button>
+    <button data-design="p1" title="フラット×回路線×白箱">B</button>
+    <button data-design="p2" title="フラット×同心円×ガラス">C</button>
+    <button data-design="p3" title="アイソメ×回路線×ガラス">D</button>
+    <button data-design="p4" title="アイソメ×軌道×白箱">E</button>
+    <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">F</button>
+    <button data-design="blender" title="Blender 3D">G</button>
+    <button data-design="p6" title="Figma SVG忠実版">H</button>
   </div>
   <div class="row1">
-    <b>KV V2</b>
-    <span class="sep"></span>
     ビュー:
-    <button data-view="flat" class="on">普通</button>
-    <button data-view="d3">3D</button>
-    <button data-view="iso1">アイソメ</button>
-    <button data-view="iso2">浅め</button>
-    <button data-view="iso3">深め</button>
-    <button data-view="iso4">右流し</button>
-    <span class="sep"></span>
-    中央:
-    <button data-am="flow0" class="on">一方向</button>
-    <button data-am="flow1">混ざる</button>
-    <button data-am="flow2">端→中央</button>
-    <button data-am="flow3">軸ゆらぎ</button>
-    <button data-am="flow4">中央→端</button>
-    <button data-am="halftone">ハーフトーン</button>
-    <span class="sep"></span>
-    アイコンの動き:
-    <button data-ia="on" class="on">オン</button>
-    <button data-ia="off">オフ</button>
+    <button data-gview="flat" class="on">普通</button>
+    <button data-gview="iso">アイソメ（厚み）</button>
   </div>
   <div class="rowE">
     浮遊(E):
@@ -99,7 +80,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=9"></script>
+<script src="patterns.js?v=10"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -116,29 +97,28 @@
     labels.z.textContent = v.z + '°'; labels.s.textContent = '×' + (+v.s).toFixed(2);
   }
   function readSliders() { return { x: +rx.value, y: +ry.value, z: +rz.value, s: +rs.value }; }
-  /* 角度XYZ・大きさ: エージェント版=KV.setView / A〜E=選択案の傾き・拡大(KVP.setTransform) */
+  /* 角度XYZ・大きさ: エージェント=KV.setView / パターン=KVP.setTransform */
   [rx, ry, rz, rs].forEach(sl => sl.addEventListener('input', () => {
     const v = readSliders(); syncLabels(v);
-    if (curDesign === 'agent') { KV.setView(v); document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.remove('on')); }
+    if (curDesign === 'agent') KV.setView(v);
     else if (curDesign !== 'blender') KVP.setTransform(v);
   }));
 
-  /* エージェント版の操作（row1） */
-  document.querySelectorAll('.kv-bar [data-view]').forEach(b => b.onclick = () => {
-    const v = KV.VIEWS[b.dataset.view]; KV.setView(v);
-    rx.value = v.x; ry.value = v.y; rz.value = v.z; rs.value = v.s; syncLabels(v);
-    document.querySelectorAll('.kv-bar [data-view]').forEach(x => x.classList.toggle('on', x === b));
-  });
-  document.querySelectorAll('.kv-bar [data-am]').forEach(b => b.onclick = () => {
-    KV.setAgentMode(b.dataset.am);
-    document.querySelectorAll('.kv-bar [data-am]').forEach(x => x.classList.toggle('on', x === b));
-  });
-  document.querySelectorAll('.kv-bar [data-ia]').forEach(b => b.onclick = () => {
-    KV.setIconAnim(b.dataset.ia === 'on');
-    document.querySelectorAll('.kv-bar [data-ia]').forEach(x => x.classList.toggle('on', x === b));
+  /* ビュー: 普通 / アイソメ（全案共通） */
+  const ISO_AGENT = { x: 54, y: 0, z: -42, s: 1.26 };
+  function syncViewUI(mode) {
+    document.querySelectorAll('.kv-bar [data-gview]').forEach(x => x.classList.toggle('on', x.dataset.gview === mode));
+    const t = (curDesign === 'agent') ? (mode === 'iso' ? ISO_AGENT : { x: 0, y: 0, z: 0, s: 1 }) : KVP.getTransform();
+    rx.value = t.x; ry.value = t.y; rz.value = t.z; rs.value = t.s; syncLabels(t);
+  }
+  document.querySelectorAll('.kv-bar [data-gview]').forEach(b => b.onclick = () => {
+    const mode = b.dataset.gview;
+    if (curDesign === 'agent') KV.setView(mode === 'iso' ? ISO_AGENT : { x: 0, y: 0, z: 0, s: 1 });
+    else if (curDesign !== 'blender') KVP.setView(mode);
+    syncViewUI(mode);
   });
 
-  /* 浮遊 / パララックス（E専用） */
+  /* 浮遊 / パララックス（F=E案専用） */
   document.querySelectorAll('.kv-bar [data-float]').forEach(b => b.onclick = () => {
     KVP.setFloat(b.dataset.float === 'on');
     document.querySelectorAll('.kv-bar [data-float]').forEach(x => x.classList.toggle('on', x === b));
@@ -148,18 +128,18 @@
     document.querySelectorAll('.kv-bar [data-parallax]').forEach(x => x.classList.toggle('on', x === b));
   });
 
-  /* デザイン切替（エージェント / A〜E / Blender版） */
-  function resetSliders() { rx.value = 0; ry.value = 0; rz.value = 0; rs.value = 1; syncLabels(readSliders()); }
+  /* デザイン切替（A〜H） */
   document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
     document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
     const d = b.dataset.design; curDesign = d;
     const isAgent = d === 'agent', isBlender = d === 'blender';
     kvHost.style.display = isAgent ? '' : 'none';
     kvBlender.classList.toggle('hidden', !isBlender);
-    row1.style.display = isAgent ? '' : 'none';
-    rowE.style.display = (d === 'p5') ? '' : 'none';
-    if (isAgent || isBlender) { KVP.hide(); }
-    else { KVP.show(); KVP.setPattern(d); resetSliders(); KVP.setTransform(readSliders()); }
+    row1.style.display = isBlender ? 'none' : '';         /* ビューはBlender以外で有効 */
+    rowE.style.display = (d === 'p5') ? '' : 'none';       /* 浮遊/パララックスはF(E案)のみ */
+    if (isAgent) { KVP.hide(); syncViewUI('flat'); }
+    else if (isBlender) { KVP.hide(); }
+    else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }
   });
   rowE.style.display = 'none';
 </script>
