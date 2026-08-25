@@ -503,7 +503,10 @@
     will-change: transform, opacity;
   }
   /* 案C: 画像なし・中央テキストのみ。地色は絵コンテの #E7E7E7 を全幅で */
-  #results.pat-c .pin-vp { background: #E7E7E7; }
+  /* ⚠️【2026-08-26】#results を z-index:1 で前に出したので、pin-vp の背景を不透明にすると
+     実績尾部に重ねた開発者体験1(dev1)を覆い隠してしまう(dev1が消える)。
+     ページ地色が同じ #e7e7e7 なので、pin-vp は transparent にする(見た目は不変・dev1 が透けて見える)。 */
+  #results.pat-c .pin-vp { background: transparent; }
   #results.pat-c .pin-stage { z-index: 2; }         /* 文字を黒オブジェクトの上のレイヤーに */
   #results.pat-c .res-img-frame { display: none; }
   /* 見出し(100%行) → 数値3つ(1行) → 本文(100%行) を中央に。res-main は display:contents で
@@ -4695,8 +4698,11 @@ function updateDev(pRaw) {
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
     el.style.transform = k < 0.999 ? `translateY(${((1 - k) * 24).toFixed(1)}px)` : '';
   };
-  /* dev1(章①): ブロックを出現＋モックをループ駆動(表示中は流れっぱなし) */
-  const k1 = reveal(devEls.block1);
+  /* dev1(章①): ブロックを出現＋モックをループ駆動(表示中は流れっぱなし)。
+     【2026-08-26】実績尾部に重ねているので、dev1 は「中央に着いてから」フェードインさせ、
+     下からのせり上がりは黒(resGrow)の裏に隠す（黒がフェードするのと入れ替わりで“その場”に出る）。 */
+  const b1top = rectOf(devEls.block1).top;
+  const k1 = easeOutQ(clamp01((vh * 0.15 - b1top) / (vh * 0.25)));
   applyBlock(devEls.block1, k1);
   driveEditorLoop(dev1Refs, k1 > 0.35, 'dev1');
   /* dev2(章②): 見出し→モック→右テキストの順で出現＋モックをループ駆動 */
