@@ -236,16 +236,13 @@
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
-  /* ⚠️ 実績 → 開発者体験 は【1画面ぶん重ねる】。
-     こうすると、実績の固定が外れるのと同時に開発者体験がもう定位置(top:0)にいるので、
-     画面が上下にスライドせず「その場で切り替わる」ようになる。
-     重なっている間は #dev の板を JS で透明にしておき、実績を隠さないようにする */
-  #dev { margin-top: -100vh; }
-  /* 【2026-08-18 指定】導入事例も1画面ぶん重ねて、開発者体験の真下に置く。
-     こうしないと「黒が明るくなりきってから、何も起きない1画面」を
-     スクロールさせられる。中身を出すタイミングは JS 側で遅らせている */
-  #cases { margin-top: -100vh; }
-  #dev .pin-vp { will-change: opacity; }
+  /* 【2026-08-25 リデザイン】開発者体験は固定追従(pin)をやめ、普通に縦へ流れる。
+     実績の resGrow(黒)が画面いっぱいに広がりきった直後に、この暗いセクションが続く。
+     margin-top:0 で実績の直後に置く（重なりはさせない）。 */
+  #dev { margin-top: 0; position: relative; z-index: 0; }
+  /* 【2026-08-25 リデザイン】開発者体験を非pin(縦2ブロック)にしたので、
+     導入事例の -100vh 重なりは廃止（重なると dev2 を覆ってしまう）。実績の直後ならぬ dev の直後に普通に置く。 */
+  #cases { margin-top: 0; }
 
   .pin-vp {
     position: sticky;
@@ -582,177 +579,132 @@
   /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
      「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
   /* カンプ 14937:23887: 上から下へ #161616 → #454545 (2026-08-15 更新) */
+  /* 暗い地色: sticky で画面高さ100vhに固定＝実績の resGrow(黒)と同じ「伸び方」のグラデになり、
+     受け渡しで継ぎ目が出ない(ヒデさん指定)。margin-bottom:-100vh でレイアウト高さを消し、
+     dev1/dev2 のブロックはこの暗幕の上を流れる。 */
+  /* 暗い地色: fixed で画面高さ100vhに固定＝実績の resGrow(黒)と全く同じ「伸び方」のグラデ。
+     JS(updateDev) が #dev が画面に入っている間だけ opacity を上げる（受け渡しに継ぎ目が出ない）。 */
   .dev-bg {
-    position: absolute;
-    inset: 0;
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100vh;
     background: linear-gradient(180deg, #161616 0%, #454545 100%);
-  }
-  /* 最後にスクロールで白へ戻すための、上にかぶせる板 */
-  .dev-bg2 {
-    position: absolute;
-    inset: 0;
-    background: #e7e7e7;   /* 2026-08-25: 次セクションへ戻す板も #E7E7E7 に統一 */
     opacity: 0;
+    z-index: 0;
+    pointer-events: none;
   }
-  #dev .pin-stage { background: transparent; }
+  /* 予備の板(いまは未使用・opacity0固定) */
+  .dev-bg2 { position: fixed; inset: 0; height: 100vh; background: #e7e7e7; opacity: 0; z-index: 0; pointer-events: none; }
 
-  /* ===== 見出し (カンプ 14791:29576) =====
-     ラベル : SF Pro Text Thin 20px / 字間 -1px / 行間 1 / #0EBBFF
-     見出し : Noto Sans JP ExtraLight(200) 44px / 行間 normal / #fff */
-  .dev-center {
-    position: absolute;
-    left: 0;
-    right: 0;                 /* ステージ幅いっぱいに広げて本当の中央に置く */
-    /* カンプは 143.8px。ヒデさん指定でコピーとモックの間を40px詰めるため下げてある */
-    top: 142.8px;
-    text-align: center;
+  /* ===== dev1/dev2 ブロック: 画面高さ100vhに中央寄せ。JS(updateDev)がブラー+フェードで出現→出っ放し ===== */
+  .dev-block {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 56px;                 /* 見出しと本体の間(カンプ 24777 は 59) */
+    padding: 90px 120px;
+    box-sizing: border-box;
     color: #fff;
-    will-change: transform, opacity, filter;
+    will-change: opacity, filter;
   }
-  /* ===== 見出し (カンプ 14937:23888・2026-08-15 再取得) =====
-     ラベル : SF Pro Text Thin 20px / 字間 -1px / 行間1 / #0EBBFF / 中央
-     見出し : Noto Sans JP Thin(100) 40px / 行間 normal / 白 / 中央
-     枠の gap = 12px
-     ⚠️ サイズが 44px → 40px に、gap が 20px → 12px に変わっている */
+  /* 見出し(中央): ラベル SF Pro Thin 20px #0EBBFF / 本文 Noto Sans JP Thin 40px 白 (カンプ 24778) */
+  .dev-center { text-align: center; color: #fff; }
   .dev-center .dc-label {
     display: block;
     font-family: var(--font-en);
-    /* SF Pro の Thin。実測で 100 は Ultralight の字面になるため 200 が正しい
-       (Apple の並びは Ultralight < Thin < Light。100=Ultralight / 200=Thin) */
-    font-weight: 200;
+    font-weight: 200;          /* SF Pro Thin(実測200=Thin) */
     font-size: 20px;
     letter-spacing: -1px;
     line-height: 1;
     color: #0EBBFF;
-    margin-bottom: 12px;   /* カンプ 14937:23888 の gap */
+    margin-bottom: 12px;
   }
   .dev-center .dc-one {
     display: block;
-    font-weight: 100;      /* カンプ: Noto Sans JP Thin */
-    font-size: 40px;       /* カンプ 14937:23888 で 44px → 40px に変更 */
+    font-weight: 100;          /* Noto Sans JP Thin */
+    font-size: 40px;
     line-height: normal;
   }
-  /* カンプ 14791:29706 はモック左79.7 + リスト右端1309.7 = 幅1230 で 25.3px 左寄りだった。
-     ヒデさん指定で「モックとAPI/CLI/SDKのまとまりを中央揃え」にするため両方 +25.3px */
-  /* ⚠️ モックと右リストを固定の left で置くと、画面幅が広がった時に左へ寄ってしまう
-     （実測 1637px幅で 左105 / 右302 とズレた）。1230px の枠ごと画面中央に置くこと */
-  /* ===== カンプ 14927:22549 の実測 =====
-       手前カード  左119.9 / 幅760.4   (840.6 × 0.9046)
-       中(左後ろ)  左63.5  / 幅684.3   中心は手前から -94.5, +3.0
-       奥(右後ろ)  左320.6 / 幅615.9   中心は手前から +128.5, -16.4
-       右リスト    左990.2 / 幅329.4   → 画面右から 120.4px
-     「手前カードの見た目の左端 〜 リストの右端」= 1199.7px を画面中央に置くと、
-     カンプの左余白79.8 / 右余白120.4 がそのまま再現できる（幅が変わっても同じ見え方） */
-  .dev-group {
-    perspective: 1600px;
-    position: absolute;
-    left: 50%;
-    margin-left: -600px;      /* 1199.7 ≒ 1200 の半分 */
-    width: 1200px;
-    top: 274px;
-    height: 504.37px;
+
+  /* ---- dev1: 単体パネル(エディタ+チャット) 840×504 を中央に (カンプ 24718) ---- */
+  .dev1-mock { position: relative; width: 840px; height: 504px; max-width: 100%; }
+  .dev1-mock .dm-panel { position: absolute; inset: 0; }
+
+  /* ---- dev2: 薄グレーのグラデ地の中に [左:積層モック] + [右:API/CLI/SDKリスト] (カンプ 24781) ---- */
+  .dev2-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    max-width: 1200px;
+    height: 483px;
+    background: linear-gradient(180deg, rgba(85,85,85,.7) 0%, rgba(72,72,72,.7) 100%);
   }
-  /* 後ろに控えるモック(影武者)。中身は作らず、パネルの形だけを出す。
-     カンプ 14924:21985 の実測: 手前 760.4×456.2 / 中 684.3×410.6 / 奥 615.9×369.5
-     → 840.6 基準で 0.905 / 0.814 / 0.733 倍。左右にずらして端をのぞかせる */
-  .dm-ghost {
+  /* 左: 積層モック。奥2枚をオフセットで覗かせ、手前1枚(本体)を重ねる (カンプ 24783 実測を等倍) */
+  .dev2-stack {
+    position: relative;
+    flex: 1 0 0;
+    min-width: 0;
+    align-self: center;
+    width: 545px;
+    height: 308px;
+    margin: 0 auto;
+  }
+  .dev2-stack .dm-ghost {
     position: absolute;
-    left: -40.35px;
-    top: 0;
-    width: 840.6px;
-    height: 504.37px;
-    transform-origin: 50% 50%;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    will-change: transform, opacity;
+    top: 0; left: 0;
+    border-radius: 15px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.18);
     pointer-events: none;
   }
-  /* 中身は本物と同じ .dm-panel をそのまま使う (手前に回ってきた時に見た目が変わらないように)
-     ⚠️ ただし backdrop-filter(背景ぼかし)は【手前の1枚だけ】。
-        背景ぼかしは合成コストがいちばん高い処理で、3枚同時だとカードの回転がカクつく。
-        下地を不透明にしてあるので、後ろの2枚は切っても見た目は変わらない */
-  .dm-ghost .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .dev-mock {
-    position: absolute;
-    /* 0.9046 倍で描くと左右に 40.1px ずつ余るので、その分を戻してカンプの左119.9に合わせる */
-    left: -40.35px;
-    top: 0;
-    width: 840.6px;
-    height: 504.37px;
-    z-index: 3;                 /* 文字より前に重ねる */
+  .dm-ghost-face {
+    position: absolute; inset: 0;
+    border: 0.6px solid rgba(255,255,255,.08);
+    border-radius: 15px;
+    background: linear-gradient(180deg, #2b2b2b 0%, #1b1b1b 100%);
   }
-  .dev-center { z-index: 1; }
-
-  /* ===== 右のリスト (カンプ 14791:29705) =====
-     枠: 左 980.3px / 上 315px / 幅 329.383px / 上に 20px の余白 / 項目間 37px / 右寄せ
-     選択中: 左に1pxの縦線 + gap 28px / 不透明度 1
-     それ以外: 縦線なし / 不透明度 0.2  ← カンプ実測値 */
-  .dev-list {
+  #dmGhost0 { width: 417px; height: 251px; left: 0;    top: 31px; opacity: .95; }   /* mid */
+  #dmGhost1 { width: 376px; height: 226px; left: 169px; top: 32px; opacity: .85; }   /* back */
+  /* 手前(本体): 実寸840×504のパネルを scale(0.611) で 513×308 に。内部(コード/チャット)も等倍で縮む */
+  .dev2-stack .dev-mock {
     position: absolute;
-    left: 870.08px;    /* カンプのリスト左990.2 に合わせる */
-    top: 0;
-    width: 329.383px;
-    padding-top: 20px;
+    left: 15px; top: 0;
+    width: 840px; height: 504px;
+    transform: scale(0.611);
+    transform-origin: 0 0;
+    z-index: 3;
+  }
+  .dev2-stack .dev-mock .dm-panel { position: absolute; inset: 0; border-radius: 24px; }
+  .dm-ghost .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  /* 右: API/CLI/SDK リスト。3行を縦に均等。API=活性(左罫線+不透明1)、他=不透明0.2 (カンプ 24845) */
+  .dev-list {
+    flex: 0 0 460px;
+    align-self: stretch;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 37px;
-    z-index: 2;
+    background: rgba(255,255,255,.05);
     color: #fff;
   }
   .dl-item {
+    flex: 1 0 0;
     display: flex;
     align-items: center;
-    gap: 28px;
-    cursor: pointer;
+    padding: 32px 40px;
+    box-sizing: border-box;
+    opacity: .2;
     will-change: opacity;
   }
-  .dl-bar {
-    align-self: stretch;
-    width: 1px;
-    background: #fff;
-    opacity: 0;
-    transform: scaleY(.3);
-    transform-origin: 50% 50%;
-    /* ⚠️【2026-08-19 ヒデさん指摘】以前は cubic-bezier(.2,1.5,.35,1) で
-       「少し行き過ぎてから戻る」オーバーアクションを付けていたが、
-       バウンス（跳ね返り）に見えて浮くため廃止。
-       秒数とカーブは左のモックの入れ替えと【連動】させる（--dev-swap / --dev-swap-e）。
-       これらは updateDev() が毎フレーム調整パネルの値から書き込む */
-    transition: opacity .18s var(--e-fast),
-                transform var(--dev-swap, .34s) var(--dev-swap-e, var(--e-out));
-  }
-  .dl-item.is-on .dl-bar { opacity: 1; transform: scaleY(1); }
-  /* 【2026-08-15】ブラーでの切替はやめ、下線が伸びて白文字になるだけにした */
-  .dl-head b, .dl-head span {
-    position: relative;
-    /* 文字色もモックの入れ替えと連動させる（別々だとちぐはぐに見える） */
-    transition: color var(--dev-swap, .16s) var(--dev-swap-e, var(--e-fast));
-  }
-  .dl-head { position: relative; padding-bottom: 6px; }
-  .dl-head::after {
-    content: "";
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 1px;
-    background: #fff;
-    transform: scaleX(0);
-    transform-origin: 0 50%;
-    /* ⚠️ 下線もバウンス（cubic-bezier(.2,1.4,.3,1)）をやめ、
-       秒数とカーブは左のモックの入れ替えと連動させる */
-    transition: transform var(--dev-swap, .38s) var(--dev-swap-e, var(--e-out));
-  }
-  .dl-item.is-on .dl-head::after { transform: scaleX(1); }
-  .dl-item.is-on .dl-head b, .dl-item.is-on .dl-head span { color: #fff; }
-  .dl-body { width: 301.383px; display: flex; flex-direction: column; gap: 13px; }
-  .dl-head { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-  /* カンプ: 「API」SF Pro Text Thin(100) 28px ／「の場合」Noto Sans JP Light(300) 18px */
-  /* カンプ 14937:23895: 「API」= SF Pro Text Ultralight → 実測の対応で 100 */
-  .dl-head b { font-family: var(--font-en); font-weight: 100; font-size: 28px; line-height: normal; }
-  /* カンプ: 「の場合」= Noto Sans JP ExtraLight(200) */
-  .dl-head span { font-weight: 200; font-size: 18px; line-height: normal; }
-  /* カンプ 14937:23895: Noto Sans JP ExtraLight(200) 12px / 行間 1.9 */
-  .dl-body p { font-weight: 200; font-size: 12px; line-height: 1.9; }
+  .dl-item.is-on { opacity: 1; border-left: 1px solid rgba(255,255,255,.8); }
+  .dl-body { display: flex; flex-direction: column; gap: 4px; }
+  .dl-head { display: flex; align-items: flex-end; gap: 5px; white-space: nowrap; }
+  .dl-head b { font-family: var(--font-en); font-weight: 100; font-size: 24px; line-height: 1; }   /* API= SF Pro Ultralight 24 */
+  .dl-head span { font-weight: 300; font-size: 14px; line-height: normal; }                        /* の場合= Noto Light 14 */
+  .dl-body p { font-weight: 300; font-size: 12px; line-height: 1.9; }                              /* 本文= Noto Light 12 */
 
   /* ===== モック本体: カンプ 14708:37855 を忠実に再現 (840.6×504.37) ===== */
   .dm-panel {
@@ -1177,22 +1129,20 @@
     .res-stats .st b { font-size: 12px; line-height: 16px; }
     .res-stats .st span { font-size: 28px; }
 
-    /* --- 開発者体験 --- */
-    /* 見出しの top は HTML の inline style なので !important で上書きする */
-    #devH1 { top: 118px !important; }
-    #devH2 { top: 118px !important; }
-    .dev-center { top: 88px; }
+    /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
+    .dev-block { padding: 64px 18px; gap: 28px; }
     .dev-center .dc-label { font-size: 12px; margin-bottom: 8px; }
-    .dev-center .dc-one { font-size: 24px; line-height: 36px; }
-    /* モックは JS 側で 0.40 倍。中央に置いて左右の余白を揃える */
-    .dev-group { left: 0; margin-left: 0; width: 390px; top: 0; height: auto; }
-    .dev-mock { left: 50%; }
+    .dev-center .dc-one { font-size: 24px; line-height: 1.4; }
+    /* dev1: 840×504 の実寸パネルを 0.40倍。余白ぶんは負マージンで詰める */
+    .dev1-mock { transform: scale(0.40); transform-origin: center top; margin: -151px auto; }
+    /* dev2: 積層モックの上に API/CLI/SDK リストを縦積み */
+    .dev2-wrap { flex-direction: column; height: auto; gap: 0; }
+    .dev2-stack { transform: scale(0.60); transform-origin: center top; margin: 0 auto -122px; }
     .dm-ghost { display: none; }   /* スマホでは重ねない */
-    .dev-mock { left: 50%; top: 190px; margin-left: -420.3px; }
-    .dev-list { left: 24px; top: 470px; width: 342px; padding-top: 0; gap: 22px; align-items: flex-start; }
-    .dl-body { width: 314px; }
+    .dev-list { flex: none; width: 100%; }
+    .dl-item { padding: 18px 22px; }
     .dl-head b { font-size: 22px; }
-    .dl-head span { font-size: 16px; }
+    .dl-head span { font-size: 14px; }
 
     /* --- 導入事例: モバイルは1カラム縦積み(簡易・要モバイルカンプ) --- */
     .case-title { left: 24px; top: 56px; font-size: 28px; line-height: 40px; }
@@ -1642,124 +1592,95 @@
 </section>
 
 <!-- ================= 開発者体験 (ダーク・スクロールジャック) ================= -->
-<section class="pin" id="dev">
-  <div class="pin-vp">
-    <div class="dev-bg"></div>
-    <div class="dev-bg2" id="devBg2"></div>
-    <div class="pin-stage">
-      <div class="dev-center" id="devH1">
-        <span class="dc-label">Strength 01</span>
-        <span class="dc-one">自動生成で開発スピードを加速</span>
-      </div>
-      <div class="dev-center" id="devH2">
-        <span class="dc-label">Strength 02</span>
-        <span class="dc-one">開発環境に柔軟に適応</span>
-      </div>
-      <div class="dev-group">
-      <!-- カンプ 14924:21985: 後ろに2枚控える。ホバーで輪の上を横に回って入れ替わる(案1)。
-           ⚠️ 簡易パネルではなく【本物と同じ作り】にすること。手前に来た時に見た目が変わらないため -->
-      <div class="dm-ghost" id="dmGhost0" aria-hidden="true">
-        <div class="dm-panel is-term">
-          <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
-          <div class="dm-editor"><div class="dm-code code" id="dmCodeCli"></div></div>
-        </div>
-      </div>
-      <div class="dm-ghost" id="dmGhost1" aria-hidden="true">
-        <div class="dm-panel is-sdk">
-          <div class="dm-editor">
-            <div class="dm-side">
-              <img class="dm-logo" src="assets/mock/logo.svg" alt="">
-              <div class="dm-divider"></div>
-              <div class="dm-icons">
-                <img src="assets/mock/side1.svg" alt=""><img src="assets/mock/side2.svg" alt="">
-                <img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt="">
-                <img src="assets/mock/side2.svg" alt="">
+<!-- ================= 開発者体験 (非pin・縦スクロールで dev1→dev2 / カンプ 15800:24869) =================
+     固定追従をやめ、暗いセクションに入ったら普通に下へ流れ、ブロックごとにブラー+フェードで出現→出っ放し。
+     暗い地色(dev-bg)は sticky 100vh で、実績の resGrow と同一グラデ＝受け渡しに継ぎ目が出ない。 -->
+<section id="dev">
+  <div class="dev-bg"></div>
+  <div class="dev-bg2" id="devBg2"></div>
+
+  <!-- dev1: Strength 01 -->
+  <div class="dev-block" id="devBlock1">
+    <div class="dev-center" id="devH1">
+      <span class="dc-label">Strength 01</span>
+      <span class="dc-one">自動生成で開発スピードを加速</span>
+    </div>
+    <!-- dev1 は単体パネル(エディタ+チャット)。中身は JS が #dmPanel を複製して静止完成状態で入れる -->
+    <div class="dev1-mock" id="devMock1"></div>
+  </div>
+
+  <!-- dev2: Strength 02 -->
+  <div class="dev-block" id="devBlock2">
+    <div class="dev-center" id="devH2">
+      <span class="dc-label">Strength 02</span>
+      <span class="dc-one">開発環境に柔軟に適応</span>
+    </div>
+    <div class="dev2-wrap">
+      <!-- 左: 3層オフセット積層モック(奥2枚+手前1枚) -->
+      <div class="dev2-stack">
+        <div class="dm-ghost" id="dmGhost0" aria-hidden="true"><div class="dm-panel dm-ghost-face"></div></div>
+        <div class="dm-ghost" id="dmGhost1" aria-hidden="true"><div class="dm-panel dm-ghost-face"></div></div>
+        <div class="dev-mock" id="devMock">
+          <div class="dm-panel" id="dmPanel">
+            <div class="dm-editor">
+              <div class="dm-side">
+                <img class="dm-logo" src="assets/mock/logo.svg" alt="">
+                <div class="dm-divider"></div>
+                <div class="dm-icons">
+                  <img src="assets/mock/side1.svg" alt="">
+                  <img src="assets/mock/side2.svg" alt="">
+                  <img src="assets/mock/side2.svg" alt="">
+                  <img src="assets/mock/side2.svg" alt="">
+                  <img src="assets/mock/side2.svg" alt="">
+                </div>
+              </div>
+              <div class="dm-code" id="dmCode"></div>
+              <div class="dm-load" id="dmLoad"></div>
+            </div>
+            <div class="dm-chat">
+              <div class="dm-chat-head">
+                <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">AI Assistant</span>
+                <img src="assets/mock/ellipsis.svg" alt="">
+              </div>
+              <div class="dm-history">
+                <div class="dm-msg dm-user" id="dmUserMsg"><p></p></div>
+                <div class="dm-msg dm-bot dm-thinkmsg" id="dmThink">
+                  <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
+                  <div class="lines dm-think-b"><i></i><i></i><i></i></div>
+                </div>
+                <div class="dm-msg dm-bot dm-botmsg" id="dmBotMsg">
+                  <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
+                  <p></p>
+                </div>
+              </div>
+              <div class="dm-input-c">
+                <span class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span class="dm-ph" id="dmPlaceholder">Ask anything...</span></span>
+                <span class="dm-send"><img src="assets/mock/arrow-up.svg" alt=""></span>
               </div>
             </div>
-            <div class="dm-code code" id="dmCodeSdk"></div>
-          </div>
-          <div class="dm-sdk">
-            <div class="dm-chat-head">
-              <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">SDK Reference</span>
-              <img src="assets/mock/ellipsis.svg" alt="">
-            </div>
-            <div class="dm-sdk-list" id="dmSdkList2"></div>
-          </div>
-        </div>
-      </div>
-      <div class="dev-mock" id="devMock">
-        <div class="dm-panel" id="dmPanel">
-          <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
-          <div class="dm-editor">
-            <div class="dm-side">
-              <img class="dm-logo" src="assets/mock/logo.svg" alt="">
-              <div class="dm-divider"></div>
-              <div class="dm-icons">
-                <img src="assets/mock/side1.svg" alt="">
-                <img src="assets/mock/side2.svg" alt="">
-                <img src="assets/mock/side2.svg" alt="">
-                <img src="assets/mock/side2.svg" alt="">
-                <img src="assets/mock/side2.svg" alt="">
-              </div>
-            </div>
-            <div class="dm-code" id="dmCode"></div>
-            <div class="dm-load" id="dmLoad"></div>
-          </div>
-          <div class="dm-chat">
-            <div class="dm-chat-head">
-              <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">AI Assistant</span>
-              <img src="assets/mock/ellipsis.svg" alt="">
-            </div>
-            <!-- 空の状態から、入力→送信→履歴に反映→AIが返答、の順に動く -->
-            <div class="dm-history">
-              <div class="dm-msg dm-user" id="dmUserMsg"><p></p></div>
-              <div class="dm-msg dm-bot dm-thinkmsg" id="dmThink">
-                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
-                <div class="lines dm-think-b"><i></i><i></i><i></i></div>
-              </div>
-              <div class="dm-msg dm-bot dm-botmsg" id="dmBotMsg">
-                <span class="av"><img src="assets/mock/bot.svg" alt=""></span>
-                <p></p>
-              </div>
-            </div>
-            <div class="dm-input-c">
-              <span class="dm-input"><span class="dm-typed" id="dmTyped"></span><span class="dm-cursor" id="dmCursor"></span><span class="dm-ph" id="dmPlaceholder">Ask anything...</span></span>
-              <span class="dm-send"><img src="assets/mock/arrow-up.svg" alt=""></span>
-            </div>
-          </div>
-          <div class="dm-sdk">
-            <div class="dm-chat-head">
-              <span class="ttl"><img src="assets/mock/sparkles.svg" alt="">SDK Reference</span>
-              <img src="assets/mock/ellipsis.svg" alt="">
-            </div>
-            <div class="dm-sdk-list" id="dmSdkList"></div>
           </div>
         </div>
       </div>
-      <!-- カンプ 14791:29705。ホバーで左のモックが切り替わる -->
+      <!-- 右: API/CLI/SDK リスト。API を活性(左罫線+不透明1)、他は不透明0.2 -->
       <div class="dev-list" id="devList">
         <div class="dl-item is-on" data-screen="api">
-          <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>API</b><span>の場合</span></div>
             <p>HTTPで叩くだけ。言語もフレームワークも選ばず、いまあるバックエンドからそのまま呼び出せます。認証はキー1本。</p>
           </div>
         </div>
         <div class="dl-item" data-screen="cli">
-          <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>CLI</b><span>の場合</span></div>
             <p>手元のターミナルで試して、そのままCI/CDへ。ユーザー単位で実行ログを追えるので、運用も開発の延長で回せます。</p>
           </div>
         </div>
         <div class="dl-item" data-screen="sdk">
-          <div class="dl-bar"></div>
           <div class="dl-body">
             <div class="dl-head"><b>SDK</b><span>の場合</span></div>
             <p>連携画面ごと、自社プロダクトに埋め込めます。数行置くだけで、ユーザーが自分でSaaSをつなげるようになります。</p>
           </div>
         </div>
-      </div>
       </div>
     </div>
   </div>
@@ -4089,11 +4010,15 @@ function updateResults(p) {
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
 const devBg2 = document.getElementById('devBg2');
 const devEls = {
+  sec: document.getElementById('dev'),
+  bg: document.querySelector('#dev .dev-bg'),      // 暗い地色(fixed 100vh)。可視時のみ opacity を上げる
   h1: document.getElementById('devH1'),
   h2: document.getElementById('devH2'),
-  mock: document.getElementById('devMock'),
+  block1: document.getElementById('devBlock1'),   // dev1 (Strength01)
+  block2: document.getElementById('devBlock2'),   // dev2 (Strength02)
+  mock1: document.getElementById('devMock1'),     // dev1 の単体パネル枠(JSが #dmPanel を複製)
+  mock: document.getElementById('devMock'),        // dev2 の手前パネル枠
   panel: document.getElementById('dmPanel'),
-  vp: document.querySelector('#dev .pin-vp'),
   list: document.getElementById('devList'),
   listItems: [...document.querySelectorAll('#devList .dl-item')],
   ghosts: [document.getElementById('dmGhost0'), document.getElementById('dmGhost1')],
@@ -4287,6 +4212,7 @@ const DM_SDK_ROWS = [
 ];
 const dmSdkRowEls = (() => {
   const root = document.getElementById('dmSdkList');
+  if (!root) return [];   /* 2026-08-25 リデザイン: 新デザインのパネルは editor+chat のみ(SDK Reference無し) */
   return DM_SDK_ROWS.map(([ns, m, t]) => {
     const el = document.createElement('div');
     el.className = 'dm-sdk-row';
@@ -4447,9 +4373,18 @@ function dmBuildScreen(key) {
   });
 }
 dmBuildScreen('editor');
-dmFillStatic('dmCodeCli', 'cli');
-dmFillStatic('dmCodeSdk', 'sdk');
-dmFillSdkList('dmSdkList2');
+/* 【2026-08-25 リデザイン】ゴーストは中身なし(dm-ghost-face)にしたので旧fill(dmCodeCli/Sdk/SdkList2)は撤去。
+   dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
+(function cloneDev1Panel() {
+  const src = document.getElementById('dmPanel');
+  const dst = document.getElementById('devMock1');
+  if (src && dst) {
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    dst.appendChild(clone);
+  }
+})();
 
 /* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
 const DM_TEXT = 'Slackの通知をkintoneに連携したい';
@@ -4457,6 +4392,26 @@ const DM_REPLY = 'Slack と kintone をつなぐフローを作成します。�
 /* ⚠️ id ではなく class で拾う（写しでも同じコードが使えるようにするため）。
    dmRefs は関数宣言なので、下で定義していてもここから呼べる */
 const dmEls = dmRefs(document.getElementById('dmPanel')).els;
+
+/* 【2026-08-25 リデザイン】モックは「静止した完成状態」で出しっぱなし（KVと同様・カンプも静止）。
+   コードは全行表示、チャットは 質問→AI回答 まで出た状態、入力欄はプレースホルダに戻す。 */
+function dmFillComplete(root) {
+  const r = dmRefs(root), e = r.els;
+  r.lines.forEach(l => { l.style.clipPath = 'inset(0 0 0 0)'; l.style.opacity = 1; l.style.filter = ''; });
+  if (r.load) r.load.style.opacity = 0;
+  if (e.userText) e.userText.textContent = DM_TEXT;
+  if (e.userMsg) e.userMsg.style.opacity = 1;
+  if (e.think) e.think.style.opacity = 0;
+  if (e.botText) e.botText.textContent = DM_REPLY;
+  if (e.botMsg) e.botMsg.style.opacity = 1;
+  if (e.typed) e.typed.textContent = '';
+  if (e.cursor) e.cursor.style.opacity = 0;
+  if (e.ph) e.ph.style.opacity = 1;
+  root.classList.remove('is-blank');
+}
+/* 本体(dev2)と複製(dev1)の両方を完成状態に */
+[document.getElementById('dmPanel'), (devEls.mock1 && devEls.mock1.querySelector('.dm-panel'))]
+  .forEach(p => { if (p) dmFillComplete(p); });
 
 function dmClearCode() {
   dmLineEls.forEach(l => { l.style.clipPath = 'inset(0 100% 0 0)'; l.style.opacity = 1; l.style.filter = ''; });
@@ -4609,213 +4564,46 @@ let devFin = 0;
    「見終わらないと進めない」のが不安との指摘への動線。目立たないテキストリンク */
 
 function updateDev(pRaw) {
-  const c = params.sections.dev;
-  const pat = params.patterns.dev;
-  /* 【2026-08-19 ヒデさん指定】右のリストのホバー表示（縦バー・下線・文字色）を、
-     左のモックの入れ替えと【連動】させる。
-     ⚠️ CSS の transition は JS から秒数とカーブを渡さないと別々に動いてしまい、
-        「リストは一瞬で切り替わったのにモックはまだ回っている」というちぐはぐが起きる。
-     毎フレーム書くと重いので、値が変わった時だけ書き込む */
-  const swapE = DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0];
-  if (updateDev._d !== c.stackDur || updateDev._e !== swapE.css) {
-    updateDev._d = c.stackDur; updateDev._e = swapE.css;
-    const st = document.documentElement.style;
-    st.setProperty('--dev-swap', c.stackDur + 's');
-    st.setProperty('--dev-swap-e', swapE.css);
-  }
-  /* 【章立て】1章ずつ「再生 → 解放 → スクロールで次章」 */
-  let p = chapterP('dev', DEV_CH, pRaw, canPlay(pRaw), SECS.dev);
-  const noPin = params.pin === 'off';
-  /* 【2026-08-18 ヒデさん指定】固定追従なしの時は章送りをやめ、
-     「中央から出てきて左に寄る」動きも省いて、最初から3枚が並んだ完成形で置く。
-     出現はブロックごとのブラー（renderNoPin）に任せる */
-  if (noPin) p = 1;
-  const patStack = params.patterns.devStack !== 'off';   /* 後ろに2枚控えるスタック */
-
-  /* 【2026-08-15】実績が暗転しはじめるのと同時にモックが下から出てくるようにする。
-     章の再生を待つと「黒いだけの画面」を挟んでしまうので、助走(preP)でも上げ始める */
-  /* 【2026-08-15】実績と1画面ぶん重ねてあるので、重なっている間は板ごと隠しておく。
-     こうしないと、上がってくる途中の開発者体験が実績を下から覆ってしまう。
-     定位置(top:0)に着いた時にはもう実績側の暗幕が真っ黒なので、切り替わりは見えない */
-  const devTop = rectOf(SECS.dev).top;
-  /* ⚠️ 透明な板が下のセクションを覆って操作を奪わないよう、当たり判定も一緒に切る
-     (2026-08-19: 導入事例の板が開発者体験のリストを覆っていた件と同じ理屈) */
-  const devShown = (noPin || devTop <= 2);
-  setStyle(devEls.vp, 'opacity', devShown ? '1' : '0');
-  setStyle(devEls.vp, 'pointerEvents', devShown ? '' : 'none');
-  setStyle(SECS.dev, 'pointerEvents', devShown ? '' : 'none');
-  const inM1 = seg(p, ...DEV_P.mock1, easeSlick);
-  const in1  = seg(p, ...DEV_P.h1, easeOutQ);
-  const o1   = seg(p, ...DEV_P.out1,  easeIO);
-  const mv   = seg(p, ...DEV_P.move,  easeSlick);
-  const in2  = seg(p, ...DEV_P.h2,    easeOutQ);
-  /* 白へ戻すのは【章が全部終わってから、そこからさらにスクロールした分だけ】。
-     ⚠️ 以前は生のスクロール pRaw に直結していた。章と章の間はロックが外れるので
-        pRaw だけ先へ進んでしまい、まだ再生中なのに背景が真っ白になっていた（実際に発生）。
-        全部終わった地点の pRaw を覚えて、そこからの差分で白くする */
-  const stD = secPlay.dev;
-  if (stD && stD.done && stD.endP == null) stD.endP = pRaw;
-  /* ⚠️ 2026-08-18 バグ: endP(再生を終えた位置)が終盤だと、暗転の範囲が
-     「開始 1.10 → 終了 0.99」のように前後逆転し、seg() が常に 1 を返していた。
-     その結果、ページの先頭へ戻っても暗転が解除されず、導入事例の文字も出っぱなしになる。
-     必ず「開始 < 終了」になるよう、開始位置に上限を設ける */
-  let finPlay = 0;
-  if (stD && stD.endP != null) {
-    const finFrom = Math.min(stD.endP + 0.10, 0.98 - DEV_FIN);
-    finPlay = seg(pRaw, finFrom, finFrom + DEV_FIN, easeIO);
-  }
-  /* 【2026-08-18 バグ修正】早送りすると endP の記録位置が後ろへズレ、
-     セクションの固定が外れても暗転が終わっていない状態になっていた。
-     その結果「上に暗い帯だけ残って、下は空っぽの明るい画面」になる（実際に発生）。
-     ⚠️ 保険として、セクションの下端が画面のどこまで上がってきたかでも進める。
-        これはスクロール位置だけで決まるので、早送りしても上下に動かしても必ず同じ値になる。
-        遅い方には引っぱられないよう max で合成する */
-  /* ⚠️ 効きはじめが遅いと、セクションが3割ほど抜けた時点でもまだ暗転が半端で、
-     「暗い面の下に、何も出ていない明るい帯」が見える（ヒデさん報告のスクショの状態）。
-     セクションが抜け始める前(下端=画面下端)から効かせ、3割抜けるまでに出しきる */
-  /* ⚠️【2026-08-18】以前ここに「セクションの抜け具合でも暗転を進める」保険を入れていたが、
-     それ自体が【黒→白とスライドを同時進行させる】原因だった（ヒデさん報告）。
-     暗転はピン区間の中だけで完結させ、スライドは暗転が終わってから始める。
-     （下へ抜けさせない制御は clampScroll 側で行う） */
-  const fin = noPin
-    /* 固定なし: 導入事例と重ねていないので、暗転で受け渡す必要がない */
-    ? 0
-    : params.drive === 'scroll'
-      /* ⚠️ 章の進行は pinP 0→driveWin(既定0.8) で終わる。
-         それより早く暗転を始めると、章②の見出しが出きる前に消され始める
-         （実測: devH2 が 0.7 で止まっていた）。章の後・スライドの前に置く */
-      /* ⚠️【2026-08-19 ヒデさん指摘】終わりを +0.16 で切っていたため、
-           背景の切り替えに使える区間がピン区間の14%しかなく、
-           「パツッと切れていきなり白」に見えていた。区間の最後まで使って倍近く伸ばす */
-      ? seg(pRaw, Math.min(0.9, params.sections.common.driveWin + 0.02),
-                  Math.min(0.98, params.sections.common.driveWin + 0.16), easeIO)
-      : finPlay;
-  /* ===== 開発者体験 → 導入事例 の受け渡し =====
-     ⚠️【2026-08-19】一度「先にコンテンツを消してから背景を変える」形に分けたが、
-        背景に回る区間が短くなり「パツッと切れていきなり白」になってしまった。
-        区間を広げても線形にしても解消しなかったため、
-        ヒデさんの判断で【元の、コンテンツと背景を同時に切り替える形】へ戻した。
-        受け渡しの途中で少し透けて見えるのは承知のうえ。
-        ⚠️ 再挑戦する時は「区間の取り方」ではなく、
-           そもそも暗転に使えるスクロール量が足りているかから見直すこと。 */
-  /* 導入事例側が「背景が明るくなりきってから中身を出す」ために参照する */
-  devFin = fin;
-
-  devHeading(devEls.h1, in1, o1);
-  devHeading(devEls.h2, in2, fin);
-
-  /* ---- 表示する画面 ---- */
-  /* 章②の頭でいったん空に戻す (2つ目の見出しが出るまで中身を見せない) */
-  if (p >= DEV_P.out1[0] && p < DEV_P.h2[1] && in2 < 0.99 && devStarted) {
-    devStarted = false; devHoldT0 = null; devScreenT0 = null;
-  }
-  const screen = p < DEV_P.out1[0] ? 'editor' : devScreen2;
-  if (screen !== dmCurScreen) {
-    dmBuildScreen(screen);
-    devScreenT0 = elapsed;
-    if (devSwapT0 === null) devSwapT0 = elapsed;
-  }
-  devEls.panel.classList.toggle('is-term', screen === 'cli');
-  devEls.panel.classList.toggle('is-sdk',  screen === 'sdk');
-  /* 章②のモックは、画面が切り替わるたびに中身を1行ずつ出し直す
-     (章①のエディタは専用の演出があるので触らない) */
-  if (screen !== 'editor') dmAnimScreen(screen, devScreenT0 === null ? 0 : elapsed - devScreenT0);
-  /* 切り替えの瞬間だけ、やわらかくぼける */
-  const swapDipK = devSwapT0 === null ? 0 : swapDip(clamp01((elapsed - devSwapT0) / 0.34));
-
-  /* ---- モック ---- */
-  /* 【2026-08-15】モックは章をまたいでも消さない。中央 → 左へスライドするだけ */
-  const cx = mockCenterX(), mk = mockK();
-  const op = Math.min(1, inM1 * 4) * (1 - fin);
-  const sc = (0.82 + 0.18 * inM1) * mk;
-  const tx = cx * (1 - mv);
-  const ty = 0;   /* 【2026-08-25】下から上げず、終点位置でブラー出現にする(ヒデさん指定)。浮上はopacity/blurのみ */
-  /* ⚠️ fin(白へ戻す量)をぼかしに掛けないこと。
-     掛けると白くなる途中でモックが大きくぼけ、洗いざらしの画面になる(実際に発生) */
-  let bl = (1 - inM1) * 10;
-  /* ---- ②では後ろに2枚控えるスタックにする (カンプ 14924:21985) ----
-     ホバーで選択が変わると席が回り、3Dっぽく入れ替わって見える */
-  const stackK = patStack ? mv : 0;                 // 左へ着くにつれてスタックが開く
-  const sel = Math.max(0, DEV_SCREENS.indexOf(screen));
-  /* 3枚を輪の上に並べる。選ばれたカードが席0(手前)に来るように席を回す。
-     ⚠️ CSS の transition には任せない。位置は毎フレーム JS が書き換えるので、
-        transition を掛けると常に追いかけっこになって動きが濁る。
-        サイトの他の部分と同じく【JS で席から席へ補間】する (1.3秒・ぬるっと止まるカーブ) */
-  const cards = [devEls.mock, devEls.ghosts[0], devEls.ghosts[1]];   /* 0=API 1=CLI 2=SDK */
-  cards.forEach((el, i) => {
+  /* 【2026-08-25 リデザイン・カンプ 15800:24869】固定追従(pin)なし・縦スクロール。
+     dev1(Strength01) / dev2(Strength02) の各ブロックがビューポートに入ったら
+     ブラー+フェード+わずかに下から で上品に出現し、そのまま出っ放し。
+     モックは静止した完成状態（初期化時に充填済み・ここでは触らない）。 */
+  const vh = innerHeight || 1;
+  /* ブロックの中心が画面下端(=0)→画面の45%地点(=1) へ上がるまでに出しきる。
+     45%を過ぎたら 1 で頭打ち＝出っ放し。画面の下にある間は 0＝隠す。 */
+  const reveal = (el) => {
+    if (!el) return 1;
+    const r = rectOf(el);
+    const centerY = r.top + r.height / 2;
+    return easeOutQ(clamp01((vh - centerY) / (vh * 0.55)));
+  };
+  const applyBlock = (el, k) => {
     if (!el) return;
-    const seatI = (i - sel + 3) % 3;
-    if (el._seat !== seatI) {
-      el._from = el._cur || DEV_STACK[seatI];   /* いまの見た目から次の席へ動かす */
-      el._seat = seatI;
-      el._t0 = elapsed;
-    }
-    const to = DEV_STACK[seatI];
-    const kk = el._t0 == null ? 1 : swapE.fn(clamp01((elapsed - el._t0) / c.stackDur));
-    /* ⚠️【2026-08-19 バグ修正】不透明度だけは、位置と同じタイミングで動かさないこと。
-       後ろへ回るカードは席が変わった瞬間から薄くなり始めるが、その時点ではまだ
-       大きいまま手前を横切っている。結果【回っている最中にカードが透けて、
-       下のカードの中身が見えてしまう】（ヒデさん報告。実測: 1.00 → 0.69 → 0.58 と
-       横切っている間ずっと半透明だった）。
-       暗くなる側は【動きがほぼ終わってから】暗くする。明るくなる側はそのまま。
-       こうすると、すれ違っている間はどのカードも不透明で、透けなくなる。
-       ⚠️ しきい値は「大きさが入れ替わる瞬間(kk≒0.5前後)」より必ず後ろに置くこと。
-          0.62 で試したら、まだ手前にいるカードが 0.57 まで薄くなる瞬間が残った（実測）。 */
-    const dimming = to.op < el._from.op;
-    const opK = dimming ? easeOutQ(clamp01((kk - 0.85) / 0.15)) : kk;
-    const cur = {
-      sc: el._from.sc + (to.sc - el._from.sc) * kk,
-      dx: el._from.dx + (to.dx - el._from.dx) * kk,
-      dy: el._from.dy + (to.dy - el._from.dy) * kk,
-      dz: el._from.dz + (to.dz - el._from.dz) * kk,
-      ry: el._from.ry + (to.ry - el._from.ry) * kk,
-      op: el._from.op + (to.op - el._from.op) * opK,
-    };
-    el._cur = cur;
-    const cx2 = tx + cur.dx * stackK, cy2 = ty + cur.dy * stackK;
-    const cs = (0.82 + 0.18 * inM1) * mk * (1 + (cur.sc - 1) * stackK);
-    /* 手前(席0)は常に見える。後ろの2枚は②で開いていく分だけ見える */
-    el.style.opacity = (op * (seatI === 0 ? 1 : cur.op * stackK)).toFixed(3);
-    /* 重なり順は今の大きさで決める。回っている途中でも前後が破綻しない */
-    el.style.zIndex = Math.round(cur.sc * 1000);
-    /* 傾きは【回っている最中だけ】掛ける。止まっている時は傾き0＝カンプの見た目そのまま。
-       sin(πk) なので、動き出して真ん中でいちばん傾き、着いたら0に戻る */
-    const swing = Math.sin(Math.PI * clamp01(kk));
-    el.style.transform =
-      `translate3d(${cx2.toFixed(2)}px, ${cy2.toFixed(2)}px, ${(cur.dz * stackK).toFixed(1)}px)` +
-      ` rotateY(${(cur.ry * swing * stackK).toFixed(2)}deg) scale(${cs.toFixed(4)})`;
+    el.style.opacity = k.toFixed(3);
+    const bl = (1 - k) * 16;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
-  });
+    el.style.transform = k < 0.999 ? `translateY(${((1 - k) * 24).toFixed(1)}px)` : '';
+  };
+  applyBlock(devEls.block1, reveal(devEls.block1));
+  applyBlock(devEls.block2, reveal(devEls.block2));
 
-  /* 最後にスクロールで背景がグラデーションで明るい元の背景へ戻る */
-  devBg2.style.opacity = fin.toFixed(3);
+  /* 暗い地色(fixed 100vh): #dev が画面に入っている間だけ出す。
+     実績の resGrow が上端(実績の最後)を覆っているので、そこから継ぎ目なく暗いまま受け渡る。
+     セクションの上端/下端が画面に差しかかる所でフェードして、明(#e7e7e7)へなめらかに戻す。 */
+  if (devEls.bg && devEls.sec) {
+    const r = rectOf(devEls.sec);
+    let bgK = 0;
+    if (r.bottom > 0 && r.top < vh) {
+      const enter = clamp01((vh - r.top) / (vh * 0.4));   // 上端が入ってくる
+      const leave = clamp01(r.bottom / (vh * 0.4));        // 下端が抜けていく
+      bgK = Math.min(enter, leave);
+    }
+    devEls.bg.style.opacity = bgK.toFixed(3);
+  }
 
-  /* ---- 右のリスト: 順にブラーで出る → 以降はホバーで選択が動く ---- */
-  /* 【2026-08-15】ディレイをやめて3つ一括で出す */
-  const listK = seg(p, ...DEV_P.list, easeOutQ);
-  devEls.listItems.forEach((it) => {
-    const k = listK;
-    const on = it.dataset.screen === screen;
-    it.classList.toggle('is-on', on);
-    /* ⚠️ 以前は毎フレーム少しずつ寄せていたのでホバーの反応が鈍かった。
-       いまは CSS の transition に任せて即座に切り替える */
-    it.style.opacity = (k * (on ? 1 : 0.2) * (1 - fin)).toFixed(3);
-    it.style.filter = k < 1 ? `blur(${((1 - k) * 10).toFixed(2)}px)` : '';
-  });
-
-  /* ---- モック内アニメ ----
-     【2026-08-15】「文字が出るまでアニメは始まらない／中身も空っぽ」指定。
-     見出しが出そろってから走らせ、それまでは枠だけ (AI Assistant やアイコンも隠す) */
-  /* 固定なし: 章②のブロックが画面に入ってから流す（入る前は空、出たら巻き戻す） */
-  const textShown = noPin ? npReveal(devEls.vp) > 0.35
-    : (p < DEV_P.out1[0] ? in1 >= 0.99 : in2 >= 0.99);
-  if (noPin && !textShown) { devStarted = false; devHoldT0 = null; devScreenT0 = null; }
-  if (textShown) devStarted = true;
-  devEls.panel.classList.toggle('is-blank', !devStarted);
-  if (devHoldT0 === null && devStarted) devHoldT0 = elapsed;
-  if (devScreenT0 === null && devStarted) devScreenT0 = elapsed;
-  if (!devStarted) devMockContent('empty', 0, screen);
-  else devMockContent('anim', elapsed - (screen === 'editor' ? devHoldT0 : devScreenT0), screen);
+  /* 導入事例(cases)の見出しゲートに使われる devFin は、もう開発者体験に依存させない。
+     cases 側は自分の再生進捗で見出しを出すよう変更済みなので、ここは 1 固定で無害化する。 */
+  devFin = 1;
 }
 
 /* ---------- 導入事例 (カードスタック) ---------- */
@@ -4865,9 +4653,10 @@ function updateCases(pRaw) {
   /* 固定なし: ブロックが画面に入ってからの秒数で流す（位置に直結させると
      スクロールを止めた所で止まり、カードがブラーのまま残る） */
   const npT = noPin ? npBlockT('cases', caseEls.vp) : -1;
-  const gate = devFin;
+  /* 【2026-08-25】開発者体験を非pin化したので devFin ゲートは廃止。
+     見出しはこのセクションの再生進捗 p の頭でブラー→フェードで出す(自動再生の先頭)。 */
   const intro = noPin ? easeOutQ(clamp01(npT / 0.55))
-                      : seg(gate, c.introAt, c.introAt + c.introDur, easeOutQ);
+                      : seg(p, 0, 0.12, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
   /* 【2026-08-25 刷新・カンプ 15800:24258】
@@ -5350,7 +5139,9 @@ function fit() {
   const NP_BLOCKS = { vision: 2, dev: 2, results: 1, cases: 1 };
   const H = key => (noPin ? 100 * NP_BLOCKS[key] : Math.round(params.sections[key].lenVh * lenMul(key))) + 'vh';
   SECS.vision.style.height = H('vision');
-  SECS.dev.style.height = H('dev');
+  /* 【2026-08-25 リデザイン】開発者体験は非pin・2ブロック(各min-height:100vh)なので、
+     中身なりの高さ(auto=約200vh)にする。pin用の H('dev')(=600vh)は使わない。 */
+  SECS.dev.style.height = 'auto';
   SECS.cases.style.height = H('cases');
   SECS.results.style.height = H('results');
 }
