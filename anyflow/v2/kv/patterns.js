@@ -201,8 +201,12 @@
         const im = document.createElement('img'); im.className = 'kvp-png-ico';
         im.src = PNG_DIR + f.replace('.svg', '.png');
         im.style.width = fs + 'px'; im.style.height = fs + 'px';
-        /* 影: Figma実測（chart 16.08/16.53/28.79 @140.4px ≈ 0.11/0.12/0.20×箱）を fs 基準で。 */
-        im.style.filter = `drop-shadow(${(fs * 0.06).toFixed(1)}px ${(fs * 0.09).toFixed(1)}px ${(fs * 0.16).toFixed(1)}px rgba(0,0,0,.22))`;
+        /* 影(2026-08-25 精緻化): Figma実測（chart 16.08/16.53/28.79 @140.4px ≈ 0.11/0.12/0.20×箱）通りに。
+           以前は 0.06/0.09/0.16 と実測より小さく浅かった。実測の柔らかい down-right の主影＋接地の締め影の2枚重ね。
+           色は青みのある濃色(#101828系)で無地の地色に浮きすぎないように。 */
+        im.style.filter =
+          `drop-shadow(${(fs * 0.11).toFixed(1)}px ${(fs * 0.12).toFixed(1)}px ${(fs * 0.20).toFixed(1)}px rgba(16,24,40,.20))` +
+          ` drop-shadow(${(fs * 0.03).toFixed(1)}px ${(fs * 0.045).toFixed(1)}px ${(fs * 0.07).toFixed(1)}px rgba(16,24,40,.12))`;
         ico.appendChild(im); front.appendChild(ico);
         return;
       }
