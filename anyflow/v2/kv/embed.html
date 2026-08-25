@@ -108,10 +108,14 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=32"></script>
+<script src="patterns.js?v=33"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
+
+  /* 本体(index.html)に iframe で埋め込まれているか。埋め込み時は入場アニメを
+     親の「見出しタイピング完了」の合図(kvIntroStart)まで待つ（単体/パネル操作は即再生）。 */
+  const EMBEDDED = window.parent !== window;
 
   const kvHost = document.getElementById('kv');
   const kvBlender = document.getElementById('kvBlender');
@@ -222,9 +226,10 @@
     else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }
   });
 
-  /* 起動時に既定J（PNGベタ貼り）を反映（agentエンジンは隠す） */
+  /* 起動時に既定J（PNGベタ貼り）を反映（agentエンジンは隠す）。
+     埋め込み時は defer=true でシーンを隠したまま置き、親の合図で入場する。 */
   kvHost.style.display = 'none';
-  KVP.show(); KVP.setPattern('p7'); syncViewUI('flat');
+  KVP.show(); KVP.setPattern('p7', { defer: EMBEDDED }); syncViewUI('flat');
   rowE.style.display = '';
   rowKV.style.display = '';        /* J(PNG)もモック＋軌道あり */
   rowThk.style.display = 'none';   /* J(PNG)はアイソメ厚み非対応 */
@@ -252,6 +257,23 @@
     });
     title.addEventListener('pointerup', e => { dragging = false; try { title.releasePointerCapture(e.pointerId); } catch (_) {} });
   })();
+
+  /* 本体に埋め込まれている時: 入場は親(見出しタイピング完了)の合図で始める。
+     ・親から kvIntroStart が来たら保留中の入場(モック→アイコン→軌道)を実行
+     ・読み込み完了を親へ通知(kvReady)。親は typing 完了後に kvIntroStart を返す */
+  if (EMBEDDED) {
+    window.addEventListener('message', (e) => {
+      const d = e && e.data;
+      if (!d) return;
+      if (d.type === 'kvIntroStart') KVP.runDeferredIntro();
+      /* 本体パネルの「右のグラフィックの案を選ぶ」から: 内部の同じボタンを押して切替（即再生） */
+      if (d.type === 'kvSetDesign' && d.design) {
+        const btn = document.querySelector('.kv-bar [data-design="' + d.design + '"]');
+        if (btn) btn.click();
+      }
+    });
+    try { window.parent.postMessage({ type: 'kvReady' }, '*'); } catch (_) {}
+  }
 </script>
 </body>
 </html>

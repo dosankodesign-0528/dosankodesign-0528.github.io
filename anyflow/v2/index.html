@@ -318,8 +318,8 @@
     right: auto;
     text-align: left;
     font-weight: 100;
-    font-size: 90px;
-    line-height: 153px;             /* 90px × 行間1.7 */
+    font-size: 100px;               /* 2026-08-26 ヒデさん指定: 90 → 100 */
+    line-height: 170px;             /* 100px × 行間1.7 */
     color: #101828;
     white-space: nowrap;
     overflow: hidden;               /* 下からのトリミング出現用マスク */
@@ -327,7 +327,7 @@
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
   .vis-l1 { top: 301px; }   /* Our Vision(269+20) + gap12 = 301 */
-  .vis-l2 { top: 454px; }   /* + 行間153 */
+  .vis-l2 { top: 471px; }   /* + 行間170 (font 100 に合わせて 454→471) */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -1402,7 +1402,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=7" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=8" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -2260,10 +2260,10 @@ const DEFAULTS = {
       moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
       /* 【2026-08-25・Figma 15764:55518】軌道が最初に小さく現れる中心位置(ステージ座標)。
          カンプでは右寄り(中心 ≒ x1134 / y417・幅約293px)。左端の左寄せメッセージと重ならない。 */
-      miniCX: 1134,      // 軌道が現れる中心の左右位置(px)
+      miniCX: 1334,      // 軌道が現れる中心の左右位置(px) 2026-08-26 ヒデさん指定: 1134→+200右=1334
       miniCY: 417,       // 軌道が現れる中心の上下位置(px)
       miniY: 0,          // ↑ miniCY からの縦位置の微調整(px)
-      miniScale: 0.31,   // ミニ楕円の縮小率 (Figma 55518 = 幅約293px ≒ ×0.31)
+      miniScale: 0.248,  // ミニ楕円の縮小率 2026-08-26 ヒデさん指定: 出現サイズ0.8倍 (0.31×0.8≒0.248)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       /* 軌道上のドットの出方 (2026-08-17 指定)。以前は軌道が出た時点で6個そろっていた */
       dotsInAt: 0.25,      // 軌道が出はじめてから、1個目が出るまでの秒数
@@ -2354,6 +2354,7 @@ const DEFAULTS = {
        off = 貼りつけない。セクションは普通に流れ、画面に入った時に中で再生する
              （貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に無い） */
   pin: 'on',
+  kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
   patterns: {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
@@ -2442,7 +2443,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v70';
+const STORAGE_KEY = 'anyflow-embed-anim-v71';   /* 2026-08-26 大改修(KV出現順/ビジョン軌道/開発者体験ループ/パネル刷新)で新既定を確実に反映するため更新 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -4402,6 +4403,7 @@ dmFillStatic('dmCodeCli', 'cli');
 dmFillStatic('dmCodeSdk', 'sdk');
 dmFillSdkList('dmSdkList2');
 /* dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
+let dev1Refs = null;   /* dev1(章①)の複製パネルの参照。updateDev がループ駆動に使う */
 (function cloneDev1Panel() {
   const src = document.getElementById('dmPanel');
   const dst = document.getElementById('devMock1');
@@ -4410,6 +4412,7 @@ dmFillSdkList('dmSdkList2');
     clone.removeAttribute('id');
     clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
     dst.appendChild(clone);
+    dev1Refs = dmRefs(clone);   /* class で拾うので複製でも使える */
   }
 })();
 
@@ -4633,11 +4636,63 @@ function updateDev2Stack() {
   });
 }
 
+/* ===== dev モックのループ駆動 (2026-08-26 ヒデさん指定「表示されたら流れっぱなし」) =====
+   V1.0 と同じく、ブロックが画面に入っている間は devMockContent を t%loop で回し続ける。
+   dev1 = 複製パネル(dev1Refs) / dev2 = 本体 dmPanel(API/editor) ＋ CLI/SDK ゴースト。 */
+const devMockT0 = { dev1: null, dev2: null };
+function driveEditorLoop(refs, visible, key) {
+  const panel = refs ? refs.panel : devEls.panel;
+  const lines = refs ? refs.lines : (typeof dmLineEls !== 'undefined' ? dmLineEls : []);
+  if (!lines || !lines.length) return;
+  if (visible) {
+    if (devMockT0[key] == null) devMockT0[key] = elapsed;
+    if (panel) panel.classList.remove('is-blank');
+    devMockContent('anim', elapsed - devMockT0[key], 'editor', refs);
+  } else {
+    devMockT0[key] = null;
+    devMockContent('empty', 0, 'editor', refs);
+  }
+}
+/* 個別要素のブラー+フェード出現 (rise は任意)。dev2 の順次出現に使う */
+function revealEl(el, k, blurMax, riseMax) {
+  if (!el) return;
+  el.style.opacity = k.toFixed(3);
+  const bl = (1 - k) * (blurMax == null ? 14 : blurMax);
+  el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
+  if (riseMax) el.style.transform = k < 0.999 ? `translateY(${((1 - k) * riseMax).toFixed(1)}px)` : '';
+}
+let dev2SeqT0 = null, dev2StackEl = null;
+/* dev2(章②): 見出し → モック → 右テキスト の順で出現。モックはビューポート中はループ再生。 */
+function updateDev2Reveal() {
+  const b2 = devEls.block2; if (!b2) return;
+  if (!dev2StackEl) dev2StackEl = b2.querySelector('.dev2-stack');
+  const vh = innerHeight || 1;
+  const r = rectOf(b2);
+  const centerY = r.top + r.height / 2;
+  const kBlock = easeOutQ(clamp01((vh - centerY) / (vh * 0.5)));   // ブロックが画面に入った度合い
+  /* 親ブロックは出しっぱなし(不透明1)。中の3要素を順にブラー出現させる */
+  b2.style.opacity = '1'; b2.style.filter = ''; b2.style.transform = '';
+  if (kBlock > 0.35) { if (dev2SeqT0 == null) dev2SeqT0 = elapsed; }
+  else if (kBlock < 0.05) dev2SeqT0 = null;
+  const s = dev2SeqT0 == null ? -1 : elapsed - dev2SeqT0;
+  const kHead = s < 0 ? 0 : easeOutQ(clamp01(s / 0.6));            // ① 見出し(親ボックス)
+  const kMock = s < 0 ? 0 : easeOutQ(clamp01((s - 0.45) / 0.6));   // ② モック
+  const kList = s < 0 ? 0 : easeOutQ(clamp01((s - 0.95) / 0.6));   // ③ 右テキスト
+  revealEl(devEls.h2, kHead, 16, 24);
+  revealEl(dev2StackEl, kMock, 0, 0);    // モック枠は opacity のみ(親 blur は 3D/backdrop-filter を壊すため)
+  revealEl(devEls.list, kList, 16, 24);
+  /* モックはブロックが見えている間ずっと回す（API=本体 / CLI・SDK=ゴーストも同期して回す） */
+  const on = kBlock > 0.35;
+  driveEditorLoop(null, on, 'dev2');
+  if (on && typeof dmAnimScreen === 'function') {
+    const t = elapsed - (devMockT0.dev2 == null ? elapsed : devMockT0.dev2);
+    dmAnimScreen('cli', t); dmAnimScreen('sdk', t);
+  }
+}
+
 function updateDev(pRaw) {
-  /* 【2026-08-25 リデザイン・カンプ 15800:24869】固定追従(pin)なし・縦スクロール。
-     dev1(Strength01) / dev2(Strength02) の各ブロックがビューポートに入ったら
-     ブラー+フェード+わずかに下から で上品に出現し、そのまま出っ放し。
-     モックは静止した完成状態（初期化時に充填済み・ここでは触らない）。 */
+  /* 【2026-08-26 リデザイン】固定追従なし・縦スクロール。ブロックが画面に入ったら
+     ブラー+フェードで上品に出現。モックは表示中ずっとループ再生(V1.0踏襲)。 */
   const vh = innerHeight || 1;
   /* ブロックの中心が画面下端(=0)→画面の45%地点(=1) へ上がるまでに出しきる。
      45%を過ぎたら 1 で頭打ち＝出っ放し。画面の下にある間は 0＝隠す。 */
@@ -4655,8 +4710,12 @@ function updateDev(pRaw) {
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
     el.style.transform = k < 0.999 ? `translateY(${((1 - k) * 24).toFixed(1)}px)` : '';
   };
-  applyBlock(devEls.block1, reveal(devEls.block1));
-  applyBlock(devEls.block2, reveal(devEls.block2));
+  /* dev1(章①): ブロックを出現＋モックをループ駆動(表示中は流れっぱなし) */
+  const k1 = reveal(devEls.block1);
+  applyBlock(devEls.block1, k1);
+  driveEditorLoop(dev1Refs, k1 > 0.35, 'dev1');
+  /* dev2(章②): 見出し→モック→右テキストの順で出現＋モックをループ駆動 */
+  updateDev2Reveal();
 
   /* 暗い地色(fixed 100vh): #dev が画面に入っている間だけ出す。
      実績の resGrow が上端(実績の最後)を覆っているので、そこから継ぎ目なく暗いまま受け渡る。
@@ -4841,6 +4900,35 @@ const kvEls = {
   });
 })();
 
+/* KV iframe(右グラフィック)の入場は「見出しタイピング完了」後に始める。
+   iframe とは postMessage で握手: iframe から kvReady を受け、typing 完了(gAt)で kvIntroStart を返す。
+   ⚠️ 埋め込み時 iframe は defer=true でシーンを隠したまま待っている（embed.html）。 */
+let kvIframeReady = false, kvIntroDue = false, kvIntroSent = false;
+function kvSendIntro() {
+  if (kvIntroSent || !(kvIframeReady && kvIntroDue)) return;
+  const ifr = document.querySelector('.kv-graphic-embed');
+  if (ifr && ifr.contentWindow) { ifr.contentWindow.postMessage({ type: 'kvIntroStart' }, '*'); kvIntroSent = true; }
+}
+window.addEventListener('message', (e) => {
+  if (e && e.data && e.data.type === 'kvReady') { kvIframeReady = true; kvSendIntro(); }
+});
+
+/* 調整パネルから選べる「右グラフィックの案」。key は iframe(embed.html) の data-design に対応。 */
+const KV_DESIGNS = [
+  { key: 'p7', name: 'A案' },
+  { key: 'p9', name: 'B案' },
+  { key: 'agent', name: 'アニメ' },
+  { key: 'p6', name: 'H・単純ガラス' },
+  { key: 'p8', name: 'I・背景拾い' },
+  { key: 'blender', name: 'Blender' },
+];
+/* 案を選ぶと iframe へ postMessage して切り替える（本体の文字は流し直さない）。 */
+function kvSetDesign(d) {
+  params.kvDesign = d;
+  const ifr = document.querySelector('.kv-graphic-embed');
+  if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: d }, '*');
+}
+
 function updateKV() {
   const c = params.kv, t = elapsed;
   rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
@@ -4880,6 +4968,9 @@ function updateKV() {
   const gAt = eyeAt + c.graphicGap;
   rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / (RD * 1.5))), 12);
   rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
+  /* タイピング完了(=グラフィック出現の時刻 gAt)に達したら、右のKV iframe に入場開始を合図する。
+     これで「タイピング終わる → モック → アイコン → 軌道」の順で右側が出る。 */
+  if (elapsed >= gAt) { kvIntroDue = true; kvSendIntro(); }
 }
 
 function updateSections() {
@@ -5494,20 +5585,11 @@ function buildPanel() {
   segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
     () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
 
-  sub(catAll, '② 固定追従');
-  note(params.pin === 'off'
-    ? '貼りつけず、上から下へ普通に流れます。スクロールが引っかかりません。'
-    : '画面いっぱいで一度止まり、その場でモーションが流れてから次へ進みます。');
-  segRow('貼りつけ', [['貼りつける', 'on'], ['貼りつけない', 'off']],
-    () => params.pin, v => { params.pin = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
-  /* ⚠️【2026-08-19 ヒデさん指定】ここにあった「見せきる早さ」(driveWin) は削除。
-     セクションごとの「見せる長さ」と役目がかぶっていて、
-     どちらをいじればいいのか分からずバッティングしていたため。
-     ペース調整は各セクションの「見せる長さ」に一本化する。
-     ⚠️ driveWin 自体は内部で既定(0.8)のまま使う。消すと再生位置の計算が壊れる。 */
+  /* ⚠️【2026-08-26 ヒデさん指定】「② 固定追従」の項目は削除（V2では使わないため）。
+     params.pin 自体は内部の既定(on)のまま。ペース調整は各セクションの「見せる長さ」に一本化する。 */
   note('見せるペースは、各セクションの「見せる長さ」で調整します。');
 
-  sub(catAll, '③ 慣性スクロール');
+  sub(catAll, '② 慣性スクロール');
   rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
     '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
@@ -5517,7 +5599,7 @@ function buildPanel() {
 
   /* ========== 🖼 キービジュアル ========== */
   const catKv = category('🖼 キービジュアル（いちばん上の画面）', false);
-  catNote(catKv, '最初に見える画面。文字が打たれ、そのあと惑星と輪が出ます。');
+  catNote(catKv, '最初に見える画面。文字が打たれ、そのあと右のグラフィック（モック→アイコン→軌道）が出ます。');
 
   sub(catKv, '文字が出てくる順番とタイミング');
   note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
@@ -5535,104 +5617,23 @@ function buildPanel() {
     '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
   rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
     '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
-  rows.push(slider('→ 惑星と輪が出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
-    'その一言が出てから、右側の惑星と輪が現れるまで。'));
+  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
   rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
-  /* ---------- 🪐 惑星 ----------
-     ⚠️【2026-08-19 ヒデさん指定】ここだけは触っても頭から流し直さない。
-        柄を選ぶたびにヘッダーのブラーとタイピングまでやり直しになり、
-        リロードしたようにしか見えなかったため。他のグループは従来どおり流し直す。 */
+  /* ---------- 🖼 右のグラフィックの案 (2026-08-26 ヒデさん指定) ----------
+     V2 のキービジュアルは右側のグラフィックが iframe(kv/embed.html)。
+     旧・惑星/まわりの輪のコントロールは全部撤去し、代わりに「案の切替」をここに集約。
+     押した瞬間に iframe へ postMessage して切り替える（文字は流し直さない）。 */
   liveEdit = true;
-  sub(catKv, '🪐 惑星');
-  note('ここは押した瞬間その場で変わります（文字は流し直しません）。');
+  sub(catKv, '🖼 右のグラフィックの案を選ぶ');
+  note('A案＝PNGベタ貼り（既定）/ B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ右のグラフィックが切り替わります。');
+  pillRow(KV_DESIGNS, it => (params.kvDesign || 'p7') === it.key, it => kvSetDesign(it.key));
+  liveEdit = false;
 
-  sub(catKv, '柄を選ぶ', true);
-  note('A系＝写真の質感 / B＝ドット絵風 / C系＝色の帯が流れる。');
-  pillRow(Object.entries(DESIGNS).map(([key, d]) => ({ key, name: d.name, swatch: d.swatch })),
-    it => params.design === it.key, it => params.design = it.key);
-
-  if (params.design === 'B') {
-    sub(catKv, '点々の動き方', true);
-    note(DITHERS[(params.dither || 1) - 1].desc);
-    pillRow(DITHERS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
-  } else if (WAVE_DESIGNS.includes(params.design)) {
-    sub(catKv, '色の帯の流れ方', true);
-    note(WAVE_FLOWS[(params.dither || 1) - 1].desc);
-    pillRow(WAVE_FLOWS, (_, i) => params.dither === i + 1, (_, i) => params.dither = i + 1);
-  } else {
-    sub(catKv, '柄の動き', true);
-    note('この柄に動きの選択肢はありません。B や C 系を選ぶと出てきます。');
-  }
-
-  sub(catKv, '惑星の回り方', true);
-  rows.push(slider('1回転の時間', 4, 120, 1, () => params.sphere.duration, v => params.sphere.duration = v, v => v + '秒',
-    'ぐるっと1周する時間。小さいほど速く回ります。'));
-  segRow('回る向き', [['順回転', 1], ['逆回転', -1]], () => params.sphere.dir, v => { params.sphere.dir = v; markDirty(); });
-  rows.push(slider('軸の傾き', -180, 180, 1, () => params.sphere.tilt, v => params.sphere.tilt = v, v => v + '°',
-    '柄のどこが正面に来るかがずれます。速さは変わりません。'));
-  rows.push(slider('速度のムラ', 0, 1, 0.02, () => params.sphere.random, v => params.sphere.random = v, v => Math.round(v * 100) + '%',
-    '大きいほど速さが不規則に伸び縮みし、繰り返しに見えにくくなります。'));
-  rows.push(slider('転がり感', 0, 1, 0.01, () => params.sphere.tumble, v => params.sphere.tumble = v, v => Math.round(v * 100) + '%',
-    '大きいほど縦にも回り、コロコロ転がる感じに。0で横だけ。'));
-  rows.push(slider('表面のザラつき', 0, 1, 0.05, () => params.sphere.noise, v => params.sphere.noise = v, v => Math.round(v * 100) + '%',
-    '大きいほど表面がざらっとします。0でつるつる。'));
-
-  sub(catKv, '惑星の置き場所', true);
-  note('惑星だけを動かします。輪ごと動かすなら下の「まわりの輪」で。');
-  rows.push(slider('左右の位置', -250, 250, 1, () => params.planet.dx, v => params.planet.dx = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
-  rows.push(slider('上下の位置', -250, 250, 1, () => params.planet.dy, v => params.planet.dy = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
-  rows.push(slider('大きさ', 0.4, 1.8, 0.01, () => params.planet.scale, v => params.planet.scale = v, v => '×' + v.toFixed(2), '1.00 がデザイン通りの大きさです。'));
-  liveEdit = false;   /* ← 惑星ここまで。以降は従来どおり頭から流し直す */
-
-  /* ---------- 🛰 まわりの輪 ---------- */
-  sub(catKv, '🛰 まわりの輪');
-  note('惑星のまわりの2本の輪と、その上を回る7個の玉です。');
-  rows.push(slider('全体の左右位置', -300, 300, 1, () => params.kv.gx, v => params.kv.gx = v, v => v + 'px',
-    '惑星と輪をまとめて動かします。プラスで右へ。'));
-  rows.push(slider('全体の上下位置', -300, 300, 1, () => params.kv.gy, v => params.kv.gy = v, v => v + 'px',
-    'まとめて動かします。プラスで下へ。'));
-
-  sub(catKv, '2本の輪のゆっくりした傾き', true);
-  note(SWAYS[(params.sway || 1) - 1].desc);
-  pillRow(SWAYS, (_, i) => params.sway === i + 1, (_, i) => params.sway = i + 1);
-
-  sub(catKv, '玉が輪を回るスピード', true);
-  note(ORBIT_EASES[(params.orbitEase || 1) - 1].desc);
-  pillRow(ORBIT_EASES, (_, i) => params.orbitEase === i + 1, (_, i) => params.orbitEase = i + 1);
-  rows.push(slider('1周にかかる時間', 4, 80, 1, () => params.duration, v => params.duration = v, v => v + '秒',
-    '玉が1周する時間。小さいほど速く回ります。'));
-  rows.push(slider('まとめて何倍速', 0.1, 3, 0.05, () => params.globalSpeed, v => params.globalSpeed = v, v => '×' + v.toFixed(2),
-    '上の時間はそのまま、速さだけまとめて変えたい時に。'));
-  rows.push(slider('動き出しの加速', 0, 5, 0.1, () => params.ramp, v => params.ramp = v, v => v.toFixed(1) + '秒',
-    'この秒数をかけてじわっと本来の速さまで上がります。0で即。'));
-  segRow('回る向き', [['時計回り', 1], ['反時計回り', -1]], () => params.direction, v => { params.direction = v; markDirty(); });
-  rows.push(slider('速度の波', 0, 1, 0.05, () => params.pulse.amp, v => params.pulse.amp = v, v => Math.round(v * 100) + '%',
-    '大きいほど、速い⇄遅いを繰り返します。0で一定。'));
-  rows.push(slider('波の周期', 1, 20, 0.5, () => params.pulse.period, v => params.pulse.period = v, v => v.toFixed(1) + '秒',
-    '速い→遅い→速い が1往復する時間。'));
-
-  sub(catKv, '玉と玉の間隔', true);
-  note(DOT_GAPS[(params.dotGap || 1) - 1].desc);
-  pillRow(DOT_GAPS, (_, i) => params.dotGap === i + 1, (_, i) => params.dotGap = i + 1);
-  if ((params.dotGap || 1) === 1 && (params.orbitEase || 1) === 2)
-    note('⚠️ すぐ上を②緩急にしていると間隔も伸び縮みします。①等速との併用がおすすめ。');
-
-  [['outer', '外側の輪（上を通る方・ピンク）', '#FF5D97'], ['inner', '内側の輪（下を通る方・水色）', '#00ABEB']].forEach(([key, label, color]) => {
-    sub(catKv, `<span class="chip" style="background:${color}"></span>${label}`, true);
-    const o = () => params.orbits[key];
-    rows.push(slider('輪の大きさ', 0.5, 1.5, 0.01, () => o().scale, v => o().scale = v, v => '×' + v.toFixed(2), '1.00 がデザイン通りの大きさです。'));
-    rows.push(slider('輪の傾き', -45, 45, 0.5, () => o().angle, v => o().angle = v, v => v + '°', 'この輪だけを傾けます。'));
-    rows.push(slider('左右の位置', -200, 200, 1, () => o().dx, v => o().dx = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
-    rows.push(slider('上下の位置', -200, 200, 1, () => o().dy, v => o().dy = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
-    rows.push(slider('ゆれる大きさ', 0, 20, 0.5, () => o().wobbleAmp, v => o().wobbleAmp = v, v => v + '°',
-      'ゆらゆら傾く幅。0でまったく傾きません。'));
-    rows.push(slider('ゆれる周期', 2, 30, 0.5, () => o().wobblePeriod, v => o().wobblePeriod = v, v => v.toFixed(1) + '秒',
-      'ゆれが1往復する時間。大きいほどゆったり。'));
-    rows.push(slider('ゆれのずらし', 0, 360, 5, () => o().wobblePhase, v => o().wobblePhase = v, v => v + '°',
-      '2本が同じタイミングだと単調なので、片方をずらしたい時に。'));
-  });
+  /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
+     V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
 
   /* ---------- 🏢 導入企業のロゴ (2026-08-19 追加) ----------
      ⚠️ marquee.gap / duration / direction は前からあったのにパネルに出ていなかった。
@@ -5766,14 +5767,7 @@ function buildPanel() {
   sub(catRes, 'このセクションの長さ');
   sectionLenSlider('results', 600);
 
-  sub(catRes, 'レイアウトを選ぶ');
-  note(params.patterns.results === 'C'
-    ? '中央にテキストだけ。数字がスロットで回り、下から黒い面がせり上がって画面いっぱいに拡大→開発者体験へ（既定）。'
-    : params.patterns.results === 'A'
-      ? '写真が左に横長。先に文字が出て、あとから写真が現れます。'
-      : '写真が左端の細長い帯。文字は右に1列。見出しと同時に他も現れます。');
-  pillRow([{ key: 'C', name: '案C 中央→黒せり上がり（既定）' }, { key: 'B', name: '案B 縦帯' }, { key: 'A', name: '案A 横長' }],
-    it => params.patterns.results === it.key, it => params.patterns.results = it.key);
+  /* ⚠️【2026-08-26 ヒデさん指定】「レイアウトを選ぶ」(案A/B/C)は削除。実績は新デザイン1本に統一。 */
 
   sub(catRes, '写真のぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',

@@ -298,6 +298,7 @@
 
   let rootEl, worldEl, cur = null;
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
+  let pendingIntro = null;                                /* 埋め込み時: 親(見出しタイピング完了)の合図で入場を始めるため保留する */
   let mockAnimOn = true, eMockSlot = null;                /* モックアニメのオン/オフ・現在のモック枠 */
   let eMockDur = 0;                                        /* モックのタイピング再生尺(ms)。playIntro が完了後に右グラフィックを出すのに使う */
   let eSpins = [], dotSpeed = 3, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率(既定3x・2026-08-25 ヒデさん指定)・緩急(linear/pulse) */
@@ -716,9 +717,11 @@
     return rootEl;
   }
 
-  function setPattern(key) {
+  function setPattern(key, opts) {
+    opts = opts || {};
     const p = PATTERNS[key]; if (!p) return;
     if (eMockStop) { eMockStop(); eMockStop = null; }
+    pendingIntro = null;                                 /* 前の保留があれば捨てる */
     eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
@@ -733,9 +736,17 @@
       worldEl.appendChild(scene);
       eBack = scene.querySelector('.kvp-e-back');
       eFront = scene.querySelector('.kvp-e-icons');
-      eMockStop = startEMock(scene.querySelector('.kvp-emock-slot'));  /* モックをアニメ（開発者体験1と同じ） */
       applyFloat(); applyParallax(); applyTransform();
-      playIntro(scene);   /* 入場アニメ: mock→アイコンがバラバラ→軌道/ドット/発光 */
+      /* 入場: モックのタイピングを回し→ playIntro が mock→アイコン→軌道の順で出す。
+         opts.defer=true（本体に埋め込み時）は、親の「見出しタイピング完了」の合図まで待つ。
+         シーンは .kvp-intro で隠したまま置いておき、runDeferredIntro() で開始する。 */
+      const runIntro = () => {
+        if (eMockStop) { eMockStop(); eMockStop = null; }
+        eMockStop = startEMock(scene.querySelector('.kvp-emock-slot'));  /* モックをアニメ（開発者体験1と同じ） */
+        playIntro(scene);   /* 入場アニメ: mock→アイコン→軌道/ドット */
+      };
+      if (opts.defer) pendingIntro = runIntro;   /* 親の合図待ち */
+      else runIntro();
       return;
     }
 
@@ -775,9 +786,12 @@
   function setTransform(v) { curTransform = Object.assign(curTransform, v); applyTransform(); }
   function show() { rootEl.classList.remove('hidden'); rootEl._fit && rootEl._fit(); }
   function hide() { rootEl.classList.add('hidden'); }
+  /* 保留中の入場（opts.defer で待たせたもの）を実行。親の「見出しタイピング完了」の合図で呼ぶ。 */
+  function runDeferredIntro() { if (pendingIntro) { const f = pendingIntro; pendingIntro = null; f(); } }
+  function hasPendingIntro() { return !!pendingIntro; }
 
   global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform, setView,
-    setThick, setThickVar, setMockAnim, setDotSpeed, setDotEase,
+    setThick, setThickVar, setMockAnim, setDotSpeed, setDotEase, runDeferredIntro, hasPendingIntro,
     get: () => cur, getTransform: () => Object.assign({}, curTransform),
     getMockAnim: () => mockAnimOn, getDotSpeed: () => dotSpeed, getDotEase: () => dotEase,
     PATTERNS, C, STAGE };
