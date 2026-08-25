@@ -6012,13 +6012,14 @@ document.getElementById('panelHead').addEventListener('click', () => {
   keepPanelInView();
 });
 
-/* ===== 隠しモード（2026-08-21 ヒデさん指示） =====
-   パネルは最初は見えない。画面右上の透明ボックスをクリックすると出る/隠れる。
-   出した状態は同じタブの間だけ覚える（調整中にリロードしても消えない） */
+/* ===== 表示モード（2026-08-25 ヒデさん指定：V1.0同様に最初から表示） =====
+   パネルは V1.0 と同じく最初から右下に表示（closed=見出しだけ・クリックで開く）。
+   透明ボックス(.tools-secret-hot)は残してあり、隠したい時だけ押せる。
+   sessionStorage に明示的に '0'(隠す) が入っている時だけ隠した状態で始める。 */
 (() => {
   const SKEY = 'anyflow-tools-secret';
-  let shown = false;
-  try { shown = sessionStorage.getItem(SKEY) === '1'; } catch (e) {}
+  let shown = true;
+  try { if (sessionStorage.getItem(SKEY) === '0') shown = false; } catch (e) {}
   const apply = () => toolsEl.classList.toggle('tools-hidden', !shown);
   apply();
   const hot = document.createElement('div');
