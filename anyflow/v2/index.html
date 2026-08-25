@@ -166,7 +166,7 @@
 
   /* === V2 KV: 惑星を隠して「パターン群」(iframe)に差し替え（2026-08-25 移行） ===
      iframe にしている理由: すりガラス(backdrop-filter)を本体の transform:scale から隔離し、
-     kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は本体と同じ #f2f2f2。 */
+     kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は Figma実測の #E7E7E7（白フロストが#EEEに浮き出る）。 */
   .orbit { display: none !important; }
   .kv-graphic-embed {
     position: absolute; top: 0; right: 0;
@@ -174,11 +174,17 @@
     border: 0; background: transparent;
     color-scheme: light;
   }
-  /* 調整パネルを開く透明ボックス（本体側。iframe内のパネルをトグルする） */
+  /* 調整パネルを開く透明ボックス（本体側。iframe内のパネルをトグルする）。
+     判定を広げて見つけやすく。薄い⚙アイコンを常時うっすら表示（ホバーで濃く） */
   .kvp-secret {
-    position: absolute; top: 62px; right: 0; width: 64px; height: 64px;
+    position: absolute; top: 54px; right: 0; width: 200px; height: 140px;
     z-index: 40; cursor: pointer; background: transparent;
   }
+  .kvp-secret::after {
+    content: "⚙"; position: absolute; top: 10px; right: 16px; font-size: 18px; line-height: 1;
+    color: #101828; opacity: .18; transition: opacity .2s; pointer-events: none;
+  }
+  .kvp-secret:hover::after { opacity: .5; }
   /* 旧「モーション調整パネル」(惑星KV含む) と その開閉ボックスは撤去（2026-08-25 移行）。
      JS は残すので params 既定値でモーションは動く。右上の開閉は新パネル(kvpSecret)に一本化。 */
   .tools, .tools-secret-hot { display: none !important; }
@@ -1395,7 +1401,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=3" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 

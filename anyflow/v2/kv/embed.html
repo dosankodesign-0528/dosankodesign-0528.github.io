@@ -8,14 +8,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=29">
+<link rel="stylesheet" href="patterns.css?v=30">
 <style>
   /* 埋め込み用: ヘッダー/コピー/ティッカーは持たない。背景は本体サイトと同色にして
      すりガラスが本体の地色をボカしているように見せる（iframe内のbackdrop-filterは
      iframe内の背景しかボカせないため、地色を本体に合わせるのが必須）。 */
-  html, body { margin: 0; background: #f2f2f2; overflow: hidden; }
-  /* 秘密ボックスは本体ヘッダー(上部)と被らない位置へ下げる */
-  .kv-secret { top: 90px !important; right: 0 !important; }
+  html, body { margin: 0; background: #E7E7E7; overflow: hidden; }  /* Figmaキャンバス色。白フロストが#EEEに浮き出る */
+  /* 秘密ボックスは本体ヘッダー(上部)と被らない位置へ下げる＋判定を広げて見つけやすく */
+  .kv-secret { top: 80px !important; right: 0 !important; width: 200px !important; height: 140px !important; }
+  .kv-secret::after {
+    content: "⚙"; position: absolute; top: 10px; right: 16px; font-size: 18px; line-height: 1;
+    color: #101828; opacity: .18; transition: opacity .2s; pointer-events: none;
+  }
+  .kv-secret:hover::after { opacity: .5; }
   /* 調整パネル: ドラッグで移動・リサイズ可能に。既定位置はティッカーに被らない高さへ */
   .kv-bar { align-items: stretch; resize: both; overflow: auto; bottom: 170px;
             min-width: 240px; min-height: 90px; max-width: 96vw; max-height: 88vh; }
@@ -28,6 +33,12 @@
   .kv-bar .rowThk input[type=range] { width: 66px; accent-color: #090909; }
   .kv-bar .rowThk > span:not(.sep) { min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
   .kv-bar .rowCap { font-size: 10.5px; color: #9ca3af; line-height: 1.5; padding: 1px 2px 3px; max-width: 460px; }
+  /* 案の並び: A案/B案/その他 と、その他ドロワー */
+  .kv-bar .row0 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .kv-bar .rowOther { display: flex; flex-wrap: wrap; gap: 5px; padding: 5px 0 2px; margin-top: 3px; border-top: 1px dashed #e5e5e5; }
+  .kv-bar .rowOther[hidden] { display: none; }
+  .kv-bar #btnOther.ghost { color: #6b7280; font-weight: 500; }
+  .kv-bar #btnOther.open { background: #eef2ff; border-color: #c7d2fe; }
 </style>
 </head>
 <body>
@@ -41,17 +52,20 @@
   <div class="kv-bar-title" id="kvBarTitle">調整パネル<span class="hint">ドラッグで移動／右下で拡縮</span></div>
   <div class="row0">
     <b>案:</b>
-    <button data-design="agent" title="エージェント版">A</button>
-    <button data-design="p1" title="フラット×回路線×白箱">B</button>
-    <button data-design="p2" title="フラット×同心円×ガラス">C</button>
-    <button data-design="p3" title="アイソメ×回路線×ガラス">D</button>
-    <button data-design="p4" title="アイソメ×軌道×白箱">E</button>
-    <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">F</button>
-    <button data-design="blender" title="Blender 3D">G</button>
-    <button data-design="p6" title="単純なすりガラス">H</button>
-    <button data-design="p8" title="背景色を拾ったすりガラス">I</button>
-    <button data-design="p7" class="on" title="PNG画像ベタ貼り">J</button>
-    <button data-design="p9" title="2Dだけど立体的（角度＋影）">K</button>
+    <button data-design="p7" class="on" title="PNG画像ベタ貼り（frost焼込み＋CSS影）">A案</button>
+    <button data-design="p9" title="2Dだけど立体的（モックだけ3D傾き）">B案</button>
+    <button type="button" id="btnOther" class="ghost" title="その他の実験案を開く">その他 ▾</button>
+  </div>
+  <div class="rowOther" id="rowOther" hidden>
+    <button data-design="agent" title="開発者体験アニメ版">アニメ</button>
+    <button data-design="p6" title="単純なすりガラス">H・単純ガラス</button>
+    <button data-design="p8" title="背景色を拾ったすりガラス">I・背景拾い</button>
+    <button data-design="p1" title="フラット×回路線×白箱">回路線</button>
+    <button data-design="p2" title="フラット×同心円×ガラス">同心円ガラス</button>
+    <button data-design="p3" title="アイソメ×回路線×ガラス">アイソメ回路</button>
+    <button data-design="p4" title="アイソメ×軌道×白箱">アイソメ軌道</button>
+    <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">同心円ドット</button>
+    <button data-design="blender" title="Blender 3D">Blender</button>
   </div>
   <div class="rowCap" id="kvCap"></div>
   <div class="row1">
@@ -88,7 +102,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=28"></script>
+<script src="patterns.js?v=29"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -143,10 +157,10 @@
     p4: 'アイソメ×白い箱×単一軌道',
     p5: '同心円＋周回ドット＋アニメmock（CSS）',
     blender: 'Blenderで3Dレンダーした画像版',
-    p6: '【H・単純】カンプ忠実・すりガラスをライブ描画。無地だとブラーが見えにくいのが弱点',
-    p8: '【I・背景色を拾った】すりガラス＋地色を強めに。無地でも“効いてない錯覚”を解消',
-    p7: '【J・PNGベタ貼り】書き出しPNG（frost焼込み）＋影はCSS。無地でも確実にフロスト（既定）',
-    p9: '【K・参考画像の角度】アイコンは正面向きの平面（厚みなし）、モックだけ3Dで傾ける（表を向いた角度を再現）',
+    p6: '【その他/H・単純】カンプ忠実・すりガラスをライブ描画。無地だとブラーが見えにくいのが弱点',
+    p8: '【その他/I・背景色を拾った】すりガラス＋地色を強めに。無地でも“効いてない錯覚”を解消',
+    p7: '【A案・PNGベタ貼り】書き出しPNG（frost焼込み）＋影はCSS。地色#E7E7E7で確実にフロスト（既定）',
+    p9: '【B案・参考画像の角度】アイコンは正面向きの平面（厚みなし）、モックだけ3Dで傾ける（表を向いた角度を再現）',
   };
   function updateCap(d) { kvCap.textContent = CAPTIONS[d] || ''; }
 
@@ -160,9 +174,21 @@
   tLang.addEventListener('input', () => { KVP.setThickVar('lang', tLang.value + 'deg'); tLangv.textContent = tLang.value + '°'; });
   tLint.addEventListener('input', () => { KVP.setThickVar('lint', tLint.value); tLintv.textContent = tLint.value; });
 
+  /* 「その他 ▾」ドロワーの開閉。中の案を選ぶと「その他」ボタン自体も on 表示にする */
+  const btnOther = document.getElementById('btnOther');
+  const rowOther = document.getElementById('rowOther');
+  const OTHER_SET = new Set(['agent', 'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p8', 'blender']);
+  btnOther.onclick = () => {
+    const willOpen = rowOther.hidden;
+    rowOther.hidden = !willOpen;
+    btnOther.textContent = willOpen ? 'その他 ▴' : 'その他 ▾';
+    btnOther.classList.toggle('open', willOpen);
+  };
+
   document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
     document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
     const d = b.dataset.design; curDesign = d;
+    btnOther.classList.toggle('on', OTHER_SET.has(d));   /* 中の案が選ばれていれば「その他」も点灯 */
     const isAgent = d === 'agent', isBlender = d === 'blender';
     kvHost.style.display = isAgent ? '' : 'none';
     kvBlender.classList.toggle('hidden', !isBlender);

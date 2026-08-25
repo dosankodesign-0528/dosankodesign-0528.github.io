@@ -138,13 +138,12 @@ body { background: #E7E7E7; }
 .kvp-png-ico { position: absolute; left: 0; top: 0; display: block; }
 /* J=背景色を拾った(p8): すりガラスに地色を強めに持たせ、無地でも"フロスト"に見せる（効いてない錯覚を解消） */
 .pat-p8 .kvp-ico--glass .kvp-ico-frost { background: rgba(255,255,255,.62); }
-.pat-p8 .kvp-emock-slot { background: rgba(255,255,255,.6); }
-/* K=参考画像に忠実(p9): シーンは傾けず、アイコンは正面向きの平面（厚み無し）。
-   モックだけ3Dで傾ける＝"表を向いた角度"を再現（右奥へ回転）。mockは地色で見せる（傾けでfrostが弱くなるため）。 */
-.pat-p9 .kvp-png-ico { filter: drop-shadow(0 14px 20px rgba(16,24,40,.18)) !important; }
-.pat-p9 .kvp-emock-slot { background: rgba(255,255,255,.6);
-  transform: perspective(1700px) rotateY(-20deg) rotateX(3deg); transform-origin: center center;
-  box-shadow: 40px 44px 60px rgba(16,24,40,.18); }
+/* p8/p9 のモック地色は基準(白0.3)を継承。地色#E7E7E7で#EEEEEEに出る */
+/* B案（元K・2Dだけど立体的）: シーン全体を穏やかに3D傾斜（前の版に戻す）。
+   ⚠️ モック単体の rotateY(-20) は"変な傾き"で不評だったため撤去。シーン全体を rotateX で軽く寝かせる。
+   影はアイコンを少し強めにして立体感を出す。モック地色は基準(白0.3)を継承。 */
+.pat-p9 .kvp-svgscene { transform: perspective(1700px) rotateX(15deg) rotateZ(-1.5deg); transform-origin: center 58%; }
+.pat-p9 .kvp-png-ico { filter: drop-shadow(0 16px 24px rgba(16,24,40,.22)) !important; }
 /* 浮遊アニメ（Eのみ・トグル）*/
 /* 浮遊は margin で動かす（transformだと子のbackdrop-filterが無効化されるため） */
 @keyframes kvpFloat { 0%,100% { margin-top: 0; } 50% { margin-top: -10px; } }
@@ -195,7 +194,7 @@ body { background: #E7E7E7; }
    縮小するが、それは“ガラス要素自身”ではないので backdrop-filter が生きる（Safari等でも安全）。
    Figma実測: mock bg白30% / backdrop-blur 75px / 角丸20 / ドロップ45,52,48 rgba(0,0,0,.2) / 内側1,1,2白 */
 .kvp-emock-slot { position: absolute; overflow: hidden; border-radius: 20px;
-  background: rgba(255,255,255,.5);   /* 無地の上でもフロストに見えるようFigmaの0.3→0.5に。重なりでは実ブラーも出る */
+  background: rgba(255,255,255,.3);   /* Figma実測=白30%。地色#E7E7E7の上で#EEEEEEに浮き出る（カラーピッカー確認済） */
   backdrop-filter: blur(75px) saturate(1.15); -webkit-backdrop-filter: blur(75px) saturate(1.15);
   border: 1px solid rgba(255,255,255,.6);
   box-shadow: 45px 52px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.5); }
@@ -213,10 +212,19 @@ body { background: #E7E7E7; }
 .em-divider { width: 30px; height: 1px; background: rgba(120,130,150,.25); }
 .em-sicons { display: flex; flex-direction: column; gap: 20px; align-items: center; }
 .em-sicons img { width: 20px; height: 20px; opacity: .3; }
-.em-code { flex: 1 1 0; min-width: 0; padding: 36px 40px; display: flex; flex-direction: column; gap: 14px; }
-.em-crow { display: flex; align-items: center; gap: 7px; height: 8px; opacity: 0; transform: translateY(4px);
-  transition: opacity .3s ease, transform .3s ease; }
-.em-crow.on { opacity: 1; transform: none; }
+.em-code { flex: 1 1 0; min-width: 0; padding: 36px 40px; display: flex; flex-direction: column; gap: 14px; position: relative; }
+/* コードは左→右に“拭くように”出す（開発者体験1と同じ clip-path トリミング＝実際に書かれてる感） */
+.em-crow { display: flex; align-items: center; gap: 7px; height: 8px;
+  clip-path: inset(0 100% 0 0); transition: clip-path .34s cubic-bezier(.22,.7,.3,1); }
+.em-crow.on { clip-path: inset(0 0 0 0); }
+/* スケルトンローディング（コード生成前の“溜め”。シマーで光が横切る） */
+.em-skel { position: absolute; inset: 36px 40px auto; display: flex; flex-direction: column; gap: 16px;
+  opacity: 0; transition: opacity .35s ease; pointer-events: none; }
+.em-skel.on { opacity: 1; }
+.em-skel-bar { height: 8px; border-radius: 4px;
+  background: linear-gradient(100deg, rgba(150,162,180,.16) 30%, rgba(150,162,180,.42) 50%, rgba(150,162,180,.16) 70%);
+  background-size: 220% 100%; animation: emShimmer 1.15s linear infinite; }
+@keyframes emShimmer { 0% { background-position: 180% 0; } 100% { background-position: -80% 0; } }
 .em-ind { flex: 0 0 auto; height: 8px; }
 .em-bar { height: 8px; border-radius: 4px; flex: 0 0 auto; }
 .em-chat { flex: 0 0 360px; display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,.5); }
@@ -237,12 +245,22 @@ body { background: #E7E7E7; }
 .em-line { height: 7px; border-radius: 4px; background: #96a2b4; }
 .em-input { display: flex; align-items: center; gap: 8px; padding: 20px 22px; border-top: 1px solid rgba(255,255,255,.7); position: relative; }
 .em-typed { font: 400 15px/1 "Noto Sans JP", sans-serif; color: rgba(70,90,120,.9); white-space: nowrap; }
-.em-caret { width: 2px; height: 16px; background: #0EBBFF; margin-left: 1px; animation: emCaret 1s step-end infinite; }
+/* カーソル: 既定は非表示。タイプ中(.typing)だけ typed の直後に出す＝プレースホルダーと重ならない */
+.em-caret { display: none; width: 2px; height: 16px; background: #0EBBFF; margin-left: 1px; animation: emCaret 1s step-end infinite; }
+.em-input.typing .em-caret { display: inline-block; }
 @keyframes emCaret { 50% { opacity: 0; } }
-.em-ph { font: 400 15px/1 "Noto Sans JP", sans-serif; color: rgba(120,140,170,.5); position: absolute; left: 22px; }
+.em-ph { font: 400 15px/1 "Noto Sans JP", sans-serif; color: rgba(120,140,170,.5); position: absolute; left: 22px; transition: opacity .15s; }
+.em-input.typing .em-ph { opacity: 0; }
 .em-send { margin-left: auto; width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,.6);
-  display: flex; align-items: center; justify-content: center; }
+  display: flex; align-items: center; justify-content: center; transition: transform .12s ease, background .12s ease; }
 .em-send img { width: 13px; height: 13px; opacity: .55; }
+.em-send.is-hit { transform: scale(.86); background: rgba(14,187,255,.28); }
+/* 思考中ドット（送信後の“考え中”。回答が来たら入れ替え。開発者体験1と同じ） */
+.em-bub-think .em-bub.em-think { flex: 0 0 auto; width: auto; flex-direction: row; align-items: center; gap: 6px; padding: 14px 16px; }
+.em-think i { width: 6px; height: 6px; border-radius: 50%; background: #96a2b4; animation: emThink 1.25s ease-in-out infinite; }
+.em-think i:nth-child(2) { animation-delay: .16s; }
+.em-think i:nth-child(3) { animation-delay: .32s; }
+@keyframes emThink { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
 
 /* ============ パネル行・Blender版 ============ */
 /* 隠しモード（網走と同じ）: 既定は非表示、右上の透明ボックスで出し入れ */

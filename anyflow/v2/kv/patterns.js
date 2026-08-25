@@ -487,11 +487,17 @@
     [32, [[48, '#ffffff']]],
     [16, [[16, '#ff5d97']]],
   ];
+  /* スケルトンローディング用（コード生成前の“溜め”表示。[インデント, 幅]） */
+  const E_SKEL_ROWS = [[0, 210], [0, 160], [18, 132], [18, 188], [36, 104], [0, 174], [18, 142]];
   function eBubble(kind, cls, lines) {
     const av = kind === 'user' ? 'em-av-user' : 'em-av-bot';
     const icon = kind === 'user' ? 'user.svg' : 'bot.svg';
     const li = lines.map(([w, o]) => `<span class="em-line" style="width:${w}px;opacity:${o}"></span>`).join('');
     return `<div class="em-msg ${cls}"><span class="em-av ${av}"><img src="../assets/mock/${icon}" alt=""></span><div class="em-bub">${li}</div></div>`;
+  }
+  /* 思考中ドット（送信後の“AIが考えてる”表示。回答が来たら入れ替え） */
+  function eThink(cls) {
+    return `<div class="em-msg ${cls}"><span class="em-av em-av-bot"><img src="../assets/mock/bot.svg" alt=""></span><div class="em-bub em-think"><i></i><i></i><i></i></div></div>`;
   }
   const E_MOCK_NAT = { w: 900, h: 540 };
   function buildDashE() {
@@ -513,14 +519,22 @@
       bars.forEach(([w, c]) => { const b = document.createElement('span'); b.className = 'em-bar'; b.style.width = w + 'px'; b.style.background = c; r.appendChild(b); });
       code.appendChild(r);
     });
+    /* スケルトン（コード生成前のローディング＝“溜め”。シマーで光が横に走る。開発者体験1と同じ） */
+    const skel = document.createElement('div'); skel.className = 'em-skel';
+    E_SKEL_ROWS.forEach(([indent, w]) => {
+      const s = document.createElement('div'); s.className = 'em-skel-bar';
+      s.style.width = w + 'px'; if (indent) s.style.marginLeft = indent + 'px';
+      skel.appendChild(s);
+    });
+    code.appendChild(skel);
     editor.appendChild(side); editor.appendChild(code);
     /* chat */
     const chat = document.createElement('div'); chat.className = 'em-chat';
     chat.innerHTML =
       '<div class="em-chead"><span class="em-ctitle"><img src="../assets/mock/sparkles.svg" alt="">AI Assistant</span><img class="em-ell" src="../assets/mock/ellipsis.svg" alt=""></div>' +
       '<div class="em-hist">' +
-        eBubble('bot', 'on', [[180, .8], [220, .6], [140, .6]]) +
         eBubble('user', 'em-bub-user', [[210, .8], [190, .6]]) +
+        eThink('em-bub-think') +
         eBubble('bot', 'em-bub-ans', [[110, .8], [150, .6]]) +
       '</div>' +
       '<div class="em-input"><span class="em-typed"></span><span class="em-caret"></span><span class="em-ph">Ask anything...</span><span class="em-send"><img src="../assets/mock/arrow-up.svg" alt=""></span></div>';
@@ -528,28 +542,67 @@
     slot.appendChild(panel);
     return slot;
   }
+  /* 開発者体験1と同じ流れ: 空 → チャットに入力(カーソル追従) → 送信 → 自分の吹き出し →
+     考え中ドット → 左のエディタがスケルトンで“溜め” → コードが左→右に一気に書かれる → AI回答。
+     ⚠️ 最初は何も出さない(reset)。オブジェクトを最初から置かない、が指定。 */
   function startEMock(slot) {
     if (!slot) return () => {};
-    const rows = [].slice.call(slot.querySelectorAll('.em-crow'));
+    const rows  = [].slice.call(slot.querySelectorAll('.em-crow'));
+    const skel  = slot.querySelector('.em-skel');
     const typed = slot.querySelector('.em-typed');
-    const ph = slot.querySelector('.em-ph');
+    const input = slot.querySelector('.em-input');
+    const send  = slot.querySelector('.em-send');
     const userB = slot.querySelector('.em-bub-user');
-    const ansB = slot.querySelector('.em-bub-ans');
+    const thinkB = slot.querySelector('.em-bub-think');
+    const ansB  = slot.querySelector('.em-bub-ans');
     const PROMPT = 'SlackとNotionを連携して';
     const timers = [];
     const T = (fn, ms) => timers.push(setTimeout(fn, ms));
-    function cycle() {
+
+    /* タイムライン(ms)。開発者体験1の順序をKV向けに詰めたもの */
+    const CH = 85;                                   /* 1文字ぶんのタイプ間隔 */
+    const typeStart = 500;
+    const typeEnd   = typeStart + PROMPT.length * CH;
+    const sendAt    = typeEnd + 260;                 /* 送信ボタンを押す */
+    const userAt    = sendAt + 210;                  /* 打った内容が履歴に入る */
+    const thinkAt   = userAt + 340;                  /* 考え中ドット */
+    const skelAt    = thinkAt + 240;                 /* エディタがスケルトン(ローディング) */
+    const HOLD      = 900;                            /* 溜め */
+    const burstAt   = skelAt + HOLD;                 /* コードを一気に書き出す */
+    const STEP      = 58;                             /* 1行ずつの間隔(左→右) */
+    const answerAt  = burstAt + rows.length * STEP + 360; /* 書き終わり際にAI回答 */
+    const LOOP      = answerAt + 2800;               /* 全部見せてから次の周へ */
+
+    function reset() {
       rows.forEach(r => r.classList.remove('on'));
-      userB.classList.remove('on'); ansB.classList.remove('on');
-      typed.textContent = ''; ph.style.opacity = '1';
-      for (let i = 0; i <= PROMPT.length; i++) T(() => { typed.textContent = PROMPT.slice(0, i); ph.style.opacity = '0'; }, 300 + i * 95);
-      const typeEnd = 300 + PROMPT.length * 95;
-      T(() => { typed.textContent = ''; ph.style.opacity = '1'; userB.classList.add('on'); }, typeEnd + 350);
-      rows.forEach((r, i) => T(() => r.classList.add('on'), typeEnd + 800 + i * 95));
-      T(() => ansB.classList.add('on'), typeEnd + 800 + rows.length * 95 + 450);
+      if (skel) skel.classList.remove('on');
+      [userB, thinkB, ansB].forEach(b => b && b.classList.remove('on'));
+      typed.textContent = '';
+      input.classList.remove('typing');
+      if (send) send.classList.remove('is-hit');
+    }
+    function cycle() {
+      reset();
+      /* ① タイプ（カーソルは typed の直後に追従・プレースホルダーは消える） */
+      T(() => input.classList.add('typing'), typeStart - 80);
+      for (let i = 0; i <= PROMPT.length; i++)
+        T(() => { typed.textContent = PROMPT.slice(0, i); }, typeStart + i * CH);
+      /* ② 送信 → 入力欄クリア → 自分の吹き出し */
+      T(() => { if (send) send.classList.add('is-hit'); }, sendAt);
+      T(() => { typed.textContent = ''; input.classList.remove('typing'); }, sendAt + 140);
+      T(() => { if (send) send.classList.remove('is-hit'); }, sendAt + 230);
+      T(() => userB && userB.classList.add('on'), userAt);
+      /* ③ 考え中 → ④ エディタがスケルトンで溜め */
+      T(() => thinkB && thinkB.classList.add('on'), thinkAt);
+      T(() => skel && skel.classList.add('on'), skelAt);
+      /* ⑤ 溜めのあと、コードを左→右に一気に書き出す */
+      T(() => skel && skel.classList.remove('on'), burstAt);
+      rows.forEach((r, i) => T(() => r.classList.add('on'), burstAt + i * STEP));
+      /* ⑥ 考え中を回答に入れ替え */
+      T(() => { thinkB && thinkB.classList.remove('on'); ansB && ansB.classList.add('on'); }, answerAt);
     }
     cycle();
-    const iv = setInterval(cycle, 9500); timers.push(() => clearInterval(iv));
+    const iv = setInterval(cycle, LOOP); timers.push(() => clearInterval(iv));
     return () => timers.forEach(t => (typeof t === 'function' ? t() : clearTimeout(t)));
   }
 
