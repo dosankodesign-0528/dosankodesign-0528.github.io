@@ -119,13 +119,6 @@ body { background: #E7E7E7; }
 /* ============ E案（Figma 15699）: 前向きmock＋同心円＋周回ドット＋大小ガラス ============ */
 .kvp-e-back { position: absolute; inset: 0; transition: left .15s ease-out, top .15s ease-out; }
 .kvp-e-icons { position: absolute; inset: 0; transition: left .15s ease-out, top .15s ease-out; }
-/* ブランドの淡い発光（背後）。すりガラスがこれをボカして"本物のフロスト"に見える。 */
-.kvp-eglow { position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(420px 340px at 690px 300px, rgba(14,187,255,.40), transparent 70%),
-    radial-gradient(460px 360px at 1280px 640px, rgba(255,93,151,.34), transparent 70%),
-    radial-gradient(520px 420px at 1180px 230px, rgba(14,187,255,.26), transparent 70%),
-    radial-gradient(400px 320px at 640px 620px, rgba(120,90,255,.24), transparent 70%); }
 .kvp-eorbits { position: absolute; inset: 0; }
 .kvp-eorbit { position: absolute; border-radius: 50%; border: 1px solid rgba(140,150,170,.3); }
 .kvp-espin { position: absolute; width: 0; height: 0; animation: kvpSpin linear infinite; }

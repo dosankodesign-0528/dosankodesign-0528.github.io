@@ -153,10 +153,7 @@
         `backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);`;
       parent.appendChild(d); return d;
     };
-    /* --- 背面: 発光→同心円→周回ドット→mock --- */
-    /* ⚠️ 無地の上ではすりガラスは"ボカす物が無い"ので見えない。ブランドの淡い発光を背後に敷き、
-       ガラスがそれをボカして"本物のすりガラス"に見えるようにする（anyflowの発光グラデ世界観にも合う）。 */
-    const glow = document.createElement('div'); glow.className = 'kvp-eglow'; back.appendChild(glow);
+    /* --- 背面: 同心円→周回ドット→mock（背景の発光は不要との指示で撤去） --- */
     put(back, 'ellipse-102.svg', 647, 115, 649, 649);
     put(back, 'ellipse-101.svg', 754, 222, 435, 435);
     spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
