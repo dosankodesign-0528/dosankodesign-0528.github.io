@@ -160,11 +160,9 @@
     spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
     /* モックもCSSで作り直す（mock.svgは背景ブラーが<foreignObject>で死ぬため）。
        buildDashE = Figmaのmockと同じ構成(エディタ+チャット)のCSS版・すりガラスが本当に効く。
-       H案は静止表示なので全コード行・吹き出しを 'on' にして、タイピング演出は回さない。 */
-    const emock = buildDashE();
-    emock.querySelectorAll('.em-crow, .em-msg, .em-bub-user, .em-bub-ans').forEach(el => el.classList.add('on'));
-    const ph = emock.querySelector('.em-ph'); if (ph) ph.style.opacity = '1';
-    back.appendChild(emock);
+       アニメは setPattern('p6') 側で startEMock を回す（開発者体験1と同じ：入力→自分の吹き出し→
+       コードがスケルトン→出現→AIの吹き出し）。ここでは静止マークを付けない。 */
+    back.appendChild(buildDashE());
     /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）---
        ⚠️ Figma書き出しSVGは背景ブラーを <foreignObject backdrop-filter> として持つが、
        <img> で読むと完全に無効化される（imgのforeignObjectはページ背景を合成しない）。
@@ -259,6 +257,11 @@
       box.appendChild(L);
     }
     const face = document.createElement('div'); face.className = 'kvp-ico-face';
+    /* 箱のすりガラスは「面」ではなく別レイヤー(frost)に載せる。こうしないとグリフが
+       backdrop-filter要素の入れ子になり、Chrome/Safari共に子のブラーが描画されない(Chromium #993644)。
+       frostをグリフの兄弟(背面)にすることで、グリフのガラス部品のbackdrop-filterが生きる。 */
+    const frost = document.createElement('div'); frost.className = 'kvp-ico-frost';
+    face.appendChild(frost);
     const glyph = document.createElement('div'); glyph.className = 'kvp-ico-glyph';
     (ICON_DEFS[id] || []).forEach(part => {
       const b = insetToBox(part.inset);
@@ -575,6 +578,7 @@
       worldEl.appendChild(scene);
       eBack = scene.querySelector('.kvp-e-back');
       eFront = scene.querySelector('.kvp-e-icons');
+      eMockStop = startEMock(scene.querySelector('.kvp-emock-slot'));  /* モックをアニメ（開発者体験1と同じ） */
       applyFloat(); applyParallax(); applyTransform();
       return;
     }

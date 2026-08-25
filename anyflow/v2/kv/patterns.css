@@ -68,9 +68,16 @@ body { background: #E7E7E7; }
   border: 1px solid #fff;
   box-shadow: var(--drop, 0 14px 30px rgba(16,24,40,.16)), inset 0 2px 3px rgba(255,255,255,.95); }
 /* 材質：すりガラス（Figma実測: bg白30% / border1px白 / backdrop-blur可変 / ドロップシャドウ+内側ハイライト） */
-.kvp-ico--glass .kvp-ico-face { background: rgba(255,255,255,.3); border: 1px solid #fff;
-  backdrop-filter: blur(var(--blur, 26px)) saturate(1.2); -webkit-backdrop-filter: blur(var(--blur, 26px)) saturate(1.2);
+.kvp-ico--glass .kvp-ico-face { border: 1px solid #fff;
   box-shadow: var(--drop, 0 14px 30px rgba(16,24,40,.12)), inset 1px 1px 2px rgba(255,255,255,.4); }
+/* 箱のすりガラスは「面」ではなく別レイヤー(frost)に。こうしないとグリフがbackdrop-filter要素の
+   入れ子になり子のブラーが描画されない(Chromium #993644)。frostはグリフの兄弟(背面)。 */
+.kvp-ico--glass .kvp-ico-frost { position: absolute; inset: 0; z-index: 0;
+  background: rgba(255,255,255,.3);
+  backdrop-filter: blur(var(--blur, 26px)) saturate(1.2); -webkit-backdrop-filter: blur(var(--blur, 26px)) saturate(1.2); }
+/* rebuilt(H)の平面ガラスは faceのtranslateZ を切る＝グリフの祖先に変形を残さない(グリフのbackdrop-filterを生かす) */
+.kvp-ico--rebuilt .kvp-ico-face { transform: none; }
+.kvp-ico--rebuilt .kvp-ico-box { transform-style: flat; }
 
 /* 箱の向き：フラット①②＝浅い立体 / アイソメ③④＝上面・側面が見える */
 .is-flat .kvp-ico-box { transform: rotateX(10deg) rotateY(-7deg); }
