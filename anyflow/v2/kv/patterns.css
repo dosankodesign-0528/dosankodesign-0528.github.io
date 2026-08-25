@@ -131,7 +131,14 @@ body { background: #E7E7E7; }
 .kvp-frost { position: absolute; }
 /* H: アイコンwrapper（浮遊対象）*/
 .kvp-ico-svg { position: absolute; }
-.pat-p6.float-on .kvp-e-icons .kvp-ico-svg { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
+.pat-p6.float-on .kvp-e-icons .kvp-ico-svg,
+.pat-p7.float-on .kvp-e-icons .kvp-ico-svg,
+.pat-p8.float-on .kvp-e-icons .kvp-ico-svg { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
+/* 画像ベタ貼り(p7)のPNGアイコン（影はJSでdrop-shadow付与） */
+.kvp-png-ico { position: absolute; left: 0; top: 0; display: block; }
+/* J=背景色を拾った(p8): すりガラスに地色を強めに持たせ、無地でも"フロスト"に見せる（効いてない錯覚を解消） */
+.pat-p8 .kvp-ico--glass .kvp-ico-frost { background: rgba(255,255,255,.62); }
+.pat-p8 .kvp-emock-slot { background: rgba(255,255,255,.6); }
 /* 浮遊アニメ（Eのみ・トグル）*/
 /* 浮遊は margin で動かす（transformだと子のbackdrop-filterが無効化されるため） */
 @keyframes kvpFloat { 0%,100% { margin-top: 0; } 50% { margin-top: -10px; } }

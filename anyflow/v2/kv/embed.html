@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=26">
+<link rel="stylesheet" href="patterns.css?v=27">
 <style>
   /* 埋め込み用: ヘッダー/コピー/ティッカーは持たない。背景は本体サイトと同色にして
      すりガラスが本体の地色をボカしているように見せる（iframe内のbackdrop-filterは
@@ -27,6 +27,7 @@
   .kv-bar .rowThk { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #555; flex-wrap: wrap; }
   .kv-bar .rowThk input[type=range] { width: 66px; accent-color: #090909; }
   .kv-bar .rowThk > span:not(.sep) { min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+  .kv-bar .rowCap { font-size: 10.5px; color: #9ca3af; line-height: 1.5; padding: 1px 2px 3px; max-width: 460px; }
 </style>
 </head>
 <body>
@@ -47,8 +48,11 @@
     <button data-design="p4" title="アイソメ×軌道×白箱">E</button>
     <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">F</button>
     <button data-design="blender" title="Blender 3D">G</button>
-    <button data-design="p6" class="on" title="Figma SVG忠実版">H</button>
+    <button data-design="p6" class="on" title="単純なすりガラス">H</button>
+    <button data-design="p8" title="背景色を拾ったすりガラス">I</button>
+    <button data-design="p7" title="PNG画像ベタ貼り">J</button>
   </div>
+  <div class="rowCap" id="kvCap"></div>
   <div class="row1">
     ビュー:
     <button data-gview="flat" class="on">普通</button>
@@ -83,7 +87,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=26"></script>
+<script src="patterns.js?v=27"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -128,6 +132,22 @@
     document.querySelectorAll('.kv-bar [data-parallax]').forEach(x => x.classList.toggle('on', x === b));
   });
 
+  /* 案の補足文（グレー）: 何の案か分かるように */
+  const kvCap = document.getElementById('kvCap');
+  const CAPTIONS = {
+    agent: '開発者体験アニメ版：正面モックがタイプ→コード生成→AI返答をループ',
+    p1: 'フラット×白い立体箱×回路線ネットワーク',
+    p2: 'フラット×すりガラス×同心円グロー',
+    p3: 'アイソメ×すりガラス×回路線',
+    p4: 'アイソメ×白い箱×単一軌道',
+    p5: '同心円＋周回ドット＋アニメmock（CSS）',
+    blender: 'Blenderで3Dレンダーした画像版',
+    p6: '【H・単純】カンプ忠実・すりガラスをライブ描画。無地だとブラーが見えにくいのが弱点',
+    p8: '【I・背景色を拾った】すりガラス＋地色を強めに。無地でも“効いてない錯覚”を解消',
+    p7: '【J・PNGベタ貼り】書き出しPNG（frost焼込み）＋影はCSS。無地でも確実にフロスト',
+  };
+  function updateCap(d) { kvCap.textContent = CAPTIONS[d] || ''; }
+
   /* 厚み（アイソメ）: 方式①②③ ＋ 厚み/光源角度/光の強さ */
   const rowThk = document.querySelector('.kv-bar .rowThk');
   document.querySelectorAll('.kv-bar [data-thk]').forEach(b => b.onclick = () => {
@@ -145,8 +165,9 @@
     kvHost.style.display = isAgent ? '' : 'none';
     kvBlender.classList.toggle('hidden', !isBlender);
     row1.style.display = isBlender ? 'none' : '';
-    rowE.style.display = (d === 'p5' || d === 'p6') ? '' : 'none';
-    rowThk.style.display = (d === 'p6') ? '' : 'none';   /* 厚み(アイソメ)はH案で */
+    rowE.style.display = (d === 'p5' || d === 'p6' || d === 'p7' || d === 'p8') ? '' : 'none';
+    rowThk.style.display = (d === 'p6' || d === 'p8') ? '' : 'none';   /* 厚み(アイソメ)はCSS版H/Iで */
+    updateCap(d);
     if (isAgent) { KVP.hide(); syncViewUI('flat'); }
     else if (isBlender) { KVP.hide(); }
     else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }
@@ -157,6 +178,7 @@
   KVP.show(); KVP.setPattern('p6'); syncViewUI('flat');
   rowE.style.display = '';
   rowThk.style.display = '';
+  updateCap('p6');
 
   /* 隠しモード: 透明ボックスでパネルを出し入れ */
   document.getElementById('kvSecret').onclick = () => document.querySelector('.kv-bar').classList.toggle('show');

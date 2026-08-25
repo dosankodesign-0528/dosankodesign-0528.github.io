@@ -61,7 +61,7 @@
     calendar: [
       { css: GRAD + 'border-radius:99px;', inset: [12.95, 57.98, 58.91, 31.34] },
       { css: GRAD + 'border-radius:99px;', inset: [12.95, 31.34, 58.91, 57.98] },
-      { css: 'border:.5px solid #7EE5FF;border-radius:9px;background-image:linear-gradient(108deg,rgba(130,232,255,.3),rgba(55,159,255,.3));backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:inset 0 3px 10px rgba(255,255,255,.4);',
+      { css: 'border:.5px solid rgba(126,229,255,.95);border-radius:9px;background:rgba(255,255,255,.3);background-image:linear-gradient(140deg,rgba(152,225,255,.42),rgba(72,170,255,.34));backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);box-shadow:inset 0 2px 7px rgba(255,255,255,.6);',
         inset: [25.76, 16.41, 21.98, 16.41] },
       { css: CAL_CELL, inset: [53.1, 59.36, 40.76, 28.17] },
       { css: CAL_CELL, inset: [41.09, 59.36, 52.77, 28.17] },
@@ -114,7 +114,10 @@
     p4: { conn: 'orbit',   box: 'white', layout: LAYOUT_ORBIT,   iso: true  },
     p5: { conn: 'econc',   box: 'glass', layout: LAYOUT_E,       iso: false },
     p6: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false },
+    p7: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, img: true },   /* 画像ベタ貼り版(PNG) */
+    p8: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, bgpick: true }, /* 背景色を拾った版(すりガラス＋地色) */
   };
+  const PNG_DIR = 'assets/png/';   /* 書き出しPNG（frost焼込み済み・透過）。影はCSSで付ける */
 
   /* ---- SVG忠実版（Figmaから書き出したSVGを実座標に配置。静止・ズレゼロ）---- */
   const SVG_DIR = 'assets/figma/';
@@ -138,7 +141,7 @@
     });
     parent.appendChild(spin);
   }
-  function buildSvgScene() {
+  function buildSvgScene(useImg) {
     const scene = document.createElement('div'); scene.className = 'kvp-svgscene';
     const back = document.createElement('div'); back.className = 'kvp-e-back';
     const front = document.createElement('div'); front.className = 'kvp-e-icons';
@@ -172,6 +175,20 @@
     /* SVGは背景ブラーを持てない(foreignObjectがimgで死ぬ)と確定 → 全アイコンをCSSで作り直す */
     const CSS_REBUILD = { 'icon-4.svg': 'chart', 'icon-3.svg': 'chat', 'icon-2.svg': 'person', 'icon-1.svg': 'calendar', 'icon.svg': 'cloud' };
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
+      if (useImg) {
+        /* 画像ベタ貼り版: 書き出しPNG（frost焼込み・透過）をそのまま貼る。影だけCSSで付ける（Figma実測比）。 */
+        const ico = document.createElement('div'); ico.className = 'kvp-ico-svg';
+        ico.style.left = (x - w / 2) + 'px'; ico.style.top = (y - h / 2) + 'px';
+        ico.style.width = w + 'px'; ico.style.height = h + 'px';
+        ico.style.setProperty('--fd', (i * 0.6) + 's');
+        const im = document.createElement('img'); im.className = 'kvp-png-ico';
+        im.src = PNG_DIR + f.replace('.svg', '.png');
+        im.style.width = w + 'px'; im.style.height = h + 'px';
+        /* 影: Figma実測（chart 16.08/16.53/28.79 @140.4px ≈ 0.11/0.12/0.20×箱）を fs 基準で。 */
+        im.style.filter = `drop-shadow(${(fs * 0.06).toFixed(1)}px ${(fs * 0.09).toFixed(1)}px ${(fs * 0.16).toFixed(1)}px rgba(0,0,0,.22))`;
+        ico.appendChild(im); front.appendChild(ico);
+        return;
+      }
       if (CSS_REBUILD[f]) {
         const ico = buildIcon(CSS_REBUILD[f], 'glass', fs);
         ico.classList.add('kvp-ico-svg', 'kvp-ico--rebuilt');
@@ -536,7 +553,7 @@
 
   /* ============ 浮遊 / パララックス / XYZ変形 ============ */
   function applyFloat() {
-    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6'));
+    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8'));
   }
   function onPointer(e) {
     if ((cur !== 'p5' && cur !== 'p6') || !parallaxOn || !eBack || !eFront) return;
@@ -547,12 +564,12 @@
   }
   function applyParallax() {
     if (!eBack || !eFront) return;
-    if (!((cur === 'p5' || cur === 'p6') && parallaxOn)) {
+    if (!((cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8') && parallaxOn)) {
       eBack.style.left = eBack.style.top = ''; eFront.style.left = eFront.style.top = '';
     }
   }
   function applyTransform() {
-    const c = (cur === 'p5' || cur === 'p6') ? EC : C;
+    const c = (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8') ? EC : C;
     worldEl.style.transformOrigin = `${c.x}px ${c.y}px`;
     const t = curTransform;
     worldEl.style.transform = (t.x || t.y || t.z || t.s !== 1)
@@ -594,14 +611,14 @@
     eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'is-iso', 'is-flat');
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'pat-p7', 'pat-p8', 'is-iso', 'is-flat');
     rootEl.classList.add('pat-' + key);
     viewMode = p.iso ? 'iso' : 'flat';                  /* 案の既定ビュー（後で普通/アイソメで切替可） */
     applyView();
     curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
 
-    if (key === 'p6') {                                  /* SVG忠実版（背面=軌道+周回ドット+mock / 前面=浮遊アイコン） */
-      const scene = buildSvgScene();
+    if (key === 'p6' || key === 'p7' || key === 'p8') {  /* H/I/J: 同じシーン。p7=PNG画像 / p8=背景色拾い(CSSで地色付与) */
+      const scene = buildSvgScene(key === 'p7');
       worldEl.appendChild(scene);
       eBack = scene.querySelector('.kvp-e-back');
       eFront = scene.querySelector('.kvp-e-icons');
