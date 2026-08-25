@@ -1024,70 +1024,87 @@
   .dm-think-b { display: flex !important; flex-direction: row !important; gap: 5px; }
   .dm-think-b i { width: 5px; height: 5px; border-radius: 50%; background: #fff; }
   /* カンプ 14708:37856 (x118.65 y4174.10 / セクション上端4752.97 からの相対) */
-  /* ---- 導入事例 ---- */
-  /* カンプ: 「導入事例」とカード1枚目が上揃え。カードは880幅で388.78px間隔 */
+  /* ---- 導入事例 (2×2グリッド・カンプ 15800:24526) ---- */
   .case-title {
     position: absolute;
     left: 120px;
-    top: 172px;
-    font-weight: 200;          /* カンプ 14708:37826: Noto Sans JP ExtraLight 44px */
+    top: 93px;
+    font-weight: 200;          /* カンプ 15800:24527: Noto Sans JP ExtraLight 44px */
     font-size: 44px;
     line-height: 64px;
     color: #101828;
   }
-  /* カードの位置はステージ座標そのままで動かすので、箱は変形させない */
-  .case-list {
-    position: absolute;
-    right: 120px;
-    top: 0;
-    width: 880px;
-    height: 921px;
-  }
-  .case-card {
+  /* グリッド全体。左右は画面いっぱい、中身は 1440基準の座標で置く */
+  .case-grid {
     position: absolute;
     left: 0;
+    top: 227px;                /* 見出し(93+64) + gap60 = 227 */
+    width: 100%;
+    height: 589px;             /* 2行 295+294 */
+  }
+  /* 罫線 = カンプ #acacac。JSで scaleX / scaleY を 0→1 にして「左/上から引く」 */
+  .cg-hline {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: #acacac;
+    transform-origin: left center;
+    transform: scaleX(0);
+    will-change: transform;
+  }
+  #cgH0 { top: 0; }            /* 上 */
+  #cgH1 { top: 295px; }        /* 中 (行の境目) */
+  #cgH2 { top: 589px; }        /* 下 */
+  .cg-vline {
+    position: absolute;
+    left: 50%;
     top: 0;
-    width: 880px;
-    height: 344.78px;
-    background: #fff;
-    border-radius: 4px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.06);
-    will-change: transform, opacity, filter;
+    width: 1px;
+    height: 100%;
+    background: #acacac;
+    transform-origin: center top;
+    transform: scaleY(0);
+    will-change: transform;
   }
-  .case-card img {
+  /* 4セル。padding 60 / 画像260×173 + 本文(gap32) */
+  .cg-cell {
     position: absolute;
-    left: 44px;
-    top: 32px;
-    width: 421px;
-    height: 281px;
-    object-fit: cover;
-    display: block;
+    width: 50%;
+    box-sizing: border-box;
+    padding: 60px;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    will-change: opacity, filter;
   }
-  .case-card .cc-body {
-    position: absolute;
-    left: 489px;
-    top: 69px;
-    width: 347px;
-  }
-  .case-card .cc-quote {
-    font-weight: 300;          /* カンプ 14708:37831: Noto Sans JP Light 22px */
-    font-size: 22px;
+  .cg-tl { left: 0;   top: 0;     height: 295px; }
+  .cg-tr { left: 50%; top: 0;     height: 295px; }
+  .cg-bl { left: 0;   top: 295px; height: 294px; }
+  .cg-br { left: 50%; top: 295px; height: 294px; }
+  .cg-img { flex: 0 0 260px; width: 260px; height: 173px; overflow: hidden; }
+  .cg-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cg-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 27px; }
+  .cg-quote {
+    font-weight: 300;          /* カンプ 15800:24533: Noto Sans JP Light 20px */
+    font-size: 20px;
     line-height: normal;
     color: #000;
   }
-  .case-card .cc-tag {
-    display: inline-block;
-    margin-top: 26px;
+  .cg-meta { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .cg-tag {
+    display: inline-flex;
+    align-items: center;
     padding: 1px 10px;
-    border: 0.5px solid #000;  /* カンプ 14708:37833: 0.5px 黒 */
+    border: 0.5px solid #000;  /* カンプ 15800:24535: 0.5px 黒 */
     font-weight: 300;
-    font-size: 10px;           /* カンプ 14708:37834: Light 10px */
+    font-size: 10px;           /* カンプ 15800:24536: Light 10px */
     color: #000;
+    white-space: nowrap;
   }
-  .case-card .cc-company {
-    margin-top: 8px;
-    font-weight: 300;          /* カンプ 14708:37835: Noto Sans JP Light 24px */
-    font-size: 24px;
+  .cg-company {
+    font-weight: 300;          /* カンプ 15800:24537: Noto Sans JP Light 20px */
+    font-size: 20px;
     color: #000;
   }
 
@@ -1175,15 +1192,19 @@
     .dl-head b { font-size: 22px; }
     .dl-head span { font-size: 16px; }
 
-    /* --- 導入事例: 写真が上・文章が下の縦組みに変える --- */
-    .case-title { left: 24px; top: 60px; font-size: 28px; line-height: 40px; }
-    .case-list { right: 24px; top: 0; width: 342px; height: var(--dh, 780px); }
-    .case-card { width: 342px; height: 372px; border-radius: 8px; }
-    .case-card img { left: 0; top: 0; width: 342px; height: 200px; border-radius: 8px 8px 0 0; }
-    .case-card .cc-body { left: 18px; top: 222px; width: 306px; }
-    .case-card .cc-quote { font-size: 16px; line-height: 24px; }
-    .case-card .cc-tag { margin-top: 16px; font-size: 12px; padding: 2px 8px; }
-    .case-card .cc-company { margin-top: 6px; font-size: 18px; }
+    /* --- 導入事例: モバイルは1カラム縦積み(簡易・要モバイルカンプ) --- */
+    .case-title { left: 24px; top: 56px; font-size: 28px; line-height: 40px; }
+    .case-grid { left: 0; top: 118px; width: 100%; height: 620px; }
+    .cg-vline { display: none; }
+    #cgH0 { top: 0; } #cgH1 { top: 310px; } #cgH2 { top: 620px; }
+    .cg-cell { width: 100%; padding: 20px 24px; gap: 14px; height: 155px; }
+    .cg-tl { left: 0; top: 0; }   .cg-tr { left: 0; top: 155px; }
+    .cg-bl { left: 0; top: 310px; } .cg-br { left: 0; top: 465px; }
+    .cg-img { flex: 0 0 120px; width: 120px; height: 80px; }
+    .cg-body { gap: 10px; }
+    .cg-quote { font-size: 13px; }
+    .cg-tag { font-size: 10px; }
+    .cg-company { font-size: 15px; }
 
     /* --- 調整パネルは画面いっぱいに --- */
     .tools { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; }
@@ -1742,36 +1763,47 @@
   </div>
 </section>
 
-<!-- ================= 導入事例 (カードスタック) ================= -->
+<!-- ================= 導入事例 (2×2グリッド・ライン描画 / カンプ 15800:24526・24258) ================= -->
 <section class="pin" id="cases">
   <div class="pin-vp">
     <div class="pin-stage">
       <div class="case-title rv" id="caseTitle">導入事例</div>
-      <div class="case-list" id="caseList">
-      <div class="case-card" id="caseCard0">
-        <img src="assets/case-smarthr.png" alt="株式会社SmartHR">
-        <div class="cc-body">
-          <div class="cc-quote">1年で15種類の連携機能を提供！！外部データ連携のインフラとしてAnyflowを活用</div>
-          <span class="cc-tag">HRテック</span>
-          <div class="cc-company">株式会社SmartHR</div>
+      <div class="case-grid" id="caseGrid">
+        <!-- 罫線: 水平3本(上→中→下) + 中央垂直1本。JSで左/上から scaleX/scaleY で描画 -->
+        <div class="cg-hline" id="cgH0"></div>
+        <div class="cg-hline" id="cgH1"></div>
+        <div class="cg-hline" id="cgH2"></div>
+        <div class="cg-vline" id="cgV"></div>
+        <!-- 4セル(左上→右上→左下→右下)。ブラーで登場 -->
+        <div class="cg-cell cg-tl" id="caseCard0">
+          <div class="cg-img"><img src="assets/case-smarthr.png" alt="株式会社SmartHR"></div>
+          <div class="cg-body">
+            <div class="cg-quote">1年で15種類の連携機能を提供！！外部データ連携のインフラとしてAnyflowを活用</div>
+            <div class="cg-meta"><span class="cg-tag">HRテック</span><div class="cg-company">株式会社SmartHR</div></div>
+          </div>
         </div>
-      </div>
-      <div class="case-card" id="caseCard1">
-        <img src="assets/case-deex.png" alt="deex株式会社">
-        <div class="cc-body">
-          <div class="cc-quote">CRMと自社プロダクトを相互連携。実物の連携画面で商談を推進！！</div>
-          <span class="cc-tag">セールステック</span>
-          <div class="cc-company">deex株式会社</div>
+        <div class="cg-cell cg-tr" id="caseCard1">
+          <div class="cg-img"><img src="assets/case-deex.png" alt="deex株式会社"></div>
+          <div class="cg-body">
+            <div class="cg-quote">CRMと自社プロダクトを相互連携。実物の連携画面で商談を推進！！</div>
+            <div class="cg-meta"><span class="cg-tag">セールステック</span><div class="cg-company">deex株式会社</div></div>
+          </div>
         </div>
-      </div>
-      <div class="case-card" id="caseCard2">
-        <img src="assets/case-salesgo.png" alt="SALES GO 株式会社">
-        <div class="cc-body">
-          <div class="cc-quote">単なるデジタル化でなく”真の営業DX”へ。100種以上のツール連携を推進中！！</div>
-          <span class="cc-tag">セールステック</span>
-          <div class="cc-company">SALES GO 株式会社</div>
+        <div class="cg-cell cg-bl" id="caseCard2">
+          <div class="cg-img"><img src="assets/case-salesgo.png" alt="SALES GO 株式会社"></div>
+          <div class="cg-body">
+            <div class="cg-quote">単なるデジタル化でなく”真の営業DX”へ。100種以上のツール連携を推進中！！</div>
+            <div class="cg-meta"><span class="cg-tag">セールステック</span><div class="cg-company">SALES GO 株式会社</div></div>
+          </div>
         </div>
-      </div>
+        <!-- ⚠️ 4枚目は仮置き（実データが3社のため、1枚目SmartHRを複製）。ヒデさん確認後に本物へ差し替え -->
+        <div class="cg-cell cg-br" id="caseCard3">
+          <div class="cg-img"><img src="assets/case-smarthr.png" alt="株式会社SmartHR"></div>
+          <div class="cg-body">
+            <div class="cg-quote">1年で15種類の連携機能を提供！！外部データ連携のインフラとしてAnyflowを活用</div>
+            <div class="cg-meta"><span class="cg-tag">HRテック</span><div class="cg-company">株式会社SmartHR</div></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2358,16 +2390,21 @@ const DEFAULTS = {
           既定は 1.3秒 × ①元の動き(easeOutQ)。
           他のカーブはパネルから選べるようにしてあるので、試したくなったらそこで。 */
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1 },
-    /* 尺 / 奥行き(1段ごとの縮小の効き) / 出現ブラー / 並んでいる時のカードの間隔(px) */
-    cases:   { lenVh: 200, driveLen: 3.0, depth: 1, inBlur: 20, gap: 44, playSec: 5.4,
-      /* 【2026-08-18】開発者体験と1画面重ねたので、助走(pre)の前半は
-         「黒→白に切り替わる区間」に当たる。中身はそれが終わってから出す。
-         早すぎると、暗い背景の上に文字が重なって読みづらくなる */
-      introAt: 0.72,   // 「導入事例」の文字が出はじめる位置 (暗転の何割地点か)
-      introDur: 0.22,  // 出きるまでの長さ
-      cardAt: 0.84,    // 1枚目のカードが出はじめる位置
-      cardGap: 0.05,   // カードごとの遅れ
-      cardDur: 0.16,   // 1枚が出きるまでの長さ
+    /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
+       見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
+    cases:   { lenVh: 200, driveLen: 3.0, playSec: 5.4, inBlur: 20,
+      /* 見出しだけ「開発者体験の暗転(devFin)」基準。暗い背景の上に文字が重ならないようにするため */
+      introAt: 0.72,   // 見出し「導入事例」が出はじめる位置 (devFin の何割地点か)
+      introDur: 0.22,  // 見出しが出きるまで
+      /* 以下はこのセクションの再生進捗 p(0→1) 基準 */
+      lineAt: 0.08,      // 1本目(上)の水平線を引き始める
+      lineStagger: 0.10, // 水平線ごとの遅れ (上→下で順に)
+      lineDur: 0.30,     // 水平線1本を左から引き切るまで
+      vlineAt: 0.34,     // 中央の垂直線を引き始める
+      vlineDur: 0.34,    // 垂直線を上から引き切るまで
+      cardAt: 0.56,      // 1枚目のカードがブラーで出はじめる
+      cardGap: 0.06,     // カードごとの遅れ
+      cardDur: 0.22,     // カード1枚が出きるまで
     },
   },
   /* 【2026-08-18】アニメーションの駆動方式。参考サイト調査を受けて2軸を用意した。
@@ -2554,6 +2591,15 @@ function load() {
         if (Math.abs(_visV.splitAmt  - 92)   < 1e-6) _visV.splitAmt  = DEFAULTS.sections.vision.splitAmt;   // 92 → 0
         if (Math.abs(_visV.driftAmt  - 130)  < 1e-6) _visV.driftAmt  = DEFAULTS.sections.vision.driftAmt;   // 130 → 0
         if (Math.abs(_visV.miniScale - 0.16) < 1e-6) _visV.miniScale = DEFAULTS.sections.vision.miniScale;  // 0.16 → 0.31
+      }
+      /* 【2026-08-25】導入事例: カードスタック → 2×2グリッド＋ライン描画に刷新。
+         カード出現の意味(基準)が devFin→再生進捗p に変わったので、旧既定のまま保存されていたら
+         新既定へ載せ替える。lineAt 等の新プロパティは上の spread で自動的に入る。 */
+      const _casV = merged.sections.cases;
+      if (_casV) {
+        if (Math.abs(_casV.cardAt  - 0.84) < 1e-6) _casV.cardAt  = DEFAULTS.sections.cases.cardAt;   // 0.84 → 0.56
+        if (Math.abs(_casV.cardGap - 0.05) < 1e-6) _casV.cardGap = DEFAULTS.sections.cases.cardGap;  // 0.05 → 0.06
+        if (Math.abs(_casV.cardDur - 0.16) < 1e-6) _casV.cardDur = DEFAULTS.sections.cases.cardDur;  // 0.16 → 0.22
       }
       merged.patterns = { ...DEFAULTS.patterns, ...(s.patterns || {}) };
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
@@ -4774,14 +4820,10 @@ function updateDev(pRaw) {
 const caseEls = {
   vp: document.querySelector('#cases .pin-vp'),
   title: document.getElementById('caseTitle'),
-  cards: [0, 1, 2].map(i => document.getElementById('caseCard' + i)),
+  hlines: [0, 1, 2].map(i => document.getElementById('cgH' + i)),   // 水平線(上→下)
+  vline: document.getElementById('cgV'),                             // 中央の垂直線
+  cards: [0, 1, 2, 3].map(i => document.getElementById('caseCard' + i)),  // 4セル
 };
-/* カード1枚の高さと着地位置。スマホは写真が上・文章が下の縦組みに変わるので別寸法 */
-const caseH = () => (isMobile ? 372 : 344.78);
-const caseTop = () => (isMobile ? 118 : 172);
-/* 重なり方: 3枚とも同じ上端(＝「導入事例」の上っ面)に貼り付いて終わる。
-   奥へ送られたカードは 0.1 ずつ縮むので、手前のカードの内側に隠れる。
-   ズラして重ねたい時は調整パネルの「重なりのズレ」を 0 より大きくする。 */
 
 function updateCases(pRaw) {
   const c = params.sections.cases;
@@ -4826,45 +4868,33 @@ function updateCases(pRaw) {
                       : seg(gate, c.introAt, c.introAt + c.introDur, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
 
-  /* カードは【カンプのように縦にgap分空けて並んだ状態】でブラー出現し、
-     スクロールするとリストごと上へ流れて、上端に着いたものから順に貼り付いて重なる。
-     (2026-08-14: 画面外から1枚ずつ飛び込んでくる形をやめてこの形に) */
-  /* ⚠️【2026-08-18 バグ修正】カードの出現区間は
-       cardAt(0.84) + 2×cardGap(0.05) + cardDur(0.16) = 1.10
-     まで伸びていて、gate は 1 で頭打ちなので【3枚目が永久に出きらない】。
-     出現ブラー(20px)が 7.8px 残ったままになっていた（ヒデさん報告のスクショの状態）。
-     1 を超える時は cardAt から 1.0 までに収まるよう詰める */
-  const cSpan = 2 * c.cardGap + c.cardDur;
-  const cSq = cSpan > 1 - c.cardAt ? (1 - c.cardAt) / cSpan : 1;
-  const inK = [0, 1, 2].map(i => noPin
-    ? easeOutQ(clamp01((npT - (0.15 + i * 0.18)) / 0.55))
-    : seg(gate, c.cardAt + i * c.cardGap * cSq,
-                c.cardAt + i * c.cardGap * cSq + c.cardDur * cSq, easeOutQ));
-
-  const CASE_TOP = caseTop(), CASE_H = caseH();
-  const step = CASE_H + c.gap;              // カード1枚ぶんの送り量
-  /* 2枚ぶん送ると3枚とも上端に重なりきる。
-     ⚠️ 以前は easeIO を尺いっぱい(0.06〜0.94)に掛けていたので、
-        出だしも終わりもダラッと遅く「のっそり」して見えた。
-        すっと動いて最後だけ静かに止まる easeSlick を、少し短い区間に掛ける */
-  const offset = seg(p, 0.08, 0.72, easeSlick) * step * 2;
-
+  /* 【2026-08-25 刷新・カンプ 15800:24258】
+     水平線3本(上→下でディレイ) が左から引かれる → 中央の垂直線が上から引かれる → カード4枚がブラーで登場。
+     線は CSS の scaleX / scaleY を 0→1 にして「左から / 上から引く」。線・カードは再生進捗 p 基準。 */
+  /* 水平線: 上(i=0)が先。下へ行くほど lineStagger だけ遅れて引き始める */
+  caseEls.hlines.forEach((el, i) => {
+    if (!el) return;
+    const a = c.lineAt + i * c.lineStagger;
+    const k = noPin ? easeOutQ(clamp01((npT - (0.25 + i * 0.14)) / 0.5))
+                    : seg(p, a, a + c.lineDur, easeOutQ);
+    el.style.transform = `scaleX(${k.toFixed(4)})`;
+  });
+  /* 中央の垂直線: 上から下へ (水平線が進んだあと) */
+  if (caseEls.vline) {
+    const vk = noPin ? easeOutQ(clamp01((npT - 0.7) / 0.5))
+                     : seg(p, c.vlineAt, c.vlineAt + c.vlineDur, easeOutQ);
+    caseEls.vline.style.transform = `scaleY(${vk.toFixed(4)})`;
+  }
+  /* カード4枚: 罫線が引けたあと、左上→右上→左下→右下 の順にブラーで登場。
+     ⚠️ 固定なしではブロックごと（.pin-stage）にブラーで出しているので、カード側には掛けない(二重防止) */
   caseEls.cards.forEach((el, i) => {
-    const natural = i * step - offset;      // 0未満 = 上端に貼り付いている
-    const y = CASE_TOP + Math.max(0, natural) + (1 - inK[i]) * 60;
-    /* 自分の上に何枚積まれたか = 奥行きの段数 (カンプ: 0.8 / 0.9 / 1.0) */
-    const depth = Math.min(2, Math.max(0, -natural / step));
-    const sc = 1 - depth * 0.1 * c.depth;
-    el.style.transformOrigin = '50% 0%';
-    el.style.transform = `translateY(${y.toFixed(2)}px) scale(${sc.toFixed(4)})`;
-    el.style.opacity = Math.min(1, inK[i] * 3).toFixed(3);
-    /* ブラーは出てくる間だけ (絵コンテ: カードは3つ順番にブラーで出てくる)。
-       ⚠️ 固定なしではブロックごと（.pin-stage）にブラーで出しているので、
-          カード側にも掛けると二重になって「無駄にぼけている」状態になる
-          （2026-08-18 ヒデさん指摘）。固定なしでは掛けない */
-    const bl = noPin ? 0 : (1 - inK[i]) * c.inBlur;
+    if (!el) return;
+    const a = c.cardAt + i * c.cardGap;
+    const k = noPin ? easeOutQ(clamp01((npT - (0.9 + i * 0.12)) / 0.5))
+                    : seg(p, a, a + c.cardDur, easeOutQ);
+    el.style.opacity = Math.min(1, k * 2).toFixed(3);
+    const bl = noPin ? 0 : (1 - k) * c.inBlur;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
-    el.style.zIndex = i + 1;
   });
 }
 
@@ -5956,38 +5986,45 @@ function buildPanel() {
     it => params.patterns.mock === it.key, it => params.patterns.mock = it.key);
 
   /* ========== 🗂 導入事例 ========== */
-  const catCase = category('🗂 導入事例（カードが重なるセクション）', false);
-  catNote(catCase, '見出し → カードが並んで現れる → 上から順に重なります。');
+  const catCase = category('🗂 導入事例（2×2グリッド）', false);
+  catNote(catCase, '見出し → 水平線が左から3本 → 中央の縦線 → カード4枚がブラーで登場。');
 
   sub(catCase, 'このセクションの長さ');
   sectionLenSlider('cases', 1000);
-  /* ⚠️ 2026-08-19: 同じ「再生時間」スライダーがここと「タイミング」の2か所にあり、
-     どちらを動かしても同じ値が変わるので混乱のもとだった。ここ1本にまとめる */
-  rows.push(slider('重なりきるまで', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
-    '3枚が重なりきるまで。小さいほどキビキビ動きます。'));
+  rows.push(slider('全体の再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
+    '見出し〜カードまで出そろうのにかける時間。小さいほどキビキビ。'));
 
   sub(catCase, 'カードのぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px',
     '大きいほど強くぼけた状態から現れます。※貼りつけない時は無効。'));
 
-  sub(catCase, '出てくる順番とタイミング');
+  sub(catCase, '① 見出し「導入事例」');
   note('「%」は、前の暗い画面が明るく戻る動きの進み具合です。');
   rows.push(slider('見出しが出る', 0, 1, 0.02, () => sv().cases.introAt, v => sv().cases.introAt = v, v => Math.round(v * 100) + '%',
     '何割進んだら見出しが出はじめるか。小さいほど早く見えます。'));
   rows.push(slider('見出しが出きるまで', 0.05, 1, 0.02, () => sv().cases.introDur, v => sv().cases.introDur = v, v => v.toFixed(2) + '秒',
     '「導入事例」の文字がぼけから出きるまでの時間。'));
+
+  sub(catCase, '② 罫線が引かれる（水平3本→中央の縦線）');
+  note('「%」はセクションの再生進捗です。');
+  rows.push(slider('1本目が引き始める', 0, 1, 0.02, () => sv().cases.lineAt, v => sv().cases.lineAt = v, v => Math.round(v * 100) + '%',
+    '一番上の水平線が左から引かれ始める時点。'));
+  rows.push(slider('次の線までの遅れ', 0, 0.4, 0.01, () => sv().cases.lineStagger, v => sv().cases.lineStagger = v, v => Math.round(v * 100) + '%',
+    '大きいほど「上→下へ1本ずつ順に」。0で3本同時。'));
+  rows.push(slider('1本を引き切るまで', 0.05, 1, 0.02, () => sv().cases.lineDur, v => sv().cases.lineDur = v, v => Math.round(v * 100) + '%',
+    '水平線1本が左から右へ引き切るのにかける長さ。'));
+  rows.push(slider('縦線が引き始める', 0, 1, 0.02, () => sv().cases.vlineAt, v => sv().cases.vlineAt = v, v => Math.round(v * 100) + '%',
+    '中央の縦線が上から引かれ始める時点。'));
+  rows.push(slider('縦線を引き切るまで', 0.05, 1, 0.02, () => sv().cases.vlineDur, v => sv().cases.vlineDur = v, v => Math.round(v * 100) + '%',
+    '縦線が上から下へ引き切るのにかける長さ。'));
+
+  sub(catCase, '③ カード4枚がブラーで登場');
   rows.push(slider('1枚目が出る', 0, 1, 0.02, () => sv().cases.cardAt, v => sv().cases.cardAt = v, v => Math.round(v * 100) + '%',
-    '1枚目が出はじめる時点。見出しより後にすると読んでから出ます。'));
+    '1枚目(左上)が出はじめる時点。罫線より後にすると線が引けてから出ます。'));
   rows.push(slider('次のカードのディレイ', 0, 0.2, 0.01, () => sv().cases.cardGap, v => sv().cases.cardGap = v, v => v.toFixed(2),
-    '大きいほど「1枚ずつ順に」。0で3枚同時。'));
+    '大きいほど「1枚ずつ順に」。0で4枚同時。'));
   rows.push(slider('1枚が出きるまで', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
     '1枚がぼけから出きるまでの長さ。'));
-
-  sub(catCase, 'カードの重なり方');
-  rows.push(slider('奥行きの強さ', 0, 1, 0.05, () => sv().cases.depth, v => sv().cases.depth = v, v => Math.round(v * 100) + '%',
-    '大きいほど奥のカードが小さくなり奥行きが出ます。0で同じ大きさ。'));
-  rows.push(slider('重なる前のすき間', 0, 120, 4, () => sv().cases.gap, v => sv().cases.gap = v, v => v + 'px',
-    '重なる前に縦へ並んでいる時の、カード同士のすき間。'));
 
   /* ボタン。
      ⚠️【2026-08-19 ヒデさん指定】「動きを止める」「先頭から見直す」は削除。
