@@ -236,10 +236,10 @@
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
-  /* 【2026-08-25 リデザイン】開発者体験は固定追従(pin)をやめ、普通に縦へ流れる。
-     実績の resGrow(黒)が画面いっぱいに広がりきった直後に、この暗いセクションが続く。
-     margin-top:0 で実績の直後に置く（重なりはさせない）。 */
-  #dev { margin-top: 0; position: relative; z-index: 0; }
+  /* 【2026-08-26 更新】開発者体験は固定追従なし・縦2ブロック。
+     実績の尾部(vh)に重ねる指定は下の「.dev-bg」直前の #dev ルールに集約(margin-top:-100vh)。
+     ここでは position/z-index だけ持たせて重なり文脈を作る(dev1 を黒の裏へ)。 */
+  #dev { position: relative; z-index: 0; }
   /* 【2026-08-25 リデザイン】開発者体験を非pin(縦2ブロック)にしたので、
      導入事例の -100vh 重なりは廃止（重なると dev2 を覆ってしまう）。実績の直後ならぬ dev の直後に普通に置く。 */
   #cases { margin-top: 0; }
@@ -535,6 +535,39 @@
   .res-img-frame { overflow: hidden; }
   .res-img-frame img { display: block; }
 
+  /* ===== 実績 新デザイン (Figma 15833:23655・フレーム1138×456) 2026-08-26 ===== */
+  /* ⚠️ #dev を実績尾部に重ねる(#dev z-index:0)ので、実績全体(resGrow含む)を z-index:1 で前に出す。
+     これで dev1 は黒(resGrow)の【裏】に入り、黒がフェードした所で“その場”に現れる(下からせり上がらない)。 */
+  #results { position: relative; z-index: 1; }
+  #results .pin-stage { display: flex; align-items: center; justify-content: center; }
+  .res2 { width: 1138px; max-width: calc(100% - 96px); display: flex; flex-direction: column; gap: 40px; color: #000; }
+  /* 上段: 見出し(左) + 3数値(右)。フレーム 1138×116・数値グループ 631×102 */
+  .res2-top { display: flex; align-items: center; justify-content: space-between; gap: 44px; }
+  .res2-head { font-family: var(--font-jp); font-weight: 300; font-size: 34px; line-height: 1.7; color: #000; white-space: nowrap; }
+  .res2-hl1, .res2-hl2 { display: block; }
+  .res2-hl2 { display: flex; align-items: center; min-height: calc(34px * 1.7); }
+  .res2-typed { white-space: pre; }
+  .res2-caret { display: inline-block; width: 2px; height: 34px; background: #0EBBFF; margin-left: 2px; }
+  .res2-stats { display: flex; align-items: flex-start; gap: 44px; }
+  .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 300; font-size: 16px; line-height: 24px; color: #333; white-space: nowrap; }
+  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 100; font-size: 70px; line-height: 1; color: #000; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* 区切り線(横・全幅) */
+  .res2-hr { width: 100%; height: 1px; background: #D1D5DC; }
+  /* 下段: 2つの価値。フレーム 1138×220・各カラム 512(text260 + gap32 + graphic220)・中央に縦線182 */
+  .res2-vals { display: flex; align-items: center; justify-content: space-between; }
+  .res2-vals .r2v { display: flex; align-items: center; gap: 32px; }
+  .res2-vals .r2v-text { width: 260px; display: flex; flex-direction: column; gap: 16px; }
+  .r2v-tagh { display: flex; flex-direction: column; gap: 8px; }
+  .r2v-tag { font-family: var(--font-en); font-weight: 400; font-size: 20px; line-height: 1; }
+  .r2v-tag-saas { color: #FF5D97; }
+  .r2v-tag-ai { color: #0E4497; }
+  .r2v-h { font-family: var(--font-jp); font-weight: 300; font-size: 26px; line-height: 1.6; color: #000; }
+  .r2v-p { font-family: var(--font-jp); font-weight: 300; font-size: 14px; line-height: 1.8; color: #101828; margin: 0; }
+  .r2v-graphic { width: 220px; height: 220px; flex: 0 0 auto; }
+  .r2v-graphic img { width: 100%; height: 100%; display: block; }
+  .res2-vline { width: 1px; height: 182px; background: #D1D5DC; flex: 0 0 auto; }
+
   /* ---- 案A: 画像が左に横長 ----
      右端が画面右から683px固定 / 左端-183px → 画面幅ぶん横に伸びる */
   #results.pat-a .res-img-frame { position: absolute; left: -183px; right: 683px; top: 147.5px; height: 480px; }
@@ -585,6 +618,12 @@
      dev1/dev2 のブロックはこの暗幕の上を流れる。 */
   /* 暗い地色: fixed で画面高さ100vhに固定＝実績の resGrow(黒)と全く同じ「伸び方」のグラデ。
      JS(updateDev) が #dev が画面に入っている間だけ opacity を上げる（受け渡しに継ぎ目が出ない）。 */
+  /* 【2026-08-26 ヒデさん指定・1スクロール削減】
+     開発者体験を実績セクションの“尾部(vh)”に重ねる。dev1 は黒(resGrow)の【裏】に潜ませ、
+     黒が実績の最後で全面を覆いきった所で dev1 が中央に着き、黒がフェード→その場に出現する。
+     ⚠️ position:relative + z-index:0 で #dev をひとつの重なり文脈にし、resGrow(fixed z-index:1)を
+        dev1 より前に出す（＝黒が dev1 を覆える）。これが無いと dev1 が黒の手前で「下からせり上がる」。 */
+  #dev { margin-top: -100vh; position: relative; z-index: 0; }
   .dev-bg {
     position: fixed;
     left: 0; top: 0;
@@ -1402,7 +1441,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=8" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=9" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -1560,24 +1599,46 @@
          .pin-stage の外＝transformの影響を受けない位置に置く -->
     <div class="res-grow" id="resGrow"></div>
     <div class="pin-stage">
-    <!-- 案A: カンプ 14824:22160 / 案B: カンプ 14831:22066 (既定) -->
-    <div class="res-img-frame rv" id="resImg">
-      <img src="assets/results-image.png" alt="">
-    </div>
-    <div class="res-col">
-      <div class="res-main rv" id="resMain">
-        <div class="res-head" id="resHead"></div>
-        <div class="res-line"></div>
-        <div class="res-nums">
-          <div class="rn"><b>導入企業</b><span id="cntMain">200+</span></div>
-          <div class="rn"><b>連携実績</b><span id="cntSub1">500+</span></div>
+    <!-- 実績 新デザイン (Figma 15833:23655・1138×456)。上=見出し+3数値 / 区切り線 / 下=2つの価値 -->
+    <div class="res2" id="res2Wrap">
+      <!-- 上段: 見出し(左) + 3数値(右) -->
+      <div class="res2-top">
+        <div class="res2-head" id="resHead">
+          <div class="res2-hl1" id="resHl1">事業の推進力を、</div>
+          <div class="res2-hl2"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span></div>
+        </div>
+        <div class="res2-stats" id="resStats">
+          <div class="r2s"><b>導入企業</b><span id="cntMain">200+</span></div>
+          <div class="r2s"><b>連携実績</b><span id="cntSub1">500+</span></div>
+          <div class="r2s"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
         </div>
       </div>
-      <div class="res-stats rv" id="resStats">
-        <div class="st"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
-        <div class="st"><b>最短リリース</b><span id="cntSub3">1week</span></div>
+      <!-- 区切り線(横) -->
+      <div class="res2-hr" id="resHr"></div>
+      <!-- 下段: 2つの価値 -->
+      <div class="res2-vals" id="resVals">
+        <div class="r2v">
+          <div class="r2v-text">
+            <div class="r2v-tagh">
+              <div class="r2v-tag r2v-tag-saas">for Saas</div>
+              <div class="r2v-h">リアルタイムに<br>データ同期</div>
+            </div>
+            <p class="r2v-p">テキストが入ります。テキストが入ります。テキストが入ります。</p>
+          </div>
+          <div class="r2v-graphic"><img src="assets/results-val-saas.svg" alt=""></div>
+        </div>
+        <div class="res2-vline"></div>
+        <div class="r2v">
+          <div class="r2v-text">
+            <div class="r2v-tagh">
+              <div class="r2v-tag r2v-tag-ai">for AI</div>
+              <div class="r2v-h">コンテキスト取得<br>から実行</div>
+            </div>
+            <p class="r2v-p">テキストが入ります。テキストが入ります。テキストが入ります。</p>
+          </div>
+          <div class="r2v-graphic"><img src="assets/results-val-ai.svg" alt=""></div>
+        </div>
       </div>
-      <div class="res-text rv" id="resText">テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。テキストが入ります。</div>
     </div>
     </div>
   </div>
@@ -2304,7 +2365,7 @@ const DEFAULTS = {
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
       outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
-      outTo: 0.85,     // 案B/C: ここで完全に黒/暗背景になる。開発者体験のすぐ手前で暗転しきる(黒→モックの余計スクロールを詰める・2026-08-25 0.60→0.85)
+      outTo: 0.95,     // ここで完全に黒。dev を実績尾部に重ねたので、黒の全面到達≒dev1中央到達に近づける(2026-08-26 0.85→0.95)
       outBlur: 22,     // 消える時のぼかし量(案Bのみ。案Cは白反転)
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
@@ -2443,7 +2504,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v71';   /* 2026-08-26 大改修(KV出現順/ビジョン軌道/開発者体験ループ/パネル刷新)で新既定を確実に反映するため更新 */
+const STORAGE_KEY = 'anyflow-embed-anim-v72';   /* 2026-08-26 実績リデザイン/KV速く/ビジョンブラー無し/1スクロール削減 で新既定を確実に反映 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -3171,7 +3232,7 @@ function renderNoPin() {
   /* 実績の中身も出したままにする。
      ⚠️ 再生前の状態で el.style.opacity = 0 が直接入るのに対し、出現側は setStyle
         （キャッシュ付き）で書くため、噛み合わずに 0 のまま残ることがある */
-  if (resEls) for (const el of [resEls.main, resEls.img, resEls.stats, resEls.text, resEls.head]) {
+  if (resEls) for (const el of [resEls.hl1, resEls.stats, resEls.vals, resEls.hr, resEls.head]) {
     if (!el) continue;
     el.style.opacity = '1';
     el.style.filter = '';
@@ -3574,8 +3635,9 @@ function updateVision(p) {
     : easeIO(clamp01((A - (splitAt - c.labelOutLead)) / Math.max(0.1, c.labelOutDur)));
   /* 【2026-08-25 指定】Our Vision は「先に消える」のをやめ、メッセージ(2行)と同じ
      タイミング(=軌道が左下へ移動し始める ex)で一緒に消す。 */
+  /* 【2026-08-26 ヒデさん指定】Our Vision の文字はブラーなし＝フェードのみで出す(blur=0) */
   rv(visEls.label, easeOutQ(clamp01((A - c.labelAt) / c.labelDur)) * (1 - ex),
-     blurOnlyLbl ? 12 : B, blurOnlyLbl ? 0 : 10);
+     0, 0);
 
   /* 見出し2行: 左寄せで下からトリミング出現(マスク) → その場でブラーで消える (上下分割は廃止) */
   [[visEls.l1, l1At, -1, 0], [visEls.l2, l2At, 1, 1]].forEach(([el, at, dir, idx]) => {
@@ -3600,14 +3662,12 @@ function updateVision(p) {
         const ki = easeOutQ(clamp01((raw0 - (ci / (n - 1)) * lag) / spanIn));
         sp.style.transform = blurOnly ? '' : `translateY(${((1 - ki) * 108).toFixed(2)}%)`;
         sp.style.opacity = blurOnly ? ki.toFixed(3) : '';
-        sp.style.filter = (ki > 0 && ki < 1)
-          ? `blur(${((1 - ki) * (blurOnly ? 10 : 5)).toFixed(2)}px)` : '';
+        sp.style.filter = '';   /* 2026-08-26: ブラーなし(下からのマスクのみで出す) */
       });
     } else {
       inner.style.transform = blurOnly ? '' : `translateY(${((1 - k) * 108).toFixed(2)}%)`;
       inner.style.opacity = blurOnly ? k.toFixed(3) : '';
-      inner.style.filter = (k > 0 && k < 1)
-        ? `blur(${((1 - k) * (blurOnly ? 10 : 5)).toFixed(2)}px)` : '';
+      inner.style.filter = '';   /* 2026-08-26: ブラーなし */
       if (chars[0] && (chars[0].style.transform || chars[0].style.opacity)) {
         chars.forEach(sp => { sp.style.transform = ''; sp.style.filter = ''; sp.style.opacity = ''; });
       }
@@ -3615,7 +3675,7 @@ function updateVision(p) {
     /* 【2026-08-25 指定】メッセージは分割(split/vanish)では消さず、軌道が移動し始めるタイミング(ex)で消す */
     const gone = ex;
     el.style.opacity = ((k > 0 ? 1 : 0) * (1 - gone)).toFixed(3);
-    el.style.filter = gone * B > 0.05 ? `blur(${(gone * B).toFixed(2)}px)` : '';
+    el.style.filter = '';   /* 2026-08-26 ヒデさん指定: 退場もブラーなし(フェードのみ) */
     /* 上下に開く → 止まらずに慣性で流れ続けながら消える */
     const dy = dir * (spK * c.splitAmt + drift);
     el.style.transform = `translate(0px, ${dy.toFixed(2)}px)`;
@@ -3742,38 +3802,28 @@ function updateVision(p) {
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
 const resEls = {
-  img: document.getElementById('resImg'),
-  imgInner: document.querySelector('#resImg img'),
-  main: document.getElementById('resMain'),
   head: document.getElementById('resHead'),
+  hl1: document.getElementById('resHl1'),     // 「事業の推進力を、」フェードイン
+  typed: document.getElementById('resTyped'), // 「Anyflowが支えます。」タイピング
+  caret: document.getElementById('resCaret'),
+  stats: document.getElementById('resStats'), // 3数値グループ
+  vals: document.getElementById('resVals'),   // 2つの価値
+  hr: document.getElementById('resHr'),       // 区切り線
   dark: document.getElementById('resDark'),
   grow: document.getElementById('resGrow'),
-  stats: document.getElementById('resStats'),
-  text: document.getElementById('resText'),
   cntMain: document.getElementById('cntMain'),
   cntSub1: document.getElementById('cntSub1'),
   cntSub2: document.getElementById('cntSub2'),
 };
-/* 見出しは1文字ずつの箱に分けて、キービジュアルと同じようにタイピングさせる */
-/* 案C: 白反転させるラベル(導入企業/連携実績/稼働率)。res-main が display:contents でも拾える */
-function resPatCLabels() { return [...SECS.results.querySelectorAll('.rn b, .st b')]; }
-const RES_HEAD_LINES = ['事業の推進力を、Anyflowが後押しします。'];   /* 2026-08-25: 1行＋文言「後押しします」に(ヒデさん指定) */
-const resHeadChars = (() => {
-  const root = resEls.head;
-  root.innerHTML = '';
-  const out = [];
-  RES_HEAD_LINES.forEach((line, li) => {
-    if (li) root.appendChild(document.createElement('br'));
-    for (const ch of line) {
-      const sp = document.createElement('span');
-      sp.className = 'rh-ch';
-      sp.textContent = ch;
-      root.appendChild(sp);
-      out.push(sp);
-    }
-  });
-  return out;
-})();
+const RES_TYPE_TEXT = 'Anyflowが支えます。';   /* 見出し2行目=タイピングする文言(Figma準拠) */
+/* 黒せり上がりで白反転させる「濃い文字」。色付きタグ(for Saas/for AI)は反転しない */
+function resInvertEls() {
+  return [resEls.hl1, resEls.typed,
+    ...SECS.results.querySelectorAll('.r2s b'),   // 数字ラベル(導入企業/連携実績/稼働率)
+    ...SECS.results.querySelectorAll('.r2s span'),// 数字そのもの
+    ...SECS.results.querySelectorAll('.r2v-h'),   // 価値の見出し
+    ...SECS.results.querySelectorAll('.r2v-p')];  // 価値の本文
+}
 let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
@@ -3787,7 +3837,7 @@ let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロー�
    数字は「0 から目的の数字まで、0〜9 を何周か流してから止まる」形で作る。
    桁ごとに少し遅らせて止めるので、左から順に確定していく。 */
 const SLOT_TARGETS = [
-  ['cntMain', '200+'], ['cntSub1', '500+'], ['cntSub2', '99.9%'], ['cntSub3', '1week'],
+  ['cntMain', '200+'], ['cntSub1', '500+'], ['cntSub2', '99.9%'],   /* 2026-08-26: 3数値(最短リリースは廃止) */
 ];
 let slots = [];
 let slotBuiltCycles = -1;
@@ -3864,7 +3914,11 @@ function renderSlots(ts) {
 /* 見出しが出きるまで と 数字が回りきるまで の、遅い方 */
 function resTotal() {
   const c = params.sections.results;
-  return Math.max(c.typeAt + c.softDur + 0.2, slotEnd() + 0.3);
+  const l1Dur = c.softDur * 0.6;
+  const typeStart = c.typeAt + l1Dur + 0.15;
+  const typeEnd = typeStart + RES_TYPE_TEXT.length * 0.06;
+  const restEnd = typeStart + 0.1 + c.softDur * 0.8;
+  return Math.max(typeEnd, restEnd, slotEnd() + 0.3) + 0.4;
 }
 /* 中央でピン留めされたら再生。出終わったらスクロールで下のセクションへ抜ける。
    ⚠️ 以前は「時間だけ」で進めていたので、ピンしている間にスクロールしても何も進まず、
@@ -3872,163 +3926,92 @@ function resTotal() {
       いまは【時間でも進む／スクロールでも進む、速い方を採用】。止まっていても勝手に出てくるし、
       スクロールした分はちゃんと先へ進むので、無駄なスクロールが発生しない。
       max で持つので巻き戻りもしない (リプレイなし) */
+let resInvertOn = false;   /* 白反転のインライン color を今かけているか(掃除用) */
 function updateResults(p) {
   const c = params.sections.results;
-  const pat = params.patterns.results;                // 'A' | 'B' | 'C'
-  const patA = pat === 'A';
-  const patC = pat === 'C';
-  const patB = !patA && !patC;                        // 既定Bは A でも C でもない場合
-  SECS.results.classList.toggle('pat-a', patA);
-  SECS.results.classList.toggle('pat-b', patB);
-  SECS.results.classList.toggle('pat-c', patC);
+  SECS.results.classList.add('pat-c');                 // 単一レイアウト(pin-vp 地色/z-index に使用)
+  SECS.results.classList.remove('pat-a', 'pat-b');
 
-  /* 【2026-08-15】「ビューポートに入った段階で始めてよい（中央でなくてよい）」指定。
-     ピンで固定して止めるのはやめ、セクションが画面に入った時刻を起点に時間で再生する */
-  const pre = progOverride.resultsPre != null ? progOverride.resultsPre : preP(SECS.results);
-  /* 【2026-08-15】ビューポート中央(＝固定が始まった瞬間)に来たら再生し、
-     再生が終わるまでスクロールを止める（他のセクションと同じ playT の仕組み） */
   buildSlots();
   const t = playT('results', resTotal(), canPlay(p), SECS.results, p);
 
-  /* パララックス: 枠は動かさず、中の画像の位置だけスクロールでずらす */
-  const r = rectOf(SECS.results);
-  const q = clamp01((innerHeight - r.top) / (innerHeight + r.height));
-  if (patB) {
-    /* 案B は実寸の画像を縦にずらす */
-    resEls.imgInner.style.objectPosition = '';
-    resEls.imgInner.style.top = (-625.6 + (q - 0.5) * c.parallax * 3).toFixed(2) + 'px';
-  } else if (patA) {
-    resEls.imgInner.style.top = '';
-    resEls.imgInner.style.objectPosition = `50% ${(62 + (q - 0.5) * c.parallax).toFixed(2)}%`;
-  }
-  /* 案C は画像なし＝パララックスなし */
-
+  /* ---- 再生前: 全部隠す(数字は0で待機) ---- */
   if (t < 0) {
     resEls.dark.style.opacity = 0;
-    if (resEls.grow) { resEls.grow.style.opacity = 0; resEls.grow.style.transform = 'translateY(82%) scale(0.07, 0.55)'; resEls.grow.style.borderRadius = '0'; }
-    /* ⚠️ ここは rv()/setStyle と同じ要素を触るので、直接 style を書かないこと。
-       直接書くとキャッシュとズレて、次に出そうとした時に書き込みが省略される
-       （2026-08-19: これで実績が二度と出てこなくなっていた） */
-    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { rv(el, 0, 0); });
-    /* ⚠️【2026-08-25 バグ修正】案C(pat-c)では .res-main が display:contents。
-       箱を持たないので rv(resEls.main, 0, 0) の opacity は無視され、子の .res-nums
-       (導入企業/連携実績の2数値)が非表示にならず「000+」が2個だけ先に見えていた
-       （稼働率=res-stats は直接消えるので残らず、ちょうど2個だけ漏れる症状と一致）。
-       .res-nums を直接 rv で隠す。再生時は下の rv(nums, nk, …) が引き継ぐ。 */
-    const numsHideEl = resEls.main.querySelector('.res-nums');
-    if (numsHideEl) rv(numsHideEl, 0, 0);
-    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
-    resEls.head.style.opacity = 0;
-    renderSlots(-1);   /* 数字は 0 の位置で待たせる */
+    if (resEls.grow) { resEls.grow.style.opacity = 0; resEls.grow.style.transform = 'translateY(82%) scale(0.07, 0.55)'; }
+    rv(resEls.hl1, 0, 0); rv(resEls.stats, 0, 0); rv(resEls.vals, 0, 0); rv(resEls.hr, 0, 0);
+    resEls.typed.textContent = '';
+    if (resEls.caret) resEls.caret.style.opacity = 0;
+    renderSlots(-1);
     slotT0 = null;
     return;
   }
 
-  if (!patA) {
-    /* ---- 案B/C 共通: 【2026-08-15 確定・案Cも同じ入り方】
-       ①「事業の推進力を、Anyflowが支えます。」がブラーで出る
-       ② そのあと 罫線 → 数字 → 下段 → 本文 が続けてブラーで出る
-       ③ 左の画像は①と同時にブラーで出る ---- */
-    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
-    /* 【2026-08-25 指定】ビューポート下に来たら、上から順に(見出し→数値の行→本文)ブラーで出現。
-       数値の行が出きってから、そのあとでスロット回転を始める(ブラーと回転が重ならないように)。 */
-    const D = c.softDur * 0.8;         // 1要素の出現尺
-    const G = c.softDur * 0.5;         // 上→下の遅れ
-    const revK = i => easeOutQ(clamp01((t - (c.typeAt + i * G)) / D));
-    const hk = revK(0), nk = revK(1), tk = revK(2);
-    /* 見出し */
-    resEls.head.style.opacity = hk.toFixed(3);
-    resEls.head.style.filter = hk >= 1 ? '' : `blur(${((1 - hk) * 12).toFixed(2)}px)`;
-    /* 数値の行(導入企業/連携実績/稼働率) */
-    rv(resEls.main, 1, 0);
-    resEls.main.style.filter = '';
-    resEls.main.querySelector('.res-line').style.opacity = 1;
-    const nums = resEls.main.querySelector('.res-nums');
-    rv(nums, nk, 12, 10);
-    rv(resEls.stats, nk, 12, 10);
-    /* 本文 */
-    rv(resEls.text, tk, 12, 10);
-    /* スロット: 数値の行が出きって(nk≒1)から、かつ数字が画面に入ってから回す */
-    const nr = rectOf(nums);
-    if (slotT0 === null) {
-      if (nk >= 0.999 && nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
-    } else if (nr.top > innerHeight * 1.2) {
-      slotT0 = null;
-    }
-    renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
-    /* 見出しと同時に左の画像もブラーで出る（案Bのみ・案Cは画像なし） */
-    if (patB) rv(resEls.img, revK(0), c.imgBlur);
-  } else {
-    /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
-    resHeadChars.forEach(sp => { sp.style.opacity = 1; });
-    resEls.head.style.opacity = 1; resEls.head.style.filter = '';
-    const kTx = easeOutQ(clamp01((t - 0.1) / c.softDur));
-    rv(resEls.main,  kTx, 8, 14);
-    resEls.main.querySelector('.res-line').style.opacity = 1;
-    resEls.main.querySelector('.res-nums').style.opacity = 1;
-    resEls.main.querySelector('.res-nums').style.filter = '';
-    rv(resEls.stats, kTx, 8, 12);
-    rv(resEls.text,  kTx, 8, 12);
-    rv(resEls.img,   easeOutQ(clamp01((t - c.imgAt) / (c.softDur * 1.4))), c.imgBlur);
-    renderSlots(t - 0.1);   /* 案A は従来どおり時間で回す */
+  /* ---- 再生【2026-08-26 ヒデさん指定・ブラーなしフェード】
+     ①「事業の推進力を、」フェードイン → ②「Anyflowが支えます。」タイピング
+     → ③ タイピング開始頃から 残り(区切り線/3数値/2つの価値)がフェードイン
+     → ④ 数値は0の状態からスロットカウンター ---- */
+  const l1Dur = c.softDur * 0.6;
+  const l1k = easeOutQ(clamp01((t - c.typeAt) / l1Dur));
+  rv(resEls.hl1, l1k, 0, 0);                            // ① フェード(blur=0)
+
+  const typeStart = c.typeAt + l1Dur + 0.15;           // ② タイピング開始
+  const CH = 0.06, chars = RES_TYPE_TEXT.length;
+  const typeEnd = typeStart + chars * CH;
+  const nTyped = t < typeStart ? 0 : Math.min(chars, Math.floor((t - typeStart) / CH));
+  resEls.typed.textContent = RES_TYPE_TEXT.slice(0, nTyped);
+  const typing = t >= typeStart - 0.05 && t < typeEnd + 0.4;
+  if (resEls.caret) resEls.caret.style.opacity = (typing && (t * 1.8) % 1 < 0.55) ? 1 : 0;
+
+  const restAt = typeStart + 0.1;                      // ③ 残りがフェード(タイピング開始頃から)
+  const restK = easeOutQ(clamp01((t - restAt) / (c.softDur * 0.8)));
+  rv(resEls.hr, restK, 0, 0);
+  rv(resEls.stats, restK, 0, 0);
+  rv(resEls.vals, restK, 0, 0);
+
+  /* ④ スロット: 数値が出てきたら(restK≒出そろい)0から回す */
+  const nr = rectOf(resEls.stats);
+  if (slotT0 === null) {
+    if (restK >= 0.6 && nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
+  } else if (nr.top > innerHeight * 1.2) {
+    slotT0 = null;
   }
+  renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
 
-  /* ⚠️ ここに以前あった setCounter() は削除した。
-     毎フレーム textContent を書き戻すので、スロットのリールを作った直後に
-     平文へ潰してしまう（2026-08-17 にこれで1回ハマった）。
-     数字の描画は renderSlots() が受け持つ。 */
-
-  /* ===== 実績 → 開発者体験 のつなぎ ===== */
+  /* ===== 実績 → 開発者体験 のつなぎ(黒せり上がり + 白反転) ===== */
   const devTop = rectOf(SECS.dev).top;
-  const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=開発者体験が着いた */
-
-  if (patC) {
-    /* 案C: 黒い縦長のレクタングル(角丸なし)が①下から上下中央へ→②中央から左右上下に広がって全画面。
-       文字は【上のレイヤー】に残し、黒が来た所は“白反転”→最後に消す。 */
-    const grin    = clamp01((p - c.outFrom) / (c.outTo - c.outFrom));  // 0→1 全体進行
-    const riseK   = easeOutC(clamp01(grin / 0.40));                    // ① 下から中央へ
-    const spreadK = easeIO(clamp01((grin - 0.36) / 0.64));             // ② 中央から左右上下へ
-    if (resEls.grow) {
-      const gy = (1 - riseK) * 82;                    // 下(82%下) → 中央(0)
-      const sx = 0.07 + spreadK * 0.93;               // 細い棒 → 全幅
-      const sy = 0.55 + spreadK * 0.45;               // 縦長 → 全高
-      resEls.grow.style.transform = `translateY(${gy.toFixed(2)}%) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
-      /* 入ってきたら不透明 → 開発者体験が着いたら渡してフェード（同じ黒なので継ぎ目なし） */
-      resEls.grow.style.opacity = (clamp01(riseK * 4) * (1 - handed)).toFixed(3);
-    }
-    resEls.dark.style.opacity = 0;
-    /* 黒が来た所の文字は“白反転”（読めるまま白へ）→ 全画面の黒になる頃に消す。
-       res-main は display:contents のため rendered box を直接触る */
-    const invK   = easeIO(clamp01((grin - 0.18) / 0.34));   // 黒が上がってくるほど白へ
-    const fadeK  = clamp01((grin - 0.66) / 0.30);           // 全画面の黒になる頃に消す
-    const numsEl = resEls.main.querySelector('.res-nums');
-    const mix = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
-    resEls.head.style.color = mix([16, 24, 40]);  resEls.head.style.filter = '';
-    resEls.text.style.color = mix([16, 24, 40]);
-    if (numsEl) numsEl.style.color = mix([0, 0, 0]);
-    resEls.stats.style.color = mix([0, 0, 0]);
-    resPatCLabels().forEach(bEl => { bEl.style.color = mix([138, 143, 152]); });
-    resEls.head.style.opacity = (1 - fadeK).toFixed(3);
-    [numsEl, resEls.stats, resEls.text].forEach(el => { if (el) { setStyle(el, 'opacity', (1 - fadeK).toFixed(3)); setStyle(el, 'filter', ''); } });
-  } else {
-    /* 案C用に付けた白反転のインライン color を掃除（A/Bへ戻した時に白いまま残らないように） */
-    if (resEls.head.style.color) {
-      [resEls.head, resEls.text, resEls.stats].forEach(el => { el.style.color = ''; });
-      const nn = resEls.main.querySelector('.res-nums'); if (nn) nn.style.color = '';
-      resHeadChars.forEach(sp => { sp.style.color = ''; });
-      resPatCLabels().forEach(bEl => { bEl.style.color = ''; });
-    }
-    /* 案A/B: 従来どおり固定の暗幕を opacity でクロスフェード（開発者体験が着くまで出しっぱなし） */
-    if (resEls.grow) resEls.grow.style.opacity = 0;
-    const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
-    resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
-    if (outK > 0) {
-      /* ⚠️ ここも rv() と同じ要素なので setStyle 経由で書く（直接書くとキャッシュとズレる） */
-      [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
-        setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - outK)).toFixed(3));
-        setStyle(el, 'filter', `blur(${(outK * c.outBlur).toFixed(2)}px)`);
-      });
-    }
+  const handed = clamp01((-devTop) / (innerHeight * 0.25));
+  const grin    = clamp01((p - c.outFrom) / (c.outTo - c.outFrom));
+  const riseK   = easeOutC(clamp01(grin / 0.40));
+  const spreadK = easeIO(clamp01((grin - 0.36) / 0.64));
+  if (resEls.grow) {
+    const gy = (1 - riseK) * 82;
+    const sx = 0.07 + spreadK * 0.93;
+    const sy = 0.55 + spreadK * 0.45;
+    resEls.grow.style.transform = `translateY(${gy.toFixed(2)}%) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+    resEls.grow.style.opacity = (clamp01(riseK * 4) * (1 - handed)).toFixed(3);
+  }
+  resEls.dark.style.opacity = 0;
+  /* 黒が来た所の“濃い文字”は白へ反転(色付きタグ for Saas/for AI は反転しない) → 全画面黒で消す。
+     ⚠️ 以前は .rn b, .st b の color:#333 !important が反転を上書きして数字ラベルが白反転しなかった。
+        新デザインはラベルに !important を付けていないので、インライン color がそのまま効く。 */
+  const invK  = easeIO(clamp01((grin - 0.18) / 0.34));
+  const fadeK = clamp01((grin - 0.66) / 0.30);
+  if (grin > 0.001) {
+    resInvertOn = true;
+    const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
+    resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+    const lc = `rgba(${Math.round(209 + (255 - 209) * invK)},${Math.round(213 + (255 - 213) * invK)},${Math.round(220 + (255 - 220) * invK)},${(0.6 + 0.4 * invK).toFixed(2)})`;
+    if (resEls.hr) resEls.hr.style.background = lc;
+    SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = lc);
+    const fo = (1 - fadeK).toFixed(3);
+    [resEls.hl1, resEls.head, resEls.stats, resEls.vals, resEls.hr].forEach(el => { if (el) setStyle(el, 'opacity', fo); });
+  } else if (resInvertOn) {
+    /* 反転を掛けていない位置に戻ったら、インライン color を掃除(次の再生で白く残らない) */
+    resInvertOn = false;
+    resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+    if (resEls.hr) resEls.hr.style.background = '';
+    SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
   }
 }
 
@@ -4679,7 +4662,9 @@ function updateDev2Reveal() {
   const kMock = s < 0 ? 0 : easeOutQ(clamp01((s - 0.45) / 0.6));   // ② モック
   const kList = s < 0 ? 0 : easeOutQ(clamp01((s - 0.95) / 0.6));   // ③ 右テキスト
   revealEl(devEls.h2, kHead, 16, 24);
-  revealEl(dev2StackEl, kMock, 0, 0);    // モック枠は opacity のみ(親 blur は 3D/backdrop-filter を壊すため)
+  /* 【2026-08-26 ヒデさん指定】親ボックス(モック)は最初から出さず、ブラーでフェードイン。
+     .dm-panel は濃い下地も敷いているので、親 blur で backdrop-filter が一瞬切れても見た目は変わらない。 */
+  revealEl(dev2StackEl, kMock, 16, 0);
   revealEl(devEls.list, kList, 16, 24);
   /* モックはブロックが見えている間ずっと回す（API=本体 / CLI・SDK=ゴーストも同期して回す） */
   const on = kBlock > 0.35;

@@ -259,11 +259,13 @@
     /* 【2026-08-25 ヒデさん指定】順番: ①モックが出てタイピング → ②タイピング完了後にアイコンが浮上
        → ③最後に軌道が出てドットが回り始める。各要素は1回だけ出して出っ放し(再出現なし)。 */
     requestAnimationFrame(() => {
+      /* 【2026-08-26 ヒデさん指定】モックが出たら、タイピング完了は待たずに
+         アイコンをすぐ出す → 軌道もそのすぐ後。モックのタイピングは裏で並行して進む。 */
       T(() => mock && mock.classList.add('in'), 80);                     /* ① モック(直後にタイピング開始) */
-      const afterType = 80 + Math.max(600, eMockDur) + 250;             /* タイピング完了後 */
-      icons.forEach((ic, i) => T(() => ic.classList.add('in'), afterType + i * 130)); /* ② アイコンが浮上 */
-      const afterIcons = afterType + icons.length * 130 + 350;
-      T(() => bg.forEach(e => e.classList.add('in')), afterIcons);       /* ③ 軌道＋ドット */
+      const afterMock = 80 + 620;                                        /* モックがフェードインした直後（タイピングは待たない） */
+      icons.forEach((ic, i) => T(() => ic.classList.add('in'), afterMock + i * 110)); /* ② アイコンがすぐ浮上 */
+      const afterIcons = afterMock + icons.length * 110 + 220;
+      T(() => bg.forEach(e => e.classList.add('in')), afterIcons);       /* ③ 軌道＋ドット(そのすぐ後) */
       T(() => scene.classList.remove('kvp-intro'), afterIcons + 900);    /* 演出終了：初期scopeを解除 */
     });
   }
