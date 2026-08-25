@@ -15,6 +15,7 @@
   const dashRect = { l: C.x - DASH.w / 2, r: C.x + DASH.w / 2, t: C.y - DASH.h / 2, b: C.y + DASH.h / 2 };
   const ICO = 112;                                /* アイコン箱の一辺 */
   const ICONS_DIR = 'assets/icons/';
+  const MASK_DIR = 'assets/masks/';   /* ガラス形状の不透明シルエット（backdrop-filterのマスク用） */
 
   /* Figma実測: ガラス棒＝border .5px #7EE5FF / backdrop-blur 10px / シアン2色グラデ+白10% / inner inset 0 3px 10px rgba(255,255,255,.4) */
   const GLASS_BAR =
@@ -29,7 +30,7 @@
   const ICON_DEFS = {
     chat: [
       { svg: 'chat-body.svg',   inset: [18.57, 32.34, 31.79, 14.68] },
-      { svg: 'chat-shape1.svg', inset: [31.82, 14.68, 18.57, 32.34] },
+      { glass: 'chat-shape1.svg', inset: [31.82, 14.68, 18.57, 32.34] },
       { css: 'background:#fff;border-radius:6px;', inset: [46, 30, 47, 46] },
       { css: 'background:#fff;border-radius:6px;', inset: [55, 36, 40, 46] },
     ],
@@ -41,8 +42,8 @@
     ],
     person: [
       { svg: 'person-ell98.svg',  inset: [10.5, 24.5, 67.75, 53.75] },
-      { svg: 'person-ell97.svg',  inset: [15.85, 33.6, 51.36, 33.6] },
-      { svg: 'person-vector.svg', inset: [50, 14.36, 21.41, 17.32] },
+      { glass: 'person-ell97.svg', inset: [15.85, 33.6, 51.36, 33.6] },
+      { glass: 'person-vector.svg', inset: [50, 14.36, 21.41, 17.32] },
     ],
     lock: [
       { svg: 'lock-union.svg', inset: [16.66, 33.16, 48.94, 33.16] },
@@ -55,7 +56,7 @@
     ],
     cloud: [
       { svg: 'cloud-ell96.svg', inset: [18.14, 14.25, 43.56, 47.45] },
-      { svg: 'cloud-union.svg', inset: [27.4, 11.03, 24.28, 11.03] },
+      { glass: 'cloud-union.svg', inset: [27.4, 11.03, 24.28, 11.03] },
     ],
     calendar: [
       { css: GRAD + 'border-radius:99px;', inset: [12.95, 57.98, 58.91, 31.34] },
@@ -266,6 +267,16 @@
       s.style.width = b.width + '%'; s.style.height = b.height + '%';
       if (part.css) s.style.cssText += ';' + part.css;
       if (part.svg) loadSVG(part.svg, s);
+      if (part.glass) {
+        /* ガラス部品＝ライブCSS backdrop-filter を SVG形状でマスク。後ろ(前面の青ソリッド等)を本当にボカす。
+           シアン薄グラデ＋内側の光＝Figmaのガラス質感。SVGのforeignObjectブラーは死ぬので使わない */
+        const m = MASK_DIR + part.glass;
+        const gb = Math.max(4, size * 0.09).toFixed(1);   /* ガラスのブラーはアイコンサイズ比 */
+        s.style.cssText += ';background:linear-gradient(140deg,rgba(152,225,255,.42),rgba(72,170,255,.34));'
+          + `backdrop-filter:blur(${gb}px) saturate(1.5);-webkit-backdrop-filter:blur(${gb}px) saturate(1.5);`
+          + 'box-shadow:inset 0 2px 6px rgba(255,255,255,.55),inset 0 0 1px rgba(120,210,255,.8);'
+          + `-webkit-mask:url(${m}) no-repeat center/contain;mask:url(${m}) no-repeat center/contain;`;
+      }
       glyph.appendChild(s);
     });
     face.appendChild(glyph);
