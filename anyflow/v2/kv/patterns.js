@@ -175,6 +175,14 @@
       if (CSS_REBUILD[f]) {
         const ico = buildIcon(CSS_REBUILD[f], 'glass', fs);
         ico.classList.add('kvp-ico-svg', 'kvp-ico--rebuilt');
+        /* アイソメ厚み用: スラブを不透明白＋奥ほど暗く、Zは --thk で可変（普通ビューでは display:none）。
+           slabのサイズ基準は fs。①積層スラブ方式の実体。 */
+        const slabs = ico.querySelectorAll('.kvp-slab');
+        slabs.forEach((s, j) => {
+          const k = (slabs.length - j) / slabs.length;   /* 0(手前)〜1(奥) */
+          s.style.background = 'hsl(220 16% ' + (100 - 15 * k).toFixed(1) + '%)';
+          s.style.transform = 'translateZ(calc(var(--thk, 26px) * ' + (-k).toFixed(3) + ' * ' + (fs / 112).toFixed(3) + '))';
+        });
         placeIcon(ico, x, y, fs);
         ico.style.setProperty('--fd', (i * 0.6) + 's');
         front.appendChild(ico);
@@ -565,7 +573,7 @@
   function start(cfg) {
     cfg = cfg || {};
     rootEl = document.getElementById(cfg.mount || 'kvp');
-    rootEl.classList.add('kvp-root', 'hidden');
+    rootEl.classList.add('kvp-root', 'hidden', 'thk-1');   /* 既定の厚み方式=①積層スラブ */
     const stage = document.createElement('div'); stage.className = 'kvp-stage'; rootEl.appendChild(stage);
     worldEl = document.createElement('div'); worldEl.className = 'kvp-world'; stage.appendChild(worldEl);
     function fit() {
@@ -628,6 +636,12 @@
     applyFloat(); applyTransform();
   }
 
+  /* アイソメの厚み: 方式(1=積層/2=面/3=影)と 厚み/光源角度/光の強さ */
+  function setThick(n) { rootEl.classList.remove('thk-1', 'thk-2', 'thk-3'); rootEl.classList.add('thk-' + n); }
+  function setThickVar(k, v) {
+    const map = { thk: '--thk', lang: '--lang', lint: '--lint' };
+    if (map[k]) rootEl.style.setProperty(map[k], v);
+  }
   function setFloat(on) { floatOn = !!on; applyFloat(); }
   function setParallax(on) { parallaxOn = !!on; applyParallax(); }
   function setTransform(v) { curTransform = Object.assign(curTransform, v); applyTransform(); }
@@ -635,5 +649,6 @@
   function hide() { rootEl.classList.add('hidden'); }
 
   global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform, setView,
+    setThick, setThickVar,
     get: () => cur, getTransform: () => Object.assign({}, curTransform), PATTERNS, C, STAGE };
 })(window);
