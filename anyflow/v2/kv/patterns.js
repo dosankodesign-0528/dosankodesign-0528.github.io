@@ -157,7 +157,12 @@
     eSpins.forEach(s => { s.style.animationName = dotEase === 'pulse' ? 'kvpSpinPulse' : 'kvpSpin'; });
   }
   function buildSvgScene(useImg) {
-    const scene = document.createElement('div'); scene.className = 'kvp-svgscene';
+    /* ⚠️ .kvp-intro（初期非表示 opacity:0）はシーン生成時に付ける。
+       後から付けると、appendChild → startEMock の強制リフロー(void offsetWidth)で
+       アイコン/モックのopacityが 1 のまま確定してしまい、opacityのtransitionが
+       「1→0(消える)→0→1(また出る)」と余計に走ってチラつく（出て消えてまた出る）。
+       生成時から付ければ“最初の算出値が0”になり、無駄なフェードアウトが起きない。 */
+    const scene = document.createElement('div'); scene.className = 'kvp-svgscene kvp-intro';
     const back = document.createElement('div'); back.className = 'kvp-e-back';
     const front = document.createElement('div'); front.className = 'kvp-e-icons';
     const put = (parent, f, left, top, w, h) => {

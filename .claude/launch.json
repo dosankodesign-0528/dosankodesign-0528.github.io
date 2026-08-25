@@ -122,9 +122,9 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v2' && exec python3 -m http.server 8774"
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v2' && exec python3 -m http.server 8775"
       ],
-      "port": 8774
+      "port": 8775
     },
     {
       "name": "abashiri-v2-start",

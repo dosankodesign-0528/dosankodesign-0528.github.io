@@ -1402,7 +1402,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=6" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=7" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -3909,6 +3909,13 @@ function updateResults(p) {
        直接書くとキャッシュとズレて、次に出そうとした時に書き込みが省略される
        （2026-08-19: これで実績が二度と出てこなくなっていた） */
     [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => { rv(el, 0, 0); });
+    /* ⚠️【2026-08-25 バグ修正】案C(pat-c)では .res-main が display:contents。
+       箱を持たないので rv(resEls.main, 0, 0) の opacity は無視され、子の .res-nums
+       (導入企業/連携実績の2数値)が非表示にならず「000+」が2個だけ先に見えていた
+       （稼働率=res-stats は直接消えるので残らず、ちょうど2個だけ漏れる症状と一致）。
+       .res-nums を直接 rv で隠す。再生時は下の rv(nums, nk, …) が引き継ぐ。 */
+    const numsHideEl = resEls.main.querySelector('.res-nums');
+    if (numsHideEl) rv(numsHideEl, 0, 0);
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
     resEls.head.style.opacity = 0;
     renderSlots(-1);   /* 数字は 0 の位置で待たせる */
