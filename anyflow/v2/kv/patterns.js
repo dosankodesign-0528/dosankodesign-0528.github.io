@@ -204,18 +204,13 @@
     const T = (fn, ms) => introTimers.push(setTimeout(fn, ms));
     const mock = scene.querySelector('.kvp-emock-slot');
     const icons = [].slice.call(scene.querySelectorAll('.kvp-ico-svg'));
-    const bg = [].slice.call(scene.querySelectorAll('.kvp-eglow, .kvp-eorbits, .kvp-svgel, .kvp-espin'));
-    /* アイコンはランダムな方向から飛んでくる（バラバラ感）*/
-    icons.forEach(ic => {
-      ic.style.setProperty('--idx', Math.round((Math.random() - 0.5) * 170) + 'px');
-      ic.style.setProperty('--idy', Math.round((Math.random() - 0.5) * 150) + 'px');
-    });
-    const order = icons.slice().sort(() => Math.random() - 0.5);   /* 出る順もランダム */
+    const bg = [].slice.call(scene.querySelectorAll('.kvp-eorbits, .kvp-svgel, .kvp-espin'));
+    /* 上品なフェードインのみ：mock→アイコンを均等ステガーで→軌道/ドット。散らばり・緩急なし */
     requestAnimationFrame(() => {
-      T(() => mock && mock.classList.add('in'), 150);                       /* ① mock */
-      order.forEach((ic, i) => T(() => ic.classList.add('in'), 700 + i * 130 + Math.random() * 90)); /* ② アイコン */
-      T(() => bg.forEach(e => e.classList.add('in')), 1500);               /* ③ 軌道・ドット・発光 */
-      T(() => scene.classList.remove('kvp-intro'), 2700);                  /* 演出終了：初期scopeを解除 */
+      T(() => mock && mock.classList.add('in'), 120);                     /* ① mock */
+      icons.forEach((ic, i) => T(() => ic.classList.add('in'), 560 + i * 110)); /* ② アイコン(均等) */
+      T(() => bg.forEach(e => e.classList.add('in')), 1300);             /* ③ 軌道・周回ドット */
+      T(() => scene.classList.remove('kvp-intro'), 2300);                /* 演出終了：初期scopeを解除 */
     });
   }
 

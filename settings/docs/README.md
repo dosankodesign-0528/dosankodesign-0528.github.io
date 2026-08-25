@@ -49,6 +49,7 @@
 | [anyflow/STORYBOARD-NOTES.md](anyflow/STORYBOARD-NOTES.md) | 絵コンテのメモ |
 | [anyflow/FRAMER-AGENT-BRIEF.md](anyflow/FRAMER-AGENT-BRIEF.md) | Framer 側の担当者／AI 向けの依頼書 |
 | [anyflow/anyflow-postmortem.md](anyflow/anyflow-postmortem.md) | 事故の振り返り（[general/WORKING-RULES.md](general/WORKING-RULES.md) の根拠になった実測） |
+| [anyflow/BACKDROP-FILTER-HANDOFF.md](anyflow/BACKDROP-FILTER-HANDOFF.md) | v2 KV のすりガラス(backdrop-filter)問題の引き継ぎ書（原因複数・試したこと・検証法・次の一手。別アカ継続用） |
 
 ### travel-shiori（旅のしおり）
 | ファイル | 中身 |

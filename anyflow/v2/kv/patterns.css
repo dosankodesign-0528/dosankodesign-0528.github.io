@@ -140,17 +140,13 @@ body { background: #E7E7E7; }
 /* === KV入場アニメ（H）：mock→アイコンがバラバラ出現→軌道/ドット/発光。
    scene に .kvp-intro が付いてる間だけ初期非表示。JSが順に .in を付けて出す。
    演出後は .kvp-intro を外す＝アイコンにtransformを残さない（グリフのbackdrop-filterを生かす）。 */
-.kvp-intro .kvp-eglow, .kvp-intro .kvp-eorbits, .kvp-intro .kvp-svgel, .kvp-intro .kvp-espin {
-  opacity: 0; transition: opacity .9s ease-out; }
-.kvp-intro .kvp-emock-slot {
-  opacity: 0; transform: translateY(22px) scale(.96);
-  transition: opacity .55s ease-out, transform .6s cubic-bezier(.2,.8,.2,1); }
-.kvp-intro .kvp-ico-svg {
-  opacity: 0; transform: translate(var(--idx,0px), var(--idy,0px)) scale(.45);
-  transition: opacity .5s ease-out, transform .6s cubic-bezier(.2,.9,.3,1.25); }
-.kvp-intro .kvp-eglow.in, .kvp-intro .kvp-eorbits.in, .kvp-intro .kvp-svgel.in,
-.kvp-intro .kvp-espin.in, .kvp-intro .kvp-emock-slot.in, .kvp-intro .kvp-ico-svg.in {
-  opacity: 1; transform: none; }
+/* 上品なフェードインのみ（散らばり・跳ね・緩急なし）。transformを使わない＝グリフのbackdrop-filterも維持 */
+.kvp-intro .kvp-eorbits, .kvp-intro .kvp-svgel, .kvp-intro .kvp-espin,
+.kvp-intro .kvp-emock-slot, .kvp-intro .kvp-ico-svg {
+  opacity: 0; transition: opacity .6s ease-out; }
+.kvp-intro .kvp-eorbits.in, .kvp-intro .kvp-svgel.in, .kvp-intro .kvp-espin.in,
+.kvp-intro .kvp-emock-slot.in, .kvp-intro .kvp-ico-svg.in {
+  opacity: 1; }
 
 /* --- E: アニメするmock（frosted glass・Figma実測の質感） --- */
 /* ⚠️ すりガラスは「縮小されない枠(slot)」に載せる。中身(.kvp-emock)は transform:scale で
