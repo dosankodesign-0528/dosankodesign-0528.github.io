@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=26">
+<link rel="stylesheet" href="patterns.css?v=27">
 </head>
 <body>
 
@@ -56,6 +56,7 @@
     <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">F</button>
     <button data-design="blender" title="Blender 3D">G</button>
     <button data-design="p6" title="Figma SVG忠実版">H</button>
+    <button data-design="p7" title="塗り実測忠実版（無地でもガラス・backdrop非依存）">I</button>
   </div>
   <div class="row1">
     ビュー:
@@ -81,7 +82,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=26"></script>
+<script src="patterns.js?v=27"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -137,7 +138,7 @@
     kvHost.style.display = isAgent ? '' : 'none';
     kvBlender.classList.toggle('hidden', !isBlender);
     row1.style.display = isBlender ? 'none' : '';         /* ビューはBlender以外で有効 */
-    rowE.style.display = (d === 'p5' || d === 'p6') ? '' : 'none';   /* 浮遊/パララックスは F・H で */
+    rowE.style.display = (d === 'p5' || d === 'p6' || d === 'p7') ? '' : 'none';   /* 浮遊/パララックスは F・H・I で */
     if (isAgent) { KVP.hide(); syncViewUI('flat'); }
     else if (isBlender) { KVP.hide(); }
     else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }

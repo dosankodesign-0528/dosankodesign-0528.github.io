@@ -25,6 +25,27 @@
     'box-shadow:inset 0 3px 10px rgba(255,255,255,.4);';
   const GRAD = 'background-image:linear-gradient(180deg,#58D0FF,#0EBBFF);';
   const CAL_CELL = 'background:#fff;border-radius:3px;box-shadow:inset 0 1px 1px rgba(255,255,255,.6);';
+  /* カレンダー本体のガラス（従来）。paint版で差し替えられるよう定数化 */
+  const CAL_GLASS = 'border:.5px solid #7EE5FF;border-radius:9px;background-image:linear-gradient(108deg,rgba(130,232,255,.3),rgba(55,159,255,.3));backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:inset 0 3px 10px rgba(255,255,255,.4);';
+
+  /* ===== 案I（p7）: 塗り実測忠実版 =====
+     ガラスの「見た目」を backdrop-filter でなく グラデ＋不透明度＋フチ光 で作る。
+     → 無地(#E7E7E7)でもカンプ通りに見え、模様に重なっても濁らない。
+     backdrop-filter は残す＝物に重なった所でだけ効く“オマケ”。 */
+  const GLASS_BAR_PAINT =
+    'border-radius:4px;border:.5px solid rgba(126,229,255,.9);' +
+    'background-image:linear-gradient(180deg,rgba(210,238,252,.66) 0%,rgba(150,208,244,.72) 55%,rgba(96,190,240,.82) 100%);' +
+    'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);' +
+    'box-shadow:inset 0 2px 3px rgba(255,255,255,.85),inset 0 -7px 12px -4px rgba(46,175,245,.3);';
+  const CAL_GLASS_PAINT =
+    'border:.5px solid rgba(126,229,255,.9);border-radius:9px;' +
+    'background-image:linear-gradient(150deg,rgba(214,240,253,.6),rgba(120,200,244,.72));' +
+    'backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);' +
+    'box-shadow:inset 0 2px 4px rgba(255,255,255,.8);';
+  /* 実測CSS(inline) → paint版CSS への差し替え表。buildIconのpaint時のみ適用 */
+  const PAINT_SWAP = {};
+  PAINT_SWAP[GLASS_BAR] = GLASS_BAR_PAINT;
+  PAINT_SWAP[CAL_GLASS] = CAL_GLASS_PAINT;
 
   /* Figmaアイコンの部品（inset:[top,right,bottom,left]% / 100×100内） */
   const ICON_DEFS = {
@@ -61,8 +82,7 @@
     calendar: [
       { css: GRAD + 'border-radius:99px;', inset: [12.95, 57.98, 58.91, 31.34] },
       { css: GRAD + 'border-radius:99px;', inset: [12.95, 31.34, 58.91, 57.98] },
-      { css: 'border:.5px solid #7EE5FF;border-radius:9px;background-image:linear-gradient(108deg,rgba(130,232,255,.3),rgba(55,159,255,.3));backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:inset 0 3px 10px rgba(255,255,255,.4);',
-        inset: [25.76, 16.41, 21.98, 16.41] },
+      { css: CAL_GLASS, inset: [25.76, 16.41, 21.98, 16.41] },
       { css: CAL_CELL, inset: [53.1, 59.36, 40.76, 28.17] },
       { css: CAL_CELL, inset: [41.09, 59.36, 52.77, 28.17] },
       { css: CAL_CELL, inset: [53.1, 43.76, 40.76, 43.76] },
@@ -114,6 +134,7 @@
     p4: { conn: 'orbit',   box: 'white', layout: LAYOUT_ORBIT,   iso: true  },
     p5: { conn: 'econc',   box: 'glass', layout: LAYOUT_E,       iso: false },
     p6: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false },
+    p7: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, paint: true },  /* 案I: 塗り実測忠実版 */
   };
 
   /* ---- SVG忠実版（Figmaから書き出したSVGを実座標に配置。静止・ズレゼロ）---- */
@@ -138,8 +159,8 @@
     });
     parent.appendChild(spin);
   }
-  function buildSvgScene() {
-    const scene = document.createElement('div'); scene.className = 'kvp-svgscene';
+  function buildSvgScene(paint) {
+    const scene = document.createElement('div'); scene.className = 'kvp-svgscene' + (paint ? ' kvp-paint' : '');
     const back = document.createElement('div'); back.className = 'kvp-e-back';
     const front = document.createElement('div'); front.className = 'kvp-e-icons';
     const put = (parent, f, left, top, w, h) => {
@@ -173,7 +194,7 @@
     const CSS_REBUILD = { 'icon-4.svg': 'chart', 'icon-3.svg': 'chat', 'icon-2.svg': 'person', 'icon-1.svg': 'calendar', 'icon.svg': 'cloud' };
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
       if (CSS_REBUILD[f]) {
-        const ico = buildIcon(CSS_REBUILD[f], 'glass', fs);
+        const ico = buildIcon(CSS_REBUILD[f], 'glass', fs, paint);
         ico.classList.add('kvp-ico-svg', 'kvp-ico--rebuilt');
         /* アイソメ厚み用: スラブを不透明白＋奥ほど暗く、Zは --thk で可変（普通ビューでは display:none）。
            slabのサイズ基準は fs。①積層スラブ方式の実体。 */
@@ -259,16 +280,18 @@
   const FLAT_PRESET = { x: 0, y: 0, z: 0, s: 1 };
 
   /* ---------- アイコン1個＝本物の3D箱（size=一辺px。Eは大小バラバラ）---------- */
-  function buildIcon(id, boxStyle, size) {
+  function buildIcon(id, boxStyle, size, paint) {
     size = size || ICO;
     const wrap = document.createElement('div');
-    wrap.className = 'kvp-ico kvp-ico--' + boxStyle;
+    wrap.className = 'kvp-ico kvp-ico--' + boxStyle + (paint ? ' kvp-ico--paint' : '');
     wrap.style.width = size + 'px'; wrap.style.height = size + 'px';
-    /* Figma実測比: 角丸=size×0.085 / backdrop-blur=size×1.19 / ドロップシャドウ=(0.073,0.075,0.13)×size rgba(0,0,0,.2) */
+    /* Figma実測比: 角丸=size×0.085 / backdrop-blur=size×1.19。
+       ドロップシャドウ: 従来=(0.073,0.075,0.13)×size @.2 / paint版=実測(0.032,0.074,0.17)×size @.25 */
     wrap.style.setProperty('--ico-r', (size * 0.085).toFixed(1) + 'px');
     wrap.style.setProperty('--blur', Math.round(size * 1.19) + 'px');
+    const dr = paint ? [0.032, 0.074, 0.17, '.25'] : [0.073, 0.075, 0.13, '.2'];
     wrap.style.setProperty('--drop',
-      `${(size * 0.073).toFixed(1)}px ${(size * 0.075).toFixed(1)}px ${(size * 0.13).toFixed(1)}px rgba(0,0,0,.2)`);
+      `${(size * dr[0]).toFixed(1)}px ${(size * dr[1]).toFixed(1)}px ${(size * dr[2]).toFixed(1)}px rgba(0,0,0,${dr[3]})`);
     const shadow = document.createElement('div'); shadow.className = 'kvp-ico-shadow';
     wrap.appendChild(shadow);
     const box = document.createElement('div'); box.className = 'kvp-ico-box';
@@ -295,14 +318,18 @@
       const s = document.createElement('span');
       s.style.left = b.left + '%'; s.style.top = b.top + '%';
       s.style.width = b.width + '%'; s.style.height = b.height + '%';
-      if (part.css) s.style.cssText += ';' + part.css;
+      if (part.css) s.style.cssText += ';' + (paint ? (PAINT_SWAP[part.css] || part.css) : part.css);
       if (part.svg) loadSVG(part.svg, s);
       if (part.glass) {
         /* ガラス部品＝ライブCSS backdrop-filter を SVG形状でマスク。後ろ(前面の青ソリッド等)を本当にボカす。
-           シアン薄グラデ＋内側の光＝Figmaのガラス質感。SVGのforeignObjectブラーは死ぬので使わない */
+           シアン薄グラデ＋内側の光＝Figmaのガラス質感。SVGのforeignObjectブラーは死ぬので使わない。
+           paint版は不透明度を上げ、無地でも“ガラスらしさ”がグラデ自体で出るようにする（backdropはオマケ）。 */
         const m = MASK_DIR + part.glass;
         const gb = Math.max(4, size * 0.09).toFixed(1);   /* ガラスのブラーはアイコンサイズ比 */
-        s.style.cssText += ';background:linear-gradient(140deg,rgba(152,225,255,.42),rgba(72,170,255,.34));'
+        const gfill = paint
+          ? 'background:linear-gradient(140deg,rgba(190,234,255,.78),rgba(96,192,246,.66));'
+          : 'background:linear-gradient(140deg,rgba(152,225,255,.42),rgba(72,170,255,.34));';
+        s.style.cssText += ';' + gfill
           + `backdrop-filter:blur(${gb}px) saturate(1.5);-webkit-backdrop-filter:blur(${gb}px) saturate(1.5);`
           + 'box-shadow:inset 0 2px 6px rgba(255,255,255,.55),inset 0 0 1px rgba(120,210,255,.8);'
           + `-webkit-mask:url(${m}) no-repeat center/contain;mask:url(${m}) no-repeat center/contain;`;
@@ -536,10 +563,10 @@
 
   /* ============ 浮遊 / パララックス / XYZ変形 ============ */
   function applyFloat() {
-    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6'));
+    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6' || cur === 'p7'));
   }
   function onPointer(e) {
-    if ((cur !== 'p5' && cur !== 'p6') || !parallaxOn || !eBack || !eFront) return;
+    if ((cur !== 'p5' && cur !== 'p6' && cur !== 'p7') || !parallaxOn || !eBack || !eFront) return;
     /* transformを使うと子のbackdrop-filterが無効化されるので left/top で視差移動する */
     const ox = (e.clientX / window.innerWidth - 0.5), oy = (e.clientY / window.innerHeight - 0.5);
     eBack.style.left = (ox * 10).toFixed(1) + 'px'; eBack.style.top = (oy * 10).toFixed(1) + 'px';
@@ -547,12 +574,12 @@
   }
   function applyParallax() {
     if (!eBack || !eFront) return;
-    if (!((cur === 'p5' || cur === 'p6') && parallaxOn)) {
+    if (!((cur === 'p5' || cur === 'p6' || cur === 'p7') && parallaxOn)) {
       eBack.style.left = eBack.style.top = ''; eFront.style.left = eFront.style.top = '';
     }
   }
   function applyTransform() {
-    const c = (cur === 'p5' || cur === 'p6') ? EC : C;
+    const c = (cur === 'p5' || cur === 'p6' || cur === 'p7') ? EC : C;
     worldEl.style.transformOrigin = `${c.x}px ${c.y}px`;
     const t = curTransform;
     worldEl.style.transform = (t.x || t.y || t.z || t.s !== 1)
@@ -594,14 +621,14 @@
     eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'is-iso', 'is-flat');
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'pat-p7', 'is-iso', 'is-flat');
     rootEl.classList.add('pat-' + key);
     viewMode = p.iso ? 'iso' : 'flat';                  /* 案の既定ビュー（後で普通/アイソメで切替可） */
     applyView();
     curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
 
-    if (key === 'p6') {                                  /* SVG忠実版（背面=軌道+周回ドット+mock / 前面=浮遊アイコン） */
-      const scene = buildSvgScene();
+    if (key === 'p6' || key === 'p7') {                  /* SVG忠実版（背面=軌道+周回ドット+mock / 前面=浮遊アイコン）。p7=塗り実測忠実版 */
+      const scene = buildSvgScene(key === 'p7');
       worldEl.appendChild(scene);
       eBack = scene.querySelector('.kvp-e-back');
       eFront = scene.querySelector('.kvp-e-icons');
