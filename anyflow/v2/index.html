@@ -646,58 +646,49 @@
     background: linear-gradient(180deg, rgba(85,85,85,.7) 0%, rgba(72,72,72,.7) 100%);
   }
   /* 左: 積層モック。奥2枚をオフセットで覗かせ、手前1枚(本体)を重ねる (カンプ 24783 実測を等倍) */
+  /* 左: 3枚カルーセル。perspective の中で 840×504 のパネルを中央基準に置き、
+     JS(updateDev2Stack)が DEV_STACK の席へ補間して回す(V1.0踏襲)。SCALE=0.6 で dev2 に収める。
+     モックは左右中央に来る(ヒデさん指定)。 */
   .dev2-stack {
     position: relative;
     flex: 1 0 0;
     min-width: 0;
     align-self: center;
-    width: 545px;
-    height: 308px;
-    margin: 0 auto;
+    height: 320px;
+    perspective: 1600px;
   }
-  .dev2-stack .dm-ghost {
-    position: absolute;
-    top: 0; left: 0;
-    border-radius: 15px;
-    box-shadow: 0 10px 22px rgba(0,0,0,.18);
-    pointer-events: none;
-  }
-  .dm-ghost-face {
-    position: absolute; inset: 0;
-    border: 0.6px solid rgba(255,255,255,.08);
-    border-radius: 15px;
-    background: linear-gradient(180deg, #2b2b2b 0%, #1b1b1b 100%);
-  }
-  #dmGhost0 { width: 417px; height: 251px; left: 0;    top: 31px; opacity: .95; }   /* mid */
-  #dmGhost1 { width: 376px; height: 226px; left: 169px; top: 32px; opacity: .85; }   /* back */
-  /* 手前(本体): 実寸840×504のパネルを scale(0.611) で 513×308 に。内部(コード/チャット)も等倍で縮む */
+  .dev2-stack .dm-ghost,
   .dev2-stack .dev-mock {
     position: absolute;
-    left: 15px; top: 0;
+    left: 50%; top: 50%;
     width: 840px; height: 504px;
-    transform: scale(0.611);
-    transform-origin: 0 0;
-    z-index: 3;
+    margin-left: -420px; margin-top: -252px;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
   }
-  .dev2-stack .dev-mock .dm-panel { position: absolute; inset: 0; border-radius: 24px; }
+  .dev2-stack .dm-panel { position: absolute; inset: 0; border-radius: 24px; }
   .dm-ghost .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
   /* 右: API/CLI/SDK リスト。3行を縦に均等。API=活性(左罫線+不透明1)、他=不透明0.2 (カンプ 24845) */
+  /* 右: API/CLI/SDK リスト(カンプ 15800:24845)。項目は自然高さで縦中央にグループ。API活性、他0.2 */
   .dev-list {
-    flex: 0 0 460px;
+    flex: 0 0 500px;
     align-self: stretch;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     background: rgba(255,255,255,.05);
     color: #fff;
   }
   .dl-item {
-    flex: 1 0 0;
     display: flex;
     align-items: center;
     padding: 32px 40px;
     box-sizing: border-box;
     opacity: .2;
+    cursor: pointer;
+    transition: opacity .3s var(--e-out, ease);
     will-change: opacity;
   }
   .dl-item.is-on { opacity: 1; border-left: 1px solid rgba(255,255,255,.8); }
@@ -1617,10 +1608,30 @@
       <span class="dc-one">開発環境に柔軟に適応</span>
     </div>
     <div class="dev2-wrap">
-      <!-- 左: 3層オフセット積層モック(奥2枚+手前1枚) -->
+      <!-- 左: 3層カルーセル(手前=API/後ろ=CLI・SDK)。右のリストをホバーすると席が回って入れ替わる(V1.0踏襲) -->
       <div class="dev2-stack">
-        <div class="dm-ghost" id="dmGhost0" aria-hidden="true"><div class="dm-panel dm-ghost-face"></div></div>
-        <div class="dm-ghost" id="dmGhost1" aria-hidden="true"><div class="dm-panel dm-ghost-face"></div></div>
+        <div class="dm-ghost" id="dmGhost0" aria-hidden="true">
+          <div class="dm-panel is-term">
+            <div class="dm-term-bar"><i></i><i></i><i></i><span>anyflow — zsh</span></div>
+            <div class="dm-editor"><div class="dm-code code" id="dmCodeCli"></div></div>
+          </div>
+        </div>
+        <div class="dm-ghost" id="dmGhost1" aria-hidden="true">
+          <div class="dm-panel is-sdk">
+            <div class="dm-editor">
+              <div class="dm-side">
+                <img class="dm-logo" src="assets/mock/logo.svg" alt="">
+                <div class="dm-divider"></div>
+                <div class="dm-icons"><img src="assets/mock/side1.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""></div>
+              </div>
+              <div class="dm-code code" id="dmCodeSdk"></div>
+            </div>
+            <div class="dm-sdk">
+              <div class="dm-chat-head"><span class="ttl"><img src="assets/mock/sparkles.svg" alt="">SDK Reference</span><img src="assets/mock/ellipsis.svg" alt=""></div>
+              <div class="dm-sdk-list" id="dmSdkList2"></div>
+            </div>
+          </div>
+        </div>
         <div class="dev-mock" id="devMock">
           <div class="dm-panel" id="dmPanel">
             <div class="dm-editor">
@@ -4379,8 +4390,11 @@ function dmBuildScreen(key) {
   });
 }
 dmBuildScreen('editor');
-/* 【2026-08-25 リデザイン】ゴーストは中身なし(dm-ghost-face)にしたので旧fill(dmCodeCli/Sdk/SdkList2)は撤去。
-   dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
+/* dev2 カルーセルの後ろ2枚(CLI/SDK)の中身を静止で充填(V1.0踏襲)。 */
+dmFillStatic('dmCodeCli', 'cli');
+dmFillStatic('dmCodeSdk', 'sdk');
+dmFillSdkList('dmSdkList2');
+/* dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
 (function cloneDev1Panel() {
   const src = document.getElementById('dmPanel');
   const dst = document.getElementById('devMock1');
@@ -4561,13 +4575,56 @@ let devFin = 0;
     if (!it || it.dataset.screen === devScreen2) return;
     devScreen2 = it.dataset.screen;
     devSwapT0 = elapsed;
+    /* 活性(左罫線+不透明1)を移す。カルーセルの席回転(updateDev2Stack)と連動する */
+    devEls.listItems.forEach(x => x.classList.toggle('is-on', x === it));
   };
-  devEls.list.addEventListener('pointerover', e => pick(e.target));
-  devEls.list.addEventListener('click', e => pick(e.target));
+  if (devEls.list) {
+    devEls.list.addEventListener('pointerover', e => pick(e.target));
+    devEls.list.addEventListener('click', e => pick(e.target));
+  }
 })();
 
 /* ---- スキップ: いまの章を終わらせて、次の章の位置までスクロールする ----
    「見終わらないと進めない」のが不安との指摘への動線。目立たないテキストリンク */
+
+/* 【2026-08-25 ヒデさん指定】dev2 の3枚カルーセル(V1.0踏襲)。右の API/CLI/SDK をホバーして
+   devScreen2 が変わると席が回り、3Dっぽく入れ替わって見える。dev2 が画面に入っている間だけ毎フレーム位置を書く。
+   全体を DEV2_SCALE で dev2 に収める。 */
+const DEV2_SCALE = 0.6;
+function updateDev2Stack() {
+  if (!devEls.block2 || !devEls.mock) return;
+  const r = rectOf(devEls.block2);
+  if (r.bottom < -100 || r.top > (innerHeight || 1) + 100) return;   // 画面外はスキップ
+  const c = params.sections.dev;
+  const swapE = DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0];
+  const sel = Math.max(0, DEV_SCREENS.indexOf(devScreen2));
+  const cards = [devEls.mock, devEls.ghosts[0], devEls.ghosts[1]];   // 0=API 1=CLI 2=SDK
+  cards.forEach((el, i) => {
+    if (!el) return;
+    const seatI = (i - sel + 3) % 3;
+    if (el._seat !== seatI) { el._from = el._cur || DEV_STACK[seatI]; el._seat = seatI; el._t0 = elapsed; }
+    const to = DEV_STACK[seatI];
+    const kk = el._t0 == null ? 1 : swapE.fn(clamp01((elapsed - el._t0) / c.stackDur));
+    /* 暗くなる側は動きがほぼ終わってから暗くする(すれ違い中の透け防止・V1.0の対策) */
+    const dimming = to.op < el._from.op;
+    const opK = dimming ? easeOutQ(clamp01((kk - 0.85) / 0.15)) : kk;
+    const cur = {
+      sc: el._from.sc + (to.sc - el._from.sc) * kk,
+      dx: el._from.dx + (to.dx - el._from.dx) * kk,
+      dy: el._from.dy + (to.dy - el._from.dy) * kk,
+      dz: el._from.dz + (to.dz - el._from.dz) * kk,
+      ry: el._from.ry + (to.ry - el._from.ry) * kk,
+      op: el._from.op + (to.op - el._from.op) * opK,
+    };
+    el._cur = cur;
+    const swing = Math.sin(Math.PI * clamp01(kk));   // 回っている最中だけ傾く(止まると0=フラット)
+    el.style.opacity = cur.op.toFixed(3);
+    el.style.zIndex = Math.round(cur.sc * 1000);
+    el.style.transform =
+      `translate3d(${(cur.dx * DEV2_SCALE).toFixed(1)}px, ${(cur.dy * DEV2_SCALE).toFixed(1)}px, ${(cur.dz * DEV2_SCALE).toFixed(1)}px)` +
+      ` rotateY(${(cur.ry * swing).toFixed(2)}deg) scale(${(cur.sc * DEV2_SCALE).toFixed(4)})`;
+  });
+}
 
 function updateDev(pRaw) {
   /* 【2026-08-25 リデザイン・カンプ 15800:24869】固定追従(pin)なし・縦スクロール。
@@ -4836,6 +4893,7 @@ function updateSections() {
   const prog = el => (params.pin === 'off' ? clamp01(preP(el)) : pinP(el));
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', prog(SECS.vision)));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
+  updateDev2Stack();   /* dev2 の3枚カルーセル(ホバー切替) */
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
   updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', prog(SECS.results)));
   if (params.pin === 'off') renderNoPin();
