@@ -159,8 +159,22 @@
     spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
     frost(back, 701, 274, 539, 323, 20, 75);   /* Figma実測: mock backdrop-blur 75px */
     put(back, 'mock.svg', 680, 253, 600, 387);
-    /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）--- */
+    /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）---
+       ⚠️ Figma書き出しSVGは背景ブラーを <foreignObject backdrop-filter> として持つが、
+       <img> で読むと完全に無効化される（imgのforeignObjectはページ背景を合成しない）。
+       残るのは「白30%の箱＋影」だけ → 透ける。裏に .kvp-frost を敷いて補っている。
+       【実験 2026-08-25】chart(icon-4.svg)だけ CSS で作り直す（Framer式＝箱に直接
+       backdrop-filter＋白30%）。SVG方式との差をヒデさんのブラウザで比較する。 */
+    const CSS_REBUILD = { 'icon-4.svg': 'chart' };   // 実験対象（差が無ければ空にしてSVGへ戻す）
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
+      if (CSS_REBUILD[f]) {
+        const ico = buildIcon(CSS_REBUILD[f], 'glass', fs);
+        ico.classList.add('kvp-ico-svg', 'kvp-ico--rebuilt');
+        placeIcon(ico, x, y, fs);
+        ico.style.setProperty('--fd', (i * 0.6) + 's');
+        front.appendChild(ico);
+        return;
+      }
       const ico = document.createElement('div'); ico.className = 'kvp-ico-svg';
       ico.style.left = (x - w / 2) + 'px'; ico.style.top = (y - h / 2) + 'px';
       ico.style.width = w + 'px'; ico.style.height = h + 'px';
