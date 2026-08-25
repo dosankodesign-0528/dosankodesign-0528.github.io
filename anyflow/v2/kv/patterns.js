@@ -247,12 +247,15 @@
     const mock = scene.querySelector('.kvp-emock-slot');
     const icons = [].slice.call(scene.querySelectorAll('.kvp-ico-svg'));
     const bg = [].slice.call(scene.querySelectorAll('.kvp-eorbits, .kvp-svgel, .kvp-espin'));
-    /* 上品なフェードインのみ：mock→アイコンを均等ステガーで→軌道/ドット。散らばり・緩急なし */
+    /* 【2026-08-25 ヒデさん指定】順番: ①モックが出てタイピング → ②タイピング完了後にアイコンが浮上
+       → ③最後に軌道が出てドットが回り始める。各要素は1回だけ出して出っ放し(再出現なし)。 */
     requestAnimationFrame(() => {
-      T(() => mock && mock.classList.add('in'), 120);                     /* ① mock */
-      icons.forEach((ic, i) => T(() => ic.classList.add('in'), 560 + i * 110)); /* ② アイコン(均等) */
-      T(() => bg.forEach(e => e.classList.add('in')), 1300);             /* ③ 軌道・周回ドット */
-      T(() => scene.classList.remove('kvp-intro'), 2300);                /* 演出終了：初期scopeを解除 */
+      T(() => mock && mock.classList.add('in'), 80);                     /* ① モック(直後にタイピング開始) */
+      const afterType = 80 + Math.max(600, eMockDur) + 250;             /* タイピング完了後 */
+      icons.forEach((ic, i) => T(() => ic.classList.add('in'), afterType + i * 130)); /* ② アイコンが浮上 */
+      const afterIcons = afterType + icons.length * 130 + 350;
+      T(() => bg.forEach(e => e.classList.add('in')), afterIcons);       /* ③ 軌道＋ドット */
+      T(() => scene.classList.remove('kvp-intro'), afterIcons + 900);    /* 演出終了：初期scopeを解除 */
     });
   }
 
@@ -287,6 +290,7 @@
   let rootEl, worldEl, cur = null;
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
   let mockAnimOn = true, eMockSlot = null;                /* モックアニメのオン/オフ・現在のモック枠 */
+  let eMockDur = 0;                                        /* モックのタイピング再生尺(ms)。playIntro が完了後に右グラフィックを出すのに使う */
   let eSpins = [], dotSpeed = 3, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率(既定3x・2026-08-25 ヒデさん指定)・緩急(linear/pulse) */
   let floatOn = true, parallaxOn = false;                 /* 浮遊/パララックス（Eのみ） */
   let curTransform = { x: 0, y: 0, z: 0, s: 1 };          /* XYZ・大きさ（選択案の傾き/拡大） */
@@ -580,22 +584,19 @@
     const timers = [];
     const T = (fn, ms) => timers.push(setTimeout(fn, ms));
 
-    /* タイムライン(ms) */
-    const CH = 85;
-    const typeStart = 500;
+    /* タイムライン(ms)。2026-08-25: タイピング→右グラフィック の全体を短めに(約3秒で完成)。 */
+    const CH = 50;
+    const typeStart = 300;
     const typeEnd   = typeStart + PROMPT.length * CH;
-    const sendAt    = typeEnd + 260;
-    const userAt    = sendAt + 210;
-    const thinkAt   = userAt + 340;
-    const skelAt    = thinkAt + 240;
-    const HOLD_DAME = 900;                            /* コード書き出し前の溜め */
+    const sendAt    = typeEnd + 180;
+    const userAt    = sendAt + 150;
+    const thinkAt   = userAt + 250;
+    const skelAt    = thinkAt + 180;
+    const HOLD_DAME = 450;                            /* コード書き出し前の溜め */
     const burstAt   = skelAt + HOLD_DAME;
-    const STEP      = 58;
-    const answerAt  = burstAt + rows.length * STEP + 360;
-    const PLAY_DUR  = answerAt + 700;                 /* 再生が“完成”に至るまで */
-    const HOLD_DONE = 5000;                           /* 完成状態を見せる時間(約5秒・ヒデさん指定) */
-    const FADE      = 600;                            /* 完成→空へのフェード */
-    const PERIOD    = HOLD_DONE + FADE + PLAY_DUR;    /* 1周期 */
+    const STEP      = 30;
+    const answerAt  = burstAt + rows.length * STEP + 260;
+    const PLAY_DUR  = answerAt + 400;                 /* 再生が“完成”に至るまで */
 
     function snapClass(add) { if (add) slot.classList.add('em-snap'); else { void slot.offsetWidth; slot.classList.remove('em-snap'); } }
     /* 完成状態(全部出た状態)へ一瞬で */
@@ -637,16 +638,12 @@
       rows.forEach((r, i) => T(() => r.classList.add('on'), burstAt + i * STEP));
       T(() => { thinkB && thinkB.classList.remove('on'); ansB && ansB.classList.add('on'); }, answerAt);
     }
-    /* 1周期: 完成が見えている → HOLD_DONE後にフェード → 空へ → 再生(完成で終わる) */
-    function period() {
-      T(() => slot.classList.add('em-out'), HOLD_DONE);
-      T(() => { reset(); playSeq(); }, HOLD_DONE + FADE);
-    }
-
-    /* 【2026-08-25 ヒデさん指定】完成状態で表示して、そのまま出しっぱなし。
-       以前の「5秒ごとに消えて再出現するループ(period/setInterval)」は撤去した
-       （“最初アイコン等が出た後にまた消えて出てくる”挙動をやめる）。 */
-    showDone();
+    /* 【2026-08-25 ヒデさん指定】タイピングを1回だけ再生して完成状態で止める(ループなし)。
+       右側グラフィック(アイコン→軌道+ドット)は playIntro がこのタイピング完了後に順に出す。 */
+    if (!mockAnimOn) { showDone(); eMockDur = 0; return () => {}; }
+    reset();       /* 空から */
+    playSeq();     /* 1回だけ打つ→完成で終わる */
+    eMockDur = PLAY_DUR;
     return () => timers.forEach(t => (typeof t === 'function' ? t() : clearTimeout(t)));
   }
   /* モックアニメのオン/オフ（オフは完成状態で静止）。パネルから呼ぶ */
