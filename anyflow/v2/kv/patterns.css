@@ -78,6 +78,10 @@ body { background: #E7E7E7; }
 /* ⚠️ ガラス箱は回転させない：transformが子の backdrop-filter(すりガラス)を無効化して透けるため。
    白箱(不透明)は backdrop不使用なので回転して3Dのままでよい */
 .kvp-ico--glass .kvp-ico-box { transform: none; }
+/* H(SVG差し替え)のCSS再現アイコンは「平面すりガラス」＝厚みスラブを出さない（平面だと
+   シアンのスラブが白30%の面を透けて青被りするため）。面だけの純ガラスにする。 */
+.kvp-ico--rebuilt .kvp-slab { display: none; }
+.kvp-ico--rebuilt .kvp-ico-box { transform: none; }
 
 /* ============ 回線ネットワーク（①③）＋青データ光 ============ */
 .kvp-net { position: absolute; inset: 0; }

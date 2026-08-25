@@ -165,7 +165,8 @@
        残るのは「白30%の箱＋影」だけ → 透ける。裏に .kvp-frost を敷いて補っている。
        【実験 2026-08-25】chart(icon-4.svg)だけ CSS で作り直す（Framer式＝箱に直接
        backdrop-filter＋白30%）。SVG方式との差をヒデさんのブラウザで比較する。 */
-    const CSS_REBUILD = { 'icon-4.svg': 'chart' };   // 実験対象（差が無ければ空にしてSVGへ戻す）
+    /* SVGは背景ブラーを持てない(foreignObjectがimgで死ぬ)と確定 → 全アイコンをCSSで作り直す */
+    const CSS_REBUILD = { 'icon-4.svg': 'chart', 'icon-3.svg': 'chat', 'icon-2.svg': 'person', 'icon-1.svg': 'calendar', 'icon.svg': 'cloud' };
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
       if (CSS_REBUILD[f]) {
         const ico = buildIcon(CSS_REBUILD[f], 'glass', fs);
