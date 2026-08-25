@@ -206,12 +206,15 @@ body { background: #E7E7E7; }
     0 30px 36px rgba(16,24,40,.22), inset 1px 1px 2px rgba(255,255,255,.5); }
 .kvp-emock { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: flex; background: transparent; }
 .em-editor { flex: 1 1 0; min-width: 0; display: flex; }
-.em-side { width: 66px; flex: 0 0 auto; background: rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.5);
-  display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 32px 0; }
-.em-logo { width: 10px; height: 46px; border-radius: 5px; background: linear-gradient(#0EBBFF,#FF5D97); opacity: .9; }
-.em-divider { width: 30px; height: 1px; background: rgba(120,130,150,.25); }
-.em-sicons { display: flex; flex-direction: column; gap: 20px; align-items: center; }
-.em-sicons img { width: 20px; height: 20px; opacity: .3; }
+/* 左サイドバー: Figma(15711-26540)準拠。ロゴ=小ドット3つ／区切り線／ナビ=ドット5枠(1つ目は非表示=4つ見える) */
+.em-side { width: 53px; flex: 0 0 auto; background: rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.5);
+  display: flex; flex-direction: column; align-items: center; padding: 24px 0; }
+.em-slogo { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.em-slogo i { width: 8px; height: 8px; border-radius: 50%; background: rgba(96,110,134,.5); }
+.em-divider { width: 24px; height: 1px; background: rgba(120,130,150,.28); margin: 20px 0; }
+.em-snav { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.em-snav i { width: 10px; height: 10px; border-radius: 50%; background: rgba(96,110,134,.34); }
+.em-snav i.hidden-dot { visibility: hidden; }
 .em-code { flex: 1 1 0; min-width: 0; padding: 36px 40px; display: flex; flex-direction: column; gap: 14px; position: relative; }
 /* コードは左→右に“拭くように”出す（開発者体験1と同じ clip-path トリミング＝実際に書かれてる感） */
 .em-crow { display: flex; align-items: center; gap: 7px; height: 8px;
@@ -261,6 +264,14 @@ body { background: #E7E7E7; }
 .em-think i:nth-child(2) { animation-delay: .16s; }
 .em-think i:nth-child(3) { animation-delay: .32s; }
 @keyframes emThink { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+/* 考え終わったら思考ボックスを畳む＝ピンクと青の間に空きが出るのを防ぐ */
+.em-bub-think:not(.on) { display: none; }
+/* ループ末: パス・トリミングで巻き戻さず、全要素をフェードアウトで消す */
+.kvp-emock-slot.em-out .em-crow,
+.kvp-emock-slot.em-out .em-msg { opacity: 0; transition: opacity .5s ease; }
+/* リセットは一瞬で（フェードや巻き戻しを見せない） */
+.kvp-emock-slot.em-snap .em-crow,
+.kvp-emock-slot.em-snap .em-msg { transition: none !important; }
 
 /* ============ パネル行・Blender版 ============ */
 /* 隠しモード（網走と同じ）: 既定は非表示、右上の透明ボックスで出し入れ */

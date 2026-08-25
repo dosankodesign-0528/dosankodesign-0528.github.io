@@ -510,8 +510,10 @@
     /* editor */
     const editor = document.createElement('div'); editor.className = 'em-editor';
     const side = document.createElement('div'); side.className = 'em-side';
-    side.innerHTML = '<img class="em-logo" src="../assets/mock/logo.svg" alt=""><div class="em-divider"></div>' +
-      '<div class="em-sicons"><img src="../assets/mock/side1.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""><img src="../assets/mock/side2.svg" alt=""></div>';
+    /* Figma(15711-26540)準拠: ロゴ=小ドット3つ／区切り線／ナビ=ドット5枠(1つ目は非表示=4つ見える) */
+    side.innerHTML = '<div class="em-slogo"><i></i><i></i><i></i></div>' +
+      '<div class="em-divider"></div>' +
+      '<div class="em-snav"><i class="hidden-dot"></i><i></i><i></i><i></i><i></i></div>';
     const code = document.createElement('div'); code.className = 'em-code';
     E_CODE_ROWS.forEach(([indent, bars]) => {
       const r = document.createElement('div'); r.className = 'em-crow';
@@ -571,15 +573,20 @@
     const burstAt   = skelAt + HOLD;                 /* コードを一気に書き出す */
     const STEP      = 58;                             /* 1行ずつの間隔(左→右) */
     const answerAt  = burstAt + rows.length * STEP + 360; /* 書き終わり際にAI回答 */
-    const LOOP      = answerAt + 2800;               /* 全部見せてから次の周へ */
+    const fadeOutAt = answerAt + 2200;               /* 全部見せてからフェードアウト開始 */
+    const LOOP      = fadeOutAt + 600;               /* フェード後に次の周へ */
 
     function reset() {
+      slot.classList.add('em-snap');                 /* トランジションを一瞬切って即リセット(巻き戻し/チラつき防止) */
       rows.forEach(r => r.classList.remove('on'));
       if (skel) skel.classList.remove('on');
       [userB, thinkB, ansB].forEach(b => b && b.classList.remove('on'));
+      slot.classList.remove('em-out');
       typed.textContent = '';
       input.classList.remove('typing');
       if (send) send.classList.remove('is-hit');
+      void slot.offsetWidth;                          /* リフローで即時反映してからトランジションを戻す */
+      slot.classList.remove('em-snap');
     }
     function cycle() {
       reset();
@@ -600,6 +607,8 @@
       rows.forEach((r, i) => T(() => r.classList.add('on'), burstAt + i * STEP));
       /* ⑥ 考え中を回答に入れ替え */
       T(() => { thinkB && thinkB.classList.remove('on'); ansB && ansB.classList.add('on'); }, answerAt);
+      /* ⑦ ループ末: 全要素をフェードアウトで消す（パストリミングの巻き戻しはしない） */
+      T(() => slot.classList.add('em-out'), fadeOutAt);
     }
     cycle();
     const iv = setInterval(cycle, LOOP); timers.push(() => clearInterval(iv));
