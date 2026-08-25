@@ -164,6 +164,25 @@
     background-repeat: no-repeat;
   }
 
+  /* === V2 KV: 惑星を隠して「パターン群」(iframe)に差し替え（2026-08-25 移行） ===
+     iframe にしている理由: すりガラス(backdrop-filter)を本体の transform:scale から隔離し、
+     kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は本体と同じ #f2f2f2。 */
+  .orbit { display: none !important; }
+  .kv-graphic-embed {
+    position: absolute; top: 0; right: 0;
+    width: 1440px; height: var(--dh, 921px);
+    border: 0; background: transparent;
+    color-scheme: light;
+  }
+  /* 調整パネルを開く透明ボックス（本体側。iframe内のパネルをトグルする） */
+  .kvp-secret {
+    position: absolute; top: 62px; right: 0; width: 64px; height: 64px;
+    z-index: 40; cursor: pointer; background: transparent;
+  }
+  /* 旧「モーション調整パネル」(惑星KV含む) と その開閉ボックスは撤去（2026-08-25 移行）。
+     JS は残すので params 既定値でモーションは動く。右上の開閉は新パネル(kvpSecret)に一本化。 */
+  .tools, .tools-secret-hot { display: none !important; }
+
   /* ---- Logos (ティッカー風カルーセル) ---- */
   .logos {
     position: absolute;
@@ -1374,6 +1393,11 @@
 
 <div class="stage-wrap">
   <div class="stage" id="stage">
+
+    <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
+    <iframe class="kv-graphic-embed" src="kv/embed.html" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
+    <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
     <header class="header">
       <div class="logo"><img src="assets/header-logo.svg" alt="Anyflow Embed"></div>
@@ -5977,6 +6001,22 @@ document.getElementById('panelHead').addEventListener('click', () => {
 document.getElementById('panelBody').addEventListener('click', () => {
   requestAnimationFrame(keepPanelInView);
 });
+</script>
+
+<!-- V2 KV: 右上の透明ボックスで、iframe内の「調整パネル」を出し入れ（網走と同じ隠しモード） -->
+<script>
+(function () {
+  var box = document.getElementById('kvpSecret');
+  var ifr = document.querySelector('.kv-graphic-embed');
+  if (!box || !ifr) return;
+  box.addEventListener('click', function () {
+    try {
+      var d = ifr.contentDocument;
+      var bar = d && d.querySelector('.kv-bar');
+      if (bar) bar.classList.toggle('show');
+    } catch (e) { /* iframe未ロード時は無視 */ }
+  });
+})();
 </script>
 </body>
 </html>

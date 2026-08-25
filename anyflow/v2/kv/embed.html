@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>KV embed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="kv.css?v=12">
+<link rel="stylesheet" href="patterns.css?v=18">
+<style>
+  /* 埋め込み用: ヘッダー/コピー/ティッカーは持たない。背景は本体サイトと同色にして
+     すりガラスが本体の地色をボカしているように見せる（iframe内のbackdrop-filterは
+     iframe内の背景しかボカせないため、地色を本体に合わせるのが必須）。 */
+  html, body { margin: 0; background: #f2f2f2; overflow: hidden; }
+  /* 秘密ボックスは本体ヘッダー(上部)と被らない位置へ下げる */
+  .kv-secret { top: 90px !important; right: 0 !important; }
+  /* 調整パネル: ドラッグで移動・リサイズ可能に。既定位置はティッカーに被らない高さへ */
+  .kv-bar { align-items: stretch; resize: both; overflow: auto; bottom: 170px;
+            min-width: 240px; min-height: 90px; max-width: 96vw; max-height: 88vh; }
+  .kv-bar-title { display: flex; align-items: center; justify-content: space-between;
+                  font-weight: 600; font-size: 12px; color: #101828;
+                  cursor: move; user-select: none; padding-bottom: 2px;
+                  border-bottom: 1px solid #ececec; margin-bottom: 2px; }
+  .kv-bar-title .hint { font-weight: 400; font-size: 10px; color: #9ca3af; }
+</style>
+</head>
+<body>
+
+<div id="kv"></div>
+<div id="kvp"></div>
+<div id="kvBlender" class="hidden"><img src="assets/kv-hero-3d.png?v=1" alt="Blender 3D キービジュアル"></div>
+
+<div class="kv-secret" id="kvSecret" title="調整パネル"></div>
+<div class="kv-bar">
+  <div class="kv-bar-title" id="kvBarTitle">調整パネル<span class="hint">ドラッグで移動／右下で拡縮</span></div>
+  <div class="row0">
+    <b>案:</b>
+    <button data-design="agent" title="エージェント版">A</button>
+    <button data-design="p1" title="フラット×回路線×白箱">B</button>
+    <button data-design="p2" title="フラット×同心円×ガラス">C</button>
+    <button data-design="p3" title="アイソメ×回路線×ガラス">D</button>
+    <button data-design="p4" title="アイソメ×軌道×白箱">E</button>
+    <button data-design="p5" title="同心円+周回ドット+アニメmock(CSS)">F</button>
+    <button data-design="blender" title="Blender 3D">G</button>
+    <button data-design="p6" class="on" title="Figma SVG忠実版">H</button>
+  </div>
+  <div class="row1">
+    ビュー:
+    <button data-gview="flat" class="on">普通</button>
+    <button data-gview="iso">アイソメ（厚み）</button>
+  </div>
+  <div class="rowE">
+    浮遊(E):
+    <button data-float="on" class="on">オン</button>
+    <button data-float="off">オフ</button>
+    <span class="sep"></span>
+    パララックス(E):
+    <button data-parallax="off" class="on">オフ</button>
+    <button data-parallax="on">オン</button>
+  </div>
+  <div class="row2">
+    角度
+    X <input type="range" id="rx" min="-30" max="72" step="1" value="0"><span id="rxv">0°</span>
+    Y <input type="range" id="ry" min="-45" max="45" step="1" value="0"><span id="ryv">0°</span>
+    Z <input type="range" id="rz" min="-90" max="90" step="1" value="0"><span id="rzv">0°</span>
+    大きさ <input type="range" id="rs" min="0.8" max="1.5" step="0.02" value="1"><span id="rsv">×1.00</span>
+  </div>
+</div>
+
+<script src="engine.js?v=12"></script>
+<script src="patterns.js?v=16"></script>
+<script>
+  KV.start({ mount: 'kv' });
+  KVP.start({ mount: 'kvp' });
+
+  const kvHost = document.getElementById('kv');
+  const kvBlender = document.getElementById('kvBlender');
+  const row1 = document.querySelector('.kv-bar .row1');
+  const rowE = document.querySelector('.kv-bar .rowE');
+  let curDesign = 'p6';   /* 既定=H（カンプ忠実SVG版） */
+
+  const labels = { x: rxv, y: ryv, z: rzv, s: rsv };
+  function syncLabels(v) {
+    labels.x.textContent = v.x + '°'; labels.y.textContent = v.y + '°';
+    labels.z.textContent = v.z + '°'; labels.s.textContent = '×' + (+v.s).toFixed(2);
+  }
+  function readSliders() { return { x: +rx.value, y: +ry.value, z: +rz.value, s: +rs.value }; }
+  [rx, ry, rz, rs].forEach(sl => sl.addEventListener('input', () => {
+    const v = readSliders(); syncLabels(v);
+    if (curDesign === 'agent') KV.setView(v);
+    else if (curDesign !== 'blender') KVP.setTransform(v);
+  }));
+
+  const ISO_AGENT = { x: 54, y: 0, z: -42, s: 1.26 };
+  function syncViewUI(mode) {
+    document.querySelectorAll('.kv-bar [data-gview]').forEach(x => x.classList.toggle('on', x.dataset.gview === mode));
+    const t = (curDesign === 'agent') ? (mode === 'iso' ? ISO_AGENT : { x: 0, y: 0, z: 0, s: 1 }) : KVP.getTransform();
+    rx.value = t.x; ry.value = t.y; rz.value = t.z; rs.value = t.s; syncLabels(t);
+  }
+  document.querySelectorAll('.kv-bar [data-gview]').forEach(b => b.onclick = () => {
+    const mode = b.dataset.gview;
+    if (curDesign === 'agent') KV.setView(mode === 'iso' ? ISO_AGENT : { x: 0, y: 0, z: 0, s: 1 });
+    else if (curDesign !== 'blender') KVP.setView(mode);
+    syncViewUI(mode);
+  });
+
+  document.querySelectorAll('.kv-bar [data-float]').forEach(b => b.onclick = () => {
+    KVP.setFloat(b.dataset.float === 'on');
+    document.querySelectorAll('.kv-bar [data-float]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  document.querySelectorAll('.kv-bar [data-parallax]').forEach(b => b.onclick = () => {
+    KVP.setParallax(b.dataset.parallax === 'on');
+    document.querySelectorAll('.kv-bar [data-parallax]').forEach(x => x.classList.toggle('on', x === b));
+  });
+
+  document.querySelectorAll('.kv-bar [data-design]').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.kv-bar [data-design]').forEach(x => x.classList.toggle('on', x === b));
+    const d = b.dataset.design; curDesign = d;
+    const isAgent = d === 'agent', isBlender = d === 'blender';
+    kvHost.style.display = isAgent ? '' : 'none';
+    kvBlender.classList.toggle('hidden', !isBlender);
+    row1.style.display = isBlender ? 'none' : '';
+    rowE.style.display = (d === 'p5' || d === 'p6') ? '' : 'none';
+    if (isAgent) { KVP.hide(); syncViewUI('flat'); }
+    else if (isBlender) { KVP.hide(); }
+    else { KVP.show(); KVP.setPattern(d); syncViewUI(KVP.PATTERNS[d] && KVP.PATTERNS[d].iso ? 'iso' : 'flat'); }
+  });
+
+  /* 起動時に既定H を反映（agentエンジンは隠す） */
+  kvHost.style.display = 'none';
+  KVP.show(); KVP.setPattern('p6'); syncViewUI('flat');
+  rowE.style.display = '';
+
+  /* 隠しモード: 透明ボックスでパネルを出し入れ */
+  document.getElementById('kvSecret').onclick = () => document.querySelector('.kv-bar').classList.toggle('show');
+
+  /* 調整パネルをタイトルバーでドラッグ移動（リサイズは CSS resize:both の右下ハンドル） */
+  (function () {
+    const bar = document.querySelector('.kv-bar');
+    const title = document.getElementById('kvBarTitle');
+    let dragging = false, sx = 0, sy = 0, bx = 0, by = 0;
+    title.addEventListener('pointerdown', e => {
+      dragging = true; const r = bar.getBoundingClientRect();
+      bar.style.left = r.left + 'px'; bar.style.top = r.top + 'px';
+      bar.style.right = 'auto'; bar.style.bottom = 'auto'; bar.style.transform = 'none';
+      sx = e.clientX; sy = e.clientY; bx = r.left; by = r.top;
+      title.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    title.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      bar.style.left = (bx + e.clientX - sx) + 'px';
+      bar.style.top = (by + e.clientY - sy) + 'px';
+    });
+    title.addEventListener('pointerup', e => { dragging = false; try { title.releasePointerCapture(e.pointerId); } catch (_) {} });
+  })();
+</script>
+</body>
+</html>
