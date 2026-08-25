@@ -498,6 +498,40 @@
     pointer-events: none;
     z-index: 5;
   }
+  /* ===== 案C: 実績=中央テキストだけ → 下から昇って画面いっぱいに拡大する黒オブジェクトで開発者体験へ ===== */
+  .res-grow {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(180deg, #161616 0%, #454545 100%);
+    transform-origin: 50% 50%;
+    transform: translateY(60%) scale(0.18);
+    border-radius: 40px;
+    opacity: 0; pointer-events: none; z-index: 5;
+    will-change: transform, opacity;
+  }
+  /* 案C: 画像なし・中央テキストのみ */
+  #results.pat-c .res-img-frame { display: none; }
+  #results.pat-c .res-col {
+    position: absolute; inset: 0;   /* キャンバス全面＝ビューポート全面。中央フレックスで viewport 中央に寄せる */
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 40px; padding: 0 80px;
+  }
+  #results.pat-c .res-main {
+    position: static; width: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 34px;
+  }
+  #results.pat-c .res-head { text-align: center; }
+  #results.pat-c .res-line { display: none; }
+  #results.pat-c .res-nums,
+  #results.pat-c .res-stats {
+    position: static; display: flex; justify-content: center; gap: 72px; margin: 0;
+  }
+  #results.pat-c .rn,
+  #results.pat-c .st { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #results.pat-c .rn b,
+  #results.pat-c .st b { font-size: 15px; font-weight: 400; color: #8a8f98; }
+  #results.pat-c .rn span,
+  #results.pat-c .st span { font-size: 60px; font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; }
+  #results.pat-c .res-text { position: static; width: min(680px, 78%); text-align: center; }
   .res-img-frame { overflow: hidden; }
   .res-img-frame img { display: block; }
 
@@ -1562,6 +1596,9 @@
          .pin-stage は transform を持つので、その中に入れると position:fixed が
          ステージ基準になってしまい、スクロールで一緒に流れてしまう -->
     <div class="res-dark" id="resDark"></div>
+    <!-- 案C: 下から昇って画面いっぱいに拡大する黒オブジェクト（実績→開発者体験のつなぎ）。
+         .pin-stage の外＝transformの影響を受けない位置に置く -->
+    <div class="res-grow" id="resGrow"></div>
     <div class="pin-stage">
     <!-- 案A: カンプ 14824:22160 / 案B: カンプ 14831:22066 (既定) -->
     <div class="res-img-frame rv" id="resImg">
@@ -2351,7 +2388,7 @@ const DEFAULTS = {
              （貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に無い） */
   pin: 'on',
   patterns: {
-    results: 'B',   // 実績のレイアウト A=横長画像 / B=左端の縦帯(カンプ 14831:22066)
+    results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
   },   // セクション演出の採用案
@@ -2441,6 +2478,17 @@ const DEFAULTS = {
 const STORAGE_KEY = 'anyflow-embed-anim-v70';
 
 let params = load();
+/* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化。既存の保存値も一度だけCへ移行する
+   （パネルで案A/Bへ戻せる。移行フラグで一度きり＝以後は保存値を尊重） */
+try {
+  if (localStorage.getItem(STORAGE_KEY) && !localStorage.getItem('anyflow-migrate-resC')) {
+    params.patterns.results = 'C';
+    const _s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    _s.patterns = _s.patterns || {}; _s.patterns.results = 'C';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
+    localStorage.setItem('anyflow-migrate-resC', '1');
+  }
+} catch (e) {}
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -3708,6 +3756,7 @@ const resEls = {
   main: document.getElementById('resMain'),
   head: document.getElementById('resHead'),
   dark: document.getElementById('resDark'),
+  grow: document.getElementById('resGrow'),
   stats: document.getElementById('resStats'),
   text: document.getElementById('resText'),
   cntMain: document.getElementById('cntMain'),
@@ -3832,9 +3881,13 @@ function resTotal() {
       max で持つので巻き戻りもしない (リプレイなし) */
 function updateResults(p) {
   const c = params.sections.results;
-  const patB = params.patterns.results !== 'A';
+  const pat = params.patterns.results;                // 'A' | 'B' | 'C'
+  const patA = pat === 'A';
+  const patC = pat === 'C';
+  const patB = !patA && !patC;                        // 既定Bは A でも C でもない場合
+  SECS.results.classList.toggle('pat-a', patA);
   SECS.results.classList.toggle('pat-b', patB);
-  SECS.results.classList.toggle('pat-a', !patB);
+  SECS.results.classList.toggle('pat-c', patC);
 
   /* 【2026-08-15】「ビューポートに入った段階で始めてよい（中央でなくてよい）」指定。
      ピンで固定して止めるのはやめ、セクションが画面に入った時刻を起点に時間で再生する */
@@ -3851,13 +3904,15 @@ function updateResults(p) {
     /* 案B は実寸の画像を縦にずらす */
     resEls.imgInner.style.objectPosition = '';
     resEls.imgInner.style.top = (-625.6 + (q - 0.5) * c.parallax * 3).toFixed(2) + 'px';
-  } else {
+  } else if (patA) {
     resEls.imgInner.style.top = '';
     resEls.imgInner.style.objectPosition = `50% ${(62 + (q - 0.5) * c.parallax).toFixed(2)}%`;
   }
+  /* 案C は画像なし＝パララックスなし */
 
   if (t < 0) {
     resEls.dark.style.opacity = 0;
+    if (resEls.grow) { resEls.grow.style.opacity = 0; resEls.grow.style.transform = 'translateY(60%) scale(0.18)'; resEls.grow.style.borderRadius = '40px'; }
     /* ⚠️ ここは rv()/setStyle と同じ要素を触るので、直接 style を書かないこと。
        直接書くとキャッシュとズレて、次に出そうとした時に書き込みが省略される
        （2026-08-19: これで実績が二度と出てこなくなっていた） */
@@ -3869,8 +3924,8 @@ function updateResults(p) {
     return;
   }
 
-  if (patB) {
-    /* ---- 案B: 【2026-08-15 確定】
+  if (!patA) {
+    /* ---- 案B/C 共通: 【2026-08-15 確定・案Cも同じ入り方】
        ①「事業の推進力を、Anyflowが支えます。」がブラーで出る
        ② そのあと 罫線 → 数字 → 下段 → 本文 が続けてブラーで出る
        ③ 左の画像は①と同時にブラーで出る ---- */
@@ -3900,8 +3955,8 @@ function updateResults(p) {
     renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
     rv(resEls.stats, 1, 0);
     rv(resEls.text,  1, 0);
-    /* 見出しと同時に左の画像もブラーで出る */
-    rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
+    /* 見出しと同時に左の画像もブラーで出る（案Bのみ・案Cは画像なし） */
+    if (patB) rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
   } else {
     /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
@@ -3922,20 +3977,44 @@ function updateResults(p) {
      平文へ潰してしまう（2026-08-17 にこれで1回ハマった）。
      数字の描画は renderSlots() が受け持つ。 */
 
-  /* 【2026-08-15・案B】全部出そろったあと、スクロールに合わせて
-     中身をブラーで消しながら、同じタイミングで開発者体験の暗い背景へつなぐ */
-  const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
-  /* 暗幕は【開発者体験が定位置(top:0)に着いてから】そっと消す。
-     着くまで出しっぱなしにしておくことで、下で起きている入れ替わりが一切見えない */
+  /* ===== 実績 → 開発者体験 のつなぎ ===== */
   const devTop = rectOf(SECS.dev).top;
-  const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=着いて少し進んだ */
-  resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
-  if (outK > 0) {
-    /* ⚠️ ここも rv() と同じ要素なので setStyle 経由で書く（直接書くとキャッシュとズレる） */
-    [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
-      setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - outK)).toFixed(3));
-      setStyle(el, 'filter', `blur(${(outK * c.outBlur).toFixed(2)}px)`);
-    });
+  const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=開発者体験が着いた */
+
+  if (patC) {
+    /* 案C: 下から昇って画面いっぱいに拡大する黒オブジェクト＋実績はブラーで消える */
+    const grin = seg(p, c.outFrom, c.outTo, easeOutC);         // 0→1 成長
+    const gy = (1 - grin) * 60;                                 // 60%下(下から) → 0(中央)
+    const gs = 0.18 + 0.82 * grin;                             // 小さい箱 → 画面いっぱい
+    if (resEls.grow) {
+      resEls.grow.style.transform = `translateY(${gy.toFixed(2)}%) scale(${gs.toFixed(3)})`;
+      resEls.grow.style.borderRadius = `${((1 - grin) * 40).toFixed(0)}px`;
+      /* 成長開始で不透明 → 開発者体験が定位置に着いたら渡してフェード（同じ黒なので継ぎ目なし） */
+      resEls.grow.style.opacity = (clamp01(grin * 6) * (1 - handed)).toFixed(3);
+    }
+    resEls.dark.style.opacity = 0;
+    /* 黒が中央〜画面いっぱいに来る頃、実績の文字は真っ黒になる前にブラーで消す */
+    const textOut = clamp01((grin - 0.35) / 0.5);
+    if (textOut > 0) {
+      resEls.head.style.opacity = ((+resEls.head.style.opacity || 0) * (1 - textOut)).toFixed(3);
+      resEls.head.style.filter = `blur(${(textOut * c.outBlur).toFixed(2)}px)`;
+      [resEls.main, resEls.stats, resEls.text].forEach(el => {
+        setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - textOut)).toFixed(3));
+        setStyle(el, 'filter', `blur(${(textOut * c.outBlur).toFixed(2)}px)`);
+      });
+    }
+  } else {
+    /* 案A/B: 従来どおり固定の暗幕を opacity でクロスフェード（開発者体験が着くまで出しっぱなし） */
+    if (resEls.grow) resEls.grow.style.opacity = 0;
+    const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;
+    resEls.dark.style.opacity = (outK * (1 - handed)).toFixed(3);
+    if (outK > 0) {
+      /* ⚠️ ここも rv() と同じ要素なので setStyle 経由で書く（直接書くとキャッシュとズレる） */
+      [resEls.img, resEls.main, resEls.stats, resEls.text].forEach(el => {
+        setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - outK)).toFixed(3));
+        setStyle(el, 'filter', `blur(${(outK * c.outBlur).toFixed(2)}px)`);
+      });
+    }
   }
 }
 
@@ -5773,10 +5852,12 @@ function buildPanel() {
   sectionLenSlider('results', 600);
 
   sub(catRes, 'レイアウトを選ぶ');
-  note(params.patterns.results === 'A'
-    ? '写真が左に横長。先に文字が出て、あとから写真が現れます。'
-    : '写真が左端の細長い帯。文字は右に1列。見出しと同時に他も現れます。');
-  pillRow([{ key: 'B', name: '案B 縦帯（デザイン通り）' }, { key: 'A', name: '案A 横長' }],
+  note(params.patterns.results === 'C'
+    ? '中央にテキストだけ。数字がスロットで回り、下から黒い面がせり上がって画面いっぱいに拡大→開発者体験へ（既定）。'
+    : params.patterns.results === 'A'
+      ? '写真が左に横長。先に文字が出て、あとから写真が現れます。'
+      : '写真が左端の細長い帯。文字は右に1列。見出しと同時に他も現れます。');
+  pillRow([{ key: 'C', name: '案C 中央→黒せり上がり（既定）' }, { key: 'B', name: '案B 縦帯' }, { key: 'A', name: '案A 横長' }],
     it => params.patterns.results === it.key, it => params.patterns.results = it.key);
 
   sub(catRes, '写真のぼけ具合');
