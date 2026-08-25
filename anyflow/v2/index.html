@@ -525,8 +525,9 @@
   }
   #results.pat-c .res-stats .st:nth-child(2) { display: none; }   /* 最短リリース(1week)は隠す＝数値3つ */
   /* 2026-08-25 精査(カンプ 15779:30326): ラベルは Noto Light 16px・黒(グレー#8a8f98→黒)・行間24。 */
+  /* 2026-08-25: ラベルは色を変えず #333333 固定(ヒデさん指定)。 */
   #results.pat-c .rn b,
-  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: #000; text-align: center; }
+  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: #333333 !important; text-align: center; }
   /* 数値は SF Pro Text Ultralight(100)・80px（カンプ一致）。 */
   #results.pat-c .rn span,
   #results.pat-c .st span { display: block; width: auto; font-weight: 100; font-size: 80px; line-height: 1; text-align: center; }
@@ -2292,7 +2293,7 @@ const DEFAULTS = {
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
       outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
-      outTo: 0.60,     // 案B/C: ここで完全に黒/暗背景になる (着地より前に。2026-08-25 0.84→0.60)
+      outTo: 0.85,     // 案B/C: ここで完全に黒/暗背景になる。開発者体験のすぐ手前で暗転しきる(黒→モックの余計スクロールを詰める・2026-08-25 0.60→0.85)
       outBlur: 22,     // 消える時のぼかし量(案Bのみ。案Cは白反転)
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
@@ -2315,7 +2316,7 @@ const DEFAULTS = {
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1 },
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
-    cases:   { lenVh: 200, driveLen: 3.0, playSec: 5.4, inBlur: 20,
+    cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
       /* 見出しだけ「開発者体験の暗転(devFin)」基準。暗い背景の上に文字が重ならないようにするため */
       introAt: 0.72,   // 見出し「導入事例」が出はじめる位置 (devFin の何割地点か)
       introDur: 0.22,  // 見出しが出きるまで
@@ -3906,33 +3907,34 @@ function updateResults(p) {
        ② そのあと 罫線 → 数字 → 下段 → 本文 が続けてブラーで出る
        ③ 左の画像は①と同時にブラーで出る ---- */
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
-    const headK = easeOutQ(clamp01((t - c.typeAt) / c.softDur));
-    resEls.head.style.opacity = headK.toFixed(3);
-    resEls.head.style.filter = headK >= 1 ? '' : `blur(${((1 - headK) * 12).toFixed(2)}px)`;
-    /* 【2026-08-17 指定】ブラーで出るのは見出しだけ。
-       罫線・数字・下段・本文は最初から出したままにして、
-       数字はスロットの回転そのものを見せる（ブラー出現と重なると回転が埋もれる）。 */
+    /* 【2026-08-25 指定】ビューポート下に来たら、上から順に(見出し→数値の行→本文)ブラーで出現。
+       数値の行が出きってから、そのあとでスロット回転を始める(ブラーと回転が重ならないように)。 */
+    const D = c.softDur * 0.8;         // 1要素の出現尺
+    const G = c.softDur * 0.5;         // 上→下の遅れ
+    const revK = i => easeOutQ(clamp01((t - (c.typeAt + i * G)) / D));
+    const hk = revK(0), nk = revK(1), tk = revK(2);
+    /* 見出し */
+    resEls.head.style.opacity = hk.toFixed(3);
+    resEls.head.style.filter = hk >= 1 ? '' : `blur(${((1 - hk) * 12).toFixed(2)}px)`;
+    /* 数値の行(導入企業/連携実績/稼働率) */
     rv(resEls.main, 1, 0);
     resEls.main.style.filter = '';
     resEls.main.querySelector('.res-line').style.opacity = 1;
     const nums = resEls.main.querySelector('.res-nums');
-    nums.style.opacity = 1;
-    nums.style.filter = '';
-    /* 【2026-08-17 指定】スロットは「数字が実際にビューポートに入ってから」回り出す。
-       セクションの再生開始を起点にすると、数字がまだ画面の下にいるうちに回り終わることがある。
-       いちど入ったら覚えておき、上に大きく戻った時だけ巻き戻す（リプレイ用） */
-    /* 数字は常に「画面に入ってから時間で回す」（実績は駆動方式に関わらず時間再生） */
+    rv(nums, nk, 12, 10);
+    rv(resEls.stats, nk, 12, 10);
+    /* 本文 */
+    rv(resEls.text, tk, 12, 10);
+    /* スロット: 数値の行が出きって(nk≒1)から、かつ数字が画面に入ってから回す */
     const nr = rectOf(nums);
     if (slotT0 === null) {
-      if (nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
+      if (nk >= 0.999 && nr.top < innerHeight * c.slotEnterAt && nr.bottom > 0) slotT0 = elapsed;
     } else if (nr.top > innerHeight * 1.2) {
       slotT0 = null;
     }
     renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
-    rv(resEls.stats, 1, 0);
-    rv(resEls.text,  1, 0);
     /* 見出しと同時に左の画像もブラーで出る（案Bのみ・案Cは画像なし） */
-    if (patB) rv(resEls.img, easeOutQ(clamp01((t - c.typeAt) / (c.softDur * 1.25))), c.imgBlur);
+    if (patB) rv(resEls.img, revK(0), c.imgBlur);
   } else {
     /* ---- 案A: 先にテキスト群 → そのあとブラーで画像 (2026-08-15 指定) ---- */
     resHeadChars.forEach(sp => { sp.style.opacity = 1; });
@@ -4575,7 +4577,8 @@ function updateDev(pRaw) {
     if (!el) return 1;
     const r = rectOf(el);
     const centerY = r.top + r.height / 2;
-    return easeOutQ(clamp01((vh - centerY) / (vh * 0.55)));
+    /* ブロックの上端が画面上端に来た時点でほぼ出しきる(=黒背景の直後に自動で出て見える)。0.5 で top=0 のとき k≒1 */
+    return easeOutQ(clamp01((vh - centerY) / (vh * 0.5)));
   };
   const applyBlock = (el, k) => {
     if (!el) return;
