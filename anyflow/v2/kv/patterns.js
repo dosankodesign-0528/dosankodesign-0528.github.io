@@ -157,8 +157,13 @@
     put(back, 'ellipse-101.svg', 754, 222, 435, 435);
     spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
     spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
-    frost(back, 701, 274, 539, 323, 20, 75);   /* Figma実測: mock backdrop-blur 75px */
-    put(back, 'mock.svg', 680, 253, 600, 387);
+    /* モックもCSSで作り直す（mock.svgは背景ブラーが<foreignObject>で死ぬため）。
+       buildDashE = Figmaのmockと同じ構成(エディタ+チャット)のCSS版・すりガラスが本当に効く。
+       H案は静止表示なので全コード行・吹き出しを 'on' にして、タイピング演出は回さない。 */
+    const emock = buildDashE();
+    emock.querySelectorAll('.em-crow, .em-msg, .em-bub-user, .em-bub-ans').forEach(el => el.classList.add('on'));
+    const ph = emock.querySelector('.em-ph'); if (ph) ph.style.opacity = '1';
+    back.appendChild(emock);
     /* --- 前面: アイコン（各wrapperで浮遊。中にライブブラー＋SVG）---
        ⚠️ Figma書き出しSVGは背景ブラーを <foreignObject backdrop-filter> として持つが、
        <img> で読むと完全に無効化される（imgのforeignObjectはページ背景を合成しない）。

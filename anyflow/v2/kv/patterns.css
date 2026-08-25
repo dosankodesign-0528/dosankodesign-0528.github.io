@@ -131,12 +131,15 @@ body { background: #E7E7E7; }
 .pat-p5.float-on .kvp-e-icons .kvp-ico { animation: kvpFloat 4.6s ease-in-out infinite; animation-delay: var(--fd, 0s); }
 
 /* --- E: アニメするmock（frosted glass・Figma実測の質感） --- */
-.kvp-emock-slot { position: absolute; }
-.kvp-emock { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: flex; overflow: hidden;
-  border-radius: 30px; background: rgba(255,255,255,.34);
-  backdrop-filter: blur(50px) saturate(1.1); -webkit-backdrop-filter: blur(50px) saturate(1.1);
-  border: 1px solid rgba(255,255,255,.55);
-  box-shadow: 42px 54px 72px rgba(0,0,0,.15), inset 2px 2px 3px rgba(255,255,255,.65); }
+/* ⚠️ すりガラスは「縮小されない枠(slot)」に載せる。中身(.kvp-emock)は transform:scale で
+   縮小するが、それは“ガラス要素自身”ではないので backdrop-filter が生きる（Safari等でも安全）。
+   Figma実測: mock bg白30% / backdrop-blur 75px / 角丸20 / ドロップ45,52,48 rgba(0,0,0,.2) / 内側1,1,2白 */
+.kvp-emock-slot { position: absolute; overflow: hidden; border-radius: 20px;
+  background: rgba(255,255,255,.3);
+  backdrop-filter: blur(75px) saturate(1.15); -webkit-backdrop-filter: blur(75px) saturate(1.15);
+  border: 1px solid rgba(255,255,255,.6);
+  box-shadow: 45px 52px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.5); }
+.kvp-emock { position: absolute; left: 0; top: 0; transform-origin: 0 0; display: flex; background: transparent; }
 .em-editor { flex: 1 1 0; min-width: 0; display: flex; }
 .em-side { width: 66px; flex: 0 0 auto; background: rgba(255,255,255,.4); border-right: 1px solid rgba(255,255,255,.5);
   display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 32px 0; }
