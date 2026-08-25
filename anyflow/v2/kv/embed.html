@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="kv.css?v=12">
-<link rel="stylesheet" href="patterns.css?v=31">
+<link rel="stylesheet" href="patterns.css?v=32">
 <style>
   /* 埋め込み用: ヘッダー/コピー/ティッカーは持たない。背景は本体サイトと同色にして
      すりガラスが本体の地色をボカしているように見せる（iframe内のbackdrop-filterは
@@ -24,9 +24,9 @@
                   cursor: move; user-select: none; padding-bottom: 2px;
                   border-bottom: 1px solid #ececec; margin-bottom: 2px; }
   .kv-bar-title .hint { font-weight: 400; font-size: 10px; color: #9ca3af; }
-  .kv-bar .rowThk { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #555; flex-wrap: wrap; }
-  .kv-bar .rowThk input[type=range] { width: 66px; accent-color: #090909; }
-  .kv-bar .rowThk > span:not(.sep) { min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+  .kv-bar .rowThk, .kv-bar .rowKV { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #555; flex-wrap: wrap; }
+  .kv-bar .rowThk input[type=range], .kv-bar .rowKV input[type=range] { width: 66px; accent-color: #090909; }
+  .kv-bar .rowThk > span:not(.sep), .kv-bar .rowKV > span:not(.sep) { min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
   .kv-bar .rowCap { font-size: 10.5px; color: #9ca3af; line-height: 1.5; padding: 1px 2px 3px; max-width: 460px; }
   /* 案の並び: A案/B案/その他 と、その他ドロワー */
   .kv-bar .row0 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -77,6 +77,17 @@
     <button data-parallax="off" class="on">オフ</button>
     <button data-parallax="on">オン</button>
   </div>
+  <div class="rowKV">
+    モックアニメ:
+    <button data-mockanim="on" class="on">オン</button>
+    <button data-mockanim="off">オフ</button>
+    <span class="sep"></span>
+    軌道ドット速度 <input type="range" id="dotSpeed" min="0.3" max="3" step="0.1" value="1"><span id="dotSpeedv">×1.0</span>
+    <span class="sep"></span>
+    ドットの緩急:
+    <button data-dotease="linear" class="on">一定</button>
+    <button data-dotease="pulse" title="ゆっくり→急に加速→またゆっくり">緩急</button>
+  </div>
   <div class="rowThk">
     厚み方式(アイソメ):
     <button data-thk="1" class="on" title="積層スラブ＝なめらか3D">①積層</button>
@@ -97,7 +108,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=30"></script>
+<script src="patterns.js?v=31"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -106,6 +117,7 @@
   const kvBlender = document.getElementById('kvBlender');
   const row1 = document.querySelector('.kv-bar .row1');
   const rowE = document.querySelector('.kv-bar .rowE');
+  const rowKV = document.querySelector('.kv-bar .rowKV');   /* モックアニメ/軌道ドット速度・緩急 */
   let curDesign = 'p7';   /* 既定=J（PNGベタ貼り） */
 
   const labels = { x: rxv, y: ryv, z: rzv, s: rsv };
@@ -140,6 +152,19 @@
   document.querySelectorAll('.kv-bar [data-parallax]').forEach(b => b.onclick = () => {
     KVP.setParallax(b.dataset.parallax === 'on');
     document.querySelectorAll('.kv-bar [data-parallax]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  /* モックアニメ オン/オフ */
+  document.querySelectorAll('.kv-bar [data-mockanim]').forEach(b => b.onclick = () => {
+    KVP.setMockAnim(b.dataset.mockanim === 'on');
+    document.querySelectorAll('.kv-bar [data-mockanim]').forEach(x => x.classList.toggle('on', x === b));
+  });
+  /* 軌道ドット 速度 */
+  const dotSpeed = document.getElementById('dotSpeed'), dotSpeedv = document.getElementById('dotSpeedv');
+  dotSpeed.addEventListener('input', () => { KVP.setDotSpeed(+dotSpeed.value); dotSpeedv.textContent = '×' + (+dotSpeed.value).toFixed(1); });
+  /* 軌道ドット 緩急 */
+  document.querySelectorAll('.kv-bar [data-dotease]').forEach(b => b.onclick = () => {
+    KVP.setDotEase(b.dataset.dotease);
+    document.querySelectorAll('.kv-bar [data-dotease]').forEach(x => x.classList.toggle('on', x === b));
   });
 
   /* 案の補足文（グレー）: 何の案か分かるように */
@@ -189,6 +214,7 @@
     kvBlender.classList.toggle('hidden', !isBlender);
     row1.style.display = isBlender ? 'none' : '';
     rowE.style.display = (d === 'p5' || d === 'p6' || d === 'p7' || d === 'p8' || d === 'p9') ? '' : 'none';
+    rowKV.style.display = (d === 'p6' || d === 'p7' || d === 'p8' || d === 'p9') ? '' : 'none';   /* モック＋軌道を持つ案で */
     rowThk.style.display = (d === 'p6' || d === 'p8') ? '' : 'none';   /* 厚み(アイソメ)はCSS版H/Iで */
     updateCap(d);
     if (isAgent) { KVP.hide(); syncViewUI('flat'); }
@@ -200,6 +226,7 @@
   kvHost.style.display = 'none';
   KVP.show(); KVP.setPattern('p7'); syncViewUI('flat');
   rowE.style.display = '';
+  rowKV.style.display = '';        /* J(PNG)もモック＋軌道あり */
   rowThk.style.display = 'none';   /* J(PNG)はアイソメ厚み非対応 */
   updateCap('p7');
 

@@ -133,14 +133,28 @@
   const SVG_OC = { x: 971.5, y: 439.5 };            /* 同心円の中心（ellipse実座標より） */
   function spinDots(parent, cx, cy, r, defs, dur, rev) {
     const spin = document.createElement('div'); spin.className = 'kvp-espin';
-    spin.style.left = cx + 'px'; spin.style.top = cy + 'px'; spin.style.animationDuration = dur + 's';
+    spin.dataset.baseDur = dur;                         /* 素の周期。速度倍率で割る */
+    spin.style.left = cx + 'px'; spin.style.top = cy + 'px';
+    spin.style.animationDuration = (dur / (dotSpeed || 1)) + 's';
+    spin.style.animationName = dotEase === 'pulse' ? 'kvpSpinPulse' : 'kvpSpin';
     if (rev) spin.style.animationDirection = 'reverse';
     defs.forEach(([ang, col]) => {
       const a = ang * Math.PI / 180; const d = document.createElement('div'); d.className = 'kvp-edot';
       d.style.left = (Math.cos(a) * r) + 'px'; d.style.top = (Math.sin(a) * r) + 'px';
       d.style.background = col; spin.appendChild(d);   /* フラット（影/ブラー無し）*/
     });
+    eSpins.push(spin);
     parent.appendChild(spin);
+  }
+  /* 軌道ドットの速度倍率（大きいほど速い） */
+  function setDotSpeed(mult) {
+    dotSpeed = Math.max(0.1, +mult || 1);
+    eSpins.forEach(s => { s.style.animationDuration = ((+s.dataset.baseDur || 30) / dotSpeed) + 's'; });
+  }
+  /* 軌道ドットの緩急: 'linear'=一定 / 'pulse'=ゆっくり→急加速→ゆっくり */
+  function setDotEase(mode) {
+    dotEase = (mode === 'pulse') ? 'pulse' : 'linear';
+    eSpins.forEach(s => { s.style.animationName = dotEase === 'pulse' ? 'kvpSpinPulse' : 'kvpSpin'; });
   }
   function buildSvgScene(useImg) {
     const scene = document.createElement('div'); scene.className = 'kvp-svgscene';
@@ -160,6 +174,7 @@
     /* --- 背面: 同心円→周回ドット→mock（背景の発光は不要との指示で撤去） --- */
     put(back, 'ellipse-102.svg', 647, 115, 649, 649);
     put(back, 'ellipse-101.svg', 754, 222, 435, 435);
+    eSpins = [];                                        /* 作り直しのたびに回転要素を採り直す */
     spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
     spinDots(back, SVG_OC.x, SVG_OC.y, 217.5, [[10, '#0EBBFF']], 30, false);
     /* モックもCSSで作り直す（mock.svgは背景ブラーが<foreignObject>で死ぬため）。
@@ -271,6 +286,8 @@
 
   let rootEl, worldEl, cur = null;
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
+  let mockAnimOn = true, eMockSlot = null;                /* モックアニメのオン/オフ・現在のモック枠 */
+  let eSpins = [], dotSpeed = 1, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率・緩急(linear/pulse) */
   let floatOn = true, parallaxOn = false;                 /* 浮遊/パララックス（Eのみ） */
   let curTransform = { x: 0, y: 0, z: 0, s: 1 };          /* XYZ・大きさ（選択案の傾き/拡大） */
   let viewMode = 'flat';                                   /* 普通/アイソメ（全案共通） */
@@ -544,11 +561,13 @@
     slot.appendChild(panel);
     return slot;
   }
-  /* 開発者体験1と同じ流れ: 空 → チャットに入力(カーソル追従) → 送信 → 自分の吹き出し →
-     考え中ドット → 左のエディタがスケルトンで“溜め” → コードが左→右に一気に書かれる → AI回答。
-     ⚠️ 最初は何も出さない(reset)。オブジェクトを最初から置かない、が指定。 */
+  /* 開発者体験1と同じ流れ: 空 → 入力(カーソル追従) → 送信 → 自分の吹き出し → 考え中ドット →
+     エディタがスケルトンで“溜め” → コードが左→右に書かれる → AI回答。
+     【2026-08-25 ヒデさん指定】表示は“完成状態(全部出た状態)”から始め、約5秒後に最初へ戻って再生する。
+     モックアニメは調整パネルでオン/オフ（オフ＝完成状態で静止）。 */
   function startEMock(slot) {
     if (!slot) return () => {};
+    eMockSlot = slot;
     const rows  = [].slice.call(slot.querySelectorAll('.em-crow'));
     const skel  = slot.querySelector('.em-skel');
     const typed = slot.querySelector('.em-typed');
@@ -561,58 +580,80 @@
     const timers = [];
     const T = (fn, ms) => timers.push(setTimeout(fn, ms));
 
-    /* タイムライン(ms)。開発者体験1の順序をKV向けに詰めたもの */
-    const CH = 85;                                   /* 1文字ぶんのタイプ間隔 */
+    /* タイムライン(ms) */
+    const CH = 85;
     const typeStart = 500;
     const typeEnd   = typeStart + PROMPT.length * CH;
-    const sendAt    = typeEnd + 260;                 /* 送信ボタンを押す */
-    const userAt    = sendAt + 210;                  /* 打った内容が履歴に入る */
-    const thinkAt   = userAt + 340;                  /* 考え中ドット */
-    const skelAt    = thinkAt + 240;                 /* エディタがスケルトン(ローディング) */
-    const HOLD      = 900;                            /* 溜め */
-    const burstAt   = skelAt + HOLD;                 /* コードを一気に書き出す */
-    const STEP      = 58;                             /* 1行ずつの間隔(左→右) */
-    const answerAt  = burstAt + rows.length * STEP + 360; /* 書き終わり際にAI回答 */
-    const fadeOutAt = answerAt + 2200;               /* 全部見せてからフェードアウト開始 */
-    const LOOP      = fadeOutAt + 600;               /* フェード後に次の周へ */
+    const sendAt    = typeEnd + 260;
+    const userAt    = sendAt + 210;
+    const thinkAt   = userAt + 340;
+    const skelAt    = thinkAt + 240;
+    const HOLD_DAME = 900;                            /* コード書き出し前の溜め */
+    const burstAt   = skelAt + HOLD_DAME;
+    const STEP      = 58;
+    const answerAt  = burstAt + rows.length * STEP + 360;
+    const PLAY_DUR  = answerAt + 700;                 /* 再生が“完成”に至るまで */
+    const HOLD_DONE = 5000;                           /* 完成状態を見せる時間(約5秒・ヒデさん指定) */
+    const FADE      = 600;                            /* 完成→空へのフェード */
+    const PERIOD    = HOLD_DONE + FADE + PLAY_DUR;    /* 1周期 */
 
+    function snapClass(add) { if (add) slot.classList.add('em-snap'); else { void slot.offsetWidth; slot.classList.remove('em-snap'); } }
+    /* 完成状態(全部出た状態)へ一瞬で */
+    function showDone() {
+      snapClass(true);
+      rows.forEach(r => r.classList.add('on'));
+      if (skel) skel.classList.remove('on');
+      userB && userB.classList.add('on');
+      thinkB && thinkB.classList.remove('on');       /* 考え中は畳む */
+      ansB && ansB.classList.add('on');
+      slot.classList.remove('em-out');
+      typed.textContent = ''; input.classList.remove('typing');
+      if (send) send.classList.remove('is-hit');
+      snapClass(false);
+    }
+    /* 空へ一瞬で */
     function reset() {
-      slot.classList.add('em-snap');                 /* トランジションを一瞬切って即リセット(巻き戻し/チラつき防止) */
+      snapClass(true);
       rows.forEach(r => r.classList.remove('on'));
       if (skel) skel.classList.remove('on');
       [userB, thinkB, ansB].forEach(b => b && b.classList.remove('on'));
       slot.classList.remove('em-out');
-      typed.textContent = '';
-      input.classList.remove('typing');
+      typed.textContent = ''; input.classList.remove('typing');
       if (send) send.classList.remove('is-hit');
-      void slot.offsetWidth;                          /* リフローで即時反映してからトランジションを戻す */
-      slot.classList.remove('em-snap');
+      snapClass(false);
     }
-    function cycle() {
-      reset();
-      /* ① タイプ（カーソルは typed の直後に追従・プレースホルダーは消える） */
+    /* 空→完成 の再生（末尾でフェードアウトはしない＝完成状態で終わる） */
+    function playSeq() {
       T(() => input.classList.add('typing'), typeStart - 80);
       for (let i = 0; i <= PROMPT.length; i++)
         T(() => { typed.textContent = PROMPT.slice(0, i); }, typeStart + i * CH);
-      /* ② 送信 → 入力欄クリア → 自分の吹き出し */
       T(() => { if (send) send.classList.add('is-hit'); }, sendAt);
       T(() => { typed.textContent = ''; input.classList.remove('typing'); }, sendAt + 140);
       T(() => { if (send) send.classList.remove('is-hit'); }, sendAt + 230);
       T(() => userB && userB.classList.add('on'), userAt);
-      /* ③ 考え中 → ④ エディタがスケルトンで溜め */
       T(() => thinkB && thinkB.classList.add('on'), thinkAt);
       T(() => skel && skel.classList.add('on'), skelAt);
-      /* ⑤ 溜めのあと、コードを左→右に一気に書き出す */
       T(() => skel && skel.classList.remove('on'), burstAt);
       rows.forEach((r, i) => T(() => r.classList.add('on'), burstAt + i * STEP));
-      /* ⑥ 考え中を回答に入れ替え */
       T(() => { thinkB && thinkB.classList.remove('on'); ansB && ansB.classList.add('on'); }, answerAt);
-      /* ⑦ ループ末: 全要素をフェードアウトで消す（パストリミングの巻き戻しはしない） */
-      T(() => slot.classList.add('em-out'), fadeOutAt);
     }
-    cycle();
-    const iv = setInterval(cycle, LOOP); timers.push(() => clearInterval(iv));
+    /* 1周期: 完成が見えている → HOLD_DONE後にフェード → 空へ → 再生(完成で終わる) */
+    function period() {
+      T(() => slot.classList.add('em-out'), HOLD_DONE);
+      T(() => { reset(); playSeq(); }, HOLD_DONE + FADE);
+    }
+
+    showDone();                                        /* まず完成状態から */
+    if (!mockAnimOn) return () => {};                  /* オフ＝完成状態で静止 */
+    period();
+    const iv = setInterval(period, PERIOD); timers.push(() => clearInterval(iv));
     return () => timers.forEach(t => (typeof t === 'function' ? t() : clearTimeout(t)));
+  }
+  /* モックアニメのオン/オフ（オフは完成状態で静止）。パネルから呼ぶ */
+  function setMockAnim(on) {
+    mockAnimOn = !!on;
+    if (eMockStop) { eMockStop(); eMockStop = null; }
+    if (eMockSlot) eMockStop = startEMock(eMockSlot);
   }
 
   /* ============ 浮遊 / パララックス / XYZ変形 ============ */
@@ -730,6 +771,8 @@
   function hide() { rootEl.classList.add('hidden'); }
 
   global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform, setView,
-    setThick, setThickVar,
-    get: () => cur, getTransform: () => Object.assign({}, curTransform), PATTERNS, C, STAGE };
+    setThick, setThickVar, setMockAnim, setDotSpeed, setDotEase,
+    get: () => cur, getTransform: () => Object.assign({}, curTransform),
+    getMockAnim: () => mockAnimOn, getDotSpeed: () => dotSpeed, getDotEase: () => dotEase,
+    PATTERNS, C, STAGE };
 })(window);
