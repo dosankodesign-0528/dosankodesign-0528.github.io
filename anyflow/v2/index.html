@@ -498,7 +498,7 @@
         テキストは一番上に残り、棒が広がるにつれて溶け込む(ブラーで消える)。動きは JS(updateResults)。 */
   .res-grow {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(180deg, #161616 0%, #2a2a2a 100%);
+    background: linear-gradient(180deg, #161616 0%, #454545 100%);   /* 開発者体験の暗背景と同一グラデ＝受け渡しで差分が出ない(ヒデさん指定) */
     transform-origin: 50% 50%;
     transform: translateY(80%) scale(0.07, 0.55);   /* 初期＝下・縦長の細い棒。実際の動きは JS */
     border-radius: 0;                                 /* 角丸なしの単純なレクタングル（ヒデさん指定 2026-08-25） */
@@ -4681,7 +4681,7 @@ function updateDev(pRaw) {
   const op = Math.min(1, inM1 * 4) * (1 - fin);
   const sc = (0.82 + 0.18 * inM1) * mk;
   const tx = cx * (1 - mv);
-  const ty = (1 - inM1) * 120;
+  const ty = 0;   /* 【2026-08-25】下から上げず、終点位置でブラー出現にする(ヒデさん指定)。浮上はopacity/blurのみ */
   /* ⚠️ fin(白へ戻す量)をぼかしに掛けないこと。
      掛けると白くなる途中でモックが大きくぼけ、洗いざらしの画面になる(実際に発生) */
   let bl = (1 - inM1) * 10;
