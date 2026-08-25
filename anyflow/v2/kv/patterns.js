@@ -116,6 +116,7 @@
     p6: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false },
     p7: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, img: true },   /* 画像ベタ貼り版(PNG) */
     p8: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, bgpick: true }, /* 背景色を拾った版(すりガラス＋地色) */
+    p9: { conn: 'svgimport', box: 'glass', layout: LAYOUT_E,    iso: false, img: true, tilt: true }, /* 2Dだけど立体的(PNG＋緩い3D角度) */
   };
   const PNG_DIR = 'assets/png/';   /* 書き出しPNG（frost焼込み済み・透過）。影はCSSで付ける */
 
@@ -176,14 +177,15 @@
     const CSS_REBUILD = { 'icon-4.svg': 'chart', 'icon-3.svg': 'chat', 'icon-2.svg': 'person', 'icon-1.svg': 'calendar', 'icon.svg': 'cloud' };
     SVG_ICONS.forEach(([f, x, y, w, h, fs], i) => {
       if (useImg) {
-        /* 画像ベタ貼り版: 書き出しPNG（frost焼込み・透過）をそのまま貼る。影だけCSSで付ける（Figma実測比）。 */
+        /* 画像ベタ貼り版: 書き出しPNG（frost焼込み・透過・箱ぴったり@3x）をそのまま貼る。影だけCSS。
+           ⚠️ PNGは"箱そのもの"なので、表示は viewBox(w) ではなく Figmaの箱サイズ fs で（カンプ忠実）。 */
         const ico = document.createElement('div'); ico.className = 'kvp-ico-svg';
-        ico.style.left = (x - w / 2) + 'px'; ico.style.top = (y - h / 2) + 'px';
-        ico.style.width = w + 'px'; ico.style.height = h + 'px';
+        ico.style.left = (x - fs / 2) + 'px'; ico.style.top = (y - fs / 2) + 'px';
+        ico.style.width = fs + 'px'; ico.style.height = fs + 'px';
         ico.style.setProperty('--fd', (i * 0.6) + 's');
         const im = document.createElement('img'); im.className = 'kvp-png-ico';
         im.src = PNG_DIR + f.replace('.svg', '.png');
-        im.style.width = w + 'px'; im.style.height = h + 'px';
+        im.style.width = fs + 'px'; im.style.height = fs + 'px';
         /* 影: Figma実測（chart 16.08/16.53/28.79 @140.4px ≈ 0.11/0.12/0.20×箱）を fs 基準で。 */
         im.style.filter = `drop-shadow(${(fs * 0.06).toFixed(1)}px ${(fs * 0.09).toFixed(1)}px ${(fs * 0.16).toFixed(1)}px rgba(0,0,0,.22))`;
         ico.appendChild(im); front.appendChild(ico);
@@ -553,7 +555,7 @@
 
   /* ============ 浮遊 / パララックス / XYZ変形 ============ */
   function applyFloat() {
-    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8'));
+    rootEl.classList.toggle('float-on', floatOn && (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8' || cur === 'p9'));
   }
   function onPointer(e) {
     if ((cur !== 'p5' && cur !== 'p6') || !parallaxOn || !eBack || !eFront) return;
@@ -564,12 +566,12 @@
   }
   function applyParallax() {
     if (!eBack || !eFront) return;
-    if (!((cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8') && parallaxOn)) {
+    if (!((cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8' || cur === 'p9') && parallaxOn)) {
       eBack.style.left = eBack.style.top = ''; eFront.style.left = eFront.style.top = '';
     }
   }
   function applyTransform() {
-    const c = (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8') ? EC : C;
+    const c = (cur === 'p5' || cur === 'p6' || cur === 'p7' || cur === 'p8' || cur === 'p9') ? EC : C;
     worldEl.style.transformOrigin = `${c.x}px ${c.y}px`;
     const t = curTransform;
     worldEl.style.transform = (t.x || t.y || t.z || t.s !== 1)
@@ -611,14 +613,14 @@
     eBack = eFront = null;
     cur = key;
     worldEl.innerHTML = '';
-    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'pat-p7', 'pat-p8', 'is-iso', 'is-flat');
+    rootEl.classList.remove('pat-p1', 'pat-p2', 'pat-p3', 'pat-p4', 'pat-p5', 'pat-p6', 'pat-p7', 'pat-p8', 'pat-p9', 'is-iso', 'is-flat');
     rootEl.classList.add('pat-' + key);
     viewMode = p.iso ? 'iso' : 'flat';                  /* 案の既定ビュー（後で普通/アイソメで切替可） */
     applyView();
     curTransform = Object.assign({}, viewMode === 'iso' ? ISO_PRESET : FLAT_PRESET);
 
-    if (key === 'p6' || key === 'p7' || key === 'p8') {  /* H/I/J: 同じシーン。p7=PNG画像 / p8=背景色拾い(CSSで地色付与) */
-      const scene = buildSvgScene(key === 'p7');
+    if (key === 'p6' || key === 'p7' || key === 'p8' || key === 'p9') {  /* H/I/J/K: 同じシーン。p7/p9=PNG画像 / p8=背景色拾い / p9=緩い3D角度 */
+      const scene = buildSvgScene(key === 'p7' || key === 'p9');
       worldEl.appendChild(scene);
       eBack = scene.querySelector('.kvp-e-back');
       eFront = scene.querySelector('.kvp-e-icons');

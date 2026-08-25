@@ -139,6 +139,11 @@ body { background: #E7E7E7; }
 /* J=背景色を拾った(p8): すりガラスに地色を強めに持たせ、無地でも"フロスト"に見せる（効いてない錯覚を解消） */
 .pat-p8 .kvp-ico--glass .kvp-ico-frost { background: rgba(255,255,255,.62); }
 .pat-p8 .kvp-emock-slot { background: rgba(255,255,255,.6); }
+/* K=2Dだけど立体的(p9): PNGシーンを緩い3D角度に傾ける（参考画像の角度）＋強めの浮遊影。
+   PNGなのでtransformで壊れる心配なし。mockは地色を持たせる（傾けでfrostが弱くなるため）。 */
+.pat-p9 .kvp-svgscene { transform: perspective(1700px) rotateX(15deg) rotateZ(-1.5deg); transform-origin: center 58%; }
+.pat-p9 .kvp-png-ico { filter: drop-shadow(0 16px 24px rgba(16,24,40,.22)) !important; }
+.pat-p9 .kvp-emock-slot { background: rgba(255,255,255,.6); }
 /* 浮遊アニメ（Eのみ・トグル）*/
 /* 浮遊は margin で動かす（transformだと子のbackdrop-filterが無効化されるため） */
 @keyframes kvpFloat { 0%,100% { margin-top: 0; } 50% { margin-top: -10px; } }
