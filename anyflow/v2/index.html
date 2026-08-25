@@ -35,7 +35,7 @@
 
   /* ---- ステージ: 高さ921pxのカンプ座標系のまま、幅だけ画面いっぱいに広げる（フィル） ----
      左右の要素は left:120px / right:120px でアンカーするので、幅が変わっても余白は120pxのまま */
-  .stage-wrap { width: 100%; overflow: hidden; }
+  .stage-wrap { width: 100%; overflow: hidden; background: #E7E7E7; }  /* KVの地色を全幅で。1440幅のiframeの左右も#E7E7E7で埋める(フレーム幅の切れ防止) */
   .stage {
     position: relative;
     width: var(--sw, 1440px);
@@ -175,16 +175,11 @@
     color-scheme: light;
   }
   /* 調整パネルを開く透明ボックス（本体側。iframe内のパネルをトグルする）。
-     判定を広げて見つけやすく。薄い⚙アイコンを常時うっすら表示（ホバーで濃く） */
+     網走と同じく“完全に透明な空ボックス”。アイコンは出さない（ヒデさん指定 2026-08-25） */
   .kvp-secret {
-    position: absolute; top: 54px; right: 0; width: 200px; height: 140px;
+    position: absolute; top: 54px; right: 0; width: 120px; height: 90px;
     z-index: 40; cursor: pointer; background: transparent;
   }
-  .kvp-secret::after {
-    content: "⚙"; position: absolute; top: 10px; right: 16px; font-size: 18px; line-height: 1;
-    color: #101828; opacity: .18; transition: opacity .2s; pointer-events: none;
-  }
-  .kvp-secret:hover::after { opacity: .5; }
   /* 【2026-08-25 復活・ヒデさん指定】本体の「モーション調整パネル」を再表示する。
      スクロール駆動/固定追従などの切替を V1.0 のように戻すため。
      開閉ボックスは 2枚に分離: 右上⚙ = KVパネル(kvpSecret) / 左上⚙ = 本体モーションパネル(.tools-secret-hot)。 */
@@ -498,40 +493,45 @@
     pointer-events: none;
     z-index: 5;
   }
-  /* ===== 案C: 実績=中央テキストだけ → 下から昇って画面いっぱいに拡大する黒オブジェクトで開発者体験へ ===== */
+  /* ===== 案C: 実績=中央テキスト(絵コンテ準拠) → 縦長の黒い棒が下から入り左右上下に広がって開発者体験へ =====
+     ⚠️ 黒オブジェクトは【テキストより下のレイヤー】(z-index:1 < 文字の pin-stage z-index:2)。
+        テキストは一番上に残り、棒が広がるにつれて溶け込む(ブラーで消える)。動きは JS(updateResults)。 */
   .res-grow {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(180deg, #161616 0%, #454545 100%);
+    background: linear-gradient(180deg, #161616 0%, #2a2a2a 100%);
     transform-origin: 50% 50%;
-    transform: translateY(60%) scale(0.18);
-    border-radius: 40px;
-    opacity: 0; pointer-events: none; z-index: 5;
+    transform: translateY(80%) scale(0.07, 0.55);   /* 初期＝下・縦長の細い棒。実際の動きは JS */
+    border-radius: 0;                                 /* 角丸なしの単純なレクタングル（ヒデさん指定 2026-08-25） */
+    opacity: 0; pointer-events: none; z-index: 1;
     will-change: transform, opacity;
   }
-  /* 案C: 画像なし・中央テキストのみ */
+  /* 案C: 画像なし・中央テキストのみ。地色は絵コンテの #E7E7E7 を全幅で */
+  #results.pat-c .pin-vp { background: #E7E7E7; }
+  #results.pat-c .pin-stage { z-index: 2; }         /* 文字を黒オブジェクトの上のレイヤーに */
   #results.pat-c .res-img-frame { display: none; }
+  /* 見出し(100%行) → 数値3つ(1行) → 本文(100%行) を中央に。res-main は display:contents で
+     head/数値を res-col 直下へ流し込み、数値グループ(res-nums)と(res-stats)を同じ折返し行に並べる */
   #results.pat-c .res-col {
-    position: absolute; inset: 0;   /* キャンバス全面＝ビューポート全面。中央フレックスで viewport 中央に寄せる */
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; gap: 40px; padding: 0 80px;
+    position: absolute; inset: 0;
+    display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center;
+    text-align: center; row-gap: 44px; column-gap: 72px; padding: 0 72px;
   }
-  #results.pat-c .res-main {
-    position: static; width: auto;
-    display: flex; flex-direction: column; align-items: center; gap: 34px;
-  }
-  #results.pat-c .res-head { text-align: center; }
+  #results.pat-c .res-main { display: contents; }
+  #results.pat-c .res-head { flex-basis: 100%; text-align: center; }
   #results.pat-c .res-line { display: none; }
   #results.pat-c .res-nums,
-  #results.pat-c .res-stats {
-    position: static; display: flex; justify-content: center; gap: 72px; margin: 0;
-  }
+  #results.pat-c .res-stats { display: flex; column-gap: 72px; justify-content: center; align-items: flex-start; margin: 0; width: auto; }
   #results.pat-c .rn,
-  #results.pat-c .st { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  #results.pat-c .st {
+    flex: 0 0 auto; width: auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    padding: 0; border: none;
+  }
+  #results.pat-c .res-stats .st:nth-child(2) { display: none; }   /* 最短リリース(1week)は隠す＝数値3つ */
   #results.pat-c .rn b,
-  #results.pat-c .st b { font-size: 15px; font-weight: 400; color: #8a8f98; }
+  #results.pat-c .st b { font-size: 15px; font-weight: 400; line-height: 1; color: #8a8f98; text-align: center; }
   #results.pat-c .rn span,
-  #results.pat-c .st span { font-size: 60px; font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; }
-  #results.pat-c .res-text { position: static; width: min(680px, 78%); text-align: center; }
+  #results.pat-c .st span { display: block; width: auto; font-weight: 100; font-size: 80px; line-height: 1; text-align: center; }
+  #results.pat-c .res-text { flex-basis: 100%; width: min(680px, 80%); margin: 0 auto; text-align: center; }
   .res-img-frame { overflow: hidden; }
   .res-img-frame img { display: block; }
 
@@ -1200,8 +1200,8 @@
   /* 隠しモード（2026-08-21 ヒデさん指示）：パネルは最初は見えない。
      画面右上の透明ボックス（.tools-secret-hot）をクリックすると出る/隠れる */
   .tools.tools-hidden { display: none; }
-  /* 本体モーションパネルの開閉ボックス。右上はKVパネル(kvp-secret)が使うので、
-     こちらは左上に分離する（2026-08-25 復活）。うっすら⚙を出して見つけやすく。 */
+  /* 本体モーションパネルの開閉ボックス。左上に分離（2026-08-25）。
+     網走と同じく“完全に透明な空ボックス”。アイコンは出さない（ヒデさん指定 2026-08-25） */
   .tools-secret-hot {
     position: fixed;
     top: 0;
@@ -1212,11 +1212,6 @@
     background: transparent;
     cursor: pointer;
   }
-  .tools-secret-hot::after {
-    content: "⚙"; position: absolute; top: 10px; left: 16px; font-size: 18px; line-height: 1;
-    color: #101828; opacity: .18; transition: opacity .2s; pointer-events: none;
-  }
-  .tools-secret-hot:hover::after { opacity: .5; }
   .switcher {
     position: relative;
     width: 360px;
@@ -1442,7 +1437,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=4" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=5" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -2330,7 +2325,7 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
-      driveLen: 3.0,     // スクロール駆動の時、尺を何倍に伸ばすか（大きいほどゆったり）
+      driveLen: 2.0,     // スクロール駆動の時、尺を何倍に伸ばすか（小さいほどスクロール量が減る。2026-08-25 3.0→2.0）
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
       imgBlur: 24,     // 画像が出る時のぼかし量
@@ -2341,9 +2336,9 @@ const DEFAULTS = {
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
-      outFrom: 0.48,   // 案B: ここから中身がブラーで消え、暗い背景へ移りはじめる
-      outTo: 0.84,     // 案B: ここで完全に暗い背景になる (着地より前に真っ黒にする)
-      outBlur: 22,     // 消える時のぼかし量
+      outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
+      outTo: 0.60,     // 案B/C: ここで完全に黒/暗背景になる (着地より前に。2026-08-25 0.84→0.60)
+      outBlur: 22,     // 消える時のぼかし量(案Bのみ。案Cは白反転)
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
          ⚠️ 下の4つは「回転が見えるように」仮で置いた値。パネルで詰めてください */
@@ -2478,15 +2473,25 @@ const DEFAULTS = {
 const STORAGE_KEY = 'anyflow-embed-anim-v70';
 
 let params = load();
-/* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化。既存の保存値も一度だけCへ移行する
-   （パネルで案A/Bへ戻せる。移行フラグで一度きり＝以後は保存値を尊重） */
+/* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
+   （パネルで案A/Bやタイミングへ戻せる。移行フラグで一度きり＝以後は保存値を尊重） */
 try {
-  if (localStorage.getItem(STORAGE_KEY) && !localStorage.getItem('anyflow-migrate-resC')) {
+  if (localStorage.getItem(STORAGE_KEY) && !localStorage.getItem('anyflow-migrate-resC2')) {
+    const D = DEFAULTS.sections.results;
     params.patterns.results = 'C';
+    if (params.sections && params.sections.results) {
+      params.sections.results.outFrom = D.outFrom;
+      params.sections.results.outTo = D.outTo;
+      params.sections.results.driveLen = D.driveLen;
+    }
     const _s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
     _s.patterns = _s.patterns || {}; _s.patterns.results = 'C';
+    _s.sections = _s.sections || {}; _s.sections.results = _s.sections.results || {};
+    _s.sections.results.outFrom = D.outFrom;
+    _s.sections.results.outTo = D.outTo;
+    _s.sections.results.driveLen = D.driveLen;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
-    localStorage.setItem('anyflow-migrate-resC', '1');
+    localStorage.setItem('anyflow-migrate-resC2', '1');
   }
 } catch (e) {}
 function load() {
@@ -3764,7 +3769,9 @@ const resEls = {
   cntSub2: document.getElementById('cntSub2'),
 };
 /* 見出しは1文字ずつの箱に分けて、キービジュアルと同じようにタイピングさせる */
-const RES_HEAD_LINES = ['事業の推進力を、', 'Anyflowが支えます。'];
+/* 案C: 白反転させるラベル(導入企業/連携実績/稼働率)。res-main が display:contents でも拾える */
+function resPatCLabels() { return [...SECS.results.querySelectorAll('.rn b, .st b')]; }
+const RES_HEAD_LINES = ['事業の推進力を、Anyflowが後押しします。'];   /* 2026-08-25: 1行＋文言「後押しします」に(ヒデさん指定) */
 const resHeadChars = (() => {
   const root = resEls.head;
   root.innerHTML = '';
@@ -3912,7 +3919,7 @@ function updateResults(p) {
 
   if (t < 0) {
     resEls.dark.style.opacity = 0;
-    if (resEls.grow) { resEls.grow.style.opacity = 0; resEls.grow.style.transform = 'translateY(60%) scale(0.18)'; resEls.grow.style.borderRadius = '40px'; }
+    if (resEls.grow) { resEls.grow.style.opacity = 0; resEls.grow.style.transform = 'translateY(82%) scale(0.07, 0.55)'; resEls.grow.style.borderRadius = '0'; }
     /* ⚠️ ここは rv()/setStyle と同じ要素を触るので、直接 style を書かないこと。
        直接書くとキャッシュとズレて、次に出そうとした時に書き込みが省略される
        （2026-08-19: これで実績が二度と出てこなくなっていた） */
@@ -3982,28 +3989,41 @@ function updateResults(p) {
   const handed = clamp01((-devTop) / (innerHeight * 0.25));   /* 0=まだ / 1=開発者体験が着いた */
 
   if (patC) {
-    /* 案C: 下から昇って画面いっぱいに拡大する黒オブジェクト＋実績はブラーで消える */
-    const grin = seg(p, c.outFrom, c.outTo, easeOutC);         // 0→1 成長
-    const gy = (1 - grin) * 60;                                 // 60%下(下から) → 0(中央)
-    const gs = 0.18 + 0.82 * grin;                             // 小さい箱 → 画面いっぱい
+    /* 案C: 黒い縦長のレクタングル(角丸なし)が①下から上下中央へ→②中央から左右上下に広がって全画面。
+       文字は【上のレイヤー】に残し、黒が来た所は“白反転”→最後に消す。 */
+    const grin    = clamp01((p - c.outFrom) / (c.outTo - c.outFrom));  // 0→1 全体進行
+    const riseK   = easeOutC(clamp01(grin / 0.40));                    // ① 下から中央へ
+    const spreadK = easeIO(clamp01((grin - 0.36) / 0.64));             // ② 中央から左右上下へ
     if (resEls.grow) {
-      resEls.grow.style.transform = `translateY(${gy.toFixed(2)}%) scale(${gs.toFixed(3)})`;
-      resEls.grow.style.borderRadius = `${((1 - grin) * 40).toFixed(0)}px`;
-      /* 成長開始で不透明 → 開発者体験が定位置に着いたら渡してフェード（同じ黒なので継ぎ目なし） */
-      resEls.grow.style.opacity = (clamp01(grin * 6) * (1 - handed)).toFixed(3);
+      const gy = (1 - riseK) * 82;                    // 下(82%下) → 中央(0)
+      const sx = 0.07 + spreadK * 0.93;               // 細い棒 → 全幅
+      const sy = 0.55 + spreadK * 0.45;               // 縦長 → 全高
+      resEls.grow.style.transform = `translateY(${gy.toFixed(2)}%) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+      /* 入ってきたら不透明 → 開発者体験が着いたら渡してフェード（同じ黒なので継ぎ目なし） */
+      resEls.grow.style.opacity = (clamp01(riseK * 4) * (1 - handed)).toFixed(3);
     }
     resEls.dark.style.opacity = 0;
-    /* 黒が中央〜画面いっぱいに来る頃、実績の文字は真っ黒になる前にブラーで消す */
-    const textOut = clamp01((grin - 0.35) / 0.5);
-    if (textOut > 0) {
-      resEls.head.style.opacity = ((+resEls.head.style.opacity || 0) * (1 - textOut)).toFixed(3);
-      resEls.head.style.filter = `blur(${(textOut * c.outBlur).toFixed(2)}px)`;
-      [resEls.main, resEls.stats, resEls.text].forEach(el => {
-        setStyle(el, 'opacity', ((+el.style.opacity || 0) * (1 - textOut)).toFixed(3));
-        setStyle(el, 'filter', `blur(${(textOut * c.outBlur).toFixed(2)}px)`);
-      });
-    }
+    /* 黒が来た所の文字は“白反転”（読めるまま白へ）→ 全画面の黒になる頃に消す。
+       res-main は display:contents のため rendered box を直接触る */
+    const invK   = easeIO(clamp01((grin - 0.18) / 0.34));   // 黒が上がってくるほど白へ
+    const fadeK  = clamp01((grin - 0.66) / 0.30);           // 全画面の黒になる頃に消す
+    const numsEl = resEls.main.querySelector('.res-nums');
+    const mix = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
+    resEls.head.style.color = mix([16, 24, 40]);  resEls.head.style.filter = '';
+    resEls.text.style.color = mix([16, 24, 40]);
+    if (numsEl) numsEl.style.color = mix([0, 0, 0]);
+    resEls.stats.style.color = mix([0, 0, 0]);
+    resPatCLabels().forEach(bEl => { bEl.style.color = mix([138, 143, 152]); });
+    resEls.head.style.opacity = (1 - fadeK).toFixed(3);
+    [numsEl, resEls.stats, resEls.text].forEach(el => { if (el) { setStyle(el, 'opacity', (1 - fadeK).toFixed(3)); setStyle(el, 'filter', ''); } });
   } else {
+    /* 案C用に付けた白反転のインライン color を掃除（A/Bへ戻した時に白いまま残らないように） */
+    if (resEls.head.style.color) {
+      [resEls.head, resEls.text, resEls.stats].forEach(el => { el.style.color = ''; });
+      const nn = resEls.main.querySelector('.res-nums'); if (nn) nn.style.color = '';
+      resHeadChars.forEach(sp => { sp.style.color = ''; });
+      resPatCLabels().forEach(bEl => { bEl.style.color = ''; });
+    }
     /* 案A/B: 従来どおり固定の暗幕を opacity でクロスフェード（開発者体験が着くまで出しっぱなし） */
     if (resEls.grow) resEls.grow.style.opacity = 0;
     const outK = patB ? seg(p, c.outFrom, c.outTo, easeIO) : 0;

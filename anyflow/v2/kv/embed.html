@@ -14,13 +14,8 @@
      すりガラスが本体の地色をボカしているように見せる（iframe内のbackdrop-filterは
      iframe内の背景しかボカせないため、地色を本体に合わせるのが必須）。 */
   html, body { margin: 0; background: #E7E7E7; overflow: hidden; }  /* Figmaキャンバス色。白フロストが#EEEに浮き出る */
-  /* 秘密ボックスは本体ヘッダー(上部)と被らない位置へ下げる＋判定を広げて見つけやすく */
-  .kv-secret { top: 80px !important; right: 0 !important; width: 200px !important; height: 140px !important; }
-  .kv-secret::after {
-    content: "⚙"; position: absolute; top: 10px; right: 16px; font-size: 18px; line-height: 1;
-    color: #101828; opacity: .18; transition: opacity .2s; pointer-events: none;
-  }
-  .kv-secret:hover::after { opacity: .5; }
+  /* 秘密ボックスは本体ヘッダー(上部)と被らない位置へ下げる。網走同様“透明な空ボックス”・アイコン無し（2026-08-25） */
+  .kv-secret { top: 80px !important; right: 0 !important; width: 120px !important; height: 90px !important; }
   /* 調整パネル: ドラッグで移動・リサイズ可能に。既定位置はティッカーに被らない高さへ */
   .kv-bar { align-items: stretch; resize: both; overflow: auto; bottom: 170px;
             min-width: 240px; min-height: 90px; max-width: 96vw; max-height: 88vh; }
