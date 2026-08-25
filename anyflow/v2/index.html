@@ -3999,7 +3999,9 @@ function updateResults(p) {
      ⚠️ 以前は .rn b, .st b の color:#333 !important が反転を上書きして数字ラベルが白反転しなかった。
         新デザインはラベルに !important を付けていないので、インライン color がそのまま効く。 */
   const invK  = easeIO(clamp01((grin - 0.18) / 0.34));
-  const fadeK = clamp01((grin - 0.66) / 0.30);
+  /* 【2026-08-26 ヒデさん指定】dev1 のモック出現と被らないよう、実績の消えは早めに。
+     黒が全面(grin≒1)を覆う前に実績コンテンツを消しきる(grin 0.45→0.72 で消える)。 */
+  const fadeK = clamp01((grin - 0.45) / 0.27);
   if (grin > 0.001) {
     resInvertOn = true;
     const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
