@@ -287,7 +287,7 @@
   let rootEl, worldEl, cur = null;
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
   let mockAnimOn = true, eMockSlot = null;                /* モックアニメのオン/オフ・現在のモック枠 */
-  let eSpins = [], dotSpeed = 1, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率・緩急(linear/pulse) */
+  let eSpins = [], dotSpeed = 3, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率(既定3x・2026-08-25 ヒデさん指定)・緩急(linear/pulse) */
   let floatOn = true, parallaxOn = false;                 /* 浮遊/パララックス（Eのみ） */
   let curTransform = { x: 0, y: 0, z: 0, s: 1 };          /* XYZ・大きさ（選択案の傾き/拡大） */
   let viewMode = 'flat';                                   /* 普通/アイソメ（全案共通） */
@@ -643,10 +643,10 @@
       T(() => { reset(); playSeq(); }, HOLD_DONE + FADE);
     }
 
-    showDone();                                        /* まず完成状態から */
-    if (!mockAnimOn) return () => {};                  /* オフ＝完成状態で静止 */
-    period();
-    const iv = setInterval(period, PERIOD); timers.push(() => clearInterval(iv));
+    /* 【2026-08-25 ヒデさん指定】完成状態で表示して、そのまま出しっぱなし。
+       以前の「5秒ごとに消えて再出現するループ(period/setInterval)」は撤去した
+       （“最初アイコン等が出た後にまた消えて出てくる”挙動をやめる）。 */
+    showDone();
     return () => timers.forEach(t => (typeof t === 'function' ? t() : clearTimeout(t)));
   }
   /* モックアニメのオン/オフ（オフは完成状態で静止）。パネルから呼ぶ */

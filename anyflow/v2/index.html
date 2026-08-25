@@ -25,7 +25,7 @@
     --font-jp: 'Noto Sans JP', sans-serif;
   }
   html, body {
-    background: #f2f2f2;
+    background: #e7e7e7;   /* 2026-08-25: 全セクション地色を #E7E7E7 で統一(KVと同じ) */
     font-family: 'Noto Sans JP', sans-serif;
     /* overflow-x: hidden は position: sticky を殺すため clip を使う
        (clip はスクロールコンテナを作らないので sticky が生きる) */
@@ -252,13 +252,13 @@
     top: 0;
     height: 100vh;
     overflow: hidden;
-    background: #f2f2f2;
+    background: #e7e7e7;   /* 2026-08-25: #E7E7E7 に統一(Vision等が薄グレーだったのを解消) */
   }
   /* 固定追従なし: 貼りつけをやめ、重ねも解除する（普通に上から下へ流れる） */
   html.nopin .pin-vp { position: relative; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
-  html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #f2f2f2; }
+  html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
   html.nopin #dev .np-vp { background: #161616; }
   /* 章①用の静止モック（複製）。ホバーも動きも持たない見せ物 */
   /* 章①用の静止モック。JS で動かさないので、CSS で中央に置いて見出しの下に収める */
@@ -527,8 +527,10 @@
     padding: 0; border: none;
   }
   #results.pat-c .res-stats .st:nth-child(2) { display: none; }   /* 最短リリース(1week)は隠す＝数値3つ */
+  /* 2026-08-25 精査(カンプ 15779:30326): ラベルは Noto Light 16px・黒(グレー#8a8f98→黒)・行間24。 */
   #results.pat-c .rn b,
-  #results.pat-c .st b { font-size: 15px; font-weight: 400; line-height: 1; color: #8a8f98; text-align: center; }
+  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: #000; text-align: center; }
+  /* 数値は SF Pro Text Ultralight(100)・80px（カンプ一致）。 */
   #results.pat-c .rn span,
   #results.pat-c .st span { display: block; width: auto; font-weight: 100; font-size: 80px; line-height: 1; text-align: center; }
   #results.pat-c .res-text { flex-basis: 100%; width: min(680px, 80%); margin: 0 auto; text-align: center; }
@@ -589,7 +591,7 @@
   .dev-bg2 {
     position: absolute;
     inset: 0;
-    background: #f2f2f2;
+    background: #e7e7e7;   /* 2026-08-25: 次セクションへ戻す板も #E7E7E7 に統一 */
     opacity: 0;
   }
   #dev .pin-stage { background: transparent; }
