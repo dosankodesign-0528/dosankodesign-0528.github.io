@@ -153,7 +153,10 @@
         `backdrop-filter:blur(${blur}px);-webkit-backdrop-filter:blur(${blur}px);`;
       parent.appendChild(d); return d;
     };
-    /* --- 背面: 同心円＋周回ドット＋mock --- */
+    /* --- 背面: 発光→同心円→周回ドット→mock --- */
+    /* ⚠️ 無地の上ではすりガラスは"ボカす物が無い"ので見えない。ブランドの淡い発光を背後に敷き、
+       ガラスがそれをボカして"本物のすりガラス"に見えるようにする（anyflowの発光グラデ世界観にも合う）。 */
+    const glow = document.createElement('div'); glow.className = 'kvp-eglow'; back.appendChild(glow);
     put(back, 'ellipse-102.svg', 647, 115, 649, 649);
     put(back, 'ellipse-101.svg', 754, 222, 435, 435);
     spinDots(back, SVG_OC.x, SVG_OC.y, 324.5, [[-30, '#FF5D97'], [150, '#0E4497']], 42, true);
@@ -193,6 +196,30 @@
     });
     scene.appendChild(back); scene.appendChild(front);
     return scene;
+  }
+
+  /* KV入場アニメ: mock→アイコンがランダムにバラバラ出現→軌道/周回ドット/発光。
+     scene に .kvp-intro を付け、順に .in を付与。演出後は .kvp-intro を外す（transformを残さない）。 */
+  let introTimers = [];
+  function playIntro(scene) {
+    introTimers.forEach(clearTimeout); introTimers = [];
+    scene.classList.add('kvp-intro');
+    const T = (fn, ms) => introTimers.push(setTimeout(fn, ms));
+    const mock = scene.querySelector('.kvp-emock-slot');
+    const icons = [].slice.call(scene.querySelectorAll('.kvp-ico-svg'));
+    const bg = [].slice.call(scene.querySelectorAll('.kvp-eglow, .kvp-eorbits, .kvp-svgel, .kvp-espin'));
+    /* アイコンはランダムな方向から飛んでくる（バラバラ感）*/
+    icons.forEach(ic => {
+      ic.style.setProperty('--idx', Math.round((Math.random() - 0.5) * 170) + 'px');
+      ic.style.setProperty('--idy', Math.round((Math.random() - 0.5) * 150) + 'px');
+    });
+    const order = icons.slice().sort(() => Math.random() - 0.5);   /* 出る順もランダム */
+    requestAnimationFrame(() => {
+      T(() => mock && mock.classList.add('in'), 150);                       /* ① mock */
+      order.forEach((ic, i) => T(() => ic.classList.add('in'), 700 + i * 130 + Math.random() * 90)); /* ② アイコン */
+      T(() => bg.forEach(e => e.classList.add('in')), 1500);               /* ③ 軌道・ドット・発光 */
+      T(() => scene.classList.remove('kvp-intro'), 2700);                  /* 演出終了：初期scopeを解除 */
+    });
   }
 
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -580,6 +607,7 @@
       eFront = scene.querySelector('.kvp-e-icons');
       eMockStop = startEMock(scene.querySelector('.kvp-emock-slot'));  /* モックをアニメ（開発者体験1と同じ） */
       applyFloat(); applyParallax(); applyTransform();
+      playIntro(scene);   /* 入場アニメ: mock→アイコンがバラバラ→軌道/ドット/発光 */
       return;
     }
 
