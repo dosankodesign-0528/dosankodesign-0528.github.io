@@ -6634,29 +6634,47 @@ function buildPanel() {
   rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
-  /* ---------- 🖼 右のグラフィックの案 (2026-08-26 ヒデさん指定) ----------
-     V2 のキービジュアルは右側のグラフィックが iframe(kv/embed.html)。
-     旧・惑星/まわりの輪のコントロールは全部撤去し、代わりに「案の切替」をここに集約。
-     押した瞬間に iframe へ postMessage して切り替える（文字は流し直さない）。 */
-  liveEdit = true;
-  /* ===== 🎨 グラフィック (2026-08-26 ヒデさん指定) =====
-     右側のグラフィックを扱うセクション。いちばん上に「直接編集」を置く。
-     直接編集をオンにするとアニメーションが止まり、掴んで動かしやすくなる。 */
+  /* ===== 🎨 グラフィック (2026-08-26 ヒデさん指定・整理) =====
+     右側のグラフィックの設定をここに集約する。いちばん上が「直接編集」。
+     以下は全部この中の入れ子: 案を選ぶ / 出てくるタイミング / 惑星のアニメーション / 軌道 */
   liveEdit = true;
   sub(catKv, '🎨 グラフィック');
+  const gRoot = mount;   /* この中に入れ子で並べる */
   segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
     v => { editHandles.set(!!v); markDirty(); });
   note('オンにすると右のグラフィックに操作点が出て、アニメーションが止まります。中心＝移動 / 右端＝サイズ / 上端＝つぶし（パース）/ 外側＝傾き。惑星も動かせます。');
-  liveEdit = false;
 
-  sub(catKv, '🖼 右のグラフィックの案を選ぶ');
-  note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ切り替わります。');
+  sub(gRoot, '案を選ぶ', true);
+  note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的。押すとすぐ切り替わります。');
   pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key, it => kvSetDesign(it.key));
+
+  /* ---------- 出てくるタイミング (グラフィックの入れ子) ----------
+     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。 */
+  liveEdit = true;
+  sub(gRoot, '出てくるタイミング', true);
+  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
+  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
+    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
+    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
+  rows.push(slider('① モックが出る', 0, 2, 0.02,
+    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でモックが出るか。'));
+  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
+    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でアイコンが出始めるか。'));
+  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
+    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
+  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
+    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒で軌道(輪+ドット)が出るか。'));
+  liveEdit = false;
 
   /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定) ----------
      煩雑さ対策: 共通の項目だけを表に出し、案ごとの細かいつまみは
      【選んだ案のぶんだけ】小見出し(たためる・既定は閉じる)に出す。 */
-  sub(catKv, '🪐 惑星のアニメーション（惑星(V1)の案のみ）');
+  sub(gRoot, '🪐 惑星のアニメーション（惑星(V1)の案のみ）', true);
+  const aRoot = mount;   /* 案ごとの調整はこの中に入れ子で出す */
   note('案を押すと、その案の調整つまみだけが下に出ます（たためます）。');
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
     /* ⚠️ ここで rebuildKeeping(null) を呼ぶと位置が保てずガタつく。
@@ -6671,8 +6689,8 @@ function buildPanel() {
   slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
   /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定 */
-  slider('ドットの大きさ（共通）', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
-    v => '×' + v.toFixed(2), 'すべての案のドットにまとめて効きます。', { fixedMax: true });
+  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
+    v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます（案ごとの重複つまみは廃止）。', { fixedMax: true });
   pillRow([{ key: 'flat', name: '同じ大きさ' }, { key: 'persp', name: '遠近つき' }],
     it => (params.conv.dotPersp || 'flat') === it.key,
     it => { params.conv.dotPersp = it.key; markDirty(); },
@@ -6685,7 +6703,7 @@ function buildPanel() {
   const cvMode = params.converge || 'reel';
   if (cvMode === 'reel') {
     const R = params.conv.reel;
-    sub(catKv, '①収縮ループの調整', true);
+    sub(aRoot, '①収縮ループの調整', true);
     segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
       () => R.flow || 'down', v => { R.flow = v; markDirty(); });
     note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
@@ -6723,31 +6741,27 @@ function buildPanel() {
       '縮むほどドットが速く回る。0で通常の速さのまま。');
   } else if (cvMode === 'spiral') {
     const S = params.conv.spiral;
-    sub(catKv, '②スパイラルの調整', true);
+    sub(aRoot, '②スパイラルの調整', true);
     slider('粒の数', 1, 200, 1, () => S.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
     slider('軌道にいる秒数', 0.2, 12, 0.1, () => S.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
       '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
     slider('吸い込みの秒数', 0.5, 16, 0.1, () => S.life, v => S.life = v, v => v.toFixed(1) + '秒',
       '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
     slider('回転の速さ', 0.1, 5, 0.05, () => S.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('粒の大きさ', 0.08, 3, 0.02, () => S.size, v => S.size = v, v => '×' + v.toFixed(2),
-      '軌道のドット(×1)に対する大きさ。', { fixedMax: true });
   } else if (cvMode === 'accre') {
     const AC = params.conv.accre;
-    sub(catKv, '③降着円盤の調整', true);
+    sub(aRoot, '③降着円盤の調整', true);
     slider('粒の数', 5, 600, 5, () => AC.count, v => AC.count = v, v => v + '個',
       '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
     slider('落ちる速さ', 0.05, 6, 0.05, () => AC.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
       '内へ落ちていく速さ。', { fixedMax: true });
     slider('回る速さ', 0.05, 6, 0.05, () => AC.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('粒の大きさ', 0.05, 2, 0.01, () => AC.size, v => AC.size = v, v => '×' + v.toFixed(2),
-      '軌道のドット(×1)に対する大きさ。', { fixedMax: true });
     slider('円盤の大きさ', 0.3, 3, 0.01, () => AC.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
     slider('きらめき', 0, 1, 0.02, () => AC.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
       '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
   } else if (cvMode === 'waves') {
     const W = params.conv.waves;
-    sub(catKv, '④内向きの波の調整', true);
+    sub(aRoot, '④内向きの波の調整', true);
     slider('1本が流れる秒数', 1, 12, 0.1, () => W.T, v => W.T = v, v => v.toFixed(1) + '秒',
       '外から惑星に取り込まれるまでの時間。', { fixedMax: true });
     slider('1グループの本数', 1, 12, 1, () => W.count, v => W.count = v, v => v + '本', null, { fixedMax: true });
@@ -6763,15 +6777,13 @@ function buildPanel() {
       '軌道より少し外(×1.1あたり)から生まれると自然。', { fixedMax: true });
   } else if (cvMode === 'mesh') {
     const M = params.conv.mesh;
-    sub(catKv, '⑤メッシュの調整', true);
+    sub(aRoot, '⑤メッシュの調整', true);
     note('軌道の代わりにノードの網。ノードはランダムに漂い、パケットが渡り歩いて惑星へ届きます（輪とドットは自動で隠れます）。');
     pillRow([{ key: 'organic', name: 'ふわふわ' }, { key: 'constellation', name: '星座' }, { key: 'grid', name: '格子' }],
       it => (M.style || 'organic') === it.key, it => { M.style = it.key; markDirty(); },
       { get: () => params.conv.mesh.style, set: v => { M.style = v; } });
     note('ふわふわ＝丸く漂う網 / 星座＝明滅する点と近い線だけ(惑星への線なし) / 格子＝碁盤目のネット。');
     slider('ノードの数', 3, 60, 1, () => M.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
-    slider('ドットの大きさ', 0.1, 3, 0.02, () => M.size, v => M.size = v, v => '×' + v.toFixed(2),
-      '軌道のドット(×1)に対する大きさ。', { fixedMax: true });
     slider('線の濃さ', 0, 1, 0.01, () => M.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
     slider('線の太さ', 0.3, 6, 0.1, () => M.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
     slider('つながる範囲', 0.05, 1.2, 0.01, () => M.span, v => M.span = v, v => v.toFixed(2),
@@ -6783,11 +6795,10 @@ function buildPanel() {
     slider('パケットの頻度', 0.1, 8, 0.1, () => M.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
   } else if (cvMode === 'beads') {
     const B = params.conv.beads;
-    sub(catKv, '⑥ドットの軌道の調整', true);
+    sub(aRoot, '⑥ドットの軌道の調整', true);
     note('ドットが等間隔で密に並んで「輪」の形を作ります。吸われるのは一部だけなので、軌道の形は崩れません。');
     slider('ドットの密度', 6, 400, 2, () => B.count, v => B.count = v, v => v + '個',
       '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
-    slider('ドットの大きさ', 0.1, 2, 0.02, () => B.size, v => B.size = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
     slider('軌道線の濃さ', 0, 1, 0.01, () => B.ghost, v => B.ghost = v, v => v.toFixed(2),
       '薄い輪郭線を残すと「軌道」だと分かりやすくなります。0で線なし。', { fixedMax: true });
     slider('同時に吸われる割合', 0.02, 1, 0.01, () => B.ratio, v => B.ratio = v, pctF,
@@ -6798,7 +6809,7 @@ function buildPanel() {
       '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
   } else if (CONV_LINKED.includes(cvMode)) {
     const L = params.conv.link;
-    sub(catKv, '⑦同時双方向の調整', true);
+    sub(aRoot, '⑦同時双方向の調整', true);
     note('惑星とドットをラインで結び、集約(青)と配信(ピンク)の粒が同じ線ですれ違いながら流れます。');
     note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
     slider('吸い込まれる範囲', 0, 1.2, 0.02, () => L.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
@@ -6807,7 +6818,6 @@ function buildPanel() {
     slider('1周の秒数', 0.5, 10, 0.1, () => L.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
     slider('粒の密度', 0.3, 6, 0.1, () => L.density, v => L.density = v, v => '×' + v.toFixed(1),
       '1本の線に流す粒の数。', { fixedMax: true });
-    slider('粒の大きさ', 0.1, 2.5, 0.02, () => L.size, v => L.size = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
     slider('線の反り', 0, 1, 0.01, () => L.curve, v => L.curve = v, v => v.toFixed(2),
       '0で直線、大きいほど弧を描きます。', { fixedMax: true });
     slider('線の濃さ', 0, 0.6, 0.01, () => L.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
@@ -6817,7 +6827,8 @@ function buildPanel() {
   /* ---------- 🛰 軌道（レイアウト＋位置/サイズ/傾き＋プリセット） ----------
      2026-08-26 ヒデさん指定: 「軌道のレイアウト」の独立セクションは廃止し、ここに統合。
      位置・サイズ・傾きはサブカテゴリ(たためる)にまとめ、プリセットで呼び出せるようにした。 */
-  sub(catKv, '🛰 軌道');
+  sub(gRoot, '🛰 軌道', true);
+  const oRoot = mount;   /* 位置・サイズ・傾きはこの中に入れ子で出す */
   /* 【2026-08-26 ヒデさん指定】ゆらゆら(全体がゆっくり傾く・2本が交差する)のオンオフ */
   segRow('ゆらゆら', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
@@ -6880,18 +6891,18 @@ function buildPanel() {
     (mount || body).appendChild(pn);
   }
 
-  sub(catKv, '位置（軌道）', true);
+  sub(oRoot, '位置（軌道）', true);
   for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
     const O = params.orbits[okey];
     slider(oname + ' 横', -400, 400, 1, () => O.dx, v => O.dx = v, v => (v > 0 ? '+' : '') + v + 'px', null, { fixedMax: true });
     slider(oname + ' 縦', -400, 400, 1, () => O.dy, v => O.dy = v, v => (v > 0 ? '+' : '') + v + 'px', null, { fixedMax: true });
   }
-  sub(catKv, 'サイズ（軌道）', true);
+  sub(oRoot, 'サイズ（軌道）', true);
   for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
     const O = params.orbits[okey];
     slider(oname, 0.2, 2.5, 0.01, () => O.scale, v => O.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
   }
-  sub(catKv, '傾き（軌道）', true);
+  sub(oRoot, '傾き（軌道）', true);
   for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
     const O = params.orbits[okey];
     slider(oname, -90, 90, 0.5, () => O.angle, v => O.angle = v, v => (v > 0 ? '+' : '') + v.toFixed(1) + '°',
@@ -6899,28 +6910,6 @@ function buildPanel() {
   }
   liveEdit = false;
 
-  /* ---------- 🖼 右グラフィックの出始めタイミング (2026-08-26 ヒデさん指定) ----------
-     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。
-     触ると右のグラフィックがその場で再生されて確認できる（本体の文字は流し直さない）。 */
-  liveEdit = true;
-  sub(catKv, '🖼 右グラフィックの出始めタイミング');
-  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
-  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
-    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
-    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
-  rows.push(slider('① モックが出る', 0, 2, 0.02,
-    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でモックが出るか。'));
-  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
-    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でアイコンが出始めるか。'));
-  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
-    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
-  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
-    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒で軌道(輪+ドット)が出るか。'));
-  liveEdit = false;
 
   /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
      V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
@@ -6950,10 +6939,9 @@ function buildPanel() {
   const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
   catNote(catVis, 'Our Vision(ブラー) → 2行がマスクで1行ずつ出る → その場で消える → 右に輪が現れて左下へ → Platform の図。');
 
-  sub(catVis, 'このセクションの長さ');
+  /* 【2026-08-26 整理】1項目だけの見出しが並んで冗長だったので「基本」にまとめた */
+  sub(catVis, '基本（長さ・ぼけ具合）');
   sectionLenSlider('vision', 800);
-
-  sub(catVis, '文字のぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px',
     '文字が出る時・消える時のぼやけの強さ。'));
 
@@ -7041,11 +7029,13 @@ function buildPanel() {
       '大きいほど、じわーっと粘って止まります。'));
   }
 
+  /* 【2026-08-26 整理】見出しだけが空で、中身(見出し/Point01/Point02)が同じ階層に並んでいたので入れ子に直した */
   sub(catVis, '⑦ 「2つの価値」の文字の位置');
+  const vpRoot = mount;
   note('デザイン位置からのズレ。プラスで右／下へ。');
   [['見出し「連携が生む、2つの価値」', 'headX', 'headY'], ['Point 01 のかたまり', 'p1X', 'p1Y'], ['Point 02 のかたまり', 'p2X', 'p2Y']]
     .forEach(([label, kx, ky]) => {
-      sub(catVis, label, true);
+      sub(vpRoot, label, true);
       rows.push(slider('左右の位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
       rows.push(slider('上下の位置', -400, 400, 2, () => sv().vision[ky], v => sv().vision[ky] = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
     });
@@ -7054,12 +7044,9 @@ function buildPanel() {
   const catRes = category('📈 実績（導入企業◯◯社などの数字）', false);
   catNote(catRes, '見出し → 数字と本文 → 見終わると暗くなって次のセクションへ。');
 
-  sub(catRes, 'このセクションの長さ');
-  sectionLenSlider('results', 600);
-
   /* ⚠️【2026-08-26 ヒデさん指定】「レイアウトを選ぶ」(案A/B/C)は削除。実績は新デザイン1本に統一。 */
-
-  sub(catRes, '写真のぼけ具合');
+  sub(catRes, '基本（長さ・ぼけ具合）');
+  sectionLenSlider('results', 600);
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
     '大きいほど、写真がぼんやりした状態から現れます。'));
 
@@ -7107,7 +7094,7 @@ function buildPanel() {
   const catDev = category('🖥 開発者体験（暗い画面のコード紹介）', false);
   catNote(catDev, '暗い背景で API / CLI / SDK の画面が順に切り替わります。');
 
-  sub(catDev, 'このセクションの長さ');
+  sub(catDev, '基本（長さ）');
   sectionLenSlider('dev', 1600);
 
   sub(catDev, '画面が切り替わる時の見え方');
@@ -7138,12 +7125,10 @@ function buildPanel() {
   const catCase = category('🗂 導入事例（2×2グリッド）', false);
   catNote(catCase, '見出し → 水平線が左から3本 → 中央の縦線 → カード4枚がブラーで登場。');
 
-  sub(catCase, 'このセクションの長さ');
+  sub(catCase, '基本（長さ・ぼけ具合）');
   sectionLenSlider('cases', 1000);
   rows.push(slider('全体の再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
     '見出し〜カードまで出そろうのにかける時間。小さいほどキビキビ。'));
-
-  sub(catCase, 'カードのぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px',
     '大きいほど強くぼけた状態から現れます。※貼りつけない時は無効。'));
 
