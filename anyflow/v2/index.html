@@ -2663,6 +2663,15 @@ function load() {
   };
   if (typeof merged.orbitLayout !== 'string') merged.orbitLayout = DEFAULTS.orbitLayout;
   if (!Array.isArray(merged.orbitPresets)) merged.orbitPresets = [];
+  /* 【2026-08-26 ヒデさん指定】直接編集でいじった変形(位置/サイズ/傾き/つぶし)を一度だけ既定へ戻す。
+     他の調整は残す。1回だけ走らせるため印を localStorage に置く */
+  if (!localStorage.getItem('anyflow-reset-transform-20260826')) {
+    for (const k of ['outer', 'inner']) {
+      for (const key of ['dx', 'dy', 'scale', 'angle', 'flat']) merged.orbits[k][key] = DEFAULTS.orbits[k][key];
+    }
+    merged.planet = { ...DEFAULTS.planet };
+    localStorage.setItem('anyflow-reset-transform-20260826', '1');
+  }
   /* 廃止した案(⑪糸・⑭⑯〜⑳)を選んだままなら既定へ寄せる (2026-08-26) */
   if (!CONVERGES.some(c => c.key === merged.converge)) merged.converge = DEFAULTS.converge;
   /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
@@ -3461,14 +3470,29 @@ function convFrame(geoms) {
 }
 const sphereCanvasEl = document.getElementById('sphere');
 
-/* ===== 直接編集（Figma のようにドラッグで動かす。2026-08-26 ヒデさん指定） =====
-   右のグラフィックに操作点(ハンドル)を出し、掴んで動かすと params が変わる。
-   ・中心 = 位置 / 右端 = サイズ / 上端 = つぶし(パース) / 外側 = 傾き
-   ・惑星も中心を掴んで動かせる（右端でサイズ）
-   軌道SVGと同じ 915.483x630 の座標系に重ねるので、拡大されていても位置がずれない。 */
+/* ===== 直接編集（Figma のエディタ操作感を踏襲。2026-08-26 ヒデさん指定） =====
+   リサーチ(Figma/FigJam ヘルプ)に基づく仕様:
+   ・選択すると「バウンディングボックス」(青い枠)が出る
+   ・四隅の白い四角ハンドル = 斜めリサイズ。辺の中央 = 幅だけ／高さだけのリサイズ
+   ・角の【少し外側】にホバーすると回転カーソルに変わり、ドラッグで回転
+   ・Shift = 比率を保つ / 回転は15°刻み
+   ・ドラッグ中はサイズや角度の数値が出る
+   対象: 外の輪 / 内の輪 / 惑星。クリックで選び、枠の内側をドラッグで移動。 */
 const editHandles = (() => {
-  let svg = null, on = false, drag = null, wasRunning = null;
-  const H = [];   /* {el, kind, key} */
+  const BLUE = '#0D99FF';
+  /* Figma の回転カーソル(曲がった矢印)に寄せた自前カーソル */
+  const ROT_CUR = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
+    '<path d="M7 10a6 6 0 0 1 10-3.5" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round"/>' +
+    '<path d="M7 10a6 6 0 0 1 10-3.5" fill="none" stroke="white" stroke-width="1.2" stroke-linecap="round"/>' +
+    '<path d="M17.6 3.2l0.6 4.2-4.2-0.6z" fill="black" stroke="white" stroke-width="0.8"/>' +
+    '</svg>') + '") 12 12, grab';
+  let svg = null, on = false, drag = null, wasRunning = null, sel = null;
+  let boxG = null, boxRect = null, label = null;
+  const hits = {};      /* 当たり判定(選択用) */
+  const handles = [];   /* {el, kind, ix, iy} kind: corner/edge/rot */
+
+  const KEYS = ['outer', 'inner', 'planet'];
   function ensure() {
     if (svg) return svg;
     const orbit = document.querySelector('.orbit');
@@ -3478,113 +3502,245 @@ const editHandles = (() => {
     svg.setAttribute('class', 'edit-layer');
     svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:9;overflow:visible;';
     orbit.appendChild(svg);
-    const mk = (kind, key, color, r, cursor) => {
-      const g = document.createElementNS(SVG_NS, 'g');
-      const c = document.createElementNS(SVG_NS, 'circle');
-      c.setAttribute('r', r);
-      c.setAttribute('fill', kind === 'move' ? color : '#fff');
-      c.setAttribute('stroke', color);
-      c.setAttribute('stroke-width', '2');
-      c.setAttribute('opacity', '0.95');
-      c.style.cursor = cursor;
-      c.style.pointerEvents = 'auto';
-      g.appendChild(c);
-      svg.appendChild(g);
-      const h = { el: g, dot: c, kind, key };
-      c.addEventListener('pointerdown', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        c.setPointerCapture(e.pointerId);
-        const p = toLocal(e);
-        drag = { h, start: p, base: snapshot(key) };
-      });
-      H.push(h);
-      return h;
-    };
-    /* 外の輪(ピンク) / 内の輪(水色) / 惑星(黒) */
-    mk('move', 'outer', '#FF5D97', 9, 'move');
-    mk('size', 'outer', '#FF5D97', 7, 'ew-resize');
-    mk('flat', 'outer', '#FF5D97', 7, 'ns-resize');
-    mk('rot',  'outer', '#FF5D97', 7, 'grab');
-    mk('move', 'inner', '#0EBBFF', 9, 'move');
-    mk('size', 'inner', '#0EBBFF', 7, 'ew-resize');
-    mk('flat', 'inner', '#0EBBFF', 7, 'ns-resize');
-    mk('rot',  'inner', '#0EBBFF', 7, 'grab');
-    mk('move', 'planet', '#111', 9, 'move');
-    mk('size', 'planet', '#111', 7, 'nwse-resize');
+
+    /* --- 当たり判定(クリックで選ぶ) --- */
+    for (const key of KEYS) {
+      const el = document.createElementNS(SVG_NS, key === 'planet' ? 'circle' : 'ellipse');
+      el.setAttribute('fill', key === 'planet' ? 'rgba(0,0,0,0)' : 'none');
+      if (key !== 'planet') { el.setAttribute('stroke', 'rgba(0,0,0,0)'); el.setAttribute('stroke-width', '30'); }
+      el.style.cursor = 'move';   /* 描かれている所を触れば、そのまま掴んで動かせる */
+      el.style.pointerEvents = key === 'planet' ? 'fill' : 'stroke';
+      el.addEventListener('pointerdown', e => { e.stopPropagation(); select(key); startDrag(e, { kind: 'move' }); });
+      svg.appendChild(el);
+      hits[key] = el;
+    }
+
+    /* --- バウンディングボックス --- */
+    boxG = document.createElementNS(SVG_NS, 'g');
+    svg.appendChild(boxG);
+    boxRect = document.createElementNS(SVG_NS, 'rect');
+    boxRect.setAttribute('fill', 'rgba(0,0,0,0)');
+    boxRect.setAttribute('stroke', BLUE);
+    boxRect.setAttribute('stroke-width', '1.5');
+    /* 枠そのものは当たり判定を持たない。移動は「描かれている所(線・惑星)」を掴んで行う。
+       こうすると選択中でも別のオブジェクトをクリックして選び直せる(ヒデさん指定 2026-08-26) */
+    boxRect.style.pointerEvents = 'none';
+    boxG.appendChild(boxRect);
+
+    /* --- 回転ゾーン(角の少し外側。Figma と同じく“角の外”で回転) --- */
+    for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('width', '30'); r.setAttribute('height', '30');
+      r.setAttribute('fill', 'rgba(0,0,0,0)');
+      r.setAttribute('data-kind', 'rot');
+      r.style.cursor = ROT_CUR;
+      r.style.pointerEvents = 'all';
+      r.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind: 'rot' }); });
+      boxG.appendChild(r);
+      handles.push({ el: r, kind: 'rot', ix, iy });
+    }
+    /* --- 辺ハンドル(幅だけ / 高さだけ) --- */
+    for (const [ix, iy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const h = mkHandle('edge', ix, iy); handles.push(h);
+    }
+    /* --- 角ハンドル(斜めリサイズ)。辺より後に置いて上に来るように --- */
+    for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const h = mkHandle('corner', ix, iy); handles.push(h);
+    }
+    /* --- ドラッグ中の数値表示 --- */
+    label = document.createElementNS(SVG_NS, 'g');
+    const lb = document.createElementNS(SVG_NS, 'rect');
+    lb.setAttribute('rx', '3'); lb.setAttribute('fill', BLUE);
+    lb.setAttribute('height', '18'); lb.setAttribute('width', '92');
+    const lt = document.createElementNS(SVG_NS, 'text');
+    lt.setAttribute('fill', '#fff'); lt.setAttribute('font-size', '11');
+    lt.setAttribute('text-anchor', 'middle'); lt.setAttribute('dy', '12.5');
+    label.append(lb, lt); label.style.display = 'none'; label.style.pointerEvents = 'none';
+    svg.appendChild(label);
+    label._bg = lb; label._tx = lt;
+
+    /* 何もない所を押したら選択解除 */
+    svg.addEventListener('pointerdown', () => select(null));
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', () => { drag = null; });
+    window.addEventListener('pointerup', endDrag);
     return svg;
   }
+  function mkHandle(kind, ix, iy) {
+    const r = document.createElementNS(SVG_NS, 'rect');
+    r.setAttribute('data-kind', kind); r.setAttribute('data-ix', ix); r.setAttribute('data-iy', iy);
+    r.setAttribute('width', '9'); r.setAttribute('height', '9');
+    r.setAttribute('fill', '#fff'); r.setAttribute('stroke', BLUE); r.setAttribute('stroke-width', '1.5');
+    r.style.pointerEvents = 'all';
+    r.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind, ix, iy }); });
+    boxG.appendChild(r);
+    return { el: r, kind, ix, iy };
+  }
+
   /* 画面座標 → SVG(915x630) 座標 */
   function toLocal(e) {
     const m = svg.getScreenCTM();
     if (!m) return { x: 0, y: 0 };
-    const inv = m.inverse();
     const pt = svg.createSVGPoint();
     pt.x = e.clientX; pt.y = e.clientY;
-    const q = pt.matrixTransform(inv);
+    const q = pt.matrixTransform(m.inverse());
     return { x: q.x, y: q.y };
   }
+  /* いま選んでいる対象の枠(中心・半幅・半高・角度) */
+  function boxOf(key) {
+    if (key === 'planet') {
+      const c = convCenter(), r = convPlanetR();
+      return { cx: c.x, cy: c.y, rx: r, ry: r, rot: 0 };
+    }
+    return orbitGeom(key);
+  }
+  function select(key) {
+    sel = key;
+    if (boxG) boxG.style.display = key ? '' : 'none';
+    place();
+  }
+  function startDrag(e, info) {
+    if (!sel && info.kind === 'move') return;
+    e.preventDefault();
+    const b = boxOf(sel);
+    drag = { ...info, start: toLocal(e), box: b, base: snapshot(sel), shift: e.shiftKey };
+  }
+  function endDrag() { drag = null; if (label) label.style.display = 'none'; }
   function snapshot(key) {
-    if (key === 'planet') return { ...params.planet };
-    return { ...params.orbits[key] };
+    return key === 'planet' ? { ...params.planet } : { ...params.orbits[key] };
+  }
+  function clamp(lo, hi, v) { return v < lo ? lo : v > hi ? hi : v; }
+  /* SVG座標 → 対象のローカル座標(回転を戻す) */
+  function toBox(p, b) {
+    const a = -b.rot * Math.PI / 180;
+    const dx = p.x - b.cx, dy = p.y - b.cy;
+    return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) };
   }
   function onMove(e) {
-    if (!drag) return;
+    if (!drag || !sel) return;
     e.preventDefault();
-    const p = toLocal(e), b = drag.base, k = drag.h.key;
-    const dx = p.x - drag.start.x, dy = p.y - drag.start.y;
-    if (k === 'planet') {
+    const p = toLocal(e), b = drag.box, base = drag.base, shift = e.shiftKey;
+    let text = '';
+    if (sel === 'planet') {
       const P = params.planet;
-      if (drag.h.kind === 'move') { P.dx = Math.round(b.dx + dx); P.dy = Math.round(b.dy + dy); }
-      else { const c = convCenter(); P.scale = clamp(0.2, 3, b.scale + dx / 130); }
+      if (drag.kind === 'move') {
+        P.dx = Math.round(base.dx + (p.x - drag.start.x));
+        P.dy = Math.round(base.dy + (p.y - drag.start.y));
+        text = `${P.dx} , ${P.dy}`;
+      } else if (drag.kind !== 'rot') {
+        const l = toBox(p, b);
+        const k = Math.max(Math.abs(l.x), Math.abs(l.y)) / 130;
+        P.scale = clamp(0.2, 3, k);
+        text = '×' + P.scale.toFixed(2);
+      }
     } else {
-      const O = params.orbits[k], base = orbitBase(k);
-      if (drag.h.kind === 'move') { O.dx = Math.round(b.dx + dx); O.dy = Math.round(b.dy + dy); }
-      else if (drag.h.kind === 'size') O.scale = clamp(0.2, 2.5, b.scale + dx / Math.max(60, base.rx));
-      else if (drag.h.kind === 'flat') O.flat = clamp(0.05, 3, (b.flat == null ? 1 : b.flat) - dy / Math.max(30, base.ry));
-      else if (drag.h.kind === 'rot') {
-        const g = orbitGeom(k);
-        const a0 = Math.atan2(drag.start.y - g.cy, drag.start.x - g.cx);
-        const a1 = Math.atan2(p.y - g.cy, p.x - g.cx);
-        O.angle = Math.round((b.angle + (a1 - a0) * 180 / Math.PI) * 10) / 10;
+      const O = params.orbits[sel], bs = orbitBase(sel);
+      if (drag.kind === 'move') {
+        O.dx = Math.round(base.dx + (p.x - drag.start.x));
+        O.dy = Math.round(base.dy + (p.y - drag.start.y));
+        text = `${O.dx} , ${O.dy}`;
+      } else if (drag.kind === 'rot') {
+        const a0 = Math.atan2(drag.start.y - b.cy, drag.start.x - b.cx);
+        const a1 = Math.atan2(p.y - b.cy, p.x - b.cx);
+        let deg = base.angle + (a1 - a0) * 180 / Math.PI;
+        if (shift) deg = Math.round(deg / 15) * 15;      /* Figma と同じ 15°刻み */
+        O.angle = Math.round(deg * 10) / 10;
+        text = ((bs.rot + O.angle).toFixed(1)) + '°';
+      } else {
+        const l = toBox(p, b);
+        const wantRx = Math.abs(l.x), wantRy = Math.abs(l.y);
+        const baseFlat = base.flat == null ? 1 : base.flat;
+        if (drag.kind === 'corner') {
+          const sc = clamp(0.2, 2.5, wantRx / bs.rx);
+          O.scale = sc;
+          O.flat = shift ? baseFlat                       /* Shift=比率を保つ */
+                         : clamp(0.05, 3, wantRy / Math.max(1, bs.ry * sc));
+        } else if (drag.ix !== 0) {                       /* 左右の辺 = 幅だけ */
+          O.scale = clamp(0.2, 2.5, wantRx / bs.rx);
+        } else {                                          /* 上下の辺 = 高さだけ(つぶし) */
+          O.flat = clamp(0.05, 3, wantRy / Math.max(1, bs.ry * O.scale));
+        }
+        const g = orbitGeom(sel);
+        text = `${Math.round(g.rx * 2)} × ${Math.round(g.ry * 2)}`;
       }
     }
     markDirty();
     renderFrame();
     if (typeof syncPanelRows === 'function') syncPanelRows();
+    showLabel(text);
   }
-  function clamp(lo, hi, v) { return v < lo ? lo : v > hi ? hi : v; }
-  /* 毎フレーム、ハンドルを今の図形の上に置き直す */
+  function showLabel(text) {
+    if (!label || !text) return;
+    const b = boxOf(sel);
+    label.style.display = '';
+    label._tx.textContent = text;
+    const w = Math.max(56, text.length * 8 + 16);
+    label._bg.setAttribute('width', w);
+    label._bg.setAttribute('x', (b.cx - w / 2).toFixed(1));
+    label._bg.setAttribute('y', (b.cy + b.ry + 14).toFixed(1));
+    label._tx.setAttribute('x', b.cx.toFixed(1));
+    label._tx.setAttribute('y', (b.cy + b.ry + 14).toFixed(1));
+  }
+  /* 毎フレーム、枠とハンドルを今の図形に合わせて置き直す */
   function place() {
     if (!on || !svg) return;
-    const cc = convCenter(), pr = convPlanetR();
-    for (const h of H) {
-      let x = 0, y = 0;
-      if (h.key === 'planet') {
-        if (h.kind === 'move') { x = cc.x; y = cc.y; }
-        else { x = cc.x + pr * 0.72; y = cc.y + pr * 0.72; }
+    /* 当たり判定を今の図形に合わせる */
+    for (const key of KEYS) {
+      const el = hits[key];
+      if (key === 'planet') {
+        const c = convCenter(), r = convPlanetR();
+        el.setAttribute('cx', c.x); el.setAttribute('cy', c.y); el.setAttribute('r', r);
       } else {
-        const g = orbitGeom(h.key);
-        if (h.kind === 'move') { x = g.cx; y = g.cy; }
-        else if (h.kind === 'size') { const q = posOn(g, 0); x = q.x; y = q.y; }
-        else if (h.kind === 'flat') { const q = posOn(g, 270); x = q.x; y = q.y; }
-        else { const q = posOn(g, 180); x = q.x; y = q.y; }
+        const g = orbitGeom(key);
+        el.setAttribute('cx', g.cx); el.setAttribute('cy', g.cy);
+        el.setAttribute('rx', g.rx); el.setAttribute('ry', g.ry);
+        el.setAttribute('transform', `rotate(${g.rot} ${g.cx} ${g.cy})`);
       }
-      h.dot.setAttribute('cx', x.toFixed(1));
-      h.dot.setAttribute('cy', y.toFixed(1));
     }
+    if (!sel) { if (boxG) boxG.style.display = 'none'; return; }
+    boxG.style.display = '';
+    const b = boxOf(sel);
+    boxG.setAttribute('transform', `rotate(${b.rot} ${b.cx} ${b.cy})`);
+    boxRect.setAttribute('x', (b.cx - b.rx).toFixed(1));
+    boxRect.setAttribute('y', (b.cy - b.ry).toFixed(1));
+    boxRect.setAttribute('width', (b.rx * 2).toFixed(1));
+    boxRect.setAttribute('height', (b.ry * 2).toFixed(1));
+    /* 惑星は円なので、つぶし(辺ハンドル)は出さない */
+    for (const h of handles) {
+      const isEdge = h.kind === 'edge';
+      const hide = sel === 'planet' && (isEdge || h.kind === 'rot');
+      h.el.style.display = hide ? 'none' : '';
+      if (hide) continue;
+      const x = b.cx + b.rx * h.ix, y = b.cy + b.ry * h.iy;
+      if (h.kind === 'rot') {
+        h.el.setAttribute('x', (x + h.ix * 4 - 15).toFixed(1));
+        h.el.setAttribute('y', (y + h.iy * 4 - 15).toFixed(1));
+      } else {
+        h.el.setAttribute('x', (x - 4.5).toFixed(1));
+        h.el.setAttribute('y', (y - 4.5).toFixed(1));
+        /* カーソルは向きに応じて Figma と同じ両矢印にする(回転角も加味) */
+        h.el.style.cursor = cursorFor(h.ix, h.iy, b.rot);
+      }
+    }
+  }
+  function cursorFor(ix, iy, rot) {
+    let a = Math.atan2(iy, ix) * 180 / Math.PI + rot;
+    a = ((a % 180) + 180) % 180;
+    if (a < 22.5 || a >= 157.5) return 'ew-resize';
+    if (a < 67.5) return 'nwse-resize';
+    if (a < 112.5) return 'ns-resize';
+    return 'nesw-resize';
   }
   return {
     get on() { return on; },
+    get selected() { return sel; },
+    select,
     set(v) {
       on = !!v;
       const el = ensure();
       if (el) el.style.display = on ? '' : 'none';
-      /* 【2026-08-26 ヒデさん指定】直接編集の間はアニメーションを止める(掴んで動かしやすくする)。
-         切った時は元に戻す */
+      /* 直接編集の間はアニメーションを止める(掴んで動かしやすくする)。切った時は元に戻す */
       if (on) { wasRunning = params.running; params.running = false; }
-      else if (wasRunning != null) { params.running = wasRunning; wasRunning = null; }
+      else { if (wasRunning != null) { params.running = wasRunning; wasRunning = null; } select(null); }
       if (typeof applyMarquee === 'function') applyMarquee();
       renderFrame();
       if (on) place();
@@ -6642,7 +6798,26 @@ function buildPanel() {
   const gRoot = mount;   /* この中に入れ子で並べる */
   segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
     v => { editHandles.set(!!v); markDirty(); });
-  note('オンにすると右のグラフィックに操作点が出て、アニメーションが止まります。中心＝移動 / 右端＝サイズ / 上端＝つぶし（パース）/ 外側＝傾き。惑星も動かせます。');
+  note('オンにすると、右のグラフィックをクリックして選べます（外の輪 / 内の輪 / 惑星）。選ぶと青い枠が出ます: 枠の内側＝移動 / 四隅＝斜めリサイズ / 辺＝幅・高さだけ / 角の少し外側＝回転。Shiftで比率を保つ・回転は15°刻み。編集中はアニメーションが止まります。');
+  {
+    const sv2 = document.createElement('button');
+    sv2.className = 'sw-pill sw-add';
+    sv2.textContent = '💾 この形で保存';
+    sv2.onclick = () => {
+      save();
+      dirty = false; if (syncSaveBtn) syncSaveBtn();
+      sv2.textContent = '✓ 保存しました';
+      setTimeout(() => { sv2.textContent = '💾 この形で保存'; }, 1400);
+    };
+    const r = document.createElement('div');
+    r.className = 'sw-row';
+    r.appendChild(sv2);
+    (mount || body).appendChild(r);
+    const n2 = document.createElement('div');
+    n2.className = 'grp-note';
+    n2.textContent = '直接編集で整えた形を保存します（次に開いた時もこの形になります）。';
+    (mount || body).appendChild(n2);
+  }
 
   sub(gRoot, '案を選ぶ', true);
   note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的。押すとすぐ切り替わります。');
