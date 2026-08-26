@@ -1204,10 +1204,13 @@
 
   /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
   /* 調整UIは右下にまとめて固定 */
+  /* 【2026-08-27 ヒデさん指定】右下常時表示をやめ、右上の空ボックスで出し入れ。
+     出る位置は画面の左側(コピーのあたり)で上下中央そろえ */
   .tools {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 50;
   }
   /* 隠しモード（2026-08-21 ヒデさん指示）：パネルは最初は見えない。
@@ -1215,12 +1218,13 @@
   .tools.tools-hidden { display: none; }
   /* 本体モーションパネルの開閉ボックス。左上に分離（2026-08-25）。
      網走と同じく“完全に透明な空ボックス”。アイコンは出さない（ヒデさん指定 2026-08-25） */
+  /* パネルを出し入れする透明ボックス。右上に大きめの領域を取る(2026-08-27 ヒデさん指定) */
   .tools-secret-hot {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 64px;
-    height: 64px;
+    right: 0;
+    width: 180px;
+    height: 120px;
     z-index: 60;
     background: transparent;
     cursor: pointer;
@@ -1367,6 +1371,19 @@
   }
   .panel.closed { height: auto !important; resize: none; }
   /* 【2026-08-27 ヒデさん指定】右下だけでなく、上下・左右の辺をつかんでもサイズ変更できる */
+  /* 編集モードのバー(キービジュアル右上) */
+  .edit-bar { position: fixed; top: 16px; right: 16px; z-index: 70; display: none; align-items: center; gap: 6px;
+              background: rgba(255,255,255,.94); backdrop-filter: blur(10px);
+              border: 1px solid #e6e6e6; border-radius: 10px; padding: 6px 8px;
+              box-shadow: 0 8px 28px rgba(0,0,0,.12); font-size: 12px; }
+  .eb-btn { height: 28px; padding: 0 10px; border: 1px solid #e2e2e2; border-radius: 7px; background: #fff;
+            color: #444; font-size: 12px; cursor: pointer; white-space: nowrap;
+            transition: background .15s, color .15s, border-color .15s; }
+  .eb-btn:hover:not(:disabled) { background: #f3f3f3; color: #111; }
+  .eb-btn:disabled { opacity: .35; cursor: default; }
+  .eb-btn.primary { background: #111; color: #fff; border-color: #111; }
+  .eb-btn.primary:hover { background: #333; }
+  .eb-sep { width: 1px; height: 18px; background: #e6e6e6; }
   .pz { position: absolute; z-index: 3; }
   .pz-t { top: -3px; left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
   .pz-b { bottom: -3px; left: 10px; right: 16px; height: 8px; cursor: ns-resize; }
@@ -2719,12 +2736,12 @@ function load() {
   if (!Array.isArray(merged.orbitPresets)) merged.orbitPresets = [];
   /* 【2026-08-26 ヒデさん指定】直接編集でいじった変形(位置/サイズ/傾き/つぶし)を一度だけ既定へ戻す。
      他の調整は残す。1回だけ走らせるため印を localStorage に置く */
-  if (!localStorage.getItem('anyflow-reset-transform-20260826')) {
+  if (!localStorage.getItem('anyflow-reset-transform-20260827')) {
     for (const k of ['outer', 'inner']) {
       for (const key of ['dx', 'dy', 'scale', 'angle', 'flat']) merged.orbits[k][key] = DEFAULTS.orbits[k][key];
     }
     merged.planet = { ...DEFAULTS.planet };
-    localStorage.setItem('anyflow-reset-transform-20260826', '1');
+    localStorage.setItem('anyflow-reset-transform-20260827', '1');
   }
   /* 廃止した案(⑪糸・⑭⑯〜⑳)を選んだままなら既定へ寄せる (2026-08-26) */
   /* ⚠️ ここは CONVERGES(const)の定義より前に走るので、CONVERGES を参照すると TDZ で例外になり、
@@ -3672,7 +3689,11 @@ const editHandles = (() => {
     const b = boxOf(sel);
     drag = { ...info, start: toLocal(e), box: b, base: snapshot(sel), shift: e.shiftKey };
   }
-  function endDrag() { drag = null; if (label) label.style.display = 'none'; }
+  function endDrag() {
+    if (drag && typeof editHistory !== 'undefined') { editHistory.push(); editBar.sync(); }
+    drag = null;
+    if (label) label.style.display = 'none';
+  }
   function snapshot(key) {
     return key === 'planet' ? { ...params.planet } : { ...params.orbits[key] };
   }
@@ -3804,6 +3825,7 @@ const editHandles = (() => {
     get selected() { return sel; },
     /* パネル側から: 選択が変わった時 / ドラッグで値が変わった時 に呼んでもらう */
     bind(onSelect, onChange) { onSel = onSelect; onEdit = onChange; },
+    refresh() { if (onSel) onSel(sel); },
     select,
     set(v) {
       on = !!v;
@@ -3815,6 +3837,10 @@ const editHandles = (() => {
          切る時は「編集のための一時停止」を必ず解除する(記録が無ければ再生に戻す)。 */
       if (on) { if (wasRunning == null) wasRunning = params.running; params.running = false; }
       else { params.running = (wasRunning == null ? true : wasRunning); wasRunning = null; select(null); }
+      /* 編集バーと「元に戻す」の履歴を、編集モードに合わせて出し入れする */
+      if (typeof editHistory !== 'undefined') {
+        if (on) { editHistory.begin(); editBar.show(); } else editBar.hide();
+      }
       if (onSel) onSel(on ? sel : null);
       if (typeof applyMarquee === 'function') applyMarquee();
       renderFrame();
@@ -3823,6 +3849,114 @@ const editHandles = (() => {
     place,
   };
 })();
+
+/* ===== 編集モードのバー ＋ 元に戻す(⌘Z) / やり直し(⌘⇧Z) (2026-08-27 ヒデさん指定) =====
+   編集モードに入ると、キービジュアルの右上にバーが出て
+   「保存 / やめる / 編集前に戻す / 元に戻す / やり直し」ができる。
+   Figma と同じく ⌘Z(Ctrl+Z) で1つ前へ、⌘⇧Z(Ctrl+Shift+Z) でやり直し。 */
+const editHistory = (() => {
+  let stack = [], idx = -1, entry = null;   /* entry = 編集に入った時の状態(編集前に戻す用) */
+  const snap = () => JSON.stringify({
+    o: params.orbits.outer, i: params.orbits.inner, p: params.planet,
+  });
+  function restore(json) {
+    if (!json) return;
+    const d = JSON.parse(json);
+    Object.assign(params.orbits.outer, d.o);
+    Object.assign(params.orbits.inner, d.i);
+    Object.assign(params.planet, d.p);
+    markDirty();
+    renderFrame();
+    if (editHandles.on) editHandles.place();
+    if (typeof syncPanelRows === 'function') syncPanelRows();
+    if (typeof editHandles.refresh === 'function') editHandles.refresh();
+  }
+  return {
+    /* 編集モードに入った時 */
+    begin() { entry = snap(); stack = [entry]; idx = 0; },
+    /* 1操作(ドラッグや数値入力)が終わったら積む */
+    push() {
+      const now = snap();
+      if (stack[idx] === now) return;          /* 変化なしなら積まない */
+      stack = stack.slice(0, idx + 1);
+      stack.push(now);
+      if (stack.length > 60) stack.shift();    /* 持ちすぎない */
+      idx = stack.length - 1;
+    },
+    undo() { if (idx > 0) { idx--; restore(stack[idx]); return true; } return false; },
+    redo() { if (idx < stack.length - 1) { idx++; restore(stack[idx]); return true; } return false; },
+    /* 編集に入る前の状態へ全部戻す */
+    revert() { if (entry) { restore(entry); stack = [entry]; idx = 0; } },
+    get canUndo() { return idx > 0; },
+    get canRedo() { return idx < stack.length - 1; },
+  };
+})();
+
+/* 画面上の編集バー */
+const editBar = (() => {
+  let el = null, btns = {};
+  function ensure() {
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'edit-bar';
+    const mk = (key, label, title, cls) => {
+      const b = document.createElement('button');
+      b.className = 'eb-btn' + (cls ? ' ' + cls : '');
+      b.textContent = label;
+      b.title = title;
+      el.appendChild(b);
+      btns[key] = b;
+      return b;
+    };
+    mk('undo', '↶', '元に戻す（⌘Z）').onclick = () => { editHistory.undo(); sync(); };
+    mk('redo', '↷', 'やり直し（⌘⇧Z）').onclick = () => { editHistory.redo(); sync(); };
+    const sep = document.createElement('span');
+    sep.className = 'eb-sep';
+    el.appendChild(sep);
+    mk('revert', '↺ 編集前に戻す', '編集モードに入る前の形へ全部戻す').onclick = () => {
+      editHistory.revert(); sync();
+    };
+    mk('cancel', 'やめる', '保存せずに編集モードを抜ける').onclick = () => {
+      editHistory.revert();
+      editHandles.set(false);
+      if (typeof buildPanel === 'function') buildPanel();
+    };
+    mk('save', '保存', 'いまの形で保存して編集モードを抜ける', 'primary').onclick = () => {
+      save(); dirty = false; if (syncSaveBtn) syncSaveBtn();
+      btns.save.textContent = '✓ 保存しました';
+      setTimeout(() => {
+        btns.save.textContent = '保存';
+        editHandles.set(false);
+        if (typeof buildPanel === 'function') buildPanel();
+      }, 700);
+    };
+    document.body.appendChild(el);
+    return el;
+  }
+  function sync() {
+    if (!el) return;
+    btns.undo.disabled = !editHistory.canUndo;
+    btns.redo.disabled = !editHistory.canRedo;
+  }
+  return {
+    show() { ensure(); el.style.display = 'flex'; sync(); },
+    hide() { if (el) el.style.display = 'none'; },
+    sync,
+  };
+})();
+
+/* キーボード: ⌘Z / ⌘⇧Z (Windows は Ctrl) */
+window.addEventListener('keydown', (e) => {
+  if (!editHandles.on) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (!mod || e.key.toLowerCase() !== 'z') return;
+  const t = e.target;
+  /* 数値入力欄の中では、その欄の取り消しを優先する */
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+  e.preventDefault();
+  if (e.shiftKey) editHistory.redo(); else editHistory.undo();
+  editBar.sync();
+});
 
 /* 軌道SVG(奥/手前の楕円・クリップ・グラデ)へジオメトリを反映 */
 const orbitSvgEls = {
@@ -6686,8 +6820,13 @@ let subItems = null;
 function sub(target, html, deep, opts) {
   const key = String(html).replace(/<[^>]*>/g, '').trim();
   const fixed = !!(opts && opts.fixed);   /* たためない＝常に開いたコンパクト表示 */
-  /* 既定はたたむ。ただし「🎨 グラフィック」だけは開いた状態で始める(ヒデさん指定 2026-08-27) */
-  const open = fixed ? true : (subOpen[key] === undefined ? (key === '🎨 グラフィック') : subOpen[key]);
+  /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
+     (2026-08-27 ヒデさん指定) */
+  const GRAPHIC_OPEN = ['🎨 グラフィック', 'プリセット', '🪐 アニメーション（惑星(V1)の案のみ）',
+                        'ゆらゆら', '出てくるタイミング', '①収縮ループの調整', '②スパイラルの調整',
+                        '③降着円盤の調整', '④内向きの波の調整', '⑤メッシュの調整',
+                        '⑥ドットの軌道の調整', '⑦同時双方向の調整', '消え方（吸収の表現）'];
+  const open = fixed ? true : (subOpen[key] === undefined ? GRAPHIC_OPEN.includes(key) : subOpen[key]);
   subOpen[key] = open;
   const g = document.createElement('div');
   g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed') + (fixed ? ' fixed' : '');
@@ -6724,6 +6863,9 @@ function sub(target, html, deep, opts) {
   };
   acts.append(rs, sv);
   title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
+  /* 【2026-08-27 ヒデさん指定】戻す値を持たないセクション(プリセットなど)にはボタンを出さない。
+     組み立てが終わってから項目の有無で判断する */
+  setTimeout(() => { if (!items.length) acts.remove(); }, 0);
   const inner = document.createElement('div');
   inner.className = 'grp-body';
   if (fixed) { chev.style.display = 'none'; title.style.cursor = 'default'; }
@@ -6857,7 +6999,7 @@ function buildNumPanel(host) {
       if (editHandles.on) editHandles.place();
     };
     i.addEventListener('input', apply);
-    i.addEventListener('change', apply);
+    i.addEventListener('change', () => { apply(); if (typeof editHistory !== 'undefined') { editHistory.push(); editBar.sync(); } });
     f.append(l, i, u);
     return { el: f, input: i, get };
   }
@@ -6996,23 +7138,26 @@ function buildPanel() {
   sub(catKv, '🎨 グラフィック');
   const gRoot = mount;   /* この中に入れ子で並べる */
 
-  sub(gRoot, '案を選ぶ', true);
-  note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的。押すとすぐ切り替わります。');
-  pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key,
-    it => { kvSetDesign(it.key); rebuildKeeping(null); });
-  /* 【2026-08-26 ヒデさん指定】直接編集は惑星(V1)を選んでいる時だけここに出す(A/B案には関係ないため) */
-  if ((params.kvDesign || 'planet') === 'planet') {
-    segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
-      v => { editHandles.set(!!v); markDirty(); rebuildKeeping(null); });
-    /* 選んだオブジェクトの数値パネル(Figma風)。選択・ドラッグに合わせて動的に出る */
-    buildNumPanel(mount || body);
-  } else if (editHandles.on) {
-    editHandles.set(false);   /* 惑星以外の案に切り替えたら編集モードは切る */
+  /* 【2026-08-27 ヒデさん指定】A/B案は廃止し惑星で固定。案の選択ピルも削除。
+     ここには「編集する」ボタンだけを置き、押すとキービジュアル上に編集バーが出る。 */
+  {
+    const row = document.createElement('div');
+    row.className = 'sw-row';
+    const b2 = document.createElement('button');
+    b2.className = 'sw-pill sw-add';
+    b2.textContent = '✏️ グラフィックを編集する';
+    b2.onclick = () => { editHandles.set(true); rebuildKeeping(null); };
+    row.appendChild(b2);
+    (mount || body).appendChild(row);
+    const n2 = document.createElement('div');
+    n2.className = 'grp-note';
+    n2.textContent = '押すと編集モードに入ります。画面右上に出るバーで、保存・やめる・元に戻す(⌘Z)ができます。';
+    (mount || body).appendChild(n2);
   }
 
   /* --- プリセット: いまの軌道・惑星の形に名前を付けて保存し、ワンタップで呼び出す
          (2026-08-27 ヒデさん指定で「プリセット」として直接編集の下に置く) --- */
-  sub(gRoot, 'プリセット', true);
+  sub(gRoot, 'プリセット', true, { fixed: true });
   {
     const list = params.orbitPresets || (params.orbitPresets = []);
     const presetRow = document.createElement('div');
@@ -7678,9 +7823,10 @@ document.getElementById('panelHead').addEventListener('click', () => {
    透明ボックス(.tools-secret-hot)は残してあり、隠したい時だけ押せる。
    sessionStorage に明示的に '0'(隠す) が入っている時だけ隠した状態で始める。 */
 (() => {
+  /* 【2026-08-27 ヒデさん指定】既定は隠す。右上の空ボックスを押すと出る */
   const SKEY = 'anyflow-tools-secret';
-  let shown = true;
-  try { if (sessionStorage.getItem(SKEY) === '0') shown = false; } catch (e) {}
+  let shown = false;
+  try { if (sessionStorage.getItem(SKEY) === '1') shown = true; } catch (e) {}
   const apply = () => toolsEl.classList.toggle('tools-hidden', !shown);
   apply();
   const hot = document.createElement('div');
