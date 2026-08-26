@@ -2670,6 +2670,8 @@ function load() {
          旧既定(96)のまま保存されている＝触っていない場合だけ、新しい既定に載せ替える */
       if (merged.marquee && merged.marquee.gap === 96) merged.marquee.gap = DEFAULTS.marquee.gap;
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
+  /* 【2026-08-27】止まったまま保存された古い値の救済。開いた時は必ず再生状態にする */
+  merged.running = true;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.dotGap = merged.dotGap || DEFAULTS.dotGap;
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
@@ -2773,7 +2775,13 @@ function load() {
   }
   return structuredClone(DEFAULTS);
 }
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
+/* ⚠️【2026-08-27 事故対応】直接編集をオンにすると再生を止める(params.running=false)。
+   その状態のまま保存すると【次に開いた時に何も動かず＝画面が真っ白】になる(実際に発生)。
+   一時停止は"今だけの状態"なので、保存には必ず再生中として書き出す。 */
+function save() {
+  const out = { ...params, running: true };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+}
 /* ===== 保存の考え方 (2026-08-19 ヒデさん指定) =====
    以前は「触った瞬間に保存」だったので、ちょっと試しただけの値が
    そのまま次回の既定になってしまい、元に戻したいのに戻せなかった。
