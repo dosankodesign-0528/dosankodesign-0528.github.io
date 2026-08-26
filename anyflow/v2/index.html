@@ -4710,15 +4710,18 @@ function updateDev(pRaw) {
   /* dev2(章②): 見出し→モック→右テキストの順で出現＋モックをループ駆動 */
   updateDev2Reveal();
 
-  /* 暗い地色(fixed 100vh): #dev が画面に入っている間だけ出す。
-     実績の resGrow が上端(実績の最後)を覆っているので、そこから継ぎ目なく暗いまま受け渡る。
-     セクションの上端/下端が画面に差しかかる所でフェードして、明(#e7e7e7)へなめらかに戻す。 */
+  /* 暗い地色(fixed 100vh)。
+     ⚠️【2026-08-26 ヒデさん指定】黒トランジション中に「後ろも暗くなる」のを防ぐ。
+        実績尾部に #dev を重ねているため、以前の (vh - r.top)/… だと #dev が入ってくる早い段階で
+        dev-bg が全面を暗くし、resGrow(黒オブジェクト)がまだ小さいのに背景が暗く見えていた。
+        → dev-bg は「dev1 が中央付近に着いてから(=resGrow が黒を渡す点)」だけ出す。
+        それまでは背景は元の地色(#e7e7e7)のまま、resGrow オブジェクトだけが展開して黒になる。 */
   if (devEls.bg && devEls.sec) {
     const r = rectOf(devEls.sec);
     let bgK = 0;
     if (r.bottom > 0 && r.top < vh) {
-      const enter = clamp01((vh - r.top) / (vh * 0.4));   // 上端が入ってくる
-      const leave = clamp01(r.bottom / (vh * 0.4));        // 下端が抜けていく
+      const enter = clamp01((vh * 0.15 - r.top) / (vh * 0.25));   // dev1が中央付近に来てから
+      const leave = clamp01(r.bottom / (vh * 0.4));                // 下端が抜けていく
       bgK = Math.min(enter, leave);
     }
     devEls.bg.style.opacity = bgK.toFixed(3);
