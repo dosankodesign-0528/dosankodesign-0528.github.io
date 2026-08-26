@@ -5971,7 +5971,10 @@ function buildPanel() {
   /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩＋調整つまみ) ---------- */
   sub(catKv, '🪐 惑星への集約アニメ（惑星(V1)の案のみ）');
   note('①＝内の輪が収縮→吸収→再生ループ / ②＝粒が螺旋で吸い込まれる / ④＝鼓動で一斉収束 / ⑩＝輪が外から内へ。案を選ぶと下にその案の調整つまみが出ます。');
-  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key, it => { params.converge = it.key; markDirty(); buildPanel(); });
+  /* ⚠️ ここで buildPanel() を呼んで作り直さない。案ごとにつまみの数が違うと高さが変わって
+     レイアウトシフト(ガタつき)が起きる(ヒデさん指摘 2026-08-26)。
+     つまみは下に4案ぶん常に全部並べて、位置を固定にする。 */
+  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key, it => { params.converge = it.key; markDirty(); });
   const pctF = v => Math.round(v * 100) + '%';
   segRow('パース(遠近感)', [['通常', 'normal'], ['調整版', 'fix']], () => params.conv.pers || 'normal',
     v => { params.conv.pers = v; markDirty(); });
@@ -5982,52 +5985,49 @@ function buildPanel() {
   note('輪を消すとその輪のドットも消えます。①は内の輪が主役なので、内の輪を消すと収縮は見えなくなります。');
   slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+  /* つまみは4案ぶん常に全部表示（位置固定・レイアウトシフト防止。ヒデさん指定 2026-08-26）。
+     選んでいる案のぶんだけアニメに効く */
+  note('つまみは4案ぶん全部並んでいます（選んだ案のぶんだけ効く）。位置が動かないよう常に全部表示。');
   {
-    const cm = params.converge || 'reel';
-    if (cm === 'reel') {
-      const R = params.conv.reel;
-      slider('① 周期', 2, 10, 0.1, () => R.T, v => R.T = v, v => v.toFixed(1) + '秒', '1ループの長さ。');
-      slider('① 新しい輪が出る長さ', 0.02, 0.4, 0.01, () => R.inDur, v => R.inDur = v, pctF,
-        '周期のうち、フェードインに使う割合。');
-      slider('① 収縮を始めるタイミング', 0.05, 0.7, 0.01, () => R.shrinkAt, v => R.shrinkAt = v, pctF,
-        'ここまでは全周サイズでドットが回る。');
-      slider('① 吸収し終わるタイミング', 0.4, 0.98, 0.01, () => R.endAt, v => R.endAt = v, pctF,
-        'ここでフェードアウトし終わる。残りは消えたまま次のループを待つ。');
-      slider('① どこまで縮むか', 0.5, 1, 0.01, () => R.depth, v => R.depth = v, pctF,
-        '100%で惑星の中心まで縮む。');
-    } else if (cm === 'spiral') {
-      const S = params.conv.spiral;
-      slider('② 粒の数', 4, 24, 1, () => S.count, v => S.count = v, v => v + '個');
-      slider('② 1粒の寿命', 2, 10, 0.1, () => S.life, v => S.life = v, v => v.toFixed(1) + '秒',
-        '縁から惑星に吸い込まれるまでのおおよその秒数。');
-      slider('② 回転の速さ', 0.3, 2.5, 0.05, () => S.speed, v => S.speed = v, v => '×' + v.toFixed(2));
-      slider('② 粒の大きさ', 0.3, 1.2, 0.02, () => S.size, v => S.size = v, v => '×' + v.toFixed(2),
-        '軌道のドット(×1)に対する大きさ。');
-    } else if (cm === 'pulse') {
-      const P = params.conv.pulse;
-      slider('④ 周期', 2, 8, 0.1, () => P.T, v => P.T = v, v => v.toFixed(1) + '秒', '鼓動1回の長さ。');
-      slider('④ 普段どおり回る割合', 0.2, 0.7, 0.01, () => P.holdK, v => P.holdK = v, pctF,
-        '周期のうち、軌道上を普通に回っている時間。');
-      slider('④ 収束にかける長さ', 0.08, 0.45, 0.01, () => P.convDur, v => P.convDur = v, pctF,
-        '短いほどキュッと素早く吸い込まれる。');
-      slider('④ 再出現の長さ', 0.05, 0.4, 0.01, () => P.backDur, v => P.backDur = v, pctF,
-        '吸収後、軌道上にフェードインで戻ってくる時間。');
-    } else if (cm === 'waves') {
-      const W = params.conv.waves;
-      slider('⑩ 1本が流れる秒数', 2, 8, 0.1, () => W.T, v => W.T = v, v => v.toFixed(1) + '秒',
-        '外から惑星に取り込まれるまでの時間。');
-      slider('⑩ 1グループの本数', 1, 8, 1, () => W.count, v => W.count = v, v => v + '本');
-      slider('⑩ 本と本の間隔', 0.2, 3, 0.05, () => W.gap, v => W.gap = v, v => v.toFixed(2) + '秒');
-      slider('⑩ グループ後の休み', 0, 6, 0.1, () => W.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
-        '全部吸収された後、次のグループが出るまでの間。リズムをつくる。');
-      slider('⑩ 輪の濃さ', 0.1, 1, 0.05, () => W.alpha, v => W.alpha = v, v => v.toFixed(2));
-      slider('⑩ フェードインの長さ', 0.02, 0.4, 0.01, () => W.inK, v => W.inK = v, pctF,
-        '1本の旅のうち、出てくるフェードインに使う割合。');
-      slider('⑩ 取り込まれ始め', 0.4, 0.96, 0.01, () => W.outAt, v => W.outAt = v, pctF,
-        'ここからフェードアウト=惑星に取り込まれていく。');
-      slider('⑩ 始まりの大きさ', 1, 1.5, 0.01, () => W.from, v => W.from = v, v => '×' + v.toFixed(2),
-        '軌道より少し外(×1.1あたり)から生まれると自然。');
-    }
+    const R = params.conv.reel;
+    slider('① 周期', 2, 10, 0.1, () => R.T, v => R.T = v, v => v.toFixed(1) + '秒', '1ループの長さ。');
+    slider('① 新しい輪が出る長さ', 0.02, 0.4, 0.01, () => R.inDur, v => R.inDur = v, pctF,
+      '周期のうち、フェードインに使う割合。');
+    slider('① 収縮を始めるタイミング', 0.05, 0.7, 0.01, () => R.shrinkAt, v => R.shrinkAt = v, pctF,
+      'ここまでは全周サイズでドットが回る。');
+    slider('① 吸収し終わるタイミング', 0.4, 0.98, 0.01, () => R.endAt, v => R.endAt = v, pctF,
+      'ここでフェードアウトし終わる。残りは消えたまま次のループを待つ。');
+    slider('① どこまで縮むか', 0.5, 1, 0.01, () => R.depth, v => R.depth = v, pctF,
+      '100%で惑星の中心まで縮む。');
+    const S = params.conv.spiral;
+    slider('② 粒の数', 4, 24, 1, () => S.count, v => S.count = v, v => v + '個');
+    slider('② 1粒の寿命', 2, 10, 0.1, () => S.life, v => S.life = v, v => v.toFixed(1) + '秒',
+      '縁から惑星に吸い込まれるまでのおおよその秒数。');
+    slider('② 回転の速さ', 0.3, 2.5, 0.05, () => S.speed, v => S.speed = v, v => '×' + v.toFixed(2));
+    slider('② 粒の大きさ', 0.3, 1.2, 0.02, () => S.size, v => S.size = v, v => '×' + v.toFixed(2),
+      '軌道のドット(×1)に対する大きさ。');
+    const P = params.conv.pulse;
+    slider('④ 周期', 2, 8, 0.1, () => P.T, v => P.T = v, v => v.toFixed(1) + '秒', '鼓動1回の長さ。');
+    slider('④ 普段どおり回る割合', 0.2, 0.7, 0.01, () => P.holdK, v => P.holdK = v, pctF,
+      '周期のうち、軌道上を普通に回っている時間。');
+    slider('④ 収束にかける長さ', 0.08, 0.45, 0.01, () => P.convDur, v => P.convDur = v, pctF,
+      '短いほどキュッと素早く吸い込まれる。');
+    slider('④ 再出現の長さ', 0.05, 0.4, 0.01, () => P.backDur, v => P.backDur = v, pctF,
+      '吸収後、軌道上にフェードインで戻ってくる時間。');
+    const W = params.conv.waves;
+    slider('⑩ 1本が流れる秒数', 2, 8, 0.1, () => W.T, v => W.T = v, v => v.toFixed(1) + '秒',
+      '外から惑星に取り込まれるまでの時間。');
+    slider('⑩ 1グループの本数', 1, 8, 1, () => W.count, v => W.count = v, v => v + '本');
+    slider('⑩ 本と本の間隔', 0.2, 3, 0.05, () => W.gap, v => W.gap = v, v => v.toFixed(2) + '秒');
+    slider('⑩ グループ後の休み', 0, 6, 0.1, () => W.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
+      '全部吸収された後、次のグループが出るまでの間。リズムをつくる。');
+    slider('⑩ 輪の濃さ', 0.1, 1, 0.05, () => W.alpha, v => W.alpha = v, v => v.toFixed(2));
+    slider('⑩ フェードインの長さ', 0.02, 0.4, 0.01, () => W.inK, v => W.inK = v, pctF,
+      '1本の旅のうち、出てくるフェードインに使う割合。');
+    slider('⑩ 取り込まれ始め', 0.4, 0.96, 0.01, () => W.outAt, v => W.outAt = v, pctF,
+      'ここからフェードアウト=惑星に取り込まれていく。');
+    slider('⑩ 始まりの大きさ', 1, 1.5, 0.01, () => W.from, v => W.from = v, v => '×' + v.toFixed(2),
+      '軌道より少し外(×1.1あたり)から生まれると自然。');
   }
   liveEdit = false;
 
