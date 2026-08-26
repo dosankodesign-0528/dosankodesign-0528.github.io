@@ -2345,7 +2345,7 @@ void main(){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  sway: 3,   // 既定はクロス
+  sway: 1,   // 2026-08-27 ヒデさん指定: ゆらぎは既定オフ(①固定)
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
@@ -2818,6 +2818,11 @@ function load() {
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
       if (merged.sway < 1 || merged.sway > SWAYS.length) merged.sway = 1;
+      /* 【2026-08-27 ヒデさん指定】ゆらぎは既定オフ。保存値が残っている人も一度だけオフに揃える */
+      if (!localStorage.getItem('anyflow-sway-off-20260827')) {
+        merged.sway = 1;
+        localStorage.setItem('anyflow-sway-off-20260827', '1');
+      }
       if (merged.dither < 1 || merged.dither > DITHERS.length) merged.dither = 1;
       if (merged.dotGap < 1 || merged.dotGap > DOT_GAPS.length) merged.dotGap = DEFAULTS.dotGap;
       return merged;
@@ -2934,13 +2939,14 @@ function posOn(g, deg) {
 const CONVERGES = [
   { key: 'off',    name: '周回のみ' },
   /* 2026-08-26 ヒデさん指定で連番を1から振り直し */
-  { key: 'reel',   name: '①収縮ループ' },
-  { key: 'spiral', name: '②スパイラル' },
-  { key: 'accre',  name: '③降着円盤' },
-  { key: 'waves',  name: '④内向きの波' },
-  { key: 'mesh',   name: '⑤メッシュ' },
-  { key: 'beads',  name: '⑥ドットの軌道' },
-  { key: 'duplex', name: '⑦同時双方向' },
+  /* 名前は「何が起きるか」が分かる言い方にする(2026-08-27 ヒデさん指定) */
+  { key: 'reel',   name: '①輪が縮んで吸収' },
+  { key: 'spiral', name: '②粒が渦で吸収' },
+  { key: 'accre',  name: '③粒の渦が回る' },
+  { key: 'waves',  name: '④輪が流れ込む' },
+  { key: 'mesh',   name: '⑤網でつながる' },
+  { key: 'beads',  name: '⑥点が並ぶ軌道' },
+  { key: 'duplex', name: '⑦線で行き来' },
 ];
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
 const CONV_LINKED = ['duplex'];
@@ -6863,9 +6869,9 @@ function sub(target, html, deep, opts) {
   /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
      (2026-08-27 ヒデさん指定) */
   const GRAPHIC_OPEN = ['🎨 グラフィック', 'プリセット', '🪐 アニメーション（惑星(V1)の案のみ）',
-                        'ゆらゆら', '出てくるタイミング', '①収縮ループの調整', '②スパイラルの調整',
-                        '③降着円盤の調整', '④内向きの波の調整', '⑤メッシュの調整',
-                        '⑥ドットの軌道の調整', '⑦同時双方向の調整', '消え方（吸収の表現）'];
+                        'ゆらぎ', '出てくるタイミング', 'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
+                        'この案の調整（粒の渦）', 'この案の調整（輪が流れ込む）', 'この案の調整（網でつながる）',
+                        'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）', '消え方（吸収の表現）'];
   const open = fixed ? true : (subOpen[key] === undefined ? GRAPHIC_OPEN.includes(key) : subOpen[key]);
   subOpen[key] = open;
   const g = document.createElement('div');
@@ -7282,36 +7288,40 @@ function buildPanel() {
   /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
      V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
 
-  sub(gRoot, '🪐 アニメーション（惑星(V1)の案のみ）', true);
+  sub(gRoot, '🪐 アニメーション', true);
   const aRoot = mount;   /* 案ごとの調整はこの中に入れ子で出す */
-  note('案を押すと、その案の調整つまみだけが下に出ます（たためます）。');
+  /* 【2026-08-27 ヒデさん指定】案を押したらリロードを挟まずその場で切り替わる(liveEdit) */
+  liveEdit = true;
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
     /* ⚠️ ここで rebuildKeeping(null) を呼ぶと位置が保てずガタつく。
        pillRow 側が「押したピル」を目印に位置を保って作り直すので、ここでは値だけ変える */
-    it => { params.converge = it.key; markDirty(); },
+    it => { params.converge = it.key; markDirty(); renderFrame(); },
     { get: () => params.converge, set: v => { params.converge = v; buildPanel(); } });
-  const pctF = v => Math.round(v * 100) + '%';
-  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
-  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
-  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
-  note('輪を消すとその輪のドットも消えます。');
-  slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
-    '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
-  /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定 */
-  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
-    v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます（案ごとの重複つまみは廃止）。', { fixedMax: true });
-  /* 遠近モードは「🎨 グラフィック」の見出し右のアイコンに移した(2026-08-27 ヒデさん指定)。
-     ここでは「遠近つき」を選んでいる時だけ、効きの強さを出す */
-  if ((params.conv.dotPersp || 'flat') === 'persp') {
-    slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
-      '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
+  liveEdit = false;
+  /* どんな動きなのかを一言で(2026-08-27 ヒデさん指定) */
+  const CONV_DESC = {
+    off:    '軌道をただ回り続けます。集約の動きはしません。',
+    reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
+    spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
+    accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
+    waves:  '軌道と同じ形の輪が外側から生まれ、内側へ流れ込んで惑星に取り込まれます。何本かがまとめて流れ、少し休んでまた次のグループが来ます。',
+    mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
+    beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
+    duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
+  };
+  {
+    const d = document.createElement('div');
+    d.className = 'grp-note';
+    d.textContent = CONV_DESC[params.converge] || '';
+    (mount || body).appendChild(d);
   }
 
-  /* ===== 選んだ案のつまみだけを出す ===== */
+  /* ===== 選んだ案のつまみを先に出す(共通の項目は下へ) ===== */
+  const pctF = v => Math.round(v * 100) + '%';
   const cvMode = params.converge || 'reel';
   if (cvMode === 'reel') {
     const R = params.conv.reel;
-    sub(aRoot, '①収縮ループの調整', true);
+    sub(aRoot, 'この案の調整（輪が縮んで吸収）', true);
     segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
       () => params.conv.reel.flow || 'down', v => { R.flow = v; markDirty(); });
     note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
@@ -7349,7 +7359,7 @@ function buildPanel() {
       '縮むほどドットが速く回る。0で通常の速さのまま。');
   } else if (cvMode === 'spiral') {
     const S = params.conv.spiral;
-    sub(aRoot, '②スパイラルの調整', true);
+    sub(aRoot, 'この案の調整（粒が渦で吸収）', true);
     slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
     slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
       '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
@@ -7358,7 +7368,7 @@ function buildPanel() {
     slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
   } else if (cvMode === 'accre') {
     const AC = params.conv.accre;
-    sub(aRoot, '③降着円盤の調整', true);
+    sub(aRoot, 'この案の調整（粒の渦）', true);
     slider('粒の数', 5, 600, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
       '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
     slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
@@ -7369,7 +7379,7 @@ function buildPanel() {
       '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
   } else if (cvMode === 'waves') {
     const W = params.conv.waves;
-    sub(aRoot, '④内向きの波の調整', true);
+    sub(aRoot, 'この案の調整（輪が流れ込む）', true);
     slider('1本が流れる秒数', 1, 12, 0.1, () => params.conv.waves.T, v => W.T = v, v => v.toFixed(1) + '秒',
       '外から惑星に取り込まれるまでの時間。', { fixedMax: true });
     slider('1グループの本数', 1, 12, 1, () => params.conv.waves.count, v => W.count = v, v => v + '本', null, { fixedMax: true });
@@ -7385,8 +7395,7 @@ function buildPanel() {
       '軌道より少し外(×1.1あたり)から生まれると自然。', { fixedMax: true });
   } else if (cvMode === 'mesh') {
     const M = params.conv.mesh;
-    sub(aRoot, '⑤メッシュの調整', true);
-    note('軌道の代わりにノードの網。ノードはランダムに漂い、パケットが渡り歩いて惑星へ届きます（輪とドットは自動で隠れます）。');
+    sub(aRoot, 'この案の調整（網でつながる）', true);
     slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
     slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
       'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
@@ -7401,8 +7410,7 @@ function buildPanel() {
     slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
   } else if (cvMode === 'beads') {
     const B = params.conv.beads;
-    sub(aRoot, '⑥ドットの軌道の調整', true);
-    note('ドットが等間隔で密に並んで「輪」の形を作ります。吸われるのは一部だけなので、軌道の形は崩れません。');
+    sub(aRoot, 'この案の調整（点が並ぶ軌道）', true);
     slider('ドットの密度', 6, 400, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
       '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
     slider('軌道線の濃さ', 0, 1, 0.01, () => params.conv.beads.ghost, v => B.ghost = v, v => v.toFixed(2),
@@ -7415,8 +7423,7 @@ function buildPanel() {
       '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
   } else if (CONV_LINKED.includes(cvMode)) {
     const L = params.conv.link;
-    sub(aRoot, '⑦同時双方向の調整', true);
-    note('惑星とドットをラインで結び、集約(青)と配信(ピンク)の粒が同じ線ですれ違いながら流れます。');
+    sub(aRoot, 'この案の調整（線で行き来）', true);
     note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
     slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
       '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
@@ -7456,10 +7463,25 @@ function buildPanel() {
   rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
-  /* ゆらゆらはオンオフだけ。コンパクトに下の方へ (2026-08-27 ヒデさん指定) */
+  /* ===== どの案でも効く共通の項目(案ごとの調整より下に置く。2026-08-27 ヒデさん指定) ===== */
+  sub(aRoot, '共通（見せ方）', true);
+  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
+  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
+  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
+  note('輪を消すとその輪のドットも消えます。③⑤⑥の案では自動で隠れます。');
+  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
+    v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。', { fixedMax: true });
+  if ((params.conv.dotPersp || 'flat') === 'persp') {
+    slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
+      '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
+  }
+  slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
+    '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+
+  /* ゆらぎはオンオフだけ。コンパクトに下の方へ (2026-08-27 ヒデさん指定・既定はオフ) */
   liveEdit = true;
-  sub(gRoot, 'ゆらゆら', true, { fixed: true });
-  segRow('ゆらゆら', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
+  sub(gRoot, 'ゆらぎ', true, { fixed: true });
+  segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
   liveEdit = false;
 
