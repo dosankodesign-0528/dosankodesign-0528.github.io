@@ -7747,7 +7747,8 @@ window.addEventListener('resize', keepPanelInView);
       try { z.setPointerCapture(e.pointerId); } catch (_) {}
       const r = toolsEl.getBoundingClientRect();
       const st = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, left: r.left, top: r.top };
-      /* 掴んだ瞬間に left/top 指定へ切り替える(既定は right/bottom 固定のため) */
+      /* 掴んだ瞬間に left/top 指定へ切り替える。中央そろえの transform も外す(飛び防止) */
+      toolsEl.style.transform = 'none';
       toolsEl.style.left = r.left + 'px';
       toolsEl.style.top = r.top + 'px';
       toolsEl.style.right = 'auto';
@@ -7804,8 +7805,12 @@ window.addEventListener('resize', keepPanelInView);
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.abs(dx) + Math.abs(dy) <= 3) return;   /* まだ「押しただけ」。何もしない */
     if (!moved) {
-      /* ここで初めて「動かしている」と判断して、left/top 指定へ切り替える */
+      /* ここで初めて「動かしている」と判断して、left/top 指定へ切り替える。
+         ⚠️【2026-08-27 バグ修正】CSS の上下中央そろえ(transform: translateY(-50%))が
+            残ったまま top を指定すると、掴んだ瞬間に半分ぶん跳ねて【飛んで見えた】。
+            位置指定に切り替える時は transform を必ず外す。 */
       moved = true;
+      tools.style.transform = 'none';
       tools.style.left = ox + 'px';
       tools.style.top = oy + 'px';
       tools.style.right = 'auto';
