@@ -6,3 +6,7 @@ _site/
 
 # macOS が勝手に作るやつ
 .DS_Store
+
+# anyflow 自動デプロイの実行ログ・完了マーカー(ローカル専用)
+anyflow/.deploy-v2-v3.log
+anyflow/.deploy-v2-v3.done
