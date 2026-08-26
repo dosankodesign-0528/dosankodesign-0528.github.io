@@ -1399,6 +1399,10 @@
   .grp-title > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden;
                text-overflow: ellipsis; white-space: nowrap; }
   .grp > .grp-body { padding-bottom: 2px; }
+  /* たためない小見出し(全体カテゴリ)。コンパクトに詰める */
+  .grp.fixed { margin-top: 10px; padding-top: 9px; }
+  .grp.fixed .grp-title { font-size: 11.5px; font-weight: 500; color: #666; margin-bottom: 4px; min-height: 0; }
+  .grp.fixed .grp-acts { transform: scale(.86); transform-origin: right center; }
   /* 入れ子の小見出し: 左の罫線でぶら下がりを示す */
   .grp.sub2 { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #ededed;
               padding-left: 9px; border-left: 2px solid #ededed; }
@@ -6623,7 +6627,18 @@ function category(title, open) {
   head.innerHTML = `<span>${title}</span><span class="cat-chev">▾</span>`;
   const content = document.createElement('div');
   content.className = 'cat-body';
-  head.onclick = () => { catOpen[title] = !cat.classList.toggle('closed'); };
+  head.onclick = () => {
+    const nowClosed = cat.classList.toggle('closed');
+    catOpen[title] = !nowClosed;
+    /* 【2026-08-27 ヒデさん指定】カテゴリを開いた時は、中の小見出しも全部開いた状態にする */
+    if (!nowClosed) {
+      content.querySelectorAll('.grp').forEach(g => {
+        g.classList.remove('closed');
+        const t = g.querySelector('.grp-title span');
+        if (t) subOpen[t.textContent.trim()] = true;
+      });
+    }
+  };
   cat.append(head, content);
   body.appendChild(cat);
   return content;
@@ -6636,13 +6651,14 @@ function category(title, open) {
 const subOpen = {};
 /* いま組み立て中のセクションに属する項目(リセット用)。sub() のたびに新しくする */
 let subItems = null;
-function sub(target, html, deep) {
+function sub(target, html, deep, opts) {
   const key = String(html).replace(/<[^>]*>/g, '').trim();
+  const fixed = !!(opts && opts.fixed);   /* たためない＝常に開いたコンパクト表示 */
   /* 既定はたたむ。ただし「🎨 グラフィック」だけは開いた状態で始める(ヒデさん指定 2026-08-27) */
-  const open = subOpen[key] === undefined ? (key === '🎨 グラフィック') : subOpen[key];
+  const open = fixed ? true : (subOpen[key] === undefined ? (key === '🎨 グラフィック') : subOpen[key]);
   subOpen[key] = open;
   const g = document.createElement('div');
-  g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed');
+  g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed') + (fixed ? ' fixed' : '');
   const title = document.createElement('div');
   title.className = 'grp-title';
   const lab = document.createElement('span');
@@ -6678,7 +6694,8 @@ function sub(target, html, deep) {
   title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
   const inner = document.createElement('div');
   inner.className = 'grp-body';
-  title.onclick = () => { subOpen[key] = !g.classList.toggle('closed'); };
+  if (fixed) { chev.style.display = 'none'; title.style.cursor = 'default'; }
+  else title.onclick = () => { subOpen[key] = !g.classList.toggle('closed'); };
   g.append(title, inner);
   target.appendChild(g);
   mount = inner;      /* 以降の slider / note はこの中に入る = たためる */
@@ -6812,33 +6829,33 @@ function buildPanel() {
 
   /* ========== 🌊 全体 ========== */
   const catAll = category('🌊 全体（サイト全体のモーション）', false);
-  catNote(catAll, 'まずはここだけ。サイト全体の印象が決まります。');
 
-  sub(catAll, '① モーションが進むきっかけ');
-  note(params.drive === 'scroll'
-    ? '動かした分だけ絵が進みます。手を止めれば絵も止まり、戻せば巻き戻ります。'
-    : 'セクションに着いたら、決まった秒数の映像として流します。誰が見ても同じ速さ。');
+  /* 【2026-08-27 ヒデさん指定】①②③はたたまず、コンパクトに並べる。補足文は削除 */
+  sub(catAll, 'モーションの進み方', null, { fixed: true });
   segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
     () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
+  note(params.drive === 'scroll'
+    ? '動かした分だけ絵が進みます。手を止めれば絵も止まります。'
+    : 'セクションに着いたら、決まった秒数の映像として流します。');
 
-  note('見せるペースは、各セクションの「見せる長さ」で調整します。');
-
-  /* ② スクロールの固定(3パターン・2026-08-26 ヒデさん指定)。押した瞬間に反映(頭出ししない) */
   liveEdit = true;
-  sub(catAll, '② スクロールの固定');
-  note((params.scrollHold || 'lock') === 'smooth'
-      ? '固定追従なし＝ロックしない。自由に上下でき、アニメは画面に来たら再生します。実績の黒オブジェクトはリビールが終わってから出ます。'
-      : '固定＝再生中はその場に貼りつけ(従来のスクロールジャック・既定)。再生が終わるまでスクロールは止まります。');
+  sub(catAll, 'スクロールの固定', null, { fixed: true });
   pillRow([{ key: 'lock', name: '固定' }, { key: 'smooth', name: '固定追従なし' }],
     it => (params.scrollHold || 'lock') === it.key,
-    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); });
+    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); },
+    { get: () => params.scrollHold, set: v => { params.scrollHold = v; scrollLocked = false; if (lenis) lenis.start(); } });
+  note((params.scrollHold || 'lock') === 'smooth'
+      ? '固定追従なし＝再生中も自由に上下できます。'
+      : '固定＝再生中はその場に貼りつけて動かしません。');
   liveEdit = false;
 
-  sub(catAll, '③ 慣性スクロール');
-  rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
-    v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
-    '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
-  /* ⚠️ 2択ボタンのラベル欄は 74px。7文字だと折り返すので6文字までに収めること */
+  sub(catAll, '慣性スクロール', null, { fixed: true });
+  rows.push(slider('慣性の強さ', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
+    v => v <= 4 ? '強め' : v >= 9 ? '弱め' : '中',
+    '強めほど指を離しても流れ続け、弱めほどピタッと止まります。'));
+
+  /* くり返しは慣性とは別の話なので独立させる(ヒデさん指定 2026-08-27) */
+  sub(catAll, 'くり返し再生', null, { fixed: true });
   segRow('くり返し', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; markDirty(); });
   note('一度見たセクションも、戻ってくるともう一度流れます。');
 
