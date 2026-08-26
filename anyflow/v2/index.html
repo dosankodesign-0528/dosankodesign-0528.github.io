@@ -2471,7 +2471,7 @@ const DEFAULTS = {
      pers: 'normal'=今の実装 / 'fix'=パース調整版(輪が先に惑星の真ん中へ寄ってから同心円ですぼまる)
      showOuter/showInner: 軌道の輪のオンオフ(輪を消すとその輪のドットも消える)
      タイミング系(inDur/shrinkAt/endAt など)は「周期の中の割合」(0〜1) */
-  orbitLayout: 'gyro',   // 軌道レイアウト(ORBIT_LAYOUTS)。2026-08-26 ヒデさん指定でジャイロクロス固定(選択UIは廃止)
+  orbitLayout: 'figma',  // 軌道レイアウト(ORBIT_LAYOUTS)。2026-08-26 ヒデさん指定でカンプ通り(2本が平行)を既定に戻した
   orbitPresets: [],      // 軌道のプリセット [{name, data:{layout,outer,inner}}]。パネルで保存/切替/編集/削除
   orbitPresetOn: null,   // いま選んでいるプリセットの番号
   conv: {
@@ -2599,7 +2599,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v79';   /* 2026-08-26 ジャイロクロス既定/パネル整理(各項目リセット・小見出しアコーディオン)/④⑤とパース切替を廃止 */
+const STORAGE_KEY = 'anyflow-embed-anim-v80';   /* 2026-08-26 ジャイロクロス既定/パネル整理(各項目リセット・小見出しアコーディオン)/④⑤とパース切替を廃止 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -3461,13 +3461,13 @@ function convFrame(geoms) {
 }
 const sphereCanvasEl = document.getElementById('sphere');
 
-/* ===== 直感編集（Figma のようにドラッグで動かす。2026-08-26 ヒデさん指定） =====
+/* ===== 直接編集（Figma のようにドラッグで動かす。2026-08-26 ヒデさん指定） =====
    右のグラフィックに操作点(ハンドル)を出し、掴んで動かすと params が変わる。
    ・中心 = 位置 / 右端 = サイズ / 上端 = つぶし(パース) / 外側 = 傾き
    ・惑星も中心を掴んで動かせる（右端でサイズ）
    軌道SVGと同じ 915.483x630 の座標系に重ねるので、拡大されていても位置がずれない。 */
 const editHandles = (() => {
-  let svg = null, on = false, drag = null;
+  let svg = null, on = false, drag = null, wasRunning = null;
   const H = [];   /* {el, kind, key} */
   function ensure() {
     if (svg) return svg;
@@ -3581,6 +3581,12 @@ const editHandles = (() => {
       on = !!v;
       const el = ensure();
       if (el) el.style.display = on ? '' : 'none';
+      /* 【2026-08-26 ヒデさん指定】直接編集の間はアニメーションを止める(掴んで動かしやすくする)。
+         切った時は元に戻す */
+      if (on) { wasRunning = params.running; params.running = false; }
+      else if (wasRunning != null) { params.running = wasRunning; wasRunning = null; }
+      if (typeof applyMarquee === 'function') applyMarquee();
+      renderFrame();
       if (on) place();
     },
     place,
@@ -3704,7 +3710,7 @@ function renderFrame() {
   applySway();
   renderSphere();
   updateSections();
-  if (editHandles.on) editHandles.place();   /* 直感編集の操作点を図形に追従させる */
+  if (editHandles.on) editHandles.place();   /* 直接編集の操作点を図形に追従させる */
 }
 
 /* ゆらぎ: グラフィック全体(軌道・惑星)へのゆるい動き */
@@ -6633,6 +6639,16 @@ function buildPanel() {
      旧・惑星/まわりの輪のコントロールは全部撤去し、代わりに「案の切替」をここに集約。
      押した瞬間に iframe へ postMessage して切り替える（文字は流し直さない）。 */
   liveEdit = true;
+  /* ===== 🎨 グラフィック (2026-08-26 ヒデさん指定) =====
+     右側のグラフィックを扱うセクション。いちばん上に「直接編集」を置く。
+     直接編集をオンにするとアニメーションが止まり、掴んで動かしやすくなる。 */
+  liveEdit = true;
+  sub(catKv, '🎨 グラフィック');
+  segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
+    v => { editHandles.set(!!v); markDirty(); });
+  note('オンにすると右のグラフィックに操作点が出て、アニメーションが止まります。中心＝移動 / 右端＝サイズ / 上端＝つぶし（パース）/ 外側＝傾き。惑星も動かせます。');
+  liveEdit = false;
+
   sub(catKv, '🖼 右のグラフィックの案を選ぶ');
   note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ切り替わります。');
   pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key, it => kvSetDesign(it.key));
@@ -6806,13 +6822,9 @@ function buildPanel() {
   segRow('ゆらゆら', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
   note('軌道がゆっくり揺れる動き。「しない」でカンプの構図のままピタッと止まります。');
-  /* 【2026-08-26 ヒデさん指定】Figma のように、右のグラフィックを直接ドラッグで動かせる */
-  segRow('直感編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
-    v => { editHandles.set(!!v); markDirty(); });
-  note('オンにすると右のグラフィックに操作点が出ます。中心＝移動 / 右端＝サイズ / 上端＝つぶし（パース）/ 外側＝傾き。惑星も動かせます。');
   /* 【2026-08-26 ヒデさん指定】レイアウトの選択ピルは廃止。ジャイロクロス固定で使う
      （2本の傾きを逆にして立体交差させ、奥行きを出したレイアウト）。
-     細かい調整は下の 位置 / サイズ / 傾き と、右のグラフィックの直感編集で行う。 */
+     いまはカンプ通り(2本が平行)で固定。細かい調整は下の 位置 / サイズ / 傾き と、直接編集で行う。 */
 
   /* --- プリセット: 今の軌道の設定に名前を付けて保存し、ワンタップで呼び出す --- */
   {
