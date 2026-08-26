@@ -1330,7 +1330,8 @@
        外寸は固定して、中身だけスクロールさせる */
     /* 【2026-08-19 ヒデさん指定】画面をふさぎすぎないよう横幅をコンパクトに (360→300px)。
        あわせて文字サイズと余白も一段小さくして、中身が入りきるようにしている */
-    width: 300px;
+    /* 【2026-08-27 ヒデさん指定】横幅を1.5倍(300→450px)にして既定サイズとする */
+    width: 450px;
     height: 520px;
     min-width: 240px;
     min-height: 46px;
@@ -2578,7 +2579,8 @@ const DEFAULTS = {
     waves:  { T: 4.2, count: 3, gap: 0.9, rest: 1.6, alpha: 0.55, from: 1.12, inK: 0.12, outAt: 0.78 },
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
        一部だけが順に惑星へ吸われるので、輪の形は保たれる。ghost=薄い軌道線を残すか */
-    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, ghost: 0.18, jitter: 0 },
+    /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
+    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0 },
     /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
        style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット */
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
@@ -3460,26 +3462,7 @@ function convFrame(geoms) {
     const B = C.beads, cc = convCenter();
     const n = Math.max(6, Math.round(B.count));
     const pkts = convPktPool(n);
-    const ghostA = B.ghost || 0;
-    if (ghostA > 0) {   /* 薄い輪郭線を残して「軌道」だと分かりやすくする */
-      const gl = convLinePool(2);
-      for (const [gi, key] of [[0, 'outer'], [1, 'inner']]) {
-        const g = geoms[key];
-        gl[gi].setAttribute('d', '');
-        gl[gi].setAttribute('opacity', '0');
-        const el = gl[gi];
-        el.setAttribute('stroke', gi ? CONV_BLUE : CONV_PINK);
-        el.setAttribute('stroke-width', '1');
-        /* 楕円は path で近似(24分割) */
-        let d2 = '';
-        for (let k = 0; k <= 24; k++) {
-          const pt = posOn(g, k / 24 * 360);
-          d2 += (k ? 'L' : 'M') + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ' ';
-        }
-        el.setAttribute('d', d2 + 'Z');
-        el.setAttribute('opacity', String(ghostA));
-      }
-    } else convHideLines();
+    convHideLines();   /* 軌道の線は出さない(点だけで輪を作る) */
     if (!convBeads || convBeads.length !== n) {
       convBeads = [];
       for (let i = 0; i < n; i++) {
@@ -6975,7 +6958,7 @@ function rebuildKeeping(markEl) {
 }
 
 /* 選択ピル (惑星デザインなど)。resetRef={get,set} を渡すと行の右端にリセット(↺)が付く */
-function pillRow(items, isOn, onPick, resetRef) {
+function pillRow(items, isOn, onPick, resetRef, opts) {
   const row = document.createElement('div');
   row.className = 'sw-row';
   const isLive = liveEdit;
@@ -6999,7 +6982,7 @@ function pillRow(items, isOn, onPick, resetRef) {
          【押したボタンが画面の中で動いてしまう】(レイアウトシフト)。
          柄を続けて比べたいのに、毎回ボタンを探し直すことになっていた。
          押したボタン自体を目印にして、作り直しの前後で同じ画面位置に留める */
-      rebuildKeeping(b);
+      if (!(opts && opts.noRebuild)) rebuildKeeping(b);   /* 一部の行はパネルを作り直さない(その場で反映) */
       /* 見た目だけの案（惑星の柄など）はその場で反映。
          登場の順番が変わる案は、頭から流し直さないと結果が見えないので流し直す */
       applyEdit(isLive, true);
@@ -7290,193 +7273,202 @@ function buildPanel() {
 
   sub(gRoot, '🪐 アニメーション', true);
   const aRoot = mount;   /* 案ごとの調整はこの中に入れ子で出す */
-  /* 【2026-08-27 ヒデさん指定】案を押したらリロードを挟まずその場で切り替わる(liveEdit) */
+  /* 【2026-08-27 ヒデさん指定】案を押したら、パネルを作り直さずその場で切り替わる。
+     入れ替わるのは「説明 → この案の調整 → 共通」だけなので、下の箱ごと差し替える */
   liveEdit = true;
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
-    /* ⚠️ ここで rebuildKeeping(null) を呼ぶと位置が保てずガタつく。
-       pillRow 側が「押したピル」を目印に位置を保って作り直すので、ここでは値だけ変える */
-    it => { params.converge = it.key; markDirty(); renderFrame(); },
-    { get: () => params.converge, set: v => { params.converge = v; buildPanel(); } });
+    it => { params.converge = it.key; markDirty(); renderFrame(); fillAnimBody(); },
+    { get: () => params.converge, set: v => { params.converge = v; renderFrame(); fillAnimBody(); } },
+    { noRebuild: true });
   liveEdit = false;
-  /* どんな動きなのかを一言で(2026-08-27 ヒデさん指定) */
-  const CONV_DESC = {
-    off:    '軌道をただ回り続けます。集約の動きはしません。',
-    reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
-    spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
-    accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
-    waves:  '軌道と同じ形の輪が外側から生まれ、内側へ流れ込んで惑星に取り込まれます。何本かがまとめて流れ、少し休んでまた次のグループが来ます。',
-    mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
-    beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
-    duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
-  };
-  {
-    const d = document.createElement('div');
-    d.className = 'grp-note';
-    d.textContent = CONV_DESC[params.converge] || '';
-    (mount || body).appendChild(d);
-  }
-
-  /* ===== 選んだ案のつまみを先に出す(共通の項目は下へ) ===== */
-  const pctF = v => Math.round(v * 100) + '%';
-  const cvMode = params.converge || 'reel';
-  if (cvMode === 'reel') {
-    const R = params.conv.reel;
-    sub(aRoot, 'この案の調整（輪が縮んで吸収）', true);
-    segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
-      () => params.conv.reel.flow || 'down', v => { R.flow = v; markDirty(); });
-    note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
-    slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
-      '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
-    slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
-      'ここまでは全周サイズでドットが回る。');
-    slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
-      'ここで吸収が完了し、もう1本が移動を始める。');
-    slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
-      '吸収後、もう1本がすべり込む時間。');
-    slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
-      '空いた位置に新しい輪がフェードインする時間。');
-    slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
-    /* 消え方は「前面カット」「はみ出ず溶ける」の2種だけ残す(2026-08-26 ヒデさん指定) */
-    const VANISH_DESC = {
-      clip: '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
-      fit:  'はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まず、そこで溶けて消える。',
+  const animBody = document.createElement('div');
+  aRoot.appendChild(animBody);
+  function fillAnimBody() {
+    animBody.innerHTML = '';
+    const keepMount = mount;
+    mount = animBody;
+    /* どんな動きなのかを一言で(2026-08-27 ヒデさん指定) */
+    const CONV_DESC = {
+      off:    '軌道をただ回り続けます。集約の動きはしません。',
+      reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
+      spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
+      accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
+      waves:  '軌道と同じ形の輪が外側から生まれ、内側へ流れ込んで惑星に取り込まれます。何本かがまとめて流れ、少し休んでまた次のグループが来ます。',
+      mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
+      beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
+      duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
     };
-    const VANISHES = [{ key: 'clip', name: '前面カット' }, { key: 'fit', name: 'はみ出ず溶ける' }];
-    let vanishNoteEl = null;
-    pillRow(VANISHES, it => (R.vanish || 'clip') === it.key,
-      it => { R.vanish = it.key; markDirty(); if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[it.key]; },
-      { get: () => params.conv.reel.vanish, set: v => { R.vanish = v; if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[v]; } });
-    vanishNoteEl = document.createElement('div');
-    vanishNoteEl.className = 'grp-note';
-    vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
-    vanishNoteEl.textContent = VANISH_DESC[R.vanish] || VANISH_DESC.clip;
-    (mount || body).appendChild(vanishNoteEl);
-    slider('透過し始め', 0, 0.95, 0.01, () => params.conv.reel.fadeAt, v => R.fadeAt = v, pctF,
-      '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
-    slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
-      '吸収の瞬間にどれだけ濃さを残すか。0で完全に透明。');
-    slider('収縮中の回転アップ', 0, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v, v => '+' + Math.round(v * 180) + '°',
-      '縮むほどドットが速く回る。0で通常の速さのまま。');
-  } else if (cvMode === 'spiral') {
-    const S = params.conv.spiral;
-    sub(aRoot, 'この案の調整（粒が渦で吸収）', true);
-    slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
-    slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
-      '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
-    slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
-      '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
-    slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-  } else if (cvMode === 'accre') {
-    const AC = params.conv.accre;
-    sub(aRoot, 'この案の調整（粒の渦）', true);
-    slider('粒の数', 5, 600, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
-      '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
-    slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
-      '内へ落ちていく速さ。', { fixedMax: true });
-    slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
-      '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
-  } else if (cvMode === 'waves') {
-    const W = params.conv.waves;
-    sub(aRoot, 'この案の調整（輪が流れ込む）', true);
-    slider('1本が流れる秒数', 1, 12, 0.1, () => params.conv.waves.T, v => W.T = v, v => v.toFixed(1) + '秒',
-      '外から惑星に取り込まれるまでの時間。', { fixedMax: true });
-    slider('1グループの本数', 1, 12, 1, () => params.conv.waves.count, v => W.count = v, v => v + '本', null, { fixedMax: true });
-    slider('本と本の間隔', 0.1, 4, 0.05, () => params.conv.waves.gap, v => W.gap = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
-    slider('グループ後の休み', 0, 8, 0.1, () => params.conv.waves.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
-      '全部吸収された後、次のグループが出るまでの間。リズムをつくる。', { fixedMax: true });
-    slider('輪の濃さ', 0.05, 1, 0.05, () => params.conv.waves.alpha, v => W.alpha = v, v => v.toFixed(2), null, { fixedMax: true });
-    slider('フェードインの長さ', 0.02, 0.4, 0.01, () => params.conv.waves.inK, v => W.inK = v, pctF,
-      '1本の旅のうち、出てくるフェードインに使う割合。');
-    slider('取り込まれ始め', 0.4, 0.96, 0.01, () => params.conv.waves.outAt, v => W.outAt = v, pctF,
-      'ここからフェードアウト=惑星に取り込まれていく。');
-    slider('始まりの大きさ', 1, 1.6, 0.01, () => params.conv.waves.from, v => W.from = v, v => '×' + v.toFixed(2),
-      '軌道より少し外(×1.1あたり)から生まれると自然。', { fixedMax: true });
-  } else if (cvMode === 'mesh') {
-    const M = params.conv.mesh;
-    sub(aRoot, 'この案の調整（網でつながる）', true);
-    slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
-    slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
-      'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
-    slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
-    slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
-    slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
-      '大きいほど線が増えて網が濃くなります。', { fixedMax: true });
-    slider('ランダムさ', 0, 2.5, 0.05, () => params.conv.mesh.random, v => M.random = v, v => '×' + v.toFixed(2),
-      'ノードがどれだけ大きく漂うか。0でぴたっと止まります。', { fixedMax: true });
-    slider('漂う速さ', 0, 3, 0.05, () => params.conv.mesh.drift, v => M.drift = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('1ホップの時間', 0.05, 2, 0.05, () => params.conv.mesh.hop, v => M.hop = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
-    slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
-  } else if (cvMode === 'beads') {
-    const B = params.conv.beads;
-    sub(aRoot, 'この案の調整（点が並ぶ軌道）', true);
-    slider('ドットの密度', 6, 400, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
-      '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
-    slider('軌道線の濃さ', 0, 1, 0.01, () => params.conv.beads.ghost, v => B.ghost = v, v => v.toFixed(2),
-      '薄い輪郭線を残すと「軌道」だと分かりやすくなります。0で線なし。', { fixedMax: true });
-    slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
-      '小さいほど輪の形が保たれ、大きいほど一斉に吸い込まれます。', { fixedMax: true });
-    slider('吸収にかかる秒数', 0.5, 12, 0.1, () => params.conv.beads.life, v => B.life = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
-    slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
-      '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
-  } else if (CONV_LINKED.includes(cvMode)) {
-    const L = params.conv.link;
-    sub(aRoot, 'この案の調整（線で行き来）', true);
-    note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
-    slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
-      '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
-    slider('流れる速さ', 0.1, 4, 0.05, () => params.conv.link.speed, v => L.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    slider('1周の秒数', 0.5, 10, 0.1, () => params.conv.link.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
-    slider('粒の密度', 0.3, 6, 0.1, () => params.conv.link.density, v => L.density = v, v => '×' + v.toFixed(1),
-      '1本の線に流す粒の数。', { fixedMax: true });
-    slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
-      '0で直線、大きいほど弧を描きます。', { fixedMax: true });
-    slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+    {
+      const d = document.createElement('div');
+      d.className = 'grp-note';
+      d.textContent = CONV_DESC[params.converge] || '';
+      animBody.appendChild(d);
+    }
+
+    /* ===== 選んだ案のつまみを先に出す(共通の項目は下へ) ===== */
+    const pctF = v => Math.round(v * 100) + '%';
+    const cvMode = params.converge || 'reel';
+    if (cvMode === 'reel') {
+      const R = params.conv.reel;
+      sub(animBody, 'この案の調整（輪が縮んで吸収）', true);
+      segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
+        () => params.conv.reel.flow || 'down', v => { R.flow = v; markDirty(); });
+      note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
+      slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
+        '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
+      slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
+        'ここまでは全周サイズでドットが回る。');
+      slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
+        'ここで吸収が完了し、もう1本が移動を始める。');
+      slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
+        '吸収後、もう1本がすべり込む時間。');
+      slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
+        '空いた位置に新しい輪がフェードインする時間。');
+      slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
+      /* 消え方は「前面カット」「はみ出ず溶ける」の2種だけ残す(2026-08-26 ヒデさん指定) */
+      const VANISH_DESC = {
+        clip: '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
+        fit:  'はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まず、そこで溶けて消える。',
+      };
+      const VANISHES = [{ key: 'clip', name: '前面カット' }, { key: 'fit', name: 'はみ出ず溶ける' }];
+      let vanishNoteEl = null;
+      pillRow(VANISHES, it => (R.vanish || 'clip') === it.key,
+        it => { R.vanish = it.key; markDirty(); if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[it.key]; },
+        { get: () => params.conv.reel.vanish, set: v => { R.vanish = v; if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[v]; } });
+      vanishNoteEl = document.createElement('div');
+      vanishNoteEl.className = 'grp-note';
+      vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
+      vanishNoteEl.textContent = VANISH_DESC[R.vanish] || VANISH_DESC.clip;
+      (mount || body).appendChild(vanishNoteEl);
+      slider('透過し始め', 0, 0.95, 0.01, () => params.conv.reel.fadeAt, v => R.fadeAt = v, pctF,
+        '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
+      slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
+        '吸収の瞬間にどれだけ濃さを残すか。0で完全に透明。');
+      slider('収縮中の回転アップ', 0, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v, v => '+' + Math.round(v * 180) + '°',
+        '縮むほどドットが速く回る。0で通常の速さのまま。');
+    } else if (cvMode === 'spiral') {
+      const S = params.conv.spiral;
+      sub(animBody, 'この案の調整（粒が渦で吸収）', true);
+      slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
+      slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
+        '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
+      slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
+        '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
+      slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+    } else if (cvMode === 'accre') {
+      const AC = params.conv.accre;
+      sub(animBody, 'この案の調整（粒の渦）', true);
+      slider('粒の数', 5, 600, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
+        '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
+      slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
+        '内へ落ちていく速さ。', { fixedMax: true });
+      slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
+        '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
+    } else if (cvMode === 'waves') {
+      const W = params.conv.waves;
+      sub(animBody, 'この案の調整（輪が流れ込む）', true);
+      slider('1本が流れる秒数', 1, 12, 0.1, () => params.conv.waves.T, v => W.T = v, v => v.toFixed(1) + '秒',
+        '外から惑星に取り込まれるまでの時間。', { fixedMax: true });
+      slider('1グループの本数', 1, 12, 1, () => params.conv.waves.count, v => W.count = v, v => v + '本', null, { fixedMax: true });
+      slider('本と本の間隔', 0.1, 4, 0.05, () => params.conv.waves.gap, v => W.gap = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
+      slider('グループ後の休み', 0, 8, 0.1, () => params.conv.waves.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
+        '全部吸収された後、次のグループが出るまでの間。リズムをつくる。', { fixedMax: true });
+      slider('輪の濃さ', 0.05, 1, 0.05, () => params.conv.waves.alpha, v => W.alpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('フェードインの長さ', 0.02, 0.4, 0.01, () => params.conv.waves.inK, v => W.inK = v, pctF,
+        '1本の旅のうち、出てくるフェードインに使う割合。');
+      slider('取り込まれ始め', 0.4, 0.96, 0.01, () => params.conv.waves.outAt, v => W.outAt = v, pctF,
+        'ここからフェードアウト=惑星に取り込まれていく。');
+      slider('始まりの大きさ', 1, 1.6, 0.01, () => params.conv.waves.from, v => W.from = v, v => '×' + v.toFixed(2),
+        '軌道より少し外(×1.1あたり)から生まれると自然。', { fixedMax: true });
+    } else if (cvMode === 'mesh') {
+      const M = params.conv.mesh;
+      sub(animBody, 'この案の調整（網でつながる）', true);
+      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
+      slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
+        'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
+      slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
+      slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
+        '大きいほど線が増えて網が濃くなります。', { fixedMax: true });
+      slider('ランダムさ', 0, 2.5, 0.05, () => params.conv.mesh.random, v => M.random = v, v => '×' + v.toFixed(2),
+        'ノードがどれだけ大きく漂うか。0でぴたっと止まります。', { fixedMax: true });
+      slider('漂う速さ', 0, 3, 0.05, () => params.conv.mesh.drift, v => M.drift = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1ホップの時間', 0.05, 2, 0.05, () => params.conv.mesh.hop, v => M.hop = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
+      slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
+    } else if (cvMode === 'beads') {
+      const B = params.conv.beads;
+      sub(animBody, 'この案の調整（点が並ぶ軌道）', true);
+      slider('ドットの密度', 6, 400, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
+        '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
+      slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
+        '小さいほど輪の形が保たれ、大きいほど一斉に吸い込まれます。', { fixedMax: true });
+      slider('吸収にかかる秒数', 0.5, 12, 0.1, () => params.conv.beads.life, v => B.life = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
+        '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
+    } else if (CONV_LINKED.includes(cvMode)) {
+      const L = params.conv.link;
+      sub(animBody, 'この案の調整（線で行き来）', true);
+      note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
+      slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
+        '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
+      slider('流れる速さ', 0.1, 4, 0.05, () => params.conv.link.speed, v => L.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1周の秒数', 0.5, 10, 0.1, () => params.conv.link.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('粒の密度', 0.3, 6, 0.1, () => params.conv.link.density, v => L.density = v, v => '×' + v.toFixed(1),
+        '1本の線に流す粒の数。', { fixedMax: true });
+      slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
+        '0で直線、大きいほど弧を描きます。', { fixedMax: true });
+      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+    }
+
+
+    /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
+    sub(catKv, '左側コピー');
+    const copyRoot = mount;
+    sub(copyRoot, '順番', true);
+    note('数字はページを開いてから何秒後か。上から出る順です。');
+    rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
+      'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
+    rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
+      '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
+    sub(copyRoot, 'タイミング', true);
+    note('打つ速さと間の取り方。触ると先頭から流し直します。');
+    rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
+      '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
+    rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
+      'ゆっくりにすると、最後の一言が印象に残ります。'));
+    rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
+      '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
+    rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
+      '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
+    rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
+      '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
+    rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+      'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
+    rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
+      'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
+
+    /* ===== どの案でも効く共通の項目(案ごとの調整より下に置く。2026-08-27 ヒデさん指定) ===== */
+    sub(animBody, '共通（見せ方）', true);
+    segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
+    segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
+    segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
+    note('輪を消すとその輪のドットも消えます。③⑤⑥の案では自動で隠れます。');
+    slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
+      v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。', { fixedMax: true });
+    if ((params.conv.dotPersp || 'flat') === 'persp') {
+      slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
+        '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
+    }
+    slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
+      '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+
+
+    mount = keepMount;
   }
-
-
-  /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
-  sub(catKv, '左側コピー');
-  const copyRoot = mount;
-  sub(copyRoot, '順番', true);
-  note('数字はページを開いてから何秒後か。上から出る順です。');
-  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
-    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
-  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
-    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
-  sub(copyRoot, 'タイミング', true);
-  note('打つ速さと間の取り方。触ると先頭から流し直します。');
-  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
-    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
-  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
-    'ゆっくりにすると、最後の一言が印象に残ります。'));
-  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
-    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
-  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
-    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
-  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
-    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
-  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
-    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
-  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
-    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
-
-  /* ===== どの案でも効く共通の項目(案ごとの調整より下に置く。2026-08-27 ヒデさん指定) ===== */
-  sub(aRoot, '共通（見せ方）', true);
-  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
-  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
-  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
-  note('輪を消すとその輪のドットも消えます。③⑤⑥の案では自動で隠れます。');
-  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
-    v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。', { fixedMax: true });
-  if ((params.conv.dotPersp || 'flat') === 'persp') {
-    slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
-      '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
-  }
-  slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
-    '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+  fillAnimBody();
 
   /* ゆらぎはオンオフだけ。コンパクトに下の方へ (2026-08-27 ヒデさん指定・既定はオフ) */
   liveEdit = true;
