@@ -2418,6 +2418,12 @@ const DEFAULTS = {
        off = 貼りつけない。セクションは普通に流れ、画面に入った時に中で再生する
              （貼りつけが外れる時のスライドが起きないので、重なりの事故が構造的に無い） */
   pin: 'on',
+  /* 【2026-08-26 ヒデさん指定】スクロールの固定の強さ(3パターン・調整パネルで切替)。
+     'smooth' = 固定なし。自由にスクロール、アニメは画面に来たら時間で再生(ガタつき無し・既定)
+     'soft'   = 弱め。ブロックはせずゆるく引き戻す(ラバーバンド)＋回すと早送りで追いつく
+     'lock'   = 固定。従来のスクロールジャック(再生中は貼りつけて動かさない)
+     ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
+  scrollHold: 'smooth',
   kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
   patterns: {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
@@ -3081,8 +3087,15 @@ function anyPlaying() {
   return null;
 }
 function updateScrollLock() {
+  const hold = params.scrollHold || 'lock';
+  /* smooth: そもそもロックしない(自由スクロール) */
+  if (hold === 'smooth') {
+    if (scrollLocked) { scrollLocked = false; if (lenis) lenis.start(); }
+    return;
+  }
   const key = anyPlaying();
-  if (key && !scrollLocked) { scrollLocked = true; lockPush = 0; if (lenis) lenis.stop(); }
+  /* lock: 慣性も止めて完全固定 / soft: scrollLocked は立てる(早送り用)が lenis は止めない(スクロールは通す) */
+  if (key && !scrollLocked) { scrollLocked = true; lockPush = 0; if (lenis && hold === 'lock') lenis.stop(); }
   else if (!key && scrollLocked) { scrollLocked = false; if (lenis) lenis.start(); }
 }
 
@@ -3273,19 +3286,22 @@ function forceScroll(y) {
    なので「位置そのものを毎フレーム戻す」方式にする。
    誰がどうスクロールを動かしても、次のフレームで元の位置へ戻るので必ず止まる。 */
 function clampScroll() {
-  /* ⚠️ 固定追従なしの時は押し戻さない。
-     セクションの高さが 100vh なので「押し戻しの上限」がそのセクションの先頭に
-     なってしまい、再生が終わるまで下へ進めなくなっていた
-     （2026-08-18 ヒデさん報告「固定なしだとKVから下に行けない」）。
-     貼りつけないので、そもそも位置を固定する必要がない */
+  /* 【2026-08-26】スクロール固定の強さ 3パターン。
+     smooth = 押し戻さない(自由スクロール) / soft = ゆるく引き戻す(ラバーバンド) / lock = 従来の強制固定 */
+  const hold = params.scrollHold || 'lock';
+  if (hold === 'smooth') return;
+  /* ⚠️ 固定追従なし(pin=off)の時も押し戻さない（従来仕様）。 */
   if (params.pin === 'off') return;
-  /* ① 再生中のセクションがあれば、再生を始めた位置に釘付けにする */
+  /* ① 再生中のセクションがあれば、再生を始めた位置に固定する（soft はゆるく） */
   for (const k in secPlay) {
     const st = secPlay[k], el = SECS[k];
     if (!el || st.done || st.t0 === null) continue;
     if (st.lockY == null) st.lockY = Math.round(window.scrollY || window.pageYOffset || 0);
     const y = window.scrollY || window.pageYOffset || 0;
-    if (Math.abs(y - st.lockY) > 1) forceScroll(st.lockY);
+    if (Math.abs(y - st.lockY) > 1) {
+      if (hold === 'soft') forceScroll(y + (st.lockY - y) * 0.12);   /* ラバーバンド(ハードスナップしない) */
+      else forceScroll(st.lockY);                                     /* lock=従来の強制 */
+    }
     return;
   }
   /* ② 再生していない時は記録を捨てる。
@@ -3318,7 +3334,10 @@ function clampScroll() {
   }
   if (!isFinite(maxY)) return;
   const y = window.scrollY || window.pageYOffset || 0;
-  if (y > maxY + 1) forceScroll(maxY);
+  if (y > maxY + 1) {
+    if (hold === 'soft') forceScroll(y + (maxY - y) * 0.12);   /* soft はゆるく引き戻す */
+    else forceScroll(maxY);
+  }
 }
 
 
@@ -3326,14 +3345,16 @@ function clampScroll() {
    ⚠️ 調整パネルの中で回した時は通す */
 const LOCK_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ']);
 const inPanel = t => !!(t && t.closest && t.closest('.tools'));
+/* 入力ブロックは 'lock'(完全固定)モードだけ。'soft'/'smooth' はスクロールを通す */
+const hardLock = () => (params.scrollHold || 'lock') === 'lock';
 window.addEventListener('wheel', e => {
-  if (scrollLocked && !inPanel(e.target)) e.preventDefault();
+  if (scrollLocked && hardLock() && !inPanel(e.target)) e.preventDefault();
 }, { passive: false });
 window.addEventListener('touchmove', e => {
-  if (scrollLocked && !inPanel(e.target)) e.preventDefault();
+  if (scrollLocked && hardLock() && !inPanel(e.target)) e.preventDefault();
 }, { passive: false });
 window.addEventListener('keydown', e => {
-  if (scrollLocked && LOCK_KEYS.has(e.key) && !inPanel(e.target)) e.preventDefault();
+  if (scrollLocked && hardLock() && LOCK_KEYS.has(e.key) && !inPanel(e.target)) e.preventDefault();
 }, { passive: false });
 /* 再生中にホイールを回すと早送りする(閉じ込め防止)。
    ⚠️ 以前は「残りを一気に飛ばす」実装で、開発者体験だと最終フレーム＝白背景に
@@ -5581,11 +5602,22 @@ function buildPanel() {
   segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
     () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
 
-  /* ⚠️【2026-08-26 ヒデさん指定】「② 固定追従」の項目は削除（V2では使わないため）。
-     params.pin 自体は内部の既定(on)のまま。ペース調整は各セクションの「見せる長さ」に一本化する。 */
   note('見せるペースは、各セクションの「見せる長さ」で調整します。');
 
-  sub(catAll, '② 慣性スクロール');
+  /* ② スクロールの固定(3パターン・2026-08-26 ヒデさん指定)。押した瞬間に反映(頭出ししない) */
+  liveEdit = true;
+  sub(catAll, '② スクロールの固定');
+  note((params.scrollHold || 'smooth') === 'smooth'
+      ? 'スムーズ＝固定なし。自由に上下でき、アニメは画面に来たら再生します(V1.0の固定追従オフと同じ感覚)。'
+      : (params.scrollHold === 'soft')
+        ? '弱め＝ゆるく引き戻し(ラバーバンド)。回すと早送りで追いつきます。ガタつきは軽減。'
+        : '固定＝再生中はその場に貼りつけ(従来のスクロールジャック)。再生が終わるまでスクロールは止まります。');
+  pillRow([{ key: 'smooth', name: '固定追従なし' }, { key: 'soft', name: '弱め' }, { key: 'lock', name: '固定' }],
+    it => (params.scrollHold || 'smooth') === it.key,
+    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); });
+  liveEdit = false;
+
+  sub(catAll, '③ 慣性スクロール');
   rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
     v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
     '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
