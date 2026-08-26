@@ -626,7 +626,10 @@
      黒が実績の最後で全面を覆いきった所で dev1 が中央に着き、黒がフェード→その場に出現する。
      ⚠️ position:relative + z-index:0 で #dev をひとつの重なり文脈にし、resGrow(fixed z-index:1)を
         dev1 より前に出す（＝黒が dev1 を覆える）。これが無いと dev1 が黒の手前で「下からせり上がる」。 */
-  #dev { margin-top: -100vh; position: relative; z-index: 0; }
+  /* 【2026-08-26 ヒデさん指定】開発者体験セクションの上に約200pxの余白。
+     実績尾部への重ね(-100vh)を 200px ゆるめて、dev1 の手前に間を作る＝入った直後に
+     dev1 を見逃しにくくする（黒が覆っている間に dev1 が中央へ着くまでの猶予）。 */
+  #dev { margin-top: calc(-100vh + 200px); position: relative; z-index: 0; }
   .dev-bg {
     position: fixed;
     left: 0; top: 0;
