@@ -137,6 +137,15 @@
       ],
       "port": 3457,
       "cwd": "abashiri/v2"
+    },
+    {
+      "name": "anyflow-v3",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v3' && exec python3 -m http.server 8776"
+      ],
+      "port": 8776
     }
   ]
 }
