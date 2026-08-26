@@ -1366,6 +1366,13 @@
     padding: 0 10px 10px;
   }
   .panel.closed { height: auto !important; resize: none; }
+  /* 【2026-08-27 ヒデさん指定】右下だけでなく、上下・左右の辺をつかんでもサイズ変更できる */
+  .pz { position: absolute; z-index: 3; }
+  .pz-t { top: -3px; left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
+  .pz-b { bottom: -3px; left: 10px; right: 16px; height: 8px; cursor: ns-resize; }
+  .pz-l { left: -3px; top: 10px; bottom: 10px; width: 8px; cursor: ew-resize; }
+  .pz-r { right: -3px; top: 10px; bottom: 16px; width: 8px; cursor: ew-resize; }
+  .panel.closed .pz { display: none; }
   .panel.closed .panel-body { display: none; }
   /* 大カテゴリ (アコーディオン) */
   .cat {
@@ -1408,8 +1415,24 @@
               padding-left: 9px; border-left: 2px solid #ededed; }
   .grp.sub2 .grp-title { font-size: 11.5px; font-weight: 500; color: #555; }
   .grp.sub2 .grp.sub2 { border-left-color: #f2f2f2; }
-  .row-hint { font-size: 9.5px; line-height: 1.55; color: #999; margin: -1px 0 6px 0; }
-  .grp-note { font-size: 9.5px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
+  /* 補足文は読めれば十分なのでもう一段小さく (2026-08-27 ヒデさん指定) */
+  .row-hint { font-size: 8.5px; line-height: 1.5; color: #a6a6a6; margin: -1px 0 5px 0; }
+  .grp-note { font-size: 8.5px; line-height: 1.55; color: #a6a6a6; margin: -2px 0 5px; }
+  /* ===== Figma のプロパティパネル風 数値入力 (2026-08-27 ヒデさん指定) ===== */
+  .np { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 5px 0 2px; }
+  .np-f { display: flex; align-items: center; gap: 5px; background: #f6f6f7; border: 1px solid #ececec;
+          border-radius: 7px; padding: 3px 7px; transition: border-color .15s, background .15s; }
+  .np-f:focus-within { border-color: #0D99FF; background: #fff; }
+  .np-f label { flex: 0 0 auto; font-size: 10px; color: #9a9a9a; font-weight: 500; letter-spacing: .02em; }
+  .np-f input { flex: 1 1 auto; width: 100%; min-width: 0; border: 0; background: transparent; outline: none;
+                font-size: 11.5px; color: #111; font-variant-numeric: tabular-nums; text-align: right;
+                -moz-appearance: textfield; }
+  .np-f input::-webkit-outer-spin-button, .np-f input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .np-f .np-u { flex: 0 0 auto; font-size: 9.5px; color: #b5b5b5; }
+  /* 選択中の対象を示す見出し */
+  .np-head { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 11px; color: #444; font-weight: 600; }
+  .np-head .np-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .np-empty { font-size: 9.5px; color: #a6a6a6; padding: 6px 0 2px; line-height: 1.5; }
   /* カテゴリを開いてすぐの説明。小見出しより前に来るので上に余白がいる */
   .grp-note.cat-note { margin: 10px 0 0; }
   /* たたまれている時に「押せる」と分かるようにする小さい添え書き */
@@ -3529,6 +3552,7 @@ const editHandles = (() => {
     '<path d="M17.6 3.2l0.6 4.2-4.2-0.6z" fill="black" stroke="white" stroke-width="0.8"/>' +
     '</svg>') + '") 12 12, grab';
   let svg = null, on = false, drag = null, wasRunning = null, sel = null;
+  let onSel = null, onEdit = null;   /* パネルとの同期用コールバック */
   let boxG = null, boxRect = null, label = null;
   const hits = {};      /* 当たり判定(選択用) */
   const handles = [];   /* {el, kind, ix, iy} kind: corner/edge/rot */
@@ -3640,6 +3664,7 @@ const editHandles = (() => {
     sel = key;
     if (boxG) boxG.style.display = key ? '' : 'none';
     place();
+    if (onSel) onSel(key);      /* パネル側へ「何を選んだか」を伝える */
   }
   function startDrag(e, info) {
     if (!sel && info.kind === 'move') return;
@@ -3709,6 +3734,7 @@ const editHandles = (() => {
     markDirty();
     renderFrame();
     if (typeof syncPanelRows === 'function') syncPanelRows();
+    if (onEdit) onEdit(sel);    /* ドラッグ中もパネルの数値をリアルタイムで更新 */
     showLabel(text);
   }
   function showLabel(text) {
@@ -3776,14 +3802,20 @@ const editHandles = (() => {
   return {
     get on() { return on; },
     get selected() { return sel; },
+    /* パネル側から: 選択が変わった時 / ドラッグで値が変わった時 に呼んでもらう */
+    bind(onSelect, onChange) { onSel = onSelect; onEdit = onChange; },
     select,
     set(v) {
       on = !!v;
       const el = ensure();
       if (el) el.style.display = on ? '' : 'none';
       /* 直接編集の間はアニメーションを止める(掴んで動かしやすくする)。切った時は元に戻す */
-      if (on) { wasRunning = params.running; params.running = false; }
-      else { if (wasRunning != null) { params.running = wasRunning; wasRunning = null; } select(null); }
+      /* ⚠️【2026-08-27 事故対応】set(true) が2回走ると wasRunning に false を覚えてしまい、
+         オフにしても再生が戻らなかった(止まったまま)。すでに覚えている時は上書きしない。
+         切る時は「編集のための一時停止」を必ず解除する(記録が無ければ再生に戻す)。 */
+      if (on) { if (wasRunning == null) wasRunning = params.running; params.running = false; }
+      else { params.running = (wasRunning == null ? true : wasRunning); wasRunning = null; select(null); }
+      if (onSel) onSel(on ? sel : null);
       if (typeof applyMarquee === 'function') applyMarquee();
       renderFrame();
       if (on) place();
@@ -6794,6 +6826,100 @@ function pillRow(items, isOn, onPick, resetRef) {
   mount.appendChild(row);
 }
 
+/* ===== Figma のプロパティパネル風「数値パネル」(2026-08-27 ヒデさん指定) =====
+   直接編集で選んだオブジェクトの X / Y / W / H / 角度 を数値で表示し、直接入力もできる。
+   ドラッグ中はリアルタイムで数値が追いつく。スライダー(プログレスバー)は使わない。 */
+function buildNumPanel(host) {
+  const wrap = document.createElement('div');
+  host.appendChild(wrap);
+  const NAMES = { outer: ['外の輪', '#FF5D97'], inner: ['内の輪', '#0EBBFF'], planet: ['惑星', '#111'] };
+  let fields = {};
+
+  function mkField(label, unit, get, set, step) {
+    const f = document.createElement('div');
+    f.className = 'np-f';
+    const l = document.createElement('label');
+    l.textContent = label;
+    const i = document.createElement('input');
+    i.type = 'number';
+    i.step = step || 1;
+    i.value = get();
+    const u = document.createElement('span');
+    u.className = 'np-u';
+    u.textContent = unit || '';
+    /* 入力したら即反映。↑↓キーでも動く */
+    const apply = () => {
+      const v = parseFloat(i.value);
+      if (!isFinite(v)) return;
+      set(v);
+      markDirty();
+      renderFrame();
+      if (editHandles.on) editHandles.place();
+    };
+    i.addEventListener('input', apply);
+    i.addEventListener('change', apply);
+    f.append(l, i, u);
+    return { el: f, input: i, get };
+  }
+
+  /* 選んだ対象に合わせて中身を作り直す */
+  function render(key) {
+    wrap.innerHTML = '';
+    fields = {};
+    if (!editHandles.on) return;
+    if (!key) {
+      const e = document.createElement('div');
+      e.className = 'np-empty';
+      e.textContent = '右のグラフィックで「外の輪 / 内の輪 / 惑星」をクリックすると、ここに数値が出ます。';
+      wrap.appendChild(e);
+      return;
+    }
+    const [name, color] = NAMES[key] || [key, '#888'];
+    const head = document.createElement('div');
+    head.className = 'np-head';
+    const dot = document.createElement('span');
+    dot.className = 'np-dot';
+    dot.style.background = color;
+    head.append(dot, document.createTextNode(name));
+    wrap.appendChild(head);
+
+    const grid = document.createElement('div');
+    grid.className = 'np';
+    wrap.appendChild(grid);
+
+    if (key === 'planet') {
+      const P = params.planet;
+      fields.x = mkField('X', 'px', () => Math.round(P.dx), v => P.dx = Math.round(v));
+      fields.y = mkField('Y', 'px', () => Math.round(P.dy), v => P.dy = Math.round(v));
+      fields.w = mkField('大きさ', '%', () => Math.round(P.scale * 100), v => P.scale = clamp01x(v / 100, 0.2, 3));
+      grid.append(fields.x.el, fields.y.el, fields.w.el);
+    } else {
+      const O = params.orbits[key], b = orbitBase(key);
+      fields.x = mkField('X', 'px', () => Math.round(O.dx), v => O.dx = Math.round(v));
+      fields.y = mkField('Y', 'px', () => Math.round(O.dy), v => O.dy = Math.round(v));
+      /* W/H は実寸(px)で出す。中で scale / flat に直す = Figma と同じ感覚で触れる */
+      fields.w = mkField('W', 'px', () => Math.round(orbitGeom(key).rx * 2),
+        v => O.scale = clamp01x(v / 2 / b.rx, 0.2, 2.5));
+      fields.h = mkField('H', 'px', () => Math.round(orbitGeom(key).ry * 2),
+        v => O.flat = clamp01x(v / 2 / (b.ry * O.scale), 0.05, 3));
+      fields.r = mkField('角度', '°', () => +(b.rot + O.angle).toFixed(1),
+        v => O.angle = +(v - b.rot).toFixed(1), 0.5);
+      grid.append(fields.x.el, fields.y.el, fields.w.el, fields.h.el, fields.r.el);
+    }
+  }
+  function clamp01x(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  /* ドラッグ中: 入力欄に触っていない時だけ数値を追いつかせる */
+  function sync() {
+    for (const k in fields) {
+      const f = fields[k];
+      if (document.activeElement === f.input) continue;
+      f.input.value = f.get();
+    }
+  }
+  editHandles.bind(render, sync);
+  render(editHandles.selected);
+}
+
 /* ページの流れと同じ順番で並べる:
    全体 → キービジュアル → ビジョン → 実績 → 開発者体験 → 導入事例 */
 
@@ -6877,50 +7003,16 @@ function buildPanel() {
   /* 【2026-08-26 ヒデさん指定】直接編集は惑星(V1)を選んでいる時だけここに出す(A/B案には関係ないため) */
   if ((params.kvDesign || 'planet') === 'planet') {
     segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
-      v => { editHandles.set(!!v); markDirty(); });
+      v => { editHandles.set(!!v); markDirty(); rebuildKeeping(null); });
+    /* 選んだオブジェクトの数値パネル(Figma風)。選択・ドラッグに合わせて動的に出る */
+    buildNumPanel(mount || body);
   } else if (editHandles.on) {
     editHandles.set(false);   /* 惑星以外の案に切り替えたら編集モードは切る */
   }
 
-  /* ---------- 出てくるタイミング (グラフィックの入れ子) ----------
-     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。 */
-  liveEdit = true;
-  sub(gRoot, '出てくるタイミング', true);
-  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
-  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
-    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
-    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
-  rows.push(slider('① モックが出る', 0, 2, 0.02,
-    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でモックが出るか。'));
-  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
-    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でアイコンが出始めるか。'));
-  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
-    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
-  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
-    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒で軌道(輪+ドット)が出るか。'));
-  liveEdit = false;
-
-  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定) ----------
-     煩雑さ対策: 共通の項目だけを表に出し、案ごとの細かいつまみは
-     【選んだ案のぶんだけ】小見出し(たためる・既定は閉じる)に出す。 */
-  /* ---------- 🛰 軌道（レイアウト＋位置/サイズ/傾き＋プリセット） ----------
-     2026-08-26 ヒデさん指定: 「軌道のレイアウト」の独立セクションは廃止し、ここに統合。
-     位置・サイズ・傾きはサブカテゴリ(たためる)にまとめ、プリセットで呼び出せるようにした。 */
-  sub(gRoot, '🛰 軌道の形', true);
-  const oRoot = mount;   /* 位置・サイズ・傾きはこの中に入れ子で出す */
-  /* 【2026-08-26 ヒデさん指定】ゆらゆら(全体がゆっくり傾く・2本が交差する)のオンオフ */
-  segRow('ゆらゆら', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
-    v => { params.sway = v ? 3 : 1; markDirty(); });
-  note('軌道がゆっくり揺れる動き。「しない」でカンプの構図のままピタッと止まります。');
-  /* 【2026-08-26 ヒデさん指定】レイアウトの選択ピルは廃止。ジャイロクロス固定で使う
-     （2本の傾きを逆にして立体交差させ、奥行きを出したレイアウト）。
-     いまはカンプ通り(2本が平行)で固定。細かい調整は下の 位置 / サイズ / 傾き と、直接編集で行う。 */
-
-  /* --- プリセット: 今の軌道の設定に名前を付けて保存し、ワンタップで呼び出す --- */
+  /* --- プリセット: いまの軌道・惑星の形に名前を付けて保存し、ワンタップで呼び出す
+         (2026-08-27 ヒデさん指定で「プリセット」として直接編集の下に置く) --- */
+  sub(gRoot, 'プリセット', true);
   {
     const list = params.orbitPresets || (params.orbitPresets = []);
     const presetRow = document.createElement('div');
@@ -6929,24 +7021,19 @@ function buildPanel() {
       const b = document.createElement('button');
       b.className = 'sw-pill' + (params.orbitPresetOn === i ? ' on' : '');
       b.textContent = ps.name;
-      b.onclick = () => {
-        applyOrbitPreset(i);
-        rebuildKeeping(b);
-      };
-      /* ✎ で 名前の変更 / 上書き / 削除 */
+      b.onclick = () => { applyOrbitPreset(i); rebuildKeeping(b); };
       const e = document.createElement('button');
       e.className = 'sw-pill sw-edit';
       e.textContent = '✎';
       e.title = '名前の変更・上書き・削除';
       e.onclick = () => {
         const act = window.prompt(
-          `「${ps.name}」をどうしますか？\n  1 = 名前を変える\n  2 = 今の設定で上書き\n  3 = 削除`, '1');
+          `「${ps.name}」をどうしますか？\n  1 = 名前を変える\n  2 = 今の形で上書き\n  3 = 削除`, '1');
         if (act === '1') {
           const nm = window.prompt('新しい名前', ps.name);
           if (nm && nm.trim()) { ps.name = nm.trim(); markDirty(); buildPanel(); }
-        } else if (act === '2') {
-          ps.data = grabOrbitState(); markDirty(); buildPanel();
-        } else if (act === '3') {
+        } else if (act === '2') { ps.data = grabOrbitState(); markDirty(); buildPanel(); }
+        else if (act === '3') {
           if (window.confirm(`「${ps.name}」を削除します。よろしいですか？`)) {
             list.splice(i, 1);
             if (params.orbitPresetOn === i) params.orbitPresetOn = null;
@@ -6958,7 +7045,7 @@ function buildPanel() {
     });
     const add = document.createElement('button');
     add.className = 'sw-pill sw-add';
-    add.textContent = '＋ 今の状態を保存';
+    add.textContent = '＋ いまの形を保存';
     add.onclick = () => {
       const nm = window.prompt('プリセットの名前', 'プリセット ' + (list.length + 1));
       if (!nm || !nm.trim()) return;
@@ -6970,40 +7057,13 @@ function buildPanel() {
     (mount || body).appendChild(presetRow);
     const pn = document.createElement('div');
     pn.className = 'grp-note';
-    pn.textContent = '押すとその設定に切り替わります。✎ で名前の変更・今の設定で上書き・削除ができます。';
+    pn.textContent = '押すとその形に切り替わります。✎ で名前の変更・上書き・削除。';
     (mount || body).appendChild(pn);
-  }
-
-  sub(oRoot, '位置（軌道）', true);
-  for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
-    const O = params.orbits[okey];
-    slider(oname + ' 横', -400, 400, 1, () => params.orbits[okey].dx, v => O.dx = v, v => (v > 0 ? '+' : '') + v + 'px', null, { fixedMax: true });
-    slider(oname + ' 縦', -400, 400, 1, () => params.orbits[okey].dy, v => O.dy = v, v => (v > 0 ? '+' : '') + v + 'px', null, { fixedMax: true });
-  }
-  sub(oRoot, 'サイズ（軌道）', true);
-  for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
-    const O = params.orbits[okey];
-    slider(oname, 0.2, 2.5, 0.01, () => params.orbits[okey].scale, v => O.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-  }
-  sub(oRoot, '傾き（軌道）', true);
-  for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
-    const O = params.orbits[okey];
-    slider(oname, -90, 90, 0.5, () => params.orbits[okey].angle, v => O.angle = v, v => (v > 0 ? '+' : '') + v.toFixed(1) + '°',
-      'レイアウトの傾きに足す角度。', { fixedMax: true });
   }
   liveEdit = false;
 
-
   /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
      V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
-
-  /* ---------- 🏢 導入企業のロゴ (2026-08-19 追加) ----------
-     ⚠️ marquee.gap / duration / direction は前からあったのにパネルに出ていなかった。
-        ここは押した瞬間に反映させる（惑星と同じ扱い）。
-        間隔を触るたびに文字のモーションが頭出しし直すと、詰め具合を見比べられないため。
-     ⚠️ 見た目の反映には applyMarquee() が要る（CSS変数 --logo-gap を書くのはあの関数）。
-        set の中で必ず呼ぶこと。 */
-  liveEdit = true;
 
   sub(gRoot, '🪐 アニメーション（惑星(V1)の案のみ）', true);
   const aRoot = mount;   /* 案ごとの調整はこの中に入れ子で出す */
@@ -7154,12 +7214,17 @@ function buildPanel() {
   }
 
 
-  sub(catKv, '文字が出てくる順番とタイミング');
-  note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
+  /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
+  sub(catKv, '左側コピー');
+  const copyRoot = mount;
+  sub(copyRoot, '順番', true);
+  note('数字はページを開いてから何秒後か。上から出る順です。');
   rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
     'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
   rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
     '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
+  sub(copyRoot, 'タイミング', true);
+  note('打つ速さと間の取り方。触ると先頭から流し直します。');
   rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
     '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
   rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
@@ -7175,19 +7240,49 @@ function buildPanel() {
   rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
-  sub(catKv, '🏢 導入企業のロゴ');
-  note('画面いちばん下を、ロゴが横に流れ続ける帯です。ここは押した瞬間その場で変わります。');
-  /* ⚠️ fixedMax を渡さないと、slider() が「既定を中央に置く」ために上限を勝手に縮める
-     (実測: 160 と書いたのに 128 になっていた)。ここは書いた上限をそのまま使う */
-  rows.push(slider('ロゴの間隔', 16, 160, 2,
-    () => params.marquee.gap, v => { params.marquee.gap = v; applyMarquee(); }, v => v + 'px',
-    'ロゴとロゴの左右のすき間。小さいほど詰まって並びます。', { fixedMax: true }));
-  rows.push(slider('一巡の秒数', 10, 90, 1,
-    () => params.marquee.duration, v => { params.marquee.duration = v; applyMarquee(); }, v => v + '秒',
-    'ロゴがひとまわりするのにかかる時間。大きいほどゆっくり流れます。', { fixedMax: true }));
-  segRow('流れる向き', [['左へ', 1], ['右へ', -1]],
-    () => params.marquee.direction, v => { params.marquee.direction = v; applyMarquee(); markDirty(); });
+  /* ゆらゆらはオンオフだけ。コンパクトに下の方へ (2026-08-27 ヒデさん指定) */
+  liveEdit = true;
+  sub(gRoot, 'ゆらゆら', true, { fixed: true });
+  segRow('ゆらゆら', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
+    v => { params.sway = v ? 3 : 1; markDirty(); });
   liveEdit = false;
+
+  /* ---------- 出てくるタイミング (グラフィックの入れ子) ----------
+     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。 */
+  liveEdit = true;
+  sub(gRoot, '出てくるタイミング', true);
+  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
+  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
+    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
+    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
+  rows.push(slider('① モックが出る', 0, 2, 0.02,
+    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でモックが出るか。'));
+  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
+    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でアイコンが出始めるか。'));
+  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
+    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
+  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
+    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒で軌道(輪+ドット)が出るか。'));
+  liveEdit = false;
+
+  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定) ----------
+     煩雑さ対策: 共通の項目だけを表に出し、案ごとの細かいつまみは
+     【選んだ案のぶんだけ】小見出し(たためる・既定は閉じる)に出す。 */
+  /* ---------- 🛰 軌道（レイアウト＋位置/サイズ/傾き＋プリセット） ----------
+     2026-08-26 ヒデさん指定: 「軌道のレイアウト」の独立セクションは廃止し、ここに統合。
+     位置・サイズ・傾きはサブカテゴリ(たためる)にまとめ、プリセットで呼び出せるようにした。 */
+  /* ---------- 🏢 導入企業のロゴ (2026-08-19 追加) ----------
+     ⚠️ marquee.gap / duration / direction は前からあったのにパネルに出ていなかった。
+        ここは押した瞬間に反映させる（惑星と同じ扱い）。
+        間隔を触るたびに文字のモーションが頭出しし直すと、詰め具合を見比べられないため。
+     ⚠️ 見た目の反映には applyMarquee() が要る（CSS変数 --logo-gap を書くのはあの関数）。
+        set の中で必ず呼ぶこと。 */
+  liveEdit = true;
+
 
   /* ========== 📖 ビジョン ========== */
   const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
@@ -7485,6 +7580,52 @@ function keepPanelInView() {
 }
 window.addEventListener('resize', keepPanelInView);
 
+/* ===== 調整パネルのサイズ変更: 上下・左右の辺をつかむ (2026-08-27 ヒデさん指定) =====
+   ブラウザ標準の resize は右下だけなので、4辺ぶんのつまみを自前で足す。
+   上辺・左辺は「掴んだ端を動かす」ので、位置(top/left)も一緒に動かす。 */
+(() => {
+  const panelEl = document.getElementById('panel');
+  if (!panelEl) return;
+  const MINW = 240, MINH = 120;
+  for (const side of ['t', 'b', 'l', 'r']) {
+    const z = document.createElement('div');
+    z.className = 'pz pz-' + side;
+    panelEl.appendChild(z);
+    z.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      try { z.setPointerCapture(e.pointerId); } catch (_) {}
+      const r = toolsEl.getBoundingClientRect();
+      const st = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, left: r.left, top: r.top };
+      /* 掴んだ瞬間に left/top 指定へ切り替える(既定は right/bottom 固定のため) */
+      toolsEl.style.left = r.left + 'px';
+      toolsEl.style.top = r.top + 'px';
+      toolsEl.style.right = 'auto';
+      toolsEl.style.bottom = 'auto';
+      const move = ev => {
+        const dx = ev.clientX - st.x, dy = ev.clientY - st.y;
+        if (side === 'r') panelEl.style.width = Math.max(MINW, st.w + dx) + 'px';
+        if (side === 'b') panelEl.style.height = Math.max(MINH, st.h + dy) + 'px';
+        if (side === 'l') {
+          const w = Math.max(MINW, st.w - dx);
+          panelEl.style.width = w + 'px';
+          toolsEl.style.left = (st.left + (st.w - w)) + 'px';
+        }
+        if (side === 't') {
+          const h = Math.max(MINH, st.h - dy);
+          panelEl.style.height = h + 'px';
+          toolsEl.style.top = (st.top + (st.h - h)) + 'px';
+        }
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  }
+})();
+
 (() => {
   const tools = toolsEl;
   const head = document.getElementById('panelHead');
@@ -7499,7 +7640,7 @@ window.addEventListener('resize', keepPanelInView);
     const r = tools.getBoundingClientRect();
     sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
     moved = false; dragging = true;
-    head.setPointerCapture(e.pointerId);
+    try { head.setPointerCapture(e.pointerId); } catch (_) {}
   });
   head.addEventListener('pointermove', e => {
     if (!dragging) return;
