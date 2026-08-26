@@ -168,6 +168,11 @@
      iframe にしている理由: すりガラス(backdrop-filter)を本体の transform:scale から隔離し、
      kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は Figma実測の #E7E7E7（白フロストが#EEEに浮き出る）。 */
   .orbit { display: none !important; }
+  /* 【2026-08-26 ヒデさん指定】V1.0 の惑星ビジュアルを KV に復活。
+     調整パネルの「KV案」で 惑星(V1) を選ぶと html.kv-planet が付き、
+     iframe を隠して V1.0 の軌道・惑星・ドット(.orbit)を表示する。デザインは V1.0 のまま。 */
+  html.kv-planet .orbit { display: block !important; }
+  html.kv-planet .kv-graphic-embed, html.kv-planet .kvp-secret { display: none; }
   .kv-graphic-embed {
     position: absolute; top: 0; right: 0;
     width: 1440px; height: var(--dh, 921px);
@@ -2428,7 +2433,8 @@ const DEFAULTS = {
      'lock'   = 固定。従来のスクロールジャック(再生中は貼りつけて動かさない)
      ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
   scrollHold: 'smooth', // 2026-08-26 ヒデさん指定: サイト全体は「固定追従なし」を既定に(掴み無し・ロック無し)。固定は個別で必要な所だけ。切替は 固定追従なし / 固定 の2択
-  kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
+  kvDesign: 'planet',   // 右グラフィックの案。'planet'=V1.0の惑星(2026-08-26 復活・既定) / それ以外=iframe(kv/embed.html)の案
+  converge: 'reel',     // 惑星への集約アニメ (CONVERGES) 。惑星の案の時だけ効く。①収縮ループが既定(ヒデさん指定)
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
   patterns: {
@@ -2519,7 +2525,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v74';   /* 2026-08-26 スナップ(掴み直し)撤去＋既定を固定追従なしに。古い保存値をリセットして新既定を確実に反映 */
+const STORAGE_KEY = 'anyflow-embed-anim-v75';   /* 2026-08-26 V1.0惑星をKVに復活(kvDesign='planet')＋集約アニメ(converge)追加。新既定を確実に反映 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -2570,6 +2576,7 @@ function load() {
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
+  if (typeof merged.converge !== 'string') merged.converge = DEFAULTS.converge;   /* 2026-08-26 集約アニメ */
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
   merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
@@ -2695,7 +2702,9 @@ function orbitGeom(key) {
   if (p.wobbleAmp > 0 && p.wobblePeriod > 0) {
     wobble = p.wobbleAmp * Math.sin(2 * Math.PI * elapsed / p.wobblePeriod + p.wobblePhase * Math.PI / 180);
   }
-  if (SWAYS[(params.sway || 1) - 1].id === 'cross') {
+  /* ①収縮ループ中は軌道を固定 (傾き・クロスなし。ヒデさん指定 2026-08-26) */
+  const convReelFixed = params.kvDesign === 'planet' && params.converge === 'reel';
+  if (!convReelFixed && SWAYS[(params.sway || 1) - 1].id === 'cross') {
     /* クロス: 2本が逆方向に傾く。
        ⚠️ 最初からクロスしているとカンプと違うので、はじめは平行(傾き0)にしておき、
           crossLead 秒かけてじわじわ交差しはじめる */
@@ -2719,6 +2728,192 @@ function posOn(g, deg) {
     front: Math.sin(t) > 0,   // 楕円ローカルで下半分 = 手前側
   };
 }
+
+/* ===== 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) =====
+   大前提: デザインは V1.0 のまま一切変えない。既存の軌道・惑星・ドットに「動き」だけ足す。
+   （既存パーツと同じ見た目の複製を増やすのは OK: スパイラルの粒・波の輪）
+   'reel'   ①収縮ループ: 外の輪は常に固定で残し、内の輪がドットごと惑星へ収縮→吸収(フェード)→
+            新しい輪がフェードインして再生。傾き(シーソー)・クロスはさせない(固定)。
+   'spiral' ②スパイラル: 通常の周回はそのまま。追加の粒が螺旋で半径を縮めて吸い込まれる。
+   'pulse'  ④パルス: 7個のドットが鼓動の周期で一斉に惑星へ収束→吸収→軌道上へ再出現。
+   'waves'  ⑩内向きの波: 軌道と同じ見た目の輪が外から生まれて内へ縮み、惑星に届いて消える。 */
+const CONVERGES = [
+  { key: 'off',    name: '周回のみ' },
+  { key: 'reel',   name: '①収縮ループ' },
+  { key: 'spiral', name: '②スパイラル' },
+  { key: 'pulse',  name: '④パルス' },
+  { key: 'waves',  name: '⑩内向きの波' },
+];
+function convOn() { return params.kvDesign === 'planet' && (params.converge || 'off') !== 'off'; }
+const convDotF = DOTS.map(() => 1);   // ドットごとの「惑星への寄せ」(1=軌道上 → 0=惑星中心)
+const convDotA = DOTS.map(() => 1);   // ドットごとの濃さ倍率 (集約アニメ用)
+let convGlow = 0;                     // 吸収の瞬間、惑星がふっと明るくなる(減衰)
+let convLastT = null;                 // elapsed 基準の dt (一時停止に追従)
+let convWasOn = false;
+let convLastMode = null;              // モード切替の検知 (前のモードの粒・輪の片付け用)
+const convSStep = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+/* 惑星(#sphere)の中心 = 集約先。CSS(left306.06 top112.32 260px角) + パネルの惑星オフセット */
+function convCenter() {
+  const pl = params.planet || {};
+  return { x: 306.06 + 130 + (pl.dx || 0), y: 112.32 + 130 + (pl.dy || 0) };
+}
+/* 楕円 g を「惑星中心へ f で寄せた」ジオメトリ (f=1 そのまま → f→0 惑星中心で消える) */
+function convGeom(g, f) {
+  const c = convCenter();
+  return { cx: c.x + (g.cx - c.x) * f, cy: c.y + (g.cy - c.y) * f,
+           rx: g.rx * f, ry: g.ry * f, rot: g.rot };
+}
+/* --- 追加パーツのプール (見た目は既存パーツの複製) --- */
+let convSpiral = null;   // ②の粒: 既存ドットと同じ circle を back/front に1個ずつ
+let convWaves = null;    // ⑩の輪: 既存軌道と同じ stroke(グラデ) の ellipse (奥レイヤー)
+function convSpiralPool() {
+  if (convSpiral) return convSpiral;
+  const COLORS = ['#0EBBFF', '#FF5D97'];   // 既存ドットと同じ2色 (グレーはデータ感が無いので除外)
+  convSpiral = [];
+  for (let i = 0; i < 12; i++) {
+    const mk = () => {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', (DOT_R * 0.62).toFixed(3));   // 主役の7個より少し小さい「データの粒」
+      c.setAttribute('fill', COLORS[i % 2]);
+      c.setAttribute('opacity', '0');
+      return c;
+    };
+    const back = mk(), front = mk();
+    dotsBackG.appendChild(back); dotsFrontG.appendChild(front);
+    convSpiral.push({ back, front, ell: i % 2 ? 'inner' : 'outer',
+      deg: Math.random() * 360, f: 1 + Math.random() * 0.4,          // 出のタイミングをばらす
+      spd: (28 + Math.random() * 42), rate: 1 / (3.5 + Math.random() * 3) });
+  }
+  return convSpiral;
+}
+function convWavePool() {
+  if (convWaves) return convWaves;
+  convWaves = [];
+  const host = dotsBackG.parentNode;   // 奥レイヤーSVG (輪は惑星の後ろへ沈んで消える)
+  for (let i = 0; i < 5; i++) {
+    const el = document.createElementNS(SVG_NS, 'ellipse');
+    const shape = i % 2 ? 'inner' : 'outer';
+    el.setAttribute('stroke', shape === 'inner' ? 'url(#gInnerB)' : 'url(#gOuterB)');   // 既存軌道と同じグラデ
+    el.setAttribute('stroke-width', '3');
+    el.setAttribute('fill', 'none');
+    el.setAttribute('opacity', '0');
+    host.insertBefore(el, dotsBackG);
+    convWaves.push({ el, shape, ph: i / 5 });   // 位相をずらして常にどれかが流れている
+  }
+  return convWaves;
+}
+function convHidePools() {
+  if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
+  if (convWaves) for (const w of convWaves) w.el.setAttribute('opacity', '0');
+}
+/* 内側の輪(実物の ellipse SVG)の濃さ。reel の吸収で使い、他モードでは 1 に戻す */
+let convInnerA = 1;
+function convSetInnerAlpha(a) {
+  if (Math.abs(a - convInnerA) < 0.004) return;
+  convInnerA = a;
+  for (const el of orbitSvgEls.inner.ells) el.setAttribute('opacity', a.toFixed(3));
+}
+/* 毎フレーム: モードに応じて geoms とドット係数を書き換える (renderFrame から呼ぶ) */
+function convFrame(geoms) {
+  const dt = convLastT == null ? 0 : Math.max(0, elapsed - convLastT);
+  convLastT = elapsed;
+  convGlow *= Math.exp(-dt * 2.4);
+  const on = convOn();
+  if (!on) {
+    if (convWasOn) {   // 後片付け (モードや案を切り替えた時に一度だけ)
+      for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; }
+      convSetInnerAlpha(1); convHidePools(); convGlow = 0;
+      if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
+      convWasOn = false;
+    }
+    return;
+  }
+  convWasOn = true;
+  const mode = params.converge;
+  if (convLastMode !== mode) { convHidePools(); convLastMode = mode; }   // 切替時に前のモードの粒・輪を片付ける
+  /* 惑星の「受け止め」= 明るさ。WebGL/フォールバック両対応の CSS filter で */
+  if (sphereCanvasEl) {
+    const b = 1 + Math.min(convGlow, 1) * 0.35;
+    sphereCanvasEl.style.filter = b > 1.005 ? `brightness(${b.toFixed(3)})` : '';
+  }
+
+  if (mode === 'reel') {
+    /* 外の輪 = 常に固定で1個残す(ヒデさん指定)。内の輪がループで吸収される */
+    const T = 4.8, ph = (elapsed % T) / T;
+    let f = 1, a = 1;
+    if (ph < 0.14) { a = convSStep(ph / 0.14); }                       // 新しい輪がフェードイン
+    else if (ph < 0.30) { }                                            // 全周サイズでドットが回る
+    else if (ph < 0.86) {
+      const k = convSStep((ph - 0.30) / 0.56); f = 1 - k * 0.95;       // 惑星へ収縮
+      if (ph > 0.76) a = 1 - (ph - 0.76) / 0.10;                       // 吸収されながらフェードアウト
+    } else { a = 0; f = 0.05; }                                        // 消えている間
+    if (ph >= 0.86 && (elapsed % T) - dt * 1 < 0.86 * T) convGlow = Math.min(1.2, convGlow + 0.7);
+    geoms.inner = convGeom(geoms.inner, f);                            // ドットも輪ごと寄る
+    convSetInnerAlpha(a);
+    for (let i = 0; i < DOTS.length; i++) {
+      const isInner = DOTS[i].ellipse === 'inner';
+      convDotF[i] = 1;                                                 // 位置は geoms 側で寄せ済み
+      convDotA[i] = isInner ? a : 1;
+    }
+  } else if (mode === 'pulse') {
+    convSetInnerAlpha(1);
+    const T = 3.6, ph = (elapsed % T) / T;
+    let f = 1, a = 1;
+    if (ph < 0.5) { }                                                  // 普段どおり周回
+    else if (ph < 0.76) {
+      const k = convSStep((ph - 0.5) / 0.26); f = 1 - k * 0.94;        // 鼓動で一斉に収束
+      if (ph > 0.68) a = 1 - (ph - 0.68) / 0.08;
+    } else { f = 1; a = convSStep((ph - 0.80) / 0.20); }               // 軌道上に再出現
+    if (ph >= 0.76 && ph - (dt / T) < 0.76) convGlow = Math.min(1.2, convGlow + 0.8);
+    for (let i = 0; i < DOTS.length; i++) { convDotF[i] = f; convDotA[i] = a; }
+  } else {
+    convSetInnerAlpha(1);
+    for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; }
+  }
+
+  if (mode === 'spiral') {
+    const pool = convSpiralPool();
+    for (const p of pool) {
+      p.deg += p.spd * dt * (params.direction || 1);
+      p.f -= p.rate * dt;
+      if (p.f <= 0.12) {                                               // 吸収 → 新しい粒として再出発
+        convGlow = Math.min(1.2, convGlow + 0.18);
+        p.f = 1 + Math.random() * 0.15; p.deg = Math.random() * 360;
+        p.ell = Math.random() < 0.5 ? 'inner' : 'outer';
+        p.spd = 28 + Math.random() * 42; p.rate = 1 / (3.5 + Math.random() * 3);
+      }
+      const fv = Math.min(1, p.f);
+      let al = 1;
+      if (p.f > 1) al = 1 - (p.f - 1) / 0.4;                           // 出のばらし中は透明
+      else if (fv > 0.92) al = (1 - fv) / 0.08;                        // 縁でフェードイン
+      else if (fv < 0.26) al = (fv - 0.12) / 0.14;                     // 惑星際でフェードアウト
+      const pos = posOn(convGeom(geoms[p.ell], fv), p.deg);
+      const op = clamp01(al) * 0.9;
+      [p.back, p.front].forEach(el => { el.setAttribute('cx', pos.x); el.setAttribute('cy', pos.y); el.setAttribute('opacity', op.toFixed(3)); });
+      p.front.style.display = pos.front ? '' : 'none';
+      p.back.style.display = pos.front ? 'none' : '';
+    }
+  } else if (mode === 'waves') {
+    const pool = convWavePool();
+    const T = 4.2;
+    for (const w of pool) {
+      const ph = ((elapsed / T) + w.ph) % 1;
+      const f = 1.12 - convSStep(ph) * 1.0;                            // 外(1.12)から惑星(0.12)へ
+      let a = 0.55;
+      if (ph < 0.12) a *= ph / 0.12;
+      else if (ph > 0.78) a *= Math.max(0, (1 - ph) / 0.22);
+      if (ph > 0.94) convGlow = Math.min(1.2, convGlow + 0.02);        // 届いた分だけじわっと
+      const g = convGeom(geoms[w.shape], Math.max(0.12, f));
+      w.el.setAttribute('cx', g.cx); w.el.setAttribute('cy', g.cy);
+      w.el.setAttribute('rx', g.rx); w.el.setAttribute('ry', g.ry);
+      w.el.setAttribute('transform', `rotate(${g.rot} ${g.cx} ${g.cy})`);
+      w.el.setAttribute('opacity', a.toFixed(3));
+    }
+  } else {
+    convHidePools();
+  }
+}
+const sphereCanvasEl = document.getElementById('sphere');
 
 /* 軌道SVG(奥/手前の楕円・クリップ・グラデ)へジオメトリを反映 */
 const orbitSvgEls = {
@@ -2797,18 +2992,20 @@ function renderFrame() {
   if (fitReady && window.innerWidth > 0 &&
       (window.innerWidth !== lastFitW || window.innerHeight !== lastFitH)) fit();
   const geoms = { outer: orbitGeom('outer'), inner: orbitGeom('inner') };
+  convFrame(geoms);   /* 惑星への集約アニメ (①②④⑩)。geoms・convDotF/A を書き換える */
   updateOrbitSvg(geoms);
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
     const deg = patternDeg(d, i, p);
-    const pos = posOn(geoms[d.ellipse], deg);
+    const cf = convDotF[i];
+    const pos = posOn(cf === 1 ? geoms[d.ellipse] : convGeom(geoms[d.ellipse], cf), deg);
     const els = dotEls[i];
     [els.back, els.front].forEach(el => {
       el.setAttribute('cx', pos.x);
       el.setAttribute('cy', pos.y);
     });
     /* 出現度合いが変わった時だけ、半径と濃さを書き換える */
-    const dk = dotK[i];
+    const dk = dotK[i] * convDotA[i];
     if (els.k !== dk) {
       els.k = dk;
       const rr = (DOT_R * dk).toFixed(3), op = dk.toFixed(3);
@@ -2833,8 +3030,10 @@ function applySway() {
   const t = elapsed;
   let orbit = '', svg = '', sph = '';
   switch (SWAYS[(params.sway || 1) - 1].id) {
-    case 'seesaw': /* シーソー: 全体がゆっくり傾く */
-      orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`; break;
+    case 'seesaw': /* シーソー: 全体がゆっくり傾く。①収縮ループ中は固定(ヒデさん指定) */
+      if (!(params.kvDesign === 'planet' && params.converge === 'reel'))
+        orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`;
+      break;
     /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
   /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
@@ -4959,6 +5158,7 @@ window.addEventListener('message', (e) => {
 
 /* 調整パネルから選べる「右グラフィックの案」。key は iframe(embed.html) の data-design に対応。 */
 const KV_DESIGNS = [
+  { key: 'planet', name: '惑星(V1)' },   /* 2026-08-26 復活・既定。V1.0の軌道+惑星+ドット */
   { key: 'p7', name: 'A案' },
   { key: 'p9', name: 'B案' },
   { key: 'agent', name: 'アニメ' },
@@ -4966,12 +5166,17 @@ const KV_DESIGNS = [
   { key: 'p8', name: 'I・背景拾い' },
   { key: 'blender', name: 'Blender' },
 ];
-/* 案を選ぶと iframe へ postMessage して切り替える（本体の文字は流し直さない）。 */
+/* 案を選ぶと切り替える（本体の文字は流し直さない）。
+   'planet' は本体の .orbit を表示(html.kv-planet)、それ以外は iframe へ postMessage。 */
 function kvSetDesign(d) {
   params.kvDesign = d;
+  document.documentElement.classList.toggle('kv-planet', d === 'planet');
+  if (d === 'planet') return;
   const ifr = document.querySelector('.kv-graphic-embed');
   if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: d }, '*');
 }
+/* 読み込み時に保存値どおりのモードにしておく（既定は惑星） */
+document.documentElement.classList.toggle('kv-planet', params.kvDesign === 'planet');
 
 function updateKV() {
   const c = params.kv, t = elapsed;
@@ -5682,8 +5887,13 @@ function buildPanel() {
      押した瞬間に iframe へ postMessage して切り替える（文字は流し直さない）。 */
   liveEdit = true;
   sub(catKv, '🖼 右のグラフィックの案を選ぶ');
-  note('A案＝PNGベタ貼り（既定）/ B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ右のグラフィックが切り替わります。');
-  pillRow(KV_DESIGNS, it => (params.kvDesign || 'p7') === it.key, it => kvSetDesign(it.key));
+  note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ切り替わります。');
+  pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key, it => kvSetDesign(it.key));
+
+  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) ---------- */
+  sub(catKv, '🪐 惑星への集約アニメ（惑星(V1)の案のみ）');
+  note('軌道のデータが惑星へ集約されていく動き。①＝内の輪が収縮→吸収→新しい輪が出るループ(外の輪は固定で残る) / ②＝粒が螺旋で吸い込まれる / ④＝鼓動で一斉収束 / ⑩＝輪が外から内へ流れ込む。');
+  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key, it => { params.converge = it.key; markDirty(); });
   liveEdit = false;
 
   /* ---------- 🖼 右グラフィックの出始めタイミング (2026-08-26 ヒデさん指定) ----------
