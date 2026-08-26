@@ -1353,7 +1353,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 9px 12px;
+    /* 【2026-08-27 ヒデさん指定】掴める幅が狭かったので上下を厚くした */
+    padding: 14px 12px;
     cursor: grab;            /* ここを掴んで移動 */
     user-select: none;
     font-weight: 400;
@@ -7153,6 +7154,9 @@ function buildPanel() {
     n2.className = 'grp-note';
     n2.textContent = '押すと編集モードに入ります。画面右上に出るバーで、保存・やめる・元に戻す(⌘Z)ができます。';
     (mount || body).appendChild(n2);
+    /* 選んだオブジェクトの数値パネル(X/Y/W/H/角度)。編集モード中に動的に出る
+       ⚠️ 2026-08-27: 「案を選ぶ」セクションを消した時に、この呼び出しごと落ちていたので復活 */
+    buildNumPanel(mount || body);
   }
 
   /* --- プリセット: いまの軌道・惑星の形に名前を付けて保存し、ワンタップで呼び出す
@@ -7715,8 +7719,10 @@ const toolsEl = document.querySelector('.tools');
       背が伸びた分は自然に上へ伸びるので何もしなくてよい */
 function keepPanelInView() {
   if (!toolsEl.style.top || toolsEl.style.top === 'auto') return;
-  const h = toolsEl.offsetHeight;
-  const max = Math.max(8, (window.innerHeight || 0) - h - 8);
+  /* 下側ははみ出してよい。つまむヘッダーが画面に残るところまでを上限にする(2026-08-27 修正) */
+  const headEl = document.getElementById('panelHead');
+  const headH = (headEl && headEl.offsetHeight) || 44;
+  const max = Math.max(8, (window.innerHeight || 0) - headH - 8);
   let top = parseFloat(toolsEl.style.top);
   if (!isFinite(top)) return;
   if (top > max) top = max;
@@ -7774,9 +7780,16 @@ window.addEventListener('resize', keepPanelInView);
 (() => {
   const tools = toolsEl;
   const head = document.getElementById('panelHead');
+  /* 【2026-08-27 ヒデさん指定】掴める場所が狭かったので、ヘッダーだけでなく
+     パネルの中身の「何も無い所」でも掴んで動かせるようにする。
+     スライダー・ボタン・入力欄など“操作するもの”の上では移動しない。 */
+  const dragZones = [head, document.getElementById('panelBody')].filter(Boolean);
+  const isControl = (t) => !!(t && t.closest && t.closest(
+    'input, button, select, textarea, .sw-pill, .rst, .gbtn, .seg, .np-f, .pz, .sw-copy, a'));
   let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
-  head.addEventListener('pointerdown', e => {
+  const onDown = e => {
     if (e.button !== 0) return;
+    if (e.currentTarget !== head && isControl(e.target)) return;   /* 操作するものの上では動かさない */
     /* ⚠️【2026-08-19 バグ修正】ここで left/top 指定へ切り替えていたのが原因で、
        【ヘッダーを押しただけ】でも上端固定になっていた。
        閉じている時は下の方にいるので、そこから開くと背が 46px → 520px に伸びて
@@ -7785,9 +7798,8 @@ window.addEventListener('resize', keepPanelInView);
     const r = tools.getBoundingClientRect();
     sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
     moved = false; dragging = true;
-    try { head.setPointerCapture(e.pointerId); } catch (_) {}
-  });
-  head.addEventListener('pointermove', e => {
+  };
+  const onMove = e => {
     if (!dragging) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.abs(dx) + Math.abs(dy) <= 3) return;   /* まだ「押しただけ」。何もしない */
@@ -7799,21 +7811,42 @@ window.addEventListener('resize', keepPanelInView);
       tools.style.right = 'auto';
       tools.style.bottom = 'auto';
     }
-    const w = tools.offsetWidth, h = tools.offsetHeight;
+    /* ⚠️【2026-08-27 バグ修正】以前は「パネル全体が画面に収まる」ところまでしか動かせず、
+       背の高いパネルだと下へほとんど動かせなかった(実測: 高さ361/画面392 で上限23px)。
+       Figma のパネルと同じく、下側ははみ出してよい。【つまむヘッダーが画面に残る】所までにする。 */
+    const w = tools.offsetWidth;
+    const headH = (head && head.offsetHeight) || 44;
     tools.style.left = Math.min(Math.max(0, ox + dx), innerWidth - Math.min(w, 120)) + 'px';
-    /* 掴んで動かす時も、下へ突き抜けないところまでにしておく */
-    tools.style.top = Math.min(Math.max(0, oy + dy), Math.max(8, innerHeight - h - 8)) + 'px';
-  });
-  head.addEventListener('pointerup', e => {
-    dragging = false;
-    try { head.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
-  /* ドラッグした時は開閉トグルを発火させない */
-  head.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); moved = false; } }, true);
+    tools.style.top = Math.min(Math.max(0, oy + dy), Math.max(8, innerHeight - headH - 8)) + 'px';
+  };
+  const onUp = () => { dragging = false; };
+  for (const z of dragZones) z.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  /* ドラッグした時は、開閉トグルなどのクリックを発火させない */
+  for (const z of dragZones) {
+    z.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); moved = false; } }, true);
+  }
 })();
 
+/* 【2026-08-27 ヒデさん指定】アコーディオンは基本【下へ開く】。
+   画面の下の方にいて下へ伸ばせない時だけ【上へ開く】(上端を持ち上げる)。 */
+function openPanelDownward() {
+  /* right/bottom 固定のまま(＝一度も動かしていない)なら、CSS の上下中央そろえに任せる */
+  if (!toolsEl.style.top || toolsEl.style.top === 'auto') return;
+  const top = parseFloat(toolsEl.style.top);
+  if (!isFinite(top)) return;
+  const h = toolsEl.offsetHeight;
+  const room = (window.innerHeight || 0) - top - 8;
+  if (h <= room) return;                       /* 下に入るならそのまま(下開き) */
+  /* 下に入りきらない時だけ、入る範囲で上へ持ち上げる(上開き)。
+     持ち上げすぎて画面上端を越えないようにする */
+  const up = Math.max(0, Math.min(h - room, top - 8));
+  if (up > 0) toolsEl.style.top = (top - up) + 'px';
+}
 document.getElementById('panelHead').addEventListener('click', () => {
   panel.classList.toggle('closed');
+  requestAnimationFrame(openPanelDownward);
   /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
   keepPanelInView();
 });
@@ -7827,7 +7860,12 @@ document.getElementById('panelHead').addEventListener('click', () => {
   const SKEY = 'anyflow-tools-secret';
   let shown = false;
   try { if (sessionStorage.getItem(SKEY) === '1') shown = true; } catch (e) {}
-  const apply = () => toolsEl.classList.toggle('tools-hidden', !shown);
+  const panelEl2 = document.getElementById('panel');
+  const apply = () => {
+    toolsEl.classList.toggle('tools-hidden', !shown);
+    /* 【2026-08-27 ヒデさん指定】出したときはアコーディオンを開いた状態にする */
+    if (shown && panelEl2) panelEl2.classList.remove('closed');
+  };
   apply();
   const hot = document.createElement('div');
   hot.className = 'tools-secret-hot';
@@ -7841,7 +7879,7 @@ document.getElementById('panelHead').addEventListener('click', () => {
 /* カテゴリの開閉では外寸は変わらない作りだが、
    ヒデさんが右下のつまみで背を伸ばしている場合に備えて、ここでも押し戻しておく */
 document.getElementById('panelBody').addEventListener('click', () => {
-  requestAnimationFrame(keepPanelInView);
+  requestAnimationFrame(() => { openPanelDownward(); keepPanelInView(); });
 });
 </script>
 
