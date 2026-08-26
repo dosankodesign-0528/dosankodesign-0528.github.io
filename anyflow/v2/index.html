@@ -2427,7 +2427,7 @@ const DEFAULTS = {
      'soft'   = 弱め。ブロックはせずゆるく引き戻す(ラバーバンド)＋回すと早送りで追いつく
      'lock'   = 固定。従来のスクロールジャック(再生中は貼りつけて動かさない)
      ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
-  scrollHold: 'lock',   // 2026-08-26 ヒデさん指定: 既定は「固定」。切替は 固定追従なし / 固定 の2択
+  scrollHold: 'smooth', // 2026-08-26 ヒデさん指定: サイト全体は「固定追従なし」を既定に(掴み無し・ロック無し)。固定は個別で必要な所だけ。切替は 固定追従なし / 固定 の2択
   kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
@@ -2519,7 +2519,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v73';   /* 2026-08-26 実績リデザイン/KV速く/ビジョンブラー無し/1スクロール削減 で新既定を確実に反映 */
+const STORAGE_KEY = 'anyflow-embed-anim-v74';   /* 2026-08-26 スナップ(掴み直し)撤去＋既定を固定追従なしに。古い保存値をリセットして新既定を確実に反映 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -2962,17 +2962,10 @@ function chapterP(key, chapters, pScroll, canStart, sec) {
     if (!canStart && !st.snapTried) return 0;
     const off = sec ? rectOf(sec).top : 0;
     if (Math.abs(off) > innerHeight) return 0;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
-    if (Math.abs(off) > 6) {
-      /* ⚠️ 目印に elapsed をそのまま入れると elapsed=0 のとき falsy になって毎フレーム
-         寄せ直してしまう。null かどうかで判定すること */
-      if (!st.snapTried) {
-        st.snapTried = true; st.snapT = elapsed;
-        if (lenis) lenis.scrollTo(sec.offsetTop, { duration: 0.45, lock: true, force: true });
-        else window.scrollTo(0, sec.offsetTop);
-        return 0;
-      }
-      if (elapsed - st.snapT <= 1.2) return 0;   /* 1.2秒たったら諦めてその場で再生 */
-    }
+    /* 【2026-08-26 スナップ撤去】以前はここで lenis.scrollTo(lock:true) でスクロールを掴んで
+       ピン位置へ寄せていた。replay=true でセクションが画面外→再入するたびに毎回掴み直し、
+       「上下スクロールでガタガタ・戻れない」の主因になっていた（固定/固定追従なし両モード共通）。
+       中身は sticky で常にピン位置に居るので、掴まずその場で流し始めるだけにする。 */
     st.started = true; st.t0 = elapsed;
   }
   const ch = chapters[Math.min(st.ch, chapters.length - 1)];
@@ -3052,21 +3045,10 @@ function playT(key, total, canStart, sec, pNow) {
        （上から戻ってきた時に寄せ直すと、引っぱられて気持ち悪いため） */
     if (pNow != null && pNow < 0.12) { st.t0 = elapsed; return 0; }
     const off = sec ? rectOf(sec).top : 0;
-    if (Math.abs(off) > innerHeight) return -1;   /* 遠すぎる時は寄せない(頭へ引き戻さない) */
-    if (Math.abs(off) > 6) {
-      /* ⚠️ 寄せている途中でユーザーが操作すると onComplete が来ないことがある。
-         1.2秒経っても着かなければ諦めてその場で再生を始める（無限に止まらないため） */
-      /* ⚠️ 目印に elapsed をそのまま入れると elapsed=0 のとき falsy になり、
-         毎フレーム寄せ直してしまう。null かどうかで判定すること */
-      if (!st.snapTried) {
-        st.snapTried = true; st.snapT = elapsed;
-        if (lenis) lenis.scrollTo(sec.offsetTop, { duration: 0.45, lock: true, force: true });
-        else window.scrollTo(0, sec.offsetTop);
-        return -1;
-      }
-      if (elapsed - st.snapT <= 1.2) return -1;   /* 1.2秒たったら諦めてその場で再生 */
-      st.t0 = elapsed; return 0;
-    }
+    if (Math.abs(off) > innerHeight) return -1;   /* 遠すぎる時は待つ(頭へ引き戻さない) */
+    /* 【2026-08-26 スナップ撤去】lenis.scrollTo(lock:true) の掴み直しが「ガタガタ・戻れない」の
+       主因（replay で再入のたびに掴む）。中身は sticky で常にピン位置に居るので、
+       掴まずその場で流し始める。1ビューポート以内に来たら再生開始。 */
     st.t0 = elapsed;
   }
   if (st.t0 === null) return -1;
