@@ -3084,9 +3084,16 @@ function anyPlaying() {
   /* スクロール駆動と固定なしの時は、そもそも止めない。
      ただしスクロール駆動でも実績だけは時間再生なので、その間は止める */
   if (params.pin === 'off') return null;
+  if ((params.scrollHold || 'lock') === 'smooth') return null;   /* 固定追従なしは一切止めない(scrollHold 最優先) */
   if (params.drive === 'scroll') {
-    const r = secPlay.results;
-    return (r && r.t0 !== null && !r.done) ? 'results' : null;
+    /* ⚠️【2026-08-26 精査・喧嘩の解消】以前は「実績だけ」を止めていたが、playT では
+       【実績と導入事例の両方が時間再生】(3029行の除外リストと同じ)。導入事例は止められないのに
+       clampScroll の maxY では制限され、喧嘩でガタついていた。playT と一致させ両方止める。 */
+    for (const k of ['results', 'cases']) {
+      const s = secPlay[k];
+      if (s && s.t0 !== null && !s.done) return k;
+    }
+    return null;
   }
   for (const k in secPlay) { const s = secPlay[k]; if (s.t0 !== null && !s.done) return k; }
   /* 章の間 (t0 === null) はロックしない = スクロールで次へ進める */
