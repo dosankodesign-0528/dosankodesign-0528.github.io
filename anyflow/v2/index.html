@@ -4027,11 +4027,15 @@ function updateResults(p) {
   else if (resGrinAnchor == null) resGrinAnchor = Math.min(p, c.outTo - 0.15);
   const gStart = resGrinAnchor == null ? c.outTo : resGrinAnchor;
   const grin    = clamp01((p - gStart) / Math.max(0.05, c.outTo - gStart));
-  /* 【2026-08-26 ヒデさん指定】黒のせり上がりを“時間で目標へ追いつく”ようにして、固定追従なしで
-     スクロールが速くてもガクッと出ず、固定ありと同じくらいゆったり上がるようにする(世界観を守る)。 */
-  const gentleTC = Math.max(0.12, c.blackTC != null ? c.blackTC : 0.6);   // 時定数(秒)。大きいほどゆったり
-  grinShown += (grin - grinShown) * (1 - Math.exp(-frameDt / gentleTC));
-  if (Math.abs(grin - grinShown) < 0.001) grinShown = grin;
+  /* 【2026-08-26 ヒデさん指定・あべこべ修正】ゆったりの“時間追従”は【固定追従なし(smooth)だけ】。
+     「固定」モードは前の実装どおりスクロール駆動(=grin をそのまま)。固定がゆっくりになる問題を解消。 */
+  if ((params.scrollHold || 'lock') === 'smooth') {
+    const gentleTC = Math.max(0.12, c.blackTC != null ? c.blackTC : 0.6);   // 時定数(秒)。大きいほどゆったり
+    grinShown += (grin - grinShown) * (1 - Math.exp(-frameDt / gentleTC));
+    if (Math.abs(grin - grinShown) < 0.001) grinShown = grin;
+  } else {
+    grinShown = grin;   // 固定モード: レート制限なし(従来どおり)
+  }
   resBlackK = grinShown;   // dev1 の出現ゲート用に共有
   const gv = grinShown;
   const riseK   = easeOutC(clamp01(gv / 0.40));
@@ -4751,9 +4755,9 @@ function updateDev(pRaw) {
      下からのせり上がりは黒(resGrow)の裏に隠す（黒がフェードするのと入れ替わりで“その場”に出る）。 */
   const b1top = rectOf(devEls.block1).top;
   const posK = easeOutQ(clamp01((vh * 0.15 - b1top) / (vh * 0.25)));   // 中央付近に着いたか
-  /* 【2026-08-26】黒(resGrow)がほぼ覆ってから dev1 を出す。黒のせり上がりはゆったり(時間追従)なので、
-     dev1 も“黒が覆う瞬間”に合わせて出る＝下からのせり上がりは黒の裏、見逃しにくい。 */
-  const blackK = easeOutQ(clamp01((resBlackK - 0.55) / 0.35));
+  /* 固定追従なし(smooth)は黒がゆったり時間追従なので、dev1 も“黒が覆う瞬間(resBlackK)”に合わせて出す
+     (せり上がりを黒の裏に隠す)。「固定」モードは前の実装どおり位置だけで出す(黒はスクロール駆動)。 */
+  const blackK = (params.scrollHold === 'smooth') ? easeOutQ(clamp01((resBlackK - 0.55) / 0.35)) : 1;
   const k1 = posK * blackK;
   applyBlock(devEls.block1, k1);
   driveEditorLoop(dev1Refs, k1 > 0.35, 'dev1');
