@@ -2886,6 +2886,33 @@ function applyRingBlur(key, px) {
   for (const el of orbitSvgEls[key].ells) el.style.filter = v;
 }
 const convDotSpin = DOTS.map(() => 0);   // 収縮中の回転アップ(度)。ドットの角度に足す
+/* 消え方「前面カット」用: 手前レイヤーの輪から、惑星に重なる部分だけをマスクで切り取る。
+   輪が惑星の中へ滑り込んで見える(はみ出し対策。ヒデさん指摘 2026-08-26) */
+let convMaskEl = null, convMaskCircle = null;
+const convMaskOn = { outer: false, inner: false };
+function convSetClip(key, on) {
+  if (convMaskOn[key] === on) return;
+  convMaskOn[key] = on;
+  const front = orbitSvgEls[key].ells[1];   // [奥, 手前] の手前
+  if (on) {
+    if (!convMaskEl) {
+      const svg = front.ownerSVGElement;
+      const defs = svg.querySelector('defs');
+      convMaskEl = document.createElementNS(SVG_NS, 'mask');
+      convMaskEl.setAttribute('id', 'convPlanetHole');
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('x', '-300'); r.setAttribute('y', '-300');
+      r.setAttribute('width', '1600'); r.setAttribute('height', '1300');
+      r.setAttribute('fill', 'white');
+      convMaskCircle = document.createElementNS(SVG_NS, 'circle');
+      convMaskCircle.setAttribute('fill', 'black');
+      convMaskEl.appendChild(r); convMaskEl.appendChild(convMaskCircle);
+      defs.appendChild(convMaskEl);
+    }
+    front.setAttribute('mask', 'url(#convPlanetHole)');
+  } else front.removeAttribute('mask');
+}
+function convPlanetR() { return 130 * ((params.planet && params.planet.scale) || 1); }
 /* 毎フレーム: モードに応じて geoms とドット係数を書き換える (renderFrame から呼ぶ) */
 function convFrame(geoms) {
   const dt = convLastT == null ? 0 : Math.max(0, elapsed - convLastT);
@@ -2896,6 +2923,7 @@ function convFrame(geoms) {
     if (convWasOn) {   // 後片付け (モードや案を切り替えた時に一度だけ)
       for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; convDotSpin[i] = 0; }
       convReelAReset(); applyRingBlur('outer', 0); applyRingBlur('inner', 0);
+      convSetClip('outer', false); convSetClip('inner', false);
       convHidePools(); convGlow = 0;
       if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
       convWasOn = false;
@@ -2928,9 +2956,13 @@ function convFrame(geoms) {
     const S_out = geoms.outer, S_in = geoms.inner;                     // スロット(位置)のジオメトリ
     const shrinkKey = gen % 2 ? 'outer' : 'inner';                     // 今回吸収される実物の要素
     const slideKey = shrinkKey === 'inner' ? 'outer' : 'inner';
-    const effDepth = R.vanish === 'shrink' ? Math.max(R.depth, 0.995) : R.depth;
+    const planetR = convPlanetR();
+    let effDepth = R.depth;
+    if (R.vanish === 'shrink') effDepth = Math.max(R.depth, 0.995);
+    /* はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まない */
+    if (R.vanish === 'fit') effDepth = Math.min(R.depth, 1 - planetR / Math.max(1, S_in.rx));
     /* --- 吸収される輪 --- */
-    let gS = S_in, aB = 1, aF = 1, blur = 0, spinDeg = 0, aDot = 1;
+    let gS = S_in, aB = 1, aF = 1, blur = 0, spinDeg = 0, aDot = 1, clipOn = false;
     if (ph < sAt) { }
     else if (ph < eAt) {
       const k = convSStep((ph - sAt) / (eAt - sAt));
@@ -2943,10 +2975,24 @@ function convFrame(geoms) {
       if (R.vanish === 'sink') { aB = 1; aF = fadeA; }                 // 手前だけ透ける=惑星の後ろへ沈む
       else if (R.vanish === 'shrink') { aB = aF = 1; }                 // 透けずに点まで縮んで消える
       else if (R.vanish === 'blur') { aB = aF = fadeA; blur = fk * 5; }
-      else { aB = aF = fadeA; }                                        // fade(既定)
+      else if (R.vanish === 'early') {
+        /* 早め透過: 輪の横幅が惑星に重なる前に、サイズ連動で透け切る(はみ出しが見えない) */
+        const rxNow = S_in.rx * (1 - k * effDepth);
+        const kk = 1 - clamp01((rxNow - planetR * 1.05) / (planetR * 1.6));
+        aB = aF = 1 - (1 - R.fadeTo) * convSStep(kk);
+      }
+      else if (R.vanish === 'clip') { aB = aF = fadeA; clipOn = true; }// 前面カット=惑星に重なる部分だけ切る
+      else { aB = aF = fadeA; }                                        // fade(既定) / fit も同じ透過
       aDot = Math.max(aB, aF);
     } else if (ph < zStart) { gS = S_out; aB = aF = 0; aDot = 0; }     // 消えている間(外の位置で待機)
     else { gS = S_out; aB = aF = aDot = convSStep((ph - zStart) / zLen); }   // 新しい輪として出現
+    convSetClip(shrinkKey, clipOn);
+    convSetClip(shrinkKey === 'inner' ? 'outer' : 'inner', false);
+    if (clipOn && convMaskCircle) {
+      const cc = convCenter();
+      convMaskCircle.setAttribute('cx', cc.x); convMaskCircle.setAttribute('cy', cc.y);
+      convMaskCircle.setAttribute('r', planetR);
+    }
     /* --- 外→内へ移る輪 --- */
     let gM = S_out;
     if (ph >= eAt && ph < eAt + slideLen) {
@@ -2967,6 +3013,7 @@ function convFrame(geoms) {
     }
   } else if (mode === 'pulse') {
     convReelAReset();
+    convSetClip('outer', false); convSetClip('inner', false);
     const P = C.pulse;
     const T = Math.max(1, P.T), ph = (elapsed % T) / T;
     const hold = clamp01(P.holdK);                                     // 普段どおり回る割合
@@ -2984,6 +3031,7 @@ function convFrame(geoms) {
     for (let i = 0; i < DOTS.length; i++) { convDotF[i] = f; convDotA[i] = a; convDotSpin[i] = 0; }
   } else {
     convReelAReset();
+    convSetClip('outer', false); convSetClip('inner', false);
     for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; convDotSpin[i] = 0; }
   }
 
@@ -6068,9 +6116,32 @@ function buildPanel() {
       '空いた外の位置に、新しい輪がフェードインする時間。');
     slider('① どこまで縮むか', 0.5, 1, 0.01, () => R.depth, v => R.depth = v, pctF,
       '100%で惑星の中心まで縮む。');
-    segRow('① 消え方', [['フェード', 'fade'], ['沈む', 'sink'], ['点まで縮む', 'shrink'], ['ぼかし', 'blur']],
-      () => R.vanish || 'fade', v => { R.vanish = v; markDirty(); });
-    note('フェード＝全体が透ける / 沈む＝手前だけ透けて惑星の後ろへ沈む / 点まで縮む＝透けずに中心で消える / ぼかし＝にじみながら消える。');
+    /* 消え方: はみ出し対策の3種を追加(early/clip/fit。ヒデさん指摘 2026-08-26)。
+       選ぶと下の固定枠に説明が出る(枠の高さは固定=レイアウトシフトしない) */
+    const VANISH_DESC = {
+      fade:   'フェード: 全体がだんだん透けて消える。いちばんシンプル。',
+      sink:   '沈む: 手前の線だけ透けて、惑星の後ろへ沈み込むように消える。',
+      shrink: '点まで縮む: 透けずに惑星の中心まで縮み切り、点になって消える。',
+      blur:   'ぼかし: にじみながらぼやけて消える。',
+      early:  '早め透過: 惑星に重なる前にサイズ連動で透け切る。はみ出しがそもそも見えない。',
+      clip:   '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
+      fit:    'はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まず、そこで溶けて消える。',
+    };
+    const VANISHES = [
+      { key: 'fade', name: 'フェード' }, { key: 'sink', name: '沈む' },
+      { key: 'shrink', name: '点まで縮む' }, { key: 'blur', name: 'ぼかし' },
+      { key: 'early', name: '早め透過' }, { key: 'clip', name: '前面カット' },
+      { key: 'fit', name: 'はみ出ず溶ける' },
+    ];
+    sub(catKv, '① 消え方（吸収の表現）', true);
+    let vanishNoteEl = null;
+    pillRow(VANISHES, it => (R.vanish || 'fade') === it.key,
+      it => { R.vanish = it.key; markDirty(); if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[it.key]; });
+    vanishNoteEl = document.createElement('div');
+    vanishNoteEl.className = 'grp-note';
+    vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
+    vanishNoteEl.textContent = VANISH_DESC[R.vanish || 'fade'];
+    (mount || body).appendChild(vanishNoteEl);
     slider('① 透過し始め', 0, 0.95, 0.01, () => R.fadeAt, v => R.fadeAt = v, pctF,
       '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
     slider('① 透過率(残す濃さ)', 0, 0.9, 0.01, () => R.fadeTo, v => R.fadeTo = v, pctF,
@@ -6108,6 +6179,18 @@ function buildPanel() {
       'ここからフェードアウト=惑星に取り込まれていく。');
     slider('⑩ 始まりの大きさ', 1, 1.5, 0.01, () => W.from, v => W.from = v, v => '×' + v.toFixed(2),
       '軌道より少し外(×1.1あたり)から生まれると自然。');
+  }
+
+  /* ---------- 🛰 軌道の位置・サイズ・傾き (2026-08-26 ヒデさん指定・復活) ---------- */
+  sub(catKv, '🛰 軌道の位置・サイズ・傾き');
+  note('外の輪・内の輪を別々に動かせます。位置はカンプ基準からのズレ(px)。');
+  for (const [okey, oname] of [['outer', '外の輪'], ['inner', '内の輪']]) {
+    const O = params.orbits[okey];
+    slider(oname + ' 横の位置', -250, 250, 1, () => O.dx, v => O.dx = v, v => (v > 0 ? '+' : '') + v + 'px');
+    slider(oname + ' 縦の位置', -250, 250, 1, () => O.dy, v => O.dy = v, v => (v > 0 ? '+' : '') + v + 'px');
+    slider(oname + ' サイズ', 0.5, 1.5, 0.01, () => O.scale, v => O.scale = v, v => '×' + v.toFixed(2));
+    slider(oname + ' 傾き', -45, 45, 0.5, () => O.angle, v => O.angle = v, v => (v > 0 ? '+' : '') + v.toFixed(1) + '°',
+      'カンプの傾き(-23.3°)に足す角度。');
   }
   liveEdit = false;
 
