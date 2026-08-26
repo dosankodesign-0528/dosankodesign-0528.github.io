@@ -168,6 +168,11 @@
      iframe にしている理由: すりガラス(backdrop-filter)を本体の transform:scale から隔離し、
      kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は Figma実測の #E7E7E7（白フロストが#EEEに浮き出る）。 */
   .orbit { display: none !important; }
+  /* 【2026-08-26 ヒデさん指定】V1.0 の惑星ビジュアルを KV に復活。
+     調整パネルの「KV案」で 惑星(V1) を選ぶと html.kv-planet が付き、
+     iframe を隠して V1.0 の軌道・惑星・ドット(.orbit)を表示する。デザインは V1.0 のまま。 */
+  html.kv-planet .orbit { display: block !important; }
+  html.kv-planet .kv-graphic-embed, html.kv-planet .kvp-secret { display: none; }
   .kv-graphic-embed {
     position: absolute; top: 0; right: 0;
     width: 1440px; height: var(--dh, 921px);
@@ -1101,16 +1106,35 @@
      PCの1440×921をそのまま縮めると本文が4pxくらいになって読めないので、
      JS側(fit)で座標系ごと 390×780 に差し替え、ここで中身を組み直している。
      ここに書く数値は 390px幅の実寸そのもの。 */
+  /* ===== タブレット (781〜1100px)。2026-08-27 ヒデさん指定でざっくり対応 =====
+     PC の 1440 座標系を JS が縮めて表示するので、ここでは
+     「小さくなりすぎて読めない文字」を持ち上げ、左右の余白を整える。 */
+  @media (min-width: 781px) and (max-width: 1100px) {
+    .header { left: 32px; right: 32px; }
+    .nav-links { gap: 20px; }
+    .nav-links a { font-size: 15px; }
+    .cta { font-size: 15px; }
+    .headline { left: 32px; }
+    .hl-eyebrow { font-size: 15px; }
+    .vis-label { left: 32px; }
+    .vis-line { left: 32px; }
+    .val-point p { font-size: 15px; line-height: 24px; }
+    .cg-quote { font-size: 15px; }
+    .cg-tag { font-size: 13px; }
+    .dev-block { padding: 72px 32px; }
+    .dl-head span { font-size: 15px; }
+  }
+
   @media (max-width: 780px) {
     /* --- ヘッダー --- */
-    .header { left: 20px; right: 20px; top: 18px; }
+    .header { left: 24px; right: 24px; top: 18px; }
     .header .logo img { width: 148px; height: 27px; }
     .nav-links { display: none; }            /* ナビは省略 (後で必要ならハンバーガー化) */
-    .cta { width: 104px; font-size: 12px; padding: 8px 10px; }
+    .cta { width: 112px; font-size: 14px; padding: 9px 10px; }
 
     /* --- キービジュアル --- */
     .headline { left: 24px; top: 104px; }
-    .hl-eyebrow { font-size: 12px; gap: 8px; }
+    .hl-eyebrow { font-size: 14px; gap: 8px; }
     .hl-eyebrow i { width: 18px; }
     .hl-main { font-size: 40px; line-height: 1.35; margin-top: 8px; }
     .hl-caret { height: 34px; vertical-align: -6px; }
@@ -1121,7 +1145,7 @@
 
     /* --- ビジョン --- */
     .vis-label { left: 24px; top: 74px; font-size: 16px; }
-    .vis-line { left: 20px; font-size: 32px; line-height: 54px; }
+    .vis-line { left: 24px; font-size: 32px; line-height: 54px; }
     .vis-l1 { top: 116px; }
     .vis-l2 { top: 170px; }
     /* 軌道図は JS の kFill が 0.43 前後になる。中心は pf-wrap の top+333.5 */
@@ -1131,17 +1155,17 @@
     .pf-sub { font-size: 34px; line-height: 60px; top: 400px; }
     .pf-title { font-size: 100px; top: 268px; }
     /* 右カラムはPCでは右アンカーだが、スマホは画面いっぱいの1カラムにする */
-    .val-group { left: 0; right: auto; width: 390px; }
-    .val-head { left: 24px; top: 372px; width: 342px; }
+    .val-group { left: 0; right: auto; width: 100%; }
+    .val-head { left: 24px; right: 24px; top: 372px; width: auto; }
     .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
-    .val-point { width: 342px; }
+    .val-point { width: calc(100% - 48px); max-width: 342px; }
     .val-p1 { left: 24px; top: 462px; }
-    .val-p2 { left: 40px; top: 600px; }
-    .val-point .vp-tag { font-size: 14px; line-height: 14px; }
+    .val-p2 { left: 24px; top: 600px; }
+    .val-point .vp-tag { font-size: 14px; line-height: 16px; }
     .val-point .vp-tag i { width: 6px; height: 6px; }
     .val-point h3 { font-size: 20px; margin-top: 8px; }
-    .val-point p { font-size: 12px; line-height: 20px; margin-top: 12px; }
+    .val-point p { font-size: 14px; line-height: 22px; margin-top: 12px; }
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1155,18 +1179,18 @@
     }
     #results.pat-a .res-main, #results.pat-b .res-main { position: static; width: 100%; gap: 18px; }
     #results.pat-a .res-stats, #results.pat-b .res-stats { position: static; width: 100%; }
-    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 12px; }
+    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 14px; }
     .res-head { font-size: 22px; line-height: 1.7; }
     .res-nums { gap: 16px; }
-    .res-nums .rn b { font-size: 12px; line-height: 18px; }
+    .res-nums .rn b { font-size: 14px; line-height: 20px; }
     .res-nums .rn span { font-size: 44px; }
     .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
-    .res-stats .st b { font-size: 12px; line-height: 16px; }
+    .res-stats .st b { font-size: 14px; line-height: 18px; }
     .res-stats .st span { font-size: 28px; }
 
     /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
     .dev-block { padding: 64px 18px; gap: 28px; }
-    .dev-center .dc-label { font-size: 12px; margin-bottom: 8px; }
+    .dev-center .dc-label { font-size: 14px; margin-bottom: 8px; }
     .dev-center .dc-one { font-size: 24px; line-height: 1.4; }
     /* dev1: 840×504 の実寸パネルを 0.40倍。余白ぶんは負マージンで詰める */
     .dev1-mock { transform: scale(0.40); transform-origin: center top; margin: -151px auto; }
@@ -1189,8 +1213,8 @@
     .cg-bl { left: 0; top: 310px; } .cg-br { left: 0; top: 465px; }
     .cg-img { flex: 0 0 120px; width: 120px; height: 80px; }
     .cg-body { gap: 10px; }
-    .cg-quote { font-size: 13px; }
-    .cg-tag { font-size: 10px; }
+    .cg-quote { font-size: 14px; line-height: 22px; }
+    .cg-tag { font-size: 12px; }
     .cg-company { font-size: 15px; }
 
     /* --- 調整パネルは画面いっぱいに --- */
@@ -1199,10 +1223,13 @@
 
   /* ---- パターン切替スイッチャー (ドラッグ移動・リサイズ可) ---- */
   /* 調整UIは右下にまとめて固定 */
+  /* 【2026-08-27 ヒデさん指定】右下常時表示をやめ、右上の空ボックスで出し入れ。
+     出る位置は画面の左側(コピーのあたり)で上下中央そろえ */
   .tools {
     position: fixed;
-    right: 16px;
-    bottom: 16px;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
     z-index: 50;
   }
   /* 隠しモード（2026-08-21 ヒデさん指示）：パネルは最初は見えない。
@@ -1210,12 +1237,13 @@
   .tools.tools-hidden { display: none; }
   /* 本体モーションパネルの開閉ボックス。左上に分離（2026-08-25）。
      網走と同じく“完全に透明な空ボックス”。アイコンは出さない（ヒデさん指定 2026-08-25） */
+  /* パネルを出し入れする透明ボックス。右上に大きめの領域を取る(2026-08-27 ヒデさん指定) */
   .tools-secret-hot {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 64px;
-    height: 64px;
+    right: 0;
+    width: 180px;
+    height: 120px;
     z-index: 60;
     background: transparent;
     cursor: pointer;
@@ -1321,7 +1349,8 @@
        外寸は固定して、中身だけスクロールさせる */
     /* 【2026-08-19 ヒデさん指定】画面をふさぎすぎないよう横幅をコンパクトに (360→300px)。
        あわせて文字サイズと余白も一段小さくして、中身が入りきるようにしている */
-    width: 300px;
+    /* 【2026-08-27 ヒデさん指定】横幅を1.5倍(300→450px)にして既定サイズとする */
+    width: 450px;
     height: 520px;
     min-width: 240px;
     min-height: 46px;
@@ -1344,7 +1373,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 9px 12px;
+    /* 【2026-08-27 ヒデさん指定】掴める幅が狭かったので上下を厚くした */
+    padding: 14px 12px;
     cursor: grab;            /* ここを掴んで移動 */
     user-select: none;
     font-weight: 400;
@@ -1361,6 +1391,26 @@
     padding: 0 10px 10px;
   }
   .panel.closed { height: auto !important; resize: none; }
+  /* 【2026-08-27 ヒデさん指定】右下だけでなく、上下・左右の辺をつかんでもサイズ変更できる */
+  /* 編集モードのバー(キービジュアル右上) */
+  .edit-bar { position: fixed; top: 16px; right: 16px; z-index: 70; display: none; align-items: center; gap: 6px;
+              background: rgba(255,255,255,.94); backdrop-filter: blur(10px);
+              border: 1px solid #e6e6e6; border-radius: 10px; padding: 6px 8px;
+              box-shadow: 0 8px 28px rgba(0,0,0,.12); font-size: 12px; }
+  .eb-btn { height: 28px; padding: 0 10px; border: 1px solid #e2e2e2; border-radius: 7px; background: #fff;
+            color: #444; font-size: 12px; cursor: pointer; white-space: nowrap;
+            transition: background .15s, color .15s, border-color .15s; }
+  .eb-btn:hover:not(:disabled) { background: #f3f3f3; color: #111; }
+  .eb-btn:disabled { opacity: .35; cursor: default; }
+  .eb-btn.primary { background: #111; color: #fff; border-color: #111; }
+  .eb-btn.primary:hover { background: #333; }
+  .eb-sep { width: 1px; height: 18px; background: #e6e6e6; }
+  .pz { position: absolute; z-index: 3; }
+  .pz-t { top: -3px; left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
+  .pz-b { bottom: -3px; left: 10px; right: 16px; height: 8px; cursor: ns-resize; }
+  .pz-l { left: -3px; top: 10px; bottom: 10px; width: 8px; cursor: ew-resize; }
+  .pz-r { right: -3px; top: 10px; bottom: 16px; width: 8px; cursor: ew-resize; }
+  .panel.closed .pz { display: none; }
   .panel.closed .panel-body { display: none; }
   /* 大カテゴリ (アコーディオン) */
   .cat {
@@ -1385,20 +1435,88 @@
   .cat.closed .cat-chev { transform: rotate(-90deg); }
   .cat-body { padding: 0 10px 10px; }
   .cat.closed .cat-body { display: none; }
-  .grp { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ececec; }
-  .cat-body .grp:first-child { border-top: none; margin-top: 6px; }
-  .grp-title { font-weight: 400; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-  /* 入れ子の小見出し (惑星のデザイン > 柄の動き など) */
-  .grp.sub2 { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ececec; padding-left: 7px; border-left: 2px solid #ececec; }
-  .grp.sub2 .grp-title { font-size: 12px; color: #555; }
-  .row-hint { font-size: 9.5px; line-height: 1.55; color: #999; margin: -1px 0 6px 0; }
-  .grp-note { font-size: 9.5px; line-height: 1.6; color: #999; margin: -2px 0 6px; }
+  /* 【2026-08-26 整理】セクションの区切りと余白をはっきりさせて読みやすく */
+  .grp { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8e8e8; }
+  .cat-body .grp:first-child { border-top: none; margin-top: 8px; padding-top: 0; }
+  .grp-title { font-weight: 600; font-size: 12.5px; color: #1a1a1a; margin-bottom: 8px;
+               display: flex; align-items: center; gap: 6px; min-height: 24px; }
+  /* 見出しは1行に収める(長い時は…)。ボタンと取り合って折り返さないように */
+  .grp-title > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden;
+               text-overflow: ellipsis; white-space: nowrap; }
+  .grp > .grp-body { padding-bottom: 2px; }
+  /* たためない小見出し(全体カテゴリ)。コンパクトに詰める */
+  .grp.fixed { margin-top: 10px; padding-top: 9px; }
+  .grp.fixed .grp-title { font-size: 11.5px; font-weight: 500; color: #666; margin-bottom: 4px; min-height: 0; }
+  .grp.fixed .grp-acts { transform: scale(.86); transform-origin: right center; }
+  /* 入れ子の小見出し: 左の罫線でぶら下がりを示す */
+  .grp.sub2 { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #ededed;
+              padding-left: 9px; border-left: 2px solid #ededed; }
+  .grp.sub2 .grp-title { font-size: 11.5px; font-weight: 500; color: #555; }
+  .grp.sub2 .grp.sub2 { border-left-color: #f2f2f2; }
+  /* 補足文は読めれば十分なのでもう一段小さく (2026-08-27 ヒデさん指定) */
+  .row-hint { font-size: 8.5px; line-height: 1.5; color: #a6a6a6; margin: -1px 0 5px 0; }
+  .grp-note { font-size: 8.5px; line-height: 1.55; color: #a6a6a6; margin: -2px 0 5px; }
+  /* ===== Figma のプロパティパネル風 数値入力 (2026-08-27 ヒデさん指定) ===== */
+  .np { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 5px 0 2px; }
+  .np-f { display: flex; align-items: center; gap: 5px; background: #f6f6f7; border: 1px solid #ececec;
+          border-radius: 7px; padding: 3px 7px; transition: border-color .15s, background .15s; }
+  .np-f:focus-within { border-color: #0D99FF; background: #fff; }
+  .np-f label { flex: 0 0 auto; font-size: 10px; color: #9a9a9a; font-weight: 500; letter-spacing: .02em; }
+  .np-f input { flex: 1 1 auto; width: 100%; min-width: 0; border: 0; background: transparent; outline: none;
+                font-size: 11.5px; color: #111; font-variant-numeric: tabular-nums; text-align: right;
+                -moz-appearance: textfield; }
+  .np-f input::-webkit-outer-spin-button, .np-f input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .np-f .np-u { flex: 0 0 auto; font-size: 9.5px; color: #b5b5b5; }
+  /* 選択中の対象を示す見出し */
+  .np-head { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 11px; color: #444; font-weight: 600; }
+  .np-head .np-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .np-empty { font-size: 9.5px; color: #a6a6a6; padding: 6px 0 2px; line-height: 1.5; }
   /* カテゴリを開いてすぐの説明。小見出しより前に来るので上に余白がいる */
   .grp-note.cat-note { margin: 10px 0 0; }
   /* たたまれている時に「押せる」と分かるようにする小さい添え書き */
   .panel-head-sub { font-size: 10px; color: #999; margin-left: 8px; font-weight: 300; }
   .panel:not(.closed) .panel-head-sub { display: none; }
   .chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  /* 各項目のリセット(↺)。行の右端に置く (2026-08-26 ヒデさん指定・下の「元に戻す」は廃止) */
+  .sw-pill.sw-edit { padding: 2px 6px; opacity: .55; }
+  .sw-pill.sw-edit:hover { opacity: 1; }
+  .sw-pill.sw-add { border-style: dashed; }
+  /* 【2026-08-26 ヒデさん指定】リセットは押しやすいサイズに */
+  .rst { flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 7px;
+         background: transparent; color: #aeaeae; font-size: 15px; line-height: 24px; cursor: pointer;
+         transition: background .15s, color .15s, border-color .15s; }
+  .rst:hover { background: #f0f0f0; color: #222; border-color: #e0e0e0; }
+  .rst.off { visibility: hidden; }
+  /* 小見出しの右に置く「リセット / 保存」(セクション単位) */
+  /* 見え方モード(等倍 / パース)のアイコン */
+  .gmode { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: 0 0 auto; }
+  .gmode-b { display: flex; align-items: center; justify-content: center; width: 30px; height: 24px;
+             padding: 0; border: 1px solid #e6e6e6; border-radius: 7px; background: #fff; cursor: pointer;
+             transition: background .15s, border-color .15s; }
+  .gmode-b + .gmode-b { margin-left: 2px; }
+  .gmode-b svg { fill: #b9b9b9; transition: fill .15s; }
+  .gmode-b:hover { background: #f4f4f4; }
+  .gmode-b.on { background: #111; border-color: #111; }
+  .gmode-b.on svg { fill: #fff; }
+  .gmode + .grp-acts { margin-left: 6px; }
+  .grp-acts { display: flex; align-items: center; gap: 5px; margin-left: 6px; flex: 0 0 auto; }
+  /* リセット/保存: 押しやすい 28px 角 (2026-08-26 ヒデさん指定でサイズアップ) */
+  .gbtn { width: 28px; height: 28px; padding: 0; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;
+          color: #666; font-size: 14px; line-height: 26px; text-align: center; cursor: pointer; white-space: nowrap;
+          transition: background .15s, color .15s, border-color .15s, width .15s; }
+  .gbtn:active { transform: translateY(1px); }
+  .gbtn.done { width: auto; padding: 0 9px; font-size: 11px; }
+  .gbtn:hover { background: #f4f4f4; color: #111; border-color: #d5d5d5; }
+  .gbtn.done { background: #111; color: #fff; border-color: #111; }
+  /* 小見出しのアコーディオン (既定は閉じる) */
+  .grp-title { cursor: pointer; user-select: none; }
+  /* 開閉トグルは見出しの右端。押しやすいサイズに (2026-08-26 ヒデさん指定) */
+  .grp-chev { flex: 0 0 auto; margin-left: 6px; width: 28px; height: 28px; line-height: 26px; text-align: center;
+              color: #9a9a9a; font-size: 13px; border: 1px solid transparent; border-radius: 8px;
+              transition: transform .18s, background .15s, color .15s; }
+  .grp-title:hover .grp-chev { background: #f2f2f2; color: #333; }
+  .grp.closed .grp-chev { transform: rotate(-90deg); }
+  .grp.closed .grp-body { display: none; }
   .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
   /* ⚠️ 2026-08-19: ラベルを分かりやすい日本語に書き直したら 92px では折り返した。
      長い項目名でも1行に収まる幅にし、値の欄も「32秒」「120px」が入る幅にする */
@@ -1828,6 +1946,25 @@ const ELLIPSES = {
   outer: { cx: 457.741, cy: 306.543, rx: 435.517, ry: 146.026 },
   inner: { cx: 475.283, cy: 350.505, rx: 397.09,  ry: 133.142 },
 };
+/* ===== 軌道レイアウト (2026-08-26 ヒデさん採用: ジャイロクロス) =====
+   figma = カンプ通り(2本ほぼ平行) / gyro = ジャイロクロス。
+   gyro は2本の傾きを逆方向にして天球儀のように立体交差させ、惑星の前後を横切る場所を
+   増やして奥行きを出す。中心は惑星(436,242)寄りに置き、開き(ry/rx)も変えて交差を強調。 */
+const ORBIT_LAYOUTS = {
+  figma: {
+    name: 'カンプ通り',
+    outer: { cx: 457.741, cy: 306.543, rx: 435.517, ry: 146.026, rot: -23.3266 },
+    inner: { cx: 475.283, cy: 350.505, rx: 397.09,  ry: 133.142, rot: -23.3266 },
+  },
+  gyro: {
+    name: 'ジャイロクロス',
+    outer: { cx: 436, cy: 265, rx: 435.517, ry: 435.517 * 0.30, rot: -24 },
+    inner: { cx: 436, cy: 253, rx: 397.09,  ry: 397.09  * 0.42, rot: 14 },
+  },
+};
+function orbitBase(key) {
+  return (ORBIT_LAYOUTS[params.orbitLayout] || ORBIT_LAYOUTS.figma)[key];
+}
 /* 各ドット: 所属楕円と初期角度
    【2026-08-19 ヒデさん指定】
      ・上の軌道(outer)はドットが2個しかなかったので、ピンクを1個足して3個に
@@ -2228,7 +2365,7 @@ void main(){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  sway: 3,   // 既定はクロス
+  sway: 1,   // 2026-08-27 ヒデさん指定: ゆらぎは既定オフ(①固定)
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
@@ -2269,8 +2406,8 @@ const DEFAULTS = {
   },
   orbits: {
     /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
-    outer: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
-    inner: { scale: 1, angle: 0, dx: 0, dy: 0, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
+    outer: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
+    inner: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   dotGap: 1,           // ドットの間隔 (DOT_GAPS) 1=きっちり等間隔 / 2=ばらつかせる
@@ -2428,7 +2565,52 @@ const DEFAULTS = {
      'lock'   = 固定。従来のスクロールジャック(再生中は貼りつけて動かさない)
      ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
   scrollHold: 'smooth', // 2026-08-26 ヒデさん指定: サイト全体は「固定追従なし」を既定に(掴み無し・ロック無し)。固定は個別で必要な所だけ。切替は 固定追従なし / 固定 の2択
-  kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
+  kvDesign: 'planet',   // 右グラフィックの案。'planet'=V1.0の惑星(2026-08-26 復活・既定) / それ以外=iframe(kv/embed.html)の案
+  converge: 'reel',     // 惑星への集約アニメ (CONVERGES) 。惑星の案の時だけ効く。①収縮ループが既定(ヒデさん指定)
+  /* 集約アニメの調整つまみ (2026-08-26 ヒデさん指定: 各項目をパネルで調整できるように)
+     pers: 'normal'=今の実装 / 'fix'=パース調整版(輪が先に惑星の真ん中へ寄ってから同心円ですぼまる)
+     showOuter/showInner: 軌道の輪のオンオフ(輪を消すとその輪のドットも消える)
+     タイミング系(inDur/shrinkAt/endAt など)は「周期の中の割合」(0〜1) */
+  orbitLayout: 'figma',  // 軌道レイアウト(ORBIT_LAYOUTS)。2026-08-26 ヒデさん指定でカンプ通り(2本が平行)を既定に戻した
+  orbitPresets: [],      // 軌道のプリセット [{name, data:{layout,outer,inner}}]。パネルで保存/切替/編集/削除
+  orbitPresetOn: null,   // いま選んでいるプリセットの番号
+  conv: {
+    showOuter: true, showInner: true,
+    showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
+    /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定
+       dotSize = 全部のドットの大きさ倍率
+       dotPersp: 'flat'=どこでも同じ大きさ / 'persp'=手前が大きく奥が小さい(遠近感)
+       perspK = 遠近の強さ */
+    dotSize: 1, dotPersp: 'flat', perspK: 0.45,
+    glow: 0.35,                                              // 吸収の瞬間の惑星の光り方
+    /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
+       元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
+       vanish=消え方(fade=フェード/sink=惑星の後ろへ沈む/shrink=点まで縮む/blur=ぼかし)
+       fadeAt=透過し始め(収縮の中の割合) / fadeTo=吸収の瞬間に残す濃さ / spinUp=収縮中の回転アップ */
+    reel:   { T: 4.8, inDur: 0.14, shrinkAt: 0.30, endAt: 0.72, depth: 0.95, moveDur: 0.16,
+              vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 0,   /* 2026-08-27 ヒデさん指定: スピンは既定オフ */
+              flow: 'down' },   // 流れの向き: down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収(上がって見える)
+    /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
+    spiral: { count: 12, life: 5, speed: 1, size: 0.62, stay: 3 },
+    /* waves(⑩): リズム制(ヒデさん指定 2026-08-26)。count本がgap秒おきに出て吸収され、rest秒休んでまた次のグループ。
+       T=1本が外→惑星まで流れる秒数 / count=1グループの本数 / gap=本と本の間隔(秒) / rest=グループ後の休み(秒)
+       inK=出てくるフェードインの長さ(割合) / outAt=フェードアウト=取り込まれ始めるタイミング(割合) */
+    waves:  { T: 4.2, count: 3, gap: 0.9, rest: 1.6, alpha: 0.55, from: 1.12, inK: 0.12, outAt: 0.78 },
+    /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
+       一部だけが順に惑星へ吸われるので、輪の形は保たれる。ghost=薄い軌道線を残すか */
+    /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
+    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0 },
+    /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
+       style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット */
+    /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
+    mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6,
+              lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6 },
+    /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
+       melt = 惑星の内側での溶かし方(fade / blur / shrink) */
+    link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, T: 3.2, vanishK: 0.35 },
+    /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
+    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4 },
+  },
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
   patterns: {
@@ -2519,7 +2701,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v74';   /* 2026-08-26 スナップ(掴み直し)撤去＋既定を固定追従なしに。古い保存値をリセットして新既定を確実に反映 */
+const STORAGE_KEY = 'anyflow-embed-anim-v80';   /* 2026-08-26 ジャイロクロス既定/パネル整理(各項目リセット・小見出しアコーディオン)/④⑤とパース切替を廃止 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -2565,11 +2747,45 @@ function load() {
          旧既定(96)のまま保存されている＝触っていない場合だけ、新しい既定に載せ替える */
       if (merged.marquee && merged.marquee.gap === 96) merged.marquee.gap = DEFAULTS.marquee.gap;
   if (typeof merged.replay !== 'boolean') merged.replay = DEFAULTS.replay;
+  /* 【2026-08-27】止まったまま保存された古い値の救済。開いた時は必ず再生状態にする */
+  merged.running = true;
   merged.orbitEase = merged.orbitEase || DEFAULTS.orbitEase;
   merged.dotGap = merged.dotGap || DEFAULTS.dotGap;
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
+  if (typeof merged.converge !== 'string') merged.converge = DEFAULTS.converge;   /* 2026-08-26 集約アニメ */
+  merged.conv = {                                                                  /* 集約アニメの調整つまみ */
+    ...DEFAULTS.conv, ...(s.conv || {}),
+    reel:   { ...DEFAULTS.conv.reel,   ...((s.conv && s.conv.reel)   || {}) },
+    spiral: { ...DEFAULTS.conv.spiral, ...((s.conv && s.conv.spiral) || {}) },
+    waves:  { ...DEFAULTS.conv.waves,  ...((s.conv && s.conv.waves)  || {}) },
+    accre:  { ...DEFAULTS.conv.accre,  ...((s.conv && s.conv.accre)  || {}) },
+    beads:  { ...DEFAULTS.conv.beads,  ...((s.conv && s.conv.beads)  || {}) },
+    mesh:   { ...DEFAULTS.conv.mesh,   ...((s.conv && s.conv.mesh)   || {}) },
+    link:   { ...DEFAULTS.conv.link,   ...((s.conv && s.conv.link)   || {}) },
+  };
+  if (typeof merged.orbitLayout !== 'string') merged.orbitLayout = DEFAULTS.orbitLayout;
+  if (!Array.isArray(merged.orbitPresets)) merged.orbitPresets = [];
+  /* 【2026-08-26 ヒデさん指定】直接編集でいじった変形(位置/サイズ/傾き/つぶし)を一度だけ既定へ戻す。
+     他の調整は残す。1回だけ走らせるため印を localStorage に置く */
+  if (!localStorage.getItem('anyflow-reset-transform-20260827')) {
+    for (const k of ['outer', 'inner']) {
+      for (const key of ['dx', 'dy', 'scale', 'angle', 'flat']) merged.orbits[k][key] = DEFAULTS.orbits[k][key];
+    }
+    merged.planet = { ...DEFAULTS.planet };
+    localStorage.setItem('anyflow-reset-transform-20260827', '1');
+  }
+  /* 廃止した案(⑪糸・⑭⑯〜⑳)を選んだままなら既定へ寄せる (2026-08-26) */
+  /* ⚠️ ここは CONVERGES(const)の定義より前に走るので、CONVERGES を参照すると TDZ で例外になり、
+     【保存した設定がまるごと読めなくなる】(2026-08-26 に実際に踏んだ)。キーは直書きで判定する。 */
+  if (!['off', 'reel', 'spiral', 'accre', 'waves', 'mesh', 'beads', 'duplex'].includes(merged.converge)) {
+    merged.converge = DEFAULTS.converge;
+  }
+  /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
+  if (merged.converge === 'vein' || merged.converge === 'pulse') merged.converge = DEFAULTS.converge;
+  if (merged.conv.reel && !['clip', 'fit'].includes(merged.conv.reel.vanish)) merged.conv.reel.vanish = 'clip';
+  if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
   merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
@@ -2623,6 +2839,16 @@ function load() {
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
       if (merged.sway < 1 || merged.sway > SWAYS.length) merged.sway = 1;
+      /* 【2026-08-27 ヒデさん指定】ゆらぎは既定オフ。保存値が残っている人も一度だけオフに揃える */
+      if (!localStorage.getItem('anyflow-sway-off-20260827')) {
+        merged.sway = 1;
+        localStorage.setItem('anyflow-sway-off-20260827', '1');
+      }
+      /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
+      if (!localStorage.getItem('anyflow-spin-off-20260827')) {
+        if (merged.conv && merged.conv.reel) merged.conv.reel.spinUp = 0;
+        localStorage.setItem('anyflow-spin-off-20260827', '1');
+      }
       if (merged.dither < 1 || merged.dither > DITHERS.length) merged.dither = 1;
       if (merged.dotGap < 1 || merged.dotGap > DOT_GAPS.length) merged.dotGap = DEFAULTS.dotGap;
       return merged;
@@ -2636,7 +2862,13 @@ function load() {
   }
   return structuredClone(DEFAULTS);
 }
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(params)); }
+/* ⚠️【2026-08-27 事故対応】直接編集をオンにすると再生を止める(params.running=false)。
+   その状態のまま保存すると【次に開いた時に何も動かず＝画面が真っ白】になる(実際に発生)。
+   一時停止は"今だけの状態"なので、保存には必ず再生中として書き出す。 */
+function save() {
+  const out = { ...params, running: true };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+}
 /* ===== 保存の考え方 (2026-08-19 ヒデさん指定) =====
    以前は「触った瞬間に保存」だったので、ちょっと試しただけの値が
    そのまま次回の既定になってしまい、元に戻したいのに戻せなかった。
@@ -2689,13 +2921,15 @@ const dotK = DOTS.map(() => 1);
 
 /* 現在の軌道ジオメトリ = カンプ基準値 × パネル設定 (サイズ/角度/位置) + ゆれ */
 function orbitGeom(key) {
-  const b = ELLIPSES[key];
+  const b = orbitBase(key);   /* レイアウト(カンプ通り/ジャイロクロス)の基準値 */
   const p = params.orbits[key];
   let wobble = 0;
   if (p.wobbleAmp > 0 && p.wobblePeriod > 0) {
     wobble = p.wobbleAmp * Math.sin(2 * Math.PI * elapsed / p.wobblePeriod + p.wobblePhase * Math.PI / 180);
   }
-  if (SWAYS[(params.sway || 1) - 1].id === 'cross') {
+  /* ①収縮ループ中は軌道を固定 (傾き・クロスなし。ヒデさん指定 2026-08-26) */
+  const convReelFixed = params.kvDesign === 'planet' && params.converge === 'reel';
+  if (!convReelFixed && SWAYS[(params.sway || 1) - 1].id === 'cross') {
     /* クロス: 2本が逆方向に傾く。
        ⚠️ 最初からクロスしているとカンプと違うので、はじめは平行(傾き0)にしておき、
           crossLead 秒かけてじわじわ交差しはじめる */
@@ -2704,8 +2938,8 @@ function orbitGeom(key) {
   }
   return {
     cx: b.cx + p.dx, cy: b.cy + p.dy,
-    rx: b.rx * p.scale, ry: b.ry * p.scale,
-    rot: ROTDEG + p.angle + wobble,
+    rx: b.rx * p.scale, ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat),   /* flat=輪の潰し(ドラッグで変えられる) */
+    rot: b.rot + p.angle + wobble,   /* レイアウトごとの傾き(ジャイロクロスは2本が逆向き) */
   };
 }
 
@@ -2719,6 +2953,1063 @@ function posOn(g, deg) {
     front: Math.sin(t) > 0,   // 楕円ローカルで下半分 = 手前側
   };
 }
+
+/* ===== 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) =====
+   大前提: デザインは V1.0 のまま一切変えない。既存の軌道・惑星・ドットに「動き」だけ足す。
+   （既存パーツと同じ見た目の複製を増やすのは OK: スパイラルの粒・波の輪）
+   'reel'   ①収縮ループ: 外の輪は常に固定で残し、内の輪がドットごと惑星へ収縮→吸収(フェード)→
+            新しい輪がフェードインして再生。傾き(シーソー)・クロスはさせない(固定)。
+   'spiral' ②スパイラル: 通常の周回はそのまま。追加の粒が螺旋で半径を縮めて吸い込まれる。
+   'pulse'  ④パルス: 7個のドットが鼓動の周期で一斉に惑星へ収束→吸収→軌道上へ再出現。
+   'waves'  ⑩内向きの波: 軌道と同じ見た目の輪が外から生まれて内へ縮み、惑星に届いて消える。 */
+const CONVERGES = [
+  { key: 'off',    name: '周回のみ' },
+  /* 2026-08-26 ヒデさん指定で連番を1から振り直し */
+  /* 名前は「何が起きるか」が分かる言い方にする(2026-08-27 ヒデさん指定) */
+  { key: 'reel',   name: '①輪が縮んで吸収' },
+  { key: 'spiral', name: '②粒が渦で吸収' },
+  { key: 'accre',  name: '③粒の渦が回る' },
+  { key: 'waves',  name: '④輪が流れ込む' },
+  { key: 'mesh',   name: '⑤網でつながる' },
+  { key: 'beads',  name: '⑥点が並ぶ軌道' },
+  { key: 'duplex', name: '⑦線で行き来' },
+];
+/* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
+const CONV_LINKED = ['duplex'];
+function convOn() { return params.kvDesign === 'planet' && (params.converge || 'off') !== 'off'; }
+const convDotF = DOTS.map(() => 1);   // ドットごとの「惑星への寄せ」(1=軌道上 → 0=惑星中心)
+const convDotA = DOTS.map(() => 1);   // ドットごとの濃さ倍率 (集約アニメ用)
+let convGlow = 0;                     // 吸収の瞬間、惑星がふっと明るくなる(減衰)
+let convLastT = null;                 // elapsed 基準の dt (一時停止に追従)
+let convWasOn = false;
+let convLastMode = null;              // モード切替の検知 (前のモードの粒・輪の片付け用)
+const convSStep = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+/* 惑星(#sphere)の中心 = 集約先。CSS(left306.06 top112.32 260px角) + パネルの惑星オフセット */
+function convCenter() {
+  const pl = params.planet || {};
+  return { x: 306.06 + 130 + (pl.dx || 0), y: 112.32 + 130 + (pl.dy || 0) };
+}
+/* 楕円 g を「惑星中心へ f で寄せた」ジオメトリ (f=1 そのまま → f→0 惑星中心で消える) */
+function convGeom(g, f) {
+  const c = convCenter();
+  return { cx: c.x + (g.cx - c.x) * f, cy: c.y + (g.cy - c.y) * f,
+           rx: g.rx * f, ry: g.ry * f, rot: g.rot };
+}
+/* --- 追加パーツのプール (見た目は既存パーツの複製) --- */
+let convSpiral = null;   // ②の粒: 既存ドットと同じ circle を back/front に1個ずつ
+let convWaves = null;    // ⑩の輪: 既存軌道と同じ stroke(グラデ) の ellipse (奥レイヤー)
+let convSpiralBuilt = null;   // 作った時の {count, size}。パネルで変わったら作り直す
+function convSpiralPool() {
+  const S = params.conv.spiral;
+  const n = Math.max(1, Math.round(S.count));
+  if (convSpiral && convSpiralBuilt && (convSpiralBuilt.count !== n || convSpiralBuilt.size !== S.size)) {
+    for (const p of convSpiral) { p.back.remove(); p.front.remove(); }
+    convSpiral = null;
+  }
+  if (convSpiral) return convSpiral;
+  convSpiralBuilt = { count: n, size: S.size };
+  const COLORS = ['#0EBBFF', '#FF5D97'];   // 既存ドットと同じ2色 (グレーはデータ感が無いので除外)
+  convSpiral = [];
+  for (let i = 0; i < n; i++) {
+    const mk = () => {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', (DOT_R * S.size).toFixed(3));   // 大きさはパネルから
+      c.setAttribute('fill', COLORS[i % 2]);
+      c.setAttribute('opacity', '0');
+      return c;
+    };
+    const back = mk(), front = mk();
+    dotsBackG.appendChild(back); dotsFrontG.appendChild(front);
+    /* 【2026-08-26 ヒデさん指定】粒はまず軌道上(f=1)を回り、hold 秒たったら吸い込まれ始める */
+    convSpiral.push({ back, front, ell: i % 2 ? 'inner' : 'outer',
+      deg: Math.random() * 360, f: 1, mode: 0,
+      age: Math.random() * Math.max(0.5, S.stay),                    // 出のタイミングをばらす
+      hold: Math.max(0.3, S.stay * (0.5 + Math.random())),
+      spd: (28 + Math.random() * 42), rate: 1 / (S.life * (0.7 + Math.random() * 0.6)) });
+  }
+  return convSpiral;
+}
+let convWaveBuilt = 0;   // 作った本数。パネルで変わったら作り直す
+function convWavePool() {
+  const W = params.conv.waves;
+  const n = Math.max(1, Math.round(W.count));
+  if (convWaves && convWaveBuilt !== n) {
+    for (const w of convWaves) w.el.remove();
+    convWaves = null;
+  }
+  if (convWaves) return convWaves;
+  convWaveBuilt = n;
+  convWaves = [];
+  const host = dotsBackG.parentNode;   // 奥レイヤーSVG (輪は惑星の後ろへ沈んで消える)
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS(SVG_NS, 'ellipse');
+    const shape = i % 2 ? 'inner' : 'outer';
+    el.setAttribute('stroke', shape === 'inner' ? 'url(#gInnerB)' : 'url(#gOuterB)');   // 既存軌道と同じグラデ
+    el.setAttribute('stroke-width', '3');
+    el.setAttribute('fill', 'none');
+    el.setAttribute('opacity', '0');
+    host.insertBefore(el, dotsBackG);
+    convWaves.push({ el, shape, idx: i });
+  }
+  return convWaves;
+}
+/* ===== 2026-08-26 追加: 糸 / メッシュ / ドット軌道 / 双方向(ラインで結ぶ7案) =====
+   すべて「既存のドットと同じ circle」と「path(線)」だけで作る。惑星と軌道の見た目は変えない。 */
+const CONV_BLUE = '#0EBBFF', CONV_PINK = '#FF5D97';
+let convMesh = null, convBeads = null;   // ⑫メッシュ / ⑬ドット軌道 の状態
+let convLine = null;   // 線(path)のプール。奥レイヤーに置く(惑星の後ろを通る線が自然に隠れる)
+function convLinePool(n) {
+  if (convLine && convLine.length !== n) { for (const el of convLine) el.remove(); convLine = null; }
+  if (convLine) return convLine;
+  convLine = [];
+  const host = dotsBackG.parentNode;
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS(SVG_NS, 'path');
+    el.setAttribute('fill', 'none'); el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('opacity', '0');
+    host.insertBefore(el, dotsBackG);
+    convLine.push(el);
+  }
+  return convLine;
+}
+/* 粒(circle)のプール。【2026-08-26 ヒデさん指定】惑星の後ろに回ったものは透けさせず消すため、
+   奥(layer-back)と手前(layer-front)に1個ずつ持ち、front 判定で描くほうを切り替える。
+   奥レイヤーは惑星canvas(z-index:2)の下にあるので、惑星に隠れて自然に見えなくなる。 */
+let convPkt = null;
+function convPktPool(n) {
+  if (convPkt && convPkt.length !== n) { for (const p of convPkt) { p.el.remove(); p.back.remove(); } convPkt = null; }
+  if (convPkt) return convPkt;
+  convPkt = [];
+  for (let i = 0; i < n; i++) {
+    const mk = () => { const c = document.createElementNS(SVG_NS, 'circle'); c.setAttribute('opacity', '0'); return c; };
+    const el = mk(), back = mk();
+    dotsFrontG.appendChild(el); dotsBackG.appendChild(back);
+    convPkt.push({ el, back, k: -1, dir: 1, li: 0, hue: 0 });
+  }
+  return convPkt;
+}
+/* 粒を1つ描く。front=false なら奥レイヤーへ回して惑星に隠れさせる */
+function pktSet(pk, x, y, r, fill, op, front) {
+  for (const el of [pk.el, pk.back]) {
+    el.setAttribute('cx', x); el.setAttribute('cy', y);
+    el.setAttribute('r', r); el.setAttribute('fill', fill);
+  }
+  pk.el.setAttribute('opacity', front === false ? '0' : String(op));
+  pk.back.setAttribute('opacity', front === false ? String(op) : '0');
+}
+function convHideLines() { if (convLine) for (const el of convLine) el.setAttribute('opacity', '0'); }
+function convHidePkts() { if (convPkt) for (const p of convPkt) { p.el.setAttribute('opacity', '0'); p.back.setAttribute('opacity', '0'); p.k = -1; } }
+/* ドットの今の位置 (convFrame は renderFrame の描画前に走るので自前で出す) */
+function convDotPos(geoms, i) {
+  const d = DOTS[i];
+  return posOn(geoms[d.ellipse], patternDeg(d, i, params.dots[i]));
+}
+/* 惑星⇄点 を結ぶゆるい曲線。curve で反りの強さ */
+function convCurve(a, b, curve) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  return { x: mx - dy * curve, y: my + dx * curve };   // 中点を法線方向へずらす
+}
+function convBez(p0, pc, p1, t) {
+  const u = 1 - t;
+  return { x: u * u * p0.x + 2 * u * t * pc.x + t * t * p1.x,
+           y: u * u * p0.y + 2 * u * t * pc.y + t * t * p1.y };
+}
+function convPathD(p0, pc, p1) { return `M${p0.x.toFixed(1)},${p0.y.toFixed(1)} Q${pc.x.toFixed(1)},${pc.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`; }
+
+/* ⑦降着円盤: 惑星を中心にした薄い円盤を無数の微粒子が回りながら内へ落ちる */
+let convAccre = null;
+function convAccrePool() {
+  const A = params.conv.accre;
+  const n = Math.max(10, Math.round(A.count));
+  if (convAccre && (convAccre.length !== n || convAccre.builtSize !== A.size)) {
+    for (const p of convAccre) { p.back.remove(); p.front.remove(); }
+    convAccre = null;
+  }
+  if (convAccre) return convAccre;
+  convAccre = [];
+  convAccre.builtSize = A.size;
+  for (let i = 0; i < n; i++) {
+    const color = i % 2 ? '#FF5D97' : '#0EBBFF';
+    const mk = () => {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', (DOT_R * params.conv.accre.size).toFixed(3));
+      c.setAttribute('fill', color); c.setAttribute('opacity', '0');
+      return c;
+    };
+    const back = mk(), front = mk();
+    dotsBackG.appendChild(back); dotsFrontG.appendChild(front);
+    convAccre.push({ back, front,
+      ang: Math.random() * 360, f: 0.25 + Math.pow(Math.random(), 0.7) * 0.95,
+      tw: Math.random() * Math.PI * 2 });
+  }
+  return convAccre;
+}
+function convHidePools() {
+  if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
+  if (convWaves) for (const w of convWaves) w.el.setAttribute('opacity', '0');
+  if (convAccre) for (const p of convAccre) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
+  convHideLines(); convHidePkts();
+}
+/* 輪(実物の ellipse SVG)の濃さ。reel の循環(convReelA)と表示オンオフ(conv.showOuter/Inner)を
+   掛け合わせて renderFrame で書く。奥(b)と手前(f)を別々に持てる(消え方「沈む」で手前だけ透かす)。
+   blur は消え方「ぼかし」用。書き込みは変わった時だけ */
+const convReelA = { outer: { b: 1, f: 1, blur: 0 }, inner: { b: 1, f: 1, blur: 0 } };
+function convReelAReset() {
+  for (const k of ['outer', 'inner']) { convReelA[k].b = 1; convReelA[k].f = 1; convReelA[k].blur = 0; }
+}
+const convRingWritten = { outer: '', inner: '' };
+function applyRingAlpha(key, aB, aF) {
+  const sig = aB.toFixed(3) + '|' + aF.toFixed(3);
+  if (sig === convRingWritten[key]) return;
+  convRingWritten[key] = sig;
+  const ells = orbitSvgEls[key].ells;   // [奥, 手前]
+  ells[0].setAttribute('opacity', aB.toFixed(3));
+  ells[1].setAttribute('opacity', aF.toFixed(3));
+}
+const convRingBlurWritten = { outer: -1, inner: -1 };
+function applyRingBlur(key, px) {
+  if (Math.abs(px - convRingBlurWritten[key]) < 0.05) return;
+  convRingBlurWritten[key] = px;
+  const v = px > 0.05 ? `blur(${px.toFixed(2)}px)` : '';
+  for (const el of orbitSvgEls[key].ells) el.style.filter = v;
+}
+const convDotSpin = DOTS.map(() => 0);   // 収縮中の回転アップ(度)。ドットの角度に足す
+/* 消え方「前面カット」用: 手前レイヤーの輪から、惑星に重なる部分だけをマスクで切り取る。
+   輪が惑星の中へ滑り込んで見える(はみ出し対策。ヒデさん指摘 2026-08-26) */
+let convMaskEl = null, convMaskCircle = null;
+const convMaskOn = { outer: false, inner: false };
+function convSetClip(key, on) {
+  if (convMaskOn[key] === on) return;
+  convMaskOn[key] = on;
+  const front = orbitSvgEls[key].ells[1];   // [奥, 手前] の手前
+  if (on) {
+    if (!convMaskEl) {
+      const svg = front.ownerSVGElement;
+      const defs = svg.querySelector('defs');
+      convMaskEl = document.createElementNS(SVG_NS, 'mask');
+      convMaskEl.setAttribute('id', 'convPlanetHole');
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('x', '-300'); r.setAttribute('y', '-300');
+      r.setAttribute('width', '1600'); r.setAttribute('height', '1300');
+      r.setAttribute('fill', 'white');
+      convMaskCircle = document.createElementNS(SVG_NS, 'circle');
+      convMaskCircle.setAttribute('fill', 'black');
+      convMaskEl.appendChild(r); convMaskEl.appendChild(convMaskCircle);
+      defs.appendChild(convMaskEl);
+    }
+    front.setAttribute('mask', 'url(#convPlanetHole)');
+  } else front.removeAttribute('mask');
+}
+function convPlanetR() { return 130 * ((params.planet && params.planet.scale) || 1); }
+/* 【2026-08-26】どの案でも効く「ドットの大きさ」と「遠近感」。
+   画面の下ほど手前＝大きい。cy/ry は基準にする楕円の中心と縦半径。 */
+function convDotK(y, cy, ry) {
+  const C = params.conv || {};
+  const base = C.dotSize == null ? 1 : C.dotSize;
+  if ((C.dotPersp || 'flat') !== 'persp') return base;
+  const k = clamp01(((y - cy) / Math.max(1, ry) + 1) / 2) * 2 - 1;   // -1(奥) 〜 +1(手前)
+  return base * (1 + k * (C.perspK == null ? 0.45 : C.perspK));
+}
+/* 毎フレーム: モードに応じて geoms とドット係数を書き換える (renderFrame から呼ぶ) */
+function convFrame(geoms) {
+  const dt = convLastT == null ? 0 : Math.max(0, elapsed - convLastT);
+  convLastT = elapsed;
+  convGlow *= Math.exp(-dt * 2.4);
+  const on = convOn();
+  if (!on) {
+    if (convWasOn) {   // 後片付け (モードや案を切り替えた時に一度だけ)
+      for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; convDotSpin[i] = 0; }
+      convReelAReset(); applyRingBlur('outer', 0); applyRingBlur('inner', 0);
+      convSetClip('outer', false); convSetClip('inner', false);
+      convHidePools(); convGlow = 0;
+      if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
+      convWasOn = false;
+    }
+    return;
+  }
+  convWasOn = true;
+  const mode = params.converge;
+  const C = params.conv;
+  if (convLastMode !== mode) { convHidePools(); convLastMode = mode; }   // 切替時に前のモードの粒・輪を片付ける
+  /* 惑星の「受け止め」= 明るさ。WebGL/フォールバック両対応の CSS filter で */
+  if (sphereCanvasEl) {
+    const b = 1 + Math.min(convGlow, 1) * (C.glow || 0);
+    sphereCanvasEl.style.filter = b > 1.005 ? `brightness(${b.toFixed(3)})` : '';
+  }
+
+  if (mode === 'reel') {
+    /* 【2026-08-26 循環版・ヒデさん指定】輪は使い回しで循環する:
+       内の位置の輪が収縮して吸収されたら、外の輪が内の位置へ同じサイズになって移動し、
+       元の外の位置には吸収された輪が新しくフェードインで出現。世代(gen)ごとに
+       実物の2本(inner/outer 要素)が役割を交代し続ける = ベルトコンベアのような循環。 */
+    const R = C.reel;
+    const T = Math.max(1, R.T);
+    const gen = Math.floor(elapsed / T), ph = (elapsed % T) / T;
+    const sAt = Math.max(0.02, R.shrinkAt);                            // 収縮の開始
+    const eAt = Math.max(sAt + 0.08, Math.min(0.9, R.endAt));          // 吸収し終わり
+    const slideLen = Math.min(Math.max(0.05, R.moveDur || 0.16), (1 - eAt) * 0.9);
+    const zStart = eAt + slideLen * 0.4;                               // 新しい輪が出はじめる
+    const zLen = Math.max(0.04, Math.min(R.inDur, 1 - zStart - 0.01));
+    const S_out = geoms.outer, S_in = geoms.inner;                     // スロット(位置)のジオメトリ
+    /* 流れの向き(ヒデさん指定 2026-08-26): down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収
+       slotA=吸収される側のスロット / slotB=新しい輪が生まれる側のスロット */
+    const up = R.flow === 'up';
+    const slotA = up ? S_out : S_in;
+    const slotB = up ? S_in : S_out;
+    const shrinkKey = gen % 2 ? 'outer' : 'inner';                     // 今回吸収される実物の要素
+    const slideKey = shrinkKey === 'inner' ? 'outer' : 'inner';
+    const planetR = convPlanetR();
+    let effDepth = R.depth;
+    if (R.vanish === 'shrink') effDepth = Math.max(R.depth, 0.995);
+    /* はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まない */
+    if (R.vanish === 'fit') effDepth = Math.min(R.depth, 1 - planetR / Math.max(1, slotA.rx));
+    /* --- 吸収される輪 --- */
+    let gS = slotA, aB = 1, aF = 1, blur = 0, spinDeg = 0, aDot = 1, clipOn = false;
+    if (ph < sAt) { }
+    else if (ph < eAt) {
+      const k = convSStep((ph - sAt) / (eAt - sAt));
+      gS = convGeom(slotA, 1 - k * effDepth);
+      spinDeg = k * (R.spinUp || 0) * 180;                             // 縮むほど速く回る(角運動量ふう)
+      /* 透過: fadeAt(収縮の中の割合)から fadeTo(残す濃さ)へ */
+      const fs = sAt + (eAt - sAt) * clamp01(R.fadeAt);
+      const fk = ph > fs ? convSStep((ph - fs) / Math.max(0.001, eAt - fs)) : 0;
+      const fadeA = 1 - (1 - R.fadeTo) * fk;
+      if (R.vanish === 'sink') { aB = 1; aF = fadeA; }                 // 手前だけ透ける=惑星の後ろへ沈む
+      else if (R.vanish === 'shrink') { aB = aF = 1; }                 // 透けずに点まで縮んで消える
+      else if (R.vanish === 'blur') { aB = aF = fadeA; blur = fk * 5; }
+      else if (R.vanish === 'early') {
+        /* 早め透過: 輪の横幅が惑星に重なる前に、サイズ連動で透け切る(はみ出しが見えない) */
+        const rxNow = slotA.rx * (1 - k * effDepth);
+        const kk = 1 - clamp01((rxNow - planetR * 1.05) / (planetR * 1.6));
+        aB = aF = 1 - (1 - R.fadeTo) * convSStep(kk);
+      }
+      else if (R.vanish === 'clip') { aB = aF = fadeA; clipOn = true; }// 前面カット=惑星に重なる部分だけ切る
+      else { aB = aF = fadeA; }                                        // fade(既定) / fit も同じ透過
+      aDot = Math.max(aB, aF);
+    } else if (ph < zStart) { gS = slotB; aB = aF = 0; aDot = 0; }     // 消えている間(生まれる側で待機)
+    else { gS = slotB; aB = aF = aDot = convSStep((ph - zStart) / zLen); }   // 新しい輪として出現
+    convSetClip(shrinkKey, clipOn);
+    convSetClip(shrinkKey === 'inner' ? 'outer' : 'inner', false);
+    if (clipOn && convMaskCircle) {
+      const cc = convCenter();
+      convMaskCircle.setAttribute('cx', cc.x); convMaskCircle.setAttribute('cy', cc.y);
+      convMaskCircle.setAttribute('r', planetR);
+    }
+    /* --- 生まれる側 → 吸収される側 へ移る輪 --- */
+    let gM = slotB;
+    if (ph >= eAt && ph < eAt + slideLen) {
+      const k = convSStep((ph - eAt) / slideLen);
+      gM = { cx: slotB.cx + (slotA.cx - slotB.cx) * k, cy: slotB.cy + (slotA.cy - slotB.cy) * k,
+             rx: slotB.rx + (slotA.rx - slotB.rx) * k, ry: slotB.ry + (slotA.ry - slotB.ry) * k,
+             rot: slotB.rot + (slotA.rot - slotB.rot) * k };
+    } else if (ph >= eAt + slideLen) gM = slotA;
+    if (ph >= eAt && ph - (dt / T) < eAt) convGlow = Math.min(1.2, convGlow + 0.7);
+    geoms[shrinkKey] = gS; geoms[slideKey] = gM;                       // ドットも輪ごと動く
+    convReelA[shrinkKey].b = aB; convReelA[shrinkKey].f = aF; convReelA[shrinkKey].blur = blur;
+    convReelA[slideKey].b = 1;  convReelA[slideKey].f = 1;  convReelA[slideKey].blur = 0;
+    for (let i = 0; i < DOTS.length; i++) {
+      convDotF[i] = 1;                                                 // 位置は geoms 側で寄せ済み
+      const isShrink = DOTS[i].ellipse === shrinkKey;
+      convDotA[i] = isShrink ? aDot : 1;
+      convDotSpin[i] = isShrink ? spinDeg : 0;                         // 収縮中も回り続ける(+アップ)
+    }
+  } else {
+    convReelAReset();
+    convSetClip('outer', false); convSetClip('inner', false);
+    for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; convDotSpin[i] = 0; }
+  }
+
+  if (mode === 'spiral') {
+    /* 【2026-08-26 ヒデさん指定】粒はまず軌道上を回り(mode0)、hold秒たったら
+       螺旋で惑星へ吸い込まれ(mode1)、吸収されたらまた軌道上に生まれ直す */
+    const S = C.spiral;
+    const pool = convSpiralPool();
+    for (const p of pool) {
+      p.deg += p.spd * S.speed * dt * (params.direction || 1);         // 回転の速さはパネルから
+      p.age += dt;
+      if (p.mode === 0) {
+        p.f = 1;                                                       // 軌道上に乗って回る
+        if (p.age >= p.hold) p.mode = 1;
+      } else {
+        p.f -= p.rate * dt;                                            // 螺旋で吸い込まれる
+        if (p.f <= 0.12) {                                             // 吸収 → 軌道上に生まれ直す
+          convGlow = Math.min(1.2, convGlow + 0.18);
+          p.mode = 0; p.age = 0; p.f = 1;
+          p.hold = Math.max(0.3, S.stay * (0.5 + Math.random()));
+          p.deg = Math.random() * 360;
+          p.ell = Math.random() < 0.5 ? 'inner' : 'outer';
+          p.spd = 28 + Math.random() * 42;
+          p.rate = 1 / (S.life * (0.7 + Math.random() * 0.6));         // 吸い込みの秒数はパネルから
+        }
+      }
+      const fv = Math.max(0.12, Math.min(1, p.f));
+      let al = 1;
+      if (p.mode === 0 && p.age < 0.5) al = p.age / 0.5;               // 軌道上にフェードイン
+      else if (fv < 0.26) al = (fv - 0.12) / 0.14;                     // 惑星際でフェードアウト
+      const pos = posOn(convGeom(geoms[p.ell], fv), p.deg);
+      const op = clamp01(al) * 0.9;
+      const rr = (DOT_R * S.size * convDotK(pos.y, geoms[p.ell].cy, geoms[p.ell].ry)).toFixed(2);
+      [p.back, p.front].forEach(el => { el.setAttribute('cx', pos.x); el.setAttribute('cy', pos.y); el.setAttribute('r', rr); el.setAttribute('opacity', op.toFixed(3)); });
+      p.front.style.display = pos.front ? '' : 'none';
+      p.back.style.display = pos.front ? 'none' : '';
+    }
+  } else if (mode === 'waves') {
+    /* ⑩リズム制(ヒデさん指定): count本が gap秒おきに出て吸収され、rest秒休んでまた次のグループ */
+    const W = C.waves;
+    const pool = convWavePool();
+    const T = Math.max(1, W.T);
+    const cycle = (pool.length - 1) * W.gap + T + Math.max(0, W.rest); // 1グループ+休みの長さ
+    const base = elapsed % cycle;
+    for (const w of pool) {
+      const lt = base - w.idx * W.gap;                                 // この輪のローカル時間
+      if (lt < 0 || lt >= T) { w.el.setAttribute('opacity', '0'); continue; }
+      const ph = lt / T;
+      const f = W.from - convSStep(ph) * (W.from - 0.12);              // 外(from)から惑星(0.12)へ
+      let a = W.alpha;
+      const inK = Math.max(0.02, W.inK), outAt = Math.min(0.96, W.outAt);
+      if (ph < inK) a *= ph / inK;                                     // フェードインの長さ(パネル)
+      else if (ph > outAt) a *= Math.max(0, (1 - ph) / (1 - outAt));   // 取り込まれ始め(パネル)
+      if (ph > 0.94) convGlow = Math.min(1.2, convGlow + 0.02);        // 届いた分だけじわっと
+      const g = convGeom(geoms[w.shape], Math.max(0.12, f));
+      w.el.setAttribute('cx', g.cx); w.el.setAttribute('cy', g.cy);
+      w.el.setAttribute('rx', g.rx); w.el.setAttribute('ry', g.ry);
+      w.el.setAttribute('transform', `rotate(${g.rot} ${g.cx} ${g.cy})`);
+      w.el.setAttribute('opacity', a.toFixed(3));
+    }
+  } else if (mode === 'accre') {
+    /* ⑦降着円盤: 惑星を中心にした薄い円盤。微粒子が回りながら内へ落ちて取り込まれる */
+    const A = C.accre;
+    const pool = convAccrePool();
+    const cc = convCenter();
+    const disk = { cx: cc.x, cy: cc.y, rx: orbitBase('inner').rx * A.scale, ry: orbitBase('inner').rx * A.scale * 0.335, rot: geoms.inner.rot };
+    for (const p of pool) {
+      p.ang += (0.5 / Math.max(0.2, p.f)) * A.speed * 60 * dt * (params.direction || 1);
+      p.f -= 0.022 * A.fall * dt;
+      if (p.f <= 0.16) { convGlow = Math.min(1.2, convGlow + 0.10);
+        p.f = 1.05 + Math.random() * 0.15; p.ang = Math.random() * 360; }
+      const pos = posOn(disk, p.ang);
+      const fpos = { x: cc.x + (pos.x - cc.x) * p.f, y: cc.y + (pos.y - cc.y) * p.f, front: pos.front };
+      const twk = 0.45 + A.twinkle * Math.sin(elapsed * 2 + p.tw);
+      const near = clamp01((0.34 - p.f) / 0.18);           // 惑星際でフェードアウト
+      const al = clamp01(twk * (1 - near));
+      const rr = (DOT_R * A.size * convDotK(fpos.y, cc.y, disk.ry)).toFixed(2);
+      [p.back, p.front].forEach(el => { el.setAttribute('cx', fpos.x); el.setAttribute('cy', fpos.y);
+        el.setAttribute('r', rr); el.setAttribute('opacity', al.toFixed(3)); });
+      p.front.style.display = fpos.front ? '' : 'none';
+      p.back.style.display = fpos.front ? 'none' : '';
+    }
+  } else if (mode === 'mesh') {
+    /* ⑫メッシュ (2026-08-26 改良): 3つの見た目 × ランダムに漂う動き。
+       organic=ふわふわ漂う / constellation=星座(明滅・線は近いものだけ) / grid=格子状のネット */
+    const M = C.mesh, cc = convCenter();
+    const n = Math.max(3, Math.round(M.nodes));
+    const style = M.style || 'organic';
+    if (!convMesh || convMesh.nodes.length !== n || convMesh.style !== style) {
+      convMesh = { style, nodes: [], pk: [], next: 0 };
+      for (let i = 0; i < n; i++) {
+        /* 位相と速さを個別に持たせて、繰り返しに見えない不規則な漂いを作る */
+        convMesh.nodes.push({
+          a: (i / n) * Math.PI * 2, r: 0.5 + ((i * 37) % 10) / 10 * 0.5,
+          p1: Math.random() * 6.28, p2: Math.random() * 6.28, p3: Math.random() * 6.28,
+          s1: 0.21 + Math.random() * 0.22, s2: 0.13 + Math.random() * 0.19, s3: 0.31 + Math.random() * 0.26,
+          gx: (i % 4) / 3, gy: Math.floor(i / 4) / Math.max(1, Math.ceil(n / 4) - 1 || 1),
+          c: i % 2 ? CONV_PINK : CONV_BLUE, tw: Math.random() * 6.28,
+        });
+      }
+    }
+    const RX = orbitBase('outer').rx * 0.95, RY = RX * 0.5;
+    const amp = M.random * 46;
+    const np = k => {
+      const q = convMesh.nodes[k];
+      /* 周期の違う3つの波を重ねた、なめらかな擬似ランダム(毎フレーム乱数だとガタつく) */
+      const wx = Math.sin(elapsed * q.s1 + q.p1) * 0.6 + Math.sin(elapsed * q.s3 + q.p3) * 0.4;
+      const wy = Math.sin(elapsed * q.s2 + q.p2) * 0.6 + Math.cos(elapsed * q.s1 * 0.7 + q.p3) * 0.4;
+      let bx, by;
+      if (style === 'grid') { bx = cc.x + (q.gx - 0.5) * RX * 1.7; by = cc.y + (q.gy - 0.5) * RY * 1.5; }
+      else { bx = cc.x + Math.cos(q.a) * RX * q.r; by = cc.y + Math.sin(q.a) * RY * q.r; }
+      return { x: bx + wx * amp * M.drift, y: by + wy * amp * M.drift * 0.7 };
+    };
+    /* --- 線 --- */
+    const pairs = [];
+    for (let i = 0; i < n; i++) {
+      const A = np(i);
+      if (style !== 'constellation') pairs.push([A, cc, M.lineAlpha * 0.45]);   // 星座は惑星へ線を引かない
+      for (let j = i + 1; j < n; j++) {
+        const B = np(j), dd = Math.hypot(A.x - B.x, A.y - B.y);
+        const reach = RX * M.span * 2;
+        if (dd < reach) pairs.push([A, B, M.lineAlpha * (1 - dd / reach)]);     // 近いほど濃い
+      }
+    }
+    const lines = convLinePool(Math.max(pairs.length, n * 3));
+    for (let i = 0; i < lines.length; i++) {
+      if (i < pairs.length) {
+        const [A, B, al] = pairs[i];
+        lines[i].setAttribute('d', `M${A.x.toFixed(1)},${A.y.toFixed(1)} L${B.x.toFixed(1)},${B.y.toFixed(1)}`);
+        lines[i].setAttribute('stroke', '#6B7690');
+        lines[i].setAttribute('stroke-width', String(M.lineWidth || 1));
+        lines[i].setAttribute('opacity', Math.max(0, al).toFixed(3));
+      } else lines[i].setAttribute('opacity', '0');
+    }
+    /* --- ノードとパケット --- */
+    const pkts = convPktPool(n + 12);
+    for (let i = 0; i < n; i++) {
+      const P0 = np(i), pk = pkts[i], q = convMesh.nodes[i];
+      const tw = style === 'constellation' ? 0.55 + 0.45 * Math.sin(elapsed * 1.6 + q.tw) : 0.85;
+      /* 惑星に重なったノードは奥へ回して隠す(透けさせない) */
+      const inPlanet = Math.hypot(P0.x - cc.x, P0.y - cc.y) < convPlanetR();
+      pktSet(pk, P0.x, P0.y, (DOT_R * M.size * convDotK(P0.y, cc.y, RY)).toFixed(2), q.c, tw.toFixed(3), !inPlanet);
+    }
+    convMesh.next -= dt;
+    if (convMesh.next <= 0 && convMesh.pk.length < 12) {
+      convMesh.next = Math.max(0.08, 1 / Math.max(0.05, M.rate));
+      convMesh.pk.push({ from: (Math.random() * n) | 0, via: (Math.random() * n) | 0, k: 0, stage: 0 });
+    }
+    for (let i = convMesh.pk.length - 1; i >= 0; i--) {
+      const q2 = convMesh.pk[i];
+      q2.k += dt / Math.max(0.08, M.hop);
+      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convGlow = Math.min(1.2, convGlow + 0.3); convMesh.pk.splice(i, 1); continue; } }
+      const A = q2.stage === 0 ? np(q2.from) : np(q2.via);
+      const B = q2.stage === 0 ? np(q2.via) : cc;
+      const k = convSStep(q2.k);
+      const pk = pkts[n + i];
+      if (!pk) continue;
+      const mx = A.x + (B.x - A.x) * k, my = A.y + (B.y - A.y) * k;
+      const inP = Math.hypot(mx - cc.x, my - cc.y) < convPlanetR();
+      pktSet(pk, mx, my, (DOT_R * M.size * 0.75).toFixed(2), CONV_BLUE, '0.95', !inP);
+    }
+    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[n + i]; if (pk) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); } }
+  } else if (mode === 'beads') {
+    /* ⑬ドットの軌道 (2026-08-26 改良・ヒデさん指定):
+       ドットを【等間隔で密に】並べて輪の形そのものを作る。吸われるのは一部(ratio)だけなので
+       輪の形が崩れず「軌道」と分かる。ghost で薄い軌道線も残せる。 */
+    const B = C.beads, cc = convCenter();
+    const n = Math.max(6, Math.round(B.count));
+    const pkts = convPktPool(n);
+    convHideLines();   /* 軌道の線は出さない(点だけで輪を作る) */
+    if (!convBeads || convBeads.length !== n) {
+      convBeads = [];
+      for (let i = 0; i < n; i++) {
+        /* 外周と内周へ交互に、等間隔で並べる = 密度が上がるほど輪に見える */
+        const ring = i % 2, idx = Math.floor(i / 2), half = Math.ceil(n / 2);
+        convBeads.push({ base: (idx / half) * 360, ring, t: -1, jit: (Math.random() - 0.5) });
+      }
+      convBeads.spin = 0; convBeads.next = 0;
+    }
+    convBeads.spin += B.speed * 60 * dt * (params.direction || 1);
+    /* 吸われている数が ratio を超えないよう、順番に送り出す */
+    const wantOn = Math.max(1, Math.round(n * clamp01(B.ratio)));
+    let onNow = 0;
+    for (const b of convBeads) if (b.t >= 0) onNow++;
+    convBeads.next -= dt;
+    if (onNow < wantOn && convBeads.next <= 0) {
+      const idle = convBeads.filter(b => b.t < 0);
+      if (idle.length) { idle[(Math.random() * idle.length) | 0].t = 0; }
+      convBeads.next = Math.max(0.02, B.life / Math.max(1, wantOn) * 0.7);
+    }
+    for (let i = 0; i < n; i++) {
+      const b = convBeads[i];
+      const g = b.ring ? geoms.inner : geoms.outer;
+      const ang = b.base + convBeads.spin + b.jit * (B.jitter || 0) * 12;
+      let f = 1, al = 0.95;
+      if (b.t >= 0) {
+        b.t += dt;
+        const k = clamp01(b.t / Math.max(0.2, B.life));
+        f = 1 - convSStep(k) * 0.94;
+        if (k > 0.7) al = (1 - k) / 0.3;
+        if (k >= 1) { convGlow = Math.min(1.2, convGlow + 0.10); b.t = -1; }   /* 元の位置へ戻る */
+      }
+      const pos = posOn(f === 1 ? g : convGeom(g, f), ang);
+      pktSet(pkts[i], pos.x, pos.y, (DOT_R * B.size * convDotK(pos.y, g.cy, g.ry)).toFixed(2),
+        b.ring ? CONV_BLUE : CONV_PINK, clamp01(al).toFixed(3), pos.front);
+    }
+  } else if (CONV_LINKED.includes(mode)) {
+    /* ⑭〜⑳ 双方向: 惑星とドットをラインで結び、行き(集約)と帰り(配信)のデータが飛び交う。
+       青＝軌道から惑星へ集約 / ピンク＝惑星から軌道へ配信 */
+    const L = C.link, cc = convCenter();
+    const nd = DOTS.length;
+    const lines = convLinePool(nd);
+    const per = Math.max(1, Math.round(3 * L.density));
+    const pkts = convPktPool(nd * per);
+    const T = Math.max(0.6, L.T);
+    const ends = [], ctrls = [];
+    for (let i = 0; i < nd; i++) {
+      const p1 = convDotPos(geoms, i);
+      const pc = convCurve(cc, p1, ((i % 2) ? 1 : -1) * L.curve);
+      ends.push(p1); ctrls.push(pc);
+      lines[i].setAttribute('d', convPathD(cc, pc, p1));
+      lines[i].setAttribute('stroke', DOTS[i].color === '#4E4E4E' ? '#6B7690' : DOTS[i].color);
+      lines[i].setAttribute('stroke-width', '1');
+      lines[i].setAttribute('opacity', String(L.lineAlpha));
+    }
+    /* 【2026-08-26 ヒデさん指定】惑星のエリアに入った粒は【完全に消す】。
+       惑星の縁(fadeK の外側)から縮みながら急速に薄くなり、内側では描かない。 */
+    const pr = convPlanetR();
+    for (let i = 0; i < nd; i++) {
+      for (let j = 0; j < per; j++) {
+        const pk = pkts[i * per + j];
+        if (!pk) continue;
+        const seed = (i * 7 + j * 3) % 10 / 10;
+        const u = (elapsed * L.speed / T + seed) % 1;    // この粒の位相
+        const out = j % 2 === 1;                          // 半分は行き(集約)、半分は帰り(配信)
+        const t = out ? 1 - u : u;
+        const q = convBez(cc, ctrls[i], ends[i], clamp01(t));
+        if (!out && t > 0.94) convGlow = Math.min(1.2, convGlow + 0.03);
+        let al = 0.95, sz = L.size;
+        /* 惑星のエリア(半径 pr)に入ったら完全に消す。
+           入る手前 vanishK のぶんだけ「縮みながら」薄くなるので、パッと消えず吸い込まれて見える */
+        const dd = Math.hypot(q.x - cc.x, q.y - cc.y);
+        const edge = pr * (1 + Math.max(0, L.vanishK));   // 消え始める半径
+        if (dd < pr) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); continue; }   // 惑星の中では描かない
+        if (dd < edge) {
+          const k = convSStep(1 - (dd - pr) / Math.max(1, edge - pr));
+          sz = L.size * (1 - k * 0.9);                    // 縮んで吸い込まれる
+          al = 0.95 * (1 - k);
+        }
+        pktSet(pk, q.x, q.y, (DOT_R * Math.max(0.02, sz) * convDotK(q.y, cc.y, geoms.outer.ry)).toFixed(2),
+          out ? CONV_PINK : CONV_BLUE, clamp01(al).toFixed(3), true);
+      }
+    }
+  } else {
+    convHidePools();
+  }
+}
+const sphereCanvasEl = document.getElementById('sphere');
+
+/* ===== 直接編集（Figma のエディタ操作感を踏襲。2026-08-26 ヒデさん指定） =====
+   リサーチ(Figma/FigJam ヘルプ)に基づく仕様:
+   ・選択すると「バウンディングボックス」(青い枠)が出る
+   ・四隅の白い四角ハンドル = 斜めリサイズ。辺の中央 = 幅だけ／高さだけのリサイズ
+   ・角の【少し外側】にホバーすると回転カーソルに変わり、ドラッグで回転
+   ・Shift = 比率を保つ / 回転は15°刻み
+   ・ドラッグ中はサイズや角度の数値が出る
+   対象: 外の輪 / 内の輪 / 惑星。クリックで選び、枠の内側をドラッグで移動。 */
+const editHandles = (() => {
+  const BLUE = '#0D99FF';
+  /* Figma の回転カーソル(曲がった矢印)に寄せた自前カーソル */
+  const ROT_CUR = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">' +
+    '<path d="M7 10a6 6 0 0 1 10-3.5" fill="none" stroke="black" stroke-width="2.6" stroke-linecap="round"/>' +
+    '<path d="M7 10a6 6 0 0 1 10-3.5" fill="none" stroke="white" stroke-width="1.2" stroke-linecap="round"/>' +
+    '<path d="M17.6 3.2l0.6 4.2-4.2-0.6z" fill="black" stroke="white" stroke-width="0.8"/>' +
+    '</svg>') + '") 12 12, grab';
+  let svg = null, on = false, drag = null, wasRunning = null, sel = null;
+  let onSel = null, onEdit = null;   /* パネルとの同期用コールバック */
+  let boxG = null, boxRect = null, label = null;
+  const hits = {};      /* 当たり判定(選択用) */
+  const handles = [];   /* {el, kind, ix, iy} kind: corner/edge/rot */
+
+  const KEYS = ['outer', 'inner', 'planet'];
+  function ensure() {
+    if (svg) return svg;
+    const orbit = document.querySelector('.orbit');
+    if (!orbit) return null;
+    svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 915.483 630');
+    svg.setAttribute('class', 'edit-layer');
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:9;overflow:visible;';
+    orbit.appendChild(svg);
+
+    /* --- バウンディングボックス --- */
+    boxG = document.createElementNS(SVG_NS, 'g');
+    svg.appendChild(boxG);
+    boxRect = document.createElementNS(SVG_NS, 'rect');
+    boxRect.setAttribute('fill', 'rgba(0,0,0,0)');
+    boxRect.setAttribute('stroke', BLUE);
+    boxRect.setAttribute('stroke-width', '1.5');
+    /* 【2026-08-26 ヒデさん指定】枠の【内側】ならどこを掴んでも動かせる。
+       当たり判定(線・惑星)はこの後に作って上に重ねるので、選択中でも別のオブジェクトを選び直せる */
+    boxRect.style.cursor = 'move';
+    boxRect.style.pointerEvents = 'all';
+    boxRect.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind: 'move' }); });
+    boxG.appendChild(boxRect);
+
+    /* --- 回転ゾーン(角の少し外側。Figma と同じく“角の外”で回転) --- */
+    for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('width', '30'); r.setAttribute('height', '30');
+      r.setAttribute('fill', 'rgba(0,0,0,0)');
+      r.setAttribute('data-kind', 'rot');
+      r.style.cursor = ROT_CUR;
+      r.style.pointerEvents = 'all';
+      r.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind: 'rot' }); });
+      boxG.appendChild(r);
+      handles.push({ el: r, kind: 'rot', ix, iy });
+    }
+    /* --- 辺そのものを掴める帯 (Figma と同じく辺のどこでもリサイズできる) --- */
+    for (const [ix, iy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('fill', 'rgba(0,0,0,0)');
+      r.setAttribute('data-kind', 'edgeband');
+      r.setAttribute('data-ix', ix); r.setAttribute('data-iy', iy);
+      r.style.pointerEvents = 'all';
+      r.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startDrag(e, { kind: 'edge', ix, iy }); });
+      boxG.appendChild(r);
+      handles.push({ el: r, kind: 'edgeband', ix, iy });
+    }
+    /* --- 辺ハンドル(見た目の四角。中央に置く) --- */
+    for (const [ix, iy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const h = mkHandle('edge', ix, iy); handles.push(h);
+    }
+    /* --- 角ハンドル(斜めリサイズ)。辺より後に置いて上に来るように --- */
+    for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      const h = mkHandle('corner', ix, iy); handles.push(h);
+    }
+    /* --- 当たり判定(クリックで選ぶ) --- */
+    for (const key of KEYS) {
+      const el = document.createElementNS(SVG_NS, key === 'planet' ? 'circle' : 'ellipse');
+      el.setAttribute('fill', key === 'planet' ? 'rgba(0,0,0,0)' : 'none');
+      if (key !== 'planet') { el.setAttribute('stroke', 'rgba(0,0,0,0)'); el.setAttribute('stroke-width', '30'); }
+      el.style.cursor = 'move';   /* 描かれている所を触れば、そのまま掴んで動かせる */
+      el.style.pointerEvents = key === 'planet' ? 'fill' : 'stroke';
+      el.addEventListener('pointerdown', e => { e.stopPropagation(); select(key); startDrag(e, { kind: 'move' }); });
+      svg.appendChild(el);
+      hits[key] = el;
+    }
+
+    /* --- ドラッグ中の数値表示 --- */
+    label = document.createElementNS(SVG_NS, 'g');
+    const lb = document.createElementNS(SVG_NS, 'rect');
+    lb.setAttribute('rx', '3'); lb.setAttribute('fill', BLUE);
+    lb.setAttribute('height', '18'); lb.setAttribute('width', '92');
+    const lt = document.createElementNS(SVG_NS, 'text');
+    lt.setAttribute('fill', '#fff'); lt.setAttribute('font-size', '11');
+    lt.setAttribute('text-anchor', 'middle'); lt.setAttribute('dy', '12.5');
+    label.append(lb, lt); label.style.display = 'none'; label.style.pointerEvents = 'none';
+    svg.appendChild(label);
+    label._bg = lb; label._tx = lt;
+
+    /* 何もない所を押したら選択解除 */
+    svg.addEventListener('pointerdown', () => select(null));
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', endDrag);
+    return svg;
+  }
+  function mkHandle(kind, ix, iy) {
+    const r = document.createElementNS(SVG_NS, 'rect');
+    r.setAttribute('data-kind', kind); r.setAttribute('data-ix', ix); r.setAttribute('data-iy', iy);
+    r.setAttribute('width', '9'); r.setAttribute('height', '9');
+    r.setAttribute('fill', '#fff'); r.setAttribute('stroke', BLUE); r.setAttribute('stroke-width', '1.5');
+    r.style.pointerEvents = 'all';
+    r.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind, ix, iy }); });
+    boxG.appendChild(r);
+    return { el: r, kind, ix, iy };
+  }
+
+  /* 画面座標 → SVG(915x630) 座標 */
+  function toLocal(e) {
+    const m = svg.getScreenCTM();
+    if (!m) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const q = pt.matrixTransform(m.inverse());
+    return { x: q.x, y: q.y };
+  }
+  /* いま選んでいる対象の枠(中心・半幅・半高・角度) */
+  function boxOf(key) {
+    if (key === 'planet') {
+      const c = convCenter(), r = convPlanetR();
+      return { cx: c.x, cy: c.y, rx: r, ry: r, rot: 0 };
+    }
+    return orbitGeom(key);
+  }
+  function select(key) {
+    sel = key;
+    if (boxG) boxG.style.display = key ? '' : 'none';
+    place();
+    if (onSel) onSel(key);      /* パネル側へ「何を選んだか」を伝える */
+  }
+  function startDrag(e, info) {
+    if (!sel && info.kind === 'move') return;
+    e.preventDefault();
+    const b = boxOf(sel);
+    drag = { ...info, start: toLocal(e), box: b, base: snapshot(sel), shift: e.shiftKey };
+  }
+  function endDrag() {
+    if (drag && typeof editHistory !== 'undefined') { editHistory.push(); editBar.sync(); }
+    drag = null;
+    if (label) label.style.display = 'none';
+  }
+  function snapshot(key) {
+    return key === 'planet' ? { ...params.planet } : { ...params.orbits[key] };
+  }
+  function clamp(lo, hi, v) { return v < lo ? lo : v > hi ? hi : v; }
+  /* SVG座標 → 対象のローカル座標(回転を戻す) */
+  function toBox(p, b) {
+    const a = -b.rot * Math.PI / 180;
+    const dx = p.x - b.cx, dy = p.y - b.cy;
+    return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) };
+  }
+  function onMove(e) {
+    if (!drag || !sel) return;
+    e.preventDefault();
+    const p = toLocal(e), b = drag.box, base = drag.base, shift = e.shiftKey;
+    let text = '';
+    if (sel === 'planet') {
+      const P = params.planet;
+      if (drag.kind === 'move') {
+        P.dx = Math.round(base.dx + (p.x - drag.start.x));
+        P.dy = Math.round(base.dy + (p.y - drag.start.y));
+        text = `${P.dx} , ${P.dy}`;
+      } else if (drag.kind !== 'rot') {
+        const l = toBox(p, b);
+        const k = Math.max(Math.abs(l.x), Math.abs(l.y)) / 130;
+        P.scale = clamp(0.2, 3, k);
+        text = '×' + P.scale.toFixed(2);
+      }
+    } else {
+      const O = params.orbits[sel], bs = orbitBase(sel);
+      if (drag.kind === 'move') {
+        O.dx = Math.round(base.dx + (p.x - drag.start.x));
+        O.dy = Math.round(base.dy + (p.y - drag.start.y));
+        text = `${O.dx} , ${O.dy}`;
+      } else if (drag.kind === 'rot') {
+        const a0 = Math.atan2(drag.start.y - b.cy, drag.start.x - b.cx);
+        const a1 = Math.atan2(p.y - b.cy, p.x - b.cx);
+        let deg = base.angle + (a1 - a0) * 180 / Math.PI;
+        if (shift) deg = Math.round(deg / 15) * 15;      /* Figma と同じ 15°刻み */
+        O.angle = Math.round(deg * 10) / 10;
+        text = ((bs.rot + O.angle).toFixed(1)) + '°';
+      } else {
+        const l = toBox(p, b);
+        const wantRx = Math.abs(l.x), wantRy = Math.abs(l.y);
+        const baseFlat = base.flat == null ? 1 : base.flat;
+        if (drag.kind === 'corner') {
+          const sc = clamp(0.2, 2.5, wantRx / bs.rx);
+          O.scale = sc;
+          O.flat = shift ? baseFlat                       /* Shift=比率を保つ */
+                         : clamp(0.05, 3, wantRy / Math.max(1, bs.ry * sc));
+        } else if (drag.ix !== 0) {                       /* 左右の辺 = 幅だけ */
+          O.scale = clamp(0.2, 2.5, wantRx / bs.rx);
+        } else {                                          /* 上下の辺 = 高さだけ(つぶし) */
+          O.flat = clamp(0.05, 3, wantRy / Math.max(1, bs.ry * O.scale));
+        }
+        const g = orbitGeom(sel);
+        text = `${Math.round(g.rx * 2)} × ${Math.round(g.ry * 2)}`;
+      }
+    }
+    markDirty();
+    renderFrame();
+    if (typeof syncPanelRows === 'function') syncPanelRows();
+    if (onEdit) onEdit(sel);    /* ドラッグ中もパネルの数値をリアルタイムで更新 */
+    showLabel(text);
+  }
+  function showLabel(text) {
+    if (!label || !text) return;
+    const b = boxOf(sel);
+    label.style.display = '';
+    label._tx.textContent = text;
+    const w = Math.max(56, text.length * 8 + 16);
+    label._bg.setAttribute('width', w);
+    label._bg.setAttribute('x', (b.cx - w / 2).toFixed(1));
+    label._bg.setAttribute('y', (b.cy + b.ry + 14).toFixed(1));
+    label._tx.setAttribute('x', b.cx.toFixed(1));
+    label._tx.setAttribute('y', (b.cy + b.ry + 14).toFixed(1));
+  }
+  /* 毎フレーム、枠とハンドルを今の図形に合わせて置き直す */
+  function place() {
+    if (!on || !svg) return;
+    /* 当たり判定を今の図形に合わせる */
+    for (const key of KEYS) {
+      const el = hits[key];
+      if (key === 'planet') {
+        const c = convCenter(), r = convPlanetR();
+        el.setAttribute('cx', c.x); el.setAttribute('cy', c.y); el.setAttribute('r', r);
+      } else {
+        const g = orbitGeom(key);
+        el.setAttribute('cx', g.cx); el.setAttribute('cy', g.cy);
+        el.setAttribute('rx', g.rx); el.setAttribute('ry', g.ry);
+        el.setAttribute('transform', `rotate(${g.rot} ${g.cx} ${g.cy})`);
+      }
+    }
+    if (!sel) { if (boxG) boxG.style.display = 'none'; return; }
+    boxG.style.display = '';
+    const b = boxOf(sel);
+    boxG.setAttribute('transform', `rotate(${b.rot} ${b.cx} ${b.cy})`);
+    boxRect.setAttribute('x', (b.cx - b.rx).toFixed(1));
+    boxRect.setAttribute('y', (b.cy - b.ry).toFixed(1));
+    boxRect.setAttribute('width', (b.rx * 2).toFixed(1));
+    boxRect.setAttribute('height', (b.ry * 2).toFixed(1));
+    /* 惑星は円なので、つぶし(辺ハンドル)は出さない */
+    for (const h of handles) {
+      const isEdge = h.kind === 'edge' || h.kind === 'edgeband';
+      const hide = sel === 'planet' && (isEdge || h.kind === 'rot');
+      h.el.style.display = hide ? 'none' : '';
+      if (hide) continue;
+      const x = b.cx + b.rx * h.ix, y = b.cy + b.ry * h.iy;
+      if (h.kind === 'edgeband') {
+        /* 辺いっぱいの帯。角の回転ゾーンとぶつからないよう、少し内側で止める */
+        const T = 10, inset = 16;
+        if (h.ix === 0) {   /* 上下の辺 */
+          h.el.setAttribute('x', (b.cx - b.rx + inset).toFixed(1));
+          h.el.setAttribute('y', (y - T / 2).toFixed(1));
+          h.el.setAttribute('width', Math.max(0, b.rx * 2 - inset * 2).toFixed(1));
+          h.el.setAttribute('height', T);
+        } else {            /* 左右の辺 */
+          h.el.setAttribute('x', (x - T / 2).toFixed(1));
+          h.el.setAttribute('y', (b.cy - b.ry + inset).toFixed(1));
+          h.el.setAttribute('width', T);
+          h.el.setAttribute('height', Math.max(0, b.ry * 2 - inset * 2).toFixed(1));
+        }
+        h.el.style.cursor = cursorFor(h.ix, h.iy, b.rot);
+        continue;
+      }
+      if (h.kind === 'rot') {
+        h.el.setAttribute('x', (x + h.ix * 4 - 15).toFixed(1));
+        h.el.setAttribute('y', (y + h.iy * 4 - 15).toFixed(1));
+      } else {
+        h.el.setAttribute('x', (x - 4.5).toFixed(1));
+        h.el.setAttribute('y', (y - 4.5).toFixed(1));
+        /* カーソルは向きに応じて Figma と同じ両矢印にする(回転角も加味) */
+        h.el.style.cursor = cursorFor(h.ix, h.iy, b.rot);
+      }
+    }
+  }
+  function cursorFor(ix, iy, rot) {
+    let a = Math.atan2(iy, ix) * 180 / Math.PI + rot;
+    a = ((a % 180) + 180) % 180;
+    if (a < 22.5 || a >= 157.5) return 'ew-resize';
+    if (a < 67.5) return 'nwse-resize';
+    if (a < 112.5) return 'ns-resize';
+    return 'nesw-resize';
+  }
+  return {
+    get on() { return on; },
+    get selected() { return sel; },
+    /* パネル側から: 選択が変わった時 / ドラッグで値が変わった時 に呼んでもらう */
+    bind(onSelect, onChange) { onSel = onSelect; onEdit = onChange; },
+    refresh() { if (onSel) onSel(sel); },
+    select,
+    set(v) {
+      on = !!v;
+      const el = ensure();
+      if (el) el.style.display = on ? '' : 'none';
+      /* 直接編集の間はアニメーションを止める(掴んで動かしやすくする)。切った時は元に戻す */
+      /* ⚠️【2026-08-27 事故対応】set(true) が2回走ると wasRunning に false を覚えてしまい、
+         オフにしても再生が戻らなかった(止まったまま)。すでに覚えている時は上書きしない。
+         切る時は「編集のための一時停止」を必ず解除する(記録が無ければ再生に戻す)。 */
+      if (on) { if (wasRunning == null) wasRunning = params.running; params.running = false; }
+      else { params.running = (wasRunning == null ? true : wasRunning); wasRunning = null; select(null); }
+      /* 編集バーと「元に戻す」の履歴を、編集モードに合わせて出し入れする */
+      if (typeof editHistory !== 'undefined') {
+        if (on) { editHistory.begin(); editBar.show(); } else editBar.hide();
+      }
+      if (onSel) onSel(on ? sel : null);
+      if (typeof applyMarquee === 'function') applyMarquee();
+      renderFrame();
+      if (on) place();
+    },
+    place,
+  };
+})();
+
+/* ===== 編集モードのバー ＋ 元に戻す(⌘Z) / やり直し(⌘⇧Z) (2026-08-27 ヒデさん指定) =====
+   編集モードに入ると、キービジュアルの右上にバーが出て
+   「保存 / やめる / 編集前に戻す / 元に戻す / やり直し」ができる。
+   Figma と同じく ⌘Z(Ctrl+Z) で1つ前へ、⌘⇧Z(Ctrl+Shift+Z) でやり直し。 */
+const editHistory = (() => {
+  let stack = [], idx = -1, entry = null;   /* entry = 編集に入った時の状態(編集前に戻す用) */
+  const snap = () => JSON.stringify({
+    o: params.orbits.outer, i: params.orbits.inner, p: params.planet,
+  });
+  function restore(json) {
+    if (!json) return;
+    const d = JSON.parse(json);
+    Object.assign(params.orbits.outer, d.o);
+    Object.assign(params.orbits.inner, d.i);
+    Object.assign(params.planet, d.p);
+    markDirty();
+    renderFrame();
+    if (editHandles.on) editHandles.place();
+    if (typeof syncPanelRows === 'function') syncPanelRows();
+    if (typeof editHandles.refresh === 'function') editHandles.refresh();
+  }
+  return {
+    /* 編集モードに入った時 */
+    begin() { entry = snap(); stack = [entry]; idx = 0; },
+    /* 1操作(ドラッグや数値入力)が終わったら積む */
+    push() {
+      const now = snap();
+      if (stack[idx] === now) return;          /* 変化なしなら積まない */
+      stack = stack.slice(0, idx + 1);
+      stack.push(now);
+      if (stack.length > 60) stack.shift();    /* 持ちすぎない */
+      idx = stack.length - 1;
+    },
+    undo() { if (idx > 0) { idx--; restore(stack[idx]); return true; } return false; },
+    redo() { if (idx < stack.length - 1) { idx++; restore(stack[idx]); return true; } return false; },
+    /* 編集に入る前の状態へ全部戻す */
+    revert() { if (entry) { restore(entry); stack = [entry]; idx = 0; } },
+    get canUndo() { return idx > 0; },
+    get canRedo() { return idx < stack.length - 1; },
+  };
+})();
+
+/* 画面上の編集バー */
+const editBar = (() => {
+  let el = null, btns = {};
+  function ensure() {
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'edit-bar';
+    const mk = (key, label, title, cls) => {
+      const b = document.createElement('button');
+      b.className = 'eb-btn' + (cls ? ' ' + cls : '');
+      b.textContent = label;
+      b.title = title;
+      el.appendChild(b);
+      btns[key] = b;
+      return b;
+    };
+    mk('undo', '↶', '元に戻す（⌘Z）').onclick = () => { editHistory.undo(); sync(); };
+    mk('redo', '↷', 'やり直し（⌘⇧Z）').onclick = () => { editHistory.redo(); sync(); };
+    const sep = document.createElement('span');
+    sep.className = 'eb-sep';
+    el.appendChild(sep);
+    mk('revert', '↺ 編集前に戻す', '編集モードに入る前の形へ全部戻す').onclick = () => {
+      editHistory.revert(); sync();
+    };
+    mk('cancel', 'やめる', '保存せずに編集モードを抜ける').onclick = () => {
+      editHistory.revert();
+      editHandles.set(false);
+      if (typeof buildPanel === 'function') buildPanel();
+    };
+    mk('save', '保存', 'いまの形で保存して編集モードを抜ける', 'primary').onclick = () => {
+      save(); dirty = false; if (syncSaveBtn) syncSaveBtn();
+      btns.save.textContent = '✓ 保存しました';
+      setTimeout(() => {
+        btns.save.textContent = '保存';
+        editHandles.set(false);
+        if (typeof buildPanel === 'function') buildPanel();
+      }, 700);
+    };
+    document.body.appendChild(el);
+    return el;
+  }
+  function sync() {
+    if (!el) return;
+    btns.undo.disabled = !editHistory.canUndo;
+    btns.redo.disabled = !editHistory.canRedo;
+  }
+  return {
+    show() { ensure(); el.style.display = 'flex'; sync(); },
+    hide() { if (el) el.style.display = 'none'; },
+    sync,
+  };
+})();
+
+/* キーボード: ⌘Z / ⌘⇧Z (Windows は Ctrl) */
+window.addEventListener('keydown', (e) => {
+  if (!editHandles.on) return;
+  const mod = e.metaKey || e.ctrlKey;
+  if (!mod || e.key.toLowerCase() !== 'z') return;
+  const t = e.target;
+  /* 数値入力欄の中では、その欄の取り消しを優先する */
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+  e.preventDefault();
+  if (e.shiftKey) editHistory.redo(); else editHistory.undo();
+  editBar.sync();
+});
 
 /* 軌道SVG(奥/手前の楕円・クリップ・グラデ)へジオメトリを反映 */
 const orbitSvgEls = {
@@ -2797,18 +4088,35 @@ function renderFrame() {
   if (fitReady && window.innerWidth > 0 &&
       (window.innerWidth !== lastFitW || window.innerHeight !== lastFitH)) fit();
   const geoms = { outer: orbitGeom('outer'), inner: orbitGeom('inner') };
+  convFrame(geoms);   /* 惑星への集約アニメ (①②④⑩)。geoms・convDotF/A を書き換える */
+  /* 輪の表示オンオフ(パネル) × reelの吸収の濃さを合成して書く (2026-08-26 ヒデさん指定) */
+  /* 「軌道の代わり」になる案は、選んでいる間は輪もドットも自動で隠す。
+     ⑦降着円盤 / ⑫メッシュ = 輪もドットも / ⑬ドットの軌道 = 線だけ消してドットは自前で描く */
+  const cvNow = convOn() ? params.converge : null;
+  const hideAll = cvNow === 'accre' || cvNow === 'mesh' || cvNow === 'beads';
+  const cShowO = !hideAll && (!params.conv || params.conv.showOuter !== false);
+  const cShowI = !hideAll && (!params.conv || params.conv.showInner !== false);
+  const cShowD = !hideAll && (!params.conv || params.conv.showDots !== false);
+  applyRingAlpha('outer', (cShowO ? 1 : 0) * convReelA.outer.b, (cShowO ? 1 : 0) * convReelA.outer.f);
+  applyRingAlpha('inner', (cShowI ? 1 : 0) * convReelA.inner.b, (cShowI ? 1 : 0) * convReelA.inner.f);
+  applyRingBlur('outer', convReelA.outer.blur);
+  applyRingBlur('inner', convReelA.inner.blur);
   updateOrbitSvg(geoms);
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
-    const deg = patternDeg(d, i, p);
-    const pos = posOn(geoms[d.ellipse], deg);
+    const deg = patternDeg(d, i, p) + convDotSpin[i];   /* 収縮中の回転アップ(①) */
+    const cf = convDotF[i];
+    const pos = posOn(cf === 1 ? geoms[d.ellipse] : convGeom(geoms[d.ellipse], cf), deg);
     const els = dotEls[i];
     [els.back, els.front].forEach(el => {
       el.setAttribute('cx', pos.x);
       el.setAttribute('cy', pos.y);
     });
-    /* 出現度合いが変わった時だけ、半径と濃さを書き換える */
-    const dk = dotK[i];
+    /* 出現度合いが変わった時だけ、半径と濃さを書き換える。
+       ドット非表示(パネル)と、所属する輪が非表示の時はドットも消す */
+    const dotShow = cShowD && (d.ellipse === 'outer' ? cShowO : cShowI) ? 1 : 0;
+    const gRef = geoms[d.ellipse];
+    const dk = dotK[i] * convDotA[i] * dotShow * convDotK(pos.y, gRef.cy, gRef.ry);
     if (els.k !== dk) {
       els.k = dk;
       const rr = (DOT_R * dk).toFixed(3), op = dk.toFixed(3);
@@ -2820,6 +4128,7 @@ function renderFrame() {
   applySway();
   renderSphere();
   updateSections();
+  if (editHandles.on) editHandles.place();   /* 直接編集の操作点を図形に追従させる */
 }
 
 /* ゆらぎ: グラフィック全体(軌道・惑星)へのゆるい動き */
@@ -2833,8 +4142,10 @@ function applySway() {
   const t = elapsed;
   let orbit = '', svg = '', sph = '';
   switch (SWAYS[(params.sway || 1) - 1].id) {
-    case 'seesaw': /* シーソー: 全体がゆっくり傾く */
-      orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`; break;
+    case 'seesaw': /* シーソー: 全体がゆっくり傾く。①収縮ループ中は固定(ヒデさん指定) */
+      if (!(params.kvDesign === 'planet' && params.converge === 'reel'))
+        orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`;
+      break;
     /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
   /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
@@ -3816,9 +5127,13 @@ function updateVision(p) {
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
   /* 位置は調整パネルから動かせる (カンプ位置からの相対ずらし) */
-  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10, c.headX, c.headY);
-  rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X, c.p1Y);
-  rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X, c.p2Y);
+  /* ⚠️【2026-08-27】この横ズレは PC(1440座標系)で位置を合わせるためのもの。
+     スマホは 390 の座標系で CSS 側が左右24pxに収めているので、横ズレは効かせない
+     (実測: headX=-78 がそのまま効いて、見出しが画面の外(-54px)へ出ていた) */
+  const offX = isMobile ? 0 : 1;
+  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10, c.headX * offX, c.headY);
+  rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X * offX, c.p1Y);
+  rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = noPin ? 99 : (S < 0 ? -99 : S - (brakeStart + brake));
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
@@ -4959,19 +6274,21 @@ window.addEventListener('message', (e) => {
 
 /* 調整パネルから選べる「右グラフィックの案」。key は iframe(embed.html) の data-design に対応。 */
 const KV_DESIGNS = [
+  { key: 'planet', name: '惑星(V1)' },   /* 2026-08-26 復活・既定。V1.0の軌道+惑星+ドット */
   { key: 'p7', name: 'A案' },
   { key: 'p9', name: 'B案' },
-  { key: 'agent', name: 'アニメ' },
-  { key: 'p6', name: 'H・単純ガラス' },
-  { key: 'p8', name: 'I・背景拾い' },
-  { key: 'blender', name: 'Blender' },
 ];
-/* 案を選ぶと iframe へ postMessage して切り替える（本体の文字は流し直さない）。 */
+/* 案を選ぶと切り替える（本体の文字は流し直さない）。
+   'planet' は本体の .orbit を表示(html.kv-planet)、それ以外は iframe へ postMessage。 */
 function kvSetDesign(d) {
   params.kvDesign = d;
+  document.documentElement.classList.toggle('kv-planet', d === 'planet');
+  if (d === 'planet') return;
   const ifr = document.querySelector('.kv-graphic-embed');
   if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: d }, '*');
 }
+/* 読み込み時に保存値どおりのモードにしておく（既定は惑星） */
+document.documentElement.classList.toggle('kv-planet', params.kvDesign === 'planet');
 
 function updateKV() {
   const c = params.kv, t = elapsed;
@@ -5416,11 +6733,52 @@ function applyEdit(isLive, now) {
   else replayHere(now);
 }
 
+/* ===== 軌道プリセット (2026-08-26 ヒデさん指定) =====
+   いまの軌道の設定(レイアウト＋外/内の位置・サイズ・傾き)に名前を付けて保存し、
+   ワンタップで呼び出す。保存先は params なので localStorage に一緒に残る。 */
+function grabOrbitState() {
+  const pick = o => ({ dx: o.dx, dy: o.dy, scale: o.scale, angle: o.angle });
+  return { layout: params.orbitLayout, outer: pick(params.orbits.outer), inner: pick(params.orbits.inner) };
+}
+function applyOrbitPreset(i) {
+  const ps = (params.orbitPresets || [])[i];
+  if (!ps || !ps.data) return;
+  const d = ps.data;
+  if (d.layout) params.orbitLayout = d.layout;
+  for (const key of ['outer', 'inner']) {
+    if (!d[key]) continue;
+    for (const k of ['dx', 'dy', 'scale', 'angle']) {
+      if (typeof d[key][k] === 'number') params.orbits[key][k] = d[key][k];
+    }
+  }
+  params.orbitPresetOn = i;
+  markDirty();
+  renderFrame();
+}
 function defaultOf(get) {
   const keep = params;
   try { params = DEFAULTS; return get(); }
   catch (e) { return null; }
   finally { params = keep; }
+}
+/* 各項目のリセット(↺)。既定値は defaultOf() で DEFAULTS から引く。
+   2026-08-26 ヒデさん指定: 行ごとに戻せるようにし、下の「元に戻す」は廃止 */
+function mkReset(get, set, sync, isLive) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'rst';
+  b.textContent = '↺';
+  b.title = '既定に戻す';
+  const d = defaultOf(get);
+  if (d === undefined || d === null) { b.classList.add('off'); return b; }
+  b.onclick = (e) => {
+    e.stopPropagation();
+    set(typeof d === 'object' ? structuredClone(d) : d);
+    markDirty();
+    if (sync) sync();
+    applyEdit(!!isLive, true);
+  };
+  return b;
 }
 function slider(label, min, max, step, get, set, fmt, hint, opts) {
   /* ⚠️ 既定値が左端だと、そこから下げられない。既定がツマミの真ん中に来るよう上限を取り直す
@@ -5455,8 +6813,10 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
     applyEdit(isLive);       /* 見た目だけの項目は即反映 / それ以外は手が止まってから流し直す */
   });
   input.addEventListener('change', () => applyEdit(isLive, true));
-  row.append(lab, input, val);
   row._sync = () => { input.value = get(); val.textContent = f(get()); };
+  row.append(lab, input, val, mkReset(get, set, () => row._sync(), isLive));
+  /* セクション単位のリセット対象に登録 */
+  if (subItems) subItems.push({ reset: () => { const d = defaultOf(get); if (d != null) { set(d); row._sync(); } } });
   mount.appendChild(row);
   if (hint) {
     const h = document.createElement('div');
@@ -5468,6 +6828,11 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
 }
 
 const rows = [];
+/* ドラッグで params が変わった時に、開いているパネルの表示も追いつかせる */
+function syncPanelRows() {
+  for (const r of rows) { if (r && r._sync) r._sync(); }
+  body.querySelectorAll('.row').forEach(r => { if (r._sync) r._sync(); });
+}
 let mount = null;   // slider() などの追加先 (現在の小カテゴリの親)
 
 /* 大カテゴリ (開閉できる箱) */
@@ -5485,7 +6850,18 @@ function category(title, open) {
   head.innerHTML = `<span>${title}</span><span class="cat-chev">▾</span>`;
   const content = document.createElement('div');
   content.className = 'cat-body';
-  head.onclick = () => { catOpen[title] = !cat.classList.toggle('closed'); };
+  head.onclick = () => {
+    const nowClosed = cat.classList.toggle('closed');
+    catOpen[title] = !nowClosed;
+    /* 【2026-08-27 ヒデさん指定】カテゴリを開いた時は、中の小見出しも全部開いた状態にする */
+    if (!nowClosed) {
+      content.querySelectorAll('.grp').forEach(g => {
+        g.classList.remove('closed');
+        const t = g.querySelector('.grp-title span');
+        if (t) subOpen[t.textContent.trim()] = true;
+      });
+    }
+  };
   cat.append(head, content);
   body.appendChild(cat);
   return content;
@@ -5493,12 +6869,68 @@ function category(title, open) {
 
 /* 小カテゴリ (見出し行) — 以降の slider は同じカテゴリに追加される */
 /* 小見出し。deep=true で一段内側の見出しになる */
-function sub(target, html, deep) {
+/* 小見出しもアコーディオンにする (2026-08-26 ヒデさん指定・既定は閉じる)。
+   開閉状態は見出しテキストをキーに覚え、パネルを作り直しても保つ */
+const subOpen = {};
+/* いま組み立て中のセクションに属する項目(リセット用)。sub() のたびに新しくする */
+let subItems = null;
+function sub(target, html, deep, opts) {
+  const key = String(html).replace(/<[^>]*>/g, '').trim();
+  const fixed = !!(opts && opts.fixed);   /* たためない＝常に開いたコンパクト表示 */
+  /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
+     (2026-08-27 ヒデさん指定) */
+  const GRAPHIC_OPEN = ['🎨 グラフィック', 'プリセット', '🪐 アニメーション', '共通（見せ方）',
+                        'ゆらぎ', '出てくるタイミング', 'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
+                        'この案の調整（粒の渦）', 'この案の調整（輪が流れ込む）', 'この案の調整（網でつながる）',
+                        'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）', '消え方（吸収の表現）'];
+  const open = fixed ? true : (subOpen[key] === undefined ? GRAPHIC_OPEN.includes(key) : subOpen[key]);
+  subOpen[key] = open;
   const g = document.createElement('div');
-  g.className = deep ? 'grp sub2' : 'grp';
-  g.innerHTML = `<div class="grp-title">${html}</div>`;
+  g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed') + (fixed ? ' fixed' : '');
+  const title = document.createElement('div');
+  title.className = 'grp-title';
+  const lab = document.createElement('span');
+  lab.innerHTML = html;
+  const chev = document.createElement('span');
+  chev.className = 'grp-chev';
+  chev.textContent = '▾';
+  /* 【2026-08-26 ヒデさん指定】セクションごとに「リセット」と「保存」を置く */
+  const acts = document.createElement('div');
+  acts.className = 'grp-acts';
+  const items = [];
+  const rs = document.createElement('button');
+  rs.className = 'gbtn'; rs.type = 'button'; rs.textContent = '↺';
+  rs.title = 'このまとまりの値を既定に戻す';
+  rs.onclick = (e) => {
+    e.stopPropagation();
+    for (const it of items) { if (it.reset) it.reset(); }
+    markDirty(); renderFrame();
+    if (typeof syncPanelRows === 'function') syncPanelRows();
+    rs.classList.add('done'); rs.textContent = '✓ 戻しました';
+    setTimeout(() => { rs.classList.remove('done'); rs.textContent = '↺'; }, 1200);
+  };
+  const sv = document.createElement('button');
+  sv.className = 'gbtn'; sv.type = 'button'; sv.textContent = '💾';
+  sv.title = 'このまとまりの値を保存する';
+  sv.onclick = (e) => {
+    e.stopPropagation();
+    save(); dirty = false; if (syncSaveBtn) syncSaveBtn();
+    sv.classList.add('done'); sv.textContent = '✓ 保存';
+    setTimeout(() => { sv.classList.remove('done'); sv.textContent = '💾'; }, 1200);
+  };
+  acts.append(rs, sv);
+  title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
+  /* 【2026-08-27 ヒデさん指定】戻す値を持たないセクション(プリセットなど)にはボタンを出さない。
+     組み立てが終わってから項目の有無で判断する */
+  setTimeout(() => { if (!items.length) acts.remove(); }, 0);
+  const inner = document.createElement('div');
+  inner.className = 'grp-body';
+  if (fixed) { chev.style.display = 'none'; title.style.cursor = 'default'; }
+  else title.onclick = () => { subOpen[key] = !g.classList.toggle('closed'); };
+  g.append(title, inner);
   target.appendChild(g);
-  mount = deep ? g : target;
+  mount = inner;      /* 以降の slider / note はこの中に入る = たためる */
+  subItems = items;   /* 以降の項目は、このセクションのリセット対象になる */
 }
 /* グループのすぐ下に置く注釈 */
 /* ⚠️ mount は sub() が呼ばれて初めて決まる。sub() より前に note() を呼ぶと
@@ -5535,6 +6967,8 @@ function segRow(label, opts, getDir, setDir) {
   function sync() { bs.forEach(([b, value]) => b.classList.toggle('on', getDir() === value)); }
   sync();
   row.appendChild(seg);
+  row.appendChild(mkReset(getDir, v => { setDir(v); sync(); }, null, isLive));
+  if (subItems) subItems.push({ reset: () => { const d = defaultOf(getDir); if (d != null) { setDir(d); sync(); } } });
   mount.appendChild(row);
 }
 
@@ -5551,8 +6985,8 @@ function rebuildKeeping(markEl) {
   if (diff) body.scrollTop += diff;
 }
 
-/* 選択ピル (惑星デザインなど) */
-function pillRow(items, isOn, onPick) {
+/* 選択ピル (惑星デザインなど)。resetRef={get,set} を渡すと行の右端にリセット(↺)が付く */
+function pillRow(items, isOn, onPick, resetRef, opts) {
   const row = document.createElement('div');
   row.className = 'sw-row';
   const isLive = liveEdit;
@@ -5576,14 +7010,113 @@ function pillRow(items, isOn, onPick) {
          【押したボタンが画面の中で動いてしまう】(レイアウトシフト)。
          柄を続けて比べたいのに、毎回ボタンを探し直すことになっていた。
          押したボタン自体を目印にして、作り直しの前後で同じ画面位置に留める */
-      rebuildKeeping(b);
+      if (!(opts && opts.noRebuild)) rebuildKeeping(b);   /* 一部の行はパネルを作り直さない(その場で反映) */
       /* 見た目だけの案（惑星の柄など）はその場で反映。
          登場の順番が変わる案は、頭から流し直さないと結果が見えないので流し直す */
       applyEdit(isLive, true);
     };
     row.appendChild(b);
   });
+  const syncPills = () => row.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', isOn(items[j], j)));
+  if (resetRef) {
+    row.appendChild(mkReset(resetRef.get, v => { resetRef.set(v); syncPills(); }, null, isLive));
+    if (subItems) subItems.push({ reset: () => { const d = defaultOf(resetRef.get); if (d != null) { resetRef.set(d); syncPills(); } } });
+  }
   mount.appendChild(row);
+}
+
+/* ===== Figma のプロパティパネル風「数値パネル」(2026-08-27 ヒデさん指定) =====
+   直接編集で選んだオブジェクトの X / Y / W / H / 角度 を数値で表示し、直接入力もできる。
+   ドラッグ中はリアルタイムで数値が追いつく。スライダー(プログレスバー)は使わない。 */
+function buildNumPanel(host) {
+  const wrap = document.createElement('div');
+  host.appendChild(wrap);
+  const NAMES = { outer: ['外の輪', '#FF5D97'], inner: ['内の輪', '#0EBBFF'], planet: ['惑星', '#111'] };
+  let fields = {};
+
+  function mkField(label, unit, get, set, step) {
+    const f = document.createElement('div');
+    f.className = 'np-f';
+    const l = document.createElement('label');
+    l.textContent = label;
+    const i = document.createElement('input');
+    i.type = 'number';
+    i.step = step || 1;
+    i.value = get();
+    const u = document.createElement('span');
+    u.className = 'np-u';
+    u.textContent = unit || '';
+    /* 入力したら即反映。↑↓キーでも動く */
+    const apply = () => {
+      const v = parseFloat(i.value);
+      if (!isFinite(v)) return;
+      set(v);
+      markDirty();
+      renderFrame();
+      if (editHandles.on) editHandles.place();
+    };
+    i.addEventListener('input', apply);
+    i.addEventListener('change', () => { apply(); if (typeof editHistory !== 'undefined') { editHistory.push(); editBar.sync(); } });
+    f.append(l, i, u);
+    return { el: f, input: i, get };
+  }
+
+  /* 選んだ対象に合わせて中身を作り直す */
+  function render(key) {
+    wrap.innerHTML = '';
+    fields = {};
+    if (!editHandles.on) return;
+    if (!key) {
+      const e = document.createElement('div');
+      e.className = 'np-empty';
+      e.textContent = '右のグラフィックで「外の輪 / 内の輪 / 惑星」をクリックすると、ここに数値が出ます。';
+      wrap.appendChild(e);
+      return;
+    }
+    const [name, color] = NAMES[key] || [key, '#888'];
+    const head = document.createElement('div');
+    head.className = 'np-head';
+    const dot = document.createElement('span');
+    dot.className = 'np-dot';
+    dot.style.background = color;
+    head.append(dot, document.createTextNode(name));
+    wrap.appendChild(head);
+
+    const grid = document.createElement('div');
+    grid.className = 'np';
+    wrap.appendChild(grid);
+
+    if (key === 'planet') {
+      const P = params.planet;
+      fields.x = mkField('X', 'px', () => Math.round(P.dx), v => P.dx = Math.round(v));
+      fields.y = mkField('Y', 'px', () => Math.round(P.dy), v => P.dy = Math.round(v));
+      fields.w = mkField('大きさ', '%', () => Math.round(P.scale * 100), v => P.scale = clamp01x(v / 100, 0.2, 3));
+      grid.append(fields.x.el, fields.y.el, fields.w.el);
+    } else {
+      const O = params.orbits[key], b = orbitBase(key);
+      fields.x = mkField('X', 'px', () => Math.round(O.dx), v => O.dx = Math.round(v));
+      fields.y = mkField('Y', 'px', () => Math.round(O.dy), v => O.dy = Math.round(v));
+      /* W/H は実寸(px)で出す。中で scale / flat に直す = Figma と同じ感覚で触れる */
+      fields.w = mkField('W', 'px', () => Math.round(orbitGeom(key).rx * 2),
+        v => O.scale = clamp01x(v / 2 / b.rx, 0.2, 2.5));
+      fields.h = mkField('H', 'px', () => Math.round(orbitGeom(key).ry * 2),
+        v => O.flat = clamp01x(v / 2 / (b.ry * O.scale), 0.05, 3));
+      fields.r = mkField('角度', '°', () => +(b.rot + O.angle).toFixed(1),
+        v => O.angle = +(v - b.rot).toFixed(1), 0.5);
+      grid.append(fields.x.el, fields.y.el, fields.w.el, fields.h.el, fields.r.el);
+    }
+  }
+  function clamp01x(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  /* ドラッグ中: 入力欄に触っていない時だけ数値を追いつかせる */
+  function sync() {
+    for (const k in fields) {
+      const f = fields[k];
+      if (document.activeElement === f.input) continue;
+      f.input.value = f.get();
+    }
+  }
+  editHandles.bind(render, sync);
+  render(editHandles.selected);
 }
 
 /* ページの流れと同じ順番で並べる:
@@ -5620,77 +7153,330 @@ function buildPanel() {
   };
 
   /* ========== 🌊 全体 ========== */
-  const catAll = category('🌊 全体（サイト全体のモーション）', true);
-  catNote(catAll, 'まずはここだけ。サイト全体の印象が決まります。');
+  const catAll = category('🌊 全体（サイト全体のモーション）', false);
 
-  sub(catAll, '① モーションが進むきっかけ');
-  note(params.drive === 'scroll'
-    ? '動かした分だけ絵が進みます。手を止めれば絵も止まり、戻せば巻き戻ります。'
-    : 'セクションに着いたら、決まった秒数の映像として流します。誰が見ても同じ速さ。');
+  /* 【2026-08-27 ヒデさん指定】①②③はたたまず、コンパクトに並べる。補足文は削除 */
+  sub(catAll, 'モーションの進み方', null, { fixed: true });
   segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
     () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
+  note(params.drive === 'scroll'
+    ? '動かした分だけ絵が進みます。手を止めれば絵も止まります。'
+    : 'セクションに着いたら、決まった秒数の映像として流します。');
 
-  note('見せるペースは、各セクションの「見せる長さ」で調整します。');
-
-  /* ② スクロールの固定(3パターン・2026-08-26 ヒデさん指定)。押した瞬間に反映(頭出ししない) */
   liveEdit = true;
-  sub(catAll, '② スクロールの固定');
-  note((params.scrollHold || 'lock') === 'smooth'
-      ? '固定追従なし＝ロックしない。自由に上下でき、アニメは画面に来たら再生します。実績の黒オブジェクトはリビールが終わってから出ます。'
-      : '固定＝再生中はその場に貼りつけ(従来のスクロールジャック・既定)。再生が終わるまでスクロールは止まります。');
+  sub(catAll, 'スクロールの固定', null, { fixed: true });
   pillRow([{ key: 'lock', name: '固定' }, { key: 'smooth', name: '固定追従なし' }],
     it => (params.scrollHold || 'lock') === it.key,
-    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); });
+    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); },
+    { get: () => params.scrollHold, set: v => { params.scrollHold = v; scrollLocked = false; if (lenis) lenis.start(); } });
+  note((params.scrollHold || 'lock') === 'smooth'
+      ? '固定追従なし＝再生中も自由に上下できます。'
+      : '固定＝再生中はその場に貼りつけて動かしません。');
   liveEdit = false;
 
-  sub(catAll, '③ 慣性スクロール');
-  rows.push(slider('指への追従', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
-    v => (v <= 3 ? 'とろり ' : v <= 7 ? 'なめらか ' : '機敏 ') + v,
-    '小さいほど指を離しても流れ続け、大きいほどピタッと止まります。'));
-  /* ⚠️ 2択ボタンのラベル欄は 74px。7文字だと折り返すので6文字までに収めること */
+  sub(catAll, '慣性スクロール', null, { fixed: true });
+  rows.push(slider('慣性の強さ', 1, 12, 0.5, () => sv().common.smooth, v => sv().common.smooth = v,
+    v => v <= 4 ? '強め' : v >= 9 ? '弱め' : '中',
+    '強めほど指を離しても流れ続け、弱めほどピタッと止まります。'));
+
+  /* くり返しは慣性とは別の話なので独立させる(ヒデさん指定 2026-08-27) */
+  sub(catAll, 'くり返し再生', null, { fixed: true });
   segRow('くり返し', [['する', 1], ['しない', 0]], () => params.replay ? 1 : 0, v => { params.replay = !!v; markDirty(); });
   note('一度見たセクションも、戻ってくるともう一度流れます。');
 
   /* ========== 🖼 キービジュアル ========== */
-  const catKv = category('🖼 キービジュアル（いちばん上の画面）', false);
-  catNote(catKv, '最初に見える画面。文字が打たれ、そのあと右のグラフィック（モック→アイコン→軌道）が出ます。');
+  /* 【2026-08-27 ヒデさん指定】既定は全部たたむ。キービジュアルだけ開いて「🎨 グラフィック」を見せる */
+  const catKv = category('🖼 キービジュアル（いちばん上の画面）', true);
 
-  sub(catKv, '文字が出てくる順番とタイミング');
-  note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
-  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
-    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
-  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
-    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
-  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
-    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
-  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
-    'ゆっくりにすると、最後の一言が印象に残ります。'));
-  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
-    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
-  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
-    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
-  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
-    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
-  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
-    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
-  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
-    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
-
-  /* ---------- 🖼 右のグラフィックの案 (2026-08-26 ヒデさん指定) ----------
-     V2 のキービジュアルは右側のグラフィックが iframe(kv/embed.html)。
-     旧・惑星/まわりの輪のコントロールは全部撤去し、代わりに「案の切替」をここに集約。
-     押した瞬間に iframe へ postMessage して切り替える（文字は流し直さない）。 */
+  /* ===== 🎨 グラフィック (2026-08-26 ヒデさん指定・整理) =====
+     右側のグラフィックの設定をここに集約する。いちばん上が「直接編集」。
+     以下は全部この中の入れ子: 案を選ぶ / 出てくるタイミング / 惑星のアニメーション / 軌道 */
   liveEdit = true;
-  sub(catKv, '🖼 右のグラフィックの案を選ぶ');
-  note('A案＝PNGベタ貼り（既定）/ B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ右のグラフィックが切り替わります。');
-  pillRow(KV_DESIGNS, it => (params.kvDesign || 'p7') === it.key, it => kvSetDesign(it.key));
+  sub(catKv, '🎨 グラフィック');
+  const gRoot = mount;   /* この中に入れ子で並べる */
+  /* 【2026-08-27 ヒデさん指定】見出しの右に「見え方モード」を2つのアイコンで置く。
+     左=どこでも同じ大きさ / 右=手前が大きく奥が小さい(パース) */
+  {
+    const title = gRoot.parentElement.querySelector('.grp-title');
+    const wrap = document.createElement('div');
+    wrap.className = 'gmode';
+    const ICONS = {
+      flat: '<svg viewBox="0 0 22 14" width="22" height="14" aria-hidden="true">' +
+            '<circle cx="4" cy="7" r="2.6"/><circle cx="11" cy="7" r="2.6"/><circle cx="18" cy="7" r="2.6"/></svg>',
+      persp: '<svg viewBox="0 0 22 14" width="22" height="14" aria-hidden="true">' +
+            '<circle cx="4.5" cy="7" r="4"/><circle cx="13" cy="7" r="2.4"/><circle cx="19" cy="7" r="1.3"/></svg>',
+    };
+    for (const [key, label] of [['flat', 'どこでも同じ大きさ'], ['persp', '手前が大きく、奥が小さい（遠近）']]) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'gmode-b' + ((params.conv.dotPersp || 'flat') === key ? ' on' : '');
+      b.innerHTML = ICONS[key];
+      b.title = label;
+      b.onclick = (e) => {
+        e.stopPropagation();
+        params.conv.dotPersp = key;
+        markDirty();
+        renderFrame();
+        /* 【2026-08-27 ヒデさん指定】リロード感が出るのでパネル全体は作り直さない。
+           選択の見た目と、アニメ節(遠近の強さの出し入れ)だけを更新する */
+        wrap.querySelectorAll('.gmode-b').forEach((el, j) => el.classList.toggle('on', j === (key === 'flat' ? 0 : 1)));
+        if (typeof fillAnimBody === 'function') fillAnimBody();
+      };
+      wrap.appendChild(b);
+    }
+    title.insertBefore(wrap, title.querySelector('.grp-acts'));
+  }
+
+  /* 【2026-08-27 ヒデさん指定】A/B案は廃止し惑星で固定。案の選択ピルも削除。
+     ここには「編集する」ボタンだけを置き、押すとキービジュアル上に編集バーが出る。 */
+  {
+    const row = document.createElement('div');
+    row.className = 'sw-row';
+    const b2 = document.createElement('button');
+    b2.className = 'sw-pill sw-add';
+    b2.textContent = '✏️ グラフィックを編集する';
+    b2.onclick = () => { editHandles.set(true); rebuildKeeping(null); };
+    row.appendChild(b2);
+    (mount || body).appendChild(row);
+    const n2 = document.createElement('div');
+    n2.className = 'grp-note';
+    n2.textContent = '押すと編集モードに入ります。画面右上に出るバーで、保存・やめる・元に戻す(⌘Z)ができます。';
+    (mount || body).appendChild(n2);
+    /* 選んだオブジェクトの数値パネル(X/Y/W/H/角度)。編集モード中に動的に出る
+       ⚠️ 2026-08-27: 「案を選ぶ」セクションを消した時に、この呼び出しごと落ちていたので復活 */
+    buildNumPanel(mount || body);
+  }
+
+  /* --- プリセット: いまの軌道・惑星の形に名前を付けて保存し、ワンタップで呼び出す
+         (2026-08-27 ヒデさん指定で「プリセット」として直接編集の下に置く) --- */
+  sub(gRoot, 'プリセット', true, { fixed: true });
+  {
+    const list = params.orbitPresets || (params.orbitPresets = []);
+    const presetRow = document.createElement('div');
+    presetRow.className = 'sw-row';
+    list.forEach((ps, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw-pill' + (params.orbitPresetOn === i ? ' on' : '');
+      b.textContent = ps.name;
+      b.onclick = () => { applyOrbitPreset(i); rebuildKeeping(b); };
+      const e = document.createElement('button');
+      e.className = 'sw-pill sw-edit';
+      e.textContent = '✎';
+      e.title = '名前の変更・上書き・削除';
+      e.onclick = () => {
+        const act = window.prompt(
+          `「${ps.name}」をどうしますか？\n  1 = 名前を変える\n  2 = 今の形で上書き\n  3 = 削除`, '1');
+        if (act === '1') {
+          const nm = window.prompt('新しい名前', ps.name);
+          if (nm && nm.trim()) { ps.name = nm.trim(); markDirty(); buildPanel(); }
+        } else if (act === '2') { ps.data = grabOrbitState(); markDirty(); buildPanel(); }
+        else if (act === '3') {
+          if (window.confirm(`「${ps.name}」を削除します。よろしいですか？`)) {
+            list.splice(i, 1);
+            if (params.orbitPresetOn === i) params.orbitPresetOn = null;
+            markDirty(); buildPanel();
+          }
+        }
+      };
+      presetRow.append(b, e);
+    });
+    const add = document.createElement('button');
+    add.className = 'sw-pill sw-add';
+    add.textContent = '＋ いまの形を保存';
+    add.onclick = () => {
+      const nm = window.prompt('プリセットの名前', 'プリセット ' + (list.length + 1));
+      if (!nm || !nm.trim()) return;
+      list.push({ name: nm.trim(), data: grabOrbitState() });
+      params.orbitPresetOn = list.length - 1;
+      markDirty(); buildPanel();
+    };
+    presetRow.appendChild(add);
+    (mount || body).appendChild(presetRow);
+    const pn = document.createElement('div');
+    pn.className = 'grp-note';
+    pn.textContent = '押すとその形に切り替わります。✎ で名前の変更・上書き・削除。';
+    (mount || body).appendChild(pn);
+  }
   liveEdit = false;
 
-  /* ---------- 🖼 右グラフィックの出始めタイミング (2026-08-26 ヒデさん指定) ----------
-     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。
-     触ると右のグラフィックがその場で再生されて確認できる（本体の文字は流し直さない）。 */
+  /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
+     V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
+
+  sub(gRoot, '🪐 アニメーション', true);
+  const aRoot = mount;   /* 案ごとの調整はこの中に入れ子で出す */
+  /* 【2026-08-27 ヒデさん指定】案を押したら、パネルを作り直さずその場で切り替わる。
+     入れ替わるのは「説明 → この案の調整 → 共通」だけなので、下の箱ごと差し替える */
   liveEdit = true;
-  sub(catKv, '🖼 右グラフィックの出始めタイミング');
+  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
+    it => { params.converge = it.key; markDirty(); renderFrame(); fillAnimBody(); },
+    { get: () => params.converge, set: v => { params.converge = v; renderFrame(); fillAnimBody(); } },
+    { noRebuild: true });
+  liveEdit = false;
+  const animBody = document.createElement('div');
+  aRoot.appendChild(animBody);
+  function fillAnimBody() {
+    animBody.innerHTML = '';
+    const keepMount = mount;
+    mount = animBody;
+    /* どんな動きなのかを一言で(2026-08-27 ヒデさん指定) */
+    const CONV_DESC = {
+      off:    '軌道をただ回り続けます。集約の動きはしません。',
+      reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
+      spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
+      accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
+      waves:  '軌道と同じ形の輪が外側から生まれ、内側へ流れ込んで惑星に取り込まれます。何本かがまとめて流れ、少し休んでまた次のグループが来ます。',
+      mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
+      beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
+      duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
+    };
+    {
+      const d = document.createElement('div');
+      d.className = 'grp-note';
+      d.textContent = CONV_DESC[params.converge] || '';
+      animBody.appendChild(d);
+    }
+
+    /* ===== 選んだ案のつまみを先に出す(共通の項目は下へ) ===== */
+    const pctF = v => Math.round(v * 100) + '%';
+    const cvMode = params.converge || 'reel';
+    if (cvMode === 'reel') {
+      const R = params.conv.reel;
+      sub(animBody, 'この案の調整（輪が縮んで吸収）', true);
+      segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
+        () => params.conv.reel.flow || 'down', v => { R.flow = v; markDirty(); });
+      note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
+      slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
+        '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
+      slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
+        'ここまでは全周サイズでドットが回る。');
+      slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
+        'ここで吸収が完了し、もう1本が移動を始める。');
+      slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
+        '吸収後、もう1本がすべり込む時間。');
+      slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
+        '空いた位置に新しい輪がフェードインする時間。');
+      slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
+      /* 消え方は「前面カット」「はみ出ず溶ける」の2種だけ残す(2026-08-26 ヒデさん指定) */
+      const VANISH_DESC = {
+        clip: '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
+        fit:  'はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まず、そこで溶けて消える。',
+      };
+      const VANISHES = [{ key: 'clip', name: '前面カット' }, { key: 'fit', name: 'はみ出ず溶ける' }];
+      let vanishNoteEl = null;
+      pillRow(VANISHES, it => (R.vanish || 'clip') === it.key,
+        it => { R.vanish = it.key; markDirty(); if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[it.key]; },
+        { get: () => params.conv.reel.vanish, set: v => { R.vanish = v; if (vanishNoteEl) vanishNoteEl.textContent = VANISH_DESC[v]; } });
+      vanishNoteEl = document.createElement('div');
+      vanishNoteEl.className = 'grp-note';
+      vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
+      vanishNoteEl.textContent = VANISH_DESC[R.vanish] || VANISH_DESC.clip;
+      (mount || body).appendChild(vanishNoteEl);
+      slider('透過し始め', 0, 0.95, 0.01, () => params.conv.reel.fadeAt, v => R.fadeAt = v, pctF,
+        '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
+      slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
+        '吸収の瞬間にどれだけ濃さを残すか。0で完全に透明。');
+      /* 【2026-08-27 ヒデさん指定】収縮時のスピンはオンオフで。既定はオフ */
+      segRow('縮む時のスピン', [['なし', 0], ['あり', 1]],
+        () => (params.conv.reel.spinUp || 0) > 0 ? 1 : 0,
+        v => { R.spinUp = v ? 1.2 : 0; markDirty(); renderFrame();
+               if (typeof fillAnimBody === 'function') fillAnimBody(); });
+      if ((params.conv.reel.spinUp || 0) > 0) {
+        slider('スピンの強さ', 0.1, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v,
+          v => '+' + Math.round(v * 180) + '°', '縮むほどドットが速く回ります。', { fixedMax: true });
+      }
+    } else if (cvMode === 'spiral') {
+      const S = params.conv.spiral;
+      sub(animBody, 'この案の調整（粒が渦で吸収）', true);
+      slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
+      slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
+        '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
+      slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
+        '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
+      slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+    } else if (cvMode === 'accre') {
+      const AC = params.conv.accre;
+      sub(animBody, 'この案の調整（粒の渦）', true);
+      slider('粒の数', 5, 600, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
+        '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
+      slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
+        '内へ落ちていく速さ。', { fixedMax: true });
+      slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
+        '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
+    } else if (cvMode === 'waves') {
+      const W = params.conv.waves;
+      sub(animBody, 'この案の調整（輪が流れ込む）', true);
+      slider('1本が流れる秒数', 1, 12, 0.1, () => params.conv.waves.T, v => W.T = v, v => v.toFixed(1) + '秒',
+        '外から惑星に取り込まれるまでの時間。', { fixedMax: true });
+      slider('1グループの本数', 1, 12, 1, () => params.conv.waves.count, v => W.count = v, v => v + '本', null, { fixedMax: true });
+      slider('本と本の間隔', 0.1, 4, 0.05, () => params.conv.waves.gap, v => W.gap = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
+      slider('グループ後の休み', 0, 8, 0.1, () => params.conv.waves.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
+        '全部吸収された後、次のグループが出るまでの間。リズムをつくる。', { fixedMax: true });
+      slider('輪の濃さ', 0.05, 1, 0.05, () => params.conv.waves.alpha, v => W.alpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('フェードインの長さ', 0.02, 0.4, 0.01, () => params.conv.waves.inK, v => W.inK = v, pctF,
+        '1本の旅のうち、出てくるフェードインに使う割合。');
+      slider('取り込まれ始め', 0.4, 0.96, 0.01, () => params.conv.waves.outAt, v => W.outAt = v, pctF,
+        'ここからフェードアウト=惑星に取り込まれていく。');
+      slider('始まりの大きさ', 1, 1.6, 0.01, () => params.conv.waves.from, v => W.from = v, v => '×' + v.toFixed(2),
+        '軌道より少し外(×1.1あたり)から生まれると自然。', { fixedMax: true });
+    } else if (cvMode === 'mesh') {
+      const M = params.conv.mesh;
+      sub(animBody, 'この案の調整（網でつながる）', true);
+      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
+      slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
+        'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
+      slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
+      slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
+        '大きいほど線が増えて網が濃くなります。', { fixedMax: true });
+      slider('ランダムさ', 0, 2.5, 0.05, () => params.conv.mesh.random, v => M.random = v, v => '×' + v.toFixed(2),
+        'ノードがどれだけ大きく漂うか。0でぴたっと止まります。', { fixedMax: true });
+      slider('漂う速さ', 0, 3, 0.05, () => params.conv.mesh.drift, v => M.drift = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1ホップの時間', 0.05, 2, 0.05, () => params.conv.mesh.hop, v => M.hop = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
+      slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
+    } else if (cvMode === 'beads') {
+      const B = params.conv.beads;
+      sub(animBody, 'この案の調整（点が並ぶ軌道）', true);
+      slider('ドットの密度', 6, 400, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
+        '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
+      slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
+        '小さいほど輪の形が保たれ、大きいほど一斉に吸い込まれます。', { fixedMax: true });
+      slider('吸収にかかる秒数', 0.5, 12, 0.1, () => params.conv.beads.life, v => B.life = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
+        '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
+    } else if (CONV_LINKED.includes(cvMode)) {
+      const L = params.conv.link;
+      sub(animBody, 'この案の調整（線で行き来）', true);
+      note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
+      slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
+        '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
+      slider('流れる速さ', 0.1, 4, 0.05, () => params.conv.link.speed, v => L.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1周の秒数', 0.5, 10, 0.1, () => params.conv.link.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('粒の密度', 0.3, 6, 0.1, () => params.conv.link.density, v => L.density = v, v => '×' + v.toFixed(1),
+        '1本の線に流す粒の数。', { fixedMax: true });
+      slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
+        '0で直線、大きいほど弧を描きます。', { fixedMax: true });
+      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+    }
+
+
+    mount = keepMount;
+  }
+  fillAnimBody();
+
+  /* ゆらぎはオンオフだけ。コンパクトに下の方へ (2026-08-27 ヒデさん指定・既定はオフ) */
+  liveEdit = true;
+  sub(gRoot, 'ゆらぎ', true, { fixed: true });
+  segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
+    v => { params.sway = v ? 3 : 1; markDirty(); });
+  liveEdit = false;
+
+  /* ---------- 出てくるタイミング (グラフィックの入れ子) ----------
+     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。 */
+  liveEdit = true;
+  sub(gRoot, '出てくるタイミング', true);
   note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
   rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
     () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
@@ -5709,38 +7495,91 @@ function buildPanel() {
     '起点から何秒で軌道(輪+ドット)が出るか。'));
   liveEdit = false;
 
-  /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
-     V2 の輪/軌道は右グラフィック(iframe)側で自前に持つため、本体パネルからは出さない。 */
-
-  /* ---------- 🏢 導入企業のロゴ (2026-08-19 追加) ----------
+  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定) ----------
+     煩雑さ対策: 共通の項目だけを表に出し、案ごとの細かいつまみは
+     【選んだ案のぶんだけ】小見出し(たためる・既定は閉じる)に出す。 */
+  /* ---------- 🛰 軌道（レイアウト＋位置/サイズ/傾き＋プリセット） ----------
+     2026-08-26 ヒデさん指定: 「軌道のレイアウト」の独立セクションは廃止し、ここに統合。
+     位置・サイズ・傾きはサブカテゴリ(たためる)にまとめ、プリセットで呼び出せるようにした。 */
+  /* (ロゴ帯のセクションは 2026-08-27 ヒデさん指定で削除)
      ⚠️ marquee.gap / duration / direction は前からあったのにパネルに出ていなかった。
         ここは押した瞬間に反映させる（惑星と同じ扱い）。
         間隔を触るたびに文字のモーションが頭出しし直すと、詰め具合を見比べられないため。
      ⚠️ 見た目の反映には applyMarquee() が要る（CSS変数 --logo-gap を書くのはあの関数）。
         set の中で必ず呼ぶこと。 */
   liveEdit = true;
-  sub(catKv, '🏢 導入企業のロゴ');
-  note('画面いちばん下を、ロゴが横に流れ続ける帯です。ここは押した瞬間その場で変わります。');
-  /* ⚠️ fixedMax を渡さないと、slider() が「既定を中央に置く」ために上限を勝手に縮める
-     (実測: 160 と書いたのに 128 になっていた)。ここは書いた上限をそのまま使う */
-  rows.push(slider('ロゴの間隔', 16, 160, 2,
-    () => params.marquee.gap, v => { params.marquee.gap = v; applyMarquee(); }, v => v + 'px',
-    'ロゴとロゴの左右のすき間。小さいほど詰まって並びます。', { fixedMax: true }));
-  rows.push(slider('一巡の秒数', 10, 90, 1,
-    () => params.marquee.duration, v => { params.marquee.duration = v; applyMarquee(); }, v => v + '秒',
-    'ロゴがひとまわりするのにかかる時間。大きいほどゆっくり流れます。', { fixedMax: true }));
-  segRow('流れる向き', [['左へ', 1], ['右へ', -1]],
-    () => params.marquee.direction, v => { params.marquee.direction = v; applyMarquee(); markDirty(); });
+
+
+  /* ---------- 🪐 惑星の模様 (2026-08-27 ヒデさん指定でV1.0のものを復活) ----------
+     連番のラベルにして、押した瞬間その場で切り替える(頭出ししない)。 */
+  liveEdit = true;
+  sub(gRoot, '惑星の模様', true);
+  const PLANET_SKINS = [
+    { key: 'A1', name: '1 ビビッドブルー' },
+    { key: 'A2', name: '2 ピンク×ブルー' },
+    { key: 'A3', name: '3 ライトグレイン' },
+    { key: 'B',  name: '4 ハーフトーン' },
+    { key: 'C1', name: '5 波・流れる' },
+    { key: 'C2', name: '6 波・白帯' },
+    { key: 'C3', name: '7 波・呼吸' },
+  ];
+  pillRow(PLANET_SKINS, it => params.design === it.key,
+    it => { params.design = it.key; markDirty(); renderFrame(); },
+    { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
+    { noRebuild: true });
+  note('惑星の表面の柄。1〜4は模様、5〜7は色の波が流れるタイプです。');
   liveEdit = false;
+
+  /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
+  sub(catKv, '左側コピー');
+  const copyRoot = mount;
+  sub(copyRoot, '順番', true);
+  note('数字はページを開いてから何秒後か。上から出る順です。');
+  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
+    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
+  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
+    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
+  sub(copyRoot, 'タイミング', true);
+  note('打つ速さと間の取り方。触ると先頭から流し直します。');
+  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
+    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
+  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
+    'ゆっくりにすると、最後の一言が印象に残ります。'));
+  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
+    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
+  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
+    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
+  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
+    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
+  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
+  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
+    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
+
+  /* ===== どの案でも効く共通の項目(案ごとの調整より下に置く。2026-08-27 ヒデさん指定) ===== */
+  sub(animBody, '共通（見せ方）', true);
+  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
+  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
+  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
+  note('輪を消すとその輪のドットも消えます。③⑤⑥の案では自動で隠れます。');
+  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
+    v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。', { fixedMax: true });
+  if ((params.conv.dotPersp || 'flat') === 'persp') {
+    slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
+      '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
+  }
+  slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
+    '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+
+
 
   /* ========== 📖 ビジョン ========== */
   const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
   catNote(catVis, 'Our Vision(ブラー) → 2行がマスクで1行ずつ出る → その場で消える → 右に輪が現れて左下へ → Platform の図。');
 
-  sub(catVis, 'このセクションの長さ');
+  /* 【2026-08-26 整理】1項目だけの見出しが並んで冗長だったので「基本」にまとめた */
+  sub(catVis, '基本（長さ・ぼけ具合）');
   sectionLenSlider('vision', 800);
-
-  sub(catVis, '文字のぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 20, 1, () => sv().vision.blur, v => sv().vision.blur = v, v => v + 'px',
     '文字が出る時・消える時のぼやけの強さ。'));
 
@@ -5828,11 +7667,13 @@ function buildPanel() {
       '大きいほど、じわーっと粘って止まります。'));
   }
 
+  /* 【2026-08-26 整理】見出しだけが空で、中身(見出し/Point01/Point02)が同じ階層に並んでいたので入れ子に直した */
   sub(catVis, '⑦ 「2つの価値」の文字の位置');
+  const vpRoot = mount;
   note('デザイン位置からのズレ。プラスで右／下へ。');
   [['見出し「連携が生む、2つの価値」', 'headX', 'headY'], ['Point 01 のかたまり', 'p1X', 'p1Y'], ['Point 02 のかたまり', 'p2X', 'p2Y']]
     .forEach(([label, kx, ky]) => {
-      sub(catVis, label, true);
+      sub(vpRoot, label, true);
       rows.push(slider('左右の位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
       rows.push(slider('上下の位置', -400, 400, 2, () => sv().vision[ky], v => sv().vision[ky] = v, v => v + 'px', 'プラスで下へ、マイナスで上へ。'));
     });
@@ -5841,12 +7682,9 @@ function buildPanel() {
   const catRes = category('📈 実績（導入企業◯◯社などの数字）', false);
   catNote(catRes, '見出し → 数字と本文 → 見終わると暗くなって次のセクションへ。');
 
-  sub(catRes, 'このセクションの長さ');
-  sectionLenSlider('results', 600);
-
   /* ⚠️【2026-08-26 ヒデさん指定】「レイアウトを選ぶ」(案A/B/C)は削除。実績は新デザイン1本に統一。 */
-
-  sub(catRes, '写真のぼけ具合');
+  sub(catRes, '基本（長さ・ぼけ具合）');
+  sectionLenSlider('results', 600);
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().results.imgBlur, v => sv().results.imgBlur = v, v => v + 'px',
     '大きいほど、写真がぼんやりした状態から現れます。'));
 
@@ -5894,7 +7732,7 @@ function buildPanel() {
   const catDev = category('🖥 開発者体験（暗い画面のコード紹介）', false);
   catNote(catDev, '暗い背景で API / CLI / SDK の画面が順に切り替わります。');
 
-  sub(catDev, 'このセクションの長さ');
+  sub(catDev, '基本（長さ）');
   sectionLenSlider('dev', 1600);
 
   sub(catDev, '画面が切り替わる時の見え方');
@@ -5925,12 +7763,10 @@ function buildPanel() {
   const catCase = category('🗂 導入事例（2×2グリッド）', false);
   catNote(catCase, '見出し → 水平線が左から3本 → 中央の縦線 → カード4枚がブラーで登場。');
 
-  sub(catCase, 'このセクションの長さ');
+  sub(catCase, '基本（長さ・ぼけ具合）');
   sectionLenSlider('cases', 1000);
   rows.push(slider('全体の再生時間', 3, 20, 0.5, () => sv().cases.playSec, v => sv().cases.playSec = v, v => v.toFixed(1) + '秒',
     '見出し〜カードまで出そろうのにかける時間。小さいほどキビキビ。'));
-
-  sub(catCase, 'カードのぼけ具合');
   rows.push(slider('ぼかしの強さ', 0, 40, 1, () => sv().cases.inBlur, v => sv().cases.inBlur = v, v => v + 'px',
     '大きいほど強くぼけた状態から現れます。※貼りつけない時は無効。'));
 
@@ -5970,31 +7806,21 @@ function buildPanel() {
   btns.className = 'btns';
   const saveBtn = document.createElement('button');
   saveBtn.className = 'primary';
+  /* 【2026-08-26 ヒデさん指定】いまの値を「最初に出る状態」として確定させるボタン */
   syncSaveBtn = () => {
-    saveBtn.textContent = dirty ? '保存する（未保存あり）' : '保存する';
+    saveBtn.textContent = dirty ? 'これをデフォルトに設定（未保存あり）' : 'これをデフォルトに設定';
     saveBtn.classList.toggle('dirty', dirty);
   };
   saveBtn.onclick = () => {
     save();
     dirty = false;
     syncSaveBtn();
-    saveBtn.textContent = '✅ 保存しました';
+    saveBtn.textContent = '✅ デフォルトにしました';
     setTimeout(syncSaveBtn, 1600);
   };
   syncSaveBtn();
-  const resetBtn = document.createElement('button');
-  resetBtn.textContent = '↩︎ 元に戻す';
-  resetBtn.onclick = () => {
-    if (!window.confirm('保存した内容も含めて、最初の状態に戻します。よろしいですか？')) return;
-    params = structuredClone(DEFAULTS);
-    elapsed = 0;
-    localStorage.removeItem(STORAGE_KEY);   /* 保存そのものを消す */
-    dirty = false;
-    buildPanel();
-    applyMarquee();
-    fit();
-  };
-  btns.append(saveBtn, resetBtn);
+  /* 【2026-08-26 ヒデさん指定】下の「元に戻す」は廃止。各項目の右端にある ↺ で個別に戻す */
+  btns.append(saveBtn);
   body.appendChild(btns);
 
   const copy = document.createElement('button');
@@ -6033,8 +7859,10 @@ const toolsEl = document.querySelector('.tools');
       背が伸びた分は自然に上へ伸びるので何もしなくてよい */
 function keepPanelInView() {
   if (!toolsEl.style.top || toolsEl.style.top === 'auto') return;
-  const h = toolsEl.offsetHeight;
-  const max = Math.max(8, (window.innerHeight || 0) - h - 8);
+  /* 下側ははみ出してよい。つまむヘッダーが画面に残るところまでを上限にする(2026-08-27 修正) */
+  const headEl = document.getElementById('panelHead');
+  const headH = (headEl && headEl.offsetHeight) || 44;
+  const max = Math.max(8, (window.innerHeight || 0) - headH - 8);
   let top = parseFloat(toolsEl.style.top);
   if (!isFinite(top)) return;
   if (top > max) top = max;
@@ -6043,12 +7871,66 @@ function keepPanelInView() {
 }
 window.addEventListener('resize', keepPanelInView);
 
+/* ===== 調整パネルのサイズ変更: 上下・左右の辺をつかむ (2026-08-27 ヒデさん指定) =====
+   ブラウザ標準の resize は右下だけなので、4辺ぶんのつまみを自前で足す。
+   上辺・左辺は「掴んだ端を動かす」ので、位置(top/left)も一緒に動かす。 */
+(() => {
+  const panelEl = document.getElementById('panel');
+  if (!panelEl) return;
+  const MINW = 240, MINH = 120;
+  for (const side of ['t', 'b', 'l', 'r']) {
+    const z = document.createElement('div');
+    z.className = 'pz pz-' + side;
+    panelEl.appendChild(z);
+    z.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation();
+      try { z.setPointerCapture(e.pointerId); } catch (_) {}
+      const r = toolsEl.getBoundingClientRect();
+      const st = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, left: r.left, top: r.top };
+      /* 掴んだ瞬間に left/top 指定へ切り替える。中央そろえの transform も外す(飛び防止) */
+      toolsEl.style.transform = 'none';
+      toolsEl.style.left = r.left + 'px';
+      toolsEl.style.top = r.top + 'px';
+      toolsEl.style.right = 'auto';
+      toolsEl.style.bottom = 'auto';
+      const move = ev => {
+        const dx = ev.clientX - st.x, dy = ev.clientY - st.y;
+        if (side === 'r') panelEl.style.width = Math.max(MINW, st.w + dx) + 'px';
+        if (side === 'b') panelEl.style.height = Math.max(MINH, st.h + dy) + 'px';
+        if (side === 'l') {
+          const w = Math.max(MINW, st.w - dx);
+          panelEl.style.width = w + 'px';
+          toolsEl.style.left = (st.left + (st.w - w)) + 'px';
+        }
+        if (side === 't') {
+          const h = Math.max(MINH, st.h - dy);
+          panelEl.style.height = h + 'px';
+          toolsEl.style.top = (st.top + (st.h - h)) + 'px';
+        }
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  }
+})();
+
 (() => {
   const tools = toolsEl;
   const head = document.getElementById('panelHead');
+  /* 【2026-08-27 ヒデさん指定】掴める場所が狭かったので、ヘッダーだけでなく
+     パネルの中身の「何も無い所」でも掴んで動かせるようにする。
+     スライダー・ボタン・入力欄など“操作するもの”の上では移動しない。 */
+  const dragZones = [head, document.getElementById('panelBody')].filter(Boolean);
+  const isControl = (t) => !!(t && t.closest && t.closest(
+    'input, button, select, textarea, .sw-pill, .rst, .gbtn, .seg, .np-f, .pz, .sw-copy, a'));
   let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
-  head.addEventListener('pointerdown', e => {
+  const onDown = e => {
     if (e.button !== 0) return;
+    if (e.currentTarget !== head && isControl(e.target)) return;   /* 操作するものの上では動かさない */
     /* ⚠️【2026-08-19 バグ修正】ここで left/top 指定へ切り替えていたのが原因で、
        【ヘッダーを押しただけ】でも上端固定になっていた。
        閉じている時は下の方にいるので、そこから開くと背が 46px → 520px に伸びて
@@ -6057,35 +7939,59 @@ window.addEventListener('resize', keepPanelInView);
     const r = tools.getBoundingClientRect();
     sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
     moved = false; dragging = true;
-    head.setPointerCapture(e.pointerId);
-  });
-  head.addEventListener('pointermove', e => {
+  };
+  const onMove = e => {
     if (!dragging) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.abs(dx) + Math.abs(dy) <= 3) return;   /* まだ「押しただけ」。何もしない */
     if (!moved) {
-      /* ここで初めて「動かしている」と判断して、left/top 指定へ切り替える */
+      /* ここで初めて「動かしている」と判断して、left/top 指定へ切り替える。
+         ⚠️【2026-08-27 バグ修正】CSS の上下中央そろえ(transform: translateY(-50%))が
+            残ったまま top を指定すると、掴んだ瞬間に半分ぶん跳ねて【飛んで見えた】。
+            位置指定に切り替える時は transform を必ず外す。 */
       moved = true;
+      tools.style.transform = 'none';
       tools.style.left = ox + 'px';
       tools.style.top = oy + 'px';
       tools.style.right = 'auto';
       tools.style.bottom = 'auto';
     }
-    const w = tools.offsetWidth, h = tools.offsetHeight;
+    /* ⚠️【2026-08-27 バグ修正】以前は「パネル全体が画面に収まる」ところまでしか動かせず、
+       背の高いパネルだと下へほとんど動かせなかった(実測: 高さ361/画面392 で上限23px)。
+       Figma のパネルと同じく、下側ははみ出してよい。【つまむヘッダーが画面に残る】所までにする。 */
+    const w = tools.offsetWidth;
+    const headH = (head && head.offsetHeight) || 44;
     tools.style.left = Math.min(Math.max(0, ox + dx), innerWidth - Math.min(w, 120)) + 'px';
-    /* 掴んで動かす時も、下へ突き抜けないところまでにしておく */
-    tools.style.top = Math.min(Math.max(0, oy + dy), Math.max(8, innerHeight - h - 8)) + 'px';
-  });
-  head.addEventListener('pointerup', e => {
-    dragging = false;
-    try { head.releasePointerCapture(e.pointerId); } catch (err) {}
-  });
-  /* ドラッグした時は開閉トグルを発火させない */
-  head.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); moved = false; } }, true);
+    tools.style.top = Math.min(Math.max(0, oy + dy), Math.max(8, innerHeight - headH - 8)) + 'px';
+  };
+  const onUp = () => { dragging = false; };
+  for (const z of dragZones) z.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  /* ドラッグした時は、開閉トグルなどのクリックを発火させない */
+  for (const z of dragZones) {
+    z.addEventListener('click', e => { if (moved) { e.stopImmediatePropagation(); moved = false; } }, true);
+  }
 })();
 
+/* 【2026-08-27 ヒデさん指定】アコーディオンは基本【下へ開く】。
+   画面の下の方にいて下へ伸ばせない時だけ【上へ開く】(上端を持ち上げる)。 */
+function openPanelDownward() {
+  /* right/bottom 固定のまま(＝一度も動かしていない)なら、CSS の上下中央そろえに任せる */
+  if (!toolsEl.style.top || toolsEl.style.top === 'auto') return;
+  const top = parseFloat(toolsEl.style.top);
+  if (!isFinite(top)) return;
+  const h = toolsEl.offsetHeight;
+  const room = (window.innerHeight || 0) - top - 8;
+  if (h <= room) return;                       /* 下に入るならそのまま(下開き) */
+  /* 下に入りきらない時だけ、入る範囲で上へ持ち上げる(上開き)。
+     持ち上げすぎて画面上端を越えないようにする */
+  const up = Math.max(0, Math.min(h - room, top - 8));
+  if (up > 0) toolsEl.style.top = (top - up) + 'px';
+}
 document.getElementById('panelHead').addEventListener('click', () => {
   panel.classList.toggle('closed');
+  requestAnimationFrame(openPanelDownward);
   /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
   keepPanelInView();
 });
@@ -6095,10 +8001,16 @@ document.getElementById('panelHead').addEventListener('click', () => {
    透明ボックス(.tools-secret-hot)は残してあり、隠したい時だけ押せる。
    sessionStorage に明示的に '0'(隠す) が入っている時だけ隠した状態で始める。 */
 (() => {
+  /* 【2026-08-27 ヒデさん指定】既定は隠す。右上の空ボックスを押すと出る */
   const SKEY = 'anyflow-tools-secret';
-  let shown = true;
-  try { if (sessionStorage.getItem(SKEY) === '0') shown = false; } catch (e) {}
-  const apply = () => toolsEl.classList.toggle('tools-hidden', !shown);
+  let shown = false;
+  try { if (sessionStorage.getItem(SKEY) === '1') shown = true; } catch (e) {}
+  const panelEl2 = document.getElementById('panel');
+  const apply = () => {
+    toolsEl.classList.toggle('tools-hidden', !shown);
+    /* 【2026-08-27 ヒデさん指定】出したときはアコーディオンを開いた状態にする */
+    if (shown && panelEl2) panelEl2.classList.remove('closed');
+  };
   apply();
   const hot = document.createElement('div');
   hot.className = 'tools-secret-hot';
@@ -6112,7 +8024,7 @@ document.getElementById('panelHead').addEventListener('click', () => {
 /* カテゴリの開閉では外寸は変わらない作りだが、
    ヒデさんが右下のつまみで背を伸ばしている場合に備えて、ここでも押し戻しておく */
 document.getElementById('panelBody').addEventListener('click', () => {
-  requestAnimationFrame(keepPanelInView);
+  requestAnimationFrame(() => { openPanelDownward(); keepPanelInView(); });
 });
 </script>
 
