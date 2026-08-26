@@ -1106,16 +1106,35 @@
      PCの1440×921をそのまま縮めると本文が4pxくらいになって読めないので、
      JS側(fit)で座標系ごと 390×780 に差し替え、ここで中身を組み直している。
      ここに書く数値は 390px幅の実寸そのもの。 */
+  /* ===== タブレット (781〜1100px)。2026-08-27 ヒデさん指定でざっくり対応 =====
+     PC の 1440 座標系を JS が縮めて表示するので、ここでは
+     「小さくなりすぎて読めない文字」を持ち上げ、左右の余白を整える。 */
+  @media (min-width: 781px) and (max-width: 1100px) {
+    .header { left: 32px; right: 32px; }
+    .nav-links { gap: 20px; }
+    .nav-links a { font-size: 15px; }
+    .cta { font-size: 15px; }
+    .headline { left: 32px; }
+    .hl-eyebrow { font-size: 15px; }
+    .vis-label { left: 32px; }
+    .vis-line { left: 32px; }
+    .val-point p { font-size: 15px; line-height: 24px; }
+    .cg-quote { font-size: 15px; }
+    .cg-tag { font-size: 13px; }
+    .dev-block { padding: 72px 32px; }
+    .dl-head span { font-size: 15px; }
+  }
+
   @media (max-width: 780px) {
     /* --- ヘッダー --- */
-    .header { left: 20px; right: 20px; top: 18px; }
+    .header { left: 24px; right: 24px; top: 18px; }
     .header .logo img { width: 148px; height: 27px; }
     .nav-links { display: none; }            /* ナビは省略 (後で必要ならハンバーガー化) */
-    .cta { width: 104px; font-size: 12px; padding: 8px 10px; }
+    .cta { width: 112px; font-size: 14px; padding: 9px 10px; }
 
     /* --- キービジュアル --- */
     .headline { left: 24px; top: 104px; }
-    .hl-eyebrow { font-size: 12px; gap: 8px; }
+    .hl-eyebrow { font-size: 14px; gap: 8px; }
     .hl-eyebrow i { width: 18px; }
     .hl-main { font-size: 40px; line-height: 1.35; margin-top: 8px; }
     .hl-caret { height: 34px; vertical-align: -6px; }
@@ -1126,7 +1145,7 @@
 
     /* --- ビジョン --- */
     .vis-label { left: 24px; top: 74px; font-size: 16px; }
-    .vis-line { left: 20px; font-size: 32px; line-height: 54px; }
+    .vis-line { left: 24px; font-size: 32px; line-height: 54px; }
     .vis-l1 { top: 116px; }
     .vis-l2 { top: 170px; }
     /* 軌道図は JS の kFill が 0.43 前後になる。中心は pf-wrap の top+333.5 */
@@ -1136,17 +1155,17 @@
     .pf-sub { font-size: 34px; line-height: 60px; top: 400px; }
     .pf-title { font-size: 100px; top: 268px; }
     /* 右カラムはPCでは右アンカーだが、スマホは画面いっぱいの1カラムにする */
-    .val-group { left: 0; right: auto; width: 390px; }
-    .val-head { left: 24px; top: 372px; width: 342px; }
+    .val-group { left: 0; right: auto; width: 100%; }
+    .val-head { left: 24px; right: 24px; top: 372px; width: auto; }
     .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
-    .val-point { width: 342px; }
+    .val-point { width: calc(100% - 48px); max-width: 342px; }
     .val-p1 { left: 24px; top: 462px; }
-    .val-p2 { left: 40px; top: 600px; }
-    .val-point .vp-tag { font-size: 14px; line-height: 14px; }
+    .val-p2 { left: 24px; top: 600px; }
+    .val-point .vp-tag { font-size: 14px; line-height: 16px; }
     .val-point .vp-tag i { width: 6px; height: 6px; }
     .val-point h3 { font-size: 20px; margin-top: 8px; }
-    .val-point p { font-size: 12px; line-height: 20px; margin-top: 12px; }
+    .val-point p { font-size: 14px; line-height: 22px; margin-top: 12px; }
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1160,18 +1179,18 @@
     }
     #results.pat-a .res-main, #results.pat-b .res-main { position: static; width: 100%; gap: 18px; }
     #results.pat-a .res-stats, #results.pat-b .res-stats { position: static; width: 100%; }
-    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 12px; }
+    #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 14px; }
     .res-head { font-size: 22px; line-height: 1.7; }
     .res-nums { gap: 16px; }
-    .res-nums .rn b { font-size: 12px; line-height: 18px; }
+    .res-nums .rn b { font-size: 14px; line-height: 20px; }
     .res-nums .rn span { font-size: 44px; }
     .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
-    .res-stats .st b { font-size: 12px; line-height: 16px; }
+    .res-stats .st b { font-size: 14px; line-height: 18px; }
     .res-stats .st span { font-size: 28px; }
 
     /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
     .dev-block { padding: 64px 18px; gap: 28px; }
-    .dev-center .dc-label { font-size: 12px; margin-bottom: 8px; }
+    .dev-center .dc-label { font-size: 14px; margin-bottom: 8px; }
     .dev-center .dc-one { font-size: 24px; line-height: 1.4; }
     /* dev1: 840×504 の実寸パネルを 0.40倍。余白ぶんは負マージンで詰める */
     .dev1-mock { transform: scale(0.40); transform-origin: center top; margin: -151px auto; }
@@ -1194,8 +1213,8 @@
     .cg-bl { left: 0; top: 310px; } .cg-br { left: 0; top: 465px; }
     .cg-img { flex: 0 0 120px; width: 120px; height: 80px; }
     .cg-body { gap: 10px; }
-    .cg-quote { font-size: 13px; }
-    .cg-tag { font-size: 10px; }
+    .cg-quote { font-size: 14px; line-height: 22px; }
+    .cg-tag { font-size: 12px; }
     .cg-company { font-size: 15px; }
 
     /* --- 調整パネルは画面いっぱいに --- */
@@ -2569,7 +2588,7 @@ const DEFAULTS = {
        vanish=消え方(fade=フェード/sink=惑星の後ろへ沈む/shrink=点まで縮む/blur=ぼかし)
        fadeAt=透過し始め(収縮の中の割合) / fadeTo=吸収の瞬間に残す濃さ / spinUp=収縮中の回転アップ */
     reel:   { T: 4.8, inDur: 0.14, shrinkAt: 0.30, endAt: 0.72, depth: 0.95, moveDur: 0.16,
-              vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 1.2,
+              vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 0,   /* 2026-08-27 ヒデさん指定: スピンは既定オフ */
               flow: 'down' },   // 流れの向き: down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収(上がって見える)
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 5, speed: 1, size: 0.62, stay: 3 },
@@ -2824,6 +2843,11 @@ function load() {
       if (!localStorage.getItem('anyflow-sway-off-20260827')) {
         merged.sway = 1;
         localStorage.setItem('anyflow-sway-off-20260827', '1');
+      }
+      /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
+      if (!localStorage.getItem('anyflow-spin-off-20260827')) {
+        if (merged.conv && merged.conv.reel) merged.conv.reel.spinUp = 0;
+        localStorage.setItem('anyflow-spin-off-20260827', '1');
       }
       if (merged.dither < 1 || merged.dither > DITHERS.length) merged.dither = 1;
       if (merged.dotGap < 1 || merged.dotGap > DOT_GAPS.length) merged.dotGap = DEFAULTS.dotGap;
@@ -5103,9 +5127,13 @@ function updateVision(p) {
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
   /* 位置は調整パネルから動かせる (カンプ位置からの相対ずらし) */
-  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10, c.headX, c.headY);
-  rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X, c.p1Y);
-  rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X, c.p2Y);
+  /* ⚠️【2026-08-27】この横ズレは PC(1440座標系)で位置を合わせるためのもの。
+     スマホは 390 の座標系で CSS 側が左右24pxに収めているので、横ズレは効かせない
+     (実測: headX=-78 がそのまま効いて、見出しが画面の外(-54px)へ出ていた) */
+  const offX = isMobile ? 0 : 1;
+  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / T_IN)), B, 10, c.headX * offX, c.headY);
+  rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X * offX, c.p1Y);
+  rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = noPin ? 99 : (S < 0 ? -99 : S - (brakeStart + brake));
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
@@ -7189,7 +7217,10 @@ function buildPanel() {
         params.conv.dotPersp = key;
         markDirty();
         renderFrame();
-        rebuildKeeping(null);
+        /* 【2026-08-27 ヒデさん指定】リロード感が出るのでパネル全体は作り直さない。
+           選択の見た目と、アニメ節(遠近の強さの出し入れ)だけを更新する */
+        wrap.querySelectorAll('.gmode-b').forEach((el, j) => el.classList.toggle('on', j === (key === 'flat' ? 0 : 1)));
+        if (typeof fillAnimBody === 'function') fillAnimBody();
       };
       wrap.appendChild(b);
     }
@@ -7344,8 +7375,15 @@ function buildPanel() {
         '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
       slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
         '吸収の瞬間にどれだけ濃さを残すか。0で完全に透明。');
-      slider('収縮中の回転アップ', 0, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v, v => '+' + Math.round(v * 180) + '°',
-        '縮むほどドットが速く回る。0で通常の速さのまま。');
+      /* 【2026-08-27 ヒデさん指定】収縮時のスピンはオンオフで。既定はオフ */
+      segRow('縮む時のスピン', [['なし', 0], ['あり', 1]],
+        () => (params.conv.reel.spinUp || 0) > 0 ? 1 : 0,
+        v => { R.spinUp = v ? 1.2 : 0; markDirty(); renderFrame();
+               if (typeof fillAnimBody === 'function') fillAnimBody(); });
+      if ((params.conv.reel.spinUp || 0) > 0) {
+        slider('スピンの強さ', 0.1, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v,
+          v => '+' + Math.round(v * 180) + '°', '縮むほどドットが速く回ります。', { fixedMax: true });
+      }
     } else if (cvMode === 'spiral') {
       const S = params.conv.spiral;
       sub(animBody, 'この案の調整（粒が渦で吸収）', true);
