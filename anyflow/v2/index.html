@@ -1468,6 +1468,17 @@
   .rst:hover { background: #f0f0f0; color: #222; border-color: #e0e0e0; }
   .rst.off { visibility: hidden; }
   /* 小見出しの右に置く「リセット / 保存」(セクション単位) */
+  /* 見え方モード(等倍 / パース)のアイコン */
+  .gmode { display: flex; align-items: center; gap: 2px; margin-left: auto; flex: 0 0 auto; }
+  .gmode-b { display: flex; align-items: center; justify-content: center; width: 30px; height: 24px;
+             padding: 0; border: 1px solid #e6e6e6; border-radius: 7px; background: #fff; cursor: pointer;
+             transition: background .15s, border-color .15s; }
+  .gmode-b + .gmode-b { margin-left: 2px; }
+  .gmode-b svg { fill: #b9b9b9; transition: fill .15s; }
+  .gmode-b:hover { background: #f4f4f4; }
+  .gmode-b.on { background: #111; border-color: #111; }
+  .gmode-b.on svg { fill: #fff; }
+  .gmode + .grp-acts { margin-left: 6px; }
   .grp-acts { display: flex; align-items: center; gap: 5px; margin-left: 6px; flex: 0 0 auto; }
   /* リセット/保存: 押しやすい 28px 角 (2026-08-26 ヒデさん指定でサイズアップ) */
   .gbtn { width: 28px; height: 28px; padding: 0; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;
@@ -3612,7 +3623,18 @@ const editHandles = (() => {
       boxG.appendChild(r);
       handles.push({ el: r, kind: 'rot', ix, iy });
     }
-    /* --- 辺ハンドル(幅だけ / 高さだけ) --- */
+    /* --- 辺そのものを掴める帯 (Figma と同じく辺のどこでもリサイズできる) --- */
+    for (const [ix, iy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      const r = document.createElementNS(SVG_NS, 'rect');
+      r.setAttribute('fill', 'rgba(0,0,0,0)');
+      r.setAttribute('data-kind', 'edgeband');
+      r.setAttribute('data-ix', ix); r.setAttribute('data-iy', iy);
+      r.style.pointerEvents = 'all';
+      r.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); startDrag(e, { kind: 'edge', ix, iy }); });
+      boxG.appendChild(r);
+      handles.push({ el: r, kind: 'edgeband', ix, iy });
+    }
+    /* --- 辺ハンドル(見た目の四角。中央に置く) --- */
     for (const [ix, iy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
       const h = mkHandle('edge', ix, iy); handles.push(h);
     }
@@ -3797,11 +3819,28 @@ const editHandles = (() => {
     boxRect.setAttribute('height', (b.ry * 2).toFixed(1));
     /* 惑星は円なので、つぶし(辺ハンドル)は出さない */
     for (const h of handles) {
-      const isEdge = h.kind === 'edge';
+      const isEdge = h.kind === 'edge' || h.kind === 'edgeband';
       const hide = sel === 'planet' && (isEdge || h.kind === 'rot');
       h.el.style.display = hide ? 'none' : '';
       if (hide) continue;
       const x = b.cx + b.rx * h.ix, y = b.cy + b.ry * h.iy;
+      if (h.kind === 'edgeband') {
+        /* 辺いっぱいの帯。角の回転ゾーンとぶつからないよう、少し内側で止める */
+        const T = 10, inset = 16;
+        if (h.ix === 0) {   /* 上下の辺 */
+          h.el.setAttribute('x', (b.cx - b.rx + inset).toFixed(1));
+          h.el.setAttribute('y', (y - T / 2).toFixed(1));
+          h.el.setAttribute('width', Math.max(0, b.rx * 2 - inset * 2).toFixed(1));
+          h.el.setAttribute('height', T);
+        } else {            /* 左右の辺 */
+          h.el.setAttribute('x', (x - T / 2).toFixed(1));
+          h.el.setAttribute('y', (b.cy - b.ry + inset).toFixed(1));
+          h.el.setAttribute('width', T);
+          h.el.setAttribute('height', Math.max(0, b.ry * 2 - inset * 2).toFixed(1));
+        }
+        h.el.style.cursor = cursorFor(h.ix, h.iy, b.rot);
+        continue;
+      }
       if (h.kind === 'rot') {
         h.el.setAttribute('x', (x + h.ix * 4 - 15).toFixed(1));
         h.el.setAttribute('y', (y + h.iy * 4 - 15).toFixed(1));
@@ -7138,6 +7177,35 @@ function buildPanel() {
   liveEdit = true;
   sub(catKv, '🎨 グラフィック');
   const gRoot = mount;   /* この中に入れ子で並べる */
+  /* 【2026-08-27 ヒデさん指定】見出しの右に「見え方モード」を2つのアイコンで置く。
+     左=どこでも同じ大きさ / 右=手前が大きく奥が小さい(パース) */
+  {
+    const title = gRoot.parentElement.querySelector('.grp-title');
+    const wrap = document.createElement('div');
+    wrap.className = 'gmode';
+    const ICONS = {
+      flat: '<svg viewBox="0 0 22 14" width="22" height="14" aria-hidden="true">' +
+            '<circle cx="4" cy="7" r="2.6"/><circle cx="11" cy="7" r="2.6"/><circle cx="18" cy="7" r="2.6"/></svg>',
+      persp: '<svg viewBox="0 0 22 14" width="22" height="14" aria-hidden="true">' +
+            '<circle cx="4.5" cy="7" r="4"/><circle cx="13" cy="7" r="2.4"/><circle cx="19" cy="7" r="1.3"/></svg>',
+    };
+    for (const [key, label] of [['flat', 'どこでも同じ大きさ'], ['persp', '手前が大きく、奥が小さい（遠近）']]) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'gmode-b' + ((params.conv.dotPersp || 'flat') === key ? ' on' : '');
+      b.innerHTML = ICONS[key];
+      b.title = label;
+      b.onclick = (e) => {
+        e.stopPropagation();
+        params.conv.dotPersp = key;
+        markDirty();
+        renderFrame();
+        rebuildKeeping(null);
+      };
+      wrap.appendChild(b);
+    }
+    title.insertBefore(wrap, title.querySelector('.grp-acts'));
+  }
 
   /* 【2026-08-27 ヒデさん指定】A/B案は廃止し惑星で固定。案の選択ピルも削除。
      ここには「編集する」ボタンだけを置き、押すとキービジュアル上に編集バーが出る。 */
@@ -7232,13 +7300,12 @@ function buildPanel() {
   /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定 */
   slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
     v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます（案ごとの重複つまみは廃止）。', { fixedMax: true });
-  pillRow([{ key: 'flat', name: '同じ大きさ' }, { key: 'persp', name: '遠近つき' }],
-    it => (params.conv.dotPersp || 'flat') === it.key,
-    it => { params.conv.dotPersp = it.key; markDirty(); },
-    { get: () => params.conv.dotPersp, set: v => { params.conv.dotPersp = v; } });
-  note('遠近つき＝手前のドットは大きく、奥のドットは小さく見えます（立体感が出ます）。');
-  slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
-    '「遠近つき」の時の効き。大きいほど手前と奥の差がはっきりします。', { fixedMax: true });
+  /* 遠近モードは「🎨 グラフィック」の見出し右のアイコンに移した(2026-08-27 ヒデさん指定)。
+     ここでは「遠近つき」を選んでいる時だけ、効きの強さを出す */
+  if ((params.conv.dotPersp || 'flat') === 'persp') {
+    slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
+      '手前と奥の大きさの差。大きいほど立体感が強くなります。', { fixedMax: true });
+  }
 
   /* ===== 選んだ案のつまみだけを出す ===== */
   const cvMode = params.converge || 'reel';
