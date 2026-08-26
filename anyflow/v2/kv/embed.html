@@ -108,7 +108,7 @@
 </div>
 
 <script src="engine.js?v=12"></script>
-<script src="patterns.js?v=34"></script>
+<script src="patterns.js?v=35"></script>
 <script>
   KV.start({ mount: 'kv' });
   KVP.start({ mount: 'kvp' });
@@ -265,12 +265,16 @@
     window.addEventListener('message', (e) => {
       const d = e && e.data;
       if (!d) return;
-      if (d.type === 'kvIntroStart') KVP.runDeferredIntro();
+      /* 合図: タイミングが同梱されていれば反映してから入場開始 */
+      if (d.type === 'kvIntroStart') { if (d.timing) KVP.setIntroTiming(d.timing); KVP.runDeferredIntro(); }
       /* 本体パネルの「右のグラフィックの案を選ぶ」から: 内部の同じボタンを押して切替（即再生） */
       if (d.type === 'kvSetDesign' && d.design) {
         const btn = document.querySelector('.kv-bar [data-design="' + d.design + '"]');
         if (btn) btn.click();
       }
+      /* 本体パネルの「KVの出始めタイミング」から: 反映のみ / 反映して再生 */
+      if (d.type === 'kvIntroTiming') KVP.setIntroTiming(d.timing);
+      if (d.type === 'kvIntroReplay') { KVP.setIntroTiming(d.timing); KVP.replayIntro(); }
     });
     try { window.parent.postMessage({ type: 'kvReady' }, '*'); } catch (_) {}
   }

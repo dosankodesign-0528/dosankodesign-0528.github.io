@@ -258,15 +258,19 @@
     const bg = [].slice.call(scene.querySelectorAll('.kvp-eorbits, .kvp-svgel, .kvp-espin'));
     /* 【2026-08-25 ヒデさん指定】順番: ①モックが出てタイピング → ②タイピング完了後にアイコンが浮上
        → ③最後に軌道が出てドットが回り始める。各要素は1回だけ出して出っ放し(再出現なし)。 */
+    /* 各フェーズの出始めは introTiming(秒)。本体の調整パネルから postMessage で変えられる。
+       ① モック → ② アイコン(iconsStagger でばらけて) → ③ 軌道＋ドット。 */
+    const tm = introTiming || { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 };
+    const mockMs = Math.max(0, (tm.mockAt || 0) * 1000);
+    const iconsMs = Math.max(0, (tm.iconsAt || 0) * 1000);
+    const stagMs = Math.max(0, (tm.iconsStagger || 0) * 1000);
+    const orbitMs = Math.max(0, (tm.orbitAt || 0) * 1000);
     requestAnimationFrame(() => {
-      /* 【2026-08-26 ヒデさん指定】モックが出たら、タイピング完了は待たずに
-         アイコンをすぐ出す → 軌道もそのすぐ後。モックのタイピングは裏で並行して進む。 */
-      T(() => mock && mock.classList.add('in'), 80);                     /* ① モック(直後にタイピング開始) */
-      const afterMock = 80 + 620;                                        /* モックがフェードインした直後（タイピングは待たない） */
-      icons.forEach((ic, i) => T(() => ic.classList.add('in'), afterMock + i * 110)); /* ② アイコンがすぐ浮上 */
-      const afterIcons = afterMock + icons.length * 110 + 220;
-      T(() => bg.forEach(e => e.classList.add('in')), afterIcons);       /* ③ 軌道＋ドット(そのすぐ後) */
-      T(() => scene.classList.remove('kvp-intro'), afterIcons + 900);    /* 演出終了：初期scopeを解除 */
+      T(() => mock && mock.classList.add('in'), mockMs);                       /* ① モック */
+      icons.forEach((ic, i) => T(() => ic.classList.add('in'), iconsMs + i * stagMs)); /* ② アイコン(ばらけて) */
+      T(() => bg.forEach(e => e.classList.add('in')), orbitMs);                /* ③ 軌道＋ドット */
+      const endMs = Math.max(iconsMs + icons.length * stagMs, orbitMs) + 900;
+      T(() => scene.classList.remove('kvp-intro'), endMs);                     /* 演出終了：初期scopeを解除 */
     });
   }
 
@@ -301,6 +305,8 @@
   let rootEl, worldEl, cur = null;
   let eMockStop = null, eBack = null, eFront = null;      /* E案の状態 */
   let pendingIntro = null;                                /* 埋め込み時: 親(見出しタイピング完了)の合図で入場を始めるため保留する */
+  /* 入場の各フェーズの出始めタイミング(秒・合図から)。本体パネルから postMessage で上書き可能。 */
+  let introTiming = { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 };
   let mockAnimOn = true, eMockSlot = null;                /* モックアニメのオン/オフ・現在のモック枠 */
   let eMockDur = 0;                                        /* モックのタイピング再生尺(ms)。playIntro が完了後に右グラフィックを出すのに使う */
   let eSpins = [], dotSpeed = 3, dotEase = 'linear';      /* 軌道ドット: 回転要素・速度倍率(既定3x・2026-08-25 ヒデさん指定)・緩急(linear/pulse) */
@@ -791,9 +797,14 @@
   /* 保留中の入場（opts.defer で待たせたもの）を実行。親の「見出しタイピング完了」の合図で呼ぶ。 */
   function runDeferredIntro() { if (pendingIntro) { const f = pendingIntro; pendingIntro = null; f(); } }
   function hasPendingIntro() { return !!pendingIntro; }
+  /* 入場の各フェーズの出始めタイミング(秒)を上書き。本体パネルから postMessage で呼ぶ。 */
+  function setIntroTiming(t) { if (t) introTiming = Object.assign({}, introTiming, t); }
+  /* 今の案の入場をもう一度頭から再生（パネルでタイミングを変えた時の確認用）。 */
+  function replayIntro() { if (cur) setPattern(cur); }
 
   global.KVP = { start, setPattern, show, hide, setFloat, setParallax, setTransform, setView,
     setThick, setThickVar, setMockAnim, setDotSpeed, setDotEase, runDeferredIntro, hasPendingIntro,
+    setIntroTiming, replayIntro,
     get: () => cur, getTransform: () => Object.assign({}, curTransform),
     getMockAnim: () => mockAnimOn, getDotSpeed: () => dotSpeed, getDotEase: () => dotEase,
     PATTERNS, C, STAGE };

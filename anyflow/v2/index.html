@@ -1444,7 +1444,7 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=9" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <iframe class="kv-graphic-embed" src="kv/embed.html?v=10" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -2262,6 +2262,9 @@ const DEFAULTS = {
     lineGap: 0.20,    // 改行の間
     graphicGap: 0.10, // 小ラベルのあとグラフィックが出るまで（早めに出す）
     revealDur: 1.5,   // ブラーで出てくる所の所要時間 (大きいほどゆったり)
+    /* 【2026-08-26 ヒデさん指定】右グラフィックの入場を「1行目タイピング完了」から始める。
+       introLead = 1行目完了からの前後ずらし(秒。マイナスで1行目完了より前、プラスで後)。 */
+    introLead: 0,
   },
   orbits: {
     /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
@@ -2423,8 +2426,10 @@ const DEFAULTS = {
      'soft'   = 弱め。ブロックはせずゆるく引き戻す(ラバーバンド)＋回すと早送りで追いつく
      'lock'   = 固定。従来のスクロールジャック(再生中は貼りつけて動かさない)
      ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
-  scrollHold: 'smooth',
+  scrollHold: 'lock',   // 2026-08-26 ヒデさん指定: 既定は「固定」。切替は 固定追従なし / 固定 の2択
   kvDesign: 'p7',   // 右グラフィックの案(iframe)。パネルの「右のグラフィックの案を選ぶ」で切替
+  /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
+  kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
   patterns: {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
@@ -2513,7 +2518,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v72';   /* 2026-08-26 実績リデザイン/KV速く/ビジョンブラー無し/1スクロール削減 で新既定を確実に反映 */
+const STORAGE_KEY = 'anyflow-embed-anim-v73';   /* 2026-08-26 実績リデザイン/KV速く/ビジョンブラー無し/1スクロール削減 で新既定を確実に反映 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -3951,6 +3956,7 @@ function resTotal() {
       スクロールした分はちゃんと先へ進むので、無駄なスクロールが発生しない。
       max で持つので巻き戻りもしない (リプレイなし) */
 let resInvertOn = false;   /* 白反転のインライン color を今かけているか(掃除用) */
+let resGrinAnchor = null;  /* 黒オブジェクトを上げ始めるスクロール位置(リビール完了時にセット) */
 function updateResults(p) {
   const c = params.sections.results;
   SECS.results.classList.add('pat-c');                 // 単一レイアウト(pin-vp 地色/z-index に使用)
@@ -4005,7 +4011,14 @@ function updateResults(p) {
   /* ===== 実績 → 開発者体験 のつなぎ(黒せり上がり + 白反転) ===== */
   const devTop = rectOf(SECS.dev).top;
   const handed = clamp01((-devTop) / (innerHeight * 0.25));
-  const grin    = clamp01((p - c.outFrom) / (c.outTo - c.outFrom));
+  /* 【2026-08-26 ヒデさん指定】黒オブジェクトは「実績のリビール(タイピング/スロット)が終わってから」上げる。
+     固定追従なし(smooth)でスクロールが速くても、リビール途中で黒が出るのを防ぐ。
+     リビール完了時のスクロール位置を anchor にして、そこから outTo まででフルに覆う(dev1との受け渡しは維持)。 */
+  const revealDone = t >= resTotal() - 0.05;
+  if (!revealDone) resGrinAnchor = null;
+  else if (resGrinAnchor == null) resGrinAnchor = Math.min(p, c.outTo - 0.15);
+  const gStart = resGrinAnchor == null ? c.outTo : resGrinAnchor;
+  const grin    = clamp01((p - gStart) / Math.max(0.05, c.outTo - gStart));
   const riseK   = easeOutC(clamp01(grin / 0.40));
   const spreadK = easeIO(clamp01((grin - 0.36) / 0.64));
   if (resEls.grow) {
@@ -4924,7 +4937,12 @@ let kvIframeReady = false, kvIntroDue = false, kvIntroSent = false;
 function kvSendIntro() {
   if (kvIntroSent || !(kvIframeReady && kvIntroDue)) return;
   const ifr = document.querySelector('.kv-graphic-embed');
-  if (ifr && ifr.contentWindow) { ifr.contentWindow.postMessage({ type: 'kvIntroStart' }, '*'); kvIntroSent = true; }
+  if (ifr && ifr.contentWindow) { ifr.contentWindow.postMessage({ type: 'kvIntroStart', timing: params.kvIntro }, '*'); kvIntroSent = true; }
+}
+/* パネルで KV の出始めタイミングを変えた時: iframe に反映(replay=true なら再生して確認) */
+function kvSendIntroTiming(replay) {
+  const ifr = document.querySelector('.kv-graphic-embed');
+  if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: replay ? 'kvIntroReplay' : 'kvIntroTiming', timing: params.kvIntro }, '*');
 }
 window.addEventListener('message', (e) => {
   if (e && e.data && e.data.type === 'kvReady') { kvIframeReady = true; kvSendIntro(); }
@@ -4985,9 +5003,10 @@ function updateKV() {
   const gAt = eyeAt + c.graphicGap;
   rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / (RD * 1.5))), 12);
   rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
-  /* タイピング完了(=グラフィック出現の時刻 gAt)に達したら、右のKV iframe に入場開始を合図する。
-     これで「タイピング終わる → モック → アイコン → 軌道」の順で右側が出る。 */
-  if (elapsed >= gAt) { kvIntroDue = true; kvSendIntro(); }
+  /* 【2026-08-26 ヒデさん指定】1行目のタイピングが終わったあたりで、右のKV iframe に入場開始を合図する
+     (モック→アイコン→軌道)。以前は全タイピング完了(gAt)を待っていた。introLead で前後にずらせる。 */
+  const kvIntroFireAt = c.typeAt + line1End + (c.introLead || 0);
+  if (elapsed >= kvIntroFireAt) { kvIntroDue = true; kvSendIntro(); }
 }
 
 function updateSections() {
@@ -5607,13 +5626,11 @@ function buildPanel() {
   /* ② スクロールの固定(3パターン・2026-08-26 ヒデさん指定)。押した瞬間に反映(頭出ししない) */
   liveEdit = true;
   sub(catAll, '② スクロールの固定');
-  note((params.scrollHold || 'smooth') === 'smooth'
-      ? 'スムーズ＝固定なし。自由に上下でき、アニメは画面に来たら再生します(V1.0の固定追従オフと同じ感覚)。'
-      : (params.scrollHold === 'soft')
-        ? '弱め＝ゆるく引き戻し(ラバーバンド)。回すと早送りで追いつきます。ガタつきは軽減。'
-        : '固定＝再生中はその場に貼りつけ(従来のスクロールジャック)。再生が終わるまでスクロールは止まります。');
-  pillRow([{ key: 'smooth', name: '固定追従なし' }, { key: 'soft', name: '弱め' }, { key: 'lock', name: '固定' }],
-    it => (params.scrollHold || 'smooth') === it.key,
+  note((params.scrollHold || 'lock') === 'smooth'
+      ? '固定追従なし＝ロックしない。自由に上下でき、アニメは画面に来たら再生します。実績の黒オブジェクトはリビールが終わってから出ます。'
+      : '固定＝再生中はその場に貼りつけ(従来のスクロールジャック・既定)。再生が終わるまでスクロールは止まります。');
+  pillRow([{ key: 'lock', name: '固定' }, { key: 'smooth', name: '固定追従なし' }],
+    it => (params.scrollHold || 'lock') === it.key,
     it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); });
   liveEdit = false;
 
@@ -5658,6 +5675,29 @@ function buildPanel() {
   sub(catKv, '🖼 右のグラフィックの案を選ぶ');
   note('A案＝PNGベタ貼り（既定）/ B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ右のグラフィックが切り替わります。');
   pillRow(KV_DESIGNS, it => (params.kvDesign || 'p7') === it.key, it => kvSetDesign(it.key));
+  liveEdit = false;
+
+  /* ---------- 🖼 右グラフィックの出始めタイミング (2026-08-26 ヒデさん指定) ----------
+     入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。
+     触ると右のグラフィックがその場で再生されて確認できる（本体の文字は流し直さない）。 */
+  liveEdit = true;
+  sub(catKv, '🖼 右グラフィックの出始めタイミング');
+  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。スライダーを触ると右がその場で再生されます。');
+  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
+    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
+    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
+  rows.push(slider('① モックが出る', 0, 2, 0.02,
+    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でモックが出るか。'));
+  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
+    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒でアイコンが出始めるか。'));
+  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
+    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
+  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
+    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
+    '起点から何秒で軌道(輪+ドット)が出るか。'));
   liveEdit = false;
 
   /* ⚠️【2026-08-26 ヒデさん指定】旧「🛰 まわりの輪」(惑星の軌道・玉)のコントロールは全削除。
