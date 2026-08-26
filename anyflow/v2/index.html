@@ -2435,6 +2435,23 @@ const DEFAULTS = {
   scrollHold: 'smooth', // 2026-08-26 ヒデさん指定: サイト全体は「固定追従なし」を既定に(掴み無し・ロック無し)。固定は個別で必要な所だけ。切替は 固定追従なし / 固定 の2択
   kvDesign: 'planet',   // 右グラフィックの案。'planet'=V1.0の惑星(2026-08-26 復活・既定) / それ以外=iframe(kv/embed.html)の案
   converge: 'reel',     // 惑星への集約アニメ (CONVERGES) 。惑星の案の時だけ効く。①収縮ループが既定(ヒデさん指定)
+  /* 集約アニメの調整つまみ (2026-08-26 ヒデさん指定: 各項目をパネルで調整できるように)
+     pers: 'normal'=今の実装 / 'fix'=パース調整版(輪が先に惑星の真ん中へ寄ってから同心円ですぼまる)
+     showOuter/showInner: 軌道の輪のオンオフ(輪を消すとその輪のドットも消える)
+     タイミング系(inDur/shrinkAt/endAt など)は「周期の中の割合」(0〜1) */
+  conv: {
+    pers: 'normal',
+    showOuter: true, showInner: true,
+    showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
+    glow: 0.35,                                              // 吸収の瞬間の惑星の光り方
+    reel:   { T: 4.8, inDur: 0.14, shrinkAt: 0.30, endAt: 0.86, depth: 0.95 },
+    spiral: { count: 12, life: 5, speed: 1, size: 0.62 },
+    pulse:  { T: 3.6, holdK: 0.5, convDur: 0.26, backDur: 0.20 },
+    /* waves(⑩): リズム制(ヒデさん指定 2026-08-26)。count本がgap秒おきに出て吸収され、rest秒休んでまた次のグループ。
+       T=1本が外→惑星まで流れる秒数 / count=1グループの本数 / gap=本と本の間隔(秒) / rest=グループ後の休み(秒)
+       inK=出てくるフェードインの長さ(割合) / outAt=フェードアウト=取り込まれ始めるタイミング(割合) */
+    waves:  { T: 4.2, count: 3, gap: 0.9, rest: 1.6, alpha: 0.55, from: 1.12, inK: 0.12, outAt: 0.78 },
+  },
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
   patterns: {
@@ -2525,7 +2542,7 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v75';   /* 2026-08-26 V1.0惑星をKVに復活(kvDesign='planet')＋集約アニメ(converge)追加。新既定を確実に反映 */
+const STORAGE_KEY = 'anyflow-embed-anim-v76';   /* 2026-08-26 集約アニメの調整つまみ(conv)＋パース調整版＋輪/ドットのオンオフを追加 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -2577,6 +2594,13 @@ function load() {
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
   if (typeof merged.converge !== 'string') merged.converge = DEFAULTS.converge;   /* 2026-08-26 集約アニメ */
+  merged.conv = {                                                                  /* 集約アニメの調整つまみ */
+    ...DEFAULTS.conv, ...(s.conv || {}),
+    reel:   { ...DEFAULTS.conv.reel,   ...((s.conv && s.conv.reel)   || {}) },
+    spiral: { ...DEFAULTS.conv.spiral, ...((s.conv && s.conv.spiral) || {}) },
+    pulse:  { ...DEFAULTS.conv.pulse,  ...((s.conv && s.conv.pulse)  || {}) },
+    waves:  { ...DEFAULTS.conv.waves,  ...((s.conv && s.conv.waves)  || {}) },
+  };
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
   merged.kv = { ...DEFAULTS.kv, ...(s.kv || {}) };
@@ -2757,23 +2781,38 @@ function convCenter() {
   const pl = params.planet || {};
   return { x: 306.06 + 130 + (pl.dx || 0), y: 112.32 + 130 + (pl.dy || 0) };
 }
-/* 楕円 g を「惑星中心へ f で寄せた」ジオメトリ (f=1 そのまま → f→0 惑星中心で消える) */
+/* 楕円 g を「惑星中心へ f で寄せた」ジオメトリ (f=1 そのまま → f→0 惑星中心で消える)
+   パース調整版('fix'): 中心を先に惑星の真ん中へ寄せてから、惑星を中心に同心円ですぼまる。
+   通常版は縮みながら斜めにスライドするため遠近感が崩れて見えることがある(ヒデさん指摘)。 */
 function convGeom(g, f) {
   const c = convCenter();
-  return { cx: c.x + (g.cx - c.x) * f, cy: c.y + (g.cy - c.y) * f,
+  let cf = f;
+  if ((params.conv && params.conv.pers) === 'fix') {
+    const k = clamp01((f - 0.55) / 0.45);   // f=1→0.55 の間に中心の寄せを済ませる
+    cf = k * k * (3 - 2 * k);
+  }
+  return { cx: c.x + (g.cx - c.x) * cf, cy: c.y + (g.cy - c.y) * cf,
            rx: g.rx * f, ry: g.ry * f, rot: g.rot };
 }
 /* --- 追加パーツのプール (見た目は既存パーツの複製) --- */
 let convSpiral = null;   // ②の粒: 既存ドットと同じ circle を back/front に1個ずつ
 let convWaves = null;    // ⑩の輪: 既存軌道と同じ stroke(グラデ) の ellipse (奥レイヤー)
+let convSpiralBuilt = null;   // 作った時の {count, size}。パネルで変わったら作り直す
 function convSpiralPool() {
+  const S = params.conv.spiral;
+  const n = Math.max(1, Math.round(S.count));
+  if (convSpiral && convSpiralBuilt && (convSpiralBuilt.count !== n || convSpiralBuilt.size !== S.size)) {
+    for (const p of convSpiral) { p.back.remove(); p.front.remove(); }
+    convSpiral = null;
+  }
   if (convSpiral) return convSpiral;
+  convSpiralBuilt = { count: n, size: S.size };
   const COLORS = ['#0EBBFF', '#FF5D97'];   // 既存ドットと同じ2色 (グレーはデータ感が無いので除外)
   convSpiral = [];
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < n; i++) {
     const mk = () => {
       const c = document.createElementNS(SVG_NS, 'circle');
-      c.setAttribute('r', (DOT_R * 0.62).toFixed(3));   // 主役の7個より少し小さい「データの粒」
+      c.setAttribute('r', (DOT_R * S.size).toFixed(3));   // 大きさはパネルから
       c.setAttribute('fill', COLORS[i % 2]);
       c.setAttribute('opacity', '0');
       return c;
@@ -2782,15 +2821,23 @@ function convSpiralPool() {
     dotsBackG.appendChild(back); dotsFrontG.appendChild(front);
     convSpiral.push({ back, front, ell: i % 2 ? 'inner' : 'outer',
       deg: Math.random() * 360, f: 1 + Math.random() * 0.4,          // 出のタイミングをばらす
-      spd: (28 + Math.random() * 42), rate: 1 / (3.5 + Math.random() * 3) });
+      spd: (28 + Math.random() * 42), rate: 1 / (S.life * (0.7 + Math.random() * 0.6)) });
   }
   return convSpiral;
 }
+let convWaveBuilt = 0;   // 作った本数。パネルで変わったら作り直す
 function convWavePool() {
+  const W = params.conv.waves;
+  const n = Math.max(1, Math.round(W.count));
+  if (convWaves && convWaveBuilt !== n) {
+    for (const w of convWaves) w.el.remove();
+    convWaves = null;
+  }
   if (convWaves) return convWaves;
+  convWaveBuilt = n;
   convWaves = [];
   const host = dotsBackG.parentNode;   // 奥レイヤーSVG (輪は惑星の後ろへ沈んで消える)
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < n; i++) {
     const el = document.createElementNS(SVG_NS, 'ellipse');
     const shape = i % 2 ? 'inner' : 'outer';
     el.setAttribute('stroke', shape === 'inner' ? 'url(#gInnerB)' : 'url(#gOuterB)');   // 既存軌道と同じグラデ
@@ -2798,7 +2845,7 @@ function convWavePool() {
     el.setAttribute('fill', 'none');
     el.setAttribute('opacity', '0');
     host.insertBefore(el, dotsBackG);
-    convWaves.push({ el, shape, ph: i / 5 });   // 位相をずらして常にどれかが流れている
+    convWaves.push({ el, shape, idx: i });
   }
   return convWaves;
 }
@@ -2806,12 +2853,14 @@ function convHidePools() {
   if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
   if (convWaves) for (const w of convWaves) w.el.setAttribute('opacity', '0');
 }
-/* 内側の輪(実物の ellipse SVG)の濃さ。reel の吸収で使い、他モードでは 1 に戻す */
-let convInnerA = 1;
-function convSetInnerAlpha(a) {
-  if (Math.abs(a - convInnerA) < 0.004) return;
-  convInnerA = a;
-  for (const el of orbitSvgEls.inner.ells) el.setAttribute('opacity', a.toFixed(3));
+/* 輪(実物の ellipse SVG)の濃さ。reel の吸収(convReelInnerA)と表示オンオフ(conv.showOuter/Inner)を
+   掛け合わせて renderFrame で書く。書き込みは変わった時だけ */
+let convReelInnerA = 1;                       // ①収縮ループが内の輪に掛ける濃さ
+const convRingWritten = { outer: -1, inner: -1 };
+function applyRingAlpha(key, a) {
+  if (Math.abs(a - convRingWritten[key]) < 0.004) return;
+  convRingWritten[key] = a;
+  for (const el of orbitSvgEls[key].ells) el.setAttribute('opacity', a.toFixed(3));
 }
 /* 毎フレーム: モードに応じて geoms とドット係数を書き換える (renderFrame から呼ぶ) */
 function convFrame(geoms) {
@@ -2822,7 +2871,7 @@ function convFrame(geoms) {
   if (!on) {
     if (convWasOn) {   // 後片付け (モードや案を切り替えた時に一度だけ)
       for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; }
-      convSetInnerAlpha(1); convHidePools(); convGlow = 0;
+      convReelInnerA = 1; convHidePools(); convGlow = 0;
       if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
       convWasOn = false;
     }
@@ -2830,57 +2879,71 @@ function convFrame(geoms) {
   }
   convWasOn = true;
   const mode = params.converge;
+  const C = params.conv;
   if (convLastMode !== mode) { convHidePools(); convLastMode = mode; }   // 切替時に前のモードの粒・輪を片付ける
   /* 惑星の「受け止め」= 明るさ。WebGL/フォールバック両対応の CSS filter で */
   if (sphereCanvasEl) {
-    const b = 1 + Math.min(convGlow, 1) * 0.35;
+    const b = 1 + Math.min(convGlow, 1) * (C.glow || 0);
     sphereCanvasEl.style.filter = b > 1.005 ? `brightness(${b.toFixed(3)})` : '';
   }
 
   if (mode === 'reel') {
-    /* 外の輪 = 常に固定で1個残す(ヒデさん指定)。内の輪がループで吸収される */
-    const T = 4.8, ph = (elapsed % T) / T;
+    /* 外の輪 = 常に固定で1個残す(ヒデさん指定)。内の輪がループで吸収される。
+       タイミングは全部パネルから (conv.reel。値は周期の中の割合) */
+    const R = C.reel;
+    const T = Math.max(1, R.T), ph = (elapsed % T) / T;
+    const inEnd = Math.min(R.inDur, 0.5);                              // 新しい輪のフェードイン
+    const sAt = Math.max(inEnd + 0.02, R.shrinkAt);                    // 収縮の開始
+    const eAt = Math.max(sAt + 0.08, Math.min(0.98, R.endAt));         // 吸収し終わり
+    const fadeLen = Math.min(0.12, (eAt - sAt) * 0.3);                 // フェードアウトは終わり際
     let f = 1, a = 1;
-    if (ph < 0.14) { a = convSStep(ph / 0.14); }                       // 新しい輪がフェードイン
-    else if (ph < 0.30) { }                                            // 全周サイズでドットが回る
-    else if (ph < 0.86) {
-      const k = convSStep((ph - 0.30) / 0.56); f = 1 - k * 0.95;       // 惑星へ収縮
-      if (ph > 0.76) a = 1 - (ph - 0.76) / 0.10;                       // 吸収されながらフェードアウト
-    } else { a = 0; f = 0.05; }                                        // 消えている間
-    if (ph >= 0.86 && (elapsed % T) - dt * 1 < 0.86 * T) convGlow = Math.min(1.2, convGlow + 0.7);
+    if (ph < inEnd) { a = convSStep(ph / inEnd); }
+    else if (ph < sAt) { }                                             // 全周サイズでドットが回る
+    else if (ph < eAt) {
+      const k = convSStep((ph - sAt) / (eAt - sAt)); f = 1 - k * R.depth;
+      if (ph > eAt - fadeLen) a = 1 - (ph - (eAt - fadeLen)) / fadeLen;
+    } else { a = 0; f = 1 - R.depth; }                                 // 消えている間
+    if (ph >= eAt && ph - (dt / T) < eAt) convGlow = Math.min(1.2, convGlow + 0.7);
     geoms.inner = convGeom(geoms.inner, f);                            // ドットも輪ごと寄る
-    convSetInnerAlpha(a);
+    convReelInnerA = a;
     for (let i = 0; i < DOTS.length; i++) {
-      const isInner = DOTS[i].ellipse === 'inner';
       convDotF[i] = 1;                                                 // 位置は geoms 側で寄せ済み
-      convDotA[i] = isInner ? a : 1;
+      convDotA[i] = DOTS[i].ellipse === 'inner' ? a : 1;
     }
   } else if (mode === 'pulse') {
-    convSetInnerAlpha(1);
-    const T = 3.6, ph = (elapsed % T) / T;
+    convReelInnerA = 1;
+    const P = C.pulse;
+    const T = Math.max(1, P.T), ph = (elapsed % T) / T;
+    const hold = clamp01(P.holdK);                                     // 普段どおり回る割合
+    const cEnd = Math.min(0.92, hold + P.convDur);                     // 収束し終わり
+    const bAt = Math.max(cEnd + 0.02, 1 - P.backDur);                  // 再出現の開始
     let f = 1, a = 1;
-    if (ph < 0.5) { }                                                  // 普段どおり周回
-    else if (ph < 0.76) {
-      const k = convSStep((ph - 0.5) / 0.26); f = 1 - k * 0.94;        // 鼓動で一斉に収束
-      if (ph > 0.68) a = 1 - (ph - 0.68) / 0.08;
-    } else { f = 1; a = convSStep((ph - 0.80) / 0.20); }               // 軌道上に再出現
-    if (ph >= 0.76 && ph - (dt / T) < 0.76) convGlow = Math.min(1.2, convGlow + 0.8);
+    if (ph < hold) { }
+    else if (ph < cEnd) {
+      const k = convSStep((ph - hold) / (cEnd - hold)); f = 1 - k * 0.94;
+      const fadeLen = (cEnd - hold) * 0.3;
+      if (ph > cEnd - fadeLen) a = 1 - (ph - (cEnd - fadeLen)) / fadeLen;
+    } else if (ph < bAt) { f = 1; a = 0; }                             // 吸収されて消えている間
+    else { f = 1; a = convSStep((ph - bAt) / (1 - bAt)); }             // 軌道上に再出現
+    if (ph >= cEnd && ph - (dt / T) < cEnd) convGlow = Math.min(1.2, convGlow + 0.8);
     for (let i = 0; i < DOTS.length; i++) { convDotF[i] = f; convDotA[i] = a; }
   } else {
-    convSetInnerAlpha(1);
+    convReelInnerA = 1;
     for (let i = 0; i < DOTS.length; i++) { convDotF[i] = 1; convDotA[i] = 1; }
   }
 
   if (mode === 'spiral') {
+    const S = C.spiral;
     const pool = convSpiralPool();
     for (const p of pool) {
-      p.deg += p.spd * dt * (params.direction || 1);
+      p.deg += p.spd * S.speed * dt * (params.direction || 1);         // 回転の速さはパネルから
       p.f -= p.rate * dt;
       if (p.f <= 0.12) {                                               // 吸収 → 新しい粒として再出発
         convGlow = Math.min(1.2, convGlow + 0.18);
         p.f = 1 + Math.random() * 0.15; p.deg = Math.random() * 360;
         p.ell = Math.random() < 0.5 ? 'inner' : 'outer';
-        p.spd = 28 + Math.random() * 42; p.rate = 1 / (3.5 + Math.random() * 3);
+        p.spd = 28 + Math.random() * 42;
+        p.rate = 1 / (S.life * (0.7 + Math.random() * 0.6));           // 寿命はパネルから
       }
       const fv = Math.min(1, p.f);
       let al = 1;
@@ -2894,14 +2957,21 @@ function convFrame(geoms) {
       p.back.style.display = pos.front ? 'none' : '';
     }
   } else if (mode === 'waves') {
+    /* ⑩リズム制(ヒデさん指定): count本が gap秒おきに出て吸収され、rest秒休んでまた次のグループ */
+    const W = C.waves;
     const pool = convWavePool();
-    const T = 4.2;
+    const T = Math.max(1, W.T);
+    const cycle = (pool.length - 1) * W.gap + T + Math.max(0, W.rest); // 1グループ+休みの長さ
+    const base = elapsed % cycle;
     for (const w of pool) {
-      const ph = ((elapsed / T) + w.ph) % 1;
-      const f = 1.12 - convSStep(ph) * 1.0;                            // 外(1.12)から惑星(0.12)へ
-      let a = 0.55;
-      if (ph < 0.12) a *= ph / 0.12;
-      else if (ph > 0.78) a *= Math.max(0, (1 - ph) / 0.22);
+      const lt = base - w.idx * W.gap;                                 // この輪のローカル時間
+      if (lt < 0 || lt >= T) { w.el.setAttribute('opacity', '0'); continue; }
+      const ph = lt / T;
+      const f = W.from - convSStep(ph) * (W.from - 0.12);              // 外(from)から惑星(0.12)へ
+      let a = W.alpha;
+      const inK = Math.max(0.02, W.inK), outAt = Math.min(0.96, W.outAt);
+      if (ph < inK) a *= ph / inK;                                     // フェードインの長さ(パネル)
+      else if (ph > outAt) a *= Math.max(0, (1 - ph) / (1 - outAt));   // 取り込まれ始め(パネル)
       if (ph > 0.94) convGlow = Math.min(1.2, convGlow + 0.02);        // 届いた分だけじわっと
       const g = convGeom(geoms[w.shape], Math.max(0.12, f));
       w.el.setAttribute('cx', g.cx); w.el.setAttribute('cy', g.cy);
@@ -2993,6 +3063,12 @@ function renderFrame() {
       (window.innerWidth !== lastFitW || window.innerHeight !== lastFitH)) fit();
   const geoms = { outer: orbitGeom('outer'), inner: orbitGeom('inner') };
   convFrame(geoms);   /* 惑星への集約アニメ (①②④⑩)。geoms・convDotF/A を書き換える */
+  /* 輪の表示オンオフ(パネル) × reelの吸収の濃さを合成して書く (2026-08-26 ヒデさん指定) */
+  const cShowO = !params.conv || params.conv.showOuter !== false;
+  const cShowI = !params.conv || params.conv.showInner !== false;
+  const cShowD = !params.conv || params.conv.showDots !== false;
+  applyRingAlpha('outer', cShowO ? 1 : 0);
+  applyRingAlpha('inner', (cShowI ? 1 : 0) * convReelInnerA);
   updateOrbitSvg(geoms);
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
@@ -3004,8 +3080,10 @@ function renderFrame() {
       el.setAttribute('cx', pos.x);
       el.setAttribute('cy', pos.y);
     });
-    /* 出現度合いが変わった時だけ、半径と濃さを書き換える */
-    const dk = dotK[i] * convDotA[i];
+    /* 出現度合いが変わった時だけ、半径と濃さを書き換える。
+       ドット非表示(パネル)と、所属する輪が非表示の時はドットも消す */
+    const dotShow = cShowD && (d.ellipse === 'outer' ? cShowO : cShowI) ? 1 : 0;
+    const dk = dotK[i] * convDotA[i] * dotShow;
     if (els.k !== dk) {
       els.k = dk;
       const rr = (DOT_R * dk).toFixed(3), op = dk.toFixed(3);
@@ -5890,10 +5968,67 @@ function buildPanel() {
   note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的 / その他＝実験版。押すとすぐ切り替わります。');
   pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key, it => kvSetDesign(it.key));
 
-  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) ---------- */
+  /* ---------- 🪐 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩＋調整つまみ) ---------- */
   sub(catKv, '🪐 惑星への集約アニメ（惑星(V1)の案のみ）');
-  note('軌道のデータが惑星へ集約されていく動き。①＝内の輪が収縮→吸収→新しい輪が出るループ(外の輪は固定で残る) / ②＝粒が螺旋で吸い込まれる / ④＝鼓動で一斉収束 / ⑩＝輪が外から内へ流れ込む。');
-  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key, it => { params.converge = it.key; markDirty(); });
+  note('①＝内の輪が収縮→吸収→再生ループ / ②＝粒が螺旋で吸い込まれる / ④＝鼓動で一斉収束 / ⑩＝輪が外から内へ。案を選ぶと下にその案の調整つまみが出ます。');
+  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key, it => { params.converge = it.key; markDirty(); buildPanel(); });
+  const pctF = v => Math.round(v * 100) + '%';
+  segRow('パース(遠近感)', [['通常', 'normal'], ['調整版', 'fix']], () => params.conv.pers || 'normal',
+    v => { params.conv.pers = v; markDirty(); });
+  note('調整版＝輪が先に惑星の真ん中へ寄ってから、惑星を中心にすぼまる(遠近感が崩れない)。通常＝縮みながら惑星へスライド。');
+  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0, v => { params.conv.showOuter = !!v; markDirty(); });
+  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0, v => { params.conv.showInner = !!v; markDirty(); });
+  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0, v => { params.conv.showDots = !!v; markDirty(); });
+  note('輪を消すとその輪のドットも消えます。①は内の輪が主役なので、内の輪を消すと収縮は見えなくなります。');
+  slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
+    '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+  {
+    const cm = params.converge || 'reel';
+    if (cm === 'reel') {
+      const R = params.conv.reel;
+      slider('① 周期', 2, 10, 0.1, () => R.T, v => R.T = v, v => v.toFixed(1) + '秒', '1ループの長さ。');
+      slider('① 新しい輪が出る長さ', 0.02, 0.4, 0.01, () => R.inDur, v => R.inDur = v, pctF,
+        '周期のうち、フェードインに使う割合。');
+      slider('① 収縮を始めるタイミング', 0.05, 0.7, 0.01, () => R.shrinkAt, v => R.shrinkAt = v, pctF,
+        'ここまでは全周サイズでドットが回る。');
+      slider('① 吸収し終わるタイミング', 0.4, 0.98, 0.01, () => R.endAt, v => R.endAt = v, pctF,
+        'ここでフェードアウトし終わる。残りは消えたまま次のループを待つ。');
+      slider('① どこまで縮むか', 0.5, 1, 0.01, () => R.depth, v => R.depth = v, pctF,
+        '100%で惑星の中心まで縮む。');
+    } else if (cm === 'spiral') {
+      const S = params.conv.spiral;
+      slider('② 粒の数', 4, 24, 1, () => S.count, v => S.count = v, v => v + '個');
+      slider('② 1粒の寿命', 2, 10, 0.1, () => S.life, v => S.life = v, v => v.toFixed(1) + '秒',
+        '縁から惑星に吸い込まれるまでのおおよその秒数。');
+      slider('② 回転の速さ', 0.3, 2.5, 0.05, () => S.speed, v => S.speed = v, v => '×' + v.toFixed(2));
+      slider('② 粒の大きさ', 0.3, 1.2, 0.02, () => S.size, v => S.size = v, v => '×' + v.toFixed(2),
+        '軌道のドット(×1)に対する大きさ。');
+    } else if (cm === 'pulse') {
+      const P = params.conv.pulse;
+      slider('④ 周期', 2, 8, 0.1, () => P.T, v => P.T = v, v => v.toFixed(1) + '秒', '鼓動1回の長さ。');
+      slider('④ 普段どおり回る割合', 0.2, 0.7, 0.01, () => P.holdK, v => P.holdK = v, pctF,
+        '周期のうち、軌道上を普通に回っている時間。');
+      slider('④ 収束にかける長さ', 0.08, 0.45, 0.01, () => P.convDur, v => P.convDur = v, pctF,
+        '短いほどキュッと素早く吸い込まれる。');
+      slider('④ 再出現の長さ', 0.05, 0.4, 0.01, () => P.backDur, v => P.backDur = v, pctF,
+        '吸収後、軌道上にフェードインで戻ってくる時間。');
+    } else if (cm === 'waves') {
+      const W = params.conv.waves;
+      slider('⑩ 1本が流れる秒数', 2, 8, 0.1, () => W.T, v => W.T = v, v => v.toFixed(1) + '秒',
+        '外から惑星に取り込まれるまでの時間。');
+      slider('⑩ 1グループの本数', 1, 8, 1, () => W.count, v => W.count = v, v => v + '本');
+      slider('⑩ 本と本の間隔', 0.2, 3, 0.05, () => W.gap, v => W.gap = v, v => v.toFixed(2) + '秒');
+      slider('⑩ グループ後の休み', 0, 6, 0.1, () => W.rest, v => W.rest = v, v => v.toFixed(1) + '秒',
+        '全部吸収された後、次のグループが出るまでの間。リズムをつくる。');
+      slider('⑩ 輪の濃さ', 0.1, 1, 0.05, () => W.alpha, v => W.alpha = v, v => v.toFixed(2));
+      slider('⑩ フェードインの長さ', 0.02, 0.4, 0.01, () => W.inK, v => W.inK = v, pctF,
+        '1本の旅のうち、出てくるフェードインに使う割合。');
+      slider('⑩ 取り込まれ始め', 0.4, 0.96, 0.01, () => W.outAt, v => W.outAt = v, pctF,
+        'ここからフェードアウト=惑星に取り込まれていく。');
+      slider('⑩ 始まりの大きさ', 1, 1.5, 0.01, () => W.from, v => W.from = v, v => '×' + v.toFixed(2),
+        '軌道より少し外(×1.1あたり)から生まれると自然。');
+    }
+  }
   liveEdit = false;
 
   /* ---------- 🖼 右グラフィックの出始めタイミング (2026-08-26 ヒデさん指定) ----------
