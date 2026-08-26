@@ -2471,7 +2471,7 @@ const DEFAULTS = {
      pers: 'normal'=今の実装 / 'fix'=パース調整版(輪が先に惑星の真ん中へ寄ってから同心円ですぼまる)
      showOuter/showInner: 軌道の輪のオンオフ(輪を消すとその輪のドットも消える)
      タイミング系(inDur/shrinkAt/endAt など)は「周期の中の割合」(0〜1) */
-  orbitLayout: 'gyro',   // 軌道レイアウト(ORBIT_LAYOUTS)。2026-08-26 ヒデさん採用でジャイロクロスを既定に
+  orbitLayout: 'gyro',   // 軌道レイアウト(ORBIT_LAYOUTS)。2026-08-26 ヒデさん指定でジャイロクロス固定(選択UIは廃止)
   orbitPresets: [],      // 軌道のプリセット [{name, data:{layout,outer,inner}}]。パネルで保存/切替/編集/削除
   orbitPresetOn: null,   // いま選んでいるプリセットの番号
   conv: {
@@ -6810,11 +6810,9 @@ function buildPanel() {
   segRow('直感編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
     v => { editHandles.set(!!v); markDirty(); });
   note('オンにすると右のグラフィックに操作点が出ます。中心＝移動 / 右端＝サイズ / 上端＝つぶし（パース）/ 外側＝傾き。惑星も動かせます。');
-  note('ジャイロクロス＝2本の傾きを逆にして立体交差させ、奥行きを出したレイアウト（既定）。カンプ通り＝元の2本ほぼ平行。');
-  pillRow(Object.keys(ORBIT_LAYOUTS).map(k => ({ key: k, name: ORBIT_LAYOUTS[k].name })),
-    it => (params.orbitLayout || 'gyro') === it.key,
-    it => { params.orbitLayout = it.key; markDirty(); },
-    { get: () => params.orbitLayout, set: v => { params.orbitLayout = v; } });
+  /* 【2026-08-26 ヒデさん指定】レイアウトの選択ピルは廃止。ジャイロクロス固定で使う
+     （2本の傾きを逆にして立体交差させ、奥行きを出したレイアウト）。
+     細かい調整は下の 位置 / サイズ / 傾き と、右のグラフィックの直感編集で行う。 */
 
   /* --- プリセット: 今の軌道の設定に名前を付けて保存し、ワンタップで呼び出す --- */
   {
