@@ -1417,23 +1417,28 @@
   .sw-pill.sw-edit:hover { opacity: 1; }
   .sw-pill.sw-add { border-style: dashed; }
   /* 【2026-08-26 ヒデさん指定】リセットは押しやすいサイズに */
-  .rst { flex: 0 0 22px; width: 22px; height: 22px; padding: 0; border: 1px solid transparent; border-radius: 6px;
-         background: transparent; color: #b4b4b4; font-size: 14px; line-height: 20px; cursor: pointer;
+  .rst { flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border: 1px solid transparent; border-radius: 7px;
+         background: transparent; color: #aeaeae; font-size: 15px; line-height: 24px; cursor: pointer;
          transition: background .15s, color .15s, border-color .15s; }
   .rst:hover { background: #f0f0f0; color: #222; border-color: #e0e0e0; }
   .rst.off { visibility: hidden; }
   /* 小見出しの右に置く「リセット / 保存」(セクション単位) */
-  .grp-acts { display: flex; align-items: center; gap: 4px; margin-left: 6px; flex: 0 0 auto; }
-  /* リセット/保存: 押しやすい 24px 角。ラベルは title で補う */
-  .gbtn { width: 24px; height: 24px; padding: 0; border: 1px solid #e4e4e4; border-radius: 7px; background: #fff;
-          color: #777; font-size: 12px; line-height: 22px; text-align: center; cursor: pointer; white-space: nowrap;
+  .grp-acts { display: flex; align-items: center; gap: 5px; margin-left: 6px; flex: 0 0 auto; }
+  /* リセット/保存: 押しやすい 28px 角 (2026-08-26 ヒデさん指定でサイズアップ) */
+  .gbtn { width: 28px; height: 28px; padding: 0; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;
+          color: #666; font-size: 14px; line-height: 26px; text-align: center; cursor: pointer; white-space: nowrap;
           transition: background .15s, color .15s, border-color .15s, width .15s; }
-  .gbtn.done { width: auto; padding: 0 8px; }
+  .gbtn:active { transform: translateY(1px); }
+  .gbtn.done { width: auto; padding: 0 9px; font-size: 11px; }
   .gbtn:hover { background: #f4f4f4; color: #111; border-color: #d5d5d5; }
   .gbtn.done { background: #111; color: #fff; border-color: #111; }
   /* 小見出しのアコーディオン (既定は閉じる) */
   .grp-title { cursor: pointer; user-select: none; }
-  .grp-chev { margin-left: auto; color: #bbb; font-size: 9px; transition: transform .18s; }
+  /* 開閉トグルは見出しの右端。押しやすいサイズに (2026-08-26 ヒデさん指定) */
+  .grp-chev { flex: 0 0 auto; margin-left: 6px; width: 28px; height: 28px; line-height: 26px; text-align: center;
+              color: #9a9a9a; font-size: 13px; border: 1px solid transparent; border-radius: 8px;
+              transition: transform .18s, background .15s, color .15s; }
+  .grp-title:hover .grp-chev { background: #f2f2f2; color: #333; }
   .grp.closed .grp-chev { transform: rotate(-90deg); }
   .grp.closed .grp-body { display: none; }
   .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
@@ -2693,7 +2698,11 @@ function load() {
     localStorage.setItem('anyflow-reset-transform-20260826', '1');
   }
   /* 廃止した案(⑪糸・⑭⑯〜⑳)を選んだままなら既定へ寄せる (2026-08-26) */
-  if (!CONVERGES.some(c => c.key === merged.converge)) merged.converge = DEFAULTS.converge;
+  /* ⚠️ ここは CONVERGES(const)の定義より前に走るので、CONVERGES を参照すると TDZ で例外になり、
+     【保存した設定がまるごと読めなくなる】(2026-08-26 に実際に踏んだ)。キーは直書きで判定する。 */
+  if (!['off', 'reel', 'spiral', 'accre', 'waves', 'mesh', 'beads', 'duplex'].includes(merged.converge)) {
+    merged.converge = DEFAULTS.converge;
+  }
   /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
   if (merged.converge === 'vein' || merged.converge === 'pulse') merged.converge = DEFAULTS.converge;
   if (merged.conv.reel && !['clip', 'fit'].includes(merged.conv.reel.vanish)) merged.conv.reel.vanish = 'clip';
@@ -3523,18 +3532,6 @@ const editHandles = (() => {
     svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:9;overflow:visible;';
     orbit.appendChild(svg);
 
-    /* --- 当たり判定(クリックで選ぶ) --- */
-    for (const key of KEYS) {
-      const el = document.createElementNS(SVG_NS, key === 'planet' ? 'circle' : 'ellipse');
-      el.setAttribute('fill', key === 'planet' ? 'rgba(0,0,0,0)' : 'none');
-      if (key !== 'planet') { el.setAttribute('stroke', 'rgba(0,0,0,0)'); el.setAttribute('stroke-width', '30'); }
-      el.style.cursor = 'move';   /* 描かれている所を触れば、そのまま掴んで動かせる */
-      el.style.pointerEvents = key === 'planet' ? 'fill' : 'stroke';
-      el.addEventListener('pointerdown', e => { e.stopPropagation(); select(key); startDrag(e, { kind: 'move' }); });
-      svg.appendChild(el);
-      hits[key] = el;
-    }
-
     /* --- バウンディングボックス --- */
     boxG = document.createElementNS(SVG_NS, 'g');
     svg.appendChild(boxG);
@@ -3542,9 +3539,11 @@ const editHandles = (() => {
     boxRect.setAttribute('fill', 'rgba(0,0,0,0)');
     boxRect.setAttribute('stroke', BLUE);
     boxRect.setAttribute('stroke-width', '1.5');
-    /* 枠そのものは当たり判定を持たない。移動は「描かれている所(線・惑星)」を掴んで行う。
-       こうすると選択中でも別のオブジェクトをクリックして選び直せる(ヒデさん指定 2026-08-26) */
-    boxRect.style.pointerEvents = 'none';
+    /* 【2026-08-26 ヒデさん指定】枠の【内側】ならどこを掴んでも動かせる。
+       当たり判定(線・惑星)はこの後に作って上に重ねるので、選択中でも別のオブジェクトを選び直せる */
+    boxRect.style.cursor = 'move';
+    boxRect.style.pointerEvents = 'all';
+    boxRect.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind: 'move' }); });
     boxG.appendChild(boxRect);
 
     /* --- 回転ゾーン(角の少し外側。Figma と同じく“角の外”で回転) --- */
@@ -3567,6 +3566,18 @@ const editHandles = (() => {
     for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       const h = mkHandle('corner', ix, iy); handles.push(h);
     }
+    /* --- 当たり判定(クリックで選ぶ) --- */
+    for (const key of KEYS) {
+      const el = document.createElementNS(SVG_NS, key === 'planet' ? 'circle' : 'ellipse');
+      el.setAttribute('fill', key === 'planet' ? 'rgba(0,0,0,0)' : 'none');
+      if (key !== 'planet') { el.setAttribute('stroke', 'rgba(0,0,0,0)'); el.setAttribute('stroke-width', '30'); }
+      el.style.cursor = 'move';   /* 描かれている所を触れば、そのまま掴んで動かせる */
+      el.style.pointerEvents = key === 'planet' ? 'fill' : 'stroke';
+      el.addEventListener('pointerdown', e => { e.stopPropagation(); select(key); startDrag(e, { kind: 'move' }); });
+      svg.appendChild(el);
+      hits[key] = el;
+    }
+
     /* --- ドラッグ中の数値表示 --- */
     label = document.createElementNS(SVG_NS, 'g');
     const lb = document.createElementNS(SVG_NS, 'rect');
@@ -6655,7 +6666,7 @@ function sub(target, html, deep) {
     setTimeout(() => { sv.classList.remove('done'); sv.textContent = '💾'; }, 1200);
   };
   acts.append(rs, sv);
-  title.append(lab, chev, acts);
+  title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
   const inner = document.createElement('div');
   inner.className = 'grp-body';
   title.onclick = () => { subOpen[key] = !g.classList.toggle('closed'); };
@@ -6853,13 +6864,19 @@ function buildPanel() {
   liveEdit = true;
   sub(catKv, '🎨 グラフィック');
   const gRoot = mount;   /* この中に入れ子で並べる */
-  segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
-    v => { editHandles.set(!!v); markDirty(); });
-  note('オンにすると、右のグラフィックをクリックして選べます（外の輪 / 内の輪 / 惑星）。選ぶと青い枠が出ます: 枠の内側＝移動 / 四隅＝斜めリサイズ / 辺＝幅・高さだけ / 角の少し外側＝回転。Shiftで比率を保つ・回転は15°刻み。編集中はアニメーションが止まります。');
 
   sub(gRoot, '案を選ぶ', true);
   note('惑星(V1)＝V1.0の軌道と惑星（既定）/ A案＝PNGベタ貼り / B案＝2Dだけど立体的。押すとすぐ切り替わります。');
-  pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key, it => kvSetDesign(it.key));
+  pillRow(KV_DESIGNS, it => (params.kvDesign || 'planet') === it.key,
+    it => { kvSetDesign(it.key); rebuildKeeping(null); });
+  /* 【2026-08-26 ヒデさん指定】直接編集は惑星(V1)を選んでいる時だけここに出す(A/B案には関係ないため) */
+  if ((params.kvDesign || 'planet') === 'planet') {
+    segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
+      v => { editHandles.set(!!v); markDirty(); });
+    note('オンにすると、右のグラフィックをクリックして選べます（外の輪 / 内の輪 / 惑星）。選ぶと青い枠が出ます: 枠の内側ならどこでもドラッグで移動 / 四隅＝斜めリサイズ / 辺＝幅・高さだけ / 角の少し外側＝回転。Shiftで比率を保つ・回転は15°刻み。編集中はアニメーションが止まります。');
+  } else if (editHandles.on) {
+    editHandles.set(false);   /* 惑星以外の案に切り替えたら編集モードは切る */
+  }
 
   /* ---------- 出てくるタイミング (グラフィックの入れ子) ----------
      入場は「1行目タイピング完了」が起点。モック→アイコン→軌道の各出始めを個別に調整。 */
