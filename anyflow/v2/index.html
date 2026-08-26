@@ -6638,7 +6638,8 @@ const subOpen = {};
 let subItems = null;
 function sub(target, html, deep) {
   const key = String(html).replace(/<[^>]*>/g, '').trim();
-  const open = subOpen[key] === undefined ? false : subOpen[key];
+  /* 既定はたたむ。ただし「🎨 グラフィック」だけは開いた状態で始める(ヒデさん指定 2026-08-27) */
+  const open = subOpen[key] === undefined ? (key === '🎨 グラフィック') : subOpen[key];
   subOpen[key] = open;
   const g = document.createElement('div');
   g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed');
@@ -6810,7 +6811,7 @@ function buildPanel() {
   };
 
   /* ========== 🌊 全体 ========== */
-  const catAll = category('🌊 全体（サイト全体のモーション）', true);
+  const catAll = category('🌊 全体（サイト全体のモーション）', false);
   catNote(catAll, 'まずはここだけ。サイト全体の印象が決まります。');
 
   sub(catAll, '① モーションが進むきっかけ');
@@ -6842,29 +6843,8 @@ function buildPanel() {
   note('一度見たセクションも、戻ってくるともう一度流れます。');
 
   /* ========== 🖼 キービジュアル ========== */
-  const catKv = category('🖼 キービジュアル（いちばん上の画面）', false);
-  catNote(catKv, '最初に見える画面。文字が打たれ、そのあと右のグラフィック（モック→アイコン→軌道）が出ます。');
-
-  sub(catKv, '文字が出てくる順番とタイミング');
-  note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
-  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
-    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
-  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
-    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
-  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
-    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
-  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
-    'ゆっくりにすると、最後の一言が印象に残ります。'));
-  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
-    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
-  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
-    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
-  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
-    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
-  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
-    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
-  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
-    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
+  /* 【2026-08-27 ヒデさん指定】既定は全部たたむ。キービジュアルだけ開いて「🎨 グラフィック」を見せる */
+  const catKv = category('🖼 キービジュアル（いちばん上の画面）', true);
 
   /* ===== 🎨 グラフィック (2026-08-26 ヒデさん指定・整理) =====
      右側のグラフィックの設定をここに集約する。いちばん上が「直接編集」。
@@ -6881,7 +6861,6 @@ function buildPanel() {
   if ((params.kvDesign || 'planet') === 'planet') {
     segRow('直接編集', [['する', 1], ['しない', 0]], () => editHandles.on ? 1 : 0,
       v => { editHandles.set(!!v); markDirty(); });
-    note('オンにすると、右のグラフィックをクリックして選べます（外の輪 / 内の輪 / 惑星）。選ぶと青い枠が出ます: 枠の内側ならどこでもドラッグで移動 / 四隅＝斜めリサイズ / 辺＝幅・高さだけ / 角の少し外側＝回転。Shiftで比率を保つ・回転は15°刻み。編集中はアニメーションが止まります。');
   } else if (editHandles.on) {
     editHandles.set(false);   /* 惑星以外の案に切り替えたら編集モードは切る */
   }
@@ -7157,6 +7136,27 @@ function buildPanel() {
     slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
   }
 
+
+  sub(catKv, '文字が出てくる順番とタイミング');
+  note('数字はページを開いてから何秒後か。触ると先頭から流し直します。');
+  rows.push(slider('ヘッダーが出る', 0, 3, 0.05, () => params.kv.headerAt, v => params.kv.headerAt = v, v => v.toFixed(2) + '秒後',
+    'いちばん上のロゴとメニューが、ぼけた状態から現れるまで。'));
+  rows.push(slider('文字を打ち始める', 0, 6, 0.05, () => params.kv.typeAt, v => params.kv.typeAt = v, v => v.toFixed(2) + '秒後',
+    '「AIと事業を強くする」を1文字ずつ打ち始めるまで。'));
+  rows.push(slider('1行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur, v => params.kv.charDur = v, v => v.toFixed(2) + 's/字',
+    '1文字あたりの時間。小さいほどタタタッと速く打ちます。'));
+  rows.push(slider('2行目の1文字の時間', 0.03, 0.4, 0.01, () => params.kv.charDur2, v => params.kv.charDur2 = v, v => v.toFixed(2) + 's/字',
+    'ゆっくりにすると、最後の一言が印象に残ります。'));
+  rows.push(slider('タイピング速度の変化', 0, 1, 0.05, () => params.kv.typeEase, v => params.kv.typeEase = v, v => Math.round(v * 100) + '%',
+    '大きいほど「最初は速く、最後はゆっくり」に。0で一定。'));
+  rows.push(slider('行と行の間', 0, 1.5, 0.05, () => params.kv.lineGap, v => params.kv.lineGap = v, v => v.toFixed(2) + '秒',
+    '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
+  rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
+    '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
+  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
+  rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
+    'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
   sub(catKv, '🏢 導入企業のロゴ');
   note('画面いちばん下を、ロゴが横に流れ続ける帯です。ここは押した瞬間その場で変わります。');
