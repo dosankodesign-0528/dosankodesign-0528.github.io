@@ -2938,21 +2938,33 @@ function convLinePool(n) {
   }
   return convLine;
 }
-let convPkt = null;    // 粒(circle)のプール。手前レイヤーに置く
+/* 粒(circle)のプール。【2026-08-26 ヒデさん指定】惑星の後ろに回ったものは透けさせず消すため、
+   奥(layer-back)と手前(layer-front)に1個ずつ持ち、front 判定で描くほうを切り替える。
+   奥レイヤーは惑星canvas(z-index:2)の下にあるので、惑星に隠れて自然に見えなくなる。 */
+let convPkt = null;
 function convPktPool(n) {
-  if (convPkt && convPkt.length !== n) { for (const p of convPkt) p.el.remove(); convPkt = null; }
+  if (convPkt && convPkt.length !== n) { for (const p of convPkt) { p.el.remove(); p.back.remove(); } convPkt = null; }
   if (convPkt) return convPkt;
   convPkt = [];
   for (let i = 0; i < n; i++) {
-    const el = document.createElementNS(SVG_NS, 'circle');
-    el.setAttribute('opacity', '0');
-    dotsFrontG.appendChild(el);
-    convPkt.push({ el, k: -1, dir: 1, li: 0, hue: 0 });
+    const mk = () => { const c = document.createElementNS(SVG_NS, 'circle'); c.setAttribute('opacity', '0'); return c; };
+    const el = mk(), back = mk();
+    dotsFrontG.appendChild(el); dotsBackG.appendChild(back);
+    convPkt.push({ el, back, k: -1, dir: 1, li: 0, hue: 0 });
   }
   return convPkt;
 }
+/* 粒を1つ描く。front=false なら奥レイヤーへ回して惑星に隠れさせる */
+function pktSet(pk, x, y, r, fill, op, front) {
+  for (const el of [pk.el, pk.back]) {
+    el.setAttribute('cx', x); el.setAttribute('cy', y);
+    el.setAttribute('r', r); el.setAttribute('fill', fill);
+  }
+  pk.el.setAttribute('opacity', front === false ? '0' : String(op));
+  pk.back.setAttribute('opacity', front === false ? String(op) : '0');
+}
 function convHideLines() { if (convLine) for (const el of convLine) el.setAttribute('opacity', '0'); }
-function convHidePkts() { if (convPkt) for (const p of convPkt) { p.el.setAttribute('opacity', '0'); p.k = -1; } }
+function convHidePkts() { if (convPkt) for (const p of convPkt) { p.el.setAttribute('opacity', '0'); p.back.setAttribute('opacity', '0'); p.k = -1; } }
 /* ドットの今の位置 (convFrame は renderFrame の描画前に走るので自前で出す) */
 function convDotPos(geoms, i) {
   const d = DOTS[i];
@@ -3310,10 +3322,9 @@ function convFrame(geoms) {
     for (let i = 0; i < n; i++) {
       const P0 = np(i), pk = pkts[i], q = convMesh.nodes[i];
       const tw = style === 'constellation' ? 0.55 + 0.45 * Math.sin(elapsed * 1.6 + q.tw) : 0.85;
-      pk.el.setAttribute('cx', P0.x); pk.el.setAttribute('cy', P0.y);
-      pk.el.setAttribute('r', (DOT_R * M.size * convDotK(P0.y, cc.y, RY)).toFixed(2));
-      pk.el.setAttribute('fill', q.c);
-      pk.el.setAttribute('opacity', tw.toFixed(3));
+      /* 惑星に重なったノードは奥へ回して隠す(透けさせない) */
+      const inPlanet = Math.hypot(P0.x - cc.x, P0.y - cc.y) < convPlanetR();
+      pktSet(pk, P0.x, P0.y, (DOT_R * M.size * convDotK(P0.y, cc.y, RY)).toFixed(2), q.c, tw.toFixed(3), !inPlanet);
     }
     convMesh.next -= dt;
     if (convMesh.next <= 0 && convMesh.pk.length < 12) {
@@ -3329,11 +3340,11 @@ function convFrame(geoms) {
       const k = convSStep(q2.k);
       const pk = pkts[n + i];
       if (!pk) continue;
-      pk.el.setAttribute('cx', A.x + (B.x - A.x) * k); pk.el.setAttribute('cy', A.y + (B.y - A.y) * k);
-      pk.el.setAttribute('r', (DOT_R * M.size * 0.75).toFixed(2));
-      pk.el.setAttribute('fill', CONV_BLUE); pk.el.setAttribute('opacity', '0.95');
+      const mx = A.x + (B.x - A.x) * k, my = A.y + (B.y - A.y) * k;
+      const inP = Math.hypot(mx - cc.x, my - cc.y) < convPlanetR();
+      pktSet(pk, mx, my, (DOT_R * M.size * 0.75).toFixed(2), CONV_BLUE, '0.95', !inP);
     }
-    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[n + i]; if (pk) pk.el.setAttribute('opacity', '0'); }
+    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[n + i]; if (pk) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); } }
   } else if (mode === 'beads') {
     /* ⑬ドットの軌道 (2026-08-26 改良・ヒデさん指定):
        ドットを【等間隔で密に】並べて輪の形そのものを作る。吸われるのは一部(ratio)だけなので
@@ -3394,11 +3405,8 @@ function convFrame(geoms) {
         if (k >= 1) { convGlow = Math.min(1.2, convGlow + 0.10); b.t = -1; }   /* 元の位置へ戻る */
       }
       const pos = posOn(f === 1 ? g : convGeom(g, f), ang);
-      const pk = pkts[i];
-      pk.el.setAttribute('cx', pos.x); pk.el.setAttribute('cy', pos.y);
-      pk.el.setAttribute('r', (DOT_R * B.size * convDotK(pos.y, g.cy, g.ry)).toFixed(2));
-      pk.el.setAttribute('fill', b.ring ? CONV_BLUE : CONV_PINK);
-      pk.el.setAttribute('opacity', clamp01(al).toFixed(3));
+      pktSet(pkts[i], pos.x, pos.y, (DOT_R * B.size * convDotK(pos.y, g.cy, g.ry)).toFixed(2),
+        b.ring ? CONV_BLUE : CONV_PINK, clamp01(al).toFixed(3), pos.front);
     }
   } else if (CONV_LINKED.includes(mode)) {
     /* ⑭〜⑳ 双方向: 惑星とドットをラインで結び、行き(集約)と帰り(配信)のデータが飛び交う。
@@ -3437,17 +3445,14 @@ function convFrame(geoms) {
            入る手前 vanishK のぶんだけ「縮みながら」薄くなるので、パッと消えず吸い込まれて見える */
         const dd = Math.hypot(q.x - cc.x, q.y - cc.y);
         const edge = pr * (1 + Math.max(0, L.vanishK));   // 消え始める半径
-        if (dd < pr) { pk.el.setAttribute('opacity', '0'); continue; }   // 惑星の中では描かない
+        if (dd < pr) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); continue; }   // 惑星の中では描かない
         if (dd < edge) {
           const k = convSStep(1 - (dd - pr) / Math.max(1, edge - pr));
           sz = L.size * (1 - k * 0.9);                    // 縮んで吸い込まれる
           al = 0.95 * (1 - k);
         }
-        pk.el.setAttribute('cx', q.x); pk.el.setAttribute('cy', q.y);
-        pk.el.setAttribute('r', (DOT_R * Math.max(0.02, sz) * convDotK(q.y, cc.y, geoms.outer.ry)).toFixed(2));
-        pk.el.setAttribute('fill', out ? CONV_PINK : CONV_BLUE);
-        pk.el.style.filter = '';
-        pk.el.setAttribute('opacity', clamp01(al).toFixed(3));
+        pktSet(pk, q.x, q.y, (DOT_R * Math.max(0.02, sz) * convDotK(q.y, cc.y, geoms.outer.ry)).toFixed(2),
+          out ? CONV_PINK : CONV_BLUE, clamp01(al).toFixed(3), true);
       }
     }
   } else {
