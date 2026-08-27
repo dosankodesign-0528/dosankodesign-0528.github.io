@@ -11,8 +11,12 @@ import { DEFAULT_KV_EXIT } from "@/components/kvExitConfig";
 import { DEFAULT_HERO_ENTER } from "@/components/heroEnterConfig";
 import { DEFAULT_MSG } from "@/components/msgConfig";
 import { buildEnter, DEFAULT_ENTER_TUNE } from "@/components/enterPatterns";
+import MobileExperience from "@/components/MobileExperience";
+import { useIsMobile } from "@/components/useIsMobile";
 
 export default function ExperiencePage() {
+  /* スマホ（〜640px）は専用の体験ページ（2026-08-24 ヒデさん依頼） */
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<Step>(1);
   /* 「この場所にする」を押したか。人物イラストはここで初めて出てくる */
   const [picked, setPicked] = useState(false);
@@ -117,6 +121,9 @@ export default function ExperiencePage() {
     if (s === "2" || s === "3") setStep(Number(s) as Step);
     if (s === "3") setPicked(true);
   }, []);
+
+  if (isMobile) return <MobileExperience />;
+
   return (
     <>
       {/* カンプ 15152:29210 / 29251 / 29271 はどれも back（後ろ姿）バリアント。

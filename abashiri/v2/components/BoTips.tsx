@@ -52,12 +52,15 @@ export default function BoTips({
   active,
   tune = DEFAULT_BO_TIPS,
   onVisibleChange,
+  compact = false,
 }: {
   /** true の間だけ出現カウントが進む（再生中かつ再生UIが消えている時。2026-08-23 仕様） */
   active: boolean;
   tune?: BoTipsTune;
   /** モーダルの表示中フラグを親（Watch）へ知らせる。表示中は再生UIを出さないため */
   onVisibleChange?: (visible: boolean) => void;
+  /** スマホ用に一回り小さく（幅・見出しを縮小。2026-08-24） */
+  compact?: boolean;
 }) {
   /* hidden: 出ていない / pre: 出る直前の1コマ（アニメの出発点） / in: 表示中 / out: フェードアウト中 */
   const [phase, setPhase] = useState<"hidden" | "pre" | "in" | "out">("hidden");
@@ -137,10 +140,16 @@ export default function BoTips({
           本体が「背景ぼかしの起点」になり、ピルの backdrop-blur は景色ではなく
           本体の描画結果をぼかすため、はみ出し部分ではほぼ効かない
           （2026-08-24 ヒデさん指摘の帯のブラーが効かない件の真因） */}
-      <div className="pointer-events-auto relative w-[700px] max-w-[86vw]">
+      <div
+        className={`pointer-events-auto relative ${
+          compact ? "w-[calc(100vw-40px)] max-w-[420px]" : "w-[700px] max-w-[86vw]"
+        }`}
+      >
         {/* 本体 */}
         <div
-          className="relative rounded-2xl bg-white/10 p-[44px] backdrop-blur-[65px]"
+          className={`relative rounded-2xl bg-white/10 backdrop-blur-[65px] ${
+            compact ? "p-7" : "p-[44px]"
+          }`}
           style={anim}
         >
           {/* ×：案2「内側右上のシンプル×」で採用（2026-08-23 ヒデさん決定） */}
@@ -154,11 +163,21 @@ export default function BoTips({
               <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
           </button>
-          <div className="flex flex-col items-center gap-6 text-center text-white">
+          <div
+            className={`flex flex-col items-center text-center text-white ${
+              compact ? "gap-4" : "gap-6"
+            }`}
+          >
             <div className="flex flex-col items-center gap-2 leading-[1.2]">
-              {/* 見出しサイズはカンプ実測（20px/46px。トークン外のためそのまま） */}
-              <p className="text-[20px] font-extralight">五感を使おう</p>
-              <p className="whitespace-nowrap text-[46px] font-extralight">
+              {/* 見出しサイズはカンプ実測（20px/46px）。compact はスマホ用に縮小 */}
+              <p className={compact ? "text-[15px] font-extralight" : "text-[20px] font-extralight"}>
+                五感を使おう
+              </p>
+              <p
+                className={`whitespace-nowrap font-extralight ${
+                  compact ? "text-[30px]" : "text-[46px]"
+                }`}
+              >
                 今、何が聞こえる？
               </p>
             </div>
