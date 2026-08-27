@@ -576,6 +576,9 @@
   .r2v-p { font-family: var(--font-jp); font-weight: 300; font-size: 14px; line-height: 1.8; color: #101828; margin: 0; }
   .r2v-graphic { width: 220px; height: 220px; flex: 0 0 auto; }
   .r2v-graphic img { width: 100%; height: 100%; display: block; }
+  /* 【2026-08-28 ヒデさん指定】仮置きの画像をやめ、枠線だけの幾何学図形で動くピクトグラムにする */
+  .r2v-graphic svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .r2v-graphic svg * { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
   .res2-vline { width: 1px; height: 182px; background: #D1D5DC; flex: 0 0 auto; }
 
   /* ---- 案A: 画像が左に横長 ----
@@ -1900,7 +1903,7 @@
             </div>
             <p class="r2v-p">テキストが入ります。テキストが入ります。テキストが入ります。</p>
           </div>
-          <div class="r2v-graphic"><img src="assets/results-val-saas.svg" alt=""></div>
+          <div class="r2v-graphic" id="valSaas"></div>
         </div>
         <div class="res2-vline"></div>
         <div class="r2v">
@@ -1911,7 +1914,7 @@
             </div>
             <p class="r2v-p">テキストが入ります。テキストが入ります。テキストが入ります。</p>
           </div>
-          <div class="r2v-graphic"><img src="assets/results-val-ai.svg" alt=""></div>
+          <div class="r2v-graphic" id="valAi"></div>
         </div>
       </div>
     </div>
@@ -2826,6 +2829,9 @@ const DEFAULTS = {
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
     caseHover: 'zoom',   // 導入事例のホバー (2026-08-27 ヒデさん指定・5案から選ぶ)
+    /* 【2026-08-28 ヒデさん指定】実績の2つの価値の、右側ピクトグラムの動き(各5案) */
+    valSaas: 'S1',       // for SaaS「リアルタイムにデータ同期」
+    valAi: 'A1',         // for AI「コンテキスト取得から実行」
   },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
