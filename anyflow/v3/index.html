@@ -2595,6 +2595,7 @@ const DEFAULTS = {
               blend: 0, blendAlpha: 0.45,   /* 外と内の間を埋める中間の輪(イラレのブレンドのイメージ) */
               /* データ粒: 最初は点線 → 圧縮されて1本の線になる。太さ/密度/ゆらぎを調整できる */
               pxWidth: 1.6, pxDensity: 1, pxWobble: 0, pxSpin: 1,   /* pxSpin=ドットが軌道を回る速さ */
+              pxJoinAt: 0, pxJoinEnd: 1,   /* 点がつながり始める / つながりきる タイミング(収縮の中の割合) */
               glowWidth: 0.5, glowTone: 'now', glowPower: 1,   /* 圧縮グローの線の太さ・光り方・強さ */
               flow: 'up' },   // 2026-08-27 ヒデさん指定: 既定は「上がる」(内→外→吸収)
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
@@ -3275,7 +3276,12 @@ function convPixelDash(k, R) {
   const dotW = Math.max(0.4, R.pxWidth == null ? 1.6 : R.pxWidth);
   const dens = Math.max(0.05, R.pxDensity == null ? 1 : R.pxDensity);
   const pitch = dotW * 2.6 * dens;                 /* 点の中心から次の点まで */
-  const len = 0.01 + convSStep(k) * pitch;         /* 点が伸びて隣とくっつく */
+  /* 【2026-08-27 ヒデさん指定】点がつながり始める/つながりきるタイミングを調整できる。
+     収縮の進み(k)のうち、pxJoinAt 〜 pxJoinEnd の区間で「点 → 線」に変える。 */
+  const jA = clamp01(R.pxJoinAt == null ? 0 : R.pxJoinAt);
+  const jB = Math.max(jA + 0.02, clamp01(R.pxJoinEnd == null ? 1 : R.pxJoinEnd));
+  const jk = convSStep(clamp01((k - jA) / (jB - jA)));
+  const len = 0.01 + jk * pitch;                  /* 点が伸びて隣とくっつく */
   const gap = Math.max(0, pitch - len);
   const wob = R.pxWobble || 0;
   /* 【2026-08-27 ヒデさん指定】点が軌道の上をくるくる流れるようにする。
@@ -7625,6 +7631,10 @@ function buildPanel() {
           '点と、つながった後の線の太さ。', { fixedMax: true });
         slider('点の密度', 0.05, 3, 0.05, () => params.conv.reel.pxDensity, v => R.pxDensity = v, v => '×' + v.toFixed(2),
           '小さいほど点が詰まって並びます（大きいほどスカスカ）。', { fixedMax: true });
+        slider('つながり始め', 0, 0.9, 0.01, () => params.conv.reel.pxJoinAt, v => R.pxJoinAt = v, pctF,
+          '収縮のうち、ここから点がつながり始めます。遅くするほど長くドットのままです。', { fixedMax: true });
+        slider('つながりきる', 0.1, 1, 0.01, () => params.conv.reel.pxJoinEnd, v => R.pxJoinEnd = v, pctF,
+          'ここで隙間がなくなって1本の線になります。', { fixedMax: true });
         slider('点が回る速さ', 0, 4, 0.05, () => params.conv.reel.pxSpin, v => R.pxSpin = v, v => '×' + v.toFixed(2),
           '点が軌道の上を流れる速さ。0で止まります。', { fixedMax: true });
         slider('点のゆらぎ', 0, 3, 0.05, () => params.conv.reel.pxWobble, v => R.pxWobble = v, v => v.toFixed(2),
