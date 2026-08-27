@@ -8098,25 +8098,49 @@ function valDone(st) {
 /* --- 便利関数(すべて枠線だけ) --- */
 function vCircle(st, cx, cy, r, o) { const e = valTake(st, 'circle');
   e.setAttribute('cx', cx.toFixed(1)); e.setAttribute('cy', cy.toFixed(1)); e.setAttribute('r', Math.max(0.1, r).toFixed(1));
+  e.__len = 2 * Math.PI * Math.max(0.1, r);
   if (o) valStyle(e, o); return e; }
 function vRect(st, cx, cy, w, h, o) { const e = valTake(st, 'rect');
   e.setAttribute('x', (cx - w / 2).toFixed(1)); e.setAttribute('y', (cy - h / 2).toFixed(1));
   e.setAttribute('width', Math.max(0.1, w).toFixed(1)); e.setAttribute('height', Math.max(0.1, h).toFixed(1));
-  e.setAttribute('rx', (o && o.rx != null ? o.rx : 0)); if (o) valStyle(e, o); return e; }
+  e.setAttribute('rx', (o && o.rx != null ? o.rx : 0));
+  e.__len = 2 * (Math.max(0.1, w) + Math.max(0.1, h));
+  if (o) valStyle(e, o); return e; }
 function vTri(st, cx, cy, r, rot, o) { const e = valTake(st, 'polygon');
   const p = [];
   for (let i = 0; i < 3; i++) { const a = (rot + i * 120 - 90) * Math.PI / 180;
     p.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1)); }
-  e.setAttribute('points', p.join(' ')); if (o) valStyle(e, o); return e; }
+  e.setAttribute('points', p.join(' '));
+  e.__len = 3 * (r * Math.sqrt(3));
+  if (o) valStyle(e, o); return e; }
 function vLine(st, x1, y1, x2, y2, o) { const e = valTake(st, 'line');
   e.setAttribute('x1', x1.toFixed(1)); e.setAttribute('y1', y1.toFixed(1));
   e.setAttribute('x2', x2.toFixed(1)); e.setAttribute('y2', y2.toFixed(1));
+  e.__len = Math.hypot(x2 - x1, y2 - y1);
   if (o) valStyle(e, o); return e; }
+/* 折れ線。ストーリーの「道筋」を描くのに使う */
+function vPath(st, pts, o) { const e = valTake(st, 'path');
+  e.setAttribute('d', 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L'));
+  let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
+  e.__len = L; if (o) valStyle(e, o); return e; }
+/* 【2026-08-28 ヒデさん指定】パスのトリミング。
+   線を「今どこまで描かれたか」で見せると、時間の経過やストーリーが表せる。
+   k=0 で何も描かれていない / k=1 で全部描かれた。from を渡すと途中から。 */
+function vTrim(e, k, from) {
+  const L = e.__len || 0;
+  if (!L) return e;
+  const a = Math.max(0, Math.min(1, from || 0)), b = Math.max(a, Math.min(1, k));
+  const on = L * (b - a);
+  e.setAttribute('stroke-dasharray', on.toFixed(2) + ' ' + L.toFixed(2));
+  e.setAttribute('stroke-dashoffset', (-L * a).toFixed(2));
+  return e;
+}
 function valStyle(e, o) {
   if (o.c) e.setAttribute('stroke', o.c);
   if (o.w != null) e.setAttribute('stroke-width', o.w.toFixed(2));
   if (o.a != null) e.setAttribute('opacity', Math.max(0, Math.min(1, o.a)).toFixed(3));
   if (o.dash) e.setAttribute('stroke-dasharray', o.dash); else e.removeAttribute('stroke-dasharray');
+  e.removeAttribute('stroke-dashoffset');
   if (o.rot != null) e.setAttribute('transform', `rotate(${o.rot.toFixed(1)} ${o.rx0 || 110} ${o.ry0 || 110})`);
 }
 const vE = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* なめらかな出入り */
@@ -8197,6 +8221,81 @@ const VAL_SAAS = {
       const x2 = 194 - 168 * u;
       vRect(st, x2, C + 26, 15 + near * 4, 15 + near * 4, { c: VAL_PINK, w: near ? 2.4 : 1.6 });
     }
+  },
+  /* ===== ここから 2026-08-28 追加分 =====
+     ヒデさん指定の方向: 複数が1つになる / 重なり合う / 時系列が分かる / 緩急がある。
+     S6〜S10 はパスのトリミング(線が描かれていく)を使い、時間の経過とストーリーを出す。 */
+
+  /* S6 描かれてつながる: 左から右へ線が引かれ、届いた瞬間に受け手の枠が一周描かれる */
+  S6(st, t) {
+    const C = VAL_VB / 2, L = 48, R = 172, T = 3.4, k = vLoop(t, T);
+    const draw = Math.min(1, k / 0.42);                 /* 速く引く */
+    const land = Math.max(0, (k - 0.44) / 0.3);         /* 受け手が一周描かれる */
+    const rest = Math.max(0, (k - 0.8) / 0.2);          /* 余韻はゆっくり */
+    vRect(st, L, C, 44, 56, { rx: 4, w: 1.8 });
+    vTrim(vRect(st, R, C, 44, 56, { rx: 4, w: 2.4, c: VAL_ACC, a: land > 0 ? 1 : 0 }), vE(land));
+    vTrim(vLine(st, L + 24, C, R - 24, C, { c: VAL_ACC, w: 2.2 }), vE(draw));
+    vLine(st, L + 24, C, R - 24, C, { a: 0.16, dash: '4 6' });
+    const px = L + 24 + (R - L - 48) * vE(draw);
+    vRect(st, px, C, 10, 10, { c: VAL_ACC, w: 2, a: draw < 1 ? 1 : 1 - rest });
+    vCircle(st, L, C, 8, { a: 0.4 });
+  },
+  /* S7 4つが1つに: 四隅の四角が中央へ集まり、重なって1つになる。合流の瞬間に外周が一周描かれる */
+  S7(st, t) {
+    const C = VAL_VB / 2, T = 4.2, k = vLoop(t, T);
+    const come = Math.min(1, k / 0.5), hold = Math.max(0, (k - 0.52) / 0.24), back = Math.max(0, (k - 0.82) / 0.18);
+    const d = 62 * (1 - vE(come)) + 62 * vE(back);
+    for (let i = 0; i < 4; i++) {
+      const a = (i * 90 + 45) * Math.PI / 180;
+      vRect(st, C + Math.cos(a) * d, C + Math.sin(a) * d, 30, 30,
+        { rx: 3, w: 1.8, c: i % 2 ? VAL_ACC : VAL_PINK, a: 0.9 });
+    }
+    vTrim(vCircle(st, C, C, 52, { w: 2.2, c: VAL_ACC, a: hold > 0 ? 1 - back : 0 }), vE(hold));
+  },
+  /* S8 満ちて同期: 外周が0→100%まで描かれ(進捗)、満ちた瞬間に内側の四角がパッと出る */
+  S8(st, t) {
+    const C = VAL_VB / 2, T = 3.8, k = vLoop(t, T);
+    const fill = Math.min(1, k / 0.72), pop = Math.max(0, (k - 0.72) / 0.28);
+    vCircle(st, C, C, 62, { a: 0.16, dash: '3 5' });
+    vTrim(vCircle(st, C, C, 62, { w: 2.6, c: VAL_ACC }), fill);
+    vCircle(st, C, C, 40, { a: 0.28 });
+    const sz = 34 * (pop > 0 ? (1 + (1 - vE(Math.min(1, pop * 2.4))) * 0.5) : 0);
+    if (pop > 0) vRect(st, C, C, sz, sz, { rx: 3, w: 2.4, c: VAL_ACC, a: 1 - pop * 0.5 });
+    for (let i = 0; i < 4; i++) {
+      const a = (i * 90 - 90) * Math.PI / 180;
+      vLine(st, C + Math.cos(a) * 70, C + Math.sin(a) * 70, C + Math.cos(a) * 78, C + Math.sin(a) * 78, { a: 0.3 });
+    }
+  },
+  /* S9 2つの弧が噛み合う: 左右から弧が伸びて1つの円になる。噛み合った瞬間だけ太くなる */
+  S9(st, t) {
+    const C = VAL_VB / 2, T = 3.6, k = vLoop(t, T);
+    const grow = Math.min(1, k / 0.55), lock = Math.max(0, (k - 0.55) / 0.2), off = Math.max(0, (k - 0.85) / 0.15);
+    const R = 56;
+    const arc = (a0, a1, kk, col) => {
+      const pts = []; const seg = 26;
+      for (let i = 0; i <= seg; i++) { const a = (a0 + (a1 - a0) * (i / seg)) * Math.PI / 180;
+        pts.push([C + Math.cos(a) * R, C + Math.sin(a) * R]); }
+      vTrim(vPath(st, pts, { c: col, w: lock > 0 ? 2.8 : 2, a: 1 - off }), vE(kk));
+    };
+    arc(180, 360, grow, VAL_ACC);
+    arc(0, 180, grow, VAL_PINK);
+    vCircle(st, C, C, R, { a: 0.14, dash: '4 6' });
+    /* 常設の印(左右の合わせ目)。どの場面でも密度が落ちないように */
+    vLine(st, C - R - 12, C, C - R + 2, C, { a: 0.25 });
+    vLine(st, C + R - 2, C, C + R + 12, C, { a: 0.25 });
+    if (lock > 0) vCircle(st, C, C, 12 + vE(Math.min(1, lock * 2)) * 6, { c: VAL_ACC, w: 2.2, a: 1 - lock });
+  },
+  /* S10 積層して重なる: 3つの円がずれて重なっていき、完全に重なると1つに見える */
+  S10(st, t) {
+    const C = VAL_VB / 2, T = 4.6, k = vLoop(t, T);
+    const stack = Math.min(1, k / 0.46), one = Math.max(0, (k - 0.5) / 0.22), open = Math.max(0, (k - 0.78) / 0.22);
+    const sp = 34 * (1 - vE(stack)) + 34 * vE(open);
+    for (let i = 0; i < 3; i++) {
+      const dy = (i - 1) * sp;
+      vCircle(st, C, C + dy, 44, { w: 1.8, c: i === 1 ? VAL_INK : (i ? VAL_ACC : VAL_PINK), a: 0.9 });
+    }
+    vTrim(vCircle(st, C, C, 44, { w: 2.8, c: VAL_ACC, a: one > 0 ? 1 - open : 0 }), vE(one));
+    vLine(st, C - 66, C, C + 66, C, { a: 0.14, dash: '4 6' });
   },
 };
 
@@ -8293,6 +8392,84 @@ const VAL_AI = {
     }
     if (up > 0) vTri(st, C, C + 10 - vE(up) * 70, 26 + up * 8, 90, { c: VAL_ACC, w: 2.4, a: 1 - up * 0.5 });
     vLine(st, C - 56, C + 76, C + 56, C + 76, { a: 0.35 });
+  },
+  /* ===== ここから 2026-08-28 追加分 =====
+     A6〜A10 はパスのトリミングで「道筋が描かれていく」＝時間の経過とストーリーを出す。
+     どれも 取得 → 処理 → 実行 の順番が読み取れるようにしてある。 */
+
+  /* A6 経路が描かれて実行: 円から三角へ折れ線が引かれ、描き切った瞬間に三角が一周描かれて発火 */
+  A6(st, t) {
+    const C = VAL_VB / 2, T = 3.8, k = vLoop(t, T);
+    const draw = Math.min(1, k / 0.5), fire = Math.max(0, (k - 0.52) / 0.28), off = Math.max(0, (k - 0.84) / 0.16);
+    const P = [[46, C + 34], [92, C + 34], [92, C - 30], [166, C - 30]];
+    vPath(st, P, { a: 0.15, dash: '4 6' });
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 2.2, a: 1 - off }), vE(draw));
+    vCircle(st, 46, C + 34, 15, { w: 1.8 });
+    vTrim(vTri(st, 178, C - 30, 22, 90, { c: VAL_ACC, w: 2.6, a: fire > 0 ? 1 - off : 0 }), vE(fire));
+    vTri(st, 178, C - 30, 22, 90, { a: 0.16 });
+    const kk = vE(draw), idx = Math.min(P.length - 2, Math.floor(kk * 3));
+    const seg = kk * 3 - idx;
+    vRect(st, P[idx][0] + (P[idx+1][0] - P[idx][0]) * seg, P[idx][1] + (P[idx+1][1] - P[idx][1]) * seg,
+      9, 9, { c: VAL_ACC, w: 2, a: draw < 1 ? 1 : 0 });
+  },
+  /* A7 3ステップ: 取得→解釈→実行の枠が順に描かれて満ちる。最後に三角。時系列そのもの */
+  A7(st, t) {
+    const C = VAL_VB / 2, T = 5, k = vLoop(t, T);
+    for (let i = 0; i < 3; i++) {
+      const y = C - 46 + i * 40;
+      const at = i * 0.2, kk = Math.max(0, Math.min(1, (k - at) / 0.2));
+      vRect(st, C - 12, y, 116, 26, { rx: 4, a: 0.16, dash: '4 6' });
+      vTrim(vRect(st, C - 12, y, 116, 26, { rx: 4, c: kk >= 1 ? VAL_INK : VAL_ACC, w: kk >= 1 ? 1.8 : 2.4 }), vE(kk));
+    }
+    const go = Math.max(0, (k - 0.66) / 0.34);
+    if (go > 0) vTrim(vTri(st, C + 74, C + 34, 20, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.3 }), vE(Math.min(1, go * 2)));
+    vLine(st, C - 70, C + 62, C + 86, C + 62, { a: 0.2 });
+  },
+  /* A8 満ちて発射: 円弧が満ちるまでが「取得」。満ちた瞬間に三角が右へ飛ぶ＝緩急が強い */
+  A8(st, t) {
+    const C = VAL_VB / 2, T = 3.6, k = vLoop(t, T);
+    const load = Math.min(1, k / 0.66), shoot = Math.max(0, (k - 0.66) / 0.34);
+    vCircle(st, C - 22, C, 46, { a: 0.16, dash: '3 5' });
+    vTrim(vCircle(st, C - 22, C, 46, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.8 }), load);
+    vRect(st, C - 22, C, 20, 20, { w: 1.8, a: 0.5 + load * 0.5, rot: load * 90, rx0: C - 22, ry0: C });
+    if (shoot > 0) {
+      const x = C - 22 + vE(shoot) * 104;
+      vTri(st, x, C, 22, 90, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.4 });
+      vLine(st, C + 6, C, x - 20, C, { c: VAL_ACC, a: 0.35 * (1 - shoot) });
+    }
+    vLine(st, C + 62, C - 16, C + 62, C + 16, { a: 0.22 });
+  },
+  /* A9 重なって答えになる: 3つの円(文脈の断片)が中央で重なり、重なりから四角→三角へ変わって抜ける */
+  A9(st, t) {
+    const C = VAL_VB / 2, T = 5.2, k = vLoop(t, T);
+    const come = Math.min(1, k / 0.4), born = Math.max(0, (k - 0.42) / 0.22),
+          morph = Math.max(0, (k - 0.62) / 0.2), go = Math.max(0, (k - 0.8) / 0.2);
+    const d = 52 * (1 - vE(come));
+    for (let i = 0; i < 3; i++) {
+      const a = (i * 120 - 90) * Math.PI / 180;
+      vCircle(st, C + Math.cos(a) * d, C + Math.sin(a) * d, 40,
+        { w: 1.8, c: [VAL_PINK, VAL_ACC, VAL_INK][i], a: 0.9 - go * 0.6 });
+    }
+    /* 常設の当たり。場面が変わっても図形の数がそろうように */
+    vCircle(st, C, C, 82, { a: 0.13, dash: '4 6' });
+    vLine(st, C + 88, C - 14, C + 88, C + 14, { a: 0.22 });
+    if (born > 0 && morph <= 0) vTrim(vRect(st, C, C, 30, 30, { rx: 3, c: VAL_ACC, w: 2.4 }), vE(born));
+    if (morph > 0) vTri(st, C + vE(go) * 62, C, 22 + morph * 6, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.4 });
+  },
+  /* A10 一本の線が折れて進む: 線が描かれながら3回折れ、先端が三角になって抜ける */
+  A10(st, t) {
+    const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
+    const draw = Math.min(1, k / 0.7), tip = Math.max(0, (k - 0.7) / 0.3);
+    const P = [[36, C + 46], [78, C + 46], [78, C], [130, C], [130, C - 44], [172, C - 44]];
+    vPath(st, P, { a: 0.14, dash: '4 6' });
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 2.2 }), vE(draw));
+    /* 折れ点に小さな印(＝段を越えた印。時系列が読める) */
+    for (let i = 1; i < P.length - 1; i++) {
+      const at = i / (P.length - 1);
+      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1.6, a: vE(draw) > at ? 0.9 : 0.18 });
+    }
+    if (tip > 0) vTrim(vTri(st, 182, C - 44, 20, 90, { c: VAL_ACC, w: 2.6 }), vE(Math.min(1, tip * 1.6)));
+    else vTri(st, 182, C - 44, 20, 90, { a: 0.16 });
   },
 };
 function drawValueIcons() {
@@ -10065,6 +10242,12 @@ function buildPanel() {
       { key: 'S3', name: 'S3 重なって1つ',    tip: '2つの円が寄って重なり、中央に四角が生まれます＝統合。' },
       { key: 'S4', name: 'S4 一斉にそろう',   tip: '3×3の升目がバラバラに光り、最後に全部が同じ状態へ揃います。' },
       { key: 'S5', name: 'S5 すれ違う2本',    tip: '上下の線を、円と四角が逆向きに流れます。交差で一瞬ふくらみます。' },
+      /* 2026-08-28 追加: 合流・重なり・時系列・パスのトリミング */
+      { key: 'S6', name: 'S6 描かれてつながる', tip: '左から右へ線が引かれ、届いた瞬間に受け手の枠が一周描かれます。引くのは速く、余韻はゆっくり。' },
+      { key: 'S7', name: 'S7 4つが1つに',      tip: '四隅の四角が中央へ集まって重なり、合流した瞬間に外周が一周描かれます。' },
+      { key: 'S8', name: 'S8 満ちて同期',      tip: '外周が0→100%まで描かれ(進捗)、満ちた瞬間に内側の四角がパッと出ます。時系列がはっきり。' },
+      { key: 'S9', name: 'S9 弧が噛み合う',    tip: '左右から弧が伸びてきて、中央で1つの円になります。噛み合った瞬間だけ太くなります。' },
+      { key: 'S10', name: 'S10 積層して重なる', tip: '3つの円がずれて重なっていき、完全に重なると1つに見えます。また離れます。' },
     ];
     const AI = [
       { key: 'A1', name: 'A1 一方向の流れ', tip: '円(取得)→四角(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わります。' },
@@ -10072,6 +10255,12 @@ function buildPanel() {
       { key: 'A3', name: 'A3 集めて撃つ',   tip: '散らばった四角が中央の円へ集まり、満ちたら右へ三角が飛びます。' },
       { key: 'A4', name: 'A4 走査して実行', tip: '四角の中を線が上から下へ走り(取得)、終わると三角に変わって右へ抜けます。' },
       { key: 'A5', name: 'A5 積んで実行',   tip: '下から長方形が3つ積み上がり(文脈が溜まる)、揃うと三角になって上へ抜けます。' },
+      /* 2026-08-28 追加: パスのトリミングで「道筋が描かれていく」＝時間の経過とストーリー */
+      { key: 'A6', name: 'A6 経路が描かれる', tip: '円から三角へ折れ線が引かれ、描き切った瞬間に三角が一周描かれて発火します。' },
+      { key: 'A7', name: 'A7 3ステップ',     tip: '取得→解釈→実行の枠が順に描かれて満ち、最後に三角が出ます。時系列そのもの。' },
+      { key: 'A8', name: 'A8 満ちて発射',    tip: '円弧が満ちるまでが取得。満ちた瞬間に三角が右へ飛びます。緩急が強い案。' },
+      { key: 'A9', name: 'A9 重なって答え',  tip: '3つの円(文脈の断片)が中央で重なり、重なりから四角→三角へ変わって抜けます。' },
+      { key: 'A10', name: 'A10 折れて進む',  tip: '1本の線が描かれながら3回折れ、通った折れ点に印が付きます。先端が三角になって抜けます。' },
     ];
     note('for SaaS「リアルタイムにデータ同期」');
     pillRow(SAAS, it => (params.patterns.valSaas || 'S1') === it.key,
