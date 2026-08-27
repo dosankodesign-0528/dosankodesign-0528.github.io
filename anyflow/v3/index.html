@@ -1493,6 +1493,10 @@
   }
   .gfx-edit:hover { background: linear-gradient(180deg, #2c2c2c, #111); }
   .gfx-edit.on { background: linear-gradient(180deg, #0EBBFF, #0a93c9); }
+  /* プリセットを1行に収める (2026-08-27 ヒデさん指定でコンパクト化) */
+  .pset { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0 2px; }
+  .pset-lab { flex: 0 0 auto; font-size: 11px; color: #999; line-height: 22px; }
+  .pset-row { flex: 1 1 auto; margin: 0; }
   .sw-pill.sw-save {
     border-style: dashed; border-color: #c9c9c9; color: #666;
     background: transparent; font-weight: 400;
@@ -2744,7 +2748,12 @@ const DEFAULTS = {
       ヒデさんがパネルで選んだ設定まで一緒に初期化されてしまうため。
       代わりに load() 側で【個数が違っても他の設定は生かす】ようにしてある。
       新しく足した dotGap は保存側に無いので、自動で既定(=①きっちり等間隔)が入る */
-const STORAGE_KEY = 'anyflow-embed-anim-v80';   /* 2026-08-26 ジャイロクロス既定/パネル整理(各項目リセット・小見出しアコーディオン)/④⑤とパース切替を廃止 */
+/* ⚠️【2026-08-27】ヒデさんの画面で「軌道と惑星が初期に戻らない」問題の原因は、
+   ブラウザに残っていた古い保存値(直接編集でいじった形)だった。
+   コード側の既定値は本番(anyflow-embed-v3)と完全に一致していることを実測で確認済み
+   (楕円 cx/cy/rx/ry/rotate、惑星 transform とも一致)。
+   一度きりのリセットでは取りこぼすので、保存キーごと上げて古い保存値を丸ごと捨てる。 */
+const STORAGE_KEY = 'anyflow-embed-anim-v81';   /* 2026-08-27 案ごとの形/3案/番号詰め。v80の保存値は破棄 */
 
 let params = load();
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
@@ -7161,12 +7170,6 @@ function applyGfxVariant(i) {
   renderFrame();
 }
 function gfxVariantOn() { return (params.gfxVariantOn || {})[params.converge || 'reel']; }
-/* いまの案のグラフィックを、最初に実装した配置へ戻す */
-function gfxResetToInitial() {
-  gfxApply(gfxDefault());
-  if (params.gfxVariantOn) delete params.gfxVariantOn[params.converge || 'reel'];
-  if (params.gfxPresetOn) delete params.gfxPresetOn[params.converge || 'reel'];
-}
 
 /* --- 案ごとのプリセット --- */
 function gfxPresetList() {
@@ -7355,7 +7358,7 @@ function sub(target, html, deep, opts) {
   /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
      (2026-08-27 ヒデさん指定) */
   const GRAPHIC_OPEN = ['🎨 グラフィック',
-                        '① アニメーションを選ぶ', '② グラフィックを編集', 'プリセット（この案の形）',
+                        '① アニメーションを選ぶ', '② グラフィックを編集',
                         '③ 軌道（輪）', '④ ドット（粒）', '⑤ 惑星', '⑥ 登場（出てくる順番）',
                         '表示', '表示・大きさ', '模様',
                         'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
@@ -7985,45 +7988,27 @@ function buildPanel() {
       b2.textContent = '✏️ 編集モード中';
     };
     (mount || body).appendChild(b2);
-    /* 【2026-08-27 ヒデさん指定】編集でいじった形を、最初に実装した配置へ戻すボタン。
-       戻すのは「形」(軌道と惑星の位置・大きさ・つぶし・傾き・レイアウト)だけ。
-       アニメのつまみは触らない。 */
-    const rowR = document.createElement('div');
-    rowR.className = 'sw-row';
-    const rb = document.createElement('button');
-    rb.className = 'sw-pill sw-save';
-    rb.textContent = '↺ 初期の配置に戻す';
-    rb.title = '軌道と惑星の位置・大きさ・傾きを、最初に実装した形へ戻します';
-    rb.onclick = () => {
-      gfxResetToInitial();
-      syncPanelRows();
-      if (editHandles.on) editHandles.place();
-      if (fillPresetRow) fillPresetRow();
-      fillVariantRow();
-      rb.classList.add('on'); rb.textContent = '✓ 戻しました';
-      setTimeout(() => { rb.classList.remove('on'); rb.textContent = '↺ 初期の配置に戻す'; }, 1200);
-    };
-    rowR.appendChild(rb);
-    (mount || body).appendChild(rowR);
+    /* 【2026-08-27 ヒデさん指定】補足は1行に。「初期の配置に戻す」ボタンは廃止 */
     const n2 = document.createElement('div');
     n2.className = 'grp-note';
-    n2.textContent = '押すと編集モードに入ります。右のグラフィックで輪や惑星をクリックすると枠が出て、'
-      + '辺で幅・高さ、角で縦横まとめて（縦横比は保ちません）、角の外で回転。'
-      + '画面右上のバーで 保存 / やめる / 元に戻す(⌘Z) ができます。';
+    n2.textContent = '輪や惑星をクリック → 辺で幅・高さ、角で縦横（縦横比は保ちません）、角の外で回転。';
     (mount || body).appendChild(n2);
     /* 選んだオブジェクトの数値パネル(X/Y/W/H/角度)。編集モード中に動的に出る ← 仕様は変更なし */
     buildNumPanel(mount || body);
   }
 
-  /* --- プリセット: この案の形に名前を付けて保存し、ワンタップで呼び出す --- */
-  sub(gRoot, 'プリセット（この案の形）', true, { fixed: true });
+  /* --- プリセット: この案の形に名前を付けて保存し、ワンタップで呼び出す ---
+     【2026-08-27 ヒデさん指定】見出しも説明も置かず、②の中に1行で収めてコンパクトに。 */
   {
+    const wrap = document.createElement('div');
+    wrap.className = 'pset';
+    const lab = document.createElement('span');
+    lab.className = 'pset-lab';
+    lab.textContent = 'プリセット';
     const presetRow = document.createElement('div');
-    presetRow.className = 'sw-row';
-    (mount || body).appendChild(presetRow);
-    const pn = document.createElement('div');
-    pn.className = 'grp-note';
-    (mount || body).appendChild(pn);
+    presetRow.className = 'sw-row pset-row';
+    wrap.append(lab, presetRow);
+    (mount || body).appendChild(wrap);
     /* 案ごとに中身が変わるので、行ごと作り直せるようにしておく(パネル全体は作り直さない) */
     fillPresetRow = function () {
       const list = gfxPresetList();
@@ -8032,6 +8017,7 @@ function buildPanel() {
         const b = document.createElement('button');
         b.className = 'sw-pill' + (gfxPresetOn() === i ? ' on' : '');
         b.textContent = ps.name;
+        b.title = 'この形に切り替える';
         b.onclick = () => {
           applyGfxPreset(i);
           syncPanelRows();
@@ -8059,10 +8045,10 @@ function buildPanel() {
         };
         presetRow.append(b, e);
       });
-      /* 保存は控えめな追加ボタン。上の「編集する」とは別物だと分かる見た目にする */
       const add = document.createElement('button');
       add.className = 'sw-pill sw-save';
-      add.textContent = '＋ いまの形を保存';
+      add.textContent = '＋保存';
+      add.title = 'いまの形を、この案専用のプリセットとして保存する';
       add.onclick = () => {
         const nm = window.prompt('プリセットの名前', 'プリセット ' + (list.length + 1));
         if (!nm || !nm.trim()) return;
@@ -8071,8 +8057,6 @@ function buildPanel() {
         markDirty(); fillPresetRow();
       };
       presetRow.appendChild(add);
-      const cur = (CONVERGES.find(c => c.key === (params.converge || 'reel')) || {}).name || '';
-      pn.textContent = `いま選んでいる「${cur}」専用のプリセットです。ほかの案には出ません。✎ で名前の変更・上書き・削除。`;
     };
     fillPresetRow();
   }
