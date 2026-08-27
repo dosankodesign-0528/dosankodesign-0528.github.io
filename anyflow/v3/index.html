@@ -160,6 +160,12 @@
     height: 260px;
     z-index: 2;
   }
+  /* 【2026-08-28 ヒデさん指定】エコー用。惑星の canvas をまるごと複製して重ねる器。
+     z-index は案によって 1(うしろ) / 3(手前) を JS が切り替える */
+  .echo-can {
+    position: absolute; left: 306.06px; top: 112.32px; width: 260px; height: 260px;
+    z-index: 1; pointer-events: none; transform-origin: 50% 50%; opacity: 0;
+  }
   #sphere.fallback {
     background-size: 230px 230px;
     background-position: center;
@@ -2771,7 +2777,7 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'e3',     /* エコーの見え方(e1〜e4)。glowKind='echo' の時だけ効く。既定はふちが濃い */
+    glowEcho: 'k1',     /* エコーの見え方(k1〜k3)。glowKind='echo' の時だけ効く */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3063,7 +3069,7 @@ function loadParams() {
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
-  if (!['e1', 'e2', 'e3', 'e4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e3';
+  if (!['k1', 'k2', 'k3', 'k4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k1';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -4165,92 +4171,116 @@ function convDrawRipples(strength, hit, dt) {
     el.setAttribute('opacity', (0.55 * strength * (1 - k)).toFixed(3));
   }
 }
-/* ===== エコー (2026-08-28 ヒデさん指定・4案) =====
-   データが取り込まれると、惑星の【丸いシルエット】がひと回り大きくなった残像として広がる。
-   動きは「ひと膨らみ」で固定(1.0 → 1.4 倍へ ふわっと広がって消える)。
-   ⚠️ はじめは輪郭線の案も混ぜていたが、「エコー＝残像が波紋として広がる」方向に統一する指定。
-      どれも【やわらかい面】で、線ではない。
-   1 やわらかい面   … 薄い水色の面(はじめの形)
-   2 惑星の色       … 惑星と同じ 青→ピンク のグラデーションの残像
-   3 ふちが濃い     … 中心は薄く、ふちに向かって濃くなる。いちばん波紋らしい
-   4 二重の残像     … 2枚が時間差で広がって重なる。奥行きが出る */
-let convEchoEls = null, convEchoes = [], convEchoDefs = false;
-const CONV_ECHO_MAX = 8;
-/* 残像用のグラデーションを一度だけ作る */
-function convEchoEnsureDefs() {
-  if (convEchoDefs) return;
-  const svg = dotsBackG && dotsBackG.ownerSVGElement;
-  if (!svg) return;
-  let defs = svg.querySelector('defs');
-  if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); svg.insertBefore(defs, svg.firstChild); }
-  const mk = (id, stops) => {
-    if (svg.querySelector('#' + id)) return;
-    const g = document.createElementNS(SVG_NS, 'radialGradient');
-    g.setAttribute('id', id);
-    for (const [off, col, op] of stops) {
-      const st = document.createElementNS(SVG_NS, 'stop');
-      st.setAttribute('offset', off); st.setAttribute('stop-color', col); st.setAttribute('stop-opacity', op);
-      g.appendChild(st);
-    }
-    defs.appendChild(g);
-  };
-  /* 惑星と同じ色味(内が青・外がピンク) */
-  mk('echoG2', [['0%', '#4FC3F7', '0.05'], ['55%', '#7FD8FF', '0.30'], ['100%', '#FF7BAC', '0.55']]);
-  /* ふちが濃い: 中心は抜けて、ふちだけ濃い＝波紋らしい面 */
-  mk('echoG3', [['0%', '#7FD8FF', '0'], ['62%', '#7FD8FF', '0.05'], ['88%', '#5CC8F5', '0.55'], ['100%', '#5CC8F5', '0']]);
-  convEchoDefs = true;
+/* ===== エコー (2026-08-28 ヒデさん指定・作り直し3案) =====
+   ⚠️ はじめは「単色の面」や「グラデーションの面」で残像を作っていたが、
+      惑星の色を拾っただけの別物に見えていた。
+      指定は【いま出来上がっている惑星のグラフィック全体を、そのまま重ねる】方向。
+   → 惑星は canvas なので、同じ大きさの canvas を用意して毎フレーム drawImage で
+      【絵をまるごと複製】し、ひと回り大きくして重ねる。本物の質感がそのまま残像になる。
+   1 うしろに重ねる … 惑星の後ろへ。ふちにリムのように出る。いちばん自然
+   2 ぼかして広がる … 複製にぼかしをかけながら広がる。やわらかい残像
+   3 手前にゴースト … 惑星の手前へ薄く重ねる。透けた残像がはっきり見える */
+let convEchoes = [], convEchoCans = null, convEchoEls = null;
+const CONV_ECHO_MAX = 4;
+/* 【2026-08-28 ヒデさん指定】4 は単色の面。取り込むたびに色が変わる。
+   ブランドの色まわりから選ぶので、どれが出ても浮かない */
+const ECHO_COLORS = ['#0EBBFF', '#FF5D97', '#7FD8FF', '#A78BFA', '#FFFFFF'];
+function convEchoEllipses() {
+  if (convEchoEls) return convEchoEls;
+  const host = dotsBackG && dotsBackG.parentNode;
+  if (!host) return null;
+  convEchoEls = [];
+  for (let i = 0; i < CONV_ECHO_MAX; i++) {
+    const e = document.createElementNS(SVG_NS, 'ellipse');
+    e.setAttribute('stroke', 'none');
+    e.setAttribute('opacity', '0');
+    e.style.pointerEvents = 'none';
+    host.insertBefore(e, dotsBackG);
+    convEchoEls.push(e);
+  }
+  return convEchoEls;
+}
+function convEchoCanvases() {
+  if (convEchoCans) return convEchoCans;
+  if (!sphereCanvasEl || !sphereCanvasEl.parentNode) return null;
+  convEchoCans = [];
+  for (let i = 0; i < CONV_ECHO_MAX; i++) {
+    const c = document.createElement('canvas');
+    c.width = sphereCanvasEl.width || 520;
+    c.height = sphereCanvasEl.height || 520;
+    c.className = 'echo-can';
+    sphereCanvasEl.parentNode.insertBefore(c, sphereCanvasEl);   /* 既定は惑星の後ろ */
+    convEchoCans.push({ el: c, ctx: c.getContext('2d') });
+  }
+  return convEchoCans;
 }
 function convDrawEchoes(strength, hit, dt, style) {
-  const st = style || 'e1';
-  if (!convEchoEls) {
-    const host = dotsBackG && dotsBackG.parentNode;
-    if (!host) return;
-    convEchoEls = [];
-    for (let i = 0; i < CONV_ECHO_MAX * 2; i++) {
-      const e = document.createElementNS(SVG_NS, 'ellipse');
-      e.setAttribute('stroke', 'none');
-      e.setAttribute('opacity', '0');
-      e.style.pointerEvents = 'none';
-      host.insertBefore(e, dotsBackG);
-      convEchoEls.push(e);
-    }
-  }
-  const hideAll = () => { for (const e of convEchoEls) e.setAttribute('opacity', '0'); };
+  const st = style || 'k1';
+  const useEll = (st === 'k4');
+  const cans = (!useEll && strength > 0.001) ? convEchoCanvases() : convEchoCans;
+  const ells = (useEll && strength > 0.001) ? convEchoEllipses() : convEchoEls;
+  const hideAll = () => {
+    if (convEchoCans) for (const c of convEchoCans) c.el.style.opacity = '0';
+    if (convEchoEls) for (const e of convEchoEls) e.setAttribute('opacity', '0');
+  };
   if (strength <= 0.001) { convEchoes.length = 0; hideAll(); return; }
-  convEchoEnsureDefs();
-  /* --- 生む: ひと膨らみ(吸収のたびに1つ) --- */
-  if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.18)
+  if (useEll ? !ells : !cans) { convEchoes.length = 0; return; }
+  hideAll();
+  /* 生む: 吸収のたびに1枚。色は毎回ランダムに選ぶ(4のときだけ使う) */
+  if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.2)
       && convEchoes.length < CONV_ECHO_MAX) {
-    convEchoes.push({ t: 0 });
+    convEchoes.push({ t: 0, c: ECHO_COLORS[(Math.random() * ECHO_COLORS.length) | 0] });
   }
   for (let i = convEchoes.length - 1; i >= 0; i--) {
-    convEchoes[i].t += dt * 1.05;
+    convEchoes[i].t += dt * (st === 'k2' ? 0.85 : 1.0);
     if (convEchoes[i].t >= 1) convEchoes.splice(i, 1);
   }
-  hideAll();
-  const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
-  let slot = 0;
-  const put = (mul, grow, fill, a) => {
-    const el = convEchoEls[slot++]; if (!el) return;
-    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
-    el.setAttribute('rx', (rx0 * grow * mul).toFixed(1));
-    el.setAttribute('ry', (ry0 * grow * mul).toFixed(1));
-    el.setAttribute('fill', fill);
-    el.setAttribute('opacity', Math.max(0, a).toFixed(3));
-  };
-  for (let i = 0; i < convEchoes.length; i++) {
-    const u = Math.max(0, Math.min(1, convEchoes[i].t));
-    const grow = 1 + convSStep(u) * 0.40;
-    const fade = 1 - u;
-    if (st === 'e2')      put(1, grow, 'url(#echoG2)', 0.85 * strength * fade);
-    else if (st === 'e3') put(1, grow, 'url(#echoG3)', 0.95 * strength * fade);
-    else if (st === 'e4') {
-      /* 2枚目は少し遅れて、少し小さい。重なって濃淡が出る */
-      put(1, grow, '#7FD8FF', 0.26 * strength * fade);
-      const u2 = Math.max(0, u - 0.22), g2 = 1 + convSStep(u2 / 0.78) * 0.40;
-      if (u2 > 0) put(0.94, g2, '#9BE0FF', 0.22 * strength * (1 - u2 / 0.78));
+  const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
+  /* --- 4 色が変わる面: 単色の楕円。取り込むたびに色が変わる --- */
+  if (useEll) {
+    const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
+    for (let i = 0; i < ells.length; i++) {
+      const q = convEchoes[i], el = ells[i];
+      if (!q) { el.setAttribute('opacity', '0'); continue; }
+      const u = Math.max(0, Math.min(1, q.t));
+      const grow = 1 + convSStep(u) * 0.42;
+      el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+      el.setAttribute('rx', (rx0 * grow).toFixed(1));
+      el.setAttribute('ry', (ry0 * grow).toFixed(1));
+      el.setAttribute('fill', q.c || '#7FD8FF');
+      el.setAttribute('opacity', (0.34 * strength * (1 - u)).toFixed(3));
     }
-    else                  put(1, grow, '#7FD8FF', 0.30 * strength * fade);
+    return;
+  }
+  for (let i = 0; i < cans.length; i++) {
+    const q = convEchoes[i], c = cans[i];
+    if (!q) { c.el.style.opacity = '0'; continue; }
+    const u = Math.max(0, Math.min(1, q.t));
+    /* 惑星の絵をまるごと複製する(これが残像の中身) */
+    try {
+      c.ctx.clearRect(0, 0, c.el.width, c.el.height);
+      c.ctx.drawImage(sphereCanvasEl, 0, 0);
+    } catch (e) {}
+    let grow, a, fx = '';
+    if (st === 'k2') {
+      grow = 1 + convSStep(u) * 0.52;
+      a = 0.75 * strength * (1 - u);
+      fx = `blur(${(3 + u * 16).toFixed(1)}px)`;
+      c.el.style.zIndex = '1';
+    } else if (st === 'k3') {
+      grow = 1 + convSStep(u) * 0.38;
+      a = 0.42 * strength * (1 - u);
+      fx = `saturate(${(1 + u * 0.6).toFixed(2)}) brightness(${(1 + u * 0.25).toFixed(2)})`;
+      c.el.style.zIndex = '3';                 /* 惑星の手前へ */
+    } else {
+      grow = 1 + convSStep(u) * 0.36;
+      a = 0.9 * strength * (1 - u);
+      c.el.style.zIndex = '1';
+    }
+    c.el.style.filter = fx;
+    c.el.style.transform =
+      `translate(${pl.dx}px, ${pl.dy}px) scale(${(pl.scale * grow).toFixed(4)}, ${(pl.scale * plFlat * grow).toFixed(4)})`;
+    c.el.style.opacity = a.toFixed(3);
   }
 }
 function convFrontCut() { return (params.conv && params.conv.frontCut) !== false; }
@@ -8127,6 +8157,23 @@ function vLine(st, x1, y1, x2, y2, o) { const e = valTake(st, 'line');
   e.setAttribute('x2', x2.toFixed(1)); e.setAttribute('y2', y2.toFixed(1));
   e.__len = Math.hypot(x2 - x1, y2 - y1);
   if (o) valStyle(e, o); return e; }
+/* 楕円。縦を潰すと「寝ている」＝奥行きが出る。2Dのままで立体に見せる要 */
+function vEll(st, cx, cy, rx, ry, rot, o) { const e = valTake(st, 'ellipse');
+  e.setAttribute('cx', cx.toFixed(1)); e.setAttribute('cy', cy.toFixed(1));
+  e.setAttribute('rx', Math.max(0.1, rx).toFixed(1)); e.setAttribute('ry', Math.max(0.1, ry).toFixed(1));
+  if (rot) e.setAttribute('transform', `rotate(${rot.toFixed(1)} ${cx.toFixed(1)} ${cy.toFixed(1)})`);
+  /* 楕円の周長(ラマヌジャンの近似)。トリミングに使う */
+  const a = Math.max(0.1, rx), b = Math.max(0.1, ry), h = Math.pow(a - b, 2) / Math.pow(a + b, 2);
+  e.__len = Math.PI * (a + b) * (1 + 3 * h / (10 + Math.sqrt(4 - 3 * h)));
+  if (o) valStyle(e, o); return e; }
+/* 楕円の上の点(deg)。傾きも効かせる。奥(上半分)か手前(下半分)かも返す */
+function vOn(cx, cy, rx, ry, deg, rot) {
+  const t = deg * Math.PI / 180, r = (rot || 0) * Math.PI / 180;
+  const lx = rx * Math.cos(t), ly = ry * Math.sin(t);
+  return { x: cx + lx * Math.cos(r) - ly * Math.sin(r),
+           y: cy + lx * Math.sin(r) + ly * Math.cos(r),
+           front: Math.sin(t) > 0, depth: (Math.sin(t) + 1) / 2 };
+}
 /* 折れ線。ストーリーの「道筋」を描くのに使う */
 function vPath(st, pts, o) { const e = valTake(st, 'path');
   e.setAttribute('d', 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L'));
@@ -8306,6 +8353,76 @@ const VAL_SAAS = {
     vTrim(vCircle(st, C, C, 44, { w: 2.8, c: VAL_ACC, a: one > 0 ? 1 - open : 0 }), vE(one));
     vLine(st, C - 66, C, C + 66, C, { a: 0.14, dash: '4 6' });
   },
+  /* ===== ここから 2026-08-28 追加分(躍動感・回転・奥行き) =====
+     2Dのフラットなまま立体に見せる手: 楕円を寝かせる / 手前を大きく奥を小さく /
+     回転しながら大小を変える / 前後の重なりを入れ替える。 */
+
+  /* S11 二軸のジャイロ: 直交する2つの輪が転がる。交点に印。いちばん躍動感がある */
+  S11(st, t) {
+    const C = VAL_VB / 2, R = 66;
+    const a = t * 46, b = -t * 38;
+    const f1 = Math.abs(Math.cos(t * 0.8)), f2 = Math.abs(Math.sin(t * 0.8));
+    vEll(st, C, C, R, Math.max(5, R * f1), a, { c: VAL_ACC, w: 1.8 });
+    vEll(st, C, C, R, Math.max(5, R * f2), b, { c: VAL_PINK, w: 1.8 });
+    for (let i = 0; i < 2; i++) {
+      const p = vOn(C, C, R, Math.max(5, R * f1), t * 120 + i * 180, a);
+      vRect(st, p.x, p.y, 9 + p.depth * 6, 9 + p.depth * 6, { w: 1.8, a: 0.4 + p.depth * 0.6 });
+    }
+    vCircle(st, C, C, 9, { w: 2, a: 0.9 });
+  },
+  /* S12 立方体が回る: 前後2枚の正方形を線で結んだ枠。横幅の伸び縮みで回転して見せる */
+  S12(st, t) {
+    const C = VAL_VB / 2, S = 58;
+    const k = Math.cos(t * 0.9);                       /* -1〜1 = 回転 */
+    const near = 1 + 0.16 * k, far = 1 - 0.16 * k;     /* 手前は大きく、奥は小さく */
+    const off = 22 * k;
+    const A = { x: C - off, y: C - 10, s: S * far },
+          B = { x: C + off, y: C + 10, s: S * near };
+    vRect(st, A.x, A.y, A.s, A.s, { w: 1.5, a: 0.45 });
+    for (const [dx, dy] of [[-1,-1],[1,-1],[1,1],[-1,1]])
+      vLine(st, A.x + dx * A.s / 2, A.y + dy * A.s / 2, B.x + dx * B.s / 2, B.y + dy * B.s / 2, { a: 0.3 });
+    vRect(st, B.x, B.y, B.s, B.s, { w: 2.2, c: VAL_ACC });
+    vCircle(st, B.x, B.y, 7, { c: VAL_PINK, w: 2 });
+  },
+  /* S13 手前と奥をめぐる: 寝かせた輪の上を四角が周回。手前で大きく前面、奥で小さく背面 */
+  S13(st, t) {
+    const C = VAL_VB / 2, RX = 82, RY = 30, ROT = -18;
+    vEll(st, C, C, RX, RY, ROT, { a: 0.4 });
+    vEll(st, C, C, RX * 0.62, RY * 0.62, ROT, { a: 0.2, dash: '4 6' });
+    vCircle(st, C, C, 16, { w: 2 });
+    for (let i = 0; i < 4; i++) {
+      const p = vOn(C, C, RX, RY, t * 66 + i * 90, ROT);
+      const sz = 8 + p.depth * 12;
+      vRect(st, p.x, p.y, sz, sz, { w: 1.4 + p.depth * 1.2,
+        c: i % 2 ? VAL_ACC : VAL_PINK, a: 0.35 + p.depth * 0.65 });
+    }
+  },
+  /* S14 盤が立ち上がる: 寝かせた盤が周期的に立ち上がり、上に乗った3つが一緒に回る */
+  S14(st, t) {
+    const C = VAL_VB / 2, RX = 74;
+    const tilt = 0.14 + 0.76 * (0.5 + 0.5 * Math.sin(t * 0.55));   /* 寝る↔立つ */
+    const RY = RX * tilt, ROT = -14;
+    vEll(st, C, C, RX, RY, ROT, { c: VAL_ACC, w: 2 });
+    for (let i = 0; i < 3; i++) {
+      const p = vOn(C, C, RX, RY, t * 54 + i * 120, ROT);
+      const sz = 10 + p.depth * 8;
+      vTri(st, p.x, p.y, sz, t * 40 + i * 120, { w: 1.6, a: 0.4 + p.depth * 0.6 });
+    }
+    vLine(st, C - RX - 10, C, C - RX + 4, C, { a: 0.25 });
+    vLine(st, C + RX - 4, C, C + RX + 10, C, { a: 0.25 });
+  },
+  /* S15 逆回転して噛み合う: 2つの正方形が逆に回りながら近づき、45°ずれて重なる */
+  S15(st, t) {
+    const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
+    const close = k < 0.46 ? vE(k / 0.46) : (k < 0.74 ? 1 : 1 - vE((k - 0.74) / 0.26));
+    const gap = 40 * (1 - close);
+    const sp = close * 45;
+    vRect(st, C - gap, C, 62, 62, { w: 2, c: VAL_PINK, rot: -sp, rx0: C - gap, ry0: C });
+    vRect(st, C + gap, C, 62, 62, { w: 2, c: VAL_ACC, rot: sp, rx0: C + gap, ry0: C });
+    vCircle(st, C, C, 62 * 0.72, { a: 0.14, dash: '4 6' });
+    const lock = Math.max(0, (close - 0.85) / 0.15);
+    if (lock > 0) vCircle(st, C, C, 10 + lock * 8, { c: VAL_ACC, w: 2.4, a: 1 - lock * 0.5 });
+  },
 };
 
 /* ===================== for AI: コンテキスト取得から実行 ===================== */
@@ -8479,6 +8596,83 @@ const VAL_AI = {
     }
     if (tip > 0) vTrim(vTri(st, 182, C - 44, 20, 90, { c: VAL_ACC, w: 2.6 }), vE(Math.min(1, tip * 1.6)));
     else vTri(st, 182, C - 44, 20, 90, { a: 0.16 });
+  },
+  /* ===== ここから 2026-08-28 追加分(躍動感・回転・奥行き) ===== */
+
+  /* A11 回り込んで発射: 寝かせた軌道を粒が回り、1周したら中央から三角が飛ぶ。奥は小さく手前は大きく */
+  A11(st, t) {
+    const C = VAL_VB / 2, RX = 80, RY = 28, ROT = -16, T = 3.6, k = vLoop(t, T);
+    vEll(st, C, C, RX, RY, ROT, { a: 0.35 });
+    vCircle(st, C, C, 20, { w: 1.8 });
+    for (let i = 0; i < 3; i++) {
+      const p = vOn(C, C, RX, RY, k * 360 + i * 120, ROT);
+      vCircle(st, p.x, p.y, 4 + p.depth * 6, { c: VAL_ACC, w: 1.4 + p.depth, a: 0.35 + p.depth * 0.65 });
+    }
+    const fire = Math.max(0, (k - 0.72) / 0.28);
+    if (fire > 0) {
+      const x = C + vE(fire) * 78;
+      vTri(st, x, C, 20 - fire * 4, 90, { c: VAL_ACC, w: 2.4, a: 1 - fire * 0.4 });
+    }
+  },
+  /* A12 球を走査する: 寝かせた輪を何本も重ねて球の骨組みに。走査線が上から下へ、終わると三角 */
+  A12(st, t) {
+    const C = VAL_VB / 2, R = 62, T = 4.4, k = vLoop(t, T);
+    const scan = Math.min(1, k / 0.62), go = Math.max(0, (k - 0.68) / 0.32);
+    vCircle(st, C, C, R, { w: 1.6, a: 0.8 - go * 0.6 });
+    for (let i = 1; i <= 3; i++) {
+      const f = Math.cos((i / 4) * Math.PI * 0.5 + t * 0.5);
+      vEll(st, C, C, R, Math.max(3, R * Math.abs(f)), 0, { a: (0.5 - go * 0.4) * 0.8 });
+    }
+    const y = C - R + 2 * R * vE(scan);
+    if (go <= 0) {
+      const w = Math.sqrt(Math.max(0, R * R - (y - C) * (y - C)));
+      vLine(st, C - w, y, C + w, y, { c: VAL_ACC, w: 2.4 });
+    }
+    if (go > 0) vTri(st, C + vE(go) * 62, C, 24, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.35 });
+  },
+  /* A13 カードがめくれる: 長方形が横幅の伸び縮みで3回めくれ、3枚目で三角が現れる */
+  A13(st, t) {
+    const C = VAL_VB / 2, T = 4.8, k = vLoop(t, T), W = 92, H = 68;
+    const step = Math.min(2, Math.floor(k / 0.3));
+    const u = Math.min(1, (k - step * 0.3) / 0.3);
+    const w = W * Math.abs(Math.cos(u * Math.PI));       /* 0 を通る＝真横を向く */
+    vRect(st, C, C, W, H, { rx: 4, a: 0.14, dash: '4 6' });
+    vRect(st, C, C, Math.max(2, w), H, { rx: 3, w: 2.2, c: [VAL_INK, VAL_ACC, VAL_PINK][step] });
+    for (let i = 0; i < 3; i++)
+      vRect(st, C - 34 + i * 34, C + 54, 24, 6, { rx: 2, w: 1.4, a: i <= step ? 0.9 : 0.2 });
+    const done = k > 0.9 ? (k - 0.9) / 0.1 : 0;
+    if (done > 0) vTri(st, C, C, 22 * vE(done), 90, { c: VAL_ACC, w: 2.6 });
+  },
+  /* A14 螺旋で落ちて撃つ: 粒が寝かせた軌道を回りながら中心へ。着いた瞬間に三角が上へ抜ける */
+  A14(st, t) {
+    const C = VAL_VB / 2, RX = 78, RY = 27, ROT = -20, T = 4.2, k = vLoop(t, T);
+    vEll(st, C, C, RX, RY, ROT, { a: 0.28, dash: '4 6' });
+    vEll(st, C, C, RX * 0.5, RY * 0.5, ROT, { a: 0.2, dash: '4 6' });
+    vCircle(st, C, C, 14, { w: 1.8 });
+    for (let i = 0; i < 3; i++) {
+      const kk = Math.max(0, Math.min(1, (k - i * 0.14) / 0.66));
+      const f = 1 - vE(kk) * 0.9;
+      const p = vOn(C, C, RX * f, RY * f, k * 520 + i * 120, ROT);
+      vRect(st, p.x, p.y, 6 + p.depth * 8, 6 + p.depth * 8,
+        { c: VAL_ACC, w: 1.4 + p.depth, a: (0.35 + p.depth * 0.65) * (1 - kk * 0.4) });
+    }
+    const up = Math.max(0, (k - 0.76) / 0.24);
+    if (up > 0) vTri(st, C, C - vE(up) * 66, 22, 0, { c: VAL_ACC, w: 2.6, a: 1 - up * 0.4 });
+  },
+  /* A15 板が立ち上がる: 寝ていた3枚が順に立ち上がり、揃うと三角に変わって抜ける */
+  A15(st, t) {
+    const C = VAL_VB / 2, T = 5, k = vLoop(t, T);
+    const done = Math.max(0, (k - 0.66) / 0.34);
+    for (let i = 0; i < 3; i++) {
+      const at = i * 0.2, kk = Math.max(0, Math.min(1, (k - at) / 0.22));
+      const x = C - 54 + i * 54;
+      const h = 8 + vE(kk) * 62;                        /* 寝ている → 立つ */
+      const w = 44 - vE(kk) * 16;
+      vRect(st, x, C + 34 - h / 2, w, Math.max(4, h),
+        { rx: 3, w: kk >= 1 ? 2.2 : 1.6, c: kk >= 1 ? VAL_ACC : VAL_INK, a: (0.4 + kk * 0.6) * (1 - done * 0.7) });
+    }
+    vEll(st, C, C + 44, 86, 12, 0, { a: 0.22 });        /* 床(寝かせた楕円)＝奥行き */
+    if (done > 0) vTri(st, C, C + 4 - vE(done) * 48, 24, 90, { c: VAL_ACC, w: 2.6, a: 1 - done * 0.3 });
   },
 };
 function drawValueIcons() {
@@ -9222,6 +9416,84 @@ function chipRow(label, items) {
   } });
   row.append(lab, box);
   (mount || body).appendChild(row);
+}
+
+/* 【2026-08-28 ヒデさん指定】ピクトグラムやエフェクトも「バリエーション」なので、
+   アニメーションのバリエーションと同じ見た目・同じ削除UIで並べられるようにする。
+   ・記号(A,B,C… / 1,2,3…)は【残っている中の順番】で毎回振り直す
+   ・× で削除 → 確認モーダル → 一覧の最後に「↺ 消した案を戻す(n)」
+   ・消した控えはプリセットと同じ保管場所に置くので、パネルを作り替えても残る
+   key = 控えを入れる引き出しの名前 / items = [{key,name,tip}] / mark = 記号の振り方 */
+function variantRow(bucket, items, getSel, setSel, mark) {
+  const box = document.createElement('div');
+  box.className = 'var-box';
+  const row = document.createElement('div');
+  row.className = 'sw-row';
+  box.appendChild(row);
+  (mount || body).appendChild(box);
+  const LET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const hidden = () => {
+    if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
+    return params.gfxVariantHidden[bucket] || (params.gfxVariantHidden[bucket] = []);
+  };
+  const fill = () => {
+    const hid = hidden();
+    row.innerHTML = '';
+    let k = 0;
+    items.forEach(it => {
+      if (hid.includes(it.key)) return;
+      const label = (mark === 'num' ? String(k + 1) : LET[k]) + ' '
+        + String(it.name).replace(/^[A-Za-z]{0,2}\d{0,2}\s+/, '');
+      k++;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'var-pill' + (getSel() === it.key ? ' on' : '');
+      b.title = it.tip || '';
+      b.append(document.createTextNode(label));
+      b.onclick = () => {
+        setSel(it.key); markDirty(); renderFrame();
+        row.querySelectorAll('.var-pill').forEach(el => el.classList.toggle('on', el === b));
+      };
+      const x = document.createElement('button');
+      x.type = 'button'; x.className = 'var-x'; x.textContent = '×';
+      x.title = 'この案を消す';
+      x.onclick = ev => {
+        ev.stopPropagation();
+        askModal('削除しますか？', `「${label}」を一覧から消します。以降の記号は自動で振り直します。あとで「消した案を戻す」で戻せます。`,
+          '削除する', () => {
+            hid.push(it.key);
+            /* 選んでいた案を消したら、残っている先頭へ移す */
+            if (getSel() === it.key) {
+              const alive = items.find(q => !hid.includes(q.key));
+              if (alive) setSel(alive.key);
+            }
+            presetStoreSave(); markDirty(); renderFrame(); fill();
+          });
+      };
+      b.appendChild(x);
+      row.appendChild(b);
+    });
+    if (hid.length) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'var-pill var-back';
+      back.textContent = `↺ 消した案を戻す (${hid.length})`;
+      back.onclick = () => {
+        pickModal('消した案を戻す', '戻したい案の「戻す」を押してください。まとめて全部は戻しません。',
+          hid.map(kk => (items.find(q => q.key === kk) || {}).name || kk),
+          nm => {
+            const it = items.find(q => q.name === nm);
+            const i2 = hid.indexOf(it ? it.key : nm);
+            if (i2 >= 0) hid.splice(i2, 1);
+            presetStoreSave(); markDirty(); fill();
+          });
+      };
+      row.appendChild(back);
+    }
+  };
+  fill();
+  if (rows) rows.push({ _sync: fill });
+  return fill;
 }
 
 /* パネルを作り直しても、目印にした要素が画面の同じ高さに留まるようにする。
@@ -10050,28 +10322,26 @@ function buildPanel() {
       { key: 'ripple', name: 'B 波紋',   tip: '届いた瞬間、惑星から外へ輪が広がります。輪の形と傾きは軌道に合わせて自動で決まります。' },
       { key: 'echo',   name: 'C エコー', tip: '惑星の丸いシルエットが、ひと回り大きくなった残像として外へ広がります。線ではなく“面”の波紋。' },
     ];
-    pillRow(GLOWS, it => (params.conv.glowKind || 'pulse') === it.key,
-      it => { params.conv.glowKind = it.key; markDirty(); renderFrame(); fillGlowSub(); },
-      { get: () => params.conv.glowKind, set: v => { params.conv.glowKind = v; renderFrame(); fillGlowSub(); } },
-      { noRebuild: true, tip: it => it.tip });
+    variantRow('glowKind', GLOWS,
+      () => params.conv.glowKind || 'pulse',
+      v => { params.conv.glowKind = v; fillGlowSub(); });
     /* 【2026-08-28 ヒデさん指定】エコーを選んだ時だけ、出方の4パターンを下に出す */
     const echoBox = document.createElement('div');
     (mount || body).appendChild(echoBox);
-    /* 【2026-08-28 ヒデさん指定】動きは「ひと膨らみ」で固定。
-       線の案はやめ、どれも【やわらかい残像が波紋として広がる】方向で4案 */
+    /* 【2026-08-28 ヒデさん指定】残像は【惑星のグラフィックをまるごと複製して重ねる】方向で3案。
+       単色やグラデーションの面ではなく、本物の惑星の絵がそのまま残像になる */
     const ECHOES = [
-      { key: 'e1', name: '1 やわらかい面', tip: '薄い水色の面がふわっと広がります。いちばん静か。' },
-      { key: 'e2', name: '2 惑星の色',     tip: '惑星と同じ 青→ピンク のグラデーションの残像。惑星の色をそのまま引き継ぎます。' },
-      { key: 'e3', name: '3 ふちが濃い',   tip: '中心は薄く、ふちに向かって濃くなる残像。いちばん波紋らしい広がり方です。' },
-      { key: 'e4', name: '4 二重の残像',   tip: '2枚が時間差で広がって重なります。濃淡が出て奥行きを感じます。' },
+      { key: 'k1', name: '1 うしろに重ねる', tip: '惑星の絵をそのまま複製して、ひと回り大きく後ろへ。ふちにリムのように出ます。いちばん自然。' },
+      { key: 'k2', name: '2 ぼかして広がる', tip: '複製にぼかしをかけながら大きく広がります。やわらかい残像。' },
+      { key: 'k3', name: '3 手前にゴースト', tip: '複製を惑星の手前へ薄く重ねます。透けた残像がいちばんはっきり見えます。' },
+      { key: 'k4', name: '4 色が変わる面',   tip: '単色の面の残像。取り込むたびに色が変わります（青・ピンク・水色・藤・白からランダム）。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
       if ((params.conv.glowKind || 'pulse') === 'echo') {
-        pillRow(ECHOES, it => (params.conv.glowEcho || 'e1') === it.key,
-          it => { params.conv.glowEcho = it.key; markDirty(); renderFrame(); },
-          { get: () => params.conv.glowEcho, set: v => { params.conv.glowEcho = v; renderFrame(); } },
-          { noRebuild: true, tip: it => it.tip });
+        variantRow('glowEcho', ECHOES,
+          () => params.conv.glowEcho || 'k1',
+          v => { params.conv.glowEcho = v; }, 'num');
       }
       mount = keep;
     };
@@ -10282,6 +10552,12 @@ function buildPanel() {
       { key: 'S8', name: 'S8 満ちて同期',      tip: '外周が0→100%まで描かれ(進捗)、満ちた瞬間に内側の四角がパッと出ます。時系列がはっきり。' },
       { key: 'S9', name: 'S9 弧が噛み合う',    tip: '左右から弧が伸びてきて、中央で1つの円になります。噛み合った瞬間だけ太くなります。' },
       { key: 'S10', name: 'S10 積層して重なる', tip: '3つの円がずれて重なっていき、完全に重なると1つに見えます。また離れます。' },
+      /* 2026-08-28 追加: 躍動感・回転・奥行き */
+      { key: 'S11', name: 'S11 二軸のジャイロ', tip: '直交する2つの輪が転がります。交点に印が乗り、手前は大きく奥は小さく。いちばん躍動感があります。' },
+      { key: 'S12', name: 'S12 立方体が回る',   tip: '前後2枚の正方形を線で結んだ枠。横幅の伸び縮みで回転して見せます。' },
+      { key: 'S13', name: 'S13 手前と奥をめぐる', tip: '寝かせた輪の上を四角が周回。手前で大きく前面、奥で小さく背面に回ります。' },
+      { key: 'S14', name: 'S14 盤が立ち上がる', tip: '寝かせた盤が周期的に立ち上がり、上に乗った3つが一緒に回ります。' },
+      { key: 'S15', name: 'S15 逆回転で噛み合う', tip: '2つの正方形が逆に回りながら近づき、45°ずれて重なります。' },
     ];
     const AI = [
       { key: 'A1', name: 'A1 一方向の流れ', tip: '円(取得)→四角(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わります。' },
@@ -10295,17 +10571,21 @@ function buildPanel() {
       { key: 'A8', name: 'A8 満ちて発射',    tip: '円弧が満ちるまでが取得。満ちた瞬間に三角が右へ飛びます。緩急が強い案。' },
       { key: 'A9', name: 'A9 重なって答え',  tip: '3つの円(文脈の断片)が中央で重なり、重なりから四角→三角へ変わって抜けます。' },
       { key: 'A10', name: 'A10 折れて進む',  tip: '1本の線が描かれながら3回折れ、通った折れ点に印が付きます。先端が三角になって抜けます。' },
+      /* 2026-08-28 追加: 躍動感・回転・奥行き */
+      { key: 'A11', name: 'A11 回り込んで発射', tip: '寝かせた軌道を粒が回り、1周したら中央から三角が飛びます。奥は小さく手前は大きく。' },
+      { key: 'A12', name: 'A12 球を走査する',   tip: '寝かせた輪を重ねて球の骨組みに。走査線が上から下へ走り、終わると三角が出ます。' },
+      { key: 'A13', name: 'A13 カードがめくれる', tip: '長方形が横幅の伸び縮みで3回めくれ、3枚目で三角が現れます。' },
+      { key: 'A14', name: 'A14 螺旋で落ちて撃つ', tip: '粒が寝かせた軌道を回りながら中心へ落ち、着いた瞬間に三角が上へ抜けます。' },
+      { key: 'A15', name: 'A15 板が立ち上がる', tip: '寝ていた3枚が順に立ち上がり、揃うと三角に変わって抜けます。床の楕円で奥行きを出しています。' },
     ];
     note('for SaaS「リアルタイムにデータ同期」');
-    pillRow(SAAS, it => (params.patterns.valSaas || 'S1') === it.key,
-      it => { params.patterns.valSaas = it.key; markDirty(); },
-      { get: () => params.patterns.valSaas, set: v => { params.patterns.valSaas = v; } },
-      { noRebuild: true, tip: it => it.tip });
+    variantRow('valSaas', SAAS,
+      () => params.patterns.valSaas || 'S1',
+      v => { params.patterns.valSaas = v; });
     note('for AI「コンテキスト取得から実行」');
-    pillRow(AI, it => (params.patterns.valAi || 'A1') === it.key,
-      it => { params.patterns.valAi = it.key; markDirty(); },
-      { get: () => params.patterns.valAi, set: v => { params.patterns.valAi = v; } },
-      { noRebuild: true, tip: it => it.tip });
+    variantRow('valAi', AI,
+      () => params.patterns.valAi || 'A1',
+      v => { params.patterns.valAi = v; });
   }
   liveEdit = false;
 
