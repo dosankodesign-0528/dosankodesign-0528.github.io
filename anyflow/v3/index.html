@@ -1548,7 +1548,7 @@
   .gmode + .grp-acts { margin-left: 6px; }
   /* 見出しの右ではなく、行として置く版 (2026-08-27 モノごとの整理でドットの中へ移動) */
   .gmode-row { margin: 2px 0 4px; }
-  .gmode.gmode-row { margin-left: 0; }
+  .gmode.gmode-row { margin-left: 0; flex: 1 1 auto; }
   .grp-acts { display: flex; align-items: center; gap: 5px; margin-left: 6px; flex: 0 0 auto; }
   /* リセット/保存: 押しやすい 28px 角 (2026-08-26 ヒデさん指定でサイズアップ) */
   .gbtn { width: 28px; height: 28px; padding: 0; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff;
@@ -7320,13 +7320,8 @@ function gfxSnapshotFull() {
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
-    /* 【2026-08-27 ヒデさん指定】グラフィックのセクションにある物は全部入れる。
-       「登場(出てくる順番)」もここ */
-    intro: {
-      introLead: params.kv.introLead,
-      mockAt: params.kvIntro.mockAt, iconsAt: params.kvIntro.iconsAt,
-      iconsStagger: params.kvIntro.iconsStagger, orbitAt: params.kvIntro.orbitAt,
-    },
+    /* ※「登場(出てくる順番)」は 2026-08-27 に削除。モックKV(iframe)専用で、
+         惑星案では何も効かない値だったため、プリセットにも入れない */
   };
 }
 function gfxApplyFull(d) {
@@ -7348,13 +7343,6 @@ function gfxApplyFull(d) {
   }
   const pk = CONV_PARAM_KEY[mode];
   if (d.mode && pk && C[pk]) Object.assign(C[pk], d.mode);
-  if (d.intro) {
-    if (typeof d.intro.introLead === 'number') params.kv.introLead = d.intro.introLead;
-    for (const k of ['mockAt', 'iconsAt', 'iconsStagger', 'orbitAt']) {
-      if (typeof d.intro[k] === 'number') params.kvIntro[k] = d.intro[k];
-    }
-    if (typeof kvSendIntroTiming === 'function') kvSendIntroTiming(true);
-  }
   markDirty();
   renderFrame();
 }
@@ -7578,7 +7566,7 @@ function sub(target, html, deep, opts) {
   /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
      (2026-08-27 ヒデさん指定) */
   const GRAPHIC_OPEN = ['🎨 グラフィック', '',
-                        '軌道（輪）', 'ドット（粒）', '惑星', '登場（出てくる順番）',
+                        '軌道（輪）', 'ドット（粒）', '惑星',
                         '表示', '表示・大きさ', '模様',
                         'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
                         'この案の調整（粒の渦）', 'この案の調整（網でつながる）',
@@ -8332,9 +8320,8 @@ function buildPanel() {
   /* ---------- ③ 軌道（輪） ---------- */
   liveEdit = true;
   sub(gRoot, '軌道（輪）', true);
-  const orbRoot = mount;
-  /* 【2026-08-27 ヒデさん指定】縦に3行だった表示切替を、横1行のチップにまとめた */
-  sub(orbRoot, '表示', true, { fixed: true });
+  /* 【2026-08-27 ヒデさん指定】「表示」の中に「表示」の行、のような入れ子の重複をやめ、
+     モノの箱の中は小見出しを置かずにフラットに並べる */
   chipRow('表示', [
     { name: '外の輪', get: () => params.conv.showOuter, set: v => params.conv.showOuter = v,
       hint: '外側の輪' },
@@ -8344,11 +8331,10 @@ function buildPanel() {
       hint: '輪の上を回っている点' },
   ]);
   note('輪を消すと、その輪のドットも消えます。粒の渦・網の案では自動で隠れます。');
-  sub(orbRoot, '動き', true);
-  slider('軌道が回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
+  slider('回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
     v => v === 0 ? '回らない' : '×' + v.toFixed(2),
     '軌道そのものが回ります（外と内は逆回り）。0だと形は止まったままです。');
-  slider('軌道が漂う量', 0, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
+  slider('漂う量', 0, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
     v => v === 0 ? '漂わない' : '×' + v.toFixed(2),
     '軌道そのものがゆっくり位置を変えます。0で固定。');
   segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
@@ -8357,11 +8343,8 @@ function buildPanel() {
 
   /* ---------- ④ ドット（粒） ---------- */
   sub(gRoot, 'ドット（粒）', true);
-  const dotRoot = mount;
-  sub(dotRoot, '大きさ', true, { fixed: true });
-  slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
+  slider('大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
     v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。');
-  sub(dotRoot, '見え方（遠近）', true);
   {
     /* もとは「🎨 グラフィック」の見出しの右にあったアイコン。
        モノごとの整理にあわせて、ドットの持ちものとしてここへ移した */
@@ -8398,20 +8381,22 @@ function buildPanel() {
       };
       wrap.appendChild(b);
     }
-    (mount || body).appendChild(wrap);
-    note('左＝どこでも同じ大きさ／右＝手前が大きく、奥が小さい。');
+    const prow = document.createElement('div');
+    prow.className = 'row';
+    const plab = document.createElement('label');
+    plab.textContent = '遠近';
+    plab.title = '左＝どこでも同じ大きさ／右＝手前が大きく、奥が小さい';
+    prow.append(plab, wrap);
+    (mount || body).appendChild(prow);
     (mount || body).appendChild(perspBox);
     fillPersp();
   }
-  sub(dotRoot, '動き', true);
-  slider('ドットのランダムさ', 0, 3, 0.05, () => params.conv.dotRandom, v => params.conv.dotRandom = v, v => v.toFixed(2),
+  slider('ランダムさ', 0, 3, 0.05, () => params.conv.dotRandom, v => params.conv.dotRandom = v, v => v.toFixed(2),
     '1粒ずつ速さと位置がばらつきます。0できっちり等間隔のまま回ります。');
   note('「軌道にそって回るかどうか」は案ごとの設定なので、① の中にあります。');
 
   /* ---------- ⑤ 惑星 ---------- */
   sub(gRoot, '惑星', true);
-  const plRoot = mount;
-  sub(plRoot, '模様', true, { fixed: true });
   const PLANET_SKINS = [
     { key: 'A1', name: '1 ビビッドブルー' },
     { key: 'A2', name: '2 ピンク×ブルー' },
@@ -8423,36 +8408,14 @@ function buildPanel() {
     it => { params.design = it.key; markDirty(); renderFrame(); },
     { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
     { noRebuild: true });
-  note('惑星の表面の柄。');
-  sub(plRoot, '光り方', true);
   slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
 
-  /* ---------- ⑥ 登場（出てくる順番） ---------- */
-  sub(gRoot, '登場（出てくる順番）', true);
-  const inRoot = mount;
-  sub(inRoot, '起点', true, { fixed: true });
-  note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。');
-  rows.push(slider('入場の起点(1行目完了から)', -1, 2, 0.05,
-    () => params.kv.introLead, v => { params.kv.introLead = v; kvSendIntroTiming(true); }, v => (v >= 0 ? '+' : '') + v.toFixed(2) + '秒',
-    'マイナスで1行目が終わる前、プラスで後ろへ。実際の起点ズレは次に開いた時に反映されます。'));
-  sub(inRoot, 'モック（画面のカード）', true);
-  rows.push(slider('① モックが出る', 0, 2, 0.02,
-    () => params.kvIntro.mockAt, v => { params.kvIntro.mockAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でモックが出るか。'));
-  sub(inRoot, 'アイコン', true);
-  rows.push(slider('② アイコンが出る', 0, 3, 0.05,
-    () => params.kvIntro.iconsAt, v => { params.kvIntro.iconsAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒でアイコンが出始めるか。'));
-  rows.push(slider('アイコンのばらけ', 0, 0.4, 0.01,
-    () => params.kvIntro.iconsStagger, v => { params.kvIntro.iconsStagger = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '1個ずつの間隔。大きいほどパラパラ順に。0で全部同時。'));
-  sub(inRoot, '軌道', true);
-  rows.push(slider('③ 軌道が出る', 0, 4, 0.05,
-    () => params.kvIntro.orbitAt, v => { params.kvIntro.orbitAt = v; kvSendIntroTiming(true); }, v => v.toFixed(2) + '秒',
-    '起点から何秒で軌道(輪+ドット)が出るか。'));
-  liveEdit = false;
-
+  /* 【2026-08-27 ヒデさん指摘・削除】「登場（出てくる順番）」の節はここにあったが丸ごと削除。
+     理由: 中身(入場の起点 / モックが出る / アイコンが出る・ばらけ / 軌道が出る)は
+     すべて iframe のモックKV(kv/embed.html)へ postMessage するだけの値だった。
+     惑星案に絞った今、その iframe は表示されていないので何も効かない。
+     実測: 4つのつまみを動かしても、描画中の円・楕円の位置と濃さが1つも変わらなかった。 */
   subDefaultOpen = false;     /* グラフィックはここまで */
   /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
   sub(catKv, '左側コピー');
