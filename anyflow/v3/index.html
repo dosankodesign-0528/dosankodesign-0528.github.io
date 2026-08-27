@@ -2593,6 +2593,9 @@ const DEFAULTS = {
     reel:   { T: 4.8, inDur: 0.14, shrinkAt: 0.30, endAt: 0.72, depth: 0.95, moveDur: 0.16,
               vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 0,   /* 2026-08-27 ヒデさん指定: スピンは既定オフ */
               blend: 0, blendAlpha: 0.45,   /* 外と内の間を埋める中間の輪(イラレのブレンドのイメージ) */
+              /* データ粒: 最初は点線 → 圧縮されて1本の線になる。太さ/密度/ゆらぎを調整できる */
+              pxWidth: 1.6, pxDensity: 1, pxWobble: 0,
+              glowWidth: 0.5,   /* 圧縮グローの線の太さ(細めが既定) */
               flow: 'down' },   // 流れの向き: down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収(上がって見える)
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 5, speed: 1, size: 0.62, stay: 3 },
@@ -2790,7 +2793,7 @@ function load() {
   }
   /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
   if (merged.converge === 'vein' || merged.converge === 'pulse') merged.converge = DEFAULTS.converge;
-  if (merged.conv.reel && !['clip', 'fit'].includes(merged.conv.reel.vanish)) merged.conv.reel.vanish = 'clip';
+  if (merged.conv.reel && !['clip', 'compress', 'pixel'].includes(merged.conv.reel.vanish)) merged.conv.reel.vanish = 'clip';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -3349,50 +3352,25 @@ function convFrame(geoms) {
       }
       else if (R.vanish === 'clip') { aB = aF = fadeA; clipOn = true; }// 前面カット=惑星に重なる部分だけ切る
       /* ===== 「別の物質に変わっていく」3案 (2026-08-27 ヒデさん指定) ===== */
-      else if (R.vanish === 'thread') {
-        /* ほどける糸: 縮むほど破線がほどけ、線も細くなって散っていく(好評につき据え置き) */
-        aB = aF = fadeA; clipOn = true;
-        const g = 4 + k * 26;
-        RA.dash = (Math.max(1, 8 - k * 6)).toFixed(1) + ' ' + g.toFixed(1);
-        RA.w = 3 * (1 - k * 0.6);
-      }
-      /* ===== データが集まっていく感じの5案 (2026-08-27 ヒデさん指定) ===== */
       else if (R.vanish === 'compress') {
-        /* ①圧縮グロー: 縮むほど色が濃く(彩度↑)なり、white に発光して凝縮していく */
+        /* 圧縮グロー: 縮むほど色が濃く(彩度↑)なり白く発光。線の太さはパネルで調整(既定は細め) */
         aB = aF = fadeA; clipOn = true;
-        RA.w = 3 * (1 + k * 0.8);
+        RA.w = 3 * (R.glowWidth == null ? 0.5 : R.glowWidth) * (1 + k * 0.6);
         RA.fx = `saturate(${(1 + k * 2.4).toFixed(2)}) brightness(${(1 + k * 0.45).toFixed(2)})`;
         blur = k * 1.6;
       }
       else if (R.vanish === 'pixel') {
-        /* ②データ粒に分解: 線が細かい点の列にほどけ、粒度が上がっていく */
+        /* データ粒(2026-08-27 ヒデさん指定で逆転):
+           はじめは【点線=バラバラの点】。圧縮されるほど点がつながって【1本の線】になる。 */
         aB = aF = fadeA; clipOn = true;
-        const gap = 3 + k * 9;
-        RA.dash = (Math.max(0.8, 3 - k * 2)).toFixed(1) + ' ' + gap.toFixed(1);
-        RA.w = 3 * (1 + k * 0.5);
+        const dens = Math.max(0.05, R.pxDensity == null ? 1 : R.pxDensity);
+        const dashLen = 1.2 + k * 46;                       /* 点が伸びて線になる */
+        const gapLen = Math.max(0, 9 * dens * (1 - k));     /* すき間が詰まって消える */
+        RA.dash = gapLen < 0.35 ? '' : dashLen.toFixed(1) + ' ' + gapLen.toFixed(1);
+        RA.w = 3 * (R.pxWidth == null ? 1.6 : R.pxWidth) / 3 * (1 + k * 0.4);
+        const wob = R.pxWobble || 0;
+        RA.dashOff = wob ? Math.sin(elapsed * 4.2) * wob * 9 : 0;
         RA.fx = `saturate(${(1 + k * 1.6).toFixed(2)})`;
-      }
-      else if (R.vanish === 'bundle') {
-        /* ③束ねられる: 線が太く濃くなり、1本に束ねられて吸い込まれる */
-        aB = aF = fadeA; clipOn = true;
-        RA.w = 3 * (1 + k * 2.6);
-        RA.fx = `saturate(${(1 + k * 1.2).toFixed(2)}) brightness(${(1 - k * 0.12).toFixed(2)})`;
-        blur = k * 0.8;
-      }
-      else if (R.vanish === 'scan') {
-        /* ④走査線: 目盛りのような破線が流れ、読み取られながら消えていく */
-        aB = aF = fadeA; clipOn = true;
-        RA.dash = '6 10';
-        RA.dashOff = -(elapsed * 90) % 320;
-        RA.w = 3 * (1 - k * 0.35);
-        RA.fx = `saturate(${(1 + k * 1.8).toFixed(2)}) brightness(${(1 + k * 0.25).toFixed(2)})`;
-      }
-      else if (R.vanish === 'hue') {
-        /* ⑤色が寄る: 青とピンクの差が縮まり、ひとつの色に混ざりながら溶ける */
-        aB = aF = fadeA; clipOn = true;
-        RA.w = 3 * (1 - k * 0.2);
-        RA.fx = `hue-rotate(${(k * 70).toFixed(0)}deg) saturate(${(1 + k * 1.5).toFixed(2)})`;
-        blur = k * 1.2;
       }
       else { aB = aF = fadeA; }                                        // fade(既定) / fit も同じ透過
       aDot = Math.max(aB, aF);
@@ -7540,19 +7518,13 @@ function buildPanel() {
       /* 消え方は「前面カット」「はみ出ず溶ける」の2種だけ残す(2026-08-26 ヒデさん指定) */
       const VANISH_DESC = {
         clip: '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
-        fit:  'はみ出ず溶ける: 惑星の輪郭に収まるサイズまでしか縮まず、そこで溶けて消える。',
-        thread: 'ほどける糸: 縮むほど線が破線にほどけ、細くなって散っていく。糸がほつれるような消え方。',
         compress: '圧縮グロー: 縮むほど色が濃くなり、白く発光しながら凝縮していく。データが圧縮される感じ。',
-        pixel: 'データ粒: 線が細かい点の列にほどけ、粒度が上がっていく。データが粒に分解されるイメージ。',
-        bundle: '束ねられる: 線が太く濃くなって、1本に束ねられながら吸い込まれる。情報が集約される感じ。',
-        scan: '走査線: 目盛りのような破線が流れ、読み取られながら消えていく。データが読み込まれる感じ。',
-        hue: '色が寄る: 青とピンクの差が縮まり、ひとつの色に混ざりながら溶ける。統合されるイメージ。',
+        pixel: 'データ粒: はじめはバラバラの点線。圧縮されるほど点がつながって1本の線になります。',
       };
       const VANISHES = [
-        { key: 'clip', name: '前面カット' }, { key: 'fit', name: 'はみ出ず溶ける' },
-        { key: 'thread', name: 'ほどける糸' },
-        { key: 'compress', name: '圧縮グロー' }, { key: 'pixel', name: 'データ粒' },
-        { key: 'bundle', name: '束ねられる' }, { key: 'scan', name: '走査線' }, { key: 'hue', name: '色が寄る' },
+        { key: 'clip', name: '前面カット' },
+        { key: 'compress', name: '圧縮グロー' },
+        { key: 'pixel', name: 'データ粒' },
       ];
       let vanishNoteEl = null;
       pillRow(VANISHES, it => (R.vanish || 'clip') === it.key,
@@ -7563,6 +7535,19 @@ function buildPanel() {
       vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
       vanishNoteEl.textContent = VANISH_DESC[R.vanish] || VANISH_DESC.clip;
       (mount || body).appendChild(vanishNoteEl);
+      /* 選んだ消え方に合わせて、その表現専用のつまみを出す(2026-08-27 ヒデさん指定) */
+      if ((R.vanish || 'clip') === 'compress') {
+        slider('線の太さ', 0.1, 3, 0.05, () => params.conv.reel.glowWidth, v => R.glowWidth = v, v => '×' + v.toFixed(2),
+          '圧縮されていく時の線の太さ。小さいほど細い線のまま光ります。', { fixedMax: true });
+      }
+      if ((R.vanish || 'clip') === 'pixel') {
+        slider('線の太さ', 0.2, 6, 0.1, () => params.conv.reel.pxWidth, v => R.pxWidth = v, v => v.toFixed(1) + 'px',
+          '点と、つながった後の線の太さ。', { fixedMax: true });
+        slider('点の密度', 0.05, 3, 0.05, () => params.conv.reel.pxDensity, v => R.pxDensity = v, v => '×' + v.toFixed(2),
+          '小さいほど点が詰まって並びます（大きいほどスカスカ）。', { fixedMax: true });
+        slider('点のゆらぎ', 0, 3, 0.05, () => params.conv.reel.pxWobble, v => R.pxWobble = v, v => v.toFixed(2),
+          '点の並びが小刻みに揺れます。0でぴたっと止まります。', { fixedMax: true });
+      }
       slider('透過し始め', 0, 0.95, 0.01, () => params.conv.reel.fadeAt, v => R.fadeAt = v, pctF,
         '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
       slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
