@@ -2594,9 +2594,9 @@ const DEFAULTS = {
               vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 0,   /* 2026-08-27 ヒデさん指定: スピンは既定オフ */
               blend: 0, blendAlpha: 0.45,   /* 外と内の間を埋める中間の輪(イラレのブレンドのイメージ) */
               /* データ粒: 最初は点線 → 圧縮されて1本の線になる。太さ/密度/ゆらぎを調整できる */
-              pxWidth: 1.6, pxDensity: 1, pxWobble: 0,
+              pxWidth: 1.6, pxDensity: 1, pxWobble: 0, pxSpin: 1,   /* pxSpin=ドットが軌道を回る速さ */
               glowWidth: 0.5, glowTone: 'now', glowPower: 1,   /* 圧縮グローの線の太さ・光り方・強さ */
-              flow: 'down' },   // 流れの向き: down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収(上がって見える)
+              flow: 'up' },   // 2026-08-27 ヒデさん指定: 既定は「上がる」(内→外→吸収)
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 5, speed: 1, size: 0.62, stay: 3 },
     /* waves(⑩): リズム制(ヒデさん指定 2026-08-26)。count本がgap秒おきに出て吸収され、rest秒休んでまた次のグループ。
@@ -2854,6 +2854,8 @@ function load() {
         localStorage.setItem('anyflow-sway-off-20260827', '1');
       }
       /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
+      /* 【2026-08-27 ヒデさん指定】①の流れは「上がる」で固定(選択UIは廃止)。保存値も揃える */
+      if (merged.conv && merged.conv.reel) merged.conv.reel.flow = 'up';
       if (!localStorage.getItem('anyflow-spin-off-20260827')) {
         if (merged.conv && merged.conv.reel) merged.conv.reel.spinUp = 0;
         localStorage.setItem('anyflow-spin-off-20260827', '1');
@@ -3276,10 +3278,18 @@ function convPixelDash(k, R) {
   const len = 0.01 + convSStep(k) * pitch;         /* 点が伸びて隣とくっつく */
   const gap = Math.max(0, pitch - len);
   const wob = R.pxWobble || 0;
+  /* 【2026-08-27 ヒデさん指定】点が軌道の上をくるくる流れるようにする。
+     破線のオフセットを送り続けると、点が線に沿って回って見える(⑥のドットと同じ感覚)。
+     ドットの周回オフ(convDotMoves)の時は止める。 */
+  const spin = (R.pxSpin == null ? 1 : R.pxSpin);
+  const moving = (typeof convDotMoves === 'function') ? convDotMoves() : true;
+  const base = 360 / Math.max(1, params.duration) * (params.globalSpeed || 1) * (params.direction || 1);
+  const flow = (moving && spin) ? -(elapsed * base * spin * 1.6) : 0;
+  const wave = wob ? Math.sin(elapsed * 4.2) * wob * 6 : 0;
   return {
     dash: gap < 0.25 ? '' : len.toFixed(2) + ' ' + gap.toFixed(2),
     w: dotW,
-    off: wob ? Math.sin(elapsed * 4.2) * wob * 6 : 0,
+    off: (flow + wave) % 100000,
   };
 }
 /* 【2026-08-26】どの案でも効く「ドットの大きさ」と「遠近感」。
@@ -7558,9 +7568,6 @@ function buildPanel() {
     if (cvMode === 'reel') {
       const R = params.conv.reel;
       sub(animModeBox, 'この案の調整（輪が縮んで吸収）', true);
-      segRow('流れの向き', [['下りる(外→内)', 'down'], ['上がる(内→外)', 'up']],
-        () => params.conv.reel.flow || 'down', v => { R.flow = v; markDirty(); });
-      note('下りる＝外の輪が内へ下りて吸収 / 上がる＝内の輪が外へ上がっていき、上の輪が吸収される。');
       slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
         '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
       slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
@@ -7618,6 +7625,8 @@ function buildPanel() {
           '点と、つながった後の線の太さ。', { fixedMax: true });
         slider('点の密度', 0.05, 3, 0.05, () => params.conv.reel.pxDensity, v => R.pxDensity = v, v => '×' + v.toFixed(2),
           '小さいほど点が詰まって並びます（大きいほどスカスカ）。', { fixedMax: true });
+        slider('点が回る速さ', 0, 4, 0.05, () => params.conv.reel.pxSpin, v => R.pxSpin = v, v => '×' + v.toFixed(2),
+          '点が軌道の上を流れる速さ。0で止まります。', { fixedMax: true });
         slider('点のゆらぎ', 0, 3, 0.05, () => params.conv.reel.pxWobble, v => R.pxWobble = v, v => v.toFixed(2),
           '点の並びが小刻みに揺れます。0でぴたっと止まります。', { fixedMax: true });
       }
