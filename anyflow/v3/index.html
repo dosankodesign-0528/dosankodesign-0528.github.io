@@ -658,7 +658,7 @@
     padding: 90px 120px;
     box-sizing: border-box;
     color: #fff;
-    will-change: opacity, filter;
+    will-change: opacity, filter, transform;
   }
   /* 見出し(中央): ラベル SF Pro Thin 20px #0EBBFF / 本文 Noto Sans JP Thin 40px 白 (カンプ 24778) */
   .dev-center { text-align: center; color: #fff; }
@@ -697,6 +697,10 @@
   /* 左: 3枚カルーセル。perspective の中で 840×504 のパネルを中央基準に置き、
      JS(updateDev2Stack)が DEV_STACK の席へ補間して回す(V1.0踏襲)。SCALE=0.6 で dev2 に収める。
      モックは左右中央に来る(ヒデさん指定)。 */
+  /* 【2026-08-27 ヒデさん指定】API(右にAIチャットが入るモック)はカルーセルから削除。
+     #dmPanel は dev1 の複製元なので DOM には残し、dev2 では出さない
+     (複製は読み込み時の cloneNode で作るので、隠れていても問題ない) */
+  #devMock { display: none; }
   .dev2-stack {
     position: relative;
     flex: 1 0 0;
@@ -1072,6 +1076,37 @@
     align-items: flex-start;
     will-change: opacity, filter;
   }
+  /* ===== 導入事例のホバー 5案 (2026-08-27 ヒデさん指定) =====
+     ⚠️ セルの opacity と filter は【登場アニメでJSが毎フレーム書く】ので、ホバーでは絶対に触らない。
+        触ってよいのは セルの transform と、中の要素(画像・文字)のスタイルだけ。
+     どの案かは #caseGrid の data-hover で切り替える。 */
+  .cg-cell { transition: transform .32s cubic-bezier(.22,.8,.28,1); }
+  .cg-img img, .cg-quote, .cg-tag, .cg-company, .cg-img, .cg-body {
+    transition: transform .38s cubic-bezier(.22,.8,.28,1), opacity .3s ease,
+                color .3s ease, border-color .3s ease, filter .38s ease;
+  }
+  /* A 写真が寄る: 写真だけゆっくり拡大。いちばん静か */
+  [data-hover="zoom"] .cg-cell:hover .cg-img img { transform: scale(1.07); }
+  /* B 手前に浮く: セルごと少し持ち上がる */
+  [data-hover="lift"] .cg-cell:hover { transform: translateY(-8px); }
+  [data-hover="lift"] .cg-cell:hover .cg-img img { transform: scale(1.03); }
+  /* C 下線が伸びる: 水色の線が左から引かれ、社名が少し右へ
+     ⚠️ 疑似要素(::after)ではなく実体の要素にしてある。
+        ::after は JS から状態を読めず、動いているか確かめられないため(2026-08-27) */
+  .cg-uline {
+    position: absolute; left: 60px; right: 60px; bottom: 46px; height: 1px;
+    background: #0EBBFF; transform: scaleX(0); transform-origin: left center; opacity: 0;
+    transition: transform .42s cubic-bezier(.22,.8,.28,1), opacity .2s ease; pointer-events: none;
+  }
+  [data-hover="line"] .cg-cell:hover .cg-uline { transform: scaleX(1); opacity: 1; }
+  [data-hover="line"] .cg-cell:hover .cg-company { transform: translateX(6px); }
+  /* D ほかが引く: 触った1枚だけ残り、他の3枚が薄くなる */
+  [data-hover="focus"]:hover .cg-img, [data-hover="focus"]:hover .cg-body { opacity: .26; }
+  [data-hover="focus"] .cg-cell:hover .cg-img, [data-hover="focus"] .cg-cell:hover .cg-body { opacity: 1; }
+  /* E 写真が色づく: ふだんは白黒、触ると色が戻ってタグも水色に */
+  [data-hover="color"] .cg-img img { filter: grayscale(1) contrast(1.02); }
+  [data-hover="color"] .cg-cell:hover .cg-img img { filter: none; transform: scale(1.04); }
+  [data-hover="color"] .cg-cell:hover .cg-tag { border-color: #0EBBFF; color: #0EBBFF; }
   .cg-tl { left: 0;   top: 0;     height: 295px; }
   .cg-tr { left: 50%; top: 0;     height: 295px; }
   .cg-bl { left: 0;   top: 295px; height: 294px; }
@@ -1841,7 +1876,7 @@
       <span class="dc-one">開発環境に柔軟に適応</span>
     </div>
     <div class="dev2-wrap">
-      <!-- 左: 3層カルーセル(手前=API/後ろ=CLI・SDK)。右のリストをホバーすると席が回って入れ替わる(V1.0踏襲) -->
+      <!-- 左: 2層カルーセル(CLI / SDK)。右のリストをホバーすると席が回って入れ替わる -->
       <div class="dev2-stack">
         <div class="dm-ghost" id="dmGhost0" aria-hidden="true">
           <div class="dm-panel is-term">
@@ -1906,15 +1941,10 @@
           </div>
         </div>
       </div>
-      <!-- 右: API/CLI/SDK リスト。API を活性(左罫線+不透明1)、他は不透明0.2 -->
+      <!-- 右: CLI/SDK リスト。先頭を活性(左罫線+不透明1)、他は不透明0.2 -->
       <div class="dev-list" id="devList">
-        <div class="dl-item is-on" data-screen="api">
-          <div class="dl-body">
-            <div class="dl-head"><b>API</b><span>の場合</span></div>
-            <p>HTTPで叩くだけ。言語もフレームワークも選ばず、いまあるバックエンドからそのまま呼び出せます。認証はキー1本。</p>
-          </div>
-        </div>
-        <div class="dl-item" data-screen="cli">
+        <!-- 【2026-08-27 ヒデさん指定】API(右にAIチャットが入るモック)は削除 -->
+        <div class="dl-item is-on" data-screen="cli">
           <div class="dl-body">
             <div class="dl-head"><b>CLI</b><span>の場合</span></div>
             <p>手元のターミナルで試して、そのままCI/CDへ。ユーザー単位で実行ログを追えるので、運用も開発の延長で回せます。</p>
@@ -2710,6 +2740,7 @@ const DEFAULTS = {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
+    caseHover: 'zoom',   // 導入事例のホバー (2026-08-27 ヒデさん指定・5案から選ぶ)
   },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
@@ -6145,7 +6176,10 @@ const DEV_STACK = [
   { sc: 0.875, dx: -118.1, dy:   3.2, dz: -120, ry:  22, op: 0.55, z: 2 },   /* 左後ろ */
   { sc: 0.788, dx:  121.7, dy: -17.6, dz: -120, ry: -22, op: 0.38, z: 1 },   /* 右後ろ */
 ];
-const DEV_SCREENS = ['api', 'cli', 'sdk'];
+/* 【2026-08-27 ヒデさん指定】カルーセルから「右にAIチャットが入っているモック(API)」を削除。
+   ⚠️ #dmPanel(API本体) は dev1(Strength 01)の単体パネルの複製元なので、DOMからは消さない。
+      dev2 では隠して、カルーセルの席にも並べない。 */
+const DEV_SCREENS = ['cli', 'sdk'];
 /* ===== カードが入れ替わる時の動き出し方 (2026-08-19) =====
    「半分まで進むのに全体の何割の時間を使うか」で急さが決まる。
    ⚠️【2026-08-19 ヒデさん指定】右のリストのホバー表示（縦バー・下線・文字色）は、
@@ -6621,7 +6655,7 @@ function devMockContent(mode, t, screen, R) {
 
 let devHoldT0 = null, devScreenT0 = null, devStarted = false;
 /* ②で選ばれている画面。既定は API (カンプで選択状態になっているもの)。ホバーで変わる */
-let devScreen2 = 'api', devSwapT0 = null;
+let devScreen2 = 'cli', devSwapT0 = null;   /* API を外したので既定は CLI (2026-08-27) */
 /* 開発者体験の「暗い背景 → 明るい背景」の進み具合 (0→1)。導入事例が参照する */
 let devFin = 0;
 
@@ -6655,10 +6689,12 @@ function updateDev2Stack() {
   const c = params.sections.dev;
   const swapE = DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0];
   const sel = Math.max(0, DEV_SCREENS.indexOf(devScreen2));
-  const cards = [devEls.mock, devEls.ghosts[0], devEls.ghosts[1]];   // 0=API 1=CLI 2=SDK
+  /* 【2026-08-27】API(AIチャット付き)を外したので 2枚。席は「手前」と「左後ろ」を使う */
+  const cards = [devEls.ghosts[0], devEls.ghosts[1]];   // 0=CLI 1=SDK
+  const nSeat = cards.length;
   cards.forEach((el, i) => {
     if (!el) return;
-    const seatI = (i - sel + 3) % 3;
+    const seatI = (i - sel + nSeat) % nSeat;
     if (el._seat !== seatI) { el._from = el._cur || DEV_STACK[seatI]; el._seat = seatI; el._t0 = elapsed; }
     const to = DEV_STACK[seatI];
     const kk = el._t0 == null ? 1 : swapE.fn(clamp01((elapsed - el._t0) / c.stackDur));
@@ -6801,6 +6837,7 @@ const caseEls = {
   title: document.getElementById('caseTitle'),
   hlines: [0, 1, 2].map(i => document.getElementById('cgH' + i)),   // 水平線(上→下)
   vline: document.getElementById('cgV'),                             // 中央の垂直線
+  grid: document.getElementById('caseGrid'),
   cards: [0, 1, 2, 3].map(i => document.getElementById('caseCard' + i)),  // 4セル
 };
 
@@ -6901,7 +6938,7 @@ function resetSectionClock(k) {
   if (k === 'vision')  { visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1; }
   if (k === 'results') { resT0 = null; resT = -1; }
   if (k === 'dev')     { devHoldT0 = null; devScreenT0 = null; devStarted = false;
-                         devScreen2 = 'api'; devSwapT0 = null; dmBuildScreen('editor'); }
+                         devScreen2 = 'cli'; devSwapT0 = null; dmBuildScreen('editor'); }
 }
 
 function resetSectionClocks() {
@@ -7259,6 +7296,21 @@ initSphere();
 
 /* ロゴカルーセルへパラメーターを反映 */
 const marqueeTrack = document.getElementById('marqueeTrack');
+/* 【2026-08-27 ヒデさん指定】導入事例のホバー案を反映する。
+   案の実体は CSS 側([data-hover=...])。ここでは属性を書き替えるだけ */
+function applyCaseHover() {
+  const g = caseEls && caseEls.grid;
+  if (!g) return;
+  g.dataset.hover = params.patterns.caseHover || 'zoom';
+  /* C案「下線が伸びる」で使う線を、まだ無ければ各カードに1本ずつ入れる */
+  (caseEls.cards || []).forEach(c => {
+    if (c && !c.querySelector('.cg-uline')) {
+      const i = document.createElement('i');
+      i.className = 'cg-uline';
+      c.appendChild(i);
+    }
+  });
+}
 function applyMarquee() {
   marqueeTrack.style.animationDuration = params.marquee.duration + 's';
   marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
@@ -8837,13 +8889,13 @@ function buildPanel() {
 
   /* ========== 🖥 開発者体験 ========== */
   const catDev = category('🖥 開発者体験（暗い画面のコード紹介）', false);
-  catNote(catDev, '暗い背景で API / CLI / SDK の画面が順に切り替わります。');
+  catNote(catDev, '暗い背景で CLI / SDK の画面が順に切り替わります。');
 
   sub(catDev, '基本（長さ）');
   sectionLenSlider('dev', 1600);
 
   sub(catDev, '画面が切り替わる時の見え方');
-  note('右の API / CLI / SDK にマウスを乗せると、左の3枚が回って入れ替わります。');
+  note('右の CLI / SDK にマウスを乗せると、左のモックが回って入れ替わります。');
   const easeNote = noteLive(() => DEV_SWAP_EASES[(sv().dev.swapEase || 1) - 1].desc);
   pillRow(DEV_SWAP_EASES, (_, i) => (sv().dev.swapEase || 1) === i + 1,
     (_, i) => { sv().dev.swapEase = i + 1; easeNote(); }, null, { noRebuild: true });
@@ -8907,6 +8959,23 @@ function buildPanel() {
   rows.push(slider('1枚が出きるまで', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
     '1枚がぼけから出きるまでの長さ。'));
 
+  /* 【2026-08-27 ヒデさん指定】カードにマウスを乗せた時の動きを5案から選ぶ */
+  liveEdit = true;
+  sub(catCase, 'カードのホバー', true, { fixed: true });
+  const CASE_HOVERS = [
+    { key: 'off',   name: 'なし',        tip: 'ホバーしても何も起きません。' },
+    { key: 'zoom',  name: 'A 写真が寄る', tip: '写真だけがゆっくり拡大します。いちばん静かで、いまのトーンを崩しません。' },
+    { key: 'lift',  name: 'B 手前に浮く', tip: 'カードごと少し持ち上がり、写真もわずかに寄ります。触れる物だと分かりやすい。' },
+    { key: 'line',  name: 'C 下線が伸びる', tip: '水色の線が左から引かれ、社名が少し右へずれます。読ませたい時向き。' },
+    { key: 'focus', name: 'D ほかが引く', tip: '触った1枚だけが残り、他の3枚が薄くなります。1件に集中させたい時。' },
+    { key: 'color', name: 'E 写真が色づく', tip: 'ふだんは白黒で、触ると色が戻ります。タグも水色になります。' },
+  ];
+  pillRow(CASE_HOVERS, it => (params.patterns.caseHover || 'zoom') === it.key,
+    it => { params.patterns.caseHover = it.key; applyCaseHover(); markDirty(); },
+    { get: () => params.patterns.caseHover, set: v => { params.patterns.caseHover = v; applyCaseHover(); } },
+    { noRebuild: true, tip: it => it.tip });
+  liveEdit = false;
+
   /* ボタン。
      ⚠️【2026-08-19 ヒデさん指定】「動きを止める」「先頭から見直す」は削除。
         触った値がそのまま次回の既定になる自動保存もやめて、
@@ -8957,6 +9026,7 @@ function buildPanel() {
 }
 buildPanel();
 applyMarquee();
+applyCaseHover();   /* 導入事例のホバー案を初期反映 (2026-08-27) */
 
 /* パネル開閉 */
 const panel = document.getElementById('panel');
