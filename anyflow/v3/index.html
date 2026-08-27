@@ -7952,6 +7952,255 @@ if (window.Lenis && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
    到達できず【全アニメーションが永久に止まった】。画面が途中で固まる症状の原因。
    次フレームの予約は try の外に置き、何があっても回り続けるようにする。 */
 let frameErrLogged = false;
+/* ===== 実績「2つの価値」の右側ピクトグラム (2026-08-28 ヒデさん指定) =====
+   仮置きの SVG 画像をやめ、【塗りなし・枠線だけの単純な幾何学】で動くピクトグラムにする。
+   使う形: 円 / 正方形・長方形 / 三角 / 線 のみ。図形の数はどの案も 4〜9個に揃えてある(密度を合わせる)。
+   for SaaS = リアルタイムにデータ同期 / for AI = コンテキスト取得から実行(一方向の流れ)
+   案は調整パネル(実績 > ピクトグラム)で選ぶ。 */
+const VAL_VB = 220;                    /* 描画の座標系。表示は 220×220 */
+const VAL_INK = '#111';
+const VAL_ACC = '#0EBBFF';
+const VAL_PINK = '#FF5D97';
+const valSvgs = {};                    /* { saas:{svg, pool}, ai:{...} } */
+function valEnsure(key, id) {
+  if (valSvgs[key]) return valSvgs[key];
+  const host = document.getElementById(id);
+  if (!host) return null;
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${VAL_VB} ${VAL_VB}`);
+  host.innerHTML = '';
+  host.appendChild(svg);
+  valSvgs[key] = { svg, pool: [], used: 0 };
+  return valSvgs[key];
+}
+/* 形を1つ借りる。使い回すので、毎フレーム作り直さない */
+function valTake(st, tag) {
+  let el = st.pool[st.used];
+  if (!el || el.tagName !== tag) {
+    if (el) el.remove();
+    el = document.createElementNS(SVG_NS, tag);
+    st.svg.appendChild(el);
+    st.pool[st.used] = el;
+  }
+  st.used++;
+  el.setAttribute('opacity', '1');
+  el.setAttribute('stroke', VAL_INK);
+  el.setAttribute('stroke-width', '1.6');
+  el.removeAttribute('transform');
+  return el;
+}
+function valDone(st) {
+  for (let i = st.used; i < st.pool.length; i++) st.pool[i].setAttribute('opacity', '0');
+  st.used = 0;
+}
+/* --- 便利関数(すべて枠線だけ) --- */
+function vCircle(st, cx, cy, r, o) { const e = valTake(st, 'circle');
+  e.setAttribute('cx', cx.toFixed(1)); e.setAttribute('cy', cy.toFixed(1)); e.setAttribute('r', Math.max(0.1, r).toFixed(1));
+  if (o) valStyle(e, o); return e; }
+function vRect(st, cx, cy, w, h, o) { const e = valTake(st, 'rect');
+  e.setAttribute('x', (cx - w / 2).toFixed(1)); e.setAttribute('y', (cy - h / 2).toFixed(1));
+  e.setAttribute('width', Math.max(0.1, w).toFixed(1)); e.setAttribute('height', Math.max(0.1, h).toFixed(1));
+  e.setAttribute('rx', (o && o.rx != null ? o.rx : 0)); if (o) valStyle(e, o); return e; }
+function vTri(st, cx, cy, r, rot, o) { const e = valTake(st, 'polygon');
+  const p = [];
+  for (let i = 0; i < 3; i++) { const a = (rot + i * 120 - 90) * Math.PI / 180;
+    p.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1)); }
+  e.setAttribute('points', p.join(' ')); if (o) valStyle(e, o); return e; }
+function vLine(st, x1, y1, x2, y2, o) { const e = valTake(st, 'line');
+  e.setAttribute('x1', x1.toFixed(1)); e.setAttribute('y1', y1.toFixed(1));
+  e.setAttribute('x2', x2.toFixed(1)); e.setAttribute('y2', y2.toFixed(1));
+  if (o) valStyle(e, o); return e; }
+function valStyle(e, o) {
+  if (o.c) e.setAttribute('stroke', o.c);
+  if (o.w != null) e.setAttribute('stroke-width', o.w.toFixed(2));
+  if (o.a != null) e.setAttribute('opacity', Math.max(0, Math.min(1, o.a)).toFixed(3));
+  if (o.dash) e.setAttribute('stroke-dasharray', o.dash); else e.removeAttribute('stroke-dasharray');
+  if (o.rot != null) e.setAttribute('transform', `rotate(${o.rot.toFixed(1)} ${o.rx0 || 110} ${o.ry0 || 110})`);
+}
+const vE = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* なめらかな出入り */
+const vLoop = (t, T) => (t % T) / T;                                     /* 0→1 のくり返し */
+
+/* ===================== for SaaS: リアルタイムにデータ同期 ===================== */
+const VAL_SAAS = {
+  /* S1 同期して回る二重リング: 2つの輪の中のマーカーが同じ角度で回る。
+     片方がわずかに遅れ、すっと追いつく＝「同期」 */
+  S1(st, t) {
+    const C = VAL_VB / 2, R = 62;
+    const k = vLoop(t, 6);
+    const lag = k < 0.5 ? (1 - vE(k / 0.5)) * 46 : 0;      /* 前半は遅れ、後半で追いつく */
+    for (const [i, cx] of [[0, C - 34], [1, C + 34]].entries()) {
+      const x = cx[1], deg = t * 52 - (cx[0] ? lag : 0);
+      vCircle(st, x, C, 40, { a: 0.9 });
+      const a = deg * Math.PI / 180;
+      vRect(st, x + Math.cos(a) * 40, C + Math.sin(a) * 40, 11, 11,
+        { c: cx[0] ? VAL_ACC : VAL_PINK, w: 2 });
+    }
+    vLine(st, C - 12, C, C + 12, C, { a: 0.35, dash: '3 4' });
+    const sync = lag < 1;
+    vCircle(st, C, C, sync ? 7 : 4, { c: VAL_ACC, w: 2, a: sync ? 1 : 0.3 });
+  },
+  /* S2 双方向のやり取り: 2つの箱の間を小さな正方形が行き来し、届くと受け手の枠が太くなる */
+  S2(st, t) {
+    const C = VAL_VB / 2, L = 46, R = 174;
+    const k = vLoop(t, 2.6), fwd = k < 0.5;
+    const u = vE(fwd ? k / 0.5 : (k - 0.5) / 0.5);
+    const x = fwd ? L + (R - L) * u : R - (R - L) * u;
+    const hitL = !fwd && u > 0.86, hitR = fwd && u > 0.86;
+    vRect(st, L, C, 46, 60, { rx: 4, w: hitL ? 3 : 1.6, c: hitL ? VAL_ACC : VAL_INK });
+    vRect(st, R, C, 46, 60, { rx: 4, w: hitR ? 3 : 1.6, c: hitR ? VAL_ACC : VAL_INK });
+    for (let i = 0; i < 3; i++) vLine(st, L - 14, C - 16 + i * 16, L + 14, C - 16 + i * 16, { a: 0.3 });
+    for (let i = 0; i < 3; i++) vLine(st, R - 14, C - 16 + i * 16, R + 14, C - 16 + i * 16, { a: 0.3 });
+    vRect(st, x, C, 13, 13, { c: fwd ? VAL_ACC : VAL_PINK, w: 2, rot: u * 180, rx0: x, ry0: C });
+  },
+  /* S3 重なって1つになる: 2つの円が寄って重なり、中央に正方形が生まれる＝統合 */
+  S3(st, t) {
+    const C = VAL_VB / 2;
+    const k = vLoop(t, 5);
+    const close = k < 0.45 ? vE(k / 0.45) : (k < 0.75 ? 1 : 1 - vE((k - 0.75) / 0.25));
+    const gap = 44 * (1 - close);
+    /* 常設の受け皿(点線)。どの瞬間も図形の数が他の案とそろうようにする */
+    vCircle(st, C, C, 62, { a: 0.18, dash: '4 6' });
+    vLine(st, C - 78, C, C + 78, C, { a: 0.15, dash: '4 6' });
+    vCircle(st, C - gap, C, 46, { c: VAL_PINK, a: 0.95 });
+    vCircle(st, C + gap, C, 46, { c: VAL_ACC, a: 0.95 });
+    const one = Math.max(0, (close - 0.72) / 0.28);
+    if (one > 0) {
+      vRect(st, C, C, 30 * vE(one), 30 * vE(one), { w: 2, a: one });
+      vCircle(st, C, C, 46 + (1 - one) * 10, { w: 2, a: one * 0.5 });
+    }
+  },
+  /* S4 一斉にそろう: 3×3 の升目がバラバラに光り、最後に全部が同じ状態へ揃う */
+  S4(st, t) {
+    const C = VAL_VB / 2, S = 34, G = 8;
+    const k = vLoop(t, 4.2);
+    const settle = k > 0.68 ? vE((k - 0.68) / 0.32) : 0;
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      const i = r * 3 + c;
+      const ph = ((i * 7) % 9) / 9;
+      const lit = settle > 0.1 ? settle : (Math.sin((k + ph) * Math.PI * 4) > 0.55 ? 1 : 0);
+      vRect(st, C + (c - 1) * (S + G), C + (r - 1) * (S + G), S, S,
+        { rx: 3, w: lit ? 2.2 : 1.4, c: lit ? VAL_ACC : VAL_INK, a: lit ? 1 : 0.4 });
+    }
+  },
+  /* S5 すれ違う2本の流れ: 上下の線を、円と正方形が逆向きに流れる。交差で一瞬ふくらむ */
+  S5(st, t) {
+    const C = VAL_VB / 2;
+    vLine(st, 26, C - 26, 194, C - 26, { a: 0.35 });
+    vLine(st, 26, C + 26, 194, C + 26, { a: 0.35 });
+    for (let i = 0; i < 3; i++) {
+      const u = vLoop(t * 0.42 + i / 3, 1);
+      const x = 26 + 168 * u;
+      const near = Math.abs(x - C) < 16 ? 1 : 0;
+      vCircle(st, x, C - 26, 8 + near * 3, { c: VAL_ACC, w: near ? 2.4 : 1.6 });
+      const x2 = 194 - 168 * u;
+      vRect(st, x2, C + 26, 15 + near * 4, 15 + near * 4, { c: VAL_PINK, w: near ? 2.4 : 1.6 });
+    }
+  },
+};
+
+/* ===================== for AI: コンテキスト取得から実行 ===================== */
+const VAL_AI = {
+  /* A1 一方向のパイプライン: 円(取得)→正方形(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わる */
+  A1(st, t) {
+    const C = VAL_VB / 2, X = [44, 110, 176];
+    vCircle(st, X[0], C, 26, { a: 0.9 });
+    vRect(st, X[1], C, 46, 46, { rx: 3, a: 0.9 });
+    vTri(st, X[2], C, 28, 90, { a: 0.9 });
+    vLine(st, X[0] + 30, C, X[1] - 27, C, { a: 0.3, dash: '4 5' });
+    vLine(st, X[1] + 27, C, X[2] - 26, C, { a: 0.3, dash: '4 5' });
+    for (let i = 0; i < 2; i++) {
+      const u = vLoop(t * 0.5 + i / 2, 1);
+      const x = X[0] + (X[2] - X[0]) * u;
+      if (u < 0.5) vCircle(st, x, C, 7, { c: VAL_ACC, w: 2.2 });
+      else vRect(st, x, C, 12, 12, { c: VAL_ACC, w: 2.2, rot: u * 240, rx0: x, ry0: C });
+    }
+    const fire = vLoop(t * 0.5, 1) > 0.94;
+    if (fire) vTri(st, X[2], C, 34, 90, { c: VAL_ACC, w: 2.4, a: 0.8 });
+  },
+  /* A2 形が変わる: 円 → 正方形 → 三角 と姿を変え、三角になった瞬間に外へ線が飛ぶ＝実行 */
+  A2(st, t) {
+    const C = VAL_VB / 2, T = 5.4, k = vLoop(t, T);
+    /* 常設の当たり(点線)。どの場面でも図形の数が他の案とそろうようにする */
+    vCircle(st, C, C, 78, { a: 0.16, dash: '4 6' });
+    vLine(st, C - 92, C, C - 74, C, { a: 0.22 });
+    vLine(st, C + 74, C, C + 92, C, { a: 0.22 });
+    const seg = k < 0.34 ? 0 : (k < 0.68 ? 1 : 2);
+    const u = vE(seg === 0 ? k / 0.34 : seg === 1 ? (k - 0.34) / 0.34 : (k - 0.68) / 0.32);
+    /* 見えている形を切り替えつつ、大きさを合わせて「変形」に見せる */
+    const R = 52;
+    if (seg === 0) { vCircle(st, C, C, R * (0.9 + 0.1 * u), { w: 2 }); vRect(st, C, C, R * 1.5 * u, R * 1.5 * u, { w: 2, a: u * 0.9 }); }
+    else if (seg === 1) { vRect(st, C, C, R * 1.5, R * 1.5, { w: 2, a: 1 - u * 0.1 }); vTri(st, C, C, R * u, 90, { w: 2, a: u }); }
+    else { vTri(st, C, C, R, 90, { w: 2.2 }); }
+    if (seg === 2) for (let i = 0; i < 4; i++) {
+      const d = 60 + u * 34;
+      const a = (-90 + i * 90) * Math.PI / 180;
+      vLine(st, C + Math.cos(a) * d, C + Math.sin(a) * d,
+               C + Math.cos(a) * (d + 16), C + Math.sin(a) * (d + 16), { c: VAL_ACC, w: 2, a: 1 - u });
+    }
+    vCircle(st, C, C, 6, { c: VAL_PINK, w: 2, a: 0.8 });
+  },
+  /* A3 集めて撃つ: 散らばった小さな正方形が中央の円へ集まり、満ちたら右へ三角が飛ぶ */
+  A3(st, t) {
+    const C = VAL_VB / 2, T = 4.6, k = vLoop(t, T);
+    const gather = Math.min(1, k / 0.62), shoot = Math.max(0, (k - 0.66) / 0.34);
+    vCircle(st, C - 18, C, 38, { a: 0.9 });
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + t * 0.35;
+      const d = 86 * (1 - vE(gather)) + 26 * vE(gather);
+      vRect(st, C - 18 + Math.cos(a) * d, C + Math.sin(a) * d, 12, 12,
+        { c: VAL_ACC, w: 1.8, a: 1 - shoot * 0.7, rot: a * 57, rx0: C - 18 + Math.cos(a) * d, ry0: C + Math.sin(a) * d });
+    }
+    if (shoot > 0) {
+      const x = C - 18 + vE(shoot) * 96;
+      vTri(st, x, C, 22, 90, { c: VAL_ACC, w: 2.4, a: 1 - shoot * 0.3, rot: 90, rx0: x, ry0: C });
+    }
+  },
+  /* A4 走査してから実行: 大きな正方形の中を線が上から下へ走る(取得)。走り終わると三角に変わって右へ抜ける */
+  A4(st, t) {
+    const C = VAL_VB / 2, T = 5, k = vLoop(t, T), S = 96;
+    const scan = Math.min(1, k / 0.55), go = Math.max(0, (k - 0.62) / 0.38);
+    const slideX = C + vE(go) * 66;
+    /* 常設の枠(点線)と出口の目印。場面が変わっても密度が落ちないように */
+    vRect(st, C, C, S + 26, S + 26, { rx: 6, a: 0.14, dash: '5 7' });
+    vLine(st, C + S / 2 + 24, C - 14, C + S / 2 + 24, C + 14, { a: 0.22 });
+    vLine(st, C - S / 2 - 24, C - 14, C - S / 2 - 24, C + 14, { a: 0.22 });
+    if (go < 0.5) {
+      vRect(st, C, C, S * (1 - go * 0.5), S * (1 - go * 0.5), { rx: 4, w: 2, a: 1 - go });
+      const y = C - S / 2 + S * vE(scan);
+      vLine(st, C - S / 2 + 6, y, C + S / 2 - 6, y, { c: VAL_ACC, w: 2.4, a: scan < 1 ? 1 : 0.2 });
+      for (let i = 0; i < 3; i++) {
+        const yy = C - 26 + i * 26;
+        vLine(st, C - 30, yy, C + 30, yy, { a: yy < y ? 0.55 : 0.15, dash: '5 6' });
+      }
+    }
+    if (go > 0) vTri(st, slideX, C, 30, 90, { c: VAL_ACC, w: 2.4, a: Math.min(1, go * 2) * (1 - go * 0.4) });
+  },
+  /* A5 積み上げて実行: 下から長方形が3つ積み上がり(文脈が溜まる)、揃うと三角になって上へ抜ける */
+  A5(st, t) {
+    const C = VAL_VB / 2, T = 5.2, k = vLoop(t, T);
+    const up = Math.max(0, (k - 0.7) / 0.3);
+    /* 常設の空きスロット(点線)。くり返しの切れ目でも画が空にならない */
+    for (let i = 0; i < 3; i++) {
+      vRect(st, C, C + 58 - i * 26, 92 - i * 16, 20, { rx: 3, a: 0.16, dash: '4 6' });
+    }
+    for (let i = 0; i < 3; i++) {
+      const at = i * 0.2, kk = Math.max(0, Math.min(1, (k - at) / 0.2));
+      const y0 = C + 58 - i * 26, from = C + 96;
+      const y = from + (y0 - from) * vE(kk) - vE(up) * (120 + i * 10);
+      vRect(st, C, y, 92 - i * 16, 20, { rx: 3, w: 1.8, c: kk >= 1 ? VAL_INK : VAL_ACC, a: kk * (1 - up * 0.8) });
+    }
+    if (up > 0) vTri(st, C, C + 10 - vE(up) * 70, 26 + up * 8, 90, { c: VAL_ACC, w: 2.4, a: 1 - up * 0.5 });
+    vLine(st, C - 56, C + 76, C + 56, C + 76, { a: 0.35 });
+  },
+};
+function drawValueIcons() {
+  const p = params.patterns || {};
+  const a = valEnsure('saas', 'valSaas');
+  if (a) { const f = VAL_SAAS[p.valSaas] || VAL_SAAS.S1; try { f(a, elapsed); } catch (e) {} valDone(a); }
+  const b = valEnsure('ai', 'valAi');
+  if (b) { const f = VAL_AI[p.valAi] || VAL_AI.A1; try { f(b, elapsed); } catch (e) {} valDone(b); }
+}
+
 function frame(ts) {
   try {
     if (lenis) lenis.raf(ts);
@@ -7961,6 +8210,7 @@ function frame(ts) {
     }
     lastTs = ts;
     renderFrame();
+    drawValueIcons();
   } catch (e) {
     if (!frameErrLogged) { frameErrLogged = true; console.error('[anyflow] 描画中の例外:', e); }
   }
@@ -7971,7 +8221,7 @@ renderFrame();
 
 /* デバッグ用フック（rAFが動かない環境で手動で時間を進める） */
 window.__anim = {
-  step(dt) { elapsed += dt; renderFrame(); },
+  step(dt) { elapsed += dt; renderFrame(); drawValueIcons(); },
   setElapsed(v) { elapsed = v; renderFrame(); },
   /* 各セクションの自動再生を頭からやり直す (通常はリプレイしないので検証用) */
   replay() { elapsed = 0; resetSectionClocks(); renderFrame(); },
@@ -9682,6 +9932,37 @@ function buildPanel() {
     '100%＝画面の下に出た瞬間 / 50%＝真ん中まで来てから。'));
   rows.push(slider('止まり際の粘り', 2, 9, 0.5, () => sv().results.slotEase, v => sv().results.slotEase = v, v => '×' + v.toFixed(1),
     '大きいほど「最初は勢いよく、最後はじりじり」に。'));
+
+  /* 【2026-08-28 ヒデさん指定】2つの価値の右側ピクトグラム(各5案) */
+  liveEdit = true;
+  sub(catRes, 'ピクトグラム（2つの価値の右）', true, { fixed: true });
+  {
+    const SAAS = [
+      { key: 'S1', name: 'S1 同期して回る',   tip: '2つの輪の中のマーカーが同じ角度で回ります。片方が遅れ、すっと追いつく＝同期。' },
+      { key: 'S2', name: 'S2 双方向のやり取り', tip: '2つの箱の間を小さな四角が行き来し、届くと受け手の枠が太くなります。' },
+      { key: 'S3', name: 'S3 重なって1つ',    tip: '2つの円が寄って重なり、中央に四角が生まれます＝統合。' },
+      { key: 'S4', name: 'S4 一斉にそろう',   tip: '3×3の升目がバラバラに光り、最後に全部が同じ状態へ揃います。' },
+      { key: 'S5', name: 'S5 すれ違う2本',    tip: '上下の線を、円と四角が逆向きに流れます。交差で一瞬ふくらみます。' },
+    ];
+    const AI = [
+      { key: 'A1', name: 'A1 一方向の流れ', tip: '円(取得)→四角(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わります。' },
+      { key: 'A2', name: 'A2 形が変わる',   tip: '円→四角→三角と姿を変え、三角になった瞬間に外へ線が飛びます＝実行。' },
+      { key: 'A3', name: 'A3 集めて撃つ',   tip: '散らばった四角が中央の円へ集まり、満ちたら右へ三角が飛びます。' },
+      { key: 'A4', name: 'A4 走査して実行', tip: '四角の中を線が上から下へ走り(取得)、終わると三角に変わって右へ抜けます。' },
+      { key: 'A5', name: 'A5 積んで実行',   tip: '下から長方形が3つ積み上がり(文脈が溜まる)、揃うと三角になって上へ抜けます。' },
+    ];
+    note('for SaaS「リアルタイムにデータ同期」');
+    pillRow(SAAS, it => (params.patterns.valSaas || 'S1') === it.key,
+      it => { params.patterns.valSaas = it.key; markDirty(); },
+      { get: () => params.patterns.valSaas, set: v => { params.patterns.valSaas = v; } },
+      { noRebuild: true, tip: it => it.tip });
+    note('for AI「コンテキスト取得から実行」');
+    pillRow(AI, it => (params.patterns.valAi || 'A1') === it.key,
+      it => { params.patterns.valAi = it.key; markDirty(); },
+      { get: () => params.patterns.valAi, set: v => { params.patterns.valAi = v; } },
+      { noRebuild: true, tip: it => it.tip });
+  }
+  liveEdit = false;
 
   sub(catRes, '次のセクションへのつなぎ');
   note('案Bのみ。中身が消えるのと同時に、背景が暗い画面へ変わります。');
