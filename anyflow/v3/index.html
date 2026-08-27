@@ -2630,7 +2630,7 @@ const DEFAULTS = {
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
     link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, T: 3.2, vanishK: 0.35 },
     /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
-    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0 },
+    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false },
   },
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
@@ -4322,7 +4322,10 @@ function renderFrame() {
   /* 「軌道の代わり」になる案は、選んでいる間は輪もドットも自動で隠す。
      ⑦降着円盤 / ⑫メッシュ = 輪もドットも / ⑬ドットの軌道 = 線だけ消してドットは自前で描く */
   const cvNow = convOn() ? params.converge : null;
-  const hideAll = cvNow === 'accre' || cvNow === 'mesh' || cvNow === 'beads';
+  /* 【2026-08-27 ヒデさん指定】③(粒の渦)でも、軌道オブジェクトを出せるようにした(既定は出さない)。
+     出す時は、共通の「外の輪 / 内の輪 / ドット」のスイッチに従う。 */
+  const accreShowsOrbit = cvNow === 'accre' && !!(params.conv.accre && params.conv.accre.showOrbit);
+  const hideAll = (cvNow === 'accre' && !accreShowsOrbit) || cvNow === 'mesh' || cvNow === 'beads';
   const cShowO = !hideAll && (!params.conv || params.conv.showOuter !== false);
   const cShowI = !hideAll && (!params.conv || params.conv.showInner !== false);
   const cShowD = !hideAll && (!params.conv || params.conv.showDots !== false);
@@ -7695,6 +7698,9 @@ function buildPanel() {
     } else if (cvMode === 'accre') {
       const AC = params.conv.accre;
       sub(animModeBox, 'この案の調整（粒の渦）', true);
+      segRow('軌道を出す', [['出す', 1], ['消す', 0]], () => params.conv.accre.showOrbit ? 1 : 0,
+        v => { AC.showOrbit = !!v; markDirty(); renderFrame(); });
+      note('この案は既定では軌道を消しています。「出す」にすると輪とドットも一緒に見せられます（共通の表示スイッチに従います）。');
       slider('粒の数', 5, 2000, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
         '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
       slider('粒の大きさ', 0.05, 3, 0.01, () => params.conv.accre.size, v => AC.size = v, v => '×' + v.toFixed(2),
