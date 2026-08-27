@@ -196,7 +196,7 @@ export default function MobileTop() {
           <img
             src="/img/illust-main.png"
             alt=""
-            className="pointer-events-none absolute bottom-0 right-3 w-[128px]"
+            className="pointer-events-none absolute bottom-0 right-3 w-[90px]"
           />
         </div>
       </section>
