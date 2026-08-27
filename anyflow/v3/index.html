@@ -2777,7 +2777,11 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'k1',     /* エコーの見え方(k1〜k3)。glowKind='echo' の時だけ効く */
+    glowEcho: 'k1',     /* エコーの見え方(k1〜k4)。glowKind='echo' の時だけ効く */
+    /* 【2026-08-28 ヒデさん指定】エコーがガクガクして見えるので、細かく調整できるようにした。
+       echoSpeed=広がる速さ(小さいほどゆっくり滑らか) / echoShells=重ねる枚数 /
+       echoSpread=どこまで広がるか / echoStart=どこから始まるか / echoFade=消え方のなめらかさ */
+    echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3070,6 +3074,8 @@ function loadParams() {
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['k1', 'k2', 'k3', 'k4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k1';
+  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade'])
+    if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -4185,10 +4191,14 @@ let convEchoes = [], convEchoCans = null, convEchoEls = null;
    ・最初から【ひと回り大きい】ところから始める
    ・1回の取り込みで【3枚】を、少しずつ大きさをずらして重ねる
    3枚 × 同時に2回分 = 6枚ぶん用意する */
-const CONV_ECHO_SHELLS = 3;
-const CONV_ECHO_MAX = 6;
-/* 何枚目がどこから始まるか(惑星の半径に対する倍率) */
-const ECHO_START = [1.12, 1.26, 1.40];
+const CONV_ECHO_MAX = 12;      /* 最大 6枚 × 同時2回分 */
+/* 何枚目がどこから始まるか。つまみ(echoStart / echoSpread)から作る */
+function echoShellCount() { return Math.max(1, Math.min(6, Math.round(params.conv.echoShells ?? 3))); }
+function echoStartOf(step) {
+  const s0 = params.conv.echoStart ?? 1.12;
+  const gap = (params.conv.echoSpread ?? 0.28) * 0.5;
+  return s0 + step * gap;
+}
 /* 【2026-08-28 ヒデさん指定】4 は単色の面。取り込むたびに色が変わる。
    ブランドの色まわりから選ぶので、どれが出ても浮かない */
 const ECHO_COLORS = ['#0EBBFF', '#FF5D97', '#7FD8FF', '#A78BFA', '#FFFFFF'];
@@ -4235,17 +4245,24 @@ function convDrawEchoes(strength, hit, dt, style) {
   hideAll();
   /* 生む: 吸収のたびに【3枚】。大きさをずらして重ねるので、広がりが読み取れる。
      色は取り込みごとに1つ選び、3枚で共有する(4のときだけ使う) */
+  const SH = echoShellCount();
   if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.24)
-      && convEchoes.length + CONV_ECHO_SHELLS <= CONV_ECHO_MAX) {
+      && convEchoes.length + SH <= CONV_ECHO_MAX) {
     const col = ECHO_COLORS[(Math.random() * ECHO_COLORS.length) | 0];
-    for (let sIdx = 0; sIdx < CONV_ECHO_SHELLS; sIdx++) {
+    for (let sIdx = 0; sIdx < SH; sIdx++) {
       convEchoes.push({ t: -sIdx * 0.08, step: sIdx, c: col });
     }
   }
+  /* 【2026-08-28】広がる速さをつまみで。ゆっくりにするほど1コマの変化が小さく、滑らかに見える */
+  const spd = Math.max(0.1, params.conv.echoSpeed ?? 0.7) * (st === 'k2' ? 0.85 : 1.0);
   for (let i = convEchoes.length - 1; i >= 0; i--) {
-    convEchoes[i].t += dt * (st === 'k2' ? 0.85 : 1.0);
+    convEchoes[i].t += dt * spd;
     if (convEchoes[i].t >= 1) convEchoes.splice(i, 1);
   }
+  /* 消え方: 1 で直線、大きいほど最後まで濃く残ってスッと消える(ガタつきが目立ちにくい) */
+  const fadeP = Math.max(0.4, params.conv.echoFade ?? 1.6);
+  const fadeOf = u => Math.pow(1 - u, fadeP);
+  const spread = Math.max(0.02, params.conv.echoSpread ?? 0.28);
   const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
   /* --- 4 色が変わる面: 単色の楕円。取り込むたびに色が変わる --- */
   if (useEll) {
@@ -4254,13 +4271,13 @@ function convDrawEchoes(strength, hit, dt, style) {
       const q = convEchoes[i], el = ells[i];
       if (!q || q.t < 0) { el.setAttribute('opacity', '0'); continue; }
       const u = Math.max(0, Math.min(1, q.t));
-      const grow = ECHO_START[q.step || 0] + convSStep(u) * 0.30;
+      const grow = echoStartOf(q.step || 0) + convSStep(u) * spread;
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', (rx0 * grow).toFixed(1));
       el.setAttribute('ry', (ry0 * grow).toFixed(1));
       el.setAttribute('fill', q.c || '#7FD8FF');
       /* 外側の殻ほど薄く。重ねた時に濃淡が出る */
-      el.setAttribute('opacity', (0.32 * strength * (1 - u) * (1 - (q.step || 0) * 0.22)).toFixed(3));
+      el.setAttribute('opacity', (0.32 * strength * fadeOf(u) * (1 - (q.step || 0) * 0.18)).toFixed(3));
     }
     return;
   }
@@ -4268,7 +4285,7 @@ function convDrawEchoes(strength, hit, dt, style) {
     const q = convEchoes[i], c = cans[i];
     if (!q || q.t < 0) { c.el.style.opacity = '0'; continue; }
     const u = Math.max(0, Math.min(1, q.t));
-    const base = ECHO_START[q.step || 0], dim = 1 - (q.step || 0) * 0.24;
+    const base = echoStartOf(q.step || 0), dim = 1 - (q.step || 0) * 0.18;
     /* 惑星の絵をまるごと複製する(これが残像の中身) */
     try {
       c.ctx.clearRect(0, 0, c.el.width, c.el.height);
@@ -4276,18 +4293,18 @@ function convDrawEchoes(strength, hit, dt, style) {
     } catch (e) {}
     let grow, a, fx = '';
     if (st === 'k2') {
-      grow = base + convSStep(u) * 0.38;
-      a = 0.8 * strength * (1 - u) * dim;
+      grow = base + convSStep(u) * spread * 1.3;
+      a = 0.8 * strength * fadeOf(u) * dim;
       fx = `blur(${(4 + (q.step || 0) * 3 + u * 12).toFixed(1)}px)`;
       c.el.style.zIndex = '1';
     } else if (st === 'k3') {
-      grow = base + convSStep(u) * 0.30;
-      a = 0.4 * strength * (1 - u) * dim;
+      grow = base + convSStep(u) * spread;
+      a = 0.4 * strength * fadeOf(u) * dim;
       fx = `saturate(${(1 + u * 0.6).toFixed(2)}) brightness(${(1 + u * 0.25).toFixed(2)})`;
       c.el.style.zIndex = '3';                 /* 惑星の手前へ */
     } else {
-      grow = base + convSStep(u) * 0.28;
-      a = 0.95 * strength * (1 - u) * dim;
+      grow = base + convSStep(u) * spread;
+      a = 0.95 * strength * fadeOf(u) * dim;
       c.el.style.zIndex = '1';
     }
     c.el.style.filter = fx;
@@ -8216,6 +8233,27 @@ function valStyle(e, o) {
   if (o.rot != null) e.setAttribute('transform', `rotate(${o.rot.toFixed(1)} ${o.rx0 || 110} ${o.ry0 || 110})`);
 }
 const vE = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* なめらかな出入り */
+/* 【2026-08-28 ヒデさん指定】全体的にゆったりすぎたので、緩急の強い動きを足す。
+   vE2 = 一気に動いて、終わりでぴたっと止まる(見せ場に使う)
+   vE3 = 少し行き過ぎて戻る(重なる・刺さる瞬間の気持ちよさ)
+   vHold = 前半は止まって待ち、後半で一気に動く(ためを作る) */
+const vE2 = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3.4);
+const vE3 = k => { const c = 1.7; const x = Math.max(0, Math.min(1, k));
+  return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const vHold = (k, wait) => { const w = wait == null ? 0.4 : wait;
+  return k <= w ? 0 : vE2((k - w) / (1 - w)); };
+/* 矢印(実行を表すのに使う)。dir は度(0=右) */
+function vArrow(st, x, y, len, dir, o) {
+  const a = (dir || 0) * Math.PI / 180;
+  const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len;
+  const h = Math.max(5, len * 0.30);
+  const p = [[x, y], [ex, ey]];
+  vTrim(vPath(st, p, o), 1);
+  const b1 = a + Math.PI * 0.82, b2 = a - Math.PI * 0.82;
+  vPath(st, [[ex + Math.cos(b1) * h, ey + Math.sin(b1) * h], [ex, ey],
+             [ex + Math.cos(b2) * h, ey + Math.sin(b2) * h]], o);
+  return { x: ex, y: ey };
+}
 const vLoop = (t, T) => (t % T) / T;                                     /* 0→1 のくり返し */
 
 /* ===================== for SaaS: リアルタイムにデータ同期 ===================== */
@@ -8439,6 +8477,60 @@ const VAL_SAAS = {
     const lock = Math.max(0, (close - 0.85) / 0.15);
     if (lock > 0) vCircle(st, C, C, 10 + lock * 8, { c: VAL_ACC, w: 2.4, a: 1 - lock * 0.5 });
   },
+  /* ===== 2026-08-28 追加: 開く → グリンと回る → 重なる =====
+     ヒデさん指定「一旦上下に開いた後に右回転でグリンとスピンして、また重なる」。
+     緩急を効かせるため、開く/回る/戻る をはっきり分けて、間に“ため”を入れている。 */
+
+  /* S16 開いて回って重なる: 3枚が上下に開き、右へグリンと回って、また1つに重なる */
+  S16(st, t) {
+    const C = VAL_VB / 2, T = 3.8, k = vLoop(t, T);
+    const open = Math.max(0, Math.min(1, k / 0.22));                 /* 一気に開く */
+    const spin = vHold(Math.max(0, Math.min(1, (k - 0.26) / 0.38)), 0.1) * 360;  /* ためて回る */
+    const back = vE3(Math.max(0, Math.min(1, (k - 0.7) / 0.24)));    /* 戻って重なる */
+    const gap = (44 * vE2(open)) * (1 - back);
+    const COL = [VAL_PINK, VAL_INK, VAL_ACC];
+    for (let i = 0; i < 3; i++) {
+      const y = C + (i - 1) * gap;
+      vRect(st, C, y, 76, 48, { rx: 5, w: 2, c: COL[i],
+        rot: spin, rx0: C, ry0: y });
+    }
+    vCircle(st, C, C, 66, { a: 0.13, dash: '4 6' });
+    const lock = Math.max(0, (back - 0.86) / 0.14);
+    if (lock > 0) vCircle(st, C, C, 12 + lock * 10, { c: VAL_ACC, w: 2.4, a: 1 - lock });
+  },
+  /* S17 花のように開いて閉じる: 4枚が放射状に開き、全体が回ってから中央へ戻る */
+  S17(st, t) {
+    const C = VAL_VB / 2, T = 4.2, k = vLoop(t, T);
+    const open = vE2(Math.max(0, Math.min(1, k / 0.24)));
+    const spin = vHold(Math.max(0, Math.min(1, (k - 0.28) / 0.34)), 0.08) * 270;
+    const back = vE3(Math.max(0, Math.min(1, (k - 0.66) / 0.28)));
+    const d = 52 * open * (1 - back);
+    vCircle(st, C, C, 70, { a: 0.13, dash: '4 6' });
+    for (let i = 0; i < 4; i++) {
+      const a = (i * 90 + 45 + spin) * Math.PI / 180;
+      const x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
+      vRect(st, x, y, 40, 40, { rx: 4, w: 2, c: i % 2 ? VAL_ACC : VAL_PINK,
+        rot: spin + i * 90, rx0: x, ry0: y });
+    }
+    vCircle(st, C, C, 10, { w: 2, a: 0.4 + back * 0.6 });
+  },
+  /* S18 カードを配って束ねる: 3枚が扇に開き、グリンと回って、パチンと束に戻る */
+  S18(st, t) {
+    const C = VAL_VB / 2, T = 3.6, k = vLoop(t, T);
+    const fan = vE2(Math.max(0, Math.min(1, k / 0.2)));
+    const spin = vHold(Math.max(0, Math.min(1, (k - 0.24) / 0.36)), 0.12) * 360;
+    const back = vE3(Math.max(0, Math.min(1, (k - 0.68) / 0.24)));
+    const sp = (1 - back) * fan;
+    for (let i = 0; i < 3; i++) {
+      const off = (i - 1) * 34 * sp;
+      const tilt = (i - 1) * 16 * sp + spin;
+      vRect(st, C + off, C, 66, 88, { rx: 5, w: 2,
+        c: [VAL_PINK, VAL_INK, VAL_ACC][i], rot: tilt, rx0: C + off, ry0: C });
+    }
+    vLine(st, C - 74, C + 56, C + 74, C + 56, { a: 0.25 });
+    const lock = Math.max(0, (back - 0.88) / 0.12);
+    if (lock > 0) vRect(st, C, C, 66 + lock * 12, 88 + lock * 12, { rx: 6, c: VAL_ACC, w: 2.2, a: 1 - lock });
+  },
 };
 
 /* ===================== for AI: コンテキスト取得から実行 ===================== */
@@ -8518,22 +8610,32 @@ const VAL_AI = {
     }
     if (go > 0) vTri(st, slideX, C, 30, 90, { c: VAL_ACC, w: 2.4, a: Math.min(1, go * 2) * (1 - go * 0.4) });
   },
-  /* A5 積み上げて実行: 下から長方形が3つ積み上がり(文脈が溜まる)、揃うと三角になって上へ抜ける */
+  /* A5 積んで実行 (2026-08-28 ヒデさん指定で作り直し):
+     ・フェードインをやめ、【下から入ってくる】動きにした
+     ・あとから入ってきた板が、先にあった板を【下から押し上げる】
+     ・三角は出さない。積み上がる動きだけで「溜まっていく」を見せる
+     ・緩急: 入るのは一気に(vE2)、押し上げは少し行き過ぎて戻る(vE3) */
   A5(st, t) {
-    const C = VAL_VB / 2, T = 5.2, k = vLoop(t, T);
-    const up = Math.max(0, (k - 0.7) / 0.3);
-    /* 常設の空きスロット(点線)。くり返しの切れ目でも画が空にならない */
-    for (let i = 0; i < 3; i++) {
-      vRect(st, C, C + 58 - i * 26, 92 - i * 16, 20, { rx: 3, a: 0.16, dash: '4 6' });
+    const C = VAL_VB / 2, T = 4.2, k = vLoop(t, T);
+    const N = 3, BW = 108, BH = 24, GAP = 5;
+    const baseY = C + 44;                 /* いちばん下の段の位置 */
+    const fromY = baseY + BH + 30;        /* 画面の下から入ってくる */
+    const at = q => q * 0.26, dur = 0.2;
+    /* 常設の受け皿(点線)。空の瞬間を作らない */
+    for (let q = 0; q < N; q++)
+      vRect(st, C, baseY - q * (BH + GAP), BW, BH, { rx: 3, a: 0.13, dash: '4 6' });
+    vLine(st, C - BW / 2 - 8, baseY + BH / 2 + 9, C + BW / 2 + 8, baseY + BH / 2 + 9, { a: 0.3 });
+    for (let q = 0; q < N; q++) {
+      const kk = Math.max(0, Math.min(1, (k - at(q)) / dur));
+      if (kk <= 0) continue;
+      /* 自分より【あとに】入ってきた枚数だけ、押し上げられる */
+      let lift = 0;
+      for (let r = q + 1; r < N; r++) lift += vE3(Math.max(0, Math.min(1, (k - at(r)) / dur)));
+      const y0 = baseY - lift * (BH + GAP);
+      const y = fromY + (y0 - fromY) * vE2(kk);
+      vRect(st, C, y, BW, BH, { rx: 3, w: 2, c: q === N - 1 ? VAL_ACC : VAL_INK });
+      vLine(st, C - BW / 2 + 12, y, C - BW / 2 + 38, y, { a: 0.35 });
     }
-    for (let i = 0; i < 3; i++) {
-      const at = i * 0.2, kk = Math.max(0, Math.min(1, (k - at) / 0.2));
-      const y0 = C + 58 - i * 26, from = C + 96;
-      const y = from + (y0 - from) * vE(kk) - vE(up) * (120 + i * 10);
-      vRect(st, C, y, 92 - i * 16, 20, { rx: 3, w: 1.8, c: kk >= 1 ? VAL_INK : VAL_ACC, a: kk * (1 - up * 0.8) });
-    }
-    if (up > 0) vTri(st, C, C + 10 - vE(up) * 70, 26 + up * 8, 90, { c: VAL_ACC, w: 2.4, a: 1 - up * 0.5 });
-    vLine(st, C - 56, C + 76, C + 56, C + 76, { a: 0.35 });
   },
   /* ===== ここから 2026-08-28 追加分 =====
      A6〜A10 はパスのトリミングで「道筋が描かれていく」＝時間の経過とストーリーを出す。
@@ -8567,19 +8669,21 @@ const VAL_AI = {
     if (go > 0) vTrim(vTri(st, C + 74, C + 34, 20, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.3 }), vE(Math.min(1, go * 2)));
     vLine(st, C - 70, C + 62, C + 86, C + 62, { a: 0.2 });
   },
-  /* A8 満ちて発射: 円弧が満ちるまでが「取得」。満ちた瞬間に三角が右へ飛ぶ＝緩急が強い */
+  /* A8 満ちて発射 (2026-08-28 ヒデさん指定): 発射は三角ではなく【矢印】に。
+     円弧が満ちるまでが「取得」。満ちた瞬間に矢印が右へ飛ぶ＝いちばん緩急が強い */
   A8(st, t) {
-    const C = VAL_VB / 2, T = 3.6, k = vLoop(t, T);
-    const load = Math.min(1, k / 0.66), shoot = Math.max(0, (k - 0.66) / 0.34);
-    vCircle(st, C - 22, C, 46, { a: 0.16, dash: '3 5' });
-    vTrim(vCircle(st, C - 22, C, 46, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.8 }), load);
-    vRect(st, C - 22, C, 20, 20, { w: 1.8, a: 0.5 + load * 0.5, rot: load * 90, rx0: C - 22, ry0: C });
+    const C = VAL_VB / 2, T = 3.2, k = vLoop(t, T);
+    const load = Math.min(1, k / 0.62), shoot = Math.max(0, (k - 0.62) / 0.38);
+    vCircle(st, C - 30, C, 46, { a: 0.16, dash: '3 5' });
+    vTrim(vCircle(st, C - 30, C, 46, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.8 }), load);
+    vRect(st, C - 30, C, 20, 20, { w: 1.8, a: 0.5 + load * 0.5, rot: load * 90, rx0: C - 30, ry0: C });
     if (shoot > 0) {
-      const x = C - 22 + vE(shoot) * 104;
-      vTri(st, x, C, 22, 90, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.4 });
-      vLine(st, C + 6, C, x - 20, C, { c: VAL_ACC, a: 0.35 * (1 - shoot) });
+      const e = vE2(shoot);
+      vArrow(st, C - 24 + e * 44, C, 50, 0, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.35 });
+    } else {
+      vArrow(st, C + 24, C, 44, 0, { a: 0.16 });     /* 出口の目印 */
     }
-    vLine(st, C + 62, C - 16, C + 62, C + 16, { a: 0.22 });
+    vLine(st, C + 84, C - 16, C + 84, C + 16, { a: 0.22 });
   },
   /* A9 重なって答えになる: 3つの円(文脈の断片)が中央で重なり、重なりから四角→三角へ変わって抜ける */
   A9(st, t) {
@@ -8689,6 +8793,56 @@ const VAL_AI = {
     }
     vEll(st, C, C + 44, 86, 12, 0, { a: 0.22 });        /* 床(寝かせた楕円)＝奥行き */
     if (done > 0) vTri(st, C, C + 4 - vE(done) * 48, 24, 90, { c: VAL_ACC, w: 2.6, a: 1 - done * 0.3 });
+  },
+  /* ===== 2026-08-28 追加: 矢印で「実行」を表す3案 =====
+     ヒデさん指定。三角だけでなく、ふつうの矢印も使ってよいとのこと。 */
+
+  /* A16 伸びて刺さる: 左から矢印が伸びていき、右の枠に刺さると枠が一瞬太くなる */
+  A16(st, t) {
+    const C = VAL_VB / 2, T = 3.0, k = vLoop(t, T);
+    const grow = vE2(Math.min(1, k / 0.46));
+    const hitK = Math.max(0, (k - 0.48) / 0.2);
+    const rest = Math.max(0, (k - 0.76) / 0.24);
+    vCircle(st, 40, C, 17, { w: 1.8 });
+    vRect(st, 172, C, 46, 62, { rx: 4, w: hitK > 0 && hitK < 1 ? 3.2 : 1.8,
+      c: hitK > 0 && hitK < 1 ? VAL_ACC : VAL_INK });
+    for (let i = 0; i < 3; i++) vLine(st, 158, C - 18 + i * 18, 186, C - 18 + i * 18, { a: 0.3 });
+    vArrow(st, 60, C, 88, 0, { a: 0.14 });
+    if (grow > 0.01) vArrow(st, 60, C, 88 * grow, 0, { c: VAL_ACC, w: 2.6, a: 1 - rest * 0.5 });
+  },
+  /* A17 三方向へ配信: 中央の四角から矢印が3本、同時に外へ飛ぶ */
+  A17(st, t) {
+    const C = VAL_VB / 2, T = 3.2, k = vLoop(t, T);
+    const load = Math.min(1, k / 0.34);
+    const go = Math.max(0, (k - 0.38) / 0.42);
+    const out = vE2(go);
+    vRect(st, C, C, 46, 46, { rx: 4, w: 2, c: go > 0 ? VAL_ACC : VAL_INK,
+      rot: load * 45, rx0: C, ry0: C });
+    vCircle(st, C, C, 78, { a: 0.12, dash: '4 6' });
+    for (let i = 0; i < 3; i++) {
+      const a = -90 + i * 120;
+      const r = a * Math.PI / 180;
+      const sx = C + Math.cos(r) * (30 + out * 16), sy = C + Math.sin(r) * (30 + out * 16);
+      vArrow(st, sx, sy, 46 * out, a, { c: VAL_ACC, w: 2.4, a: out > 0.02 ? 1 - go * 0.35 : 0 });
+      vArrow(st, C + Math.cos(r) * 46, C + Math.sin(r) * 46, 40, a, { a: 0.13 });
+    }
+  },
+  /* A18 向きを決めて飛ぶ: 矢印が中心でぐるっと回り、止まった向きへシュッと飛ぶ */
+  A18(st, t) {
+    const C = VAL_VB / 2, T = 3.4, k = vLoop(t, T);
+    const spin = vHold(Math.min(1, k / 0.48), 0.06);
+    const deg = -90 + spin * 400;
+    const go = Math.max(0, (k - 0.54) / 0.34);
+    const out = vE2(go);
+    vCircle(st, C, C, 62, { a: 0.14, dash: '4 6' });
+    for (let i = 0; i < 4; i++) {
+      const a = (i * 90 - 90) * Math.PI / 180;
+      vLine(st, C + Math.cos(a) * 68, C + Math.sin(a) * 68, C + Math.cos(a) * 76, C + Math.sin(a) * 76, { a: 0.3 });
+    }
+    const r = deg * Math.PI / 180;
+    const sx = C + Math.cos(r) * out * 54, sy = C + Math.sin(r) * out * 54;
+    vArrow(st, sx, sy, 50, deg, { c: go > 0 ? VAL_ACC : VAL_INK, w: 2.6, a: 1 - go * 0.3 });
+    vCircle(st, C, C, 9, { w: 2, c: VAL_PINK, a: 0.85 });
   },
 };
 function drawValueIcons() {
@@ -10358,6 +10512,19 @@ function buildPanel() {
         variantRow('glowEcho', ECHOES,
           () => params.conv.glowEcho || 'k1',
           v => { params.conv.glowEcho = v; }, 'num');
+        /* 【2026-08-28 ヒデさん指定】ガクガクして見えるので、細かく調整できるようにした */
+        slider('広がる速さ', 0.15, 2.5, 0.05, () => params.conv.echoSpeed, v => params.conv.echoSpeed = v,
+          v => '×' + v.toFixed(2),
+          '左へ動かすほどゆっくり広がります。1コマの変化が小さくなるので、なめらかに見えます。');
+        slider('重ねる枚数', 1, 6, 1, () => params.conv.echoShells, v => params.conv.echoShells = v, v => v + '枚',
+          '1回の取り込みで何枚重ねるか。多いほど層が細かくなり、段差が目立ちにくくなります。');
+        slider('広がる幅', 0.05, 0.9, 0.01, () => params.conv.echoSpread, v => params.conv.echoSpread = v,
+          v => '×' + v.toFixed(2), '残像がどこまで大きくなるか。小さいほど動きが穏やかです。');
+        slider('始まりの大きさ', 1.0, 1.6, 0.01, () => params.conv.echoStart, v => params.conv.echoStart = v,
+          v => '×' + v.toFixed(2), '惑星の何倍から出はじめるか。1.00 に近いほど惑星に隠れて見えにくくなります。');
+        slider('消え方のなめらかさ', 0.4, 4, 0.05, () => params.conv.echoFade, v => params.conv.echoFade = v,
+          v => '×' + v.toFixed(2),
+          '右へ動かすほど、最後まで濃く残ってスッと消えます。パッと消える感じが減ります。');
       }
       mount = keep;
     };
@@ -10574,17 +10741,21 @@ function buildPanel() {
       { key: 'S13', name: 'S13 手前と奥をめぐる', tip: '寝かせた輪の上を四角が周回。手前で大きく前面、奥で小さく背面に回ります。' },
       { key: 'S14', name: 'S14 盤が立ち上がる', tip: '寝かせた盤が周期的に立ち上がり、上に乗った3つが一緒に回ります。' },
       { key: 'S15', name: 'S15 逆回転で噛み合う', tip: '2つの正方形が逆に回りながら近づき、45°ずれて重なります。' },
+      /* 2026-08-28 追加: 開く → グリンと回る → 重なる */
+      { key: 'S16', name: 'S16 開いて回って重なる', tip: '3枚が一気に上下へ開き、ためてから右へグリンと回って、また1つに重なります。' },
+      { key: 'S17', name: 'S17 花のように開く',   tip: '4枚が放射状に開き、全体が回ってから中央へ戻ります。' },
+      { key: 'S18', name: 'S18 配って束ねる',     tip: '3枚が扇に開き、グリンと回って、パチンと束に戻ります。' },
     ];
     const AI = [
       { key: 'A1', name: 'A1 一方向の流れ', tip: '円(取得)→四角(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わります。' },
       { key: 'A2', name: 'A2 形が変わる',   tip: '円→四角→三角と姿を変え、三角になった瞬間に外へ線が飛びます＝実行。' },
       { key: 'A3', name: 'A3 集めて撃つ',   tip: '散らばった四角が中央の円へ集まり、満ちたら右へ三角が飛びます。' },
       { key: 'A4', name: 'A4 走査して実行', tip: '四角の中を線が上から下へ走り(取得)、終わると三角に変わって右へ抜けます。' },
-      { key: 'A5', name: 'A5 積んで実行',   tip: '下から長方形が3つ積み上がり(文脈が溜まる)、揃うと三角になって上へ抜けます。' },
+      { key: 'A5', name: 'A5 積んで実行',   tip: '長方形が下から入ってきて、先にあった板を押し上げながら積み上がります。フェードや三角は使いません。' },
       /* 2026-08-28 追加: パスのトリミングで「道筋が描かれていく」＝時間の経過とストーリー */
       { key: 'A6', name: 'A6 経路が描かれる', tip: '円から三角へ折れ線が引かれ、描き切った瞬間に三角が一周描かれて発火します。' },
       { key: 'A7', name: 'A7 3ステップ',     tip: '取得→解釈→実行の枠が順に描かれて満ち、最後に三角が出ます。時系列そのもの。' },
-      { key: 'A8', name: 'A8 満ちて発射',    tip: '円弧が満ちるまでが取得。満ちた瞬間に三角が右へ飛びます。緩急が強い案。' },
+      { key: 'A8', name: 'A8 満ちて発射',    tip: '円弧が満ちるまでが取得。満ちた瞬間に【矢印】が右へ飛びます。いちばん緩急が強い案。' },
       { key: 'A9', name: 'A9 重なって答え',  tip: '3つの円(文脈の断片)が中央で重なり、重なりから四角→三角へ変わって抜けます。' },
       { key: 'A10', name: 'A10 折れて進む',  tip: '1本の線が描かれながら3回折れ、通った折れ点に印が付きます。先端が三角になって抜けます。' },
       /* 2026-08-28 追加: 躍動感・回転・奥行き */
@@ -10593,6 +10764,10 @@ function buildPanel() {
       { key: 'A13', name: 'A13 カードがめくれる', tip: '長方形が横幅の伸び縮みで3回めくれ、3枚目で三角が現れます。' },
       { key: 'A14', name: 'A14 螺旋で落ちて撃つ', tip: '粒が寝かせた軌道を回りながら中心へ落ち、着いた瞬間に三角が上へ抜けます。' },
       { key: 'A15', name: 'A15 板が立ち上がる', tip: '寝ていた3枚が順に立ち上がり、揃うと三角に変わって抜けます。床の楕円で奥行きを出しています。' },
+      /* 2026-08-28 追加: 実行を「矢印」で表す */
+      { key: 'A16', name: 'A16 伸びて刺さる',   tip: '左から矢印が伸びていき、右の枠に刺さると枠が一瞬太くなります。' },
+      { key: 'A17', name: 'A17 三方向へ配信',   tip: '中央の四角から矢印が3本、同時に外へ飛びます。' },
+      { key: 'A18', name: 'A18 向きを決めて飛ぶ', tip: '矢印が中心でぐるっと回り、止まった向きへシュッと飛びます。' },
     ];
     note('for SaaS「リアルタイムにデータ同期」');
     variantRow('valSaas', SAAS,
