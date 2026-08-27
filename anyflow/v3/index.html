@@ -2606,7 +2606,7 @@ const DEFAULTS = {
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
        一部だけが順に惑星へ吸われるので、輪の形は保たれる。ghost=薄い軌道線を残すか */
     /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
-    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0 },
+    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
     /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
        style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット */
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
@@ -3194,10 +3194,10 @@ function convHidePools() {
 /* 輪(実物の ellipse SVG)の濃さ。reel の循環(convReelA)と表示オンオフ(conv.showOuter/Inner)を
    掛け合わせて renderFrame で書く。奥(b)と手前(f)を別々に持てる(消え方「沈む」で手前だけ透かす)。
    blur は消え方「ぼかし」用。書き込みは変わった時だけ */
-const convReelA = { outer: { b: 1, f: 1, blur: 0, w: 3, dash: '', color: '', fx: '', dashOff: 0 },
-                    inner: { b: 1, f: 1, blur: 0, w: 3, dash: '', color: '', fx: '', dashOff: 0 } };
+const convReelA = { outer: { b: 1, f: 1, blur: 0, w: 3, dash: '', color: '', fx: '', dashOff: 0, cap: '' },
+                    inner: { b: 1, f: 1, blur: 0, w: 3, dash: '', color: '', fx: '', dashOff: 0, cap: '' } };
 function convReelAReset() {
-  for (const k of ['outer', 'inner']) { const a = convReelA[k]; a.b = 1; a.f = 1; a.blur = 0; a.w = 3; a.dash = ''; a.color = ''; a.fx = ''; a.dashOff = 0; }
+  for (const k of ['outer', 'inner']) { const a = convReelA[k]; a.b = 1; a.f = 1; a.blur = 0; a.w = 3; a.dash = ''; a.color = ''; a.fx = ''; a.dashOff = 0; a.cap = ''; }
 }
 const convRingWritten = { outer: '', inner: '' };
 function applyRingAlpha(key, aB, aF) {
@@ -3211,12 +3211,14 @@ function applyRingAlpha(key, aB, aF) {
 /* 【2026-08-27 ヒデさん指定】溶ける時に「別の物質に変わっていく」見せ方をするため、
    線の太さ・破線・にじみを毎フレーム変えられるようにする */
 const convRingStyleWritten = { outer: '', inner: '' };
-function applyRingStyle(key, w, dash, color) {
-  const sig = w.toFixed(2) + '|' + dash + '|' + (color || '');
+function applyRingStyle(key, w, dash, color, cap) {
+  const sig = w.toFixed(2) + '|' + dash + '|' + (color || '') + '|' + (cap || '');
   if (sig === convRingStyleWritten[key]) return;
   convRingStyleWritten[key] = sig;
   for (const el of orbitSvgEls[key].ells) {
     el.setAttribute('stroke-width', w.toFixed(2));
+    /* 丸いドットに見せたい時は round(短い破線が丸い点になる) */
+    if (cap) el.setAttribute('stroke-linecap', cap); else el.removeAttribute('stroke-linecap');
     if (dash) el.setAttribute('stroke-dasharray', dash); else el.removeAttribute('stroke-dasharray');
     if (color) el.setAttribute('stroke', color);
     else el.setAttribute('stroke', el === orbitSvgEls[key].ells[0]
@@ -3265,6 +3267,21 @@ function convSetClip(key, on) {
   } else front.removeAttribute('mask');
 }
 function convPlanetR() { return 130 * ((params.planet && params.planet.scale) || 1); }
+/* データ粒の見た目を作る。k=0 で丸いドットの列 / k=1 で隙間ゼロの1本の線。
+   ドットの直径 = 線の太さ。間隔(pitch)を詰めていくので「密着して線になる」ように見える。 */
+function convPixelDash(k, R) {
+  const dotW = Math.max(0.4, R.pxWidth == null ? 1.6 : R.pxWidth);
+  const dens = Math.max(0.05, R.pxDensity == null ? 1 : R.pxDensity);
+  const pitch = dotW * 2.6 * dens;                 /* 点の中心から次の点まで */
+  const len = 0.01 + convSStep(k) * pitch;         /* 点が伸びて隣とくっつく */
+  const gap = Math.max(0, pitch - len);
+  const wob = R.pxWobble || 0;
+  return {
+    dash: gap < 0.25 ? '' : len.toFixed(2) + ' ' + gap.toFixed(2),
+    w: dotW,
+    off: wob ? Math.sin(elapsed * 4.2) * wob * 6 : 0,
+  };
+}
 /* 【2026-08-26】どの案でも効く「ドットの大きさ」と「遠近感」。
    画面の下ほど手前＝大きい。cy/ry は基準にする楕円の中心と縦半径。 */
 function convDotK(y, cy, ry) {
@@ -3334,7 +3351,7 @@ function convFrame(geoms) {
       const k = convSStep((ph - sAt) / (eAt - sAt));
       /* ⚠️ 前に選んでいた案の見た目(破線・色・太さ)が残らないよう、毎フレーム基準に戻してから塗る */
       const RA = convReelA[shrinkKey];
-      RA.w = 3; RA.dash = ''; RA.color = ''; RA.fx = ''; RA.dashOff = 0;
+      RA.w = 3; RA.dash = ''; RA.color = ''; RA.fx = ''; RA.dashOff = 0; RA.cap = '';
       gS = convGeom(slotA, 1 - k * effDepth);
       spinDeg = k * (R.spinUp || 0) * 180;                             // 縮むほど速く回る(角運動量ふう)
       /* 透過: fadeAt(収縮の中の割合)から fadeTo(残す濃さ)へ */
@@ -3381,16 +3398,13 @@ function convFrame(geoms) {
         }
       }
       else if (R.vanish === 'pixel') {
-        /* データ粒(2026-08-27 ヒデさん指定で逆転):
-           はじめは【点線=バラバラの点】。圧縮されるほど点がつながって【1本の線】になる。 */
+        /* データ粒(2026-08-27 ヒデさん指定):
+           軌道は最初から【丸いドットの列】。収縮するほど点が伸びて隣とくっつき、
+           最後は隙間のない1本の線になる。 */
         aB = aF = fadeA; clipOn = true;
-        const dens = Math.max(0.05, R.pxDensity == null ? 1 : R.pxDensity);
-        const dashLen = 1.2 + k * 46;                       /* 点が伸びて線になる */
-        const gapLen = Math.max(0, 9 * dens * (1 - k));     /* すき間が詰まって消える */
-        RA.dash = gapLen < 0.35 ? '' : dashLen.toFixed(1) + ' ' + gapLen.toFixed(1);
-        RA.w = 3 * (R.pxWidth == null ? 1.6 : R.pxWidth) / 3 * (1 + k * 0.4);
-        const wob = R.pxWobble || 0;
-        RA.dashOff = wob ? Math.sin(elapsed * 4.2) * wob * 9 : 0;
+        const px = convPixelDash(k, R);
+        RA.dash = px.dash; RA.w = px.w; RA.cap = 'round';
+        RA.dashOff = px.off;
         RA.fx = `saturate(${(1 + k * 1.6).toFixed(2)})`;
       }
       else { aB = aF = fadeA; }                                        // fade(既定) / fit も同じ透過
@@ -3438,10 +3452,21 @@ function convFrame(geoms) {
     convReelA[shrinkKey].b = aB; convReelA[shrinkKey].f = aF; convReelA[shrinkKey].blur = blur;
     if (!(ph >= sAt && ph < eAt)) {   /* 収縮していない間は元の見た目に戻す */
       const r0 = convReelA[shrinkKey];
-      r0.w = 3; r0.dash = ''; r0.color = ''; r0.fx = ''; r0.dashOff = 0;
+      r0.w = 3; r0.dash = ''; r0.color = ''; r0.fx = ''; r0.dashOff = 0; r0.cap = '';
     }
     const sl = convReelA[slideKey];
-    sl.b = 1; sl.f = 1; sl.blur = 0; sl.w = 3; sl.dash = ''; sl.color = ''; sl.fx = ''; sl.dashOff = 0;
+    sl.b = 1; sl.f = 1; sl.blur = 0; sl.w = 3; sl.dash = ''; sl.color = ''; sl.fx = ''; sl.dashOff = 0; sl.cap = '';
+    /* 【2026-08-27 ヒデさん指定】データ粒を選んでいる間は、軌道そのものが最初からドットの列。
+       収縮していない輪(と、収縮前の輪)も、ドット表示のままにしておく。 */
+    if (R.vanish === 'pixel') {
+      const px0 = convPixelDash(0, R);
+      for (const key of [shrinkKey, slideKey]) {
+        const st = convReelA[key];
+        const isShrinking = (key === shrinkKey) && (ph >= sAt && ph < eAt);
+        if (isShrinking) continue;                 /* 収縮中の輪は上で計算済み */
+        st.dash = px0.dash; st.w = px0.w; st.cap = 'round'; st.dashOff = px0.off;
+      }
+    }
     for (let i = 0; i < DOTS.length; i++) {
       convDotF[i] = 1;                                                 // 位置は geoms 側で寄せ済み
       const isShrink = DOTS[i].ellipse === shrinkKey;
@@ -3649,14 +3674,31 @@ function convFrame(geoms) {
     for (let i = 0; i < n; i++) {
       const b = convBeads[i];
       const g = b.ring ? geoms.inner : geoms.outer;
-      const ang = b.base + convBeads.spin + b.jit * (B.jitter || 0) * 12;
-      let f = 1, al = 0.95;
+      let f = 1, al = 0.95, swirl = 0;
       if (b.t >= 0) {
         b.t += dt;
         const k = clamp01(b.t / Math.max(0.2, B.life));
         f = 1 - convSStep(k) * 0.94;
+        /* 【2026-08-27 ヒデさん指定】吸い込まれる間に回り込ませる＝②の「渦で吸収」に近い動き。
+           spinEase を上げるほど、中心に近づくほど速く回る(角運動量ふう) */
+        if (B.spin) {
+          const ease = Math.max(0.1, B.spinEase == null ? 1 : B.spinEase);
+          swirl = B.spin * 180 * Math.pow(k, 1 / ease);
+        }
         if (k > 0.7) al = (1 - k) / 0.3;
-        if (k >= 1) { convGlow = Math.min(1.2, convGlow + 0.10); b.t = -1; }   /* 元の位置へ戻る */
+        if (k >= 1) {
+          convGlow = Math.min(1.2, convGlow + 0.10);
+          b.t = -1;
+          b.back = 0;   /* 【2026-08-27 ヒデさん指定】空いた場所へは、ゆったりフェードインで戻す */
+        }
+      }
+      const ang = b.base + convBeads.spin + b.jit * (B.jitter || 0) * 12 + swirl;
+      /* 戻ってきた点は、しばらくかけて濃くなる(ふっと湧かない) */
+      if (b.back != null) {
+        b.back += dt;
+        const bi = clamp01(b.back / Math.max(0.1, B.backIn == null ? 1.2 : B.backIn));
+        al *= convSStep(bi);
+        if (bi >= 1) b.back = null;
       }
       const pos = posOn(f === 1 ? g : convGeom(g, f), ang);
       pktSet(pkts[i], pos.x, pos.y, (DOT_R * B.size * convDotK(pos.y, g.cy, g.ry)).toFixed(2),
@@ -4240,8 +4282,8 @@ function renderFrame() {
   const cShowD = !hideAll && (!params.conv || params.conv.showDots !== false);
   applyRingAlpha('outer', (cShowO ? 1 : 0) * convReelA.outer.b, (cShowO ? 1 : 0) * convReelA.outer.f);
   applyRingAlpha('inner', (cShowI ? 1 : 0) * convReelA.inner.b, (cShowI ? 1 : 0) * convReelA.inner.f);
-  applyRingStyle('outer', convReelA.outer.w, convReelA.outer.dash, convReelA.outer.color);
-  applyRingStyle('inner', convReelA.inner.w, convReelA.inner.dash, convReelA.inner.color);
+  applyRingStyle('outer', convReelA.outer.w, convReelA.outer.dash, convReelA.outer.color, convReelA.outer.cap);
+  applyRingStyle('inner', convReelA.inner.w, convReelA.inner.dash, convReelA.inner.color, convReelA.inner.cap);
   applyRingBlur('outer', convReelA.outer.blur, convReelA.outer.fx, convReelA.outer.dashOff);
   applyRingBlur('inner', convReelA.inner.blur, convReelA.inner.fx, convReelA.inner.dashOff);
   updateOrbitSvg(geoms);
@@ -7658,6 +7700,15 @@ function buildPanel() {
       slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
       slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
         '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
+      slider('戻ってくる時間', 0.1, 5, 0.1, () => params.conv.beads.backIn, v => B.backIn = v, v => v.toFixed(1) + '秒',
+        '吸い込まれた点が、空いた場所にゆっくり現れるまでの時間。', { fixedMax: true });
+      slider('吸い込みのスピン', 0, 3, 0.05, () => params.conv.beads.spin, v => B.spin = v,
+        v => v === 0 ? 'なし' : '+' + Math.round(v * 180) + '°',
+        '吸い込まれる間に回り込みます。上げるほど②の「渦で吸収」に近い動きになります。', { fixedMax: true });
+      if ((params.conv.beads.spin || 0) > 0) {
+        slider('スピンの効き方', 0.2, 3, 0.05, () => params.conv.beads.spinEase, v => B.spinEase = v, v => '×' + v.toFixed(2),
+          '大きいほど「中心に近づくほど速く回る」渦らしい効き方になります。', { fixedMax: true });
+      }
     } else if (CONV_LINKED.includes(cvMode)) {
       const L = params.conv.link;
       sub(animModeBox, 'この案の調整（線で行き来）', true);
