@@ -2662,9 +2662,11 @@ const DEFAULTS = {
     /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
     beads:  { count: 300, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
     /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
-       style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット */
+       style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット /
+              cage=包囲ケージ(惑星のまわりの球殻にノードを並べて回す。2026-08-27 ヒデさん指定) */
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
     mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6,
+              cageR: 1.75, cageSpin: 1, cageLinks: 3, cageTilt: -20,   /* ケージ専用 */
               lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6 },
     /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
@@ -3130,9 +3132,10 @@ const GFX_VARIANTS = {
     { name: 'B まばらな星座', desc: 'ノードを9個まで減らして間隔を広げ、線を薄く。ぽつぽつと星座のように見せます。',
       gfx: { planet: { scale: 0.92 } },
       conv: { style: 'constellation', nodes: 9, span: 0.55, lineAlpha: 0.3, lineWidth: 1, drift: 1.7, random: 1, size: 0.75, hop: 0.75, rate: 0.9 } },
-    { name: 'C 立体の格子', desc: 'ノードを20個の格子に並べ、ジャイロ交差の広い範囲に配置。奥行きのあるネットになります。',
-      gfx: { layout: 'gyro', outer: { scale: 1.12 }, inner: { scale: 1.0, flat: 1.25 }, planet: { scale: 0.88, dy: 44 } },
-      conv: { style: 'grid', nodes: 20, span: 0.28, lineAlpha: 0.42, lineWidth: 1.1, drift: 0.5, random: 0.25, size: 0.5, hop: 0.5, rate: 1.5 } },
+    { name: 'C 包囲ケージ', desc: '惑星のまわりの球殻にノードを並べ、骨で結んだカゴがゆっくり回ります。手前の骨は惑星の前を、奥の骨は後ろを通るので、まるごと取り囲んでいるように見えます。',
+      gfx: { layout: 'gyro', outer: { scale: 1.12 }, inner: { scale: 1.0, flat: 1.25 }, planet: { scale: 0.9, dy: 44 } },
+      conv: { style: 'cage', nodes: 26, cageR: 1.8, cageSpin: 1, cageLinks: 3, cageTilt: -20,
+              lineAlpha: 0.5, lineWidth: 1.1, size: 0.5, random: 0.6, hop: 0.45, rate: 1.8 } },
   ],
   beads: [
     { name: 'A 標準', desc: '既定。点が等間隔に並んだ輪から、順に惑星へ吸い込まれます。',
@@ -3223,6 +3226,40 @@ function convSpiralPool() {
 const CONV_BLUE = '#0EBBFF', CONV_PINK = '#FF5D97';
 let convMesh = null, convBeads = null;   // ⑫メッシュ / ⑬ドット軌道 の状態
 let convLine = null;   // 線(path)のプール。奥レイヤーに置く(惑星の後ろを通る線が自然に隠れる)
+/* 【2026-08-27 ヒデさん指定】惑星を「包囲する」ケージ用の線。
+   convLinePool の線は奥レイヤーにしか置けず、必ず惑星の後ろを通ってしまう。
+   ケージは手前の骨も見えないと囲んでいるように見えないので、
+   ドットと同じく【奥に1本・手前に1本】持ち、深さで描くほうを切り替える。 */
+let convLine2 = null;
+function convLine2Pool(n) {
+  if (convLine2 && convLine2.length !== n) {
+    for (const q of convLine2) { q.back.remove(); q.front.remove(); }
+    convLine2 = null;
+  }
+  if (convLine2) return convLine2;
+  convLine2 = [];
+  const mk = (host, before) => {
+    const el = document.createElementNS(SVG_NS, 'path');
+    el.setAttribute('fill', 'none');
+    el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('opacity', '0');
+    host.insertBefore(el, before);
+    return el;
+  };
+  for (let i = 0; i < n; i++) {
+    convLine2.push({ back: mk(dotsBackG.parentNode, dotsBackG), front: mk(dotsFrontG.parentNode, dotsFrontG) });
+  }
+  return convLine2;
+}
+function convHideLines2() {
+  if (convLine2) for (const q of convLine2) { q.back.setAttribute('opacity', '0'); q.front.setAttribute('opacity', '0'); }
+}
+function convLine2Set(q, A, B, color, w, op, front) {
+  const d = `M${A.x.toFixed(1)},${A.y.toFixed(1)} L${B.x.toFixed(1)},${B.y.toFixed(1)}`;
+  for (const el of [q.back, q.front]) { el.setAttribute('d', d); el.setAttribute('stroke', color); el.setAttribute('stroke-width', String(w)); }
+  q.front.setAttribute('opacity', front ? String(op) : '0');
+  q.back.setAttribute('opacity', front ? '0' : String(op));
+}
 function convLinePool(n) {
   if (convLine && convLine.length !== n) { for (const el of convLine) el.remove(); convLine = null; }
   if (convLine) return convLine;
@@ -3337,7 +3374,7 @@ function convAccrePool() {
 function convHidePools() {
   if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
   if (convAccre) for (const p of convAccre) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
-  convHideLines(); convHidePkts();
+  convHideLines(); convHideLines2(); convHidePkts();
 }
 /* 輪(実物の ellipse SVG)の濃さ。reel の循環(convReelA)と表示オンオフ(conv.showOuter/Inner)を
    掛け合わせて renderFrame で書く。奥(b)と手前(f)を別々に持てる(消え方「沈む」で手前だけ透かす)。
@@ -3715,12 +3752,98 @@ function convFrame(geoms) {
       p.front.style.display = fpos.front ? '' : 'none';
       p.back.style.display = fpos.front ? 'none' : '';
     }
+  } else if (mode === 'mesh' && (C.mesh.style === 'cage')) {
+    /* ===== 包囲ケージ (2026-08-27 ヒデさん指定) =====
+       惑星のまわりの【球殻】にノードを均等に並べ、球ごとゆっくり回す。
+       奥半球のノードと骨は惑星の後ろへ、手前半球は惑星の前を通るので
+       「取り囲んでいる／包囲している」ように見える。
+       デザインは変えない: 使うのは既存のドット(circle)と線(path)だけ。 */
+    const M = C.mesh, cc = convCenter();
+    const n = Math.max(6, Math.round(M.nodes));
+    const links = Math.max(1, Math.round(M.cageLinks == null ? 3 : M.cageLinks));
+    /* 球殻の上の位置は回しても関係が変わらないので、隣どうしの組は作る時に1回だけ決める */
+    if (!convMesh || convMesh.style !== 'cage' || convMesh.nodes.length !== n || convMesh.links !== links) {
+      const base = [];
+      for (let i = 0; i < n; i++) {
+        /* フィボナッチ球: 球面に偏りなく散らす並べ方 */
+        const yy = 1 - ((i + 0.5) / n) * 2;
+        const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
+        const th = Math.PI * (1 + Math.sqrt(5)) * i;
+        base.push({ x: Math.cos(th) * rr, y: yy, z: Math.sin(th) * rr,
+                    c: i % 2 ? CONV_PINK : CONV_BLUE, tw: Math.random() * 6.28 });
+      }
+      const pairs = [];
+      for (let i = 0; i < n; i++) {
+        const d = [];
+        for (let j = 0; j < n; j++) {
+          if (i === j) continue;
+          d.push([j, Math.hypot(base[i].x - base[j].x, base[i].y - base[j].y, base[i].z - base[j].z)]);
+        }
+        d.sort((a, b) => a[1] - b[1]);
+        for (let k = 0; k < links && k < d.length; k++) {
+          const j = d[k][0];
+          if (!pairs.some(q => (q[0] === j && q[1] === i))) pairs.push([i, j]);
+        }
+      }
+      convMesh = { style: 'cage', nodes: base, pairs, links, pk: [], next: 0 };
+    }
+    const spin = M.cageSpin == null ? 1 : M.cageSpin;
+    const yaw = (convDotMoves() ? elapsed : 0) * 0.42 * spin * (params.direction || 1);
+    const tilt = (M.cageTilt == null ? -20 : M.cageTilt) * Math.PI / 180;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
+    /* 息をするようにわずかに伸び縮み(0にすると完全に固い球) */
+    const breathe = 1 + Math.sin(elapsed * 0.55) * 0.03 * (M.random || 0);
+    const Rc = convPlanetR() * (M.cageR == null ? 1.75 : M.cageR) * breathe;
+    const proj = q => {
+      const x1 = q.x * cy + q.z * sy, z1 = -q.x * sy + q.z * cy, y1 = q.y;      /* 縦軸まわりに回す */
+      const y2 = y1 * ct - z1 * st, z2 = y1 * st + z1 * ct;                      /* 少し傾ける */
+      return { x: cc.x + x1 * Rc, y: cc.y + y2 * Rc * 0.94, z: z2 };             /* z>0 = 手前 */
+    };
+    const P = convMesh.nodes.map(proj);
+    /* --- 骨(線) 手前は惑星の前、奥は惑星の後ろを通す --- */
+    const pool = convLine2Pool(convMesh.pairs.length);
+    convHideLines();     /* 片面しか持たない線プールは使わない */
+    for (let i = 0; i < pool.length; i++) {
+      const [a, b] = convMesh.pairs[i];
+      const A = P[a], B = P[b], zm = (A.z + B.z) / 2;
+      const al = M.lineAlpha * (0.42 + 0.58 * (zm + 1) / 2);   /* 奥ほど薄く＝奥行きが出る */
+      convLine2Set(pool[i], A, B, '#6B7690', (M.lineWidth || 1) * (0.7 + 0.3 * (zm + 1) / 2), al.toFixed(3), zm > 0);
+    }
+    /* --- ノード --- */
+    const pkts = convPktPool(n + 12);
+    for (let i = 0; i < n; i++) {
+      const p0 = P[i], q = convMesh.nodes[i], pk = pkts[i];
+      const dep = 0.72 + 0.5 * (p0.z + 1) / 2;                 /* 手前ほど大きく明るく */
+      pktSet(pk, p0.x, p0.y, (DOT_R * M.size * dep).toFixed(2), q.c, (0.5 + 0.5 * dep).toFixed(3), p0.z > 0);
+    }
+    /* --- パケット: 骨をたどって惑星へ届く --- */
+    convMesh.next -= dt;
+    if (convMesh.next <= 0 && convMesh.pk.length < 12) {
+      convMesh.next = Math.max(0.08, 1 / Math.max(0.05, M.rate));
+      const e = convMesh.pairs[(Math.random() * convMesh.pairs.length) | 0];
+      convMesh.pk.push({ from: e[0], via: e[1], k: 0, stage: 0 });
+    }
+    for (let i = convMesh.pk.length - 1; i >= 0; i--) {
+      const q2 = convMesh.pk[i];
+      q2.k += dt / Math.max(0.08, M.hop);
+      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convGlow = Math.min(1.2, convGlow + 0.3); convMesh.pk.splice(i, 1); continue; } }
+      const A = q2.stage === 0 ? P[q2.from] : P[q2.via];
+      const B = q2.stage === 0 ? P[q2.via] : { x: cc.x, y: cc.y, z: 1 };
+      const k = convSStep(q2.k);
+      const pk = pkts[n + i];
+      if (!pk) continue;
+      const mx = A.x + (B.x - A.x) * k, my = A.y + (B.y - A.y) * k, mz = A.z + (B.z - A.z) * k;
+      const inP = Math.hypot(mx - cc.x, my - cc.y) < convPlanetR();
+      pktSet(pk, mx, my, (DOT_R * M.size * 0.8).toFixed(2), CONV_BLUE, '0.95', mz > 0 && !inP);
+    }
+    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[n + i]; if (pk) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); } }
   } else if (mode === 'mesh') {
     /* ⑫メッシュ (2026-08-26 改良): 3つの見た目 × ランダムに漂う動き。
        organic=ふわふわ漂う / constellation=星座(明滅・線は近いものだけ) / grid=格子状のネット */
     const M = C.mesh, cc = convCenter();
     const n = Math.max(3, Math.round(M.nodes));
     const style = M.style || 'organic';
+    convHideLines2();
     if (!convMesh || convMesh.nodes.length !== n || convMesh.style !== style) {
       convMesh = { style, nodes: [], pk: [], next: 0 };
       for (let i = 0; i < n; i++) {
@@ -7166,6 +7289,51 @@ function convSwitchTo(next) {
   if (!params.gfxByMode[next]) params.gfxByMode[next] = gfxDefault();
   gfxApply(params.gfxByMode[next]);
 }
+/* ===== プリセットに入れる中身 (2026-08-27 ヒデさん指摘で拡張) =====
+   ⚠️ これまでプリセットは【形】(軌道と惑星の位置・大きさ・傾き)しか覚えていなかったので、
+      アニメのつまみをいくら調整して保存しても、呼び出した時に再現されなかった。
+      いまは「その時にパネルで見えている値」をまるごと覚える:
+        形 / 惑星の模様 / ゆらぎ / 共通の見せ方 / いま選んでいる案のつまみ一式 */
+function gfxSnapshotFull() {
+  const mode = params.converge || 'reel';
+  const pk = CONV_PARAM_KEY[mode];
+  const C = params.conv;
+  return {
+    ...gfxSnapshot(),
+    design: params.design,
+    sway: params.sway,
+    common: {
+      showOuter: C.showOuter, showInner: C.showInner, showDots: C.showDots,
+      dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, glow: C.glow,
+      dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
+      dotMove: C.dotMove ? C.dotMove[mode] : undefined,
+    },
+    mode: pk && C[pk] ? { ...C[pk] } : null,
+  };
+}
+function gfxApplyFull(d) {
+  if (!d) return;
+  gfxApply(d);                                  /* まず形 (古いプリセットはここだけ入っている) */
+  if (typeof d.design === 'string') params.design = d.design;
+  if (typeof d.sway === 'number') params.sway = d.sway;
+  const mode = params.converge || 'reel';
+  const C = params.conv;
+  if (d.common) {
+    for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
+                     'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift']) {
+      if (d.common[k] !== undefined) C[k] = d.common[k];
+    }
+    if (d.common.dotMove !== undefined) {
+      if (!C.dotMove) C.dotMove = {};
+      C.dotMove[mode] = d.common.dotMove;
+    }
+  }
+  const pk = CONV_PARAM_KEY[mode];
+  if (d.mode && pk && C[pk]) Object.assign(C[pk], d.mode);
+  markDirty();
+  renderFrame();
+}
+
 /* --- 案ごとのグラフィック3案 (2026-08-27 ヒデさん指定) --- */
 function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
@@ -7204,7 +7372,7 @@ function gfxPresetSetOn(i) {
 function applyGfxPreset(i) {
   const ps = gfxPresetList()[i];
   if (!ps || !ps.data) return;
-  gfxApply(ps.data);
+  gfxApplyFull(ps.data);
   gfxPresetSetOn(i);
 }
 function defaultOf(get) {
@@ -7867,6 +8035,7 @@ function buildPanel() {
         b.onclick = () => {
           applyGfxPreset(i);
           syncPanelRows();
+          fillAnimBody();                    /* 案のつまみも保存時の値に作り直す */
           if (editHandles.on) editHandles.place();
           presetRow.querySelectorAll('.sw-pill:not(.sw-edit)').forEach((el, j) => el.classList.toggle('on', gfxPresetOn() === j));
         };
@@ -7880,7 +8049,7 @@ function buildPanel() {
           if (act === '1') {
             const nm = window.prompt('新しい名前', ps.name);
             if (nm && nm.trim()) { ps.name = nm.trim(); markDirty(); fillPresetRow(); }
-          } else if (act === '2') { ps.data = gfxSnapshot(); markDirty(); fillPresetRow(); }
+          } else if (act === '2') { ps.data = gfxSnapshotFull(); markDirty(); fillPresetRow(); }
           else if (act === '3') {
             if (window.confirm(`「${ps.name}」を削除します。よろしいですか？`)) {
               list.splice(i, 1);
@@ -7898,7 +8067,7 @@ function buildPanel() {
       add.onclick = () => {
         const nm = window.prompt('プリセットの名前', 'プリセット ' + (list.length + 1));
         if (!nm || !nm.trim()) return;
-        list.push({ name: nm.trim(), data: gfxSnapshot() });
+        list.push({ name: nm.trim(), data: gfxSnapshotFull() });
         gfxPresetSetOn(list.length - 1);
         markDirty(); fillPresetRow();
       };
@@ -8031,6 +8200,17 @@ function buildPanel() {
       const M = params.conv.mesh;
       sub(animModeBox, 'この案の調整（網でつながる）', true);
       slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
+      /* 【2026-08-27 ヒデさん指定】包囲ケージ専用のつまみ */
+      if ((M.style || 'organic') === 'cage') {
+        slider('カゴの大きさ', 1.05, 4, 0.05, () => params.conv.mesh.cageR, v => M.cageR = v, v => '×' + v.toFixed(2),
+          '惑星の半径の何倍でカゴを組むか。大きいほど大きく取り囲みます。');
+        slider('カゴが回る速さ', 0, 3, 0.05, () => params.conv.mesh.cageSpin, v => M.cageSpin = v,
+          v => v === 0 ? '止まる' : '×' + v.toFixed(2), 'カゴごと回る速さ。0で止まります。');
+        slider('カゴの傾き', -60, 60, 1, () => params.conv.mesh.cageTilt, v => M.cageTilt = v, v => v + '°',
+          'カゴの軸の傾き。0で真横から見た形になります。');
+        slider('1点から出る骨', 1, 6, 1, () => params.conv.mesh.cageLinks, v => M.cageLinks = v, v => v + '本',
+          '多いほど骨が増えて、密なカゴになります。');
+      }
       slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
         'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
       slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
