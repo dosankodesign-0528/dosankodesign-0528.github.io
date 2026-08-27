@@ -2782,11 +2782,12 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'k6',     /* エコーの見え方(k1〜k7)。glowKind='echo' の時だけ効く。既定は溶ける系 */
+    glowEcho: 'k8',     /* エコーの見え方(k1〜k9)。glowKind='echo' の時だけ効く。既定はくっきり尾を引く */
     /* 【2026-08-28 ヒデさん指定】エコーがガクガクして見えるので、細かく調整できるようにした。
        echoSpeed=広がる速さ(小さいほどゆっくり滑らか) / echoShells=重ねる枚数 /
        echoSpread=どこまで広がるか / echoStart=どこから始まるか / echoFade=消え方のなめらかさ */
     echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
+    echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3078,8 +3079,8 @@ function loadParams() {
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
-  if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k6';
-  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade'])
+  if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k8';
+  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
@@ -4192,6 +4193,7 @@ function convDrawRipples(strength, hit, dt) {
    2 ぼかして広がる … 複製にぼかしをかけながら広がる。やわらかい残像
    3 手前にゴースト … 惑星の手前へ薄く重ねる。透けた残像がはっきり見える */
 let convEchoes = [], convEchoCans = null, convEchoEls = null;
+let convEchoClock = 0;      /* 9「連なる波」用。ずっと進み続ける時計 */
 /* 【2026-08-28 ヒデさん指定】1枚を等倍から広げると、始まりは惑星に隠れて残像が見えない。
    ・最初から【ひと回り大きい】ところから始める
    ・1回の取り込みで【3枚】を、少しずつ大きさをずらして重ねる
@@ -4306,7 +4308,8 @@ function convDrawEchoes(strength, hit, dt, style) {
   }
   /* 消え方: 1 で直線、大きいほど最後まで濃く残ってスッと消える(ガタつきが目立ちにくい) */
   const fadeP = Math.max(0.4, params.conv.echoFade ?? 1.6);
-  const fadeOf = u => Math.pow(1 - u, fadeP);
+  const aMul = Math.max(0, params.conv.echoAlpha ?? 1);      /* 濃さのつまみ */
+  const fadeOf = u => Math.pow(1 - u, fadeP) * aMul;
   const spread = Math.max(0.02, params.conv.echoSpread ?? 0.28);
   const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
   /* --- 5〜7 溶けるように広がる: 1枚の canvas に何十枚も薄く重ねて描く --- */
@@ -4354,6 +4357,37 @@ function convDrawEchoes(strength, hit, dt, style) {
       el.setAttribute('fill', q.c || '#7FD8FF');
       /* 外側の殻ほど薄く。重ねた時に濃淡が出る */
       el.setAttribute('opacity', (0.32 * strength * fadeOf(u) * (1 - (q.step || 0) * 0.18)).toFixed(3));
+    }
+    return;
+  }
+  /* --- 8/9 くっきり系【2026-08-28 ヒデさん指定】--------------------------------
+     1と同じで「惑星の絵をそのまま複製」するのでハッキリ見える。
+     違うのは、1コマぶんの進みを細かく重ねて描くところ(=進みの段差が消える)。
+       8 尾を引く : 取り込みで殻が生まれる。1と同じ出方のまま、なめらか
+       9 連なる波 : 殻を等間隔でずっと回し続ける。生まれる瞬間が無いので段差ゼロ */
+  if (st === 'k8' || st === 'k9') {
+    const N = echoShellCount();
+    convEchoClock = (convEchoClock + dt * spd * 0.6) % 1;
+    for (let i = 0; i < cans.length; i++) {
+      const c = cans[i];
+      if (i >= N) { c.el.style.opacity = '0'; continue; }
+      let u, step;
+      if (st === 'k9') {
+        u = (convEchoClock + i / N) % 1; step = 0;
+      } else {
+        const q = convEchoes[i];
+        if (!q || q.t < 0) { c.el.style.opacity = '0'; continue; }
+        u = Math.max(0, Math.min(1, q.t)); step = q.step || 0;
+      }
+      const base = echoStartOf(step);
+      const grow = base + convSStep(u) * spread;
+      const prev = base + convSStep(Math.max(0, u - 0.07)) * spread;   /* 少し前の位置 */
+      echoSmear(c, prev, grow, 1.15, 8, 0);
+      c.el.style.filter = '';
+      c.el.style.zIndex = '1';
+      c.el.style.transform =
+        `translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale.toFixed(4)}, ${(pl.scale * plFlat).toFixed(4)})`;
+      c.el.style.opacity = (0.95 * strength * fadeOf(u) * (1 - step * 0.14)).toFixed(3);
     }
     return;
   }
@@ -8923,6 +8957,35 @@ const VAL_AI = {
     vArrow(st, sx, sy, 50, deg, { c: go > 0 ? VAL_ACC : VAL_INK, w: 2.6, a: 1 - go * 0.3 });
     vCircle(st, C, C, 9, { w: 2, c: VAL_PINK, a: 0.85 });
   },
+  /* A19 ひし形を貫く (2026-08-28 ヒデさん指定・Figma 15888:25154 のピクトグラムをもとに)
+     ひし形が左から順に現れて右へ4つまで増え、そこを矢印が左から右へ貫く。
+     カンプの比率を実測して合わせた(900×520の描画で計測):
+       全体の幅 400 に対して ひし形の並びが 45% / 高さが 66% / 矢印は右から24%
+       → こちらの 220 の座標系では 全体180(x15〜195) / ひし形の並び81 /
+         半幅16.5・半高59 / 中心 x=86,104.6,123.2,141.8 / 中心 y=110
+     緩急: ひし形は一気に(vE2)、矢印は ためてから一気に(vHold) */
+  A19(st, t) {
+    const C = VAL_VB / 2, T = 4.0, k = vLoop(t, T);
+    const HW = 16.5, HH = 59;
+    const XS = [86, 104.6, 123.2, 141.8];
+    /* 1) 左からの線が引かれる */
+    const lineK = Math.min(1, k / 0.14);
+    vTrim(vLine(st, 15, C, 70, C, { c: VAL_INK, w: 1.8 }), vE2(lineK));
+    /* 2) ひし形が左から順に現れる(常設の当たりを薄く置いて、空の瞬間を作らない) */
+    for (let i = 0; i < 4; i++) {
+      const x = XS[i];
+      const pts = [[x, C - HH], [x + HW, C], [x, C + HH], [x - HW, C], [x, C - HH]];
+      vPath(st, pts, { a: 0.1 });
+      const at = 0.16 + i * 0.09, kk = Math.max(0, Math.min(1, (k - at) / 0.09));
+      if (kk > 0) vTrim(vPath(st, pts, { c: VAL_INK, w: 1.6 }), vE2(kk));
+    }
+    /* 3) 矢印が左から右へ貫く。ためてから一気に */
+    const shoot = vHold(Math.max(0, Math.min(1, (k - 0.56) / 0.34)), 0.22);
+    const x0 = 58, x1 = 152;                 /* 矢印の【根元】が動く範囲 */
+    const ax = x0 + (x1 - x0) * shoot;
+    vArrow(st, ax, C, 43, 0, { c: VAL_ACC, w: 3.4, a: shoot > 0.01 ? 1 : 0 });
+    if (shoot <= 0.01) vArrow(st, 152, C, 43, 0, { a: 0.14 });   /* 出口の目印 */
+  },
 };
 function drawValueIcons() {
   const p = params.patterns || {};
@@ -9163,6 +9226,8 @@ function gfxSnapshotFull() {
       showOuter: C.showOuter, showInner: C.showInner, showDots: C.showDots,
       dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, glow: C.glow, frontCut: C.frontCut,
       glowKind: C.glowKind, glowHold: C.glowHold, glowEcho: C.glowEcho,
+      echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
+      echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9189,7 +9254,8 @@ function gfxApplyFull(d) {
   if (d.common) {
     for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
                      'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
-                     'glowKind', 'glowHold', 'glowEcho']) {
+                     'glowKind', 'glowHold', 'glowEcho',
+                     'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -10589,6 +10655,9 @@ function buildPanel() {
       { key: 'k5', name: '5 連続ディゾルブ', tip: '惑星を少しずつ大きくしながら何十枚も薄く重ねます。段差が消えて、尾を引くように滑らかに溶けます。' },
       { key: 'k6', name: '6 内から溶ける',   tip: '同じ重ね方をしたうえで内側を抜き、外へ広がる輪にします。いちばん波紋らしい溶け方。' },
       { key: 'k7', name: '7 ぼけて溶ける',   tip: '重ねたうえで強くぼかします。輪郭が完全に消えて、光がにじむように広がります。' },
+      /* 【2026-08-28 ヒデさん指定】1のようにしっかり残像が見えて、かつ滑らかに */
+      { key: 'k8', name: '8 くっきり尾を引く', tip: '1と同じで惑星をそのまま複製するのでハッキリ見えます。1コマぶんの進みを細かく重ねるので、段差が出ずになめらかです。' },
+      { key: 'k9', name: '9 連なる波',       tip: '殻を等間隔でずっと回し続けます。生まれる瞬間が無いので、途切れずに波が外へ流れ続けます。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
@@ -10607,6 +10676,8 @@ function buildPanel() {
           v => '×' + v.toFixed(2), '残像がどこまで大きくなるか。小さいほど動きが穏やかです。');
         slider('始まりの大きさ', 1.0, 1.6, 0.01, () => params.conv.echoStart, v => params.conv.echoStart = v,
           v => '×' + v.toFixed(2), '惑星の何倍から出はじめるか。1.00 に近いほど惑星に隠れて見えにくくなります。');
+        slider('残像の濃さ', 0.1, 3, 0.05, () => params.conv.echoAlpha, v => params.conv.echoAlpha = v,
+          v => '×' + v.toFixed(2), '右へ動かすほど残像がはっきり見えます。全部の案に効きます。');
         slider('消え方のなめらかさ', 0.4, 4, 0.05, () => params.conv.echoFade, v => params.conv.echoFade = v,
           v => '×' + v.toFixed(2),
           '右へ動かすほど、最後まで濃く残ってスッと消えます。パッと消える感じが減ります。');
@@ -10853,12 +10924,16 @@ function buildPanel() {
       { key: 'A16', name: 'A16 伸びて刺さる',   tip: '左から矢印が伸びていき、右の枠に刺さると枠が一瞬太くなります。' },
       { key: 'A17', name: 'A17 三方向へ配信',   tip: '中央の四角から矢印が3本、同時に外へ飛びます。' },
       { key: 'A18', name: 'A18 向きを決めて飛ぶ', tip: '矢印が中心でぐるっと回り、止まった向きへシュッと飛びます。' },
+      { key: 'A19', name: 'A19 ひし形を貫く',    tip: 'ひし形が左から順に現れて4つまで増え、そこを矢印が左から右へ貫きます（Figmaのピクトグラムをもとにした形）。' },
     ];
-    note('for SaaS「リアルタイムにデータ同期」');
+    /* 【2026-08-28 ヒデさん指定】どちらの案か分かるよう、見出しを付けて分ける。
+       ⚠️ もとは note() で書いていたが、補足文は既定で隠しているので見えていなかった */
+    const picRoot = mount;
+    sub(picRoot, 'For Saas', true, { fixed: true });
     variantRow('valSaas', SAAS,
       () => params.patterns.valSaas || 'S1',
       v => { params.patterns.valSaas = v; });
-    note('for AI「コンテキスト取得から実行」');
+    sub(picRoot, 'For AI', true, { fixed: true });
     variantRow('valAi', AI,
       () => params.patterns.valAi || 'A1',
       v => { params.patterns.valAi = v; });
