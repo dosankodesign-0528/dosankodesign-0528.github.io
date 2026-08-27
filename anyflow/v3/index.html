@@ -1307,7 +1307,7 @@
   .sw-sec.closed .sw-sec-chev { transform: rotate(-90deg); }
   .sw-sec-body { padding: 8px 10px 10px; }
   .sw-sec.closed .sw-sec-body { display: none; }
-  .sw-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .sw-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin: 2px 0; }
   .sw-copy {
     width: 100%;
     margin-top: 10px;
@@ -1436,26 +1436,32 @@
   .cat-body { padding: 0 10px 10px; }
   .cat.closed .cat-body { display: none; }
   /* 【2026-08-26 整理】セクションの区切りと余白をはっきりさせて読みやすく */
-  .grp { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8e8e8; }
+  .grp { margin-top: 9px; padding-top: 8px; border-top: 1px solid #e8e8e8; }
   .cat-body .grp:first-child { border-top: none; margin-top: 8px; padding-top: 0; }
-  .grp-title { font-weight: 600; font-size: 12.5px; color: #1a1a1a; margin-bottom: 8px;
-               display: flex; align-items: center; gap: 6px; min-height: 24px; }
+  .grp-title { font-weight: 600; font-size: 12.5px; color: #1a1a1a; margin-bottom: 5px;
+               display: flex; align-items: center; gap: 6px; min-height: 22px; }
   /* 見出しは1行に収める(長い時は…)。ボタンと取り合って折り返さないように */
   .grp-title > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden;
                text-overflow: ellipsis; white-space: nowrap; }
   .grp > .grp-body { padding-bottom: 2px; }
   /* たためない小見出し(全体カテゴリ)。コンパクトに詰める */
-  .grp.fixed { margin-top: 10px; padding-top: 9px; }
+  .grp.fixed { margin-top: 7px; padding-top: 6px; }
+  .grp.bare { margin-top: 4px; padding-top: 4px; border-top: none; }
   .grp.fixed .grp-title { font-size: 11.5px; font-weight: 500; color: #666; margin-bottom: 4px; min-height: 0; }
   .grp.fixed .grp-acts { transform: scale(.86); transform-origin: right center; }
   /* 入れ子の小見出し: 左の罫線でぶら下がりを示す */
-  .grp.sub2 { margin-top: 10px; padding-top: 9px; border-top: 1px dashed #ededed;
-              padding-left: 9px; border-left: 2px solid #ededed; }
+  .grp.sub2 { margin-top: 7px; padding-top: 6px; border-top: 1px dashed #ededed;
+              padding-left: 8px; border-left: 2px solid #ededed; }
   .grp.sub2 .grp-title { font-size: 11.5px; font-weight: 500; color: #555; }
   .grp.sub2 .grp.sub2 { border-left-color: #f2f2f2; }
   /* 補足文は読めれば十分なのでもう一段小さく (2026-08-27 ヒデさん指定) */
-  .row-hint { font-size: 8.5px; line-height: 1.5; color: #a6a6a6; margin: -1px 0 5px 0; }
-  .grp-note { font-size: 8.5px; line-height: 1.55; color: #a6a6a6; margin: -2px 0 5px; }
+  /* 【2026-08-27 ヒデさん指定】グレーの補足説明は一旦すべて出さない。
+     必要な所だけ後から keep クラスを付けて出す。
+     文面は消していないので、項目名にマウスを乗せれば吹き出しで読める。 */
+  .row-hint, .grp-note { display: none; }
+  .row-hint.keep, .grp-note.keep { display: block; }
+  .row-hint { font-size: 8.5px; line-height: 1.45; color: #a6a6a6; margin: -2px 0 3px 0; }
+  .grp-note { font-size: 8.5px; line-height: 1.45; color: #a6a6a6; margin: -2px 0 3px; }
   /* ===== Figma のプロパティパネル風 数値入力 (2026-08-27 ヒデさん指定) ===== */
   .np { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin: 5px 0 2px; }
   .np-f { display: flex; align-items: center; gap: 5px; background: #f6f6f7; border: 1px solid #ececec;
@@ -1483,18 +1489,27 @@
   .sw-pill.sw-add { border-style: dashed; }
   /* 【2026-08-27 ヒデさん指定】「グラフィックを編集する」(実行ボタン) と
      「いまの形を保存」(控えめな追加ボタン) は、見た目をはっきり分ける */
+  /* 【2026-08-27 ヒデさん指定】選択ピル(黒)と見た目がかぶらないよう、
+     編集ボタンはブランドの水色にする。押している間はピンク。 */
   .gfx-edit {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: 100%; padding: 10px 12px; margin: 2px 0 4px;
-    border: 0; border-radius: 9px; cursor: pointer;
-    background: linear-gradient(180deg, #1b1b1b, #050505); color: #fff;
-    font: 700 12.5px/1 inherit; letter-spacing: .02em;
-    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 2px 6px rgba(0,0,0,.22);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 8px 12px; margin: 4px 0 3px;
+    border: 0; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(180deg, #24C7FF, #068FC6); color: #fff;
+    font: 700 12px/1 inherit; letter-spacing: .02em;
+    box-shadow: 0 1px 0 rgba(255,255,255,.28) inset, 0 2px 6px rgba(6,143,198,.28);
   }
-  .gfx-edit:hover { background: linear-gradient(180deg, #2c2c2c, #111); }
-  .gfx-edit.on { background: linear-gradient(180deg, #0EBBFF, #0a93c9); }
+  .gfx-edit:hover { background: linear-gradient(180deg, #3ED0FF, #0BA0DC); }
+  .gfx-edit.on { background: linear-gradient(180deg, #FF7BAC, #E23F7C); box-shadow: 0 1px 0 rgba(255,255,255,.28) inset, 0 2px 6px rgba(226,63,124,.28); }
+  /* 2択を横に並べた1行 (外の輪 / 内の輪 / ドット など) */
+  .chip-box { display: flex; gap: 4px; flex: 1 1 auto; min-width: 0; }
+  .chip-b { flex: 1 1 0; min-width: 0; border: 1px solid #d8d8d8; background: #fff; border-radius: 7px;
+            font-family: inherit; font-size: 10px; padding: 5px 3px; cursor: pointer; color: #777;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background .12s, color .12s, border-color .12s; }
+  .chip-b:hover { border-color: #999; }
+  .chip-b.on { background: #090909; color: #fff; border-color: #090909; }
   /* プリセットを1行に収める (2026-08-27 ヒデさん指定でコンパクト化) */
-  .pset { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0 2px; }
+  .pset { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 2px; }
   .pset-lab { flex: 0 0 auto; font-size: 11px; color: #999; line-height: 22px; }
   .pset-row { flex: 1 1 auto; margin: 0; }
   .sw-pill.sw-save {
@@ -1535,13 +1550,13 @@
   /* 小見出しのアコーディオン (既定は閉じる) */
   .grp-title { cursor: pointer; user-select: none; }
   /* 開閉トグルは見出しの右端。押しやすいサイズに (2026-08-26 ヒデさん指定) */
-  .grp-chev { flex: 0 0 auto; margin-left: 6px; width: 28px; height: 28px; line-height: 26px; text-align: center;
+  .grp-chev { flex: 0 0 auto; margin-left: 6px; width: 24px; height: 24px; line-height: 22px; text-align: center;
               color: #9a9a9a; font-size: 13px; border: 1px solid transparent; border-radius: 8px;
               transition: transform .18s, background .15s, color .15s; }
   .grp-title:hover .grp-chev { background: #f2f2f2; color: #333; }
   .grp.closed .grp-chev { transform: rotate(-90deg); }
   .grp.closed .grp-body { display: none; }
-  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
   /* ⚠️ 2026-08-19: ラベルを分かりやすい日本語に書き直したら 92px では折り返した。
      長い項目名でも1行に収まる幅にし、値の欄も「32秒」「120px」が入る幅にする */
   /* ⚠️ 100px は「いちばん長いラベル(9文字)を 11px で描いた実測 99px」に合わせた値。
@@ -2645,7 +2660,7 @@ const DEFAULTS = {
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
        一部だけが順に惑星へ吸われるので、輪の形は保たれる。ghost=薄い軌道線を残すか */
     /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
-    beads:  { count: 64, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
+    beads:  { count: 300, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
     /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
        style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット */
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
@@ -2858,7 +2873,8 @@ function load() {
   }
   /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
   if (merged.converge === 'vein' || merged.converge === 'pulse') merged.converge = DEFAULTS.converge;
-  if (merged.conv.reel && !['clip', 'compress', 'pixel'].includes(merged.conv.reel.vanish)) merged.conv.reel.vanish = 'clip';
+  /* 【2026-08-27 ヒデさん指定】消え方の選択は廃止。前面カット固定 */
+  if (merged.conv.reel) merged.conv.reel.vanish = 'clip';
   /* 惑星の模様 5〜7(C1/C2/C3)は 2026-08-27 に廃止。選んだままなら既定へ寄せる */
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
@@ -3081,12 +3097,12 @@ const GFX_VARIANTS = {
   reel: [
     { name: 'A カンプ通り', desc: '既定の並び。輪が惑星の手前で切り取られながら滑り込みます。',
       gfx: {}, conv: { vanish: 'clip', blend: 0 } },
-    { name: 'B 深く交差＋圧縮グロー', desc: 'ジャイロ交差の配置。中間の輪を3本はさんで層をつくり、縮むほど青く発光しながら凝縮します。',
+    { name: 'B 深く交差', desc: 'ジャイロ交差の配置。中間の輪を3本はさんで層をつくり、惑星の前後を横切る回数を増やします。',
       gfx: { layout: 'gyro', outer: { scale: 1.05 }, inner: { scale: 0.95, flat: 1.15 }, planet: { scale: 0.9, dy: 40 } },
-      conv: { vanish: 'compress', blend: 3, blendAlpha: 0.35, glowTone: 'cool', glowWidth: 0.45, glowPower: 1.2 } },
-    { name: 'C 薄い皿＋データ粒', desc: '横に広げて寝かせた薄い輪。点線が圧縮されて1本の線につながっていきます。中間の輪5本で厚みを出します。',
+      conv: { blend: 3, blendAlpha: 0.35 } },
+    { name: 'C 薄い皿', desc: '横に広げて寝かせた薄い輪。中間の輪を5本はさんで、土星の輪のような厚みを出します。',
       gfx: { outer: { scale: 1.2, flat: 0.55 }, inner: { scale: 1.05, flat: 0.5 }, planet: { scale: 1.12, dy: 52 } },
-      conv: { vanish: 'pixel', pxWidth: 1.3, pxDensity: 1.2, blend: 5, blendAlpha: 0.3 } },
+      conv: { blend: 5, blendAlpha: 0.3 } },
   ],
   spiral: [
     { name: 'A 標準の渦', desc: '既定の並び。粒がしばらく軌道を回ってから、ゆるい渦で落ちます。',
@@ -3120,13 +3136,13 @@ const GFX_VARIANTS = {
   ],
   beads: [
     { name: 'A 標準', desc: '既定。点が等間隔に並んだ輪から、順に惑星へ吸い込まれます。',
-      gfx: {}, conv: { count: 64, size: 0.5, ratio: 0.22, speed: 0.26, spin: 0, jitter: 0 } },
-    { name: 'B 密で細かい', desc: '点を120個まで増やして1粒を小さく。線に近い密度になり、流れがなめらかに見えます。',
+      gfx: {}, conv: { count: 300, size: 0.5, ratio: 0.22, speed: 0.26, spin: 0, jitter: 0 } },
+    { name: 'B 細かい粒', desc: '1粒を小さくして、線に近い細かさに。流れがなめらかに見えます。',
       gfx: { outer: { scale: 1.06 }, inner: { scale: 1.02 }, planet: { scale: 1.02 } },
-      conv: { count: 120, size: 0.34, ratio: 0.16, speed: 0.34, spin: 0.5, jitter: 0.15 } },
+      conv: { count: 300, size: 0.34, ratio: 0.16, speed: 0.34, spin: 0.5, jitter: 0.15 } },
     { name: 'C 交差する二重リング', desc: 'ジャイロ交差の2本に点を並べ、吸い込まれる時に渦を巻かせます。2本の重なりで奥行きが出ます。',
       gfx: { layout: 'gyro', outer: { scale: 1.02 }, inner: { scale: 0.94, flat: 1.2 }, planet: { scale: 0.9 } },
-      conv: { count: 78, size: 0.55, ratio: 0.3, spin: 1.3, spinEase: 1.4, backIn: 1.5 } },
+      conv: { count: 300, size: 0.55, ratio: 0.3, spin: 1.3, spinEase: 1.4, backIn: 1.5 } },
   ],
   duplex: [
     { name: 'A 標準', desc: '既定。ゆるく反った線の上を、粒が惑星と軌道の間で行き来します。',
@@ -7244,9 +7260,13 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
   function rangeFor(cur) {
     if (typeof cur !== 'number' || !isFinite(cur)) cur = dMin0;
     const floor = dMin0 < 0 ? -Infinity : (dMin0 > 0 ? dMin0 * 0.5 : 0);
-    /* 半幅: 中央に置くのに必要な分 / 刻み8つぶん / 元の範囲の15% のうち一番大きいもの */
-    const half = Math.max(cur - (isFinite(floor) ? floor : cur - (dMax0 - dMin0) * 0.5),
-                          step * 8, (dMax0 - dMin0) * 0.15);
+    /* 【2026-08-27 ヒデさん指定・精査】いまの値を真ん中に置くことを最優先にする。
+       ・下へ動かせる余地(いまの値 − 床)がそのまま半幅。これで左右が同じだけ動かせる＝中央
+       ・余地が刻み2つぶんも無い時(＝値が床に張り付いている)は中央に置けないので、
+         代わりに「少し動かすだけで変化が出る」幅を取る */
+    const room = isFinite(floor) ? (cur - floor) : (dMax0 - dMin0) * 0.5;
+    const half = (room >= step * 2) ? room
+               : Math.max(step * 4, (dMax0 - dMin0) * 0.15);
     let lo = cur - half, hi = cur + half;
     if (lo < floor) { lo = floor; hi = lo + half * 2; }
     const q = v => Math.round(v / step) * step;
@@ -7281,9 +7301,14 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
     /* 端に達したまま離したら、その値を中央にして範囲を取り直す(行き止まりを作らない) */
     const v = parseFloat(input.value), lo = +input.min, hi = +input.max;
     const k = (hi - lo) ? (v - lo) / (hi - lo) : 0.5;
-    if (k < 0.08 || k > 0.92) {
+    if (k < 0.1 || k > 0.9) {
       const r = rangeFor(v);
-      input.min = r.lo; input.max = r.hi; input.value = v;
+      /* 端まで動かしたのに範囲が狭くなるのは困る。いまの幅より狭くしない */
+      const span = Math.max(r.hi - r.lo, hi - lo);
+      const c = Math.min(Math.max(v, r.lo), r.hi);
+      let nlo = c - span / 2, nhi = c + span / 2;
+      if (nlo < r.lo) { nlo = r.lo; nhi = nlo + span; }
+      input.min = nlo; input.max = nhi; input.value = v;
     }
   });
   row._sync = () => {
@@ -7297,6 +7322,7 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
   if (subItems) subItems.push({ reset: () => { const d = defaultOf(get); if (d != null) { set(d); row._sync(); } } });
   mount.appendChild(row);
   if (hint) {
+    lab.title = hint;          /* 出さない代わりに、項目名にマウスを乗せれば読める */
     const h = document.createElement('div');
     h.className = 'row-hint';
     h.textContent = hint;
@@ -7357,17 +7383,17 @@ function sub(target, html, deep, opts) {
   const fixed = !!(opts && opts.fixed);   /* たためない＝常に開いたコンパクト表示 */
   /* 既定はたたむ。ただし「🎨 グラフィック」とその中の小見出しは開いた状態で始める
      (2026-08-27 ヒデさん指定) */
-  const GRAPHIC_OPEN = ['🎨 グラフィック',
-                        '① アニメーションを選ぶ', '② グラフィックを編集',
-                        '③ 軌道（輪）', '④ ドット（粒）', '⑤ 惑星', '⑥ 登場（出てくる順番）',
+  const GRAPHIC_OPEN = ['🎨 グラフィック', '',
+                        '軌道（輪）', 'ドット（粒）', '惑星', '登場（出てくる順番）',
                         '表示', '表示・大きさ', '模様',
                         'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
                         'この案の調整（粒の渦）', 'この案の調整（網でつながる）',
                         'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）', '消え方（吸収の表現）'];
   const open = fixed ? true : (subOpen[key] === undefined ? GRAPHIC_OPEN.includes(key) : subOpen[key]);
   subOpen[key] = open;
+  const bare = !!(opts && opts.bare);   /* 見出しそのものを出さない(中身だけ並べる) */
   const g = document.createElement('div');
-  g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed') + (fixed ? ' fixed' : '');
+  g.className = (deep ? 'grp sub2' : 'grp') + (open ? '' : ' closed') + (fixed ? ' fixed' : '') + (bare ? ' bare' : '');
   const title = document.createElement('div');
   title.className = 'grp-title';
   const lab = document.createElement('span');
@@ -7403,11 +7429,21 @@ function sub(target, html, deep, opts) {
   title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
   /* 【2026-08-27 ヒデさん指定】戻す値を持たないセクション(プリセットなど)にはボタンを出さない。
      組み立てが終わってから項目の有無で判断する */
-  setTimeout(() => { if (!items.length) acts.remove(); }, 0);
+  setTimeout(() => {
+    if (!items.length) acts.remove();
+    /* 【2026-08-27 ヒデさん指定】つまみが1つしかない小見出しは、たたむ意味がないので
+       開いたまま固定する(▾も消す)。組み立てが終わってから中身の数で判断する */
+    const ctrl = inner.querySelectorAll(':scope > .row, :scope > .sw-row, :scope > .grp, :scope > .pset').length;
+    if (!fixed && ctrl <= 1) {
+      g.classList.remove('closed'); g.classList.add('fixed');
+      chev.style.display = 'none'; title.onclick = null; title.style.cursor = 'default';
+    }
+  }, 0);
   const inner = document.createElement('div');
   inner.className = 'grp-body';
   if (fixed) { chev.style.display = 'none'; title.style.cursor = 'default'; }
   else title.onclick = () => { subOpen[key] = !g.classList.toggle('closed'); };
+  if (bare) title.style.display = 'none';
   g.append(title, inner);
   target.appendChild(g);
   mount = inner;      /* 以降の slider / note はこの中に入る = たためる */
@@ -7465,6 +7501,36 @@ function segRow(label, opts, getDir, setDir) {
   mount.appendChild(row);
 }
 
+/* 【2026-08-27 ヒデさん指定・コンパクト化】オン/オフの2択をいくつか横に並べて1行に収める。
+   これまで「外の輪」「内の輪」「ドット」で3行使っていたものが1行になる。 */
+function chipRow(label, items) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  const box = document.createElement('div');
+  box.className = 'chip-box';
+  const bs = items.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip-b';
+    b.textContent = it.name;
+    b.title = (it.hint || it.name) + '（押すと表示・非表示が切り替わります）';
+    b.onclick = () => { it.set(!it.get()); sync(); markDirty(); renderFrame(); };
+    box.appendChild(b);
+    return [b, it];
+  });
+  function sync() { bs.forEach(([b, it]) => b.classList.toggle('on', !!it.get())); }
+  sync();
+  if (rows) rows.push({ _sync: sync });
+  if (subItems) subItems.push({ reset: () => {
+    items.forEach(it => { const d = defaultOf(it.get); if (d != null) it.set(d); });
+    sync();
+  } });
+  row.append(lab, box);
+  (mount || body).appendChild(row);
+}
+
 /* パネルを作り直しても、目印にした要素が画面の同じ高さに留まるようにする。
    目印はテキストで探し直す（作り直しで DOM は別物になるため）*/
 function rebuildKeeping(markEl) {
@@ -7493,6 +7559,7 @@ function pillRow(items, isOn, onPick, resetRef, opts) {
       b.append(sw);
     }
     b.append(document.createTextNode(it.name));
+    if (opts && opts.tip) { const t = opts.tip(it, i); if (t) b.title = t; }
     b.classList.toggle('on', isOn(it, i));
     b.onclick = () => {
       onPick(it, i);
@@ -7702,7 +7769,9 @@ function buildPanel() {
      ⚠️ グラフィックの形(軌道と惑星の位置・サイズ・傾き)も、プリセットも【案ごと】に分かれている。
         案を切り替えると、その案の形に入れ替わる(前の案の形は引き継がない)。 */
   liveEdit = true;
-  sub(gRoot, '① アニメーションを選ぶ', true, { fixed: true });
+  /* 【2026-08-27 ヒデさん指定】見出しの番号も「アニメーションを選ぶ」の文言も出さず、
+     選択ピルからいきなり始める */
+  sub(gRoot, '', true, { fixed: true, bare: true });
   const aRoot = mount;
   let fillPresetRow = null;   /* ②のプリセット行を作り直す関数(案が変わったら中身を入れ替える) */
   const onConvSwitch = (next) => {
@@ -7717,7 +7786,7 @@ function buildPanel() {
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
     it => onConvSwitch(it.key),
     { get: () => params.converge, set: v => onConvSwitch(v) },
-    { noRebuild: true });
+    { noRebuild: true, tip: it => (window.__convDesc || {})[it.key] || '' });
 
   /* --- この案のグラフィック3案 (2026-08-27 ヒデさん指定) ---
      同じアニメーションの枠の中で、軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウトと
@@ -7725,10 +7794,6 @@ function buildPanel() {
   const varRow = document.createElement('div');
   varRow.className = 'sw-row';
   (mount || body).appendChild(varRow);
-  const varNote = document.createElement('div');
-  varNote.className = 'grp-note';
-  varNote.style.minHeight = '3.2em';   /* 説明が変わっても下の行が動かないように高さを確保 */
-  (mount || body).appendChild(varNote);
   const fillVariantRow = function () {
     const mode = params.converge || 'reel';
     const list = GFX_VARIANTS[mode] || [];
@@ -7738,244 +7803,25 @@ function buildPanel() {
       const b = document.createElement('button');
       b.className = 'sw-pill' + (on === i ? ' on' : '');
       b.textContent = v.name;
+      b.title = v.desc;                                 /* 説明は吹き出しで読む */
       b.onclick = () => {
         applyGfxVariant(i);
         syncPanelRows();
         fillAnimBody();
         if (editHandles.on) editHandles.place();
         varRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', j === i));
-        varNote.textContent = v.desc;
       };
       varRow.appendChild(b);
     });
-    varNote.textContent = (typeof on === 'number' && list[on])
-      ? list[on].desc
-      : 'この案の中でのグラフィックの見せ方を3つ用意しています。軌道と惑星の 位置・大きさ・傾き と、この案のつまみが入れ替わります。';
   };
   fillVariantRow();
-  liveEdit = false;
-  const animBody = document.createElement('div');
-  aRoot.appendChild(animBody);
-  /* 【2026-08-27 リロード感の解消】説明文は要素を使い回して文字だけ差し替え、
-     作り直すのは「この案の調整」の箱だけにする。共通の項目は一度きり作って触らない。
-     こうすると案を押しても、見ていた場所が動かず、アニメだけがすぐ切り替わる。 */
-  const animDescEl = document.createElement('div');
-  animDescEl.className = 'grp-note';
-  animBody.appendChild(animDescEl);
-  const animModeBox = document.createElement('div');
-  animBody.appendChild(animModeBox);
-  {
-    const CONV_DESC = {
-      off:    '軌道をただ回り続けます。集約の動きはしません。',
-      reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
-      spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
-      accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
-      mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
-      beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
-      duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
-    };
-    window.__convDesc = CONV_DESC;
-  }
-  function fillAnimBody() {
-    const keepScroll = body.scrollTop;      /* 見ていた位置を保つ */
-    const keepMount = mount, keepLive = liveEdit;
-    animDescEl.textContent = (window.__convDesc || {})[params.converge] || '';
-    animModeBox.innerHTML = '';
-    mount = animModeBox;
-    liveEdit = true;                        /* ここのつまみは触っても頭出ししない */
 
-    const pctF = v => Math.round(v * 100) + '%';
-    const cvMode = params.converge || 'reel';
-    /* 【2026-08-27 ヒデさん指定】軌道にそってドット自体が動くか。案ごとにオンオフできる */
-    if (cvMode !== 'off') {
-      const DM = params.conv.dotMove || (params.conv.dotMove = {});
-      segRow('ドットの周回', [['する', 1], ['しない', 0]],
-        () => (DM[cvMode] !== false) ? 1 : 0,
-        v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
-      note('この案でドットが軌道にそって動くか。「しない」にすると、その場に留まったまま集約などの動きだけが起きます。');
-    }
-    if (cvMode === 'reel') {
-      const R = params.conv.reel;
-      sub(animModeBox, 'この案の調整（輪が縮んで吸収）', true);
-      slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
-        '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
-      slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
-        'ここまでは全周サイズでドットが回る。');
-      slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
-        'ここで吸収が完了し、もう1本が移動を始める。');
-      slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
-        '吸収後、もう1本がすべり込む時間。');
-      slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
-        '空いた位置に新しい輪がフェードインする時間。');
-      slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
-      slider('中間の輪の数', 0, 12, 1, () => params.conv.reel.blend, v => R.blend = v, v => v + '本',
-        '外の輪と内の輪の間を、この本数だけ埋めます（イラレのブレンドのイメージ）。0で無し。', { fixedMax: true });
-      if ((params.conv.reel.blend || 0) > 0) {
-        slider('中間の輪の濃さ', 0.05, 1, 0.05, () => params.conv.reel.blendAlpha, v => R.blendAlpha = v, v => v.toFixed(2),
-          null, { fixedMax: true });
-      }
-      /* 消え方は「前面カット」「はみ出ず溶ける」の2種だけ残す(2026-08-26 ヒデさん指定) */
-      const VANISH_DESC = {
-        clip: '前面カット: 惑星の手前にはみ出た部分だけを切り取る。輪が惑星の中へ滑り込んで見える。',
-        compress: '圧縮グロー: 縮むほど色が濃くなり、白く発光しながら凝縮していく。データが圧縮される感じ。',
-        pixel: 'データ粒: はじめはバラバラの点線。圧縮されるほど点がつながって1本の線になります。',
-      };
-      const VANISHES = [
-        { key: 'clip', name: '前面カット' },
-        { key: 'compress', name: '圧縮グロー' },
-        { key: 'pixel', name: 'データ粒' },
-      ];
-      let vanishNoteEl = null;
-      /* 【2026-08-27】選ぶと下に出るつまみが変わるが、作り直すのは
-         「この案の調整」の箱だけ(fillAnimBody)。パネル全体は触らない */
-      pillRow(VANISHES, it => (R.vanish || 'clip') === it.key,
-        it => { R.vanish = it.key; markDirty(); renderFrame(); fillAnimBody(); },
-        { get: () => params.conv.reel.vanish, set: v => { R.vanish = v; renderFrame(); fillAnimBody(); } },
-        { noRebuild: true });
-      vanishNoteEl = document.createElement('div');
-      vanishNoteEl.className = 'grp-note';
-      vanishNoteEl.style.minHeight = '3.4em';   /* 高さ固定枠: 説明を差し替えても他の行が動かない */
-      vanishNoteEl.textContent = VANISH_DESC[R.vanish] || VANISH_DESC.clip;
-      (mount || body).appendChild(vanishNoteEl);
-      /* 選んだ消え方に合わせて、その表現専用のつまみを出す(2026-08-27 ヒデさん指定) */
-      if ((R.vanish || 'clip') === 'compress') {
-        pillRow([{ key: 'now', name: 'いまの感じ' }, { key: 'strong', name: '強発光' },
-                 { key: 'rainbow', name: 'レインボー' }, { key: 'cool', name: '青に寄る' },
-                 { key: 'warm', name: 'ピンクに寄る' }],
-          it => (R.glowTone || 'now') === it.key,
-          it => { R.glowTone = it.key; markDirty(); renderFrame(); },
-          { get: () => params.conv.reel.glowTone, set: v => { R.glowTone = v; renderFrame(); } },
-          { noRebuild: true });
-        note('光り方。青に寄る／ピンクに寄るは、ブランドの水色・ピンクの側へ色を寄せます。');
-        slider('光の強さ', 0.2, 3, 0.05, () => params.conv.reel.glowPower, v => R.glowPower = v, v => '×' + v.toFixed(2),
-          '発光とにじみの強さ。', { fixedMax: true });
-        slider('線の太さ', 0.1, 3, 0.05, () => params.conv.reel.glowWidth, v => R.glowWidth = v, v => '×' + v.toFixed(2),
-          '圧縮されていく時の線の太さ。小さいほど細い線のまま光ります。', { fixedMax: true });
-      }
-      if ((R.vanish || 'clip') === 'pixel') {
-        slider('線の太さ', 0.2, 6, 0.1, () => params.conv.reel.pxWidth, v => R.pxWidth = v, v => v.toFixed(1) + 'px',
-          '点と、つながった後の線の太さ。', { fixedMax: true });
-        slider('点の密度', 0.05, 3, 0.05, () => params.conv.reel.pxDensity, v => R.pxDensity = v, v => '×' + v.toFixed(2),
-          '小さいほど点が詰まって並びます（大きいほどスカスカ）。', { fixedMax: true });
-        slider('つながり始め', 0, 0.9, 0.01, () => params.conv.reel.pxJoinAt, v => R.pxJoinAt = v, pctF,
-          '収縮のうち、ここから点がつながり始めます。遅くするほど長くドットのままです。', { fixedMax: true });
-        slider('つながりきる', 0.1, 1, 0.01, () => params.conv.reel.pxJoinEnd, v => R.pxJoinEnd = v, pctF,
-          'ここで隙間がなくなって1本の線になります。', { fixedMax: true });
-        slider('点が回る速さ', 0, 4, 0.05, () => params.conv.reel.pxSpin, v => R.pxSpin = v, v => '×' + v.toFixed(2),
-          '点が軌道の上を流れる速さ。0で止まります。', { fixedMax: true });
-        slider('点のゆらぎ', 0, 3, 0.05, () => params.conv.reel.pxWobble, v => R.pxWobble = v, v => v.toFixed(2),
-          '点の並びが小刻みに揺れます。0でぴたっと止まります。', { fixedMax: true });
-      }
-      slider('透過し始め', 0, 0.95, 0.01, () => params.conv.reel.fadeAt, v => R.fadeAt = v, pctF,
-        '収縮のうち、どこから透け始めるか。遅いほどギリギリまでくっきり。');
-      slider('透過率(残す濃さ)', 0, 0.9, 0.01, () => params.conv.reel.fadeTo, v => R.fadeTo = v, pctF,
-        '吸収の瞬間にどれだけ濃さを残すか。0で完全に透明。');
-      /* 【2026-08-27 ヒデさん指定】収縮時のスピンはオンオフで。既定はオフ */
-      segRow('縮む時のスピン', [['なし', 0], ['あり', 1]],
-        () => (params.conv.reel.spinUp || 0) > 0 ? 1 : 0,
-        v => { R.spinUp = v ? 1.2 : 0; markDirty(); renderFrame();
-               if (typeof fillAnimBody === 'function') fillAnimBody(); });
-      if ((params.conv.reel.spinUp || 0) > 0) {
-        slider('スピンの強さ', 0.1, 3, 0.05, () => params.conv.reel.spinUp, v => R.spinUp = v,
-          v => '+' + Math.round(v * 180) + '°', '縮むほどドットが速く回ります。', { fixedMax: true });
-      }
-    } else if (cvMode === 'spiral') {
-      const S = params.conv.spiral;
-      sub(animModeBox, 'この案の調整（粒が渦で吸収）', true);
-      slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
-      slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
-        '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
-      slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
-        '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
-      slider('渦の巻き具合', 0, 3, 0.05, () => params.conv.spiral.swirl, v => S.swirl = v, v => '×' + v.toFixed(2),
-        '0で巻かずにまっすぐ落ちます。大きいほど中心に近づくほど速く回り、きつく巻き込みます。', { fixedMax: true });
-      slider('落ち方のカーブ', 0.1, 3, 0.05, () => params.conv.spiral.fallCurve, v => S.fallCurve = v, v => '×' + v.toFixed(2),
-        '1で一定の速さ。大きいほど中心の近くで一気に吸い込まれます。', { fixedMax: true });
-      slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-    } else if (cvMode === 'accre') {
-      const AC = params.conv.accre;
-      sub(animModeBox, 'この案の調整（粒の渦）', true);
-      segRow('軌道を出す', [['出す', 1], ['消す', 0]], () => params.conv.accre.showOrbit ? 1 : 0,
-        v => { AC.showOrbit = !!v; markDirty(); renderFrame(); });
-      note('この案は既定では軌道を消しています。「出す」にすると輪とドットも一緒に見せられます（共通の表示スイッチに従います）。');
-      slider('粒の数', 5, 2000, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
-        '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
-      slider('粒の大きさ', 0.05, 3, 0.01, () => params.conv.accre.size, v => AC.size = v, v => '×' + v.toFixed(2),
-        'この案の粒だけの大きさ（共通の「ドットの大きさ」に掛かります）。', { fixedMax: true });
-      slider('粒の揺らぎ', 0, 3, 0.05, () => params.conv.accre.wobble, v => AC.wobble = v, v => v.toFixed(2),
-        '回りながら外側・内側へゆらゆら揺れます。0でぴたっと回ります。', { fixedMax: true });
-      slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
-        '内へ落ちていく速さ。', { fixedMax: true });
-      slider('渦の巻き具合', 0, 3, 0.05, () => params.conv.accre.swirl, v => AC.swirl = v, v => '×' + v.toFixed(2),
-        '0でどこでも同じ速さ(ゆるい渦)。大きいほど中心に近づくほど速く回り、きつく巻き込みます。', { fixedMax: true });
-      slider('落ち方のカーブ', 0.1, 3, 0.05, () => params.conv.accre.fallCurve, v => AC.fallCurve = v, v => '×' + v.toFixed(2),
-        '1で一定の速さ。大きいほど中心の近くで一気に吸い込まれます。', { fixedMax: true });
-      slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-      slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-      slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
-        '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
-    } else if (cvMode === 'mesh') {
-      const M = params.conv.mesh;
-      sub(animModeBox, 'この案の調整（網でつながる）', true);
-      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
-      slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
-        'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
-      slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
-      slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
-      slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
-        '大きいほど線が増えて網が濃くなります。', { fixedMax: true });
-      slider('ランダムさ', 0, 2.5, 0.05, () => params.conv.mesh.random, v => M.random = v, v => '×' + v.toFixed(2),
-        'ノードがどれだけ大きく漂うか。0でぴたっと止まります。', { fixedMax: true });
-      slider('漂う速さ', 0, 3, 0.05, () => params.conv.mesh.drift, v => M.drift = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-      slider('1ホップの時間', 0.05, 2, 0.05, () => params.conv.mesh.hop, v => M.hop = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
-      slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
-    } else if (cvMode === 'beads') {
-      const B = params.conv.beads;
-      sub(animModeBox, 'この案の調整（点が並ぶ軌道）', true);
-      slider('ドットの密度', 6, 400, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
-        '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
-      slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
-        '小さいほど輪の形が保たれ、大きいほど一斉に吸い込まれます。', { fixedMax: true });
-      slider('吸収にかかる秒数', 0.5, 12, 0.1, () => params.conv.beads.life, v => B.life = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
-      slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-      slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
-        '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
-      slider('戻ってくる時間', 0.1, 5, 0.1, () => params.conv.beads.backIn, v => B.backIn = v, v => v.toFixed(1) + '秒',
-        '吸い込まれた点が、空いた場所にゆっくり現れるまでの時間。', { fixedMax: true });
-      slider('吸い込みのスピン', 0, 3, 0.05, () => params.conv.beads.spin, v => B.spin = v,
-        v => v === 0 ? 'なし' : '+' + Math.round(v * 180) + '°',
-        '吸い込まれる間に回り込みます。上げるほど②の「渦で吸収」に近い動きになります。', { fixedMax: true });
-      if ((params.conv.beads.spin || 0) > 0) {
-        slider('スピンの効き方', 0.2, 3, 0.05, () => params.conv.beads.spinEase, v => B.spinEase = v, v => '×' + v.toFixed(2),
-          '大きいほど「中心に近づくほど速く回る」渦らしい効き方になります。', { fixedMax: true });
-      }
-    } else if (CONV_LINKED.includes(cvMode)) {
-      const L = params.conv.link;
-      sub(animModeBox, 'この案の調整（線で行き来）', true);
-      note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
-      slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
-        '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
-      slider('流れる速さ', 0.1, 4, 0.05, () => params.conv.link.speed, v => L.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
-      slider('1周の秒数', 0.5, 10, 0.1, () => params.conv.link.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
-      slider('粒の密度', 0.3, 6, 0.1, () => params.conv.link.density, v => L.density = v, v => '×' + v.toFixed(1),
-        '1本の線に流す粒の数。', { fixedMax: true });
-      slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
-        '0で直線、大きいほど弧を描きます。', { fixedMax: true });
-      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2));
-      slider('線の太さ', 0.2, 4, 0.1, () => params.conv.link.lineWidth, v => L.lineWidth = v, v => v.toFixed(1) + 'px',
-        '惑星とドットを結ぶ線の太さ。');
-    }
-
-
-    mount = keepMount;
-    liveEdit = keepLive;
-    body.scrollTop = keepScroll;
-  }
-  fillAnimBody();
-
-  /* ═══ ② グラフィックを編集 ── 直接編集とプリセット (2026-08-27 ヒデさん指定) ═══ */
+  /* ═══ グラフィックを編集 ── 直接編集とプリセット ═══
+     【2026-08-27 ヒデさん指定】見出しは出さず、選択ピルのすぐ下にボタンを置く。
+     ⚠️ 置き場所は aRoot(選択ピルと同じ箱)。gRoot に入れると、案ごとの調整より
+        あとに回ってしまい「ピルの下」にならない */
   liveEdit = true;
-  sub(gRoot, '② グラフィックを編集', true, { fixed: true });
+  sub(aRoot, '', true, { fixed: true, bare: true });
   {
     /* 「編集する」は実行ボタン。下の「いまの形を保存」とは見た目をはっきり分ける */
     const b2 = document.createElement('button');
@@ -8062,19 +7908,195 @@ function buildPanel() {
   }
   liveEdit = false;
 
+  liveEdit = false;
+  const animBody = document.createElement('div');
+  aRoot.appendChild(animBody);
+  /* 【2026-08-27 リロード感の解消】説明文は要素を使い回して文字だけ差し替え、
+     作り直すのは「この案の調整」の箱だけにする。共通の項目は一度きり作って触らない。
+     こうすると案を押しても、見ていた場所が動かず、アニメだけがすぐ切り替わる。 */
+  /* 【2026-08-27 ヒデさん指定】案の説明は常時出さない(縦が伸びるため)。
+     文面は選択ピルにマウスを乗せた時の吹き出しで読める */
+  const animModeBox = document.createElement('div');
+  animBody.appendChild(animModeBox);
+  {
+    const CONV_DESC = {
+      off:    '軌道をただ回り続けます。集約の動きはしません。',
+      reel:   '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内側へ下りてきて、空いた外側に新しい輪が現れる…をくり返します。',
+      spiral: '粒がしばらく軌道の上を回ったあと、渦を描きながら内側へ落ちて惑星に吸い込まれます。吸われた粒はまた軌道に生まれ直します。',
+      accre:  '軌道の代わりに、たくさんの細かい粒が惑星のまわりで渦を巻きます（土星の輪のような円盤）。粒は回りながら少しずつ内側へ落ちて取り込まれます。輪とドットは自動で隠れます。',
+      mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
+      beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
+      duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
+    };
+    window.__convDesc = CONV_DESC;
+  }
+  function fillAnimBody() {
+    const keepScroll = body.scrollTop;      /* 見ていた位置を保つ */
+    const keepMount = mount, keepLive = liveEdit;
+    animModeBox.innerHTML = '';
+    mount = animModeBox;
+    liveEdit = true;                        /* ここのつまみは触っても頭出ししない */
+
+    const pctF = v => Math.round(v * 100) + '%';
+    const cvMode = params.converge || 'reel';
+    /* 【2026-08-27 ヒデさん指定】「ドットの周回」と「スピン」は同じ話なので1つのまとまりに置く。
+       案ごとに中身が変わるので、ここで案別に足していく */
+    if (cvMode !== 'off') {
+      const DM = params.conv.dotMove || (params.conv.dotMove = {});
+      sub(animModeBox, 'ドットの動き', true, { fixed: true });
+      segRow('周回', [['する', 1], ['しない', 0]],
+        () => (DM[cvMode] !== false) ? 1 : 0,
+        v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
+      if (cvMode === 'reel') {
+        const R0 = params.conv.reel;
+        segRow('スピン', [['なし', 0], ['あり', 1]],
+          () => (params.conv.reel.spinUp || 0) > 0 ? 1 : 0,
+          v => { R0.spinUp = v ? 1.2 : 0; markDirty(); renderFrame(); fillAnimBody(); });
+        if ((params.conv.reel.spinUp || 0) > 0) {
+          slider('スピンの強さ', 0.1, 3, 0.05, () => params.conv.reel.spinUp, v => R0.spinUp = v,
+            v => '+' + Math.round(v * 180) + '°', '縮むほどドットが速く回ります。');
+        }
+      }
+      if (cvMode === 'beads') {
+        const B0 = params.conv.beads;
+        slider('吸い込みのスピン', 0, 3, 0.05, () => params.conv.beads.spin, v => B0.spin = v,
+          v => v === 0 ? 'なし' : '×' + v.toFixed(2), '吸い込まれる時に渦を巻きます。0でまっすぐ落ちます。');
+        if ((params.conv.beads.spin || 0) > 0) {
+          slider('スピンの効き方', 0.2, 3, 0.05, () => params.conv.beads.spinEase, v => B0.spinEase = v,
+            v => '×' + v.toFixed(2), '大きいほど中心の近くで一気に巻き込みます。');
+        }
+      }
+      if (cvMode === 'spiral' || cvMode === 'accre') {
+        const K0 = params.conv[cvMode];
+        slider('渦の巻き具合', 0, 3, 0.05, () => params.conv[params.converge].swirl, v => K0.swirl = v,
+          v => '×' + v.toFixed(2), '0で巻かずにまっすぐ。大きいほど中心に近づくほど速く回り、きつく巻き込みます。');
+        slider('落ち方のカーブ', 0.1, 3, 0.05, () => params.conv[params.converge].fallCurve, v => K0.fallCurve = v,
+          v => '×' + v.toFixed(2), '1で一定の速さ。大きいほど中心の近くで一気に吸い込まれます。');
+      }
+    }
+    if (cvMode === 'reel') {
+      const R = params.conv.reel;
+      sub(animModeBox, 'この案の調整（輪が縮んで吸収）', true);
+      slider('周期', 2, 10, 0.1, () => params.conv.reel.T, v => R.T = v, v => v.toFixed(1) + '秒',
+        '1循環の長さ。「吸収→もう1本が移動→空いた位置に新しい輪」のくり返し。');
+      slider('収縮を始める', 0.05, 0.6, 0.01, () => params.conv.reel.shrinkAt, v => R.shrinkAt = v, pctF,
+        'ここまでは全周サイズでドットが回る。');
+      slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
+        'ここで吸収が完了し、もう1本が移動を始める。');
+      slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
+        '吸収後、もう1本がすべり込む時間。');
+      slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
+        '空いた位置に新しい輪がフェードインする時間。');
+      slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
+      slider('中間の輪の数', 0, 12, 1, () => params.conv.reel.blend, v => R.blend = v, v => v + '本',
+        '外の輪と内の輪の間を、この本数だけ埋めます（イラレのブレンドのイメージ）。0で無し。', { fixedMax: true });
+      if ((params.conv.reel.blend || 0) > 0) {
+        slider('中間の輪の濃さ', 0.05, 1, 0.05, () => params.conv.reel.blendAlpha, v => R.blendAlpha = v, v => v.toFixed(2),
+          null, { fixedMax: true });
+      }
+      /* 【2026-08-27 ヒデさん指定】ここにあった機能は全削除:
+           ・消え方の3択(前面カット / 圧縮グロー / データ粒)とその説明
+           ・圧縮グロー専用のつまみ(光り方5種・光の強さ・線の太さ)
+           ・データ粒専用のつまみ(線の太さ・点の密度・つながり始め/きる・点が回る速さ・ゆらぎ)
+           ・「透過し始め」「透過率(残す濃さ)」
+         消え方は【前面カット】固定になった(エンジン側の他の道筋は残してあるが選べない)。 */
+    } else if (cvMode === 'spiral') {
+      const S = params.conv.spiral;
+      sub(animModeBox, 'この案の調整（粒が渦で吸収）', true);
+      slider('粒の数', 1, 200, 1, () => params.conv.spiral.count, v => S.count = v, v => v + '個', null, { fixedMax: true });
+      slider('軌道にいる秒数', 0.2, 12, 0.1, () => params.conv.spiral.stay, v => S.stay = v, v => v.toFixed(1) + '秒',
+        '粒はまず軌道上を回り、このくらい経ってから吸い込まれ始める。', { fixedMax: true });
+      slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
+        '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
+      slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+    } else if (cvMode === 'accre') {
+      const AC = params.conv.accre;
+      sub(animModeBox, 'この案の調整（粒の渦）', true);
+      segRow('軌道を出す', [['出す', 1], ['消す', 0]], () => params.conv.accre.showOrbit ? 1 : 0,
+        v => { AC.showOrbit = !!v; markDirty(); renderFrame(); });
+      note('この案は既定では軌道を消しています。「出す」にすると輪とドットも一緒に見せられます（共通の表示スイッチに従います）。');
+      slider('粒の数', 5, 2000, 5, () => params.conv.accre.count, v => AC.count = v, v => v + '個',
+        '密度そのもの。多いほど渦が濃くなります。', { fixedMax: true });
+      slider('粒の大きさ', 0.05, 3, 0.01, () => params.conv.accre.size, v => AC.size = v, v => '×' + v.toFixed(2),
+        'この案の粒だけの大きさ（共通の「ドットの大きさ」に掛かります）。', { fixedMax: true });
+      slider('粒の揺らぎ', 0, 3, 0.05, () => params.conv.accre.wobble, v => AC.wobble = v, v => v.toFixed(2),
+        '回りながら外側・内側へゆらゆら揺れます。0でぴたっと回ります。', { fixedMax: true });
+      slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
+        '内へ落ちていく速さ。', { fixedMax: true });
+      slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
+        '粒の明滅の強さ。0で一定の明るさ。', { fixedMax: true });
+    } else if (cvMode === 'mesh') {
+      const M = params.conv.mesh;
+      sub(animModeBox, 'この案の調整（網でつながる）', true);
+      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
+      slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
+        'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
+      slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
+      slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
+        '大きいほど線が増えて網が濃くなります。', { fixedMax: true });
+      slider('ランダムさ', 0, 2.5, 0.05, () => params.conv.mesh.random, v => M.random = v, v => '×' + v.toFixed(2),
+        'ノードがどれだけ大きく漂うか。0でぴたっと止まります。', { fixedMax: true });
+      slider('漂う速さ', 0, 3, 0.05, () => params.conv.mesh.drift, v => M.drift = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1ホップの時間', 0.05, 2, 0.05, () => params.conv.mesh.hop, v => M.hop = v, v => v.toFixed(2) + '秒', null, { fixedMax: true });
+      slider('パケットの頻度', 0.1, 8, 0.1, () => params.conv.mesh.rate, v => M.rate = v, v => v.toFixed(1) + '個/秒', null, { fixedMax: true });
+    } else if (cvMode === 'beads') {
+      const B = params.conv.beads;
+      sub(animModeBox, 'この案の調整（点が並ぶ軌道）', true);
+      slider('ドットの密度', 6, 1200, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
+        '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
+      slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
+        '小さいほど輪の形が保たれ、大きいほど一斉に吸い込まれます。', { fixedMax: true });
+      slider('吸収にかかる秒数', 0.5, 12, 0.1, () => params.conv.beads.life, v => B.life = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('回る速さ', 0.02, 2, 0.02, () => params.conv.beads.speed, v => B.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('並びの乱れ', 0, 3, 0.05, () => params.conv.beads.jitter, v => B.jitter = v, v => v.toFixed(2),
+        '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
+      slider('戻ってくる時間', 0.1, 5, 0.1, () => params.conv.beads.backIn, v => B.backIn = v, v => v.toFixed(1) + '秒',
+        '吸い込まれた点が、空いた場所にゆっくり現れるまでの時間。', { fixedMax: true });
+    } else if (CONV_LINKED.includes(cvMode)) {
+      const L = params.conv.link;
+      sub(animModeBox, 'この案の調整（線で行き来）', true);
+      note('惑星のエリアに入った粒は完全に消えます。手前で縮みながら薄くなるので、吸い込まれるように見えます。');
+      slider('吸い込まれる範囲', 0, 1.2, 0.02, () => params.conv.link.vanishK, v => L.vanishK = v, v => '×' + v.toFixed(2),
+        '惑星の縁のどれくらい手前から縮み始めるか。0でエリアに触れた瞬間に消えます。', { fixedMax: true });
+      slider('流れる速さ', 0.1, 4, 0.05, () => params.conv.link.speed, v => L.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('1周の秒数', 0.5, 10, 0.1, () => params.conv.link.T, v => L.T = v, v => v.toFixed(1) + '秒', null, { fixedMax: true });
+      slider('粒の密度', 0.3, 6, 0.1, () => params.conv.link.density, v => L.density = v, v => '×' + v.toFixed(1),
+        '1本の線に流す粒の数。', { fixedMax: true });
+      slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
+        '0で直線、大きいほど弧を描きます。', { fixedMax: true });
+      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2));
+      slider('線の太さ', 0.2, 4, 0.1, () => params.conv.link.lineWidth, v => L.lineWidth = v, v => v.toFixed(1) + 'px',
+        '惑星とドットを結ぶ線の太さ。');
+    }
+
+
+    mount = keepMount;
+    liveEdit = keepLive;
+    body.scrollTop = keepScroll;
+  }
+  fillAnimBody();
+
   /* ═══ ③〜⑤ ここから下は【モノ(オブジェクト)ごと】の調整 (2026-08-27 ヒデさん指定) ═══
      どの案を選んでいても効く、パーツそのものの設定。案ごとの細かいつまみは ① の中にある。 */
 
   /* ---------- ③ 軌道（輪） ---------- */
   liveEdit = true;
-  sub(gRoot, '③ 軌道（輪）', true);
+  sub(gRoot, '軌道（輪）', true);
   const orbRoot = mount;
+  /* 【2026-08-27 ヒデさん指定】縦に3行だった表示切替を、横1行のチップにまとめた */
   sub(orbRoot, '表示', true, { fixed: true });
-  segRow('外の輪', [['表示', 1], ['消す', 0]], () => params.conv.showOuter ? 1 : 0,
-    v => { params.conv.showOuter = !!v; markDirty(); renderFrame(); });
-  segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0,
-    v => { params.conv.showInner = !!v; markDirty(); renderFrame(); });
-  note('輪を消すと、その輪のドットも消えます。③④の案では自動で隠れます。');
+  chipRow('表示', [
+    { name: '外の輪', get: () => params.conv.showOuter, set: v => params.conv.showOuter = v,
+      hint: '外側の輪' },
+    { name: '内の輪', get: () => params.conv.showInner, set: v => params.conv.showInner = v,
+      hint: '内側の輪' },
+    { name: 'ドット', get: () => params.conv.showDots,  set: v => params.conv.showDots = v,
+      hint: '輪の上を回っている点' },
+  ]);
+  note('輪を消すと、その輪のドットも消えます。粒の渦・網の案では自動で隠れます。');
   sub(orbRoot, '動き', true);
   slider('軌道が回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
     v => v === 0 ? '回らない' : '×' + v.toFixed(2),
@@ -8087,11 +8109,9 @@ function buildPanel() {
   note('ゆらぎは軌道まわり全体がふわっと漂う動きです（惑星もわずかに一緒に動きます）。');
 
   /* ---------- ④ ドット（粒） ---------- */
-  sub(gRoot, '④ ドット（粒）', true);
+  sub(gRoot, 'ドット（粒）', true);
   const dotRoot = mount;
-  sub(dotRoot, '表示・大きさ', true, { fixed: true });
-  segRow('ドット', [['表示', 1], ['消す', 0]], () => params.conv.showDots ? 1 : 0,
-    v => { params.conv.showDots = !!v; markDirty(); renderFrame(); });
+  sub(dotRoot, '大きさ', true, { fixed: true });
   slider('ドットの大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
     v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。');
   sub(dotRoot, '見え方（遠近）', true);
@@ -8142,7 +8162,7 @@ function buildPanel() {
   note('「軌道にそって回るかどうか」は案ごとの設定なので、① の中にあります。');
 
   /* ---------- ⑤ 惑星 ---------- */
-  sub(gRoot, '⑤ 惑星', true);
+  sub(gRoot, '惑星', true);
   const plRoot = mount;
   sub(plRoot, '模様', true, { fixed: true });
   const PLANET_SKINS = [
@@ -8162,7 +8182,7 @@ function buildPanel() {
     '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
 
   /* ---------- ⑥ 登場（出てくる順番） ---------- */
-  sub(gRoot, '⑥ 登場（出てくる順番）', true);
+  sub(gRoot, '登場（出てくる順番）', true);
   const inRoot = mount;
   sub(inRoot, '起点', true, { fixed: true });
   note('起点＝1行目のタイピング完了。そこからモック→アイコン→軌道が出ます。');
