@@ -29,6 +29,7 @@ export default function MobileExperience() {
   const [remaining, setRemaining] = useState(180);
   const [ui, setUi] = useState(true); // 再生UI（ボタン・タイマー）表示
   const [tipsVisible, setTipsVisible] = useState(false);
+  const [personIn, setPersonIn] = useState(false); // 動画画面の後ろ向き人物
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideT = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -70,6 +71,16 @@ export default function MobileExperience() {
     if (step === "video" && playing) poke();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, playing]);
+
+  /* 「この場所にする」で動画に入ったら、後ろ向き人物（PC同様）をふわっと出す */
+  useEffect(() => {
+    if (step !== "video") {
+      setPersonIn(false);
+      return;
+    }
+    const id = setTimeout(() => setPersonIn(true), 400);
+    return () => clearTimeout(id);
+  }, [step]);
 
   const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
   const ss = String(remaining % 60).padStart(2, "0");
@@ -146,28 +157,25 @@ export default function MobileExperience() {
               次へ進む
             </button>
           </div>
-          {/* 人物イラスト（KVと同配置・同サイズ） */}
-          <img
-            src="/img/illust-main.png"
-            alt=""
-            className="pointer-events-none absolute -bottom-[30px] right-3 z-10 w-[90px]"
-          />
         </section>
       )}
 
       {/* ── 場所えらび ───────────────────── */}
       {step === "pick" && (
-        <section className="relative z-10 flex h-full flex-col justify-between px-6 pb-10 pt-20">
+        <section className="relative z-10 flex h-full flex-col items-center px-6 pb-10 pt-20">
           <h2 className="text-center text-[24px] font-thin">どこでぼーっとする？</h2>
 
-          <div className="flex flex-col items-center">
-            <p className="text-[13px] font-extralight">ぼーっとスポット 0{VIDEO_IDX + 1}</p>
-            <p className="mt-1 text-[26px] font-thin">{active.label}</p>
-          </div>
+          {/* ラベル・サムネ・ボタンを1つの中央グループにまとめて中央ぞろえ */}
+          <div className="flex flex-1 flex-col items-center justify-center gap-7">
+            <div className="flex flex-col items-center">
+              <p className="text-[13px] font-extralight">
+                ぼーっとスポット 0{VIDEO_IDX + 1}
+              </p>
+              <p className="mt-1 text-[26px] font-thin">{active.label}</p>
+            </div>
 
-          <div className="flex flex-col items-center gap-6">
             {/* サムネの帯（流氷を選択中。動画があるのは流氷だけ） */}
-            <div className="flex w-full justify-center gap-2">
+            <div className="flex justify-center gap-2">
               {PICKS.map((p, i) => (
                 <button
                   key={p.id}
@@ -211,6 +219,19 @@ export default function MobileExperience() {
             playsInline
             loop
             className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* 後ろ向きの人物（PCと同じ illust-video.png）。右下にふわっと登場 */}
+          <img
+            src="/img/illust-video.png"
+            alt=""
+            className="pointer-events-none absolute -bottom-1 right-2 z-10 w-[104px] object-bottom drop-shadow-illust"
+            style={{
+              opacity: personIn ? 1 : 0,
+              filter: personIn ? "blur(0px)" : "blur(10px)",
+              transform: personIn ? "translateY(0)" : "translateY(12px)",
+              transition:
+                "opacity .9s cubic-bezier(0.22,1,0.36,1), filter .9s cubic-bezier(0.22,1,0.36,1), transform .9s cubic-bezier(0.22,1,0.36,1)",
+            }}
           />
           {/* ぼーっとTips（再生UIが消えたら＝何もない状態からカウント） */}
           <BoTips
