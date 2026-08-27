@@ -74,45 +74,42 @@ export default function MobileTop() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const scrollerRef = useRef<HTMLElement>(null);
-  const kvRef = useRef<HTMLDivElement>(null);
-  const msgRef = useRef<HTMLDivElement>(null);
-  const [msgIn, setMsgIn] = useState(false);
   preload("/img/bg-hero.jpg", { as: "image", fetchPriority: "high" });
 
-  /* KV：下へスクロールすると作字＋人物がブラーで消えていく（PC踏襲） */
+  /* 各シーンを固定ビュー（スナップ）で見せ、スクロール量に応じてブラーで出入りさせる。
+     ドックしている（画面にぴったり）時だけ鮮明、離れるほどブラー＝PCの
+     「場面がブラーでトランジション」を踏襲（2026-08-24 ヒデさん指示）。
+     ブラーは「動く背景を毎フレーム全画面ぼかす」ので重い→離れた（画面外）シーンは
+     filter:none に戻して負荷を切る。rAF は裏タブで発火しないので同期で書く。 */
   useEffect(() => {
     const sc = scrollerRef.current;
-    const kv = kvRef.current;
-    if (!sc || !kv) return;
-    /* 同期でスタイルを書く（読むのは scrollTop だけ＝リフローを起こさない）。
-       rAF だと裏タブで発火せず実機以外で確認できないため使わない */
-    const onScroll = () => {
-      const p = Math.max(
-        0,
-        Math.min(1, sc.scrollTop / (window.innerHeight * 0.7))
-      );
-      kv.style.filter = p > 0.001 ? `blur(${(p * 14).toFixed(1)}px)` : "none";
-      kv.style.opacity = String(1 - p);
-    };
-    sc.addEventListener("scroll", onScroll, { passive: true });
-    return () => sc.removeEventListener("scroll", onScroll);
-  }, []);
-
-  /* メッセージ：画面に入ったら「一括」でふわっと（行ごとの出しはしない） */
-  useEffect(() => {
-    const el = msgRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setMsgIn(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 }
+    if (!sc) return;
+    const scenes = Array.from(
+      sc.querySelectorAll<HTMLElement>("[data-scene]")
     );
-    io.observe(el);
-    return () => io.disconnect();
+    const apply = () => {
+      const h = window.innerHeight;
+      const scTop = sc.getBoundingClientRect().top;
+      /* 先に位置を読み切ってから、まとめて書く（レイアウトスラッシング回避） */
+      const ds = scenes.map((el) => (el.getBoundingClientRect().top - scTop) / h);
+      scenes.forEach((el, i) => {
+        const a = Math.min(1, Math.abs(ds[i])); // 0=ドック / 1=1画面ぶん離れた
+        if (a >= 0.999) {
+          el.style.filter = "none";
+          el.style.opacity = "1";
+        } else {
+          el.style.filter = a > 0.01 ? `blur(${(a * 16).toFixed(1)}px)` : "none";
+          el.style.opacity = String(1 - a * 0.4);
+        }
+      });
+    };
+    apply();
+    sc.addEventListener("scroll", apply, { passive: true });
+    window.addEventListener("resize", apply);
+    return () => {
+      sc.removeEventListener("scroll", apply);
+      window.removeEventListener("resize", apply);
+    };
   }, []);
 
   const scrollToId = (id: string) =>
@@ -135,12 +132,13 @@ export default function MobileTop() {
     <main
       ref={scrollerRef}
       data-mobile-scroller
-      className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden bg-sky-bottom"
+      className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden bg-sky-bottom"
     >
       {/* ── KV（100dvh） ─────────────────── */}
       <section
         id="top"
-        className="relative flex h-[100dvh] w-full flex-col overflow-hidden"
+        data-scene
+        className="relative flex h-[100dvh] w-full snap-start flex-col overflow-hidden"
       >
         <img
           src="/img/bg-hero.jpg"
@@ -169,7 +167,7 @@ export default function MobileTop() {
         </header>
 
         {/* KV中身（スクロールでブラー消え）＝作字＋スポットボタン＋人物 */}
-        <div ref={kvRef} className="relative z-10 flex flex-1 flex-col">
+        <div className="relative z-10 flex flex-1 flex-col">
           {/* 作字（元のロゴ位置のまま・全体を40px上げる） */}
           <div className="flex flex-1 flex-col items-center justify-center px-6 -translate-y-10">
             <img
@@ -186,7 +184,7 @@ export default function MobileTop() {
             <button
               type="button"
               onClick={() => scrollToId("m-spot")}
-              className="mt-9 flex items-center justify-center rounded-full bg-white/10 px-8 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
+              className="mt-9 flex -translate-y-5 items-center justify-center rounded-full bg-white/10 px-8 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
             >
               ぼーっとスポットを見る
             </button>
@@ -201,18 +199,12 @@ export default function MobileTop() {
         </div>
       </section>
 
-      {/* ── メッセージ（100dvh・一括で出す） ──── */}
-      <section className="flex min-h-[100dvh] items-center bg-gradient-to-b from-sky-top to-brand px-6 py-20 text-white">
-        <div
-          ref={msgRef}
-          style={{
-            opacity: msgIn ? 1 : 0,
-            filter: msgIn ? "blur(0px)" : "blur(10px)",
-            transform: msgIn ? "translateY(0)" : "translateY(16px)",
-            transition:
-              "opacity 1s cubic-bezier(0.22,1,0.36,1), filter 1s cubic-bezier(0.22,1,0.36,1), transform 1s cubic-bezier(0.22,1,0.36,1)",
-          }}
-        >
+      {/* ── メッセージ（固定ビュー・スクロールでブラー） ──── */}
+      <section
+        data-scene
+        className="flex h-[100dvh] snap-start items-center overflow-hidden bg-gradient-to-b from-sky-top to-brand px-6 py-16 text-white"
+      >
+        <div>
           <h2 className="text-[28px] font-thin leading-[1.5]">{MSG_TITLE}</h2>
           <div className="mt-9 space-y-6 text-[14px] font-light leading-[2] tracking-[0.3px]">
             {MSG_BLOCKS.map((lines, i) => (
@@ -231,7 +223,7 @@ export default function MobileTop() {
       {/* ── ぼーっとスポット（各100dvh） ──────── */}
       <section id="m-spot" className="bg-sky-bottom">
         {SPOTS.map((spot) => (
-          <div key={spot.no} className="relative h-[100dvh] w-full overflow-hidden">
+          <div key={spot.no} data-scene className="relative h-[100dvh] w-full snap-start overflow-hidden">
             <img
               src={spot.img}
               alt={spot.title}
@@ -261,7 +253,7 @@ export default function MobileTop() {
       </section>
 
       {/* ── 素朴なグルメ ───────────────────── */}
-      <section id="m-gourmet" className="bg-white px-6 py-20">
+      <section id="m-gourmet" data-scene className="flex h-[100dvh] snap-start flex-col justify-center bg-white px-6">
         <h2 className="text-[20px] font-thin leading-[1.7] text-ink">
           なーんにもない、道東の土地、網走。
           <br />
@@ -292,7 +284,7 @@ export default function MobileTop() {
       </section>
 
       {/* ── フッター（体験への誘導） ───────────── */}
-      <section className="bg-brand px-6 py-16 text-center text-white">
+      <section data-scene className="flex h-[100dvh] snap-start flex-col items-center justify-center bg-brand px-6 text-center text-white">
         <p className="text-[14px] font-light leading-[1.9]">
           網走で、なんにもしない時間を。
         </p>
