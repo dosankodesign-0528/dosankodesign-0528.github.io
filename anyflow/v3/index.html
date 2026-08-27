@@ -2630,7 +2630,8 @@ const DEFAULTS = {
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
     link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, T: 3.2, vanishK: 0.35 },
     /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
-    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false },
+    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false,
+              swirl: 1, fallCurve: 1 },   /* swirl=内側ほど速く回る度合い / fallCurve=落ち方のカーブ */
   },
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
@@ -3582,8 +3583,15 @@ function convFrame(geoms) {
     const cc = convCenter();
     const disk = { cx: cc.x, cy: cc.y, rx: orbitBase('inner').rx * A.scale, ry: orbitBase('inner').rx * A.scale * 0.335, rot: geoms.inner.rot };
     for (const p of pool) {
-      if (convDotMoves()) p.ang += (0.5 / Math.max(0.2, p.f)) * A.speed * 60 * dt * (params.direction || 1);
-      p.f -= 0.022 * A.fall * dt;
+      /* 【2026-08-27 ヒデさん指定】渦の巻き具合を調整できる。
+         swirl=0 でどこでも同じ速さ(ゆるい渦) / 大きいほど内側で急に速くなり、きつく巻き込む */
+      const sw = Math.max(0, A.swirl == null ? 1 : A.swirl);
+      if (convDotMoves()) {
+        p.ang += (0.5 / Math.pow(Math.max(0.2, p.f), sw)) * A.speed * 60 * dt * (params.direction || 1);
+      }
+      /* 落ち方のカーブ: 1で等速、大きいほど中心に近いほど速く吸い込まれる */
+      const fc = Math.max(0.1, A.fallCurve == null ? 1 : A.fallCurve);
+      p.f -= 0.022 * A.fall * dt * Math.pow(Math.max(0.15, p.f), 1 - fc);
       if (p.f <= 0.16) { convGlow = Math.min(1.2, convGlow + 0.10);
         p.f = 1.05 + Math.random() * 0.15; p.ang = Math.random() * 360; }
       /* 揺らぎ: 粒ごとに位相の違う波で半径をわずかに揺らす(0でぴたっと回る) */
@@ -7717,6 +7725,10 @@ function buildPanel() {
         '回りながら外側・内側へゆらゆら揺れます。0でぴたっと回ります。', { fixedMax: true });
       slider('落ちる速さ', 0.05, 6, 0.05, () => params.conv.accre.fall, v => AC.fall = v, v => '×' + v.toFixed(2),
         '内へ落ちていく速さ。', { fixedMax: true });
+      slider('渦の巻き具合', 0, 3, 0.05, () => params.conv.accre.swirl, v => AC.swirl = v, v => '×' + v.toFixed(2),
+        '0でどこでも同じ速さ(ゆるい渦)。大きいほど中心に近づくほど速く回り、きつく巻き込みます。', { fixedMax: true });
+      slider('落ち方のカーブ', 0.1, 3, 0.05, () => params.conv.accre.fallCurve, v => AC.fallCurve = v, v => '×' + v.toFixed(2),
+        '1で一定の速さ。大きいほど中心の近くで一気に吸い込まれます。', { fixedMax: true });
       slider('回る速さ', 0.05, 6, 0.05, () => params.conv.accre.speed, v => AC.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
       slider('円盤の大きさ', 0.3, 3, 0.01, () => params.conv.accre.scale, v => AC.scale = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
       slider('きらめき', 0, 1, 0.02, () => params.conv.accre.twinkle, v => AC.twinkle = v, v => v.toFixed(2),
