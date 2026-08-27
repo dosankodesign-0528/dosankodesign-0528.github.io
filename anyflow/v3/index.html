@@ -3064,6 +3064,8 @@ function loadParams() {
   if (merged.conv.reel) merged.conv.reel.vanish = 'clip';
   /* 惑星の模様 5〜7(C1/C2/C3)は 2026-08-27 に廃止。選んだままなら既定へ寄せる */
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
+  /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
+  if (!['pulse', 'ripple'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -4112,7 +4114,8 @@ function convDrawRipples(strength, hit, dt) {
     if (!host) return;
     convRippleEls = [];
     for (let i = 0; i < 5; i++) {
-      const c = document.createElementNS(SVG_NS, 'circle');
+      /* 【2026-08-28 ヒデさん指定】軌道と同じ「つぶれ具合・傾き」で広がるので、円ではなく楕円 */
+      const c = document.createElementNS(SVG_NS, 'ellipse');
       c.setAttribute('fill', 'none');
       c.setAttribute('stroke', '#0EBBFF');
       c.setAttribute('opacity', '0');
@@ -4136,12 +4139,21 @@ function convDrawRipples(strength, hit, dt) {
     convRipples[i].t += dt * 0.75;
     if (convRipples[i].t >= 1) convRipples.splice(i, 1);
   }
+  /* 【2026-08-28 ヒデさん指定】波紋の形と傾きは、軌道に合わせて自動で決める。
+     真円で上下に広がると軌道と噛み合わないため、内の輪の「つぶれ具合(ry/rx)」と「傾き(rot)」を借りる。
+     ⚠️ ③粒の渦・④網 のように輪が出ていない案でも、軌道の形そのものは生きているのでそのまま使える。 */
+  const gi = orbitGeom('inner');
+  const flat = Math.max(0.06, Math.min(1, Math.abs(gi.ry) / Math.max(1, Math.abs(gi.rx))));
+  const rot = gi.rot;
   for (let i = 0; i < convRippleEls.length; i++) {
     const q = convRipples[i], el = convRippleEls[i];
     if (!q) { el.setAttribute('opacity', '0'); continue; }
     const k = convSStep(q.t);
-    el.setAttribute('cx', cc.x); el.setAttribute('cy', cc.y);
-    el.setAttribute('r', (pr * (1 + k * 0.85)).toFixed(1));
+    const rx = pr * (1 + k * 0.95);
+    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+    el.setAttribute('rx', rx.toFixed(1));
+    el.setAttribute('ry', Math.max(1, rx * flat).toFixed(1));
+    el.setAttribute('transform', `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`);
     el.setAttribute('stroke-width', (2.2 * (1 - k) + 0.4).toFixed(2));
     el.setAttribute('opacity', (0.55 * strength * (1 - k)).toFixed(3));
   }
@@ -9720,6 +9732,7 @@ function buildPanel() {
 
   /* ---------- ⑤ 惑星 ---------- */
   sub(gRoot, '惑星', true);
+  const plRootEff = mount;   /* エフェクトの小見出しはこの中へ */
   /* 【2026-08-28 ヒデさん指定】「手前のもの(隠す/前を通す)」のつまみはパネルから削除。
      値(params.conv.frontCut)はバリエーションが使うので残してある
      (例: ③「前後を貫く軌道」は前を通す設定で立体感を出している)。 */
@@ -9734,14 +9747,14 @@ function buildPanel() {
     it => { params.design = it.key; markDirty(); renderFrame(); },
     { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
     { noRebuild: true });
-  /* 【2026-08-28 ヒデさん指定】吸収の光り方を5案から選ぶ */
+  /* 【2026-08-28 ヒデさん指定】吸収のされ方は「エフェクト」の小見出しにまとめて、
+     上の模様の選択ピルと見分けがつくようにする */
+  sub(plRootEff, 'エフェクト（吸収のされ方）', true);
   {
+    /* 【2026-08-28 ヒデさん指定】色が変わる/芯が育つ/呼吸 は削除。パルスと波紋の2案だけ残す */
     const GLOWS = [
-      { key: 'pulse',  name: 'A パルス',   tip: '届いた瞬間だけ、ふっと明るくなります（従来）。' },
-      { key: 'hue',    name: 'B 色が変わる', tip: '取り込むほど色相がじわっと動き、鮮やかになります。データが混ざって色が育つ感じ。' },
-      { key: 'core',   name: 'C 芯が育つ',  tip: '取り込むほど中心が明るく硬くなります。中身が詰まって強くなる感じ。' },
-      { key: 'ripple', name: 'D 波紋',     tip: '届いた瞬間、惑星から外へ輪が広がります。受け止めた手応えが出ます。' },
-      { key: 'breath', name: 'E 呼吸',     tip: '溜まった量に応じて、ゆっくり明るさと大きさが行き来します。生きている感じ。' },
+      { key: 'pulse',  name: 'A パルス', tip: '届いた瞬間だけ、ふっと明るくなります。' },
+      { key: 'ripple', name: 'B 波紋',   tip: '届いた瞬間、惑星から外へ輪が広がります。輪の形と傾きは軌道に合わせて自動で決まります。' },
     ];
     pillRow(GLOWS, it => (params.conv.glowKind || 'pulse') === it.key,
       it => { params.conv.glowKind = it.key; markDirty(); renderFrame(); },
