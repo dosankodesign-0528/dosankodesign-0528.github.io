@@ -2767,7 +2767,9 @@ const DEFAULTS = {
        style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット /
               cage=包囲ケージ(惑星のまわりの球殻にノードを並べて回す。2026-08-27 ヒデさん指定) */
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
-    mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6,
+    /* pts = 頂点を手で置いた座標([{x,y}])。null なら自動配置。
+       【2026-08-28 ヒデさん指定】「グラフィックを編集」から頂点をドラッグして決められる */
+    mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6, pts: null,
               cageR: 1.75, cageSpin: 1, cageLinks: 3, cageTilt: -20,   /* ケージ専用 */
               lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6 },
     /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
@@ -3375,23 +3377,23 @@ const GFX_VARIANTS = {
     { name: 'B 深く交差', desc: 'ジャイロ交差の配置。中間の輪を3本はさんで層をつくり、ゆっくり惑星の前後を横切ります。',
       gfx: { layout: 'gyro', outer: { scale: 1.05 }, inner: { scale: 0.95, flat: 1.15 }, planet: { scale: 0.9, dy: 40 } },
       conv: { blend: 3, blendAlpha: 0.28, T: 7.2, shrinkAt: 0.36, endAt: 0.82, moveDur: 0.20, inDur: 0.22 },
-      common: { orbitSpin: 0.18 }, root: { duration: 34 } },
+      common: { orbitSpin: 0.10 }, root: { duration: 34 } },
     { name: 'C 薄い皿', desc: '横に広げて寝かせた薄い輪。中間の輪5本が、土星の輪のようにゆっくり吸い込まれます。',
       gfx: GFX_LOOKS.dish,
       conv: { blend: 5, blendAlpha: 0.24, T: 7.6, shrinkAt: 0.34, endAt: 0.82, moveDur: 0.22, inDur: 0.24 },
-      common: { orbitSpin: 0.12 }, root: { duration: 34 } },
+      common: { orbitSpin: 0.07 }, root: { duration: 34 } },
     { name: 'D 立ちクロス', desc: '起こして交差させた輪が、球状の層のままゆっくり縮んでいきます。',
       gfx: GFX_LOOKS.upright,
       conv: { blend: 6, blendAlpha: 0.22, T: 8.0, depth: 0.98, shrinkAt: 0.34, endAt: 0.84, moveDur: 0.22, inDur: 0.24 },
-      common: { orbitSpin: 0.26 }, root: { duration: 36 } },
+      common: { orbitSpin: 0.10 }, root: { duration: 36 } },
     { name: 'E 大きく包む', desc: '大きく広げた輪が、長い時間をかけて小さな惑星へ吸い込まれます。いちばんゆったり。',
       gfx: GFX_LOOKS.wide,
       conv: { blend: 4, blendAlpha: 0.26, T: 9.0, shrinkAt: 0.30, endAt: 0.84, moveDur: 0.24, inDur: 0.26 },
-      common: { orbitSpin: 0.14 }, root: { duration: 38 } },
+      common: { orbitSpin: 0.07 }, root: { duration: 38 } },
     { name: 'F 惑星に寄る', desc: '惑星のすぐ外で輪が生まれては縮みます。11案の中ではテンポが速めですが、以前より落ち着かせてあります。',
       gfx: GFX_LOOKS.tight,
       conv: { blend: 2, blendAlpha: 0.32, T: 5.6, shrinkAt: 0.34, endAt: 0.80, moveDur: 0.18, inDur: 0.20 },
-      common: { orbitSpin: 0.30 }, root: { duration: 28 } },
+      common: { orbitSpin: 0.12 }, root: { duration: 28 } },
   ],
   /* 【2026-08-28 ヒデさん指定】②③は回る速さと取り込む速さが速かったので、全体にゆっくりへ。
      ・回る速さ(speed)を 1 → 0.3〜0.9 に
@@ -3627,7 +3629,7 @@ const LOOK_ROOT = {
 };
 /* ①だけ、軌道の回転を落ち着かせる(共通の値だと速すぎた) */
 const LOOK_SPIN = {
-  reel:   { hair: 0.08, portrait: 0.22, nested: 0.12, horizon: 0, rising: 0.16 },
+  reel:   { hair: 0.05, portrait: 0.10, nested: 0.07, horizon: 0, rising: 0.09 },   /* 2026-08-28 さらにゆっくりへ */
   spiral: { hair: 0.08, portrait: 0.2,  nested: 0.12, horizon: 0, rising: 0.15 },
   accre:  { hair: 0.08, portrait: 0.2,  nested: 0.12, horizon: 0, rising: 0.15 },
 };
@@ -3671,6 +3673,13 @@ const MESH_GYRO_SETS = [
     conv: { style: 'cage', nodes: 34, cageR: 1.55, cageSpin: 2.2, cageLinks: 3, cageTilt: -24,
             lineAlpha: 0.5, lineWidth: 0.9, size: 0.4, random: 0.2, hop: 0.3, rate: 2.6 } },
 ];
+/* 【2026-08-28 ヒデさん指定】①はゆったり見せたいので、ジャイロ版も転がりを大幅に落とす。
+   ⑦そのもの(独立した案)は速いままでよい */
+const GYRO_SLOW_REEL = [
+  { mix: 0.30, spin: 0.04, gyro: { tumble: 0.16, spin: 0.16, phase: 90, thin: 0.30, pull: 0.10, pullT: 14 } },
+  { mix: 0.50, spin: 0.06, gyro: { tumble: 0.24, spin: 0.26, phase: 90, thin: 0.22, pull: 0.16, pullT: 12 } },
+  { mix: 0.70, spin: 0.08, gyro: { tumble: 0.34, spin: 0.38, phase: 90, thin: 0.16, pull: 0.20, pullT: 10 } },
+];
 for (const mode in GFX_VARIANTS) {
   if (mode === 'gyro') continue;                 /* ⑦そのものには足さない */
   if (mode === 'mesh') {
@@ -3680,15 +3689,17 @@ for (const mode in GFX_VARIANTS) {
     }
     continue;
   }
-  for (const G of GYRO_MIX_SETS) {
+  GYRO_MIX_SETS.forEach((G, gi) => {
+    const slow = (mode === 'reel') ? GYRO_SLOW_REEL[gi] : null;
     GFX_VARIANTS[mode].push({
-      name: G.name, desc: G.desc,
+      name: G.name,
+      desc: slow ? G.desc.replace('。', '。①はゆったり見せたいので、転がりはかなり抑えてあります。') : G.desc,
       gfx: { layout: 'gyro', outer: { scale: 1.04 }, inner: { scale: 0.96, flat: 1.1 }, planet: { scale: 0.9, dy: 42 } },
-      gyro: G.gyro,
-      common: { orbitSpin: G.spin, gyroMix: G.mix },
-      root: { duration: 34 },
+      gyro: slow ? slow.gyro : G.gyro,
+      common: { orbitSpin: slow ? slow.spin : G.spin, gyroMix: slow ? slow.mix : G.mix },
+      root: { duration: mode === 'reel' ? 38 : 34 },
     });
-  }
+  });
 }
 
 /* 【2026-08-28 ヒデさん指定】③(粒の渦が回る)に、立体感(3D)が出る案を足す。
@@ -4418,17 +4429,24 @@ function convFrame(geoms) {
     }
     const RX = orbitBase('outer').rx * 0.95, RY = RX * 0.5;
     const amp = M.random * 46;
+    /* 【2026-08-28 ヒデさん指定】頂点を手で置いてあれば、その座標を基準にする。
+       頂点編集の最中は漂いを止めて、掴んだ点が逃げないようにする */
+    const pts = (M.pts && M.pts.length === n) ? M.pts : null;
+    const frozen = (typeof meshHandles !== 'undefined') && meshHandles.on;
     const np = k => {
       const q = convMesh.nodes[k];
       /* 周期の違う3つの波を重ねた、なめらかな擬似ランダム(毎フレーム乱数だとガタつく) */
       const wx = Math.sin(elapsed * q.s1 + q.p1) * 0.6 + Math.sin(elapsed * q.s3 + q.p3) * 0.4;
       const wy = Math.sin(elapsed * q.s2 + q.p2) * 0.6 + Math.cos(elapsed * q.s1 * 0.7 + q.p3) * 0.4;
       let bx, by;
-      if (style === 'grid') { bx = cc.x + (q.gx - 0.5) * RX * 1.7; by = cc.y + (q.gy - 0.5) * RY * 1.5; }
+      if (pts) { bx = pts[k].x; by = pts[k].y; }
+      else if (style === 'grid') { bx = cc.x + (q.gx - 0.5) * RX * 1.7; by = cc.y + (q.gy - 0.5) * RY * 1.5; }
       else { bx = cc.x + Math.cos(q.a) * RX * q.r; by = cc.y + Math.sin(q.a) * RY * q.r; }
-      const mv = convDotMoves() ? 1 : 0;   /* 周回オフならノードも漂わない */
+      const mv = (convDotMoves() && !frozen) ? 1 : 0;   /* 周回オフ・頂点編集中はノードも漂わない */
       return { x: bx + wx * amp * M.drift * mv, y: by + wy * amp * M.drift * 0.7 * mv };
     };
+    /* 頂点編集のつまみを置くために、今フレームの位置を控えておく */
+    convMesh.pos = []; for (let k = 0; k < n; k++) convMesh.pos.push(np(k));
     /* --- 線 --- */
     const pairs = [];
     for (let i = 0; i < n; i++) {
@@ -4943,10 +4961,109 @@ const editHandles = (() => {
       }
       if (onSel) onSel(on ? sel : null);
       if (typeof applyMarquee === 'function') applyMarquee();
+      /* ④網でつながる を選んでいる時は、頂点のつまみも一緒に出す (2026-08-28 ヒデさん指定) */
+      if (typeof meshHandles !== 'undefined') meshHandles.set(on && meshHandles.usable);
       renderFrame();
       if (on) place();
     },
     place,
+  };
+})();
+
+/* ===== ④網でつながる の頂点編集 (2026-08-28 ヒデさん指定) =====
+   「グラフィックを編集」に入っている間、メッシュのノードに丸いつまみを出して
+   ドラッグで位置を決められる。置いた座標は params.conv.mesh.pts に入り、
+   プリセットにも保存される。
+   ⚠️ ケージ(球殻)は3Dの並びなので、この編集の対象外(平面の3種だけ)。 */
+const meshHandles = (() => {
+  let svg = null, on = false, drag = null, dots = [];
+  function host() {
+    if (svg) return svg;
+    const orbit = document.querySelector('.orbit');
+    if (!orbit) return null;
+    svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 915.483 630');
+    svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:10;overflow:visible;';
+    orbit.appendChild(svg);
+    return svg;
+  }
+  function toLocal(e) {
+    const m = svg.getScreenCTM(); if (!m) return { x: 0, y: 0 };
+    const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+    return p.matrixTransform(m.inverse());
+  }
+  /* いま出ている位置を、そのまま「手で置いた座標」として取り込む */
+  function seed() {
+    const M = params.conv.mesh;
+    const n = Math.max(3, Math.round(M.nodes));
+    if (M.pts && M.pts.length === n) return;
+    const src = (convMesh && convMesh.pos && convMesh.pos.length === n) ? convMesh.pos : null;
+    if (!src) return;
+    M.pts = src.map(p => ({ x: +p.x.toFixed(1), y: +p.y.toFixed(1) }));
+  }
+  function build() {
+    const el = host(); if (!el) return;
+    el.innerHTML = ''; dots = [];
+    const M = params.conv.mesh;
+    const n = Math.max(3, Math.round(M.nodes));
+    for (let i = 0; i < n; i++) {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('r', '9');
+      c.setAttribute('fill', 'rgba(13,153,255,0.18)');
+      c.setAttribute('stroke', '#0D99FF');
+      c.setAttribute('stroke-width', '1.5');
+      c.style.cursor = 'grab';
+      c.style.pointerEvents = 'all';
+      c.addEventListener('pointerdown', ev => {
+        ev.stopPropagation(); ev.preventDefault();
+        seed();
+        drag = { i, start: toLocal(ev), base: { ...params.conv.mesh.pts[i] } };
+        c.setPointerCapture(ev.pointerId); c.style.cursor = 'grabbing';
+      });
+      el.appendChild(c); dots.push(c);
+    }
+    place();
+  }
+  function place() {
+    if (!on || !convMesh || !convMesh.pos) return;
+    for (let i = 0; i < dots.length; i++) {
+      const p = convMesh.pos[i];
+      if (!p) { dots[i].setAttribute('opacity', '0'); continue; }
+      dots[i].setAttribute('opacity', '1');
+      dots[i].setAttribute('cx', p.x); dots[i].setAttribute('cy', p.y);
+    }
+  }
+  window.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const p = toLocal(e), M = params.conv.mesh;
+    if (!M.pts || !M.pts[drag.i]) return;
+    M.pts[drag.i].x = +(drag.base.x + (p.x - drag.start.x)).toFixed(1);
+    M.pts[drag.i].y = +(drag.base.y + (p.y - drag.start.y)).toFixed(1);
+    markDirty(); renderFrame(); place();
+  });
+  window.addEventListener('pointerup', () => {
+    if (!drag) return;
+    dots[drag.i] && (dots[drag.i].style.cursor = 'grab');
+    drag = null;
+  });
+  return {
+    get on() { return on; },
+    /* この案で頂点編集が使えるか (平面の3種だけ) */
+    get usable() {
+      return params.kvDesign === 'planet' && params.converge === 'mesh'
+        && (params.conv.mesh.style || 'organic') !== 'cage';
+    },
+    set(v) {
+      on = !!v && this.usable;
+      const el = host(); if (!el) return;
+      el.style.display = on ? '' : 'none';
+      if (on) build();   /* 座標の取り込みは掴んだ瞬間だけ(下の pointerdown) */
+      renderFrame();
+      if (on) place();
+    },
+    place,
+    /* 自動配置へ戻す */
+    reset() { params.conv.mesh.pts = null; markDirty(); renderFrame(); if (on) build(); },
   };
 })();
 
@@ -7904,6 +8021,7 @@ function gfxSnapshotFull() {
       orbitWidth: (C.orbitWidthBy || {})[mode], /* 案ごとの軌道の線の太さ */
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
+    meshPts: (C.mesh && C.mesh.pts) ? C.mesh.pts.map(q => ({ x: q.x, y: q.y })) : null,
     gyro: C.gyro ? { ...C.gyro } : null,   /* ジャイロの転がり方 */
     /* ※「登場(出てくる順番)」は 2026-08-27 に削除。モックKV(iframe)専用で、
          惑星案では何も効かない値だったため、プリセットにも入れない */
@@ -7942,6 +8060,7 @@ function gfxApplyFull(d) {
   }
   const pk = CONV_PARAM_KEY[mode];
   if (d.mode && pk && C[pk]) Object.assign(C[pk], d.mode);
+  if (C.mesh) C.mesh.pts = d.meshPts ? d.meshPts.map(q => ({ x: q.x, y: q.y })) : null;
   if (d.gyro && C.gyro) Object.assign(C.gyro, d.gyro);
   markDirty();
   renderFrame();
@@ -8647,7 +8766,8 @@ function buildPanel() {
     fillAnimBody();                                   /* この案の調整だけ入れ替え */
     syncPanelRows();                                  /* 位置・サイズの数値を追いつかせる */
     if (fillPresetRow) fillPresetRow();               /* この案のプリセットに入れ替え */
-    fillVariantRow();                                 /* この案のグラフィック3案に入れ替え */
+    fillVariantRow();                                 /* この案のバリエーションに入れ替え */
+    if (typeof meshHandles !== 'undefined') meshHandles.set(editHandles.on && meshHandles.usable);
     if (editHandles.on) editHandles.place();          /* 編集中なら枠も追いつかせる */
   };
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
@@ -8992,7 +9112,27 @@ function buildPanel() {
     } else if (cvMode === 'mesh') {
       const M = params.conv.mesh;
       sub(animModeBox, 'この案の調整（網でつながる）', true);
-      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes, v => M.nodes = v, v => v + '個', null, { fixedMax: true });
+      /* 【2026-08-28 ヒデさん指定】頂点をドラッグして置ける。使えるのは平面の3種だけ */
+      {
+        const row = document.createElement('div');
+        row.className = 'sw-row';
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'sw-pill sw-save';
+        const has = !!(params.conv.mesh.pts && params.conv.mesh.pts.length);
+        b.textContent = has ? '↺ 頂点を自動配置に戻す' : '頂点は自動配置です';
+        b.disabled = !has;
+        b.title = has ? '手で置いた頂点を捨てて、自動の並びに戻します' : 'まだ手で動かしていません';
+        b.onclick = () => { meshHandles.reset(); markDirty(); fillAnimBody(); };
+        row.appendChild(b);
+        (mount || body).appendChild(row);
+        note((params.conv.mesh.style || 'organic') === 'cage'
+          ? 'ケージ(球殻)は立体の並びなので、頂点の手置きはできません。上の「グラフィックを編集する」で輪と惑星を動かせます。'
+          : '「グラフィックを編集する」を押すと、各ノードに丸いつまみが出ます。ドラッグで頂点の位置を決められます（編集中は漂いが止まります）。');
+      }
+      slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes,
+        v => { M.nodes = v; if (M.pts && M.pts.length !== Math.round(v)) M.pts = null; },
+        v => v + '個', '数を変えると、手で置いた頂点は自動配置に戻ります。', { fixedMax: true });
       /* 【2026-08-27 ヒデさん指定】包囲ケージ専用のつまみ */
       if ((M.style || 'organic') === 'cage') {
         slider('カゴの大きさ', 1.05, 4, 0.05, () => params.conv.mesh.cageR, v => M.cageR = v, v => '×' + v.toFixed(2),
