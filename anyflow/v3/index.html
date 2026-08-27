@@ -1962,6 +1962,14 @@ const ORBIT_LAYOUTS = {
     inner: { cx: 436, cy: 253, rx: 397.09,  ry: 397.09  * 0.42, rot: 14 },
   },
 };
+/* 軌道そのものの回転量(度)。0なら従来どおり形は固定 */
+function convOrbitSpin(key) {
+  const C = params.conv;
+  if (!C || !C.orbitSpin) return 0;
+  if (params.kvDesign !== 'planet') return 0;
+  const dir = (key === 'inner') ? -1 : 1;   /* 2本が逆向きに回ると立体感が出る */
+  return elapsed * C.orbitSpin * 18 * dir;
+}
 function orbitBase(key) {
   return (ORBIT_LAYOUTS[params.orbitLayout] || ORBIT_LAYOUTS.figma)[key];
 }
@@ -2585,6 +2593,11 @@ const DEFAULTS = {
     /* 【2026-08-27 ヒデさん指定】軌道にそってドット自体が動く(周回する)かを案ごとに切替。
        off にすると、その案ではドットが位置に留まったまま(集約などの動きだけが起きる) */
     dotMove: { reel: true, spiral: true, accre: true, waves: true, mesh: true, beads: true, duplex: true },
+    /* 【2026-08-27 ヒデさん指定】ドット1粒ずつの不規則さと、軌道そのものの動き。
+       dotRandom = ドットごとに速さ・位置がばらつく量
+       orbitSpin = 軌道そのものが回る速さ(0で回らない。これまでは形が固定だった)
+       orbitDrift = 軌道そのものがゆっくり漂う量 */
+    dotRandom: 0, orbitSpin: 0, orbitDrift: 0,
     glow: 0.35,                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -2948,10 +2961,19 @@ function orbitGeom(key) {
     const lead = clamp01((elapsed - params.crossDelay) / Math.max(0.1, params.crossLead));
     wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10) * easeIO(lead);
   }
+  let dfx = 0, dfy = 0;
+  const dr = (params.conv && params.conv.orbitDrift) || 0;
+  if (dr > 0 && params.kvDesign === 'planet') {
+    const ph = key === 'inner' ? 2.1 : 0;
+    dfx = Math.sin(elapsed * 0.37 + ph) * dr * 26;
+    dfy = Math.cos(elapsed * 0.29 + ph) * dr * 18;
+  }
   return {
-    cx: b.cx + p.dx, cy: b.cy + p.dy,
+    cx: b.cx + p.dx + dfx, cy: b.cy + p.dy + dfy,
     rx: b.rx * p.scale, ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat),   /* flat=輪の潰し(ドラッグで変えられる) */
-    rot: b.rot + p.angle + wobble,   /* レイアウトごとの傾き(ジャイロクロスは2本が逆向き) */
+    /* 【2026-08-27 ヒデさん指定】軌道そのものを回す/漂わせる(これまでは形が固定だった)。
+       惑星の案を選んでいる時だけ効かせる */
+    rot: b.rot + p.angle + wobble + convOrbitSpin(key),
   };
 }
 
@@ -4276,8 +4298,16 @@ function patternDeg(d, i, p) {
      (実測: 外側は 120° のはずが 101°〜151° まで開閉していた) */
   const phase = (params.dotGap || 1) === 1 ? DOT_PULSE_PHASE : p.pulsePhase;
   const wt = warpTime(et, params.pulse.amp, params.pulse.period, phase);
+  /* 【2026-08-27】ドット1粒ずつの不規則さ。周期の違う波を重ねて、繰り返しに見えない揺れを作る */
+  const rnd = (params.conv && params.conv.dotRandom) || 0;
+  let jitter = 0;
+  if (rnd > 0 && move) {
+    const sd = i * 2.399;
+    jitter = (Math.sin(elapsed * (0.53 + (i % 3) * 0.17) + sd) * 0.6
+            + Math.sin(elapsed * (0.91 + (i % 5) * 0.13) + sd * 1.7) * 0.4) * rnd * 26;
+  }
   /* 手前で速く・奥でゆっくり (パネルの「回り方の緩急」) */
-  return orbitEase(d.angle + p.offset + base * p.speed * wt);
+  return orbitEase(d.angle + p.offset + base * p.speed * wt + jitter);
 }
 
 function renderFrame() {
@@ -7854,6 +7884,17 @@ function buildPanel() {
   }
   slider('吸収の光り方', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '吸収の瞬間に惑星がふっと明るくなる強さ。0で光らない。');
+  /* 【2026-08-27 ヒデさん指定】ドット1粒ずつの不規則さと、軌道そのものの動き。
+     ※ いまの作りは「軌道の形は止まっていて、ドットがその上を移動している」。
+        軌道自体を動かしたい時は下の2つを上げる。 */
+  slider('ドットのランダムさ', 0, 3, 0.05, () => params.conv.dotRandom, v => params.conv.dotRandom = v, v => v.toFixed(2),
+    '1粒ずつ速さと位置がばらつきます。0できっちり等間隔のまま回ります。', { fixedMax: true });
+  slider('軌道が回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
+    v => v === 0 ? '回らない' : '×' + v.toFixed(2),
+    '軌道そのものが回ります（外と内は逆回り）。0だと形は止まったままです。', { fixedMax: true });
+  slider('軌道が漂う量', 0, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
+    v => v === 0 ? '漂わない' : '×' + v.toFixed(2),
+    '軌道そのものがゆっくり位置を変えます。0で固定。', { fixedMax: true });
 
 
 
