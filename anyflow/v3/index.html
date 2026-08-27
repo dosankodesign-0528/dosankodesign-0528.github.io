@@ -1558,6 +1558,41 @@
   .pmenu button.danger:hover { background: #fdecec; }
   .pname { flex: 0 0 auto; width: 104px; font-family: inherit; font-size: 11px; padding: 4px 10px;
            border: 1px solid #0EBBFF; border-radius: 999px; outline: none; background: #fff; color: #111; }
+  /* 【2026-08-27 ヒデさん指定】バリエーションのピルは、上のアニメーション選択ピルと
+     見た目をはっきり分ける。角丸を小さく、選択色はブランドの水色にする */
+  .var-pill {
+    position: relative; display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 9px; padding-right: 20px;
+    border: 1px solid #dcdcdc; border-radius: 6px; background: #fbfbfc;
+    font-family: inherit; font-size: 10.5px; color: #555; cursor: pointer;
+    transition: background .14s, color .14s, border-color .14s;
+  }
+  .var-pill:hover { border-color: #9fdcf5; background: #f4fbfe; }
+  .var-pill.on { background: #0EBBFF; border-color: #0EBBFF; color: #fff; }
+  .var-x {
+    position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+    width: 14px; height: 14px; line-height: 13px; text-align: center;
+    border: 0; border-radius: 4px; background: none; cursor: pointer;
+    font-family: inherit; font-size: 11px; color: #b9b9b9; opacity: 0; transition: opacity .12s, color .12s;
+  }
+  .var-pill:hover .var-x { opacity: 1; }
+  .var-pill.on .var-x { color: rgba(255,255,255,.75); }
+  .var-x:hover { color: #d94141; background: rgba(0,0,0,.06); }
+  .var-pill.on .var-x:hover { color: #fff; background: rgba(255,255,255,.22); }
+  .var-back { border-style: dashed; color: #999; padding-right: 9px; }
+  /* 確認モーダル (window.confirm を使わない。パネルのトーンに合わせる) */
+  .mdl-bg { position: fixed; inset: 0; z-index: 2000; background: rgba(20,20,20,.28);
+            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+  .mdl { width: 290px; background: #fff; border-radius: 12px; padding: 18px 18px 14px;
+         box-shadow: 0 18px 50px rgba(0,0,0,.24); font-size: 12px; color: #222; }
+  .mdl h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; }
+  .mdl p { margin: 0 0 14px; font-size: 11px; line-height: 1.6; color: #777; }
+  .mdl-btns { display: flex; gap: 8px; }
+  .mdl-btns button { flex: 1; font-family: inherit; font-size: 11.5px; padding: 8px 10px;
+                     border-radius: 8px; cursor: pointer; border: 1px solid #dcdcdc; background: #fff; color: #444; }
+  .mdl-btns button:hover { background: #f4f4f4; }
+  .mdl-btns button.danger { background: #d94141; border-color: #d94141; color: #fff; }
+  .mdl-btns button.danger:hover { background: #c23636; }
   .sw-pill.sw-save {
     border-style: dashed; border-color: #c9c9c9; color: #666;
     background: transparent; font-weight: 400;
@@ -2675,7 +2710,8 @@ const DEFAULTS = {
   gfxByMode: {},         // { 案キー: {layout, outer, inner, planet} }
   gfxPresets: {},        // { 案キー: [{name, data}] } 案ごとのプリセット
   gfxPresetOn: {},       // { 案キー: 選んでいる番号 }
-  gfxVariantOn: {},      // { 案キー: 選んでいるグラフィック3案の番号 }
+  gfxVariantOn: {},      // { 案キー: 選んでいるバリエーションの番号 }
+  gfxVariantHidden: {},  // { 案キー: [消したバリエーションの名前] } UI から削除したもの
   conv: {
     showOuter: true, showInner: true,
     showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
@@ -2846,6 +2882,8 @@ function presetStoreSave() {
   try {
     localStorage.setItem(PRESET_KEY, JSON.stringify({
       v: 1, presets: params.gfxPresets || {}, on: params.gfxPresetOn || {},
+      /* 消したバリエーションの控えもここに置く。パネルを作り替えても残るように */
+      hidden: params.gfxVariantHidden || {},
     }));
   } catch (e) {}
 }
@@ -3054,12 +3092,14 @@ function load() {
   if (st) {
     merged.gfxPresets = st.presets || {};
     merged.gfxPresetOn = (st.on && typeof st.on === 'object') ? st.on : {};
+    merged.gfxVariantHidden = (st.hidden && typeof st.hidden === 'object') ? st.hidden : {};
   } else if (merged.gfxPresets && Object.keys(merged.gfxPresets).length) {
     /* まだ別置きしていない古い持ち物は、ここで引っ越す */
     try { localStorage.setItem(PRESET_KEY, JSON.stringify({ v: 1, presets: merged.gfxPresets, on: merged.gfxPresetOn || {} })); } catch (e) {}
   }
   if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
+  if (!merged.gfxVariantHidden || Array.isArray(merged.gfxVariantHidden)) merged.gfxVariantHidden = {};
   return merged;
 }
 /* ⚠️【2026-08-27 事故対応】直接編集をオンにすると再生を止める(params.running=false)。
@@ -3400,6 +3440,88 @@ const GFX_VARIANTS = {
       common: { orbitSpin: 0.7 } },
   ],
 };
+/* ===== さらに5案 (2026-08-27 ヒデさん指定) =====
+   狙う印象は【先進的 / 上品 / 洗練】。A〜F より思い切って見た目を変える。
+   ⚠️ デザイン(惑星・軌道・ドットの絵)は変えない。変えるのは配置と、その案のつまみだけ。
+   同じ5つがどの案にも並ぶので、案をまたいで見比べられる。 */
+const GFX_LOOKS2 = [
+  { key: 'hair', name: 'G ヘアライン', spin: 0.12,
+    desc: '軌道を大きく広げ、粒をごく小さく。細い線だけが遠くを走る、いちばん静かで上品な形。',
+    gfx: { outer: { scale: 1.45, flat: 0.62 }, inner: { scale: 1.36, flat: 0.58 }, planet: { scale: 0.62, dy: 44 } },
+    common: { dotSize: 0.55 } },
+  { key: 'portrait', name: 'H 縦のクロス', spin: 1.1,
+    desc: '輪を縦に立てて交差させます。横に流れる普通の形と真逆で、いちばん目を引きます。',
+    gfx: { outer: { scale: 0.92, flat: 2.4, angle: 66 }, inner: { scale: 0.84, flat: 2.3, angle: -58 }, planet: { scale: 0.86 } } },
+  { key: 'nested', name: 'I 大小の入れ子', spin: 0.22,
+    desc: '外を大きく、内をぐっと小さく。大小の差で奥行きが出て、構造がある印象になります。',
+    gfx: { outer: { scale: 1.5, flat: 0.78 }, inner: { scale: 0.6, flat: 1.05 }, planet: { scale: 0.72, dy: 48 } } },
+  { key: 'horizon', name: 'J 地平線', spin: 0,
+    desc: '輪を水平に寝かせて細い帯に。大きな惑星が帯の上に浮かび、静かで洗練された佇まいになります。',
+    /* ⚠️ angle は基準の傾き(-23.33°)を打ち消す値。そのままだと「斜めの直線2本」に見えた(実測) */
+    gfx: { outer: { scale: 1.12, flat: 0.26, angle: 23.33 },
+           inner: { scale: 0.98, flat: 0.22, angle: 23.33 },
+           planet: { scale: 1.16, dy: 54 } } },
+  { key: 'rising', name: 'K 斜めの流れ', spin: 0.75,
+    desc: '2本とも右肩上がりに傾け、惑星を左下へ。対角に流れる非対称な構図で、動きが出ます。',
+    gfx: { layout: 'gyro',
+           outer: { scale: 1.16, flat: 0.9, angle: 52, dy: -18 },
+           inner: { scale: 1.04, flat: 1.05, angle: 44, dy: 14 },
+           planet: { scale: 0.9, dx: -24, dy: 40 } } },
+];
+/* 案ごとの味付け。書いていない組み合わせは、その案の既定のつまみのまま */
+const LOOK_TUNE = {
+  reel:   { hair: { blend: 2, blendAlpha: 0.14, T: 6.4, depth: 0.98 },
+            portrait: { blend: 4, blendAlpha: 0.35, T: 5, moveDur: 0.14 },
+            nested: { blend: 0, T: 6 },
+            horizon: { blend: 6, blendAlpha: 0.26, T: 5.4 },
+            rising: { blend: 3, blendAlpha: 0.3, T: 4.4 } },
+  spiral: { hair: { count: 40, size: 0.34, life: 8, swirl: 1.2 },
+            portrait: { count: 24, size: 0.6, life: 5, swirl: 2.2, fallCurve: 1.6 },
+            nested: { count: 20, size: 0.7, life: 6.5, stay: 4, swirl: 1.6 },
+            horizon: { count: 18, size: 0.8, life: 7, swirl: 0.4, fallCurve: 0.8 },
+            rising: { count: 28, size: 0.5, life: 5.5, swirl: 1.8 } },
+  accre:  { hair: { scale: 2.4, count: 1800, size: 0.18, fall: 0.5, twinkle: 0.8, showOrbit: false },
+            portrait: { scale: 1.0, count: 1100, size: 0.34, showOrbit: true, swirl: 1.8 },
+            nested: { scale: 0.7, count: 1000, size: 0.34, showOrbit: true, swirl: 2.0 },
+            horizon: { scale: 1.6, count: 1400, size: 0.24, fall: 0.6, swirl: 0.5, showOrbit: false },
+            rising: { scale: 1.25, count: 1100, size: 0.3, swirl: 1.4, wobble: 0.5, showOrbit: true } },
+  mesh:   { hair: { style: 'cage', nodes: 46, cageR: 2.9, cageSpin: 0.45, cageLinks: 3, cageTilt: -10,
+                    lineAlpha: 0.3, lineWidth: 0.7, size: 0.3, random: 0.3 },
+            portrait: { style: 'cage', nodes: 30, cageR: 1.7, cageSpin: 1.4, cageLinks: 4, cageTilt: -62,
+                        lineAlpha: 0.5, lineWidth: 1, size: 0.45 },
+            nested: { style: 'constellation', nodes: 16, span: 0.4, lineAlpha: 0.34, lineWidth: 0.9,
+                      drift: 1.2, random: 0.8, size: 0.6 },
+            horizon: { style: 'organic', nodes: 18, span: 0.5, lineAlpha: 0.4, lineWidth: 1,
+                       drift: 0.7, random: 0.4, size: 0.55 },
+            rising: { style: 'cage', nodes: 32, cageR: 2.0, cageSpin: 0.9, cageLinks: 3, cageTilt: 34,
+                      lineAlpha: 0.45, lineWidth: 0.9, size: 0.42 } },
+  beads:  { hair: { count: 520, size: 0.3, ratio: 0.12, speed: 0.2, life: 5 },
+            portrait: { count: 300, size: 0.55, ratio: 0.26, spin: 1.2, spinEase: 1.3 },
+            nested: { count: 300, size: 0.52, ratio: 0.2, speed: 0.3, backIn: 1.6 },
+            horizon: { count: 380, size: 0.4, ratio: 0.14, speed: 0.22, life: 4.2 },
+            rising: { count: 300, size: 0.5, ratio: 0.28, speed: 0.36, spin: 0.9 } },
+  duplex: { hair: { curve: 0.5, density: 0.9, lineAlpha: 0.14, lineWidth: 0.4, size: 0.42, speed: 0.8, T: 5.2 },
+            portrait: { curve: 0.2, density: 1.4, lineAlpha: 0.28, lineWidth: 1.1, size: 0.55, speed: 1.2 },
+            nested: { curve: 0.35, density: 1.2, lineAlpha: 0.22, lineWidth: 0.9, size: 0.6 },
+            horizon: { curve: 0.08, density: 1.8, lineAlpha: 0.24, lineWidth: 1.4, size: 0.5, speed: 1.1 },
+            rising: { curve: 0.4, density: 1.3, lineAlpha: 0.26, lineWidth: 1, size: 0.55, speed: 1.15 } },
+  gyro:   { hair: { tumble: 0.6, spin: 0.7, phase: 90, thin: 0.02, pull: 0.3, pullT: 7 },
+            portrait: { tumble: 1.3, spin: 1.5, phase: 90, thin: 0.04, pull: 0.25, pullT: 4 },
+            nested: { tumble: 0.9, spin: 1.0, phase: 120, thin: 0.05, pull: 0.45, pullT: 5.5 },
+            horizon: { tumble: 0.7, spin: 0.6, phase: 30, thin: 0.03, pull: 0.2, pullT: 6.5 },
+            rising: { tumble: 1.5, spin: 1.3, phase: 150, thin: 0.04, pull: 0.35, pullT: 4.2 } },
+};
+/* どの案にも G〜K を同じ順で足す */
+for (const mode in GFX_VARIANTS) {
+  for (const L of GFX_LOOKS2) {
+    const tune = (LOOK_TUNE[mode] || {})[L.key];
+    GFX_VARIANTS[mode].push({
+      name: L.name, desc: L.desc, gfx: L.gfx,
+      conv: tune || undefined,
+      common: { orbitSpin: L.spin, ...(L.common || {}) },
+    });
+  }
+}
 /* 案キー → params.conv の中のどのつまみ束か (duplex だけ名前が link) */
 const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link', gyro: 'gyro' };
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
@@ -7604,6 +7726,27 @@ function gfxApplyFull(d) {
   renderFrame();
 }
 
+/* 【2026-08-27 ヒデさん指定】確認は window.confirm ではなく、パネルのトーンに合わせた小さなモーダルで出す */
+function askModal(title, body, okLabel, onOk) {
+  const bg = document.createElement('div');
+  bg.className = 'mdl-bg';
+  const m = document.createElement('div');
+  m.className = 'mdl';
+  const h = document.createElement('h4'); h.textContent = title;
+  const p = document.createElement('p'); p.textContent = body;
+  const row = document.createElement('div'); row.className = 'mdl-btns';
+  const no = document.createElement('button'); no.type = 'button'; no.textContent = 'やめる';
+  const yes = document.createElement('button'); yes.type = 'button'; yes.className = 'danger'; yes.textContent = okLabel || '削除する';
+  const close = () => { bg.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  no.onclick = close;
+  yes.onclick = () => { close(); onOk(); };
+  bg.onclick = e => { if (e.target === bg) close(); };
+  document.addEventListener('keydown', onKey, true);
+  row.append(no, yes); m.append(h, p, row); bg.appendChild(m); document.body.appendChild(bg);
+  yes.focus();
+}
+
 /* --- 案ごとのグラフィック3案 (2026-08-27 ヒデさん指定) --- */
 function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
@@ -8241,31 +8384,61 @@ function buildPanel() {
     { get: () => params.converge, set: v => onConvSwitch(v) },
     { noRebuild: true, tip: it => (window.__convDesc || {})[it.key] || '' });
 
-  /* --- この案のグラフィック3案 (2026-08-27 ヒデさん指定) ---
+  /* --- この案のバリエーション (2026-08-27 ヒデさん指定) ---
+     ⚠️ 上の「アニメーションの選択ピル」と見分けがつくよう、
+        「バリエーション」の見出しを付けた別の箱に入れ、ピルの見た目も変える。
      同じアニメーションの枠の中で、軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウトと
-     その案のつまみだけを変えた3案。案を切り替えると中身も入れ替える。 */
+     その案のつまみ・軌道の回転だけを変えたもの。UIから任意に削除できる。 */
+  sub(aRoot, 'バリエーション', true, { fixed: true });
   const varRow = document.createElement('div');
   varRow.className = 'sw-row';
   (mount || body).appendChild(varRow);
+  const varHidden = () => {
+    if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
+    const m = params.converge || 'reel';
+    return params.gfxVariantHidden[m] || (params.gfxVariantHidden[m] = []);
+  };
   const fillVariantRow = function () {
     const mode = params.converge || 'reel';
     const list = GFX_VARIANTS[mode] || [];
+    const hid = varHidden();
     varRow.innerHTML = '';
     const on = gfxVariantOn();
     list.forEach((v, i) => {
+      if (hid.includes(v.name)) return;                 /* 消した案は出さない */
       const b = document.createElement('button');
-      b.className = 'sw-pill' + (on === i ? ' on' : '');
-      b.textContent = v.name;
+      b.type = 'button';
+      b.className = 'var-pill' + (on === i ? ' on' : '');
       b.title = v.desc;                                 /* 説明は吹き出しで読む */
+      b.append(document.createTextNode(v.name));
       b.onclick = () => {
         applyGfxVariant(i);
         syncPanelRows();
         fillAnimBody();
         if (editHandles.on) editHandles.place();
-        varRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', j === i));
+        varRow.querySelectorAll('.var-pill').forEach(el => el.classList.toggle('on', el === b));
       };
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'var-x';
+      x.textContent = '×';
+      x.title = 'このバリエーションを消す';
+      x.onclick = ev => {
+        ev.stopPropagation();
+        askModal('削除しますか？', `バリエーション「${v.name}」を一覧から消します。あとで「消した案を戻す」で戻せます。`,
+          '削除する', () => { hid.push(v.name); presetStoreSave(); markDirty(); fillVariantRow(); });
+      };
+      b.appendChild(x);
       varRow.appendChild(b);
     });
+    if (hid.length) {
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'var-pill var-back';
+      back.textContent = `↺ 消した案を戻す (${hid.length})`;
+      back.onclick = () => { hid.length = 0; presetStoreSave(); markDirty(); fillVariantRow(); };
+      varRow.appendChild(back);
+    }
   };
   fillVariantRow();
 
