@@ -1357,9 +1357,10 @@
   }
   .sw-copy:hover { background: #f2f2f2; }
   .sw-pill {
+    /* 2026-08-28: わずかに詰めた(可読性は保つ) */
     font-family: inherit;
-    font-size: 12px;
-    padding: 5px 10px;
+    font-size: 11.5px;
+    padding: 4px 9px;
     border-radius: 999px;
     border: 1px solid #d8d8d8;
     background: #fff;
@@ -1473,12 +1474,12 @@
   /* 【2026-08-26 整理】セクションの区切りと余白をはっきりさせて読みやすく */
   .grp { margin-top: 9px; padding-top: 8px; border-top: 1px solid #e8e8e8; }
   .cat-body .grp:first-child { border-top: none; margin-top: 8px; padding-top: 0; }
-  .grp-title { font-weight: 600; font-size: 12.5px; color: #1a1a1a; margin-bottom: 5px;
+  .grp-title { font-weight: 600; font-size: 12.5px; color: #1a1a1a; margin-bottom: 7px;
                display: flex; align-items: center; gap: 6px; min-height: 22px; }
   /* 見出しは1行に収める(長い時は…)。ボタンと取り合って折り返さないように */
   .grp-title > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden;
                text-overflow: ellipsis; white-space: nowrap; }
-  .grp > .grp-body { padding-bottom: 2px; }
+
   /* たためない小見出し(全体カテゴリ)。コンパクトに詰める */
   .grp.fixed { margin-top: 7px; padding-top: 6px; }
   .grp.bare { margin-top: 4px; padding-top: 4px; border-top: none; }
@@ -1561,17 +1562,28 @@
   /* 【2026-08-27 ヒデさん指定】バリエーションのピルは、上のアニメーション選択ピルと
      見た目をはっきり分ける。角丸を小さく、選択色はブランドの水色にする */
   .var-pill {
-    position: relative; display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 9px; padding-right: 20px;
+    position: relative; display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 7px; padding-right: 17px;
     border: 1px solid #dcdcdc; border-radius: 6px; background: #fbfbfc;
-    font-family: inherit; font-size: 10.5px; color: #555; cursor: pointer;
+    font-family: inherit; font-size: 10px; color: #555; cursor: pointer;
     transition: background .14s, color .14s, border-color .14s;
   }
+  /* 【2026-08-28】案が16個あると折り返しで400px近くになるので、箱に入れて中でスクロールさせる。
+     全部そこにあることは分かるまま、パネルの背だけ短くできる */
+  .var-box { max-height: 116px; overflow-y: auto; overscroll-behavior: contain;
+             margin: 2px 0 0; padding-right: 2px; }
+  /* まだ下に続いている時だけ、下端をふわっと薄くして「もっとある」と分かるようにする */
+  .var-box.more {
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 20px), rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(180deg, #000 calc(100% - 20px), rgba(0,0,0,0) 100%);
+  }
+  .var-box::-webkit-scrollbar { width: 5px; }
+  .var-box::-webkit-scrollbar-thumb { background: #dedede; border-radius: 3px; }
   .var-pill:hover { border-color: #9fdcf5; background: #f4fbfe; }
   .var-pill.on { background: #0EBBFF; border-color: #0EBBFF; color: #fff; }
   .var-x {
-    position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
-    width: 14px; height: 14px; line-height: 13px; text-align: center;
+    position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; line-height: 12px; text-align: center;
     border: 0; border-radius: 4px; background: none; cursor: pointer;
     font-family: inherit; font-size: 11px; color: #b9b9b9; opacity: 0; transition: opacity .12s, color .12s;
   }
@@ -1646,6 +1658,17 @@
   .grp.closed .grp-chev { transform: rotate(-90deg); }
   .grp.closed .grp-body { display: none; }
   .row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  /* 【2026-08-28 ヒデさん指定・余白の整理】
+     近接: つまみの行どうしは詰め、【違う種類の部品】の前で間を空けて、かたまりを作る。
+     ⚠️ 隣どうしのセレクタ(+)では効かない場所があった。
+        補足文(.grp-note / .row-hint)は display:none でも DOM には残っているので、
+        つまみの行とピルの行の【間に挟まって】隣接と見なされなかった(実測: 2px のままだった)。
+        なので「部品の種類そのもの」に間を持たせる形にした。 */
+  .grp-body > .sw-row, .grp-body > .var-box, .grp-body > .pset,
+  .grp-body > .gfx-edit, .grp-body > .np { margin-top: 9px; }
+  .row + .row { margin-top: 2px; }
+  /* 見出しの下と、かたまりの終わりにも息をつかせる */
+  .grp > .grp-body { padding-bottom: 4px; }
   /* ⚠️ 2026-08-19: ラベルを分かりやすい日本語に書き直したら 92px では折り返した。
      長い項目名でも1行に収まる幅にし、値の欄も「32秒」「120px」が入る幅にする */
   /* ⚠️ 100px は「いちばん長いラベル(9文字)を 11px で描いた実測 99px」に合わせた値。
@@ -8815,9 +8838,22 @@ function buildPanel() {
      同じアニメーションの枠の中で、軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウトと
      その案のつまみ・軌道の回転だけを変えたもの。UIから任意に削除できる。 */
   sub(aRoot, 'バリエーション', true, { fixed: true });
+  /* 【2026-08-28】案が増えたので、折り返しても背が伸びすぎないよう箱に入れる */
+  const varBox = document.createElement('div');
+  varBox.className = 'var-box';
   const varRow = document.createElement('div');
   varRow.className = 'sw-row';
-  (mount || body).appendChild(varRow);
+  varBox.appendChild(varRow);
+  (mount || body).appendChild(varBox);
+  /* 下にまだ案が続いているかを見て、下端のフェードを出し入れする */
+  const syncVarFade = () => {
+    const more = varBox.scrollHeight - varBox.clientHeight - varBox.scrollTop > 2;
+    varBox.classList.toggle('more', more);
+  };
+  varBox.addEventListener('scroll', syncVarFade);
+  /* ⚠️ パネルが閉じている間は高さが 0 なので、初回のフェード判定が always false になっていた(実測)。
+     箱に大きさが付いた時(＝パネルを開いた時)にも計算し直す */
+  if (window.ResizeObserver) new ResizeObserver(syncVarFade).observe(varBox);
   const varHidden = () => {
     if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
     const m = params.converge || 'reel';
@@ -8863,6 +8899,7 @@ function buildPanel() {
       b.appendChild(x);
       varRow.appendChild(b);
     });
+    requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
     if (hid.length) {
       const back = document.createElement('button');
       back.type = 'button';
@@ -9328,11 +9365,9 @@ function buildPanel() {
 
   /* ---------- ⑤ 惑星 ---------- */
   sub(gRoot, '惑星', true);
-  /* 【2026-08-28 ヒデさん指定】惑星の手前に来たものを隠すか、そのまま前を通すか */
-  segRow('手前のもの', [['隠す', 1], ['前を通す', 0]],
-    () => (params.conv.frontCut !== false) ? 1 : 0,
-    v => { params.conv.frontCut = !!v; markDirty(); renderFrame(); });
-  note('「隠す」＝惑星の手前に来た輪や粒を消して、惑星の中へ入ったように見せます。「前を通す」＝そのまま手前を横切ります。');
+  /* 【2026-08-28 ヒデさん指定】「手前のもの(隠す/前を通す)」のつまみはパネルから削除。
+     値(params.conv.frontCut)はバリエーションが使うので残してある
+     (例: ③「前後を貫く軌道」は前を通す設定で立体感を出している)。 */
   const PLANET_SKINS = [
     { key: 'A1', name: '1 ビビッドブルー' },
     { key: 'A2', name: '2 ピンク×ブルー' },
