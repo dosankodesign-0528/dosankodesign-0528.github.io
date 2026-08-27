@@ -2655,7 +2655,7 @@ const DEFAULTS = {
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
     link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, lineWidth: 1, T: 3.2, vanishK: 0.35 },
     /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
-    accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false,
+    accre:  { count: 1000, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false,
               swirl: 1, fallCurve: 1 },   /* swirl=内側ほど速く回る度合い / fallCurve=落ち方のカーブ */
   },
   /* KV(右グラフィック)の入場の各フェーズの出始めタイミング(秒・合図から)。パネルで調整可。iframe へ postMessage。 */
@@ -3100,13 +3100,13 @@ const GFX_VARIANTS = {
   ],
   accre: [
     { name: 'A 標準の円盤', desc: '既定の円盤。惑星のまわりを粒が渦を巻いて落ちていきます。',
-      gfx: {}, conv: { scale: 1.15, count: 70, size: 0.35, fall: 1, showOrbit: false, swirl: 1, fallCurve: 1 } },
+      gfx: {}, conv: { scale: 1.15, count: 1000, size: 0.35, fall: 1, showOrbit: false, swirl: 1, fallCurve: 1 } },
     { name: 'B 大きく薄い円盤', desc: '円盤をぐっと広げて粒を140個に。1粒を小さくして、細かい砂が漂うような密度にします。',
       gfx: { planet: { scale: 0.82, dy: 52 } },
-      conv: { scale: 1.85, count: 140, size: 0.28, fall: 0.7, wobble: 0.7, twinkle: 0.6, showOrbit: false, swirl: 0.6 } },
+      conv: { scale: 1.85, count: 1800, size: 0.22, fall: 0.7, wobble: 0.7, twinkle: 0.6, showOrbit: false, swirl: 0.6 } },
     { name: 'C 軌道つき・きつい渦', desc: '軌道を出したまま、内側で小さくきつい渦を巻かせます。ジャイロ交差なので円盤と輪が立体的に絡みます。',
       gfx: { layout: 'gyro', inner: { scale: 0.92, flat: 1.1 }, planet: { scale: 0.95 } },
-      conv: { scale: 0.85, count: 100, size: 0.4, showOrbit: true, swirl: 2.4, fallCurve: 1.8, wobble: 0.2 } },
+      conv: { scale: 0.85, count: 700, size: 0.4, showOrbit: true, swirl: 2.4, fallCurve: 1.8, wobble: 0.2 } },
   ],
   mesh: [
     { name: 'A ふわふわ漂う', desc: '既定。ノードがゆらゆら漂い、線で結ばれてデータが渡り歩きます。',
