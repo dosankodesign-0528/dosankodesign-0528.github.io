@@ -3814,7 +3814,7 @@ const editHandles = (() => {
     '</svg>') + '") 12 12, grab';
   let svg = null, on = false, drag = null, wasRunning = null, sel = null;
   let onSel = null, onEdit = null;   /* パネルとの同期用コールバック */
-  let boxG = null, boxRect = null, label = null;
+  let boxG = null, boxBg = null, boxRect = null, label = null;
   const hits = {};      /* 当たり判定(選択用) */
   const handles = [];   /* {el, kind, ix, iy} kind: corner/edge/rot */
 
@@ -3830,8 +3830,12 @@ const editHandles = (() => {
     orbit.appendChild(svg);
 
     /* --- バウンディングボックス --- */
-    boxG = document.createElementNS(SVG_NS, 'g');
-    svg.appendChild(boxG);
+    /* 【2026-08-27 バグ修正】辺のリサイズが効かなかった原因は重なり順。
+       選択用の当たり判定(透明な太い楕円)がハンドルの上にいて、辺を掴めなかった。
+       枠(移動用) → 当たり判定 → ハンドル類 の順に重ねる。 */
+    boxBg = document.createElementNS(SVG_NS, 'g');
+    svg.appendChild(boxBg);
+    boxG = document.createElementNS(SVG_NS, 'g');   /* ハンドル類。当たり判定より後で足す */
     boxRect = document.createElementNS(SVG_NS, 'rect');
     boxRect.setAttribute('fill', 'rgba(0,0,0,0)');
     boxRect.setAttribute('stroke', BLUE);
@@ -3841,7 +3845,7 @@ const editHandles = (() => {
     boxRect.style.cursor = 'move';
     boxRect.style.pointerEvents = 'all';
     boxRect.addEventListener('pointerdown', e => { e.stopPropagation(); startDrag(e, { kind: 'move' }); });
-    boxG.appendChild(boxRect);
+    boxBg.appendChild(boxRect);
 
     /* --- 回転ゾーン(角の少し外側。Figma と同じく“角の外”で回転) --- */
     for (const [ix, iy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
@@ -3886,6 +3890,7 @@ const editHandles = (() => {
       hits[key] = el;
     }
 
+    svg.appendChild(boxG);   /* ハンドル類は当たり判定より前面へ */
     /* --- ドラッグ中の数値表示 --- */
     label = document.createElementNS(SVG_NS, 'g');
     const lb = document.createElementNS(SVG_NS, 'rect');
@@ -3935,6 +3940,7 @@ const editHandles = (() => {
   function select(key) {
     sel = key;
     if (boxG) boxG.style.display = key ? '' : 'none';
+    if (boxBg) boxBg.style.display = key ? '' : 'none';
     place();
     if (onSel) onSel(key);      /* パネル側へ「何を選んだか」を伝える */
   }
@@ -4041,10 +4047,12 @@ const editHandles = (() => {
         el.setAttribute('transform', `rotate(${g.rot} ${g.cx} ${g.cy})`);
       }
     }
-    if (!sel) { if (boxG) boxG.style.display = 'none'; return; }
-    boxG.style.display = '';
+    if (!sel) { if (boxG) boxG.style.display = 'none'; if (boxBg) boxBg.style.display = 'none'; return; }
+    boxG.style.display = ''; boxBg.style.display = '';
     const b = boxOf(sel);
-    boxG.setAttribute('transform', `rotate(${b.rot} ${b.cx} ${b.cy})`);
+    const tr = `rotate(${b.rot} ${b.cx} ${b.cy})`;
+    boxG.setAttribute('transform', tr);
+    boxBg.setAttribute('transform', tr);
     boxRect.setAttribute('x', (b.cx - b.rx).toFixed(1));
     boxRect.setAttribute('y', (b.cy - b.ry).toFixed(1));
     boxRect.setAttribute('width', (b.rx * 2).toFixed(1));
@@ -4058,7 +4066,7 @@ const editHandles = (() => {
       const x = b.cx + b.rx * h.ix, y = b.cy + b.ry * h.iy;
       if (h.kind === 'edgeband') {
         /* 辺いっぱいの帯。角の回転ゾーンとぶつからないよう、少し内側で止める */
-        const T = 10, inset = 16;
+        const T = 22, inset = 18;   /* 2026-08-27: 掴みやすいよう帯を太く */
         if (h.ix === 0) {   /* 上下の辺 */
           h.el.setAttribute('x', (b.cx - b.rx + inset).toFixed(1));
           h.el.setAttribute('y', (y - T / 2).toFixed(1));
