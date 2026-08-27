@@ -2781,6 +2781,25 @@ const DEFAULTS = {
    コード側の既定値は本番(anyflow-embed-v3)と完全に一致していることを実測で確認済み
    (楕円 cx/cy/rx/ry/rotate、惑星 transform とも一致)。
    一度きりのリセットでは取りこぼすので、保存キーごと上げて古い保存値を丸ごと捨てる。 */
+/* ===== プリセットの保管場所 (2026-08-27 ヒデさん指定) =====
+   ⚠️ 調整パネルを作り替えるたびに STORAGE_KEY を上げると、保存値が丸ごと捨てられる。
+      プリセットまで一緒に消えるのは困るので、【バージョンを付けない別のキー】に分けて置く。
+      ここは今後もキー名を変えない。パネルをどう作り替えてもプリセットは残る。 */
+const PRESET_KEY = 'anyflow-gfx-presets';
+function presetStoreLoad() {
+  try {
+    const j = JSON.parse(localStorage.getItem(PRESET_KEY) || 'null');
+    if (j && typeof j === 'object' && j.presets && typeof j.presets === 'object') return j;
+  } catch (e) {}
+  return null;
+}
+function presetStoreSave() {
+  try {
+    localStorage.setItem(PRESET_KEY, JSON.stringify({
+      v: 1, presets: params.gfxPresets || {}, on: params.gfxPresetOn || {},
+    }));
+  } catch (e) {}
+}
 const STORAGE_KEY = 'anyflow-embed-anim-v81';   /* 2026-08-27 案ごとの形/3案/番号詰め。v80の保存値は破棄 */
 
 let params = load();
@@ -2805,7 +2824,7 @@ try {
     localStorage.setItem('anyflow-migrate-resC2', '1');
   }
 } catch (e) {}
-function load() {
+function loadParams() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     /* ⚠️【2026-08-19】以前は保存されたドットの個数が今と違うと、この if を丸ごと外れて
@@ -2858,6 +2877,7 @@ function load() {
     merged.gfxPresets[merged.converge || 'reel'] = s.orbitPresets.slice();
   }
   delete merged.orbitPresets; delete merged.orbitPresetOn;
+
   /* 【2026-08-27 ヒデさん指定】案ごとに既定がバラバラに変わってしまっていたので、
      全案の形を「最初に実装した位置関係」へ一度だけ戻す */
   if (!localStorage.getItem('anyflow-gfx-permode-20260827b')) {
@@ -2969,6 +2989,24 @@ function load() {
   }
   return structuredClone(DEFAULTS);
 }
+/* 【2026-08-27 ヒデさん指定】プリセットは STORAGE_KEY とは別に持つ。
+   ⚠️ 本体の保存値が無い / バージョンを上げて捨てた時は loadParams() が
+      いきなり DEFAULTS を返すので、そこを通っても必ずプリセットを載せ直す。
+      (この受け皿を作る前は、キーを上げるとプリセットも消えていた) */
+function load() {
+  const merged = loadParams();
+  const st = presetStoreLoad();
+  if (st) {
+    merged.gfxPresets = st.presets || {};
+    merged.gfxPresetOn = (st.on && typeof st.on === 'object') ? st.on : {};
+  } else if (merged.gfxPresets && Object.keys(merged.gfxPresets).length) {
+    /* まだ別置きしていない古い持ち物は、ここで引っ越す */
+    try { localStorage.setItem(PRESET_KEY, JSON.stringify({ v: 1, presets: merged.gfxPresets, on: merged.gfxPresetOn || {} })); } catch (e) {}
+  }
+  if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
+  if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
+  return merged;
+}
 /* ⚠️【2026-08-27 事故対応】直接編集をオンにすると再生を止める(params.running=false)。
    その状態のまま保存すると【次に開いた時に何も動かず＝画面が真っ白】になる(実際に発生)。
    一時停止は"今だけの状態"なので、保存には必ず再生中として書き出す。 */
@@ -2977,6 +3015,8 @@ function save() {
      (2026-08-27 ヒデさん指定・案ごとに形を分ける) */
   if (typeof gfxStash === 'function') gfxStash();
   const out = { ...params, running: true };
+  /* プリセットは PRESET_KEY 側だけで持つ。本体に二重で持たせない */
+  delete out.gfxPresets; delete out.gfxPresetOn;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
 }
 /* ===== 保存の考え方 (2026-08-19 ヒデさん指定) =====
@@ -7381,6 +7421,7 @@ function gfxPresetOn() {
 function gfxPresetSetOn(i) {
   if (!params.gfxPresetOn) params.gfxPresetOn = {};
   params.gfxPresetOn[params.converge || 'reel'] = i;
+  presetStoreSave();
 }
 function applyGfxPreset(i) {
   const ps = gfxPresetList()[i];
@@ -8058,7 +8099,7 @@ function buildPanel() {
         inp.className = 'pname';
         inp.value = ps.name;
         const done = ok => {
-          if (ok && inp.value.trim()) { ps.name = inp.value.trim(); markDirty(); }
+          if (ok && inp.value.trim()) { ps.name = inp.value.trim(); presetStoreSave(); markDirty(); }
           fillPresetRow();
         };
         inp.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
@@ -8097,11 +8138,11 @@ function buildPanel() {
             pmenu.appendChild(m);
           };
           mk('✎ 名前を変える', () => rename(i, b));
-          mk('⤓ いまの設定で上書き', () => { list[i].data = gfxSnapshotFull(); markDirty(); fillPresetRow(); });
+          mk('⤓ いまの設定で上書き', () => { list[i].data = gfxSnapshotFull(); presetStoreSave(); markDirty(); fillPresetRow(); });
           mk('🗑 削除', () => {
             list.splice(i, 1);
             if (gfxPresetOn() === i) gfxPresetSetOn(null);
-            markDirty(); fillPresetRow();
+            presetStoreSave(); markDirty(); fillPresetRow();
           }, 'danger');
           document.body.appendChild(pmenu);
           const r = e.getBoundingClientRect();
@@ -8117,7 +8158,7 @@ function buildPanel() {
       add.title = 'いまのグラフィックの設定を、この案専用のプリセットとして保存する';
       add.onclick = () => {
         list.push({ name: 'プリセット ' + (list.length + 1), data: gfxSnapshotFull() });
-        gfxPresetSetOn(list.length - 1);
+        gfxPresetSetOn(list.length - 1);   /* この中でプリセット保管場所へ書き込む */
         markDirty();
         fillPresetRow();
         const pills = presetRow.querySelectorAll('.sw-pill:not(.sw-edit)');
