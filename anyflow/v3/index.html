@@ -4181,7 +4181,14 @@ function convDrawRipples(strength, hit, dt) {
    2 ぼかして広がる … 複製にぼかしをかけながら広がる。やわらかい残像
    3 手前にゴースト … 惑星の手前へ薄く重ねる。透けた残像がはっきり見える */
 let convEchoes = [], convEchoCans = null, convEchoEls = null;
-const CONV_ECHO_MAX = 4;
+/* 【2026-08-28 ヒデさん指定】1枚を等倍から広げると、始まりは惑星に隠れて残像が見えない。
+   ・最初から【ひと回り大きい】ところから始める
+   ・1回の取り込みで【3枚】を、少しずつ大きさをずらして重ねる
+   3枚 × 同時に2回分 = 6枚ぶん用意する */
+const CONV_ECHO_SHELLS = 3;
+const CONV_ECHO_MAX = 6;
+/* 何枚目がどこから始まるか(惑星の半径に対する倍率) */
+const ECHO_START = [1.12, 1.26, 1.40];
 /* 【2026-08-28 ヒデさん指定】4 は単色の面。取り込むたびに色が変わる。
    ブランドの色まわりから選ぶので、どれが出ても浮かない */
 const ECHO_COLORS = ['#0EBBFF', '#FF5D97', '#7FD8FF', '#A78BFA', '#FFFFFF'];
@@ -4226,10 +4233,14 @@ function convDrawEchoes(strength, hit, dt, style) {
   if (strength <= 0.001) { convEchoes.length = 0; hideAll(); return; }
   if (useEll ? !ells : !cans) { convEchoes.length = 0; return; }
   hideAll();
-  /* 生む: 吸収のたびに1枚。色は毎回ランダムに選ぶ(4のときだけ使う) */
-  if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.2)
-      && convEchoes.length < CONV_ECHO_MAX) {
-    convEchoes.push({ t: 0, c: ECHO_COLORS[(Math.random() * ECHO_COLORS.length) | 0] });
+  /* 生む: 吸収のたびに【3枚】。大きさをずらして重ねるので、広がりが読み取れる。
+     色は取り込みごとに1つ選び、3枚で共有する(4のときだけ使う) */
+  if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.24)
+      && convEchoes.length + CONV_ECHO_SHELLS <= CONV_ECHO_MAX) {
+    const col = ECHO_COLORS[(Math.random() * ECHO_COLORS.length) | 0];
+    for (let sIdx = 0; sIdx < CONV_ECHO_SHELLS; sIdx++) {
+      convEchoes.push({ t: -sIdx * 0.08, step: sIdx, c: col });
+    }
   }
   for (let i = convEchoes.length - 1; i >= 0; i--) {
     convEchoes[i].t += dt * (st === 'k2' ? 0.85 : 1.0);
@@ -4241,21 +4252,23 @@ function convDrawEchoes(strength, hit, dt, style) {
     const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
     for (let i = 0; i < ells.length; i++) {
       const q = convEchoes[i], el = ells[i];
-      if (!q) { el.setAttribute('opacity', '0'); continue; }
+      if (!q || q.t < 0) { el.setAttribute('opacity', '0'); continue; }
       const u = Math.max(0, Math.min(1, q.t));
-      const grow = 1 + convSStep(u) * 0.42;
+      const grow = ECHO_START[q.step || 0] + convSStep(u) * 0.30;
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', (rx0 * grow).toFixed(1));
       el.setAttribute('ry', (ry0 * grow).toFixed(1));
       el.setAttribute('fill', q.c || '#7FD8FF');
-      el.setAttribute('opacity', (0.34 * strength * (1 - u)).toFixed(3));
+      /* 外側の殻ほど薄く。重ねた時に濃淡が出る */
+      el.setAttribute('opacity', (0.32 * strength * (1 - u) * (1 - (q.step || 0) * 0.22)).toFixed(3));
     }
     return;
   }
   for (let i = 0; i < cans.length; i++) {
     const q = convEchoes[i], c = cans[i];
-    if (!q) { c.el.style.opacity = '0'; continue; }
+    if (!q || q.t < 0) { c.el.style.opacity = '0'; continue; }
     const u = Math.max(0, Math.min(1, q.t));
+    const base = ECHO_START[q.step || 0], dim = 1 - (q.step || 0) * 0.24;
     /* 惑星の絵をまるごと複製する(これが残像の中身) */
     try {
       c.ctx.clearRect(0, 0, c.el.width, c.el.height);
@@ -4263,18 +4276,18 @@ function convDrawEchoes(strength, hit, dt, style) {
     } catch (e) {}
     let grow, a, fx = '';
     if (st === 'k2') {
-      grow = 1 + convSStep(u) * 0.52;
-      a = 0.75 * strength * (1 - u);
-      fx = `blur(${(3 + u * 16).toFixed(1)}px)`;
+      grow = base + convSStep(u) * 0.38;
+      a = 0.8 * strength * (1 - u) * dim;
+      fx = `blur(${(4 + (q.step || 0) * 3 + u * 12).toFixed(1)}px)`;
       c.el.style.zIndex = '1';
     } else if (st === 'k3') {
-      grow = 1 + convSStep(u) * 0.38;
-      a = 0.42 * strength * (1 - u);
+      grow = base + convSStep(u) * 0.30;
+      a = 0.4 * strength * (1 - u) * dim;
       fx = `saturate(${(1 + u * 0.6).toFixed(2)}) brightness(${(1 + u * 0.25).toFixed(2)})`;
       c.el.style.zIndex = '3';                 /* 惑星の手前へ */
     } else {
-      grow = 1 + convSStep(u) * 0.36;
-      a = 0.9 * strength * (1 - u);
+      grow = base + convSStep(u) * 0.28;
+      a = 0.95 * strength * (1 - u) * dim;
       c.el.style.zIndex = '1';
     }
     c.el.style.filter = fx;
@@ -7858,7 +7871,10 @@ const sphereCanvas = document.getElementById('sphere');
 let sphereGL = null;
 
 function initSphere() {
-  const gl = sphereCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
+  /* ⚠️【2026-08-28】preserveDrawingBuffer が無いと、描いた直後以外は canvas の中身を読めない。
+     エコー(残像)は毎フレーム drawImage で惑星の絵を複製するので、これが無いと複製が空になり
+     「残像が全く見えない」状態になっていた(実測: 濃さ0.855でも画面に何も出ない)。 */
+  const gl = sphereCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
   if (!gl) { sphereFallback(); return; }
 
   const vs = `attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
