@@ -160,6 +160,12 @@
     height: 260px;
     z-index: 2;
   }
+  /* 【2026-08-28 ヒデさん指定】エコー「惑星のコピー」用。
+     惑星そのものの絵を複製して、ひと回り大きく後ろに重ねる。惑星の【後ろ】なので縁だけが見える */
+  .echo-can {
+    position: absolute; left: 306.06px; top: 112.32px; width: 260px; height: 260px;
+    z-index: 1; pointer-events: none; transform-origin: 50% 50%; opacity: 0;
+  }
   #sphere.fallback {
     background-size: 230px 230px;
     background-position: center;
@@ -1573,17 +1579,8 @@
     font-family: inherit; font-size: 10px; color: #555; cursor: pointer;
     transition: background .14s, color .14s, border-color .14s;
   }
-  /* 【2026-08-28】案が16個あると折り返しで400px近くになるので、箱に入れて中でスクロールさせる。
-     全部そこにあることは分かるまま、パネルの背だけ短くできる */
-  .var-box { max-height: 116px; overflow-y: auto; overscroll-behavior: contain;
-             margin: 2px 0 0; padding-right: 2px; }
-  /* まだ下に続いている時だけ、下端をふわっと薄くして「もっとある」と分かるようにする */
-  .var-box.more {
-    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 20px), rgba(0,0,0,0) 100%);
-            mask-image: linear-gradient(180deg, #000 calc(100% - 20px), rgba(0,0,0,0) 100%);
-  }
-  .var-box::-webkit-scrollbar { width: 5px; }
-  .var-box::-webkit-scrollbar-thumb { background: #dedede; border-radius: 3px; }
+  /* 【2026-08-28 ヒデさん指定】スクロールで隠すのはやめ、案は全部そのまま並べる */
+  .var-box { margin: 2px 0 0; }
   .var-pill:hover { border-color: #9fdcf5; background: #f4fbfe; }
   .var-pill.on { background: #0EBBFF; border-color: #0EBBFF; color: #fff; }
   .var-x {
@@ -2767,6 +2764,8 @@ const DEFAULTS = {
     orbitSpinBy: { off: 0, reel: 0, spiral: 0, accre: 0, mesh: 0, beads: 0, duplex: 0, gyro: 0 },
     /* 【2026-08-28 ヒデさん指定】軌道の線の太さ(倍率)。案ごとに持つ。1=カンプ通りの3px */
     orbitWidthBy: { off: 1, reel: 1, spiral: 1, accre: 1, mesh: 1, beads: 1, duplex: 1, gyro: 1 },
+    /* 【2026-08-28 ヒデさん指定】軌道全体の大きさ(倍率)。案ごとに持つ。1=そのまま */
+    orbitScaleBy: { off: 1, reel: 1, spiral: 1, accre: 1, mesh: 1, beads: 1, duplex: 1, gyro: 1 },
     /* 【2026-08-27 ヒデさん指定】ドット1粒ずつの不規則さと、軌道そのものの動き。
        dotRandom = ドットごとに速さ・位置がばらつく量
        orbitSpin = 軌道そのものが回る速さ(0で回らない。これまでは形が固定だった)
@@ -2778,7 +2777,7 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'e1',     /* エコーの出方(e1〜e4)。glowKind='echo' の時だけ効く */
+    glowEcho: 'e2',     /* エコーの見え方(e1〜e5)。glowKind='echo' の時だけ効く。既定はくっきり輪郭 */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3019,6 +3018,9 @@ function loadParams() {
   if (!merged.conv.orbitWidthBy || typeof merged.conv.orbitWidthBy !== 'object') {
     merged.conv.orbitWidthBy = { ...DEFAULTS.conv.orbitWidthBy };
   }
+  if (!merged.conv.orbitScaleBy || typeof merged.conv.orbitScaleBy !== 'object') {
+    merged.conv.orbitScaleBy = { ...DEFAULTS.conv.orbitScaleBy };
+  }
   if (!merged.conv.gyroMixBy || typeof merged.conv.gyroMixBy !== 'object') {
     merged.conv.gyroMixBy = { ...DEFAULTS.conv.gyroMixBy };
   }
@@ -3067,7 +3069,7 @@ function loadParams() {
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
-  if (!['e1', 'e2', 'e3', 'e4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e1';
+  if (!['e1', 'e2', 'e3', 'e4', 'e5'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e1';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -3283,7 +3285,9 @@ function orbitGeom(key) {
   }
   return {
     cx: b.cx + p.dx + dfx, cy: b.cy + p.dy + dfy,
-    rx: b.rx * p.scale * gyPull, ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat) * gyK * gyPull,
+    /* 案ごとの「軌道のサイズ」もここで掛ける (2026-08-28 ヒデさん指定) */
+    rx: b.rx * p.scale * gyPull * convOrbitScale(),
+    ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat) * gyK * gyPull * convOrbitScale(),
     /* 【2026-08-27 ヒデさん指定】軌道そのものを回す/漂わせる(これまでは形が固定だった)。
        惑星の案を選んでいる時だけ効かせる */
     rot: b.rot + p.angle + wobble + convOrbitSpin(key) + gyRot,
@@ -4045,6 +4049,13 @@ function applyRingAlpha(key, aB, aF) {
    線の太さ・破線・にじみを毎フレーム変えられるようにする */
 const convRingStyleWritten = { outer: '', inner: '' };
 /* いま選んでいる案の「軌道の線の太さ」の倍率 */
+/* いま選んでいる案の「軌道全体の大きさ」の倍率 */
+function convOrbitScale() {
+  const C = params.conv;
+  if (!C || params.kvDesign !== 'planet') return 1;
+  const v = (C.orbitScaleBy || {})[params.converge || 'reel'];
+  return (typeof v === 'number' && v > 0.05) ? v : 1;
+}
 function convOrbitWidth() {
   const C = params.conv;
   if (!C) return 1;
@@ -4160,88 +4171,105 @@ function convDrawRipples(strength, hit, dt) {
     el.setAttribute('opacity', (0.55 * strength * (1 - k)).toFixed(3));
   }
 }
-/* ===== エコー (2026-08-28 ヒデさん指定) =====
-   データが取り込まれると、惑星の【丸いシルエットそのもの】がひと回り大きくなった残像として
-   ふわっと広がっていく。波紋(細い線)の“面”版。
-   ⚠️ 惑星の後ろ(layer-back)に置くので、惑星のふちからにじみ出るオーラのように見える。
-      惑星が縦横比を変えていても合うよう、円ではなく楕円で描く。
-   4パターン: e1 ひと膨らみ / e2 三連(パンパンパン) / e3 重なり続ける / e4 段階(止まりながら) */
-let convEchoEls = null, convEchoes = [];
-const CONV_ECHO_MAX = 12;
-function convDrawEchoes(strength, hit, dt, kind) {
+/* ===== エコー (2026-08-28 ヒデさん指定・見え方を5案から選ぶ) =====
+   データが取り込まれると、惑星の【丸いシルエット】がひと回り大きくなった残像として広がる。
+   動きは「ひと膨らみ」で固定(1.0 → 1.4 倍へ ふわっと広がって消える)。
+   ⚠️ はじめは薄い水色の面だけで「残像だと分かりづらい」という指摘。
+      輪郭をしっかり出す案・色を変える案・惑星の絵そのものを複製する案を用意した。
+   1 やわらかい面   … 薄い水色の面(はじめの形)
+   2 くっきり輪郭   … 塗りなし。濃いインクの線だけ。いちばんはっきり
+   3 二重の輪郭     … 細い外線＋太い内線のピンク。殻が2枚に見える
+   4 破線の輪郭     … 点線の輪郭。スキャンしているような見え方
+   5 惑星のコピー   … 惑星の絵そのものを複製して後ろに重ねる。縁に本物の質感が出る */
+let convEchoEls = null, convEchoes = [], convEchoCans = null;
+const CONV_ECHO_MAX = 8;
+function convEchoCanvases() {
+  if (convEchoCans) return convEchoCans;
+  if (!sphereCanvasEl || !sphereCanvasEl.parentNode) return null;
+  convEchoCans = [];
+  for (let i = 0; i < 3; i++) {
+    const c = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+    c.width = sphereCanvasEl.width; c.height = sphereCanvasEl.height;
+    c.className = 'echo-can';
+    sphereCanvasEl.parentNode.insertBefore(c, sphereCanvasEl);   /* 惑星の後ろへ */
+    convEchoCans.push({ el: c, ctx: c.getContext('2d') });
+  }
+  return convEchoCans;
+}
+function convDrawEchoes(strength, hit, dt, style) {
+  const st = style || 'e1';
+  const useCanvas = (st === 'e5');
+  /* --- 図形のプール(円・線の案で使う) --- */
   if (!convEchoEls) {
     const host = dotsBackG && dotsBackG.parentNode;
     if (!host) return;
     convEchoEls = [];
-    for (let i = 0; i < CONV_ECHO_MAX; i++) {
+    for (let i = 0; i < CONV_ECHO_MAX * 2; i++) {
       const e = document.createElementNS(SVG_NS, 'ellipse');
-      e.setAttribute('fill', '#7FD8FF');
-      e.setAttribute('stroke', 'none');
       e.setAttribute('opacity', '0');
       e.style.pointerEvents = 'none';
       host.insertBefore(e, dotsBackG);
       convEchoEls.push(e);
     }
   }
-  if (strength <= 0.001) {
-    convEchoes.length = 0;
+  const cans = useCanvas ? convEchoCanvases() : convEchoCans;
+  const hideAll = () => {
     for (const e of convEchoEls) e.setAttribute('opacity', '0');
-    return;
+    if (cans) for (const c of cans) c.el.style.opacity = '0';
+  };
+  if (strength <= 0.001) { convEchoes.length = 0; hideAll(); return; }
+  /* --- 生む: ひと膨らみ(吸収のたびに1つ) --- */
+  if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.18)
+      && convEchoes.length < CONV_ECHO_MAX) {
+    convEchoes.push({ t: 0 });
   }
-  const k = kind || 'e1';
-  /* --- いつ生むか --- */
-  const fresh = hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.18);
-  if (k === 'e3') {
-    /* 重なり続ける: 吸収と関係なく一定の間隔で出し続ける(溜まりが多いほど速く) */
-    convEchoes._next = (convEchoes._next || 0) - dt;
-    if (convEchoes._next <= 0 && convEchoes.length < CONV_ECHO_MAX) {
-      convEchoes.push({ t: 0, step: 0 });
-      convEchoes._next = 0.42 - 0.18 * convCharge;
-    }
-  } else if (fresh) {
-    if (k === 'e2') {
-      /* 三連: 1回の吸収で3つを時間差で(パンパンパン) */
-      for (let i = 0; i < 3; i++) if (convEchoes.length < CONV_ECHO_MAX) convEchoes.push({ t: -i * 0.14, step: i });
-    } else if (k === 'e4') {
-      /* 段階: 1.06 / 1.13 / 1.20 の3段を、止まりながら出す */
-      for (let i = 0; i < 3; i++) if (convEchoes.length < CONV_ECHO_MAX) convEchoes.push({ t: -i * 0.26, step: i });
-    } else if (convEchoes.length < CONV_ECHO_MAX) {
-      convEchoes.push({ t: 0, step: 0 });
-    }
-  }
-  /* --- 進める --- */
-  const speed = (k === 'e4') ? 0.85 : (k === 'e3' ? 0.55 : 1.05);
   for (let i = convEchoes.length - 1; i >= 0; i--) {
-    convEchoes[i].t += dt * speed;
+    convEchoes[i].t += dt * 1.05;
     if (convEchoes[i].t >= 1) convEchoes.splice(i, 1);
   }
-  /* --- 描く --- */
+  hideAll();
   const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
-  for (let i = 0; i < convEchoEls.length; i++) {
-    const q = convEchoes[i], el = convEchoEls[i];
-    if (!q || q.t < 0) { el.setAttribute('opacity', '0'); continue; }
-    const u = Math.max(0, Math.min(1, q.t));
-    let grow, a;
-    if (k === 'e4') {
-      /* 段階: 段ごとに決まった大きさまで一気に出て、そこで少し止まってから消える */
-      const goal = 1.06 + q.step * 0.07;
-      const rise = Math.min(1, u / 0.28);
-      grow = 1 + (goal - 1) * convSStep(rise);
-      a = (u < 0.55 ? 1 : 1 - (u - 0.55) / 0.45);
-    } else if (k === 'e3') {
-      grow = 1 + convSStep(u) * 0.30;
-      a = (1 - u) * 0.8;
-    } else if (k === 'e2') {
-      grow = 1 + convSStep(u) * (0.26 + q.step * 0.06);
-      a = 1 - u;
-    } else {
-      grow = 1 + convSStep(u) * 0.40;
-      a = 1 - u;
+  /* --- 5 惑星のコピー: 惑星の絵をそのまま複製して、後ろにひと回り大きく重ねる --- */
+  if (useCanvas) {
+    if (!cans) return;
+    for (let i = 0; i < cans.length; i++) {
+      const q = convEchoes[i], c = cans[i];
+      if (!q) { c.el.style.opacity = '0'; continue; }
+      const u = Math.max(0, Math.min(1, q.t));
+      const grow = 1 + convSStep(u) * 0.34;
+      try {
+        c.ctx.clearRect(0, 0, c.el.width, c.el.height);
+        c.ctx.drawImage(sphereCanvasEl, 0, 0);
+      } catch (e) {}
+      const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
+      c.el.style.transform = `translate(${pl.dx}px, ${pl.dy}px) scale(${(pl.scale * grow).toFixed(4)}, ${(pl.scale * plFlat * grow).toFixed(4)})`;
+      c.el.style.opacity = (0.85 * strength * (1 - u)).toFixed(3);
     }
-    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
-    el.setAttribute('rx', (rx0 * grow).toFixed(1));
-    el.setAttribute('ry', (ry0 * grow).toFixed(1));
-    el.setAttribute('opacity', (0.30 * strength * a).toFixed(3));
+    return;
+  }
+  /* --- 1〜4: 図形で描く --- */
+  let slot = 0;
+  for (let i = 0; i < convEchoes.length; i++) {
+    const q = convEchoes[i];
+    const u = Math.max(0, Math.min(1, q.t));
+    const grow = 1 + convSStep(u) * 0.40;
+    const a = 1 - u;
+    const put = (mul, o) => {
+      const el = convEchoEls[slot++]; if (!el) return;
+      el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+      el.setAttribute('rx', (rx0 * grow * mul).toFixed(1));
+      el.setAttribute('ry', (ry0 * grow * mul).toFixed(1));
+      el.setAttribute('fill', o.fill || 'none');
+      el.setAttribute('stroke', o.stroke || 'none');
+      el.setAttribute('stroke-width', (o.w || 0).toFixed(2));
+      if (o.dash) el.setAttribute('stroke-dasharray', o.dash); else el.removeAttribute('stroke-dasharray');
+      el.setAttribute('opacity', Math.max(0, o.a).toFixed(3));
+    };
+    if (st === 'e2')      put(1, { stroke: '#111', w: 2.2, a: 0.85 * strength * a });
+    else if (st === 'e3') { put(1, { stroke: '#FF5D97', w: 3.2, a: 0.8 * strength * a });
+                            put(1.09, { stroke: '#FF5D97', w: 1.2, a: 0.5 * strength * a }); }
+    else if (st === 'e4') put(1, { stroke: '#3A3A3A', w: 2, dash: '10 8', a: 0.9 * strength * a });
+    else                  put(1, { fill: '#7FD8FF', a: 0.30 * strength * a });
   }
 }
 function convFrontCut() { return (params.conv && params.conv.frontCut) !== false; }
@@ -5515,7 +5543,7 @@ function patternDeg(d, i, p) {
   /* 【2026-08-27】ドット1粒ずつの不規則さ。周期の違う波を重ねて、繰り返しに見えない揺れを作る */
   const rnd = (params.conv && params.conv.dotRandom) || 0;
   let jitter = 0;
-  if (rnd > 0 && move) {
+  if (rnd !== 0 && move) {
     const sd = i * 2.399;
     jitter = (Math.sin(elapsed * (0.53 + (i % 3) * 0.17) + sd) * 0.6
             + Math.sin(elapsed * (0.91 + (i % 5) * 0.13) + sd * 1.7) * 0.4) * rnd * 26;
@@ -8716,6 +8744,7 @@ function gfxSnapshotFull() {
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
       gyroMix: (C.gyroMixBy || {})[mode] || 0, /* 案ごとのジャイロ混ぜ具合 */
       orbitWidth: (C.orbitWidthBy || {})[mode], /* 案ごとの軌道の線の太さ */
+      orbitScale: (C.orbitScaleBy || {})[mode], /* 案ごとの軌道のサイズ */
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
     meshPts: (C.mesh && C.mesh.pts) ? C.mesh.pts.map(q => ({ x: q.x, y: q.y })) : null,
@@ -8754,6 +8783,10 @@ function gfxApplyFull(d) {
     if (typeof d.common.orbitWidth === 'number') {
       if (!C.orbitWidthBy) C.orbitWidthBy = {};
       C.orbitWidthBy[mode] = d.common.orbitWidth;
+    }
+    if (typeof d.common.orbitScale === 'number') {
+      if (!C.orbitScaleBy) C.orbitScaleBy = {};
+      C.orbitScaleBy[mode] = d.common.orbitScale;
     }
   }
   const pk = CONV_PARAM_KEY[mode];
@@ -8850,6 +8883,9 @@ function applyGfxVariant(i) {
       } else if (k === 'orbitWidth') {
         if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {};
         params.conv.orbitWidthBy[mode] = v.common[k];
+      } else if (k === 'orbitScale') {
+        if (!params.conv.orbitScaleBy) params.conv.orbitScaleBy = {};
+        params.conv.orbitScaleBy[mode] = v.common[k];
       } else params.conv[k] = v.common[k];
     }
   }
@@ -8933,12 +8969,17 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
   const dMin0 = min, dMax0 = max;
   function rangeFor(cur) {
     if (typeof cur !== 'number' || !isFinite(cur)) cur = dMin0;
-    const floor = dMin0 < 0 ? -Infinity : (dMin0 > 0 ? dMin0 * 0.5 : 0);
+    /* 【2026-08-28 ヒデさん指定】0 が左端に張り付く項目は、左側にマイナスを置いて 0 を中央にする。
+       マイナスに意味がある項目(逆回り・逆向きのゆらぎ・逆方向のずらし)だけ signed を付けている。 */
+    const signed = !!(opts && opts.signed);
+    const floor = signed ? -Infinity
+      : (dMin0 < 0 ? -Infinity : (dMin0 > 0 ? Math.min(dMin0 * 0.5, Math.abs(cur) * 0.4) : 0));
     /* 【2026-08-27 ヒデさん指定・精査】いまの値を真ん中に置くことを最優先にする。
        ・下へ動かせる余地(いまの値 − 床)がそのまま半幅。これで左右が同じだけ動かせる＝中央
        ・余地が刻み2つぶんも無い時(＝値が床に張り付いている)は中央に置けないので、
          代わりに「少し動かすだけで変化が出る」幅を取る */
-    const room = isFinite(floor) ? (cur - floor) : (dMax0 - dMin0) * 0.5;
+    const room = signed ? Math.max(Math.abs(cur), (dMax0 - dMin0) * 0.5)
+               : (isFinite(floor) ? (cur - floor) : (dMax0 - dMin0) * 0.5);
     const half = (room >= step * 2) ? room
                : Math.max(step * 4, (dMax0 - dMin0) * 0.15);
     let lo = cur - half, hi = cur + half;
@@ -9724,16 +9765,22 @@ function buildPanel() {
         () => (DM[cvMode] !== false) ? 1 : 0,
         v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
       /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は案ごとに変えられる */
+      slider('軌道のサイズ', 0.3, 2.5, 0.02,
+        () => { const v = (params.conv.orbitScaleBy || {})[cvMode]; return (typeof v === 'number' && v > 0.05) ? v : 1; },
+        v => { if (!params.conv.orbitScaleBy) params.conv.orbitScaleBy = {}; params.conv.orbitScaleBy[cvMode] = v; },
+        v => '×' + v.toFixed(2),
+        '右へ動かすほど軌道全体が大きくなります。1.00 がそのままの大きさ。');
       slider('軌道の線の太さ', 0.2, 4, 0.05,
         () => { const v = (params.conv.orbitWidthBy || {})[cvMode]; return (typeof v === 'number' && v > 0) ? v : 1; },
         v => { if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {}; params.conv.orbitWidthBy[cvMode] = v; },
         v => (3 * v).toFixed(1) + 'px',
         '右へ動かすほど軌道の線が太くなります。カンプ通りは 3.0px。');
-      slider('軌道の回転', 0, 3, 0.05,
+      slider('軌道の回転', -3, 3, 0.05,
         () => convOrbitSpinAmt(),
         v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
         v => '×' + v.toFixed(2),
-        '右へ動かすほど軌道そのものが速く回ります（外と内は逆回り）。0(左端)で止まります。');
+        '真ん中(0)で止まります。右へ動かすほど速く回り、左へ動かすと逆回りになります。',
+        { signed: true });
       if (cvMode === 'reel') {
         const R0 = params.conv.reel;
         segRow('スピン', [['なし', 0], ['あり', 1]],
@@ -9934,9 +9981,9 @@ function buildPanel() {
       hint: '輪の上を回っている点' },
   ]);
   note('輪を消すと、その輪のドットも消えます。粒の渦・網の案では自動で隠れます。軌道の回転は案ごとなので「動き（この案）」にあります。');
-  slider('漂う量', 0, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
+  slider('漂う量', -3, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
     v => '×' + v.toFixed(2),
-    '軌道そのものがゆっくり位置を変えます。0で固定。');
+    '真ん中(0)で固定。右へ動かすほど大きく漂い、左へ動かすと逆向きに漂います。', { signed: true });
   segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
   note('ゆらぎは軌道まわり全体がふわっと漂う動きです（惑星もわずかに一緒に動きます）。');
@@ -9991,8 +10038,8 @@ function buildPanel() {
     (mount || body).appendChild(perspBox);
     fillPersp();
   }
-  slider('ランダムさ', 0, 3, 0.05, () => params.conv.dotRandom, v => params.conv.dotRandom = v, v => v.toFixed(2),
-    '1粒ずつ速さと位置がばらつきます。0できっちり等間隔のまま回ります。');
+  slider('ランダムさ', -3, 3, 0.05, () => params.conv.dotRandom, v => params.conv.dotRandom = v, v => v.toFixed(2),
+    '真ん中(0)できっちり等間隔。左右どちらへ動かしてもばらつきます（向きが逆になります）。', { signed: true });
   note('「軌道にそって回るかどうか」は案ごとの設定なので、① の中にあります。');
 
   /* ---------- ⑤ 惑星 ---------- */
@@ -10029,11 +10076,13 @@ function buildPanel() {
     /* 【2026-08-28 ヒデさん指定】エコーを選んだ時だけ、出方の4パターンを下に出す */
     const echoBox = document.createElement('div');
     (mount || body).appendChild(echoBox);
+    /* 【2026-08-28 ヒデさん指定】動きは「ひと膨らみ」で固定。選ぶのは【見え方】5案 */
     const ECHOES = [
-      { key: 'e1', name: '1 ひと膨らみ', tip: '吸収のたびに、シルエットが1つ ふわっと大きくなって消えます。いちばん静か。' },
-      { key: 'e2', name: '2 三連',       tip: '1回の吸収で3つの残像が時間差で。パン・パン・パンと連なります。' },
-      { key: 'e3', name: '3 重なり続ける', tip: '一定の間隔で残像が出続け、常に何枚か重なります。溜まるほど間隔が詰まります。' },
-      { key: 'e4', name: '4 段階',       tip: '1.06→1.13→1.20 と、決まった大きさまで一気に出て少し止まる。階段状の広がり。' },
+      { key: 'e1', name: '1 やわらかい面', tip: '薄い水色の面。はじめの形です。いちばん静かですが、残像だとは分かりにくい。' },
+      { key: 'e2', name: '2 くっきり輪郭', tip: '塗りなしで、濃いインクの線だけ。輪郭がはっきり出るので残像だと分かりやすい。' },
+      { key: 'e3', name: '3 二重の輪郭',   tip: '太い内線＋細い外線のピンク。殻が2枚に見えて、広がりが読み取れます。' },
+      { key: 'e4', name: '4 破線の輪郭',   tip: '点線の輪郭。スキャンしているような、データらしい見え方。' },
+      { key: 'e5', name: '5 惑星のコピー', tip: '惑星の絵そのものを複製して、ひと回り大きく後ろに重ねます。縁に本物の質感が出るのでいちばんはっきり。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
@@ -10115,8 +10164,9 @@ function buildPanel() {
     '大きいほど、ひと呼吸おいてから2行目が出ます。'));
   rows.push(slider('1行が出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
     '1行がぼけた状態から出きるまでの時間。'));
-  rows.push(slider('1文字ずつずらす', 0, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => Math.round(v * 100) + '%',
-    '大きいほど1文字ずつバラバラに。0で行まるごと同時。'));
+  rows.push(slider('1文字ずつずらす', -0.9, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => Math.round(v * 100) + '%',
+    '真ん中(0)で行まるごと同時。左右どちらへ動かしても1文字ずつバラバラになります（順番が逆になります）。',
+    { signed: true }));
 
   sub(catVis, '③ キーメッセージが消える');
   note('2行が出そろったあと、その場でブラーで消えます（上下に分かれる演出は廃止・既定オフ）。');
@@ -10128,10 +10178,12 @@ function buildPanel() {
     '基準時間の何割で消え始めるか。小さいほど早く薄くなります。'));
   rows.push(slider('消えきるまで', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + '秒',
     '消えきるまでの時間。小さいほどサッと消えます。'));
-  rows.push(slider('上下に開く量（任意）', 0, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px',
-    '0＝分かれない（既定）。あえて上下に開きたい時だけ上げます。'));
-  rows.push(slider('開いて流れる量（任意）', 0, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
-    '0＝流れない（既定）。「上下に開く量」を使う時の余韻。'));
+  rows.push(slider('上下に開く量（任意）', -260, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px',
+    '真ん中(0)で分かれません（既定）。右へ動かすと上下に開き、左へ動かすと逆向きに開きます。',
+    { signed: true }));
+  rows.push(slider('開いて流れる量（任意）', -320, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
+    '真ん中(0)で流れません（既定）。左右どちらへ動かしても流れます（向きが逆になります）。',
+    { signed: true }));
 
   sub(catVis, '④ 輪が現れて左下へ移動する');
   note('右側に小さく現れ（デザイン位置）、メッセージが消えたあと左下へ動きながら実物大になります。');
@@ -10214,8 +10266,9 @@ function buildPanel() {
     '案Aのみ。文字が出たあと、何秒で写真が現れるか。'));
 
   sub(catRes, '写真の奥行き');
-  rows.push(slider('スクロールでのズレ', 0, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
-    '枠はそのままに中の写真だけがずれます。大きいほど奥行きが出ます。'));
+  rows.push(slider('スクロールでのズレ', -60, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
+    '真ん中(0)でズレません。右へ動かすほど奥行きが出ます。左は逆向きのズレです。',
+    { signed: true }));
 
   sub(catRes, '数字が回って止まる演出');
   note('数字が桁ごとに回り、左の桁から順に止まります。');
