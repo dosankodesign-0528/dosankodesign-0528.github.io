@@ -2606,6 +2606,7 @@ const DEFAULTS = {
   gfxByMode: {},         // { 案キー: {layout, outer, inner, planet} }
   gfxPresets: {},        // { 案キー: [{name, data}] } 案ごとのプリセット
   gfxPresetOn: {},       // { 案キー: 選んでいる番号 }
+  gfxVariantOn: {},      // { 案キー: 選んでいるグラフィック3案の番号 }
   conv: {
     showOuter: true, showInner: true,
     showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
@@ -2648,7 +2649,7 @@ const DEFAULTS = {
               lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6 },
     /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
-    link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, T: 3.2, vanishK: 0.35 },
+    link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, lineWidth: 1, T: 3.2, vanishK: 0.35 },
     /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
     accre:  { count: 70, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false,
               swirl: 1, fallCurve: 1 },   /* swirl=内側ほど速く回る度合い / fallCurve=落ち方のカーブ */
@@ -2813,7 +2814,8 @@ function load() {
   if (!merged.gfxByMode || Array.isArray(merged.gfxByMode)) merged.gfxByMode = {};
   if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
-  if (Array.isArray(s.orbitPresets) && s.orbitPresets.length && !localStorage.getItem('anyflow-gfx-permode-20260827')) {
+  if (!merged.gfxVariantOn || Array.isArray(merged.gfxVariantOn)) merged.gfxVariantOn = {};
+  if (Array.isArray(s.orbitPresets) && s.orbitPresets.length && !localStorage.getItem('anyflow-gfx-permode-20260827b')) {
     /* 旧プリセットは全案共通だった。どの案で作ったかは記録が無いので、
        ⚠️【仮置き】いま選んでいる案の引き出しへ移す(消さずに残すことを優先) */
     merged.gfxPresets[merged.converge || 'reel'] = s.orbitPresets.slice();
@@ -2821,14 +2823,14 @@ function load() {
   delete merged.orbitPresets; delete merged.orbitPresetOn;
   /* 【2026-08-27 ヒデさん指定】案ごとに既定がバラバラに変わってしまっていたので、
      全案の形を「最初に実装した位置関係」へ一度だけ戻す */
-  if (!localStorage.getItem('anyflow-gfx-permode-20260827')) {
+  if (!localStorage.getItem('anyflow-gfx-permode-20260827b')) {
     merged.gfxByMode = {};
     for (const k of ['outer', 'inner']) {
       for (const key of ['dx', 'dy', 'scale', 'angle', 'flat']) merged.orbits[k][key] = DEFAULTS.orbits[k][key];
     }
     merged.planet = { ...DEFAULTS.planet };
     merged.orbitLayout = DEFAULTS.orbitLayout;
-    localStorage.setItem('anyflow-gfx-permode-20260827', '1');
+    localStorage.setItem('anyflow-gfx-permode-20260827b', '1');
   }
   /* 【2026-08-26 ヒデさん指定】直接編集でいじった変形(位置/サイズ/傾き/つぶし)を一度だけ既定へ戻す。
      他の調整は残す。1回だけ走らせるため印を localStorage に置く */
@@ -3049,10 +3051,87 @@ const CONVERGES = [
   { key: 'reel',   name: '①輪が縮んで吸収' },
   { key: 'spiral', name: '②粒が渦で吸収' },
   { key: 'accre',  name: '③粒の渦が回る' },
-  { key: 'mesh',   name: '⑤網でつながる' },
-  { key: 'beads',  name: '⑥点が並ぶ軌道' },
-  { key: 'duplex', name: '⑦線で行き来' },
+  /* ⚠️【2026-08-27 ヒデさん指定】案を消したら番号は【詰めて】振り直す。欠番は作らない */
+  { key: 'mesh',   name: '④網でつながる' },
+  { key: 'beads',  name: '⑤点が並ぶ軌道' },
+  { key: 'duplex', name: '⑥線で行き来' },
 ];
+/* ===== 案ごとのグラフィック3案 (2026-08-27 ヒデさん指定) =====
+   ⚠️ デザインそのものは変えない。同じアニメーションの枠の中で
+      【軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウト】と
+      【その案のつまみ】だけを変えて、見え方の違う3案を用意する。
+   gfx は書いた項目だけが既定(gfxDefault)を上書きする。conv はその案のつまみ。 */
+const GFX_VARIANTS = {
+  off: [
+    { name: 'A カンプ通り', desc: 'Figma のカンプそのまま。2本がほぼ平行に流れます。', gfx: {} },
+    { name: 'B ジャイロ交差', desc: '2本の傾きを逆にして立体交差させます。惑星の前後を横切る回数が増え、奥行きが出ます。',
+      gfx: { layout: 'gyro', planet: { scale: 0.92 } } },
+    { name: 'C 薄く広がる皿', desc: '2本とも横に広げて薄くつぶし、土星の輪のように寝かせます。惑星は大きめ。',
+      gfx: { outer: { scale: 1.22, flat: 0.55 }, inner: { scale: 1.08, flat: 0.5 }, planet: { scale: 1.12, dy: 54 } } },
+  ],
+  reel: [
+    { name: 'A カンプ通り', desc: '既定の並び。輪が惑星の手前で切り取られながら滑り込みます。',
+      gfx: {}, conv: { vanish: 'clip', blend: 0 } },
+    { name: 'B 深く交差＋圧縮グロー', desc: 'ジャイロ交差の配置。中間の輪を3本はさんで層をつくり、縮むほど青く発光しながら凝縮します。',
+      gfx: { layout: 'gyro', outer: { scale: 1.05 }, inner: { scale: 0.95, flat: 1.15 }, planet: { scale: 0.9, dy: 40 } },
+      conv: { vanish: 'compress', blend: 3, blendAlpha: 0.35, glowTone: 'cool', glowWidth: 0.45, glowPower: 1.2 } },
+    { name: 'C 薄い皿＋データ粒', desc: '横に広げて寝かせた薄い輪。点線が圧縮されて1本の線につながっていきます。中間の輪5本で厚みを出します。',
+      gfx: { outer: { scale: 1.2, flat: 0.55 }, inner: { scale: 1.05, flat: 0.5 }, planet: { scale: 1.12, dy: 52 } },
+      conv: { vanish: 'pixel', pxWidth: 1.3, pxDensity: 1.2, blend: 5, blendAlpha: 0.3 } },
+  ],
+  spiral: [
+    { name: 'A 標準の渦', desc: '既定の並び。粒がしばらく軌道を回ってから、ゆるい渦で落ちます。',
+      gfx: {}, conv: { count: 12, life: 5, size: 0.62, stay: 3, swirl: 1, fallCurve: 1 } },
+    { name: 'B 大げさな渦巻き', desc: '粒を26個に増やし、中心へ近づくほど急に速く巻き込みます。ジャイロ交差の配置で渦の軸がはっきり見えます。',
+      gfx: { layout: 'gyro', outer: { scale: 1.1 }, inner: { scale: 1.0, flat: 1.2 }, planet: { scale: 0.88 } },
+      conv: { count: 26, life: 6.5, size: 0.5, stay: 2, swirl: 2.6, fallCurve: 2.0 } },
+    { name: 'C ゆったり大回り', desc: '軌道を大きく広げて寝かせ、粒が長い時間かけて大きく回り込みます。惑星は小さめ。',
+      gfx: { outer: { scale: 1.28, flat: 0.6 }, inner: { scale: 1.18, flat: 0.55 }, planet: { scale: 0.8, dy: 56 } },
+      conv: { count: 16, life: 9, size: 0.75, stay: 5, swirl: 0.25, fallCurve: 0.6 } },
+  ],
+  accre: [
+    { name: 'A 標準の円盤', desc: '既定の円盤。惑星のまわりを粒が渦を巻いて落ちていきます。',
+      gfx: {}, conv: { scale: 1.15, count: 70, size: 0.35, fall: 1, showOrbit: false, swirl: 1, fallCurve: 1 } },
+    { name: 'B 大きく薄い円盤', desc: '円盤をぐっと広げて粒を140個に。1粒を小さくして、細かい砂が漂うような密度にします。',
+      gfx: { planet: { scale: 0.82, dy: 52 } },
+      conv: { scale: 1.85, count: 140, size: 0.28, fall: 0.7, wobble: 0.7, twinkle: 0.6, showOrbit: false, swirl: 0.6 } },
+    { name: 'C 軌道つき・きつい渦', desc: '軌道を出したまま、内側で小さくきつい渦を巻かせます。ジャイロ交差なので円盤と輪が立体的に絡みます。',
+      gfx: { layout: 'gyro', inner: { scale: 0.92, flat: 1.1 }, planet: { scale: 0.95 } },
+      conv: { scale: 0.85, count: 100, size: 0.4, showOrbit: true, swirl: 2.4, fallCurve: 1.8, wobble: 0.2 } },
+  ],
+  mesh: [
+    { name: 'A ふわふわ漂う', desc: '既定。ノードがゆらゆら漂い、線で結ばれてデータが渡り歩きます。',
+      gfx: {}, conv: { style: 'organic', nodes: 14, span: 0.34, lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6, size: 0.6, hop: 0.55, rate: 1.2 } },
+    { name: 'B まばらな星座', desc: 'ノードを9個まで減らして間隔を広げ、線を薄く。ぽつぽつと星座のように見せます。',
+      gfx: { planet: { scale: 0.92 } },
+      conv: { style: 'constellation', nodes: 9, span: 0.55, lineAlpha: 0.3, lineWidth: 1, drift: 1.7, random: 1, size: 0.75, hop: 0.75, rate: 0.9 } },
+    { name: 'C 立体の格子', desc: 'ノードを20個の格子に並べ、ジャイロ交差の広い範囲に配置。奥行きのあるネットになります。',
+      gfx: { layout: 'gyro', outer: { scale: 1.12 }, inner: { scale: 1.0, flat: 1.25 }, planet: { scale: 0.88, dy: 44 } },
+      conv: { style: 'grid', nodes: 20, span: 0.28, lineAlpha: 0.42, lineWidth: 1.1, drift: 0.5, random: 0.25, size: 0.5, hop: 0.5, rate: 1.5 } },
+  ],
+  beads: [
+    { name: 'A 標準', desc: '既定。点が等間隔に並んだ輪から、順に惑星へ吸い込まれます。',
+      gfx: {}, conv: { count: 64, size: 0.5, ratio: 0.22, speed: 0.26, spin: 0, jitter: 0 } },
+    { name: 'B 密で細かい', desc: '点を120個まで増やして1粒を小さく。線に近い密度になり、流れがなめらかに見えます。',
+      gfx: { outer: { scale: 1.06 }, inner: { scale: 1.02 }, planet: { scale: 1.02 } },
+      conv: { count: 120, size: 0.34, ratio: 0.16, speed: 0.34, spin: 0.5, jitter: 0.15 } },
+    { name: 'C 交差する二重リング', desc: 'ジャイロ交差の2本に点を並べ、吸い込まれる時に渦を巻かせます。2本の重なりで奥行きが出ます。',
+      gfx: { layout: 'gyro', outer: { scale: 1.02 }, inner: { scale: 0.94, flat: 1.2 }, planet: { scale: 0.9 } },
+      conv: { count: 78, size: 0.55, ratio: 0.3, spin: 1.3, spinEase: 1.4, backIn: 1.5 } },
+  ],
+  duplex: [
+    { name: 'A 標準', desc: '既定。ゆるく反った線の上を、粒が惑星と軌道の間で行き来します。',
+      gfx: {}, conv: { curve: 0.22, density: 1, lineAlpha: 0.16, lineWidth: 1, size: 0.6, speed: 1 } },
+    { name: 'B まっすぐ放射', desc: '線の反りをほぼ無くして放射状に。太く濃くして、配線図のようなはっきりした見え方にします。',
+      gfx: { outer: { scale: 1.08 }, inner: { scale: 0.98 }, planet: { scale: 1.05 } },
+      conv: { curve: 0.03, density: 1.6, lineAlpha: 0.26, lineWidth: 2.2, size: 0.5, speed: 1.3 } },
+    { name: 'C 大きく弧を描く', desc: '線を大きく反らせて細く。ジャイロ交差の広い軌道と組み合わせ、弧が惑星の前後を回り込みます。',
+      gfx: { layout: 'gyro', outer: { scale: 1.15, flat: 0.85 }, inner: { scale: 1.0, flat: 1.3 }, planet: { scale: 0.85, dy: 40 } },
+      conv: { curve: 0.62, density: 0.8, lineAlpha: 0.34, lineWidth: 0.6, size: 0.7, speed: 0.75, T: 4.2 } },
+  ],
+};
+/* 案キー → params.conv の中のどのつまみ束か (duplex だけ名前が link) */
+const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link' };
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
 const CONV_LINKED = ['duplex'];
 function convOn() { return params.kvDesign === 'planet' && (params.converge || 'off') !== 'off'; }
@@ -3769,7 +3848,7 @@ function convFrame(geoms) {
       ends.push(p1); ctrls.push(pc);
       lines[i].setAttribute('d', convPathD(cc, pc, p1));
       lines[i].setAttribute('stroke', DOTS[i].color === '#4E4E4E' ? '#6B7690' : DOTS[i].color);
-      lines[i].setAttribute('stroke-width', '1');
+      lines[i].setAttribute('stroke-width', String(L.lineWidth == null ? 1 : L.lineWidth));
       lines[i].setAttribute('opacity', String(L.lineAlpha));
     }
     /* 【2026-08-26 ヒデさん指定】惑星のエリアに入った粒は【完全に消す】。
@@ -7062,6 +7141,33 @@ function convSwitchTo(next) {
   if (!params.gfxByMode[next]) params.gfxByMode[next] = gfxDefault();
   gfxApply(params.gfxByMode[next]);
 }
+/* --- 案ごとのグラフィック3案 (2026-08-27 ヒデさん指定) --- */
+function applyGfxVariant(i) {
+  const mode = params.converge || 'reel';
+  const v = (GFX_VARIANTS[mode] || [])[i];
+  if (!v) return;
+  const base = gfxDefault(), g = v.gfx || {};
+  gfxApply({
+    layout: g.layout || base.layout,
+    outer:  { ...base.outer,  ...(g.outer  || {}) },
+    inner:  { ...base.inner,  ...(g.inner  || {}) },
+    planet: { ...base.planet, ...(g.planet || {}) },
+  });
+  const pk = CONV_PARAM_KEY[mode];
+  if (v.conv && pk && params.conv[pk]) Object.assign(params.conv[pk], v.conv);
+  if (!params.gfxVariantOn) params.gfxVariantOn = {};
+  params.gfxVariantOn[mode] = i;
+  markDirty();
+  renderFrame();
+}
+function gfxVariantOn() { return (params.gfxVariantOn || {})[params.converge || 'reel']; }
+/* いまの案のグラフィックを、最初に実装した配置へ戻す */
+function gfxResetToInitial() {
+  gfxApply(gfxDefault());
+  if (params.gfxVariantOn) delete params.gfxVariantOn[params.converge || 'reel'];
+  if (params.gfxPresetOn) delete params.gfxPresetOn[params.converge || 'reel'];
+}
+
 /* --- 案ごとのプリセット --- */
 function gfxPresetList() {
   if (!params.gfxPresets) params.gfxPresets = {};
@@ -7602,12 +7708,48 @@ function buildPanel() {
     fillAnimBody();                                   /* この案の調整だけ入れ替え */
     syncPanelRows();                                  /* 位置・サイズの数値を追いつかせる */
     if (fillPresetRow) fillPresetRow();               /* この案のプリセットに入れ替え */
+    fillVariantRow();                                 /* この案のグラフィック3案に入れ替え */
     if (editHandles.on) editHandles.place();          /* 編集中なら枠も追いつかせる */
   };
   pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
     it => onConvSwitch(it.key),
     { get: () => params.converge, set: v => onConvSwitch(v) },
     { noRebuild: true });
+
+  /* --- この案のグラフィック3案 (2026-08-27 ヒデさん指定) ---
+     同じアニメーションの枠の中で、軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウトと
+     その案のつまみだけを変えた3案。案を切り替えると中身も入れ替える。 */
+  const varRow = document.createElement('div');
+  varRow.className = 'sw-row';
+  (mount || body).appendChild(varRow);
+  const varNote = document.createElement('div');
+  varNote.className = 'grp-note';
+  varNote.style.minHeight = '3.2em';   /* 説明が変わっても下の行が動かないように高さを確保 */
+  (mount || body).appendChild(varNote);
+  const fillVariantRow = function () {
+    const mode = params.converge || 'reel';
+    const list = GFX_VARIANTS[mode] || [];
+    varRow.innerHTML = '';
+    const on = gfxVariantOn();
+    list.forEach((v, i) => {
+      const b = document.createElement('button');
+      b.className = 'sw-pill' + (on === i ? ' on' : '');
+      b.textContent = v.name;
+      b.onclick = () => {
+        applyGfxVariant(i);
+        syncPanelRows();
+        fillAnimBody();
+        if (editHandles.on) editHandles.place();
+        varRow.querySelectorAll('.sw-pill').forEach((el, j) => el.classList.toggle('on', j === i));
+        varNote.textContent = v.desc;
+      };
+      varRow.appendChild(b);
+    });
+    varNote.textContent = (typeof on === 'number' && list[on])
+      ? list[on].desc
+      : 'この案の中でのグラフィックの見せ方を3つ用意しています。軌道と惑星の 位置・大きさ・傾き と、この案のつまみが入れ替わります。';
+  };
+  fillVariantRow();
   liveEdit = false;
   const animBody = document.createElement('div');
   aRoot.appendChild(animBody);
@@ -7816,7 +7958,9 @@ function buildPanel() {
         '1本の線に流す粒の数。', { fixedMax: true });
       slider('線の反り', 0, 1, 0.01, () => params.conv.link.curve, v => L.curve = v, v => v.toFixed(2),
         '0で直線、大きいほど弧を描きます。', { fixedMax: true });
-      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
+      slider('線の濃さ', 0, 0.6, 0.01, () => params.conv.link.lineAlpha, v => L.lineAlpha = v, v => v.toFixed(2));
+      slider('線の太さ', 0.2, 4, 0.1, () => params.conv.link.lineWidth, v => L.lineWidth = v, v => v.toFixed(1) + 'px',
+        '惑星とドットを結ぶ線の太さ。');
     }
 
 
@@ -7841,6 +7985,26 @@ function buildPanel() {
       b2.textContent = '✏️ 編集モード中';
     };
     (mount || body).appendChild(b2);
+    /* 【2026-08-27 ヒデさん指定】編集でいじった形を、最初に実装した配置へ戻すボタン。
+       戻すのは「形」(軌道と惑星の位置・大きさ・つぶし・傾き・レイアウト)だけ。
+       アニメのつまみは触らない。 */
+    const rowR = document.createElement('div');
+    rowR.className = 'sw-row';
+    const rb = document.createElement('button');
+    rb.className = 'sw-pill sw-save';
+    rb.textContent = '↺ 初期の配置に戻す';
+    rb.title = '軌道と惑星の位置・大きさ・傾きを、最初に実装した形へ戻します';
+    rb.onclick = () => {
+      gfxResetToInitial();
+      syncPanelRows();
+      if (editHandles.on) editHandles.place();
+      if (fillPresetRow) fillPresetRow();
+      fillVariantRow();
+      rb.classList.add('on'); rb.textContent = '✓ 戻しました';
+      setTimeout(() => { rb.classList.remove('on'); rb.textContent = '↺ 初期の配置に戻す'; }, 1200);
+    };
+    rowR.appendChild(rb);
+    (mount || body).appendChild(rowR);
     const n2 = document.createElement('div');
     n2.className = 'grp-note';
     n2.textContent = '押すと編集モードに入ります。右のグラフィックで輪や惑星をクリックすると枠が出て、'
@@ -7926,7 +8090,7 @@ function buildPanel() {
     v => { params.conv.showOuter = !!v; markDirty(); renderFrame(); });
   segRow('内の輪', [['表示', 1], ['消す', 0]], () => params.conv.showInner ? 1 : 0,
     v => { params.conv.showInner = !!v; markDirty(); renderFrame(); });
-  note('輪を消すと、その輪のドットも消えます。③⑤の案では自動で隠れます。');
+  note('輪を消すと、その輪のドットも消えます。③④の案では自動で隠れます。');
   sub(orbRoot, '動き', true);
   slider('軌道が回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
     v => v === 0 ? '回らない' : '×' + v.toFixed(2),
