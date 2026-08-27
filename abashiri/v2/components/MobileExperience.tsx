@@ -86,7 +86,7 @@ export default function MobileExperience() {
     const t2 = setTimeout(() => {
       setStep("video");
       setPlaying(true);
-    }, 950);
+    }, 1350);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -228,8 +228,11 @@ export default function MobileExperience() {
           <div
             ref={carRef}
             onScroll={onCarScroll}
-            className="no-scrollbar mt-8 flex w-full flex-1 snap-x snap-mandatory items-center gap-4 overflow-x-auto"
-            style={{ paddingInline: `calc(50% - ${CARD_W / 2}px)` }}
+            className="no-scrollbar mt-8 flex w-full flex-1 snap-x snap-mandatory items-center gap-4 overflow-x-auto overflow-y-hidden"
+            style={{
+              paddingInline: `calc(50% - ${CARD_W / 2}px)`,
+              touchAction: "pan-x", // 左右スワイプのみ（上下の遊びを止める）
+            }}
           >
             {PICKS.map((p, i) => (
               <div
@@ -237,7 +240,7 @@ export default function MobileExperience() {
                 ref={(el) => {
                   cardEls.current[i] = el;
                 }}
-                className={`relative aspect-[300/380] shrink-0 snap-center overflow-hidden rounded-[28px] ring-1 ring-inset ring-white/40 transition-opacity duration-300 ${
+                className={`relative aspect-[902/586] shrink-0 snap-center overflow-hidden rounded-[36px] border-[3px] border-white/60 transition-opacity duration-300 ${
                   i === pickIdx ? "opacity-100" : "opacity-55"
                 }`}
                 style={{ width: CARD_W }}
@@ -283,7 +286,7 @@ export default function MobileExperience() {
                   height: "100%",
                   borderRadius: 0,
                   transition:
-                    "top .9s cubic-bezier(0.7,0,0.25,1), left .9s cubic-bezier(0.7,0,0.25,1), width .9s cubic-bezier(0.7,0,0.25,1), height .9s cubic-bezier(0.7,0,0.25,1), border-radius .9s cubic-bezier(0.7,0,0.25,1)",
+                    "top 1.3s cubic-bezier(0.33,0,0.2,1), left 1.3s cubic-bezier(0.33,0,0.2,1), width 1.3s cubic-bezier(0.33,0,0.2,1), height 1.3s cubic-bezier(0.33,0,0.2,1), border-radius 1.3s cubic-bezier(0.33,0,0.2,1)",
                 }
               : {
                   top: enterRect.top,
@@ -340,7 +343,7 @@ export default function MobileExperience() {
               setPlaying((v) => !v);
               poke();
             }}
-            className={`absolute left-1/2 top-1/2 z-10 flex size-[76px] -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-opacity duration-500 ${
+            className={`absolute left-1/2 top-1/2 z-10 flex size-[114px] -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-opacity duration-500 ${
               controls ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           >

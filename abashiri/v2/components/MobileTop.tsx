@@ -13,7 +13,7 @@
  * コピー・写真はデスクトップ実装と同じ実データ。
  */
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 
 const NAV: { label: string; href?: string; scene?: number }[] = [
@@ -69,7 +69,7 @@ const GOURMET = [
   { no: "04", title: "酒縁酒場 屯々", img: "/img/gourmet-new-4.jpg" },
 ];
 
-const SCENE_COUNT = 8; // KV / メッセージ / スポット×4 / グルメ / フッター
+const SCENE_COUNT = 7; // KV / メッセージ / スポット×4 / グルメ
 const DUR = 800; // トランジション時間(ms)
 
 export default function MobileTop() {
@@ -136,6 +136,15 @@ export default function MobileTop() {
   };
 
   /* その場でブラーのクロスフェード（動かさない） */
+  /* グルメ（白背景）のときはヘッダーを黒に切り替える */
+  const headerDark = active === 6;
+  useEffect(() => {
+    document.documentElement.dataset.headerDark = headerDark ? "1" : "";
+    return () => {
+      document.documentElement.dataset.headerDark = "";
+    };
+  }, [headerDark]);
+
   const scene = (i: number): React.CSSProperties => ({
     opacity: i === active ? 1 : 0,
     filter: i === active ? "blur(0px)" : "blur(16px)",
@@ -151,6 +160,29 @@ export default function MobileTop() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
+      {/* 固定追従ヘッダー：左=環境音ON/OFF、右=ハンバーガー（全シーン共通。2026-08-28 ヒデさん指示） */}
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-center justify-between px-6 pt-5">
+        <div
+          id="abashiri-sound-slot"
+          className="pointer-events-auto flex h-[22px] origin-left scale-[0.72] items-center"
+        />
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label="メニューを開く"
+          className="pointer-events-auto flex size-9 items-center justify-center"
+        >
+          <span className="relative block h-[11px] w-[24px]">
+            <span
+              className={`absolute left-0 top-0 h-[1.5px] w-full rounded-full ${headerDark ? "bg-ink" : "bg-white"}`}
+            />
+            <span
+              className={`absolute bottom-0 left-0 h-[1.5px] w-full rounded-full ${headerDark ? "bg-ink" : "bg-white"}`}
+            />
+          </span>
+        </button>
+      </header>
+
       {/* ── 0: KV ───────────────────────── */}
       <section
         className="absolute inset-0 flex flex-col overflow-hidden"
@@ -163,42 +195,31 @@ export default function MobileTop() {
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/15 to-transparent" />
 
-        <header className="relative z-20 flex items-center justify-between px-6 pt-5">
-          <div
-            id="abashiri-sound-slot"
-            className="flex h-[22px] origin-left scale-[0.72] items-center"
-          />
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-label="メニューを開く"
-            className="flex size-9 items-center justify-center"
-          >
-            <span className="relative block h-[11px] w-[24px]">
-              <span className="absolute left-0 top-0 h-[1.5px] w-full rounded-full bg-white" />
-              <span className="absolute bottom-0 left-0 h-[1.5px] w-full rounded-full bg-white" />
-            </span>
-          </button>
-        </header>
-
         <div className="relative z-10 flex flex-1 flex-col">
-          <div className="flex flex-1 -translate-y-10 flex-col items-center justify-center px-6">
-            <img
-              src="/img/text-kanko-site.svg"
-              alt="網走市観光サイト"
-              className="mb-2 w-[104px]"
-            />
-            <img
-              src="/img/hero-message.svg"
-              alt="な〜んにもない、たまらない。"
-              className="w-full max-w-[300px]"
-            />
+          <div className="flex flex-1 -translate-y-8 flex-col items-center justify-center">
+            {/* 作字ブロックは PC カンプ 415×379 の相対配置そのまま
+                （網走市観光サイトは吹き出しの右上）。スマホ幅に合わせて縮小。
+                2026-08-28 ヒデさん指示：位置を勝手に変えずPC踏襲 */}
+            <div style={{ width: 415 * 0.8, height: 379 * 0.8 }} className="relative">
+              <div className="absolute left-0 top-0 h-[379px] w-[415px] origin-top-left scale-[0.8]">
+                <img
+                  src="/img/hero-message.svg"
+                  alt="な〜んにもない、たまらない。"
+                  className="absolute left-[-28px] top-[13.1px] w-[471px]"
+                />
+                <img
+                  src="/img/text-kanko-site.svg"
+                  alt="網走市観光サイト"
+                  className="absolute left-[215.7px] top-[8.3px] h-[36.3px] w-[188.2px]"
+                />
+              </div>
+            </div>
             <button
               type="button"
-              onClick={() => goTo(2)}
-              className="mt-9 flex -translate-y-[30px] items-center justify-center rounded-full bg-white/10 px-5 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
+              onClick={() => router.push("/experience")}
+              className="mt-6 flex items-center justify-center rounded-full bg-white/10 px-6 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
             >
-              ぼーっとスポットを見る
+              ぼーっとしてみる
             </button>
           </div>
           <img
@@ -303,26 +324,6 @@ export default function MobileTop() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* ── 7: フッター（体験への誘導） ─────────── */}
-      <section
-        className="absolute inset-0 flex flex-col items-center justify-center bg-brand px-6 text-center text-white"
-        style={scene(7)}
-      >
-        <p className="text-[15px] font-light leading-[1.9]">
-          網走で、なんにもしない時間を。
-        </p>
-        <a
-          href="/experience"
-          onClick={(e) => {
-            e.preventDefault();
-            router.push("/experience");
-          }}
-          className="mt-6 inline-flex w-full max-w-[342px] items-center justify-center rounded-full bg-white/15 py-[15px] text-[15px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
-        >
-          ぼーっと体験してみる
-        </a>
       </section>
 
       {/* ── 進行ドット（右端・タップでも移動） ───── */}
