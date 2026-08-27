@@ -2777,7 +2777,7 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'k1',     /* エコーの見え方(k1〜k4)。glowKind='echo' の時だけ効く */
+    glowEcho: 'k6',     /* エコーの見え方(k1〜k7)。glowKind='echo' の時だけ効く。既定は溶ける系 */
     /* 【2026-08-28 ヒデさん指定】エコーがガクガクして見えるので、細かく調整できるようにした。
        echoSpeed=広がる速さ(小さいほどゆっくり滑らか) / echoShells=重ねる枚数 /
        echoSpread=どこまで広がるか / echoStart=どこから始まるか / echoFade=消え方のなめらかさ */
@@ -3073,7 +3073,7 @@ function loadParams() {
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
-  if (!['k1', 'k2', 'k3', 'k4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k1';
+  if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k6';
   for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
@@ -4231,6 +4231,40 @@ function convEchoCanvases() {
   }
   return convEchoCans;
 }
+/* ===== 溶けるように広がる残像 (2026-08-28 ヒデさん指定) =====
+   ⚠️ これまでは「別々の殻(コピー)を数枚重ねる」作りだったので、
+      1枚1枚の輪郭が見えて段差＝ガタガタに見えていた。
+   1枚の canvas の中に、惑星を少しずつ大きくしながら【何十枚も薄く】重ねて描くと、
+   境目が消えて、ズームぼかしのように滑らかにつながる(＝ディゾルブ)。
+   さらに内側を消しゴムで抜くと、波紋のように「外へ溶けていく輪」になる。 */
+function echoSmear(c, from, to, alpha, layers, eraseInner) {
+  const ctx = c.ctx, W = c.el.width, H = c.el.height;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.clearRect(0, 0, W, H);
+  const N = Math.max(3, layers | 0);
+  for (let i = 0; i < N; i++) {
+    const f = N === 1 ? 0 : i / (N - 1);
+    const sc = from + (to - from) * f;
+    /* 外側ほど薄く。合計が濃くなりすぎないよう枚数で割る */
+    ctx.globalAlpha = Math.max(0, alpha * (1 - f * 0.85) * (2.2 / N));
+    ctx.setTransform(sc, 0, 0, sc, (W / 2) * (1 - sc), (H / 2) * (1 - sc));
+    try { ctx.drawImage(sphereCanvasEl, 0, 0); } catch (e) {}
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  if (eraseInner > 0) {
+    /* 内側をやわらかく抜く = 中が空いた輪になり、波紋らしく見える */
+    const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, (W / 2) * eraseInner);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(0.72, 'rgba(0,0,0,1)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
 function convDrawEchoes(strength, hit, dt, style) {
   const st = style || 'k1';
   const useEll = (st === 'k4');
@@ -4264,6 +4298,36 @@ function convDrawEchoes(strength, hit, dt, style) {
   const fadeOf = u => Math.pow(1 - u, fadeP);
   const spread = Math.max(0.02, params.conv.echoSpread ?? 0.28);
   const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
+  /* --- 5〜7 溶けるように広がる: 1枚の canvas に何十枚も薄く重ねて描く --- */
+  if (st === 'k5' || st === 'k6' || st === 'k7') {
+    const c0 = cans && cans[0];
+    if (!c0) return;
+    for (let i = 1; i < cans.length; i++) cans[i].el.style.opacity = '0';
+    /* いちばん新しい残像の進み具合を使う(1つのなめらかな波として見せる) */
+    let u = -1;
+    for (const q of convEchoes) if (q.t >= 0 && (u < 0 || q.t < u)) u = q.t;
+    if (u < 0) { c0.el.style.opacity = '0'; return; }
+    const uu = Math.max(0, Math.min(1, u));
+    const layers = Math.max(6, Math.round(6 + (params.conv.echoShells ?? 3) * 6));
+    const from = 1.0, to = echoStartOf(0) + convSStep(uu) * spread * 1.6;
+    if (st === 'k7') {
+      /* ぼけて溶ける: 重ね描き＋強いぼかし */
+      echoSmear(c0, from, to, 0.9, layers, 0);
+      c0.el.style.filter = `blur(${(2 + uu * 22).toFixed(1)}px)`;
+    } else if (st === 'k6') {
+      /* 内から溶ける: 内側を抜いて、外へ広がる輪にする */
+      echoSmear(c0, from, to, 1.0, layers, 0.55 + uu * 0.45);
+      c0.el.style.filter = `blur(${(1 + uu * 6).toFixed(1)}px)`;
+    } else {
+      /* 連続ディゾルブ: 段差なく尾を引いて溶ける */
+      echoSmear(c0, from, to, 0.95, layers, 0);
+      c0.el.style.filter = `blur(${(0.5 + uu * 3).toFixed(1)}px)`;
+    }
+    c0.el.style.zIndex = '1';
+    c0.el.style.transform = `translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale.toFixed(4)}, ${(pl.scale * plFlat).toFixed(4)})`;
+    c0.el.style.opacity = (strength * fadeOf(uu)).toFixed(3);
+    return;
+  }
   /* --- 4 色が変わる面: 単色の楕円。取り込むたびに色が変わる --- */
   if (useEll) {
     const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
@@ -10505,6 +10569,11 @@ function buildPanel() {
       { key: 'k2', name: '2 ぼかして広がる', tip: '複製にぼかしをかけながら大きく広がります。やわらかい残像。' },
       { key: 'k3', name: '3 手前にゴースト', tip: '複製を惑星の手前へ薄く重ねます。透けた残像がいちばんはっきり見えます。' },
       { key: 'k4', name: '4 色が変わる面',   tip: '単色の面の残像。取り込むたびに色が変わります（青・ピンク・水色・藤・白からランダム）。' },
+      /* 【2026-08-28 ヒデさん指定】殻を重ねる作りだと段差が見えてガタつくので、
+         1枚の中に何十枚も薄く重ねて【溶けるように】広げる3案 */
+      { key: 'k5', name: '5 連続ディゾルブ', tip: '惑星を少しずつ大きくしながら何十枚も薄く重ねます。段差が消えて、尾を引くように滑らかに溶けます。' },
+      { key: 'k6', name: '6 内から溶ける',   tip: '同じ重ね方をしたうえで内側を抜き、外へ広がる輪にします。いちばん波紋らしい溶け方。' },
+      { key: 'k7', name: '7 ぼけて溶ける',   tip: '重ねたうえで強くぼかします。輪郭が完全に消えて、光がにじむように広がります。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
@@ -10517,7 +10586,8 @@ function buildPanel() {
           v => '×' + v.toFixed(2),
           '左へ動かすほどゆっくり広がります。1コマの変化が小さくなるので、なめらかに見えます。');
         slider('重ねる枚数', 1, 6, 1, () => params.conv.echoShells, v => params.conv.echoShells = v, v => v + '枚',
-          '1回の取り込みで何枚重ねるか。多いほど層が細かくなり、段差が目立ちにくくなります。');
+          '1回の取り込みで何枚重ねるか。多いほど層が細かくなり、段差が目立ちにくくなります。'
+          + '（5〜7の溶ける案では「どれだけ細かく溶かすか」になります。多いほど滑らか）');
         slider('広がる幅', 0.05, 0.9, 0.01, () => params.conv.echoSpread, v => params.conv.echoSpread = v,
           v => '×' + v.toFixed(2), '残像がどこまで大きくなるか。小さいほど動きが穏やかです。');
         slider('始まりの大きさ', 1.0, 1.6, 0.01, () => params.conv.echoStart, v => params.conv.echoStart = v,
