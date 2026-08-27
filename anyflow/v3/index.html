@@ -2737,6 +2737,8 @@ const DEFAULTS = {
     /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は【案ごと】に持つ。
        案によって似合う回り方が違うため。orbitSpin(全案共通)は古い保存値からの引き継ぎ用に残す */
     orbitSpinBy: { off: 0, reel: 0, spiral: 0, accre: 0, mesh: 0, beads: 0, duplex: 0, gyro: 0 },
+    /* 【2026-08-28 ヒデさん指定】軌道の線の太さ(倍率)。案ごとに持つ。1=カンプ通りの3px */
+    orbitWidthBy: { off: 1, reel: 1, spiral: 1, accre: 1, mesh: 1, beads: 1, duplex: 1, gyro: 1 },
     /* 【2026-08-27 ヒデさん指定】ドット1粒ずつの不規則さと、軌道そのものの動き。
        dotRandom = ドットごとに速さ・位置がばらつく量
        orbitSpin = 軌道そのものが回る速さ(0で回らない。これまでは形が固定だった)
@@ -2760,7 +2762,7 @@ const DEFAULTS = {
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
        一部だけが順に惑星へ吸われるので、輪の形は保たれる。ghost=薄い軌道線を残すか */
     /* beads: 軌道線は出さず、点だけで輪を作る(2026-08-27 ヒデさん指定で ghost 廃止) */
-    beads:  { count: 300, speed: 0.26, life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
+    beads:  { count: 300, even: true, speed: 0.26,   /* even=弧の長さで等分(見た目が均等) */ life: 3.4, size: 0.5, ratio: 0.22, jitter: 0, spin: 0, spinEase: 1, backIn: 1.2 },
     /* mesh(⑫メッシュ): 3つの見た目(style) + ランダムに漂う動き
        style: organic=ふわふわ漂う / constellation=星座(明滅) / grid=格子状のネット /
               cage=包囲ケージ(惑星のまわりの球殻にノードを並べて回す。2026-08-27 ヒデさん指定) */
@@ -2974,6 +2976,9 @@ function loadParams() {
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
   if (!merged.gfxVariantOn || Array.isArray(merged.gfxVariantOn)) merged.gfxVariantOn = {};
   /* 案ごとの軌道回転。古い保存値(全案共通の orbitSpin)は、全案の初期値として配る */
+  if (!merged.conv.orbitWidthBy || typeof merged.conv.orbitWidthBy !== 'object') {
+    merged.conv.orbitWidthBy = { ...DEFAULTS.conv.orbitWidthBy };
+  }
   if (!merged.conv.gyroMixBy || typeof merged.conv.gyroMixBy !== 'object') {
     merged.conv.gyroMixBy = { ...DEFAULTS.conv.gyroMixBy };
   }
@@ -3240,6 +3245,47 @@ function orbitGeom(key) {
        惑星の案を選んでいる時だけ効かせる */
     rot: b.rot + p.angle + wobble + convOrbitSpin(key) + gyRot,
   };
+}
+
+/* ===== 楕円の上に「見た目が均等」に点を並べるための表 (2026-08-28 ヒデさん指定) =====
+   ⚠️ これまでは【角度を等分】して並べていた。楕円は長径の両端でカーブがきつく、
+      同じ角度でも弧の長さが短いので、そこだけ点が詰まって見えていた(ヒデさん指摘の箇所)。
+   弧の長さで等分し直すと、見た目が均等になる。
+   ・表は「1周のどこ(u=0〜1)」→「楕円の角度(度)」の対応。
+   ・形(ry/rx)が同じなら結果も同じなので、比率ごとに作って使い回す(小数2桁で丸めて共用)。
+   ・u を進めれば弧の上を一定の速さで進むので、端で速くなる/遅くなるムラも消える。 */
+const convArcTables = new Map();
+function convArcTable(ratio) {
+  const key = ratio.toFixed(2);
+  let t = convArcTables.get(key);
+  if (t) return t;
+  const r = Math.max(0.02, +key);
+  const STEPS = 1440, cum = [0];
+  let px = 1, py = 0, total = 0;
+  for (let i = 1; i <= STEPS; i++) {
+    const a = i / STEPS * Math.PI * 2;
+    const x = Math.cos(a), y = Math.sin(a) * r;
+    total += Math.hypot(x - px, y - py); cum.push(total); px = x; py = y;
+  }
+  const N = 512; t = new Float32Array(N + 1);
+  let j = 0;
+  for (let k = 0; k <= N; k++) {
+    const want = total * k / N;
+    while (j < STEPS && cum[j + 1] < want) j++;
+    const seg = (cum[j + 1] - cum[j]) || 1;
+    t[k] = ((j + (want - cum[j]) / seg) / STEPS) * 360;
+  }
+  t[N] = 360;
+  convArcTables.set(key, t);
+  if (convArcTables.size > 48) convArcTables.delete(convArcTables.keys().next().value);
+  return t;
+}
+/* u(0〜1、はみ出しても可) → 楕円の角度(度) */
+function convArcAngle(ratio, u) {
+  const t = convArcTable(ratio), N = t.length - 1;
+  const uu = u - Math.floor(u);
+  const x = uu * N, i = Math.floor(x), f = x - i;
+  return t[i] + (t[i + 1] - t[i]) * f;
 }
 
 function posOn(g, deg) {
@@ -3899,7 +3945,15 @@ function applyRingAlpha(key, aB, aF) {
 /* 【2026-08-27 ヒデさん指定】溶ける時に「別の物質に変わっていく」見せ方をするため、
    線の太さ・破線・にじみを毎フレーム変えられるようにする */
 const convRingStyleWritten = { outer: '', inner: '' };
+/* いま選んでいる案の「軌道の線の太さ」の倍率 */
+function convOrbitWidth() {
+  const C = params.conv;
+  if (!C) return 1;
+  const v = (C.orbitWidthBy || {})[params.converge || 'reel'];
+  return (typeof v === 'number' && v > 0) ? v : 1;
+}
 function applyRingStyle(key, w, dash, color, cap) {
+  w = w * convOrbitWidth();          /* 案ごとの太さをここでまとめて掛ける */
   const sig = w.toFixed(2) + '|' + dash + '|' + (color || '') + '|' + (cap || '');
   if (sig === convRingStyleWritten[key]) return;
   convRingStyleWritten[key] = sig;
@@ -4150,7 +4204,7 @@ function convFrame(geoms) {
           /* 収縮している側に近い輪ほど、その輪の濃さに寄せる */
           const a = ((aB + aF) / 2) * (1 - t) + 1 * t;
           el.setAttribute('opacity', (a * (R.blendAlpha == null ? 0.45 : R.blendAlpha)).toFixed(3));
-          el.setAttribute('stroke-width', (convReelA[shrinkKey].w * (1 - t) + 3 * t).toFixed(2));
+          el.setAttribute('stroke-width', ((convReelA[shrinkKey].w * (1 - t) + 3 * t) * convOrbitWidth()).toFixed(2));
         }
       } else convHideBlend();
     }
@@ -4437,7 +4491,8 @@ function convFrame(geoms) {
       for (let i = 0; i < n; i++) {
         /* 外周と内周へ交互に、等間隔で並べる = 密度が上がるほど輪に見える */
         const ring = i % 2, idx = Math.floor(i / 2), half = Math.ceil(n / 2);
-        convBeads.push({ base: (idx / half) * 360, ring, t: -1, jit: (Math.random() - 0.5) });
+        /* slot/half は「1周のどこか」の割合。弧で等分する時に使う */
+        convBeads.push({ base: (idx / half) * 360, slot: idx, half, ring, t: -1, jit: (Math.random() - 0.5) });
       }
       convBeads.spin = 0; convBeads.next = 0;
     }
@@ -4473,7 +4528,16 @@ function convFrame(geoms) {
           b.back = 0;   /* 【2026-08-27 ヒデさん指定】空いた場所へは、ゆったりフェードインで戻す */
         }
       }
-      const ang = b.base + convBeads.spin + b.jit * (B.jitter || 0) * 12 + swirl;
+      /* 【2026-08-28 ヒデさん指定】端で点が詰まって見えないよう、弧の長さで等分する。
+         「等角(従来)」に戻したい時はパネルの『並べ方』で切り替えられる */
+      let ang;
+      if (B.even === false) {
+        ang = b.base + convBeads.spin;
+      } else {
+        const ratio = Math.abs(g.ry) / Math.max(1, Math.abs(g.rx));
+        ang = convArcAngle(ratio, b.slot / Math.max(1, b.half) + convBeads.spin / 360);
+      }
+      ang += b.jit * (B.jitter || 0) * 12 + swirl;
       /* 戻ってきた点は、しばらくかけて濃くなる(ふっと湧かない) */
       if (b.back != null) {
         b.back += dt;
@@ -7837,6 +7901,7 @@ function gfxSnapshotFull() {
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
       gyroMix: (C.gyroMixBy || {})[mode] || 0, /* 案ごとのジャイロ混ぜ具合 */
+      orbitWidth: (C.orbitWidthBy || {})[mode], /* 案ごとの軌道の線の太さ */
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
     gyro: C.gyro ? { ...C.gyro } : null,   /* ジャイロの転がり方 */
@@ -7869,6 +7934,10 @@ function gfxApplyFull(d) {
     if (typeof d.common.gyroMix === 'number') {
       if (!C.gyroMixBy) C.gyroMixBy = {};
       C.gyroMixBy[mode] = d.common.gyroMix;
+    }
+    if (typeof d.common.orbitWidth === 'number') {
+      if (!C.orbitWidthBy) C.orbitWidthBy = {};
+      C.orbitWidthBy[mode] = d.common.orbitWidth;
     }
   }
   const pk = CONV_PARAM_KEY[mode];
@@ -7961,6 +8030,9 @@ function applyGfxVariant(i) {
       } else if (k === 'gyroMix') {
         if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
         params.conv.gyroMixBy[mode] = v.common[k];
+      } else if (k === 'orbitWidth') {
+        if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {};
+        params.conv.orbitWidthBy[mode] = v.common[k];
       } else params.conv[k] = v.common[k];
     }
   }
@@ -8827,6 +8899,11 @@ function buildPanel() {
         () => (DM[cvMode] !== false) ? 1 : 0,
         v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
       /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は案ごとに変えられる */
+      slider('軌道の線の太さ', 0.2, 4, 0.05,
+        () => { const v = (params.conv.orbitWidthBy || {})[cvMode]; return (typeof v === 'number' && v > 0) ? v : 1; },
+        v => { if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {}; params.conv.orbitWidthBy[cvMode] = v; },
+        v => (3 * v).toFixed(1) + 'px',
+        '右へ動かすほど軌道の線が太くなります。カンプ通りは 3.0px。');
       slider('軌道の回転', 0, 3, 0.05,
         () => convOrbitSpinAmt(),
         v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
@@ -8941,6 +9018,11 @@ function buildPanel() {
     } else if (cvMode === 'beads') {
       const B = params.conv.beads;
       sub(animModeBox, 'この案の調整（点が並ぶ軌道）', true);
+      /* 【2026-08-28 ヒデさん指定】楕円の端で点が詰まって見える問題への対処 */
+      segRow('並べ方', [['見た目そろえ', 1], ['等角(従来)', 0]],
+        () => (params.conv.beads.even === false) ? 0 : 1,
+        v => { B.even = !!v; markDirty(); renderFrame(); });
+      note('「見た目そろえ」＝弧の長さで等分するので、輪の端でも点が詰まって見えません。「等角」＝角度で等分する昔の並べ方。');
       slider('ドットの密度', 6, 1200, 2, () => params.conv.beads.count, v => B.count = v, v => v + '個',
         '多いほど点が詰まって軌道の線に見えます。', { fixedMax: true });
       slider('同時に吸われる割合', 0.02, 1, 0.01, () => params.conv.beads.ratio, v => B.ratio = v, pctF,
