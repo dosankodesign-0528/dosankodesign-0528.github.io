@@ -2582,6 +2582,9 @@ const DEFAULTS = {
        dotPersp: 'flat'=どこでも同じ大きさ / 'persp'=手前が大きく奥が小さい(遠近感)
        perspK = 遠近の強さ */
     dotSize: 1, dotPersp: 'flat', perspK: 0.45,
+    /* 【2026-08-27 ヒデさん指定】軌道にそってドット自体が動く(周回する)かを案ごとに切替。
+       off にすると、その案ではドットが位置に留まったまま(集約などの動きだけが起きる) */
+    dotMove: { reel: true, spiral: true, accre: true, waves: true, mesh: true, beads: true, duplex: true },
     glow: 0.35,                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -2754,7 +2757,9 @@ function load() {
   merged.visReveal = merged.visReveal || DEFAULTS.visReveal;
   merged.visSpin = merged.visSpin || DEFAULTS.visSpin;
   merged.visMove = merged.visMove || DEFAULTS.visMove;
-  if (typeof merged.converge !== 'string') merged.converge = DEFAULTS.converge;   /* 2026-08-26 集約アニメ */
+  if (typeof merged.converge !== 'string') merged.converge = DEFAULTS.converge;
+  if (!merged.conv || typeof merged.conv !== 'object') merged.conv = {};
+  merged.conv.dotMove = { ...DEFAULTS.conv.dotMove, ...((s.conv && s.conv.dotMove) || {}) };   /* 2026-08-26 集約アニメ */
   merged.conv = {                                                                  /* 集約アニメの調整つまみ */
     ...DEFAULTS.conv, ...(s.conv || {}),
     reel:   { ...DEFAULTS.conv.reel,   ...((s.conv && s.conv.reel)   || {}) },
@@ -2977,6 +2982,13 @@ const CONVERGES = [
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
 const CONV_LINKED = ['duplex'];
 function convOn() { return params.kvDesign === 'planet' && (params.converge || 'off') !== 'off'; }
+/* いまの案で「ドット自体の移動(周回)」を動かすか。案ごとに切り替えられる */
+function convDotMoves() {
+  const m = params.conv && params.conv.dotMove;
+  if (!m) return true;
+  const k = params.converge || 'reel';
+  return m[k] !== false;
+}
 const convDotF = DOTS.map(() => 1);   // ドットごとの「惑星への寄せ」(1=軌道上 → 0=惑星中心)
 const convDotA = DOTS.map(() => 1);   // ドットごとの濃さ倍率 (集約アニメ用)
 let convGlow = 0;                     // 吸収の瞬間、惑星がふっと明るくなる(減衰)
@@ -3370,7 +3382,7 @@ function convFrame(geoms) {
     const S = C.spiral;
     const pool = convSpiralPool();
     for (const p of pool) {
-      p.deg += p.spd * S.speed * dt * (params.direction || 1);         // 回転の速さはパネルから
+      if (convDotMoves()) p.deg += p.spd * S.speed * dt * (params.direction || 1);   // 周回オフなら角度は進めない
       p.age += dt;
       if (p.mode === 0) {
         p.f = 1;                                                       // 軌道上に乗って回る
@@ -3428,7 +3440,7 @@ function convFrame(geoms) {
     const cc = convCenter();
     const disk = { cx: cc.x, cy: cc.y, rx: orbitBase('inner').rx * A.scale, ry: orbitBase('inner').rx * A.scale * 0.335, rot: geoms.inner.rot };
     for (const p of pool) {
-      p.ang += (0.5 / Math.max(0.2, p.f)) * A.speed * 60 * dt * (params.direction || 1);
+      if (convDotMoves()) p.ang += (0.5 / Math.max(0.2, p.f)) * A.speed * 60 * dt * (params.direction || 1);
       p.f -= 0.022 * A.fall * dt;
       if (p.f <= 0.16) { convGlow = Math.min(1.2, convGlow + 0.10);
         p.f = 1.05 + Math.random() * 0.15; p.ang = Math.random() * 360; }
@@ -3475,7 +3487,8 @@ function convFrame(geoms) {
       let bx, by;
       if (style === 'grid') { bx = cc.x + (q.gx - 0.5) * RX * 1.7; by = cc.y + (q.gy - 0.5) * RY * 1.5; }
       else { bx = cc.x + Math.cos(q.a) * RX * q.r; by = cc.y + Math.sin(q.a) * RY * q.r; }
-      return { x: bx + wx * amp * M.drift, y: by + wy * amp * M.drift * 0.7 };
+      const mv = convDotMoves() ? 1 : 0;   /* 周回オフならノードも漂わない */
+      return { x: bx + wx * amp * M.drift * mv, y: by + wy * amp * M.drift * 0.7 * mv };
     };
     /* --- 線 --- */
     const pairs = [];
@@ -3543,7 +3556,7 @@ function convFrame(geoms) {
       }
       convBeads.spin = 0; convBeads.next = 0;
     }
-    convBeads.spin += B.speed * 60 * dt * (params.direction || 1);
+    if (convDotMoves()) convBeads.spin += B.speed * 60 * dt * (params.direction || 1);
     /* 吸われている数が ratio を超えないよう、順番に送り出す */
     const wantOn = Math.max(1, Math.round(n * clamp01(B.ratio)));
     let onNow = 0;
@@ -3597,7 +3610,7 @@ function convFrame(geoms) {
         const pk = pkts[i * per + j];
         if (!pk) continue;
         const seed = (i * 7 + j * 3) % 10 / 10;
-        const u = (elapsed * L.speed / T + seed) % 1;    // この粒の位相
+        const u = convDotMoves() ? ((elapsed * L.speed / T + seed) % 1) : seed;   // 周回オフなら止める
         const out = j % 2 === 1;                          // 半分は行き(集約)、半分は帰り(配信)
         const t = out ? 1 - u : u;
         const q = convBez(cc, ctrls[i], ends[i], clamp01(t));
@@ -4117,7 +4130,9 @@ let scrollDir = 0, lastScrollY = 0;
 
 /* ドットの現在角度(deg): 緩急ゆらぎつきの周回 */
 function patternDeg(d, i, p) {
-  const base = 360 / params.duration * params.globalSpeed * params.direction;
+  /* ドットの周回を止める案では、進む量を 0 にして最初の位置に留める(2026-08-27 ヒデさん指定) */
+  const move = (typeof convDotMoves === 'function' && convOn()) ? convDotMoves() : true;
+  const base = move ? (360 / params.duration * params.globalSpeed * params.direction) : 0;
   const et = effectiveTime(elapsed, p.delay, params.ramp);
   /* 【2026-08-19】「①きっちり等間隔」の時は、7個ぜんぶ同じ位相で走らせる。
      位相がドットごとに違うと、等間隔に置いても走るうちに間隔が開閉する
@@ -7411,6 +7426,14 @@ function buildPanel() {
 
     const pctF = v => Math.round(v * 100) + '%';
     const cvMode = params.converge || 'reel';
+    /* 【2026-08-27 ヒデさん指定】軌道にそってドット自体が動くか。案ごとにオンオフできる */
+    if (cvMode !== 'off') {
+      const DM = params.conv.dotMove || (params.conv.dotMove = {});
+      segRow('ドットの周回', [['する', 1], ['しない', 0]],
+        () => (DM[cvMode] !== false) ? 1 : 0,
+        v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
+      note('この案でドットが軌道にそって動くか。「しない」にすると、その場に留まったまま集約などの動きだけが起きます。');
+    }
     if (cvMode === 'reel') {
       const R = params.conv.reel;
       sub(animModeBox, 'この案の調整（輪が縮んで吸収）', true);
