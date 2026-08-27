@@ -2778,6 +2778,7 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
+    glowEcho: 'e1',     /* エコーの出方(e1〜e4)。glowKind='echo' の時だけ効く */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3065,7 +3066,8 @@ function loadParams() {
   /* 惑星の模様 5〜7(C1/C2/C3)は 2026-08-27 に廃止。選んだままなら既定へ寄せる */
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
-  if (!['pulse', 'ripple'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
+  if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
+  if (!['e1', 'e2', 'e3', 'e4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e1';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -4158,6 +4160,90 @@ function convDrawRipples(strength, hit, dt) {
     el.setAttribute('opacity', (0.55 * strength * (1 - k)).toFixed(3));
   }
 }
+/* ===== エコー (2026-08-28 ヒデさん指定) =====
+   データが取り込まれると、惑星の【丸いシルエットそのもの】がひと回り大きくなった残像として
+   ふわっと広がっていく。波紋(細い線)の“面”版。
+   ⚠️ 惑星の後ろ(layer-back)に置くので、惑星のふちからにじみ出るオーラのように見える。
+      惑星が縦横比を変えていても合うよう、円ではなく楕円で描く。
+   4パターン: e1 ひと膨らみ / e2 三連(パンパンパン) / e3 重なり続ける / e4 段階(止まりながら) */
+let convEchoEls = null, convEchoes = [];
+const CONV_ECHO_MAX = 12;
+function convDrawEchoes(strength, hit, dt, kind) {
+  if (!convEchoEls) {
+    const host = dotsBackG && dotsBackG.parentNode;
+    if (!host) return;
+    convEchoEls = [];
+    for (let i = 0; i < CONV_ECHO_MAX; i++) {
+      const e = document.createElementNS(SVG_NS, 'ellipse');
+      e.setAttribute('fill', '#7FD8FF');
+      e.setAttribute('stroke', 'none');
+      e.setAttribute('opacity', '0');
+      e.style.pointerEvents = 'none';
+      host.insertBefore(e, dotsBackG);
+      convEchoEls.push(e);
+    }
+  }
+  if (strength <= 0.001) {
+    convEchoes.length = 0;
+    for (const e of convEchoEls) e.setAttribute('opacity', '0');
+    return;
+  }
+  const k = kind || 'e1';
+  /* --- いつ生むか --- */
+  const fresh = hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.18);
+  if (k === 'e3') {
+    /* 重なり続ける: 吸収と関係なく一定の間隔で出し続ける(溜まりが多いほど速く) */
+    convEchoes._next = (convEchoes._next || 0) - dt;
+    if (convEchoes._next <= 0 && convEchoes.length < CONV_ECHO_MAX) {
+      convEchoes.push({ t: 0, step: 0 });
+      convEchoes._next = 0.42 - 0.18 * convCharge;
+    }
+  } else if (fresh) {
+    if (k === 'e2') {
+      /* 三連: 1回の吸収で3つを時間差で(パンパンパン) */
+      for (let i = 0; i < 3; i++) if (convEchoes.length < CONV_ECHO_MAX) convEchoes.push({ t: -i * 0.14, step: i });
+    } else if (k === 'e4') {
+      /* 段階: 1.06 / 1.13 / 1.20 の3段を、止まりながら出す */
+      for (let i = 0; i < 3; i++) if (convEchoes.length < CONV_ECHO_MAX) convEchoes.push({ t: -i * 0.26, step: i });
+    } else if (convEchoes.length < CONV_ECHO_MAX) {
+      convEchoes.push({ t: 0, step: 0 });
+    }
+  }
+  /* --- 進める --- */
+  const speed = (k === 'e4') ? 0.85 : (k === 'e3' ? 0.55 : 1.05);
+  for (let i = convEchoes.length - 1; i >= 0; i--) {
+    convEchoes[i].t += dt * speed;
+    if (convEchoes[i].t >= 1) convEchoes.splice(i, 1);
+  }
+  /* --- 描く --- */
+  const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
+  for (let i = 0; i < convEchoEls.length; i++) {
+    const q = convEchoes[i], el = convEchoEls[i];
+    if (!q || q.t < 0) { el.setAttribute('opacity', '0'); continue; }
+    const u = Math.max(0, Math.min(1, q.t));
+    let grow, a;
+    if (k === 'e4') {
+      /* 段階: 段ごとに決まった大きさまで一気に出て、そこで少し止まってから消える */
+      const goal = 1.06 + q.step * 0.07;
+      const rise = Math.min(1, u / 0.28);
+      grow = 1 + (goal - 1) * convSStep(rise);
+      a = (u < 0.55 ? 1 : 1 - (u - 0.55) / 0.45);
+    } else if (k === 'e3') {
+      grow = 1 + convSStep(u) * 0.30;
+      a = (1 - u) * 0.8;
+    } else if (k === 'e2') {
+      grow = 1 + convSStep(u) * (0.26 + q.step * 0.06);
+      a = 1 - u;
+    } else {
+      grow = 1 + convSStep(u) * 0.40;
+      a = 1 - u;
+    }
+    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+    el.setAttribute('rx', (rx0 * grow).toFixed(1));
+    el.setAttribute('ry', (ry0 * grow).toFixed(1));
+    el.setAttribute('opacity', (0.30 * strength * a).toFixed(3));
+  }
+}
 function convFrontCut() { return (params.conv && params.conv.frontCut) !== false; }
 function convPlanetR() { return 130 * ((params.planet && params.planet.scale) || 1); }
 /* 【2026-08-27 ヒデさん指定】惑星も縦横比を保たずにつぶせる。縦の半径はこちら */
@@ -4246,8 +4332,8 @@ function convFrame(geoms) {
       fx = `brightness(${(1 + (ch * 0.95 + hit * 0.35) * g).toFixed(3)})`
          + ` contrast(${(1 + ch * 0.8 * g).toFixed(3)})`
          + ` saturate(${(1 + ch * 0.5 * g).toFixed(3)})`;
-    } else if (gk === 'ripple') {
-      /* 波紋: 光り方は控えめにして、外へ広がる輪で受け止めを見せる(輪は下で描く) */
+    } else if (gk === 'ripple' || gk === 'echo') {
+      /* 波紋 / エコー: 惑星自体は控えめに。外へ広がる輪・残像で受け止めを見せる(下で描く) */
       fx = `brightness(${(1 + hit * 0.45 * g).toFixed(3)})`;
     } else if (gk === 'breath') {
       /* 呼吸: 溜まった量に応じて、ゆっくり明るさが行き来する */
@@ -4265,6 +4351,7 @@ function convFrame(geoms) {
       sphereCanvasEl.style.setProperty('--conv-breath', k.toFixed(4));
     } else sphereCanvasEl.style.removeProperty('--conv-breath');
     convDrawRipples(gk === 'ripple' ? g : 0, hit, dt);
+    convDrawEchoes(gk === 'echo' ? g : 0, hit, dt, C.glowEcho);
   }
 
   if (mode === 'reel') {
@@ -8446,7 +8533,7 @@ function gfxSnapshotFull() {
     common: {
       showOuter: C.showOuter, showInner: C.showInner, showDots: C.showDots,
       dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, glow: C.glow, frontCut: C.frontCut,
-      glowKind: C.glowKind, glowHold: C.glowHold,
+      glowKind: C.glowKind, glowHold: C.glowHold, glowEcho: C.glowEcho,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -8472,7 +8559,7 @@ function gfxApplyFull(d) {
   if (d.common) {
     for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
                      'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
-                     'glowKind', 'glowHold']) {
+                     'glowKind', 'glowHold', 'glowEcho']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9756,11 +9843,32 @@ function buildPanel() {
     const GLOWS = [
       { key: 'pulse',  name: 'A パルス', tip: '届いた瞬間だけ、ふっと明るくなります。' },
       { key: 'ripple', name: 'B 波紋',   tip: '届いた瞬間、惑星から外へ輪が広がります。輪の形と傾きは軌道に合わせて自動で決まります。' },
+      { key: 'echo',   name: 'C エコー', tip: '惑星の丸いシルエットが、ひと回り大きくなった残像として外へ広がります。線ではなく“面”の波紋。' },
     ];
     pillRow(GLOWS, it => (params.conv.glowKind || 'pulse') === it.key,
-      it => { params.conv.glowKind = it.key; markDirty(); renderFrame(); },
-      { get: () => params.conv.glowKind, set: v => { params.conv.glowKind = v; renderFrame(); } },
+      it => { params.conv.glowKind = it.key; markDirty(); renderFrame(); fillGlowSub(); },
+      { get: () => params.conv.glowKind, set: v => { params.conv.glowKind = v; renderFrame(); fillGlowSub(); } },
       { noRebuild: true, tip: it => it.tip });
+    /* 【2026-08-28 ヒデさん指定】エコーを選んだ時だけ、出方の4パターンを下に出す */
+    const echoBox = document.createElement('div');
+    (mount || body).appendChild(echoBox);
+    const ECHOES = [
+      { key: 'e1', name: '1 ひと膨らみ', tip: '吸収のたびに、シルエットが1つ ふわっと大きくなって消えます。いちばん静か。' },
+      { key: 'e2', name: '2 三連',       tip: '1回の吸収で3つの残像が時間差で。パン・パン・パンと連なります。' },
+      { key: 'e3', name: '3 重なり続ける', tip: '一定の間隔で残像が出続け、常に何枚か重なります。溜まるほど間隔が詰まります。' },
+      { key: 'e4', name: '4 段階',       tip: '1.06→1.13→1.20 と、決まった大きさまで一気に出て少し止まる。階段状の広がり。' },
+    ];
+    var fillGlowSub = function () {
+      const keep = mount; mount = echoBox; echoBox.innerHTML = '';
+      if ((params.conv.glowKind || 'pulse') === 'echo') {
+        pillRow(ECHOES, it => (params.conv.glowEcho || 'e1') === it.key,
+          it => { params.conv.glowEcho = it.key; markDirty(); renderFrame(); },
+          { get: () => params.conv.glowEcho, set: v => { params.conv.glowEcho = v; renderFrame(); } },
+          { noRebuild: true, tip: it => it.tip });
+      }
+      mount = keep;
+    };
+    fillGlowSub();
   }
   slider('光の強さ', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '右へ動かすほど強く光ります。0で光りません。');
