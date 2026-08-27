@@ -2,25 +2,24 @@
 
 /* eslint-disable @next/next/no-img-element */
 /*
- * スマホ（〜640px）用のトップ。デスクトップの固定キャンバス（Stage＋TopPage）とは別に、
- * 390px で美しく見えるモバイル専用レイアウト（2026-08-24 ヒデさん依頼）。
+ * スマホ（〜640px）用のトップ。デスクトップの固定キャンバスとは別レイアウト。
  *
  * ルール：左右24pxパディング／最小フォント12px／デスクトップの世界観を踏襲。
- * セクションは各 100dvh 全画面（KV → メッセージ → ぼーっとスポット → グルメ）。
  *
- * PCのスクロール演出を踏襲（2026-08-24 ヒデさん指示）：
- *   ・KV：下へスクロールすると作字がブラーで消えていく
- *   ・メッセージ：行ごとではなく「一括」でふわっと出す
+ * 演出（2026-08-24 ヒデさん指示）：
+ *   ページは「固定ビューのスライド」。上下スワイプ（またはホイール）で、
+ *   画面はそのままに、いまの場面がブラーで消え → 次の場面がブラーから現れる
+ *   （その場でブラーのクロスフェード。スクロールで流れていくのではない）。
  * コピー・写真はデスクトップ実装と同じ実データ。
  */
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { preload } from "react-dom";
 
-const NAV: { label: string; href?: string; to?: string }[] = [
-  { label: "ホーム", to: "top" },
-  { label: "ぼーっとスポット", to: "m-spot" },
-  { label: "グルメ", to: "m-gourmet" },
+const NAV: { label: string; href?: string; scene?: number }[] = [
+  { label: "ホーム", scene: 0 },
+  { label: "ぼーっとスポット", scene: 2 },
+  { label: "グルメ", scene: 6 },
   { label: "体験", href: "/experience" },
 ];
 
@@ -70,75 +69,92 @@ const GOURMET = [
   { no: "04", title: "酒縁酒場 屯々", img: "/img/gourmet-new-4.jpg" },
 ];
 
+const SCENE_COUNT = 8; // KV / メッセージ / スポット×4 / グルメ / フッター
+const DUR = 800; // トランジション時間(ms)
+
 export default function MobileTop() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
-  const scrollerRef = useRef<HTMLElement>(null);
+  const [active, setActive] = useState(0);
+  const lockRef = useRef(false);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+
   preload("/img/bg-hero.jpg", { as: "image", fetchPriority: "high" });
 
-  /* 各シーンを固定ビュー（スナップ）で見せ、スクロール量に応じてブラーで出入りさせる。
-     ドックしている（画面にぴったり）時だけ鮮明、離れるほどブラー＝PCの
-     「場面がブラーでトランジション」を踏襲（2026-08-24 ヒデさん指示）。
-     ブラーは「動く背景を毎フレーム全画面ぼかす」ので重い→離れた（画面外）シーンは
-     filter:none に戻して負荷を切る。rAF は裏タブで発火しないので同期で書く。 */
-  useEffect(() => {
-    const sc = scrollerRef.current;
-    if (!sc) return;
-    const scenes = Array.from(
-      sc.querySelectorAll<HTMLElement>("[data-scene]")
-    );
-    const apply = () => {
-      const h = window.innerHeight;
-      const scTop = sc.getBoundingClientRect().top;
-      /* 先に位置を読み切ってから、まとめて書く（レイアウトスラッシング回避） */
-      const ds = scenes.map((el) => (el.getBoundingClientRect().top - scTop) / h);
-      scenes.forEach((el, i) => {
-        const a = Math.min(1, Math.abs(ds[i])); // 0=ドック / 1=1画面ぶん離れた
-        if (a >= 0.999) {
-          el.style.filter = "none";
-          el.style.opacity = "1";
-        } else {
-          el.style.filter = a > 0.01 ? `blur(${(a * 16).toFixed(1)}px)` : "none";
-          el.style.opacity = String(1 - a * 0.4);
-        }
-      });
-    };
-    apply();
-    sc.addEventListener("scroll", apply, { passive: true });
-    window.addEventListener("resize", apply);
-    return () => {
-      sc.removeEventListener("scroll", apply);
-      window.removeEventListener("resize", apply);
-    };
+  const goTo = useCallback((n: number) => {
+    setActive((prev) => {
+      const t = Math.max(0, Math.min(SCENE_COUNT - 1, n));
+      if (t === prev || lockRef.current) return prev;
+      lockRef.current = true;
+      window.setTimeout(() => {
+        lockRef.current = false;
+      }, DUR);
+      return t;
+    });
   }, []);
+  const step = useCallback(
+    (dir: number) => setActive((prev) => {
+      if (lockRef.current) return prev;
+      const t = Math.max(0, Math.min(SCENE_COUNT - 1, prev + dir));
+      if (t !== prev) {
+        lockRef.current = true;
+        window.setTimeout(() => {
+          lockRef.current = false;
+        }, DUR);
+      }
+      return t;
+    }),
+    []
+  );
 
-  const scrollToId = (id: string) =>
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  /* ホイール（縦）で1枚ずつ */
+  const onWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 横は無視（グルメの横送り用）
+    if (Math.abs(e.deltaY) < 8) return;
+    step(e.deltaY > 0 ? 1 : -1);
+  };
+  /* スワイプ（縦）で1枚ずつ */
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touch.current;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    touch.current = null;
+    if (Math.abs(dy) < 40 || Math.abs(dy) <= Math.abs(dx)) return; // 縦スワイプのみ
+    step(dy < 0 ? 1 : -1); // 上へスワイプ＝次へ
+  };
 
   const go = (item: (typeof NAV)[number]) => {
     setMenuOpen(false);
-    if (item.href) {
-      router.push(item.href);
-      return;
-    }
-    if (item.to === "top") {
-      scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      scrollToId(item.to || "");
-    }
+    if (item.href) router.push(item.href);
+    else if (typeof item.scene === "number") goTo(item.scene);
   };
+
+  /* その場でブラーのクロスフェード（動かさない） */
+  const scene = (i: number): React.CSSProperties => ({
+    opacity: i === active ? 1 : 0,
+    filter: i === active ? "blur(0px)" : "blur(16px)",
+    transition: `opacity ${DUR}ms cubic-bezier(0.22,1,0.36,1), filter ${DUR}ms cubic-bezier(0.22,1,0.36,1)`,
+    pointerEvents: i === active ? "auto" : "none",
+    zIndex: i === active ? 10 : 1,
+  });
 
   return (
     <main
-      ref={scrollerRef}
-      data-mobile-scroller
-      className="h-[100dvh] w-full snap-y snap-mandatory overflow-y-auto overflow-x-hidden bg-sky-bottom"
+      className="relative h-[100dvh] w-full overflow-hidden bg-sky-bottom"
+      onWheel={onWheel}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
-      {/* ── KV（100dvh） ─────────────────── */}
+      {/* ── 0: KV ───────────────────────── */}
       <section
-        id="top"
-        data-scene
-        className="relative flex h-[100dvh] w-full snap-start flex-col overflow-hidden"
+        className="absolute inset-0 flex flex-col overflow-hidden"
+        style={scene(0)}
       >
         <img
           src="/img/bg-hero.jpg"
@@ -147,7 +163,6 @@ export default function MobileTop() {
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/15 to-transparent" />
 
-        {/* ヘッダー（ブラー対象外・常に鮮明） */}
         <header className="relative z-20 flex items-center justify-between px-6 pt-5">
           <div
             id="abashiri-sound-slot"
@@ -166,10 +181,8 @@ export default function MobileTop() {
           </button>
         </header>
 
-        {/* KV中身（スクロールでブラー消え）＝作字＋スポットボタン＋人物 */}
         <div className="relative z-10 flex flex-1 flex-col">
-          {/* 作字（元のロゴ位置のまま・全体を40px上げる） */}
-          <div className="flex flex-1 flex-col items-center justify-center px-6 -translate-y-10">
+          <div className="flex flex-1 -translate-y-10 flex-col items-center justify-center px-6">
             <img
               src="/img/text-kanko-site.svg"
               alt="網走市観光サイト"
@@ -180,17 +193,14 @@ export default function MobileTop() {
               alt="な〜んにもない、たまらない。"
               className="w-full max-w-[300px]"
             />
-            {/* 作字の下：ぼーっとスポットへ */}
             <button
               type="button"
-              onClick={() => scrollToId("m-spot")}
+              onClick={() => goTo(2)}
               className="mt-9 flex -translate-y-5 items-center justify-center rounded-full bg-white/10 px-8 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
             >
               ぼーっとスポットを見る
             </button>
           </div>
-
-          {/* 右下の人物イラスト */}
           <img
             src="/img/illust-main.png"
             alt=""
@@ -199,10 +209,10 @@ export default function MobileTop() {
         </div>
       </section>
 
-      {/* ── メッセージ（固定ビュー・スクロールでブラー） ──── */}
+      {/* ── 1: メッセージ ─────────────────── */}
       <section
-        data-scene
-        className="flex h-[100dvh] snap-start items-center overflow-hidden bg-gradient-to-b from-sky-top to-brand px-6 py-16 text-white"
+        className="absolute inset-0 flex items-center bg-gradient-to-b from-sky-top to-brand px-6 text-white"
+        style={scene(1)}
       >
         <div>
           <h2 className="text-[28px] font-thin leading-[1.5]">{MSG_TITLE}</h2>
@@ -220,40 +230,45 @@ export default function MobileTop() {
         </div>
       </section>
 
-      {/* ── ぼーっとスポット（各100dvh） ──────── */}
-      <section id="m-spot" className="bg-sky-bottom">
-        {SPOTS.map((spot) => (
-          <div key={spot.no} data-scene className="relative h-[100dvh] w-full snap-start overflow-hidden">
-            <img
-              src={spot.img}
-              alt={spot.title}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent px-6 pb-11 pt-28 text-white">
-              <div className="flex items-end justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[13px] font-extralight">
-                    ぼーっとスポット {spot.no}
-                  </p>
-                  <p className="mt-1 text-[22px] font-thin leading-tight">
-                    {spot.title}
-                  </p>
-                </div>
-                <span className="flex shrink-0 items-center gap-1 pb-1 text-[12px] font-extralight">
-                  もっと見る
-                  <img src="/img/icon-view-more.svg" alt="" className="size-[16px]" />
-                </span>
+      {/* ── 2〜5: ぼーっとスポット ───────────── */}
+      {SPOTS.map((spot, si) => (
+        <section
+          key={spot.no}
+          className="absolute inset-0 overflow-hidden"
+          style={scene(2 + si)}
+        >
+          <img
+            src={spot.img}
+            alt={spot.title}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent px-6 pb-12 pt-28 text-white">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-extralight">
+                  ぼーっとスポット {spot.no}
+                </p>
+                <p className="mt-1 text-[22px] font-thin leading-tight">
+                  {spot.title}
+                </p>
               </div>
-              <p className="mt-3 text-[13px] font-extralight leading-[1.9] tracking-[0.3px]">
-                {spot.body}
-              </p>
+              <span className="flex shrink-0 items-center gap-1 pb-1 text-[12px] font-extralight">
+                もっと見る
+                <img src="/img/icon-view-more.svg" alt="" className="size-[16px]" />
+              </span>
             </div>
+            <p className="mt-3 text-[13px] font-extralight leading-[1.9] tracking-[0.3px]">
+              {spot.body}
+            </p>
           </div>
-        ))}
-      </section>
+        </section>
+      ))}
 
-      {/* ── 素朴なグルメ ───────────────────── */}
-      <section id="m-gourmet" data-scene className="flex h-[100dvh] snap-start flex-col justify-center bg-white px-6">
+      {/* ── 6: 素朴なグルメ ───────────────── */}
+      <section
+        className="absolute inset-0 flex flex-col justify-center bg-white px-6"
+        style={scene(6)}
+      >
         <h2 className="text-[20px] font-thin leading-[1.7] text-ink">
           なーんにもない、道東の土地、網走。
           <br />
@@ -283,9 +298,12 @@ export default function MobileTop() {
         </div>
       </section>
 
-      {/* ── フッター（体験への誘導） ───────────── */}
-      <section data-scene className="flex h-[100dvh] snap-start flex-col items-center justify-center bg-brand px-6 text-center text-white">
-        <p className="text-[14px] font-light leading-[1.9]">
+      {/* ── 7: フッター（体験への誘導） ─────────── */}
+      <section
+        className="absolute inset-0 flex flex-col items-center justify-center bg-brand px-6 text-center text-white"
+        style={scene(7)}
+      >
+        <p className="text-[15px] font-light leading-[1.9]">
           網走で、なんにもしない時間を。
         </p>
         <a
@@ -299,6 +317,23 @@ export default function MobileTop() {
           ぼーっと体験してみる
         </a>
       </section>
+
+      {/* ── 進行ドット（右端・タップでも移動） ───── */}
+      <div className="absolute right-3 top-1/2 z-40 flex -translate-y-1/2 flex-col items-center gap-2">
+        {Array.from({ length: SCENE_COUNT }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`${i + 1}枚目へ`}
+            onClick={() => goTo(i)}
+            className={`block rounded-full transition-all duration-300 ${
+              i === active
+                ? "h-4 w-[6px] bg-white"
+                : "size-[6px] bg-white/45"
+            } ${active === 6 ? "mix-blend-difference" : ""}`}
+          />
+        ))}
+      </div>
 
       {/* ── ハンバーガーメニュー ─────────────── */}
       {menuOpen && (
