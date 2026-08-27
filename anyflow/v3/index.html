@@ -3702,6 +3702,47 @@ for (const mode in GFX_VARIANTS) {
   });
 }
 
+/* ===== ⑦の「縦のクロス」「斜めの流れ」の動きをする案を、①〜⑥にも入れる (2026-08-28 ヒデさん指定) =====
+   配置は G〜K と同じ型(portrait / rising)を使い、そこに⑦の転がりを混ぜたもの。
+   ⚠️ ④網でつながる は輪を使わないので転がりが乗らない。
+      代わりに、同じ向き(縦/斜め)に見えるカゴの傾きで入れる。 */
+const GYRO_LOOK_SETS = [
+  { key: 'portrait', name: 'ジャイロ・縦のクロス',
+    desc: '縦に立てて交差させた輪が、そのまま転がります。球の骨組みが縦向きに回っているように見えます。',
+    gfx: GFX_LOOKS2[1].gfx,
+    gyro: { tumble: 0.8, spin: 0.9, phase: 90, thin: 0.08, pull: 0.26, pullT: 6 },
+    slow: { tumble: 0.22, spin: 0.24, phase: 90, thin: 0.22, pull: 0.16, pullT: 12 },
+    mix: 0.85, slowMix: 0.45, spin2: 0.12, slowSpin: 0.06,
+    mesh: { style: 'cage', nodes: 30, cageR: 1.8, cageSpin: 0.9, cageLinks: 4, cageTilt: -78,
+            lineAlpha: 0.48, lineWidth: 1, size: 0.45, random: 0.3, hop: 0.45, rate: 1.9 } },
+  { key: 'rising', name: 'ジャイロ・斜めの流れ',
+    desc: '右肩上がりに傾けた輪が転がります。惑星は左下寄り。対角に流れる非対称な動きになります。',
+    gfx: GFX_LOOKS2[4].gfx,
+    gyro: { tumble: 0.7, spin: 0.8, phase: 140, thin: 0.1, pull: 0.3, pullT: 6.5 },
+    slow: { tumble: 0.2, spin: 0.22, phase: 140, thin: 0.24, pull: 0.18, pullT: 13 },
+    mix: 0.8, slowMix: 0.4, spin2: 0.1, slowSpin: 0.05,
+    mesh: { style: 'cage', nodes: 28, cageR: 2.0, cageSpin: 0.8, cageLinks: 3, cageTilt: 42,
+            lineAlpha: 0.45, lineWidth: 0.95, size: 0.44, random: 0.35, hop: 0.5, rate: 1.7 } },
+];
+for (const mode of ['reel', 'spiral', 'accre', 'mesh', 'beads', 'duplex']) {
+  for (const G of GYRO_LOOK_SETS) {
+    if (mode === 'mesh') {
+      GFX_VARIANTS.mesh.push({ name: G.name, desc: G.desc, gfx: G.gfx, conv: G.mesh,
+                               common: { orbitSpin: 0 } });
+      continue;
+    }
+    const slow = (mode === 'reel');            /* ①はゆったり見せたいので抑える */
+    GFX_VARIANTS[mode].push({
+      name: G.name,
+      desc: slow ? G.desc + '（①はゆったり見せたいので、転がりは抑えてあります）' : G.desc,
+      gfx: G.gfx,
+      gyro: slow ? G.slow : G.gyro,
+      common: { orbitSpin: slow ? G.slowSpin : G.spin2, gyroMix: slow ? G.slowMix : G.mix },
+      root: { duration: slow ? 38 : 34 },
+    });
+  }
+}
+
 /* 【2026-08-28 ヒデさん指定】③(粒の渦が回る)に、立体感(3D)が出る案を足す。
    軌道を出したまま【惑星の手前を通る半分】と【奥へ回る半分】をはっきり見せる。
    ・輪を起こして大きめにし、惑星の前後を大きく横切らせる
@@ -8396,16 +8437,9 @@ function sub(target, html, deep, opts) {
     rs.classList.add('done'); rs.textContent = '✓ 戻しました';
     setTimeout(() => { rs.classList.remove('done'); rs.textContent = '↺'; }, 1200);
   };
-  const sv = document.createElement('button');
-  sv.className = 'gbtn'; sv.type = 'button'; sv.textContent = '💾';
-  sv.title = 'このまとまりの値を保存する';
-  sv.onclick = (e) => {
-    e.stopPropagation();
-    save(); dirty = false; if (syncSaveBtn) syncSaveBtn();
-    sv.classList.add('done'); sv.textContent = '✓ 保存';
-    setTimeout(() => { sv.classList.remove('done'); sv.textContent = '💾'; }, 1200);
-  };
-  acts.append(rs, sv);
+  /* 【2026-08-28 ヒデさん指定】各まとまりの 💾(保存) は削除。
+     グラフィックはプリセットで、それ以外は下の「これをデフォルトに設定」で残せるため。 */
+  acts.append(rs);
   title.append(lab, acts, chev);   /* [タイトル][リセット・保存][開閉] の順 */
   /* 【2026-08-27 ヒデさん指定】戻す値を持たないセクション(プリセットなど)にはボタンを出さない。
      組み立てが終わってから項目の有無で判断する */
@@ -9616,27 +9650,13 @@ function buildPanel() {
   btns.append(saveBtn);
   body.appendChild(btns);
 
-  const copy = document.createElement('button');
-  copy.className = 'sw-copy';
-  const COPY_LABEL = '📋 いまの設定をコピーする';
-  copy.textContent = COPY_LABEL;
-  copy.onclick = async () => {
-    const json = JSON.stringify(params, null, 2);
-    try {
-      await navigator.clipboard.writeText(json);
-      copy.textContent = '✅ コピーしました。これを制作担当に送れば、この状態が正式版になります';
-    } catch (e) {
-      window.prompt('この内容をコピーして、制作担当に送ってください', json);
-    }
-    setTimeout(() => { copy.textContent = COPY_LABEL; }, 4000);
-  };
-  body.appendChild(copy);
-  const copyNote = document.createElement('div');
-  copyNote.className = 'grp-note';
-  copyNote.style.margin = '6px 0 0';
-  copyNote.textContent = '「保存する」を押すまで値は残りません（押すとこのブラウザに残ります）。'
-    + '公開サイトに反映したい時は、コピーして制作担当へ。';
-  body.appendChild(copyNote);
+  /* 【2026-08-28 ヒデさん指定】「いまの設定をコピーする」ボタンは削除。 */
+  const saveNote = document.createElement('div');
+  saveNote.className = 'grp-note keep';
+  saveNote.style.margin = '6px 0 0';
+  saveNote.textContent = 'グラフィックの形と動きは「プリセット」で保存できます。'
+    + 'それ以外のセクションは、上の「これをデフォルトに設定」で このブラウザに残ります。';
+  body.appendChild(saveNote);
   body.scrollTop = keepScroll;         // 見ていた位置に戻す
 }
 buildPanel();
