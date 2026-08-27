@@ -4391,10 +4391,13 @@ function convFrame(geoms) {
           el.setAttribute('cx', cx.toFixed(1)); el.setAttribute('cy', cy.toFixed(1));
           el.setAttribute('rx', Math.max(0.1, rx).toFixed(1)); el.setAttribute('ry', Math.max(0.1, ry).toFixed(1));
           el.setAttribute('transform', `rotate(${rot.toFixed(2)} ${cx.toFixed(1)} ${cy.toFixed(1)})`);
-          /* 収縮している側に近い輪ほど、その輪の濃さに寄せる */
+          /* 【2026-08-28 ヒデさん指定】中間の輪は【軌道をそのまま複製したくっきりした線】にする。
+             以前は blendAlpha(既定0.45)で薄くしていたので、混ざったような色に見えていた。
+             濃さは吸収中の輪と同じ動き(収縮側に近いほどその輪に寄せる)だけ残し、
+             線の太さも本物の軌道と同じ 3px × 案ごとの太さ にそろえる。 */
           const a = ((aB + aF) / 2) * (1 - t) + 1 * t;
-          el.setAttribute('opacity', (a * (R.blendAlpha == null ? 0.45 : R.blendAlpha)).toFixed(3));
-          el.setAttribute('stroke-width', ((convReelA[shrinkKey].w * (1 - t) + 3 * t) * convOrbitWidth()).toFixed(2));
+          el.setAttribute('opacity', a.toFixed(3));
+          el.setAttribute('stroke-width', (3 * convOrbitWidth()).toFixed(2));
         }
       } else convHideBlend();
     }
@@ -9509,11 +9512,9 @@ function buildPanel() {
         '空いた位置に新しい輪がフェードインする時間。');
       slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
       slider('中間の輪の数', 0, 12, 1, () => params.conv.reel.blend, v => R.blend = v, v => v + '本',
-        '外の輪と内の輪の間を、この本数だけ埋めます（イラレのブレンドのイメージ）。0で無し。', { fixedMax: true });
-      if ((params.conv.reel.blend || 0) > 0) {
-        slider('中間の輪の濃さ', 0.05, 1, 0.05, () => params.conv.reel.blendAlpha, v => R.blendAlpha = v, v => v.toFixed(2),
-          null, { fixedMax: true });
-      }
+        '外の輪と内の輪の間を、この本数だけ埋めます（イラレのブレンドのイメージ）。0で無し。'
+        + '軌道をそのまま複製したくっきりした線で出ます。', { fixedMax: true });
+      /* 【2026-08-28 ヒデさん指定】「中間の輪の濃さ」は削除。薄くせず、くっきり出すため。 */
       /* 【2026-08-27 ヒデさん指定】ここにあった機能は全削除:
            ・消え方の3択(前面カット / 圧縮グロー / データ粒)とその説明
            ・圧縮グロー専用のつまみ(光り方5種・光の強さ・線の太さ)
