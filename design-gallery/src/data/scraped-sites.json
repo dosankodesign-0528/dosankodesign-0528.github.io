@@ -1,5 +1,33 @@
 [
   {
+    "id": "c7782a450efd",
+    "title": "原宿サン･アド 50th",
+    "url": "https://h-sunad.co.jp/50th/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/harajukusunad50th_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
+    "id": "34cb924efbd5",
+    "title": "Toshiyuki Hashimoto",
+    "url": "https://toshiyukihashimoto.jp/",
+    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/toshiyukihashimoto_t-400x350.jpg",
+    "source": "sankou",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-24T01:34:04.101Z"
+  },
+  {
     "id": "f0dd4e4529f2",
     "title": "採用サイト | 株式会社ビィ･フォアード",
     "url": "https://corporate.beforward.jp/recruit/",
@@ -8901,22 +8929,6 @@
     "lastCheckedAt": "2026-08-02T05:25:50.264Z"
   },
   {
-    "id": "ac456921f999",
-    "title": "虎ノ門広告祭公式サイト",
-    "url": "https://toradfes.com/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/toradfes_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2025-07",
-    "starred": false,
-    "firstSeen": "2026-06-13T04:08:32.368Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:25:47.832Z"
-  },
-  {
     "id": "de0689b329e9",
     "title": "nobinobi 2025",
     "url": "https://nobinobi-fes.com/",
@@ -17614,20 +17626,6 @@
     "firstSeen": "2026-06-07T04:20:55.700Z"
   },
   {
-    "id": "79cc45f4194d",
-    "title": "株式会社neoAI",
-    "url": "https://neoai.jp/",
-    "thumbnailUrl": "https://sankoudesign.com/wp-content/uploads/neoai_t-400x350.jpg",
-    "source": "sankou",
-    "category": [
-      "uncategorized"
-    ],
-    "taste": [],
-    "date": "2024-08",
-    "starred": false,
-    "firstSeen": "2026-06-13T04:08:32.368Z"
-  },
-  {
     "id": "da9027c48167",
     "title": "中京テレビ",
     "url": "https://www.ctv.co.jp/",
@@ -25081,6 +25079,20 @@
     "lastCheckedAt": "2026-08-02T05:29:15.990Z"
   },
   {
+    "id": "5a735bae8d56",
+    "title": "BEAMS CREATIVE",
+    "url": "https://beamscreative.jp/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/01/24.webp",
+    "source": "muuuuu",
+    "category": [
+      "art"
+    ],
+    "taste": [],
+    "date": "2026-01",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
     "id": "5f630d27b289",
     "title": "MBS RECRUIT",
     "url": "https://www.mbs.jp/recruit/",
@@ -30351,20 +30363,6 @@
     "lastCheckedAt": "2026-08-02T05:30:16.673Z"
   },
   {
-    "id": "caa6d4dd176d",
-    "title": "中小企業に必要な保険",
-    "url": "https://www.sonpo.or.jp/sme_insurance/",
-    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2024/11/10.jpg",
-    "source": "muuuuu",
-    "category": [
-      "finance"
-    ],
-    "taste": [],
-    "date": "2024-11",
-    "starred": false,
-    "firstSeen": "2026-08-19T01:27:23.017Z"
-  },
-  {
     "id": "90a3483b2b0c",
     "title": "Aker",
     "url": "https://www.akercompanies.com/",
@@ -34126,6 +34124,36 @@
     "lastCheckedAt": "2026-08-02T05:30:49.651Z"
   },
   {
+    "id": "a78c0fe9d6d5",
+    "title": "株式会社MT-D 採用サイト",
+    "url": "https://mtd-inc.co.jp/recruit/",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260827_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "採用サイト・転職・求人"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-15T01:34:54.923Z"
+  },
+  {
+    "id": "21752911710a",
+    "title": "GTN20周年特設サイト",
+    "url": "https://www.gtn.co.jp/20th",
+    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/jp20260826_02-498x328.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "企業サイト・事務所・ビジネス"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-07-28T02:51:28.456Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:36:22.315Z"
+  },
+  {
     "id": "827fb0d1161d",
     "title": "道路工業株式会社 | 採用サイト",
     "url": "https://www.dorokogyo.co.jp/recruitment/",
@@ -37683,52 +37711,18 @@
     "lastCheckedAt": "2026-08-02T05:31:38.672Z"
   },
   {
-    "id": "734926806698",
-    "title": "500G Inc.",
-    "url": "https://www.500g.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251128_01-498x328.jpg",
+    "id": "f27d6c87cda1",
+    "title": "PX PUSH",
+    "url": "https://pxpush.com/",
+    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/wd20260826_01-498x328.jpg",
     "source": "webdesignclip",
     "category": [
-      "デザイン事務所・制作会社"
+      "WEB・情報サービス"
     ],
     "taste": [],
-    "date": "2025-11",
+    "date": "2026-08",
     "starred": false,
-    "firstSeen": "2026-06-13T04:08:32.368Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:31:38.605Z"
-  },
-  {
-    "id": "ec783bddee14",
-    "title": "LEXUS ‐ Japan Mobility Show 2025",
-    "url": "https://lexus.jp/brand/jms2025/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251127_02-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "自動車・バイク・自転車"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:31:38.546Z"
-  },
-  {
-    "id": "cd976d61e15b",
-    "title": "バンナ公園",
-    "url": "https://banna.jp/",
-    "thumbnailUrl": "https://webdesignclip.com/wp-content/uploads/20251127_01-498x328.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "レジャー・アウトドア"
-    ],
-    "taste": [],
-    "date": "2025-11",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:31:40.267Z"
+    "firstSeen": "2026-08-27T08:18:08.641Z"
   },
   {
     "id": "8548cccac6c8",
@@ -43173,20 +43167,32 @@
     "lastCheckedAt": "2026-08-02T05:32:50.828Z"
   },
   {
-    "id": "2072219327db",
-    "title": "Sage East",
-    "url": "https://www.sageeast.com/",
-    "thumbnailUrl": "https://world.webdesignclip.com/wp-content/uploads/20240319_01-498x328.jpg",
+    "id": "a4dd4ef9de8c",
+    "title": "ビジネスデータサイエンス学部（仮称）／畿央大学",
+    "url": "https://www.kio.ac.jp/bds/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260827_01-500x817.jpg",
     "source": "webdesignclip",
     "category": [
-      "写真・イラスト"
+      "学校・資格・教育"
     ],
     "taste": [],
-    "date": "2024-03",
+    "date": "2026-08",
     "starred": false,
-    "firstSeen": "2026-06-13T04:08:32.368Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:32:52.031Z"
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
+    "id": "8cfccac75381",
+    "title": "一煎",
+    "url": "https://the-greentea.jp/issen/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/lp20260826_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "食品・飲料・飲食"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
   },
   {
     "id": "b0ce6b5fd538",
@@ -46440,38 +46446,6 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:33:30.985Z"
-  },
-  {
-    "id": "4ef64402b0b6",
-    "title": "BOTANIST | ROOTH（ルース）",
-    "url": "https://botanistofficial.com/special/rooth/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250922_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "美容・健康・化粧品"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:33:31.304Z"
-  },
-  {
-    "id": "ca00d27ac3de",
-    "title": "新型RAV4特設ティザーサイト | トヨタ自動車",
-    "url": "https://toyota.jp/info/rav4/new/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250919_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "自動車・バイク・自転車"
-    ],
-    "taste": [],
-    "date": "2025-09",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": true,
-    "lastCheckedAt": "2026-08-02T05:33:29.417Z"
   },
   {
     "id": "8719a750f6fe",
@@ -50171,6 +50145,25 @@
     "lastCheckedAt": "2026-08-02T05:34:37.144Z"
   },
   {
+    "id": "b005c8af034a",
+    "title": "バンナ公園 | 沖縄県石垣島 | ECCOM八重山グループ",
+    "url": "https://banna.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2026/03/260317-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "ブランド",
+      "サービスサイト",
+      "商業施設",
+      "店舗"
+    ],
+    "taste": [],
+    "date": "2026-03",
+    "starred": false,
+    "firstSeen": "2026-04-19T11:40:43.578Z",
+    "isDead": false,
+    "lastCheckedAt": "2026-08-02T05:31:40.267Z"
+  },
+  {
     "id": "bb7908f3a97f",
     "title": "及源鋳造 OIGEN",
     "url": "https://oigen.jp/",
@@ -52639,6 +52632,22 @@
     "firstSeen": "2026-08-20T01:41:40.168Z"
   },
   {
+    "id": "502fd3ff9cfb",
+    "title": "株式会社neoAI",
+    "url": "https://neoai.jp/",
+    "thumbnailUrl": "https://data.81-web.com/wp-content/uploads/2024/11/241210-640x480.jpg",
+    "source": "81web",
+    "category": [
+      "コーポレートサイト",
+      "Webサービス",
+      "アプリ"
+    ],
+    "taste": [],
+    "date": "2024-12",
+    "starred": false,
+    "firstSeen": "2026-06-13T04:08:32.368Z"
+  },
+  {
     "id": "9394ba7a6433",
     "title": "NOOG｜ノーグ",
     "url": "https://noog.jp/",
@@ -53866,6 +53875,29 @@
     "firstSeen": "2026-06-20T04:06:33.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:35:46.195Z"
+  },
+  {
+    "id": "0da90a88716b",
+    "title": "REVERT AI",
+    "url": "https://revertai.com.br",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/08/6a7d27f49e055967118829.jpg",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Animation",
+      "CSS",
+      "HTML5",
+      "Scrolling",
+      "Typography",
+      "Sound-Audio",
+      "Storytelling",
+      "Copy design",
+      "Javascript"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
   },
   {
     "id": "11482f76f7de",
@@ -56542,6 +56574,27 @@
     "lastCheckedAt": "2026-08-02T05:36:13.108Z"
   },
   {
+    "id": "8e5dd7e98522",
+    "title": "Sharplink",
+    "url": "https://www.sharplink.com/",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a4bb2631caa4854213161.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Institutions",
+      "Animation",
+      "GSAP",
+      "Three.js",
+      "3D",
+      "Footer Design",
+      "Vue.js"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
     "id": "c282e99e8b2f",
     "title": "MIU MIU A House that we shaped",
     "url": "https://immersivebags.miumiu.com/",
@@ -56586,31 +56639,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-08-24T01:34:04.101Z"
-  },
-  {
-    "id": "dfa0f549d582",
-    "title": "The state of the gallery",
-    "url": "https://mesh3d.gallery/the-state-of-the-gallery",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a3ea31c78f5b788025408.png",
-    "source": "awwwards",
-    "category": [
-      "Technology",
-      "Web & Interactive",
-      "Scrolling",
-      "Single page",
-      "WebGL",
-      "Data Visualization",
-      "Experimental",
-      "Three.js",
-      "React",
-      "3D",
-      "Filters and Effects",
-      "About Page"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-23T01:36:59.215Z"
   },
   {
     "id": "f6a7e3b274cc",
@@ -57399,6 +57427,73 @@
     "lastCheckedAt": "2026-08-02T05:36:20.510Z"
   },
   {
+    "id": "b40a4711077e",
+    "title": "株式会社ヴォイス",
+    "url": "https://www.brandvoice.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/7hr561yu9qal-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "特設サイト",
+      "BtoCコーポレートサイト",
+      "ランディングページ",
+      "BtoBコーポレートサイト",
+      "プロダクトサイト"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
+    "id": "70c562b68cae",
+    "title": "CUTIE STREET 2nd ANNIVERSARY",
+    "url": "https://cutiestreet-2nd.com/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/sbw76kzvif82-2800x2100.webp",
+    "source": "s5style",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
+    "id": "0ac4505f7037",
+    "title": "TERISS株式会社",
+    "url": "https://teriss.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/8qjk2hpszf14-1400x1050.webp",
+    "source": "s5style",
+    "category": [
+      "uncategorized"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
+    "id": "b4d0f3c522dc",
+    "title": "IMT プロダクトサイト",
+    "url": "https://e-imt.co.jp/",
+    "thumbnailUrl": "https://api.s5-style.com/media/post-images/kohs19j0d4ec-1600x1200.webp",
+    "source": "s5style",
+    "category": [
+      "プロダクトサイト",
+      "軽工•重工•製造"
+    ],
+    "taste": [
+      "タイポグラフィー･文字",
+      "写真･フォトディレクション",
+      "動画･映像",
+      "パララックス",
+      "UI フラット"
+    ],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-27T08:18:08.641Z"
+  },
+  {
     "id": "8a049f9a4a43",
     "title": "Rurina Odani - Portfolio",
     "url": "https://rurinaodani.com/",
@@ -57646,23 +57741,6 @@
     ],
     "taste": [
       "3Dアニメーション･3Dモデル"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-24T01:34:04.101Z"
-  },
-  {
-    "id": "37ed2acbff15",
-    "title": "Toshiyuki Hashimoto",
-    "url": "https://toshiyukihashimoto.jp/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/ib4xk7q8lymt-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "デザイン･制作･開発会社"
-    ],
-    "taste": [
-      "スクロールエフェクト",
-      "モチーフ 線"
     ],
     "date": "2026-08",
     "starred": false,
@@ -58103,28 +58181,6 @@
     "firstSeen": "2026-08-15T01:34:54.923Z"
   },
   {
-    "id": "43c654fd3987",
-    "title": "株式会社MT-D 採用サイト",
-    "url": "https://mtd-inc.co.jp/recruit/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/eno19uz3l8df-1400x1050.webp",
-    "source": "s5style",
-    "category": [
-      "特設サイト",
-      "採用･仕事･アルバイトサイト",
-      "IT･コンピューター･テクノロジー",
-      "HR･タレントマネジメント"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "タイポグラフィー･文字",
-      "UI フラット",
-      "モチーフ 幾何学"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-08-15T01:34:54.923Z"
-  },
-  {
     "id": "96f97113a932",
     "title": "インターンシップ2026｜サッポロドラッグストアー採用サイト",
     "url": "https://satudora-hd.co.jp/recruit/shinsotsu/internship/",
@@ -58525,32 +58581,6 @@
     "firstSeen": "2026-07-29T02:58:09.543Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:21.892Z"
-  },
-  {
-    "id": "0242833ea241",
-    "title": "GTN創業20周年特設サイト",
-    "url": "https://www.gtn.co.jp/20th",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/8gm9orj3s7bc-1400x1050.webp",
-    "source": "s5style",
-    "category": [
-      "BtoBコーポレートサイト",
-      "モバイルサイト",
-      "特設サイト",
-      "BtoCコーポレートサイト",
-      "ランディングページ"
-    ],
-    "taste": [
-      "ピクセルアート",
-      "アイコン･ピクトグラム",
-      "3Dアニメーション･3Dモデル",
-      "イラスト",
-      "ロゴデザイン"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-07-28T02:51:28.456Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:22.315Z"
   },
   {
     "id": "e53b4b5c6d58",
@@ -62057,79 +62087,6 @@
     "firstSeen": "2026-06-06T15:26:28.565Z",
     "isDead": false,
     "lastCheckedAt": "2026-07-02T06:10:02.052Z"
-  },
-  {
-    "id": "a5200035d05a",
-    "title": "株式会社キタック | CGソリューションセンター",
-    "url": "https://kitac.design/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/uk6qca8n5x47-2800x2100.webp",
-    "source": "s5style",
-    "category": [
-      "ポータルサイト",
-      "デザイン･制作･開発会社",
-      "モバイルサイト",
-      "その他",
-      "出版･印刷"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "イラスト",
-      "スクロールエフェクト",
-      "UI 手描き･ラフ"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:23.755Z"
-  },
-  {
-    "id": "a3f348734997",
-    "title": "College of Asia Pacific Studies",
-    "url": "https://admissions.apu.ac.jp/aps/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/nju5b7zqcdiv-1400x1050.webp",
-    "source": "s5style",
-    "category": [
-      "特設サイト",
-      "ポータルサイト",
-      "ランディングページ",
-      "プロダクトサイト",
-      "学校･教育･医療･福祉"
-    ],
-    "taste": [
-      "アイコン･ピクトグラム",
-      "グラフィカル･コラージュ",
-      "イラスト",
-      "スクロールエフェクト",
-      "パララックス"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:24.229Z"
-  },
-  {
-    "id": "ffb306126bc9",
-    "title": "バレンタインコレクション2026｜メリーチョコレート",
-    "url": "https://www.mary.co.jp/mary/valentine2026/",
-    "thumbnailUrl": "https://api.s5-style.com/media/post-images/jrif9wnh3x4o-1600x1200.webp",
-    "source": "s5style",
-    "category": [
-      "デザイン･制作･開発会社",
-      "飲料･食品･メーカー"
-    ],
-    "taste": [
-      "グラフィカル･コラージュ",
-      "イラスト",
-      "動画･映像",
-      "ロゴデザイン"
-    ],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-06-06T15:26:28.565Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:37:24.425Z"
   },
   {
     "id": "bbf78832ea79",
