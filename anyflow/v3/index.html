@@ -162,8 +162,13 @@
   }
   /* 【2026-08-28 ヒデさん指定】エコー用。惑星の canvas をまるごと複製して重ねる器。
      z-index は案によって 1(うしろ) / 3(手前) を JS が切り替える */
+  /* ⚠️【2026-08-28】器が惑星と同じ大きさだと、1.4倍あたりで canvas の外にはみ出して切れる。
+     「広がる幅」を上げても途中から変わらない原因だった(実測: 0.5 も 0.9 も同じ半径で頭打ち)。
+     器を惑星の【2倍】にして、中心を惑星の中心に合わせる。中で 2.0 倍まで広げても切れない。
+       惑星: left 306.06 / top 112.32 / 260角 → 中心 (436.06, 242.32)
+       器  : 520角 なので left = 436.06-260 / top = 242.32-260 */
   .echo-can {
-    position: absolute; left: 306.06px; top: 112.32px; width: 260px; height: 260px;
+    position: absolute; left: 176.06px; top: -17.68px; width: 520px; height: 520px;
     z-index: 1; pointer-events: none; transform-origin: 50% 50%; opacity: 0;
   }
   #sphere.fallback {
@@ -4221,10 +4226,12 @@ function convEchoCanvases() {
   if (convEchoCans) return convEchoCans;
   if (!sphereCanvasEl || !sphereCanvasEl.parentNode) return null;
   convEchoCans = [];
+  const SRC = sphereCanvasEl.width || 520;
   for (let i = 0; i < CONV_ECHO_MAX; i++) {
     const c = document.createElement('canvas');
-    c.width = sphereCanvasEl.width || 520;
-    c.height = sphereCanvasEl.height || 520;
+    /* 惑星の2倍の器。中央に惑星を描くので、2.0倍まで広げても切れない */
+    c.width = SRC * 2;
+    c.height = SRC * 2;
     c.className = 'echo-can';
     sphereCanvasEl.parentNode.insertBefore(c, sphereCanvasEl);   /* 既定は惑星の後ろ */
     convEchoCans.push({ el: c, ctx: c.getContext('2d') });
@@ -4243,19 +4250,21 @@ function echoSmear(c, from, to, alpha, layers, eraseInner) {
   ctx.globalCompositeOperation = 'source-over';
   ctx.clearRect(0, 0, W, H);
   const N = Math.max(3, layers | 0);
+  const off = W / 4;                      /* 器は惑星の2倍。中央に置く */
   for (let i = 0; i < N; i++) {
     const f = N === 1 ? 0 : i / (N - 1);
     const sc = from + (to - from) * f;
     /* 外側ほど薄く。合計が濃くなりすぎないよう枚数で割る */
     ctx.globalAlpha = Math.max(0, alpha * (1 - f * 0.85) * (2.2 / N));
     ctx.setTransform(sc, 0, 0, sc, (W / 2) * (1 - sc), (H / 2) * (1 - sc));
-    try { ctx.drawImage(sphereCanvasEl, 0, 0); } catch (e) {}
+    try { ctx.drawImage(sphereCanvasEl, off, off); } catch (e) {}
   }
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   if (eraseInner > 0) {
-    /* 内側をやわらかく抜く = 中が空いた輪になり、波紋らしく見える */
-    const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, (W / 2) * eraseInner);
+    /* 内側をやわらかく抜く = 中が空いた輪になり、波紋らしく見える。
+       半径は【惑星の半径(W/4) × eraseInner】。いまの広がりに合わせて渡すこと */
+    const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(1, (W / 4) * eraseInner));
     g.addColorStop(0, 'rgba(0,0,0,1)');
     g.addColorStop(0.72, 'rgba(0,0,0,1)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -4279,7 +4288,9 @@ function convDrawEchoes(strength, hit, dt, style) {
   hideAll();
   /* 生む: 吸収のたびに【3枚】。大きさをずらして重ねるので、広がりが読み取れる。
      色は取り込みごとに1つ選び、3枚で共有する(4のときだけ使う) */
-  const SH = echoShellCount();
+  /* 溶ける系(5〜7)は1枚の中で層を作るので、殻は1つだけ生む。
+     「重ねる枚数」はその中の層の細かさとして効く */
+  const SH = (st === 'k5' || st === 'k6' || st === 'k7') ? 1 : echoShellCount();
   if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.24)
       && convEchoes.length + SH <= CONV_ECHO_MAX) {
     const col = ECHO_COLORS[(Math.random() * ECHO_COLORS.length) | 0];
@@ -4315,8 +4326,9 @@ function convDrawEchoes(strength, hit, dt, style) {
       echoSmear(c0, from, to, 0.9, layers, 0);
       c0.el.style.filter = `blur(${(2 + uu * 22).toFixed(1)}px)`;
     } else if (st === 'k6') {
-      /* 内から溶ける: 内側を抜いて、外へ広がる輪にする */
-      echoSmear(c0, from, to, 1.0, layers, 0.55 + uu * 0.45);
+      /* 内から溶ける: 内側を抜いて、外へ広がる輪にする。
+         抜く範囲は「いまの広がり」の内側 55% ぶん。広がるほど輪も外へ移る */
+      echoSmear(c0, from, to, 1.0, layers, from + (to - from) * 0.55);
       c0.el.style.filter = `blur(${(1 + uu * 6).toFixed(1)}px)`;
     } else {
       /* 連続ディゾルブ: 段差なく尾を引いて溶ける */
@@ -4352,8 +4364,11 @@ function convDrawEchoes(strength, hit, dt, style) {
     const base = echoStartOf(q.step || 0), dim = 1 - (q.step || 0) * 0.18;
     /* 惑星の絵をまるごと複製する(これが残像の中身) */
     try {
+      c.ctx.setTransform(1, 0, 0, 1, 0, 0);
       c.ctx.clearRect(0, 0, c.el.width, c.el.height);
-      c.ctx.drawImage(sphereCanvasEl, 0, 0);
+      /* 器の中央に惑星を置く(器は惑星の2倍) */
+      const off = c.el.width / 4;
+      c.ctx.drawImage(sphereCanvasEl, off, off);
     } catch (e) {}
     let grow, a, fx = '';
     if (st === 'k2') {
