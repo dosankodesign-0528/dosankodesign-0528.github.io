@@ -3,6 +3,8 @@
 import { useCallback, useState } from "react";
 import Stage from "@/components/Stage";
 import TopPage from "@/components/TopPage";
+import MobileTop from "@/components/MobileTop";
+import { useIsMobile } from "@/components/useIsMobile";
 import TopTunePanel, { type TopTuneValues } from "@/components/TopTunePanel";
 import { DEFAULT_BO } from "@/components/boPatterns";
 import { DEFAULT_SPOT_TRANSITION } from "@/components/spotTransition";
@@ -14,6 +16,10 @@ import { DEFAULT_ENTER_TUNE } from "@/components/enterPatterns";
 import { DEFAULT_INTRO_PACE } from "@/components/ExperienceFlow";
 
 export default function Home() {
+  /* スマホ（〜640px）はデスクトップの固定キャンバスではなく MobileTop を出す
+     （2026-08-24 ヒデさん依頼「390px で美しく」）。フックは早期returnより前で呼ぶ */
+  const isMobile = useIsMobile();
+
   /* 右下の調整パネルからもらう値。位置・大きさは CSS 変数側で直接反映されるので、
      ここで持つのは「案の切り替え」と「スクロール連動の値」だけ */
   const [tune, setTune] = useState<TopTuneValues>({
@@ -51,6 +57,8 @@ export default function Home() {
     setFastReplay(Boolean(path && (path.startsWith("anim.") || path.startsWith("intro."))));
     setReplayEpoch((e) => e + 1);
   }, []);
+
+  if (isMobile) return <MobileTop />;
 
   return (
     <>
