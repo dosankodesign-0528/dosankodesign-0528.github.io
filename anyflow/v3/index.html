@@ -2013,12 +2013,21 @@ const ORBIT_LAYOUTS = {
   },
 };
 /* 軌道そのものの回転量(度)。0なら従来どおり形は固定 */
-function convOrbitSpin(key) {
+/* いま選んでいる案の「軌道の回転」の量 */
+function convOrbitSpinAmt() {
   const C = params.conv;
-  if (!C || !C.orbitSpin) return 0;
+  if (!C) return 0;
+  const m = params.converge || 'reel';
+  const by = C.orbitSpinBy;
+  if (by && typeof by[m] === 'number') return by[m];
+  return C.orbitSpin || 0;      /* 案ごとの値がまだ無い時は、昔の共通の値を使う */
+}
+function convOrbitSpin(key) {
+  const amt = convOrbitSpinAmt();
+  if (!amt) return 0;
   if (params.kvDesign !== 'planet') return 0;
   const dir = (key === 'inner') ? -1 : 1;   /* 2本が逆向きに回ると立体感が出る */
-  return elapsed * C.orbitSpin * 18 * dir;
+  return elapsed * amt * 18 * dir;
 }
 function orbitBase(key) {
   return (ORBIT_LAYOUTS[params.orbitLayout] || ORBIT_LAYOUTS.figma)[key];
@@ -2647,7 +2656,10 @@ const DEFAULTS = {
     dotSize: 1, dotPersp: 'flat', perspK: 0.45,
     /* 【2026-08-27 ヒデさん指定】軌道にそってドット自体が動く(周回する)かを案ごとに切替。
        off にすると、その案ではドットが位置に留まったまま(集約などの動きだけが起きる) */
-    dotMove: { reel: true, spiral: true, accre: true, mesh: true, beads: true, duplex: true },
+    dotMove: { reel: true, spiral: true, accre: true, mesh: true, beads: true, duplex: true, gyro: true },
+    /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は【案ごと】に持つ。
+       案によって似合う回り方が違うため。orbitSpin(全案共通)は古い保存値からの引き継ぎ用に残す */
+    orbitSpinBy: { off: 0, reel: 0, spiral: 0, accre: 0, mesh: 0, beads: 0, duplex: 0, gyro: 0 },
     /* 【2026-08-27 ヒデさん指定】ドット1粒ずつの不規則さと、軌道そのものの動き。
        dotRandom = ドットごとに速さ・位置がばらつく量
        orbitSpin = 軌道そのものが回る速さ(0で回らない。これまでは形が固定だった)
@@ -2682,6 +2694,12 @@ const DEFAULTS = {
     /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
        melt = 惑星の内側での溶かし方(fade / blur / shrink) */
     link:   { speed: 1, size: 0.6, density: 1, curve: 0.22, lineAlpha: 0.16, lineWidth: 1, T: 3.2, vanishK: 0.35 },
+    /* ⑦ジャイロ回転 (2026-08-27 ヒデさん指定)
+       2本の輪が独楽(ジャイロスコープ)のように立体的に転がる。
+       2Dのまま3Dに見せるため、面の向き(rot)を回しながら 縦の潰れ(ry) を |cos| で伸び縮みさせる。
+       tumble=転がる速さ / spin=面が回る速さ / phase=2本のずれ(90度で直交＝ジャイロらしい)
+       thin=真横になった時にどこまで潰すか / pull=惑星へ吸い寄せる強さ / pullT=その周期 */
+    gyro:   { tumble: 1, spin: 1, phase: 90, thin: 0.06, pull: 0.25, pullT: 5 },
     /* accre(⑦降着円盤 2026-08-26): 軌道の代わりに無数の微粒子の渦。回りながら内へ落ちて取り込まれる */
     accre:  { count: 1000, fall: 1, speed: 1, size: 0.35, scale: 1.15, twinkle: 0.4, wobble: 0, showOrbit: false,
               swirl: 1, fallCurve: 1 },   /* swirl=内側ほど速く回る度合い / fallCurve=落ち方のカーブ */
@@ -2864,6 +2882,7 @@ function loadParams() {
     beads:  { ...DEFAULTS.conv.beads,  ...((s.conv && s.conv.beads)  || {}) },
     mesh:   { ...DEFAULTS.conv.mesh,   ...((s.conv && s.conv.mesh)   || {}) },
     link:   { ...DEFAULTS.conv.link,   ...((s.conv && s.conv.link)   || {}) },
+    gyro:   { ...DEFAULTS.conv.gyro,   ...((s.conv && s.conv.gyro)   || {}) },
   };
   if (typeof merged.orbitLayout !== 'string') merged.orbitLayout = DEFAULTS.orbitLayout;
   /* 案ごとの形とプリセットの入れ物。古い保存値(全案共通の orbitPresets)からの引っ越しもここで */
@@ -2871,6 +2890,11 @@ function loadParams() {
   if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
   if (!merged.gfxVariantOn || Array.isArray(merged.gfxVariantOn)) merged.gfxVariantOn = {};
+  /* 案ごとの軌道回転。古い保存値(全案共通の orbitSpin)は、全案の初期値として配る */
+  if (!merged.conv.orbitSpinBy || typeof merged.conv.orbitSpinBy !== 'object') {
+    const v0 = merged.conv.orbitSpin || 0;
+    merged.conv.orbitSpinBy = { off: v0, reel: v0, spiral: v0, accre: v0, mesh: v0, beads: v0, duplex: v0, gyro: v0 };
+  }
   if (Array.isArray(s.orbitPresets) && s.orbitPresets.length && !localStorage.getItem('anyflow-gfx-permode-20260827b')) {
     /* 旧プリセットは全案共通だった。どの案で作ったかは記録が無いので、
        ⚠️【仮置き】いま選んでいる案の引き出しへ移す(消さずに残すことを優先) */
@@ -2901,7 +2925,7 @@ function loadParams() {
   /* 廃止した案(⑪糸・⑭⑯〜⑳)を選んだままなら既定へ寄せる (2026-08-26) */
   /* ⚠️ ここは CONVERGES(const)の定義より前に走るので、CONVERGES を参照すると TDZ で例外になり、
      【保存した設定がまるごと読めなくなる】(2026-08-26 に実際に踏んだ)。キーは直書きで判定する。 */
-  if (!['off', 'reel', 'spiral', 'accre', 'mesh', 'beads', 'duplex'].includes(merged.converge)) {
+  if (!['off', 'reel', 'spiral', 'accre', 'mesh', 'beads', 'duplex', 'gyro'].includes(merged.converge)) {
     merged.converge = DEFAULTS.converge;
   }
   /* 廃止した案・消え方を選んだままの保存値を、生きている値へ寄せる (2026-08-26) */
@@ -3093,12 +3117,31 @@ function orbitGeom(key) {
     dfx = Math.sin(elapsed * 0.37 + ph) * dr * 26;
     dfy = Math.cos(elapsed * 0.29 + ph) * dr * 18;
   }
+  /* 【2026-08-27 ヒデさん指定】⑦ジャイロ回転: 輪そのものが独楽のように転がる。
+     面の向きを回しながら、縦の潰れを |cos| で伸び縮みさせると
+     2Dのままでも「立体的に転がっている」ように見える。
+     さらに周期的に惑星へ引き寄せて、集約している感じを出す。 */
+  let gyK = 1, gyRot = 0, gyPull = 1;
+  if (params.kvDesign === 'planet' && params.converge === 'gyro') {
+    const G = params.conv.gyro;
+    const t = elapsed * Math.max(0, G.tumble == null ? 1 : G.tumble);
+    const ph = (key === 'inner' ? (G.phase == null ? 90 : G.phase) : 0) * Math.PI / 180;
+    const thin = Math.max(0.02, G.thin == null ? 0.06 : G.thin);
+    gyK = thin + (1 - thin) * Math.abs(Math.cos(t * 0.9 + ph));
+    gyRot = elapsed * (G.spin == null ? 1 : G.spin) * 26 * (key === 'inner' ? -1 : 1);
+    const pull = Math.max(0, G.pull == null ? 0.25 : G.pull);
+    if (pull > 0) {
+      const cyc = Math.max(0.5, G.pullT == null ? 5 : G.pullT);
+      const u = (elapsed % cyc) / cyc;                        /* 0→1 のくり返し */
+      gyPull = 1 - pull * Math.pow(Math.sin(u * Math.PI), 2); /* 途中でいちばん縮む */
+    }
+  }
   return {
     cx: b.cx + p.dx + dfx, cy: b.cy + p.dy + dfy,
-    rx: b.rx * p.scale, ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat),   /* flat=輪の潰し(ドラッグで変えられる) */
+    rx: b.rx * p.scale * gyPull, ry: b.ry * p.scale * (p.flat == null ? 1 : p.flat) * gyK * gyPull,
     /* 【2026-08-27 ヒデさん指定】軌道そのものを回す/漂わせる(これまでは形が固定だった)。
        惑星の案を選んでいる時だけ効かせる */
-    rot: b.rot + p.angle + wobble + convOrbitSpin(key),
+    rot: b.rot + p.angle + wobble + convOrbitSpin(key) + gyRot,
   };
 }
 
@@ -3133,84 +3176,201 @@ const CONVERGES = [
   { key: 'mesh',   name: '④網でつながる' },
   { key: 'beads',  name: '⑤点が並ぶ軌道' },
   { key: 'duplex', name: '⑥線で行き来' },
+  { key: 'gyro',   name: '⑦ジャイロ回転' },   /* 2026-08-27 ヒデさん指定で追加 */
 ];
-/* ===== 案ごとのグラフィック3案 (2026-08-27 ヒデさん指定) =====
+/* ===== 案ごとのグラフィック6案 (2026-08-27 ヒデさん指定。3案→6案に増やした) =====
    ⚠️ デザインそのものは変えない。同じアニメーションの枠の中で
       【軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウト】と
-      【その案のつまみ】だけを変えて、見え方の違う3案を用意する。
-   gfx は書いた項目だけが既定(gfxDefault)を上書きする。conv はその案のつまみ。 */
+      【その案のつまみ】【軌道そのものの回転】だけを変えて、見え方の違う6案を用意する。
+   gfx    = 書いた項目だけが既定(gfxDefault)を上書きする
+   conv   = その案のつまみ
+   common = 全案で共通の見せ方。orbitSpin だけは「案ごとの引き出し」へ入る
+   ※ 配置は下の LOOKS を使い回す。案ごとに毎回書かないことで、
+      「どの案でも同じ配置バリエーションが選べる」状態を保つ。 */
+const GFX_LOOKS = {
+  /* カンプ通り。2本がほぼ平行に流れる */
+  std:     {},
+  /* ジャイロ交差。傾きを逆にして立体交差させる */
+  cross:   { layout: 'gyro', planet: { scale: 0.92 } },
+  /* 薄く広がる皿。横に広げて寝かせ、土星の輪のように */
+  dish:    { outer: { scale: 1.22, flat: 0.55 }, inner: { scale: 1.08, flat: 0.5 }, planet: { scale: 1.12, dy: 54 } },
+  /* 立ち上がるクロス。輪を起こして丸に近づけ、深く交差させる */
+  upright: { outer: { scale: 1.0, flat: 1.9, angle: -40 }, inner: { scale: 0.93, flat: 1.8, angle: 36 }, planet: { scale: 0.92 } },
+  /* 大きく包む。軌道を広げて惑星を小さく＝スケール感が出る */
+  wide:    { layout: 'gyro', outer: { scale: 1.4 }, inner: { scale: 1.3, flat: 1.15 }, planet: { scale: 0.74, dy: 36 } },
+  /* 惑星に寄る。軌道を小さくして惑星を大きく＝密で力強い */
+  tight:   { outer: { scale: 0.8, flat: 0.95 }, inner: { scale: 0.72, flat: 1.0 }, planet: { scale: 1.32, dy: 50 } },
+  /* 片寄せ。惑星を右へ、軌道を左へずらして非対称に */
+  offset:  { layout: 'gyro', outer: { scale: 1.12, dx: -50, dy: 8 }, inner: { scale: 1.0, dx: -32, flat: 1.2 },
+             planet: { scale: 0.96, dx: 64, dy: 52 } },
+};
 const GFX_VARIANTS = {
   off: [
-    { name: 'A カンプ通り', desc: 'Figma のカンプそのまま。2本がほぼ平行に流れます。', gfx: {} },
+    { name: 'A カンプ通り', desc: 'Figma のカンプそのまま。2本がほぼ平行に流れます。',
+      gfx: GFX_LOOKS.std, common: { orbitSpin: 0 } },
     { name: 'B ジャイロ交差', desc: '2本の傾きを逆にして立体交差させます。惑星の前後を横切る回数が増え、奥行きが出ます。',
-      gfx: { layout: 'gyro', planet: { scale: 0.92 } } },
+      gfx: GFX_LOOKS.cross, common: { orbitSpin: 0.35 } },
     { name: 'C 薄く広がる皿', desc: '2本とも横に広げて薄くつぶし、土星の輪のように寝かせます。惑星は大きめ。',
-      gfx: { outer: { scale: 1.22, flat: 0.55 }, inner: { scale: 1.08, flat: 0.5 }, planet: { scale: 1.12, dy: 54 } } },
+      gfx: GFX_LOOKS.dish, common: { orbitSpin: 0.2 } },
+    { name: 'D 立ちクロス', desc: '輪を起こして丸に近づけ、深く交差させます。回転をつけると天球儀のように見えます。',
+      gfx: GFX_LOOKS.upright, common: { orbitSpin: 0.8 } },
+    { name: 'E 大きく包む', desc: '軌道を大きく広げて惑星を小さく。スケール感が出ます。',
+      gfx: GFX_LOOKS.wide, common: { orbitSpin: 0.5 } },
+    { name: 'F 惑星に寄る', desc: '軌道を小さくたたんで惑星を大きく。密で力強い見え方になります。',
+      gfx: GFX_LOOKS.tight, common: { orbitSpin: 1.2 } },
   ],
   reel: [
     { name: 'A カンプ通り', desc: '既定の並び。輪が惑星の手前で切り取られながら滑り込みます。',
-      gfx: {}, conv: { vanish: 'clip', blend: 0 } },
+      gfx: GFX_LOOKS.std, conv: { blend: 0 }, common: { orbitSpin: 0 } },
     { name: 'B 深く交差', desc: 'ジャイロ交差の配置。中間の輪を3本はさんで層をつくり、惑星の前後を横切る回数を増やします。',
       gfx: { layout: 'gyro', outer: { scale: 1.05 }, inner: { scale: 0.95, flat: 1.15 }, planet: { scale: 0.9, dy: 40 } },
-      conv: { blend: 3, blendAlpha: 0.35 } },
+      conv: { blend: 3, blendAlpha: 0.35 }, common: { orbitSpin: 0.35 } },
     { name: 'C 薄い皿', desc: '横に広げて寝かせた薄い輪。中間の輪を5本はさんで、土星の輪のような厚みを出します。',
-      gfx: { outer: { scale: 1.2, flat: 0.55 }, inner: { scale: 1.05, flat: 0.5 }, planet: { scale: 1.12, dy: 52 } },
-      conv: { blend: 5, blendAlpha: 0.3 } },
+      gfx: GFX_LOOKS.dish, conv: { blend: 5, blendAlpha: 0.3 }, common: { orbitSpin: 0.2 } },
+    { name: 'D 立ちクロス', desc: '起こして交差させた輪が縮んでいきます。中間の輪を多めにして、球状の層が吸い込まれるように。',
+      gfx: GFX_LOOKS.upright, conv: { blend: 7, blendAlpha: 0.28, T: 5.6, depth: 0.98 }, common: { orbitSpin: 0.9 } },
+    { name: 'E 大きく包む', desc: '大きく広げた輪が、長い時間をかけて小さな惑星へ吸い込まれます。',
+      gfx: GFX_LOOKS.wide, conv: { blend: 4, blendAlpha: 0.32, T: 7.2, shrinkAt: 0.24 }, common: { orbitSpin: 0.5 } },
+    { name: 'F 惑星に寄る', desc: '惑星のすぐ外を短い周期で輪が縮んでは生まれます。テンポが速い印象に。',
+      gfx: GFX_LOOKS.tight, conv: { blend: 2, blendAlpha: 0.4, T: 3.2, moveDur: 0.12 }, common: { orbitSpin: 1.3 } },
   ],
   spiral: [
     { name: 'A 標準の渦', desc: '既定の並び。粒がしばらく軌道を回ってから、ゆるい渦で落ちます。',
-      gfx: {}, conv: { count: 12, life: 5, size: 0.62, stay: 3, swirl: 1, fallCurve: 1 } },
+      gfx: GFX_LOOKS.std, conv: { count: 12, life: 5, size: 0.62, stay: 3, swirl: 1, fallCurve: 1 }, common: { orbitSpin: 0 } },
     { name: 'B 大げさな渦巻き', desc: '粒を26個に増やし、中心へ近づくほど急に速く巻き込みます。ジャイロ交差の配置で渦の軸がはっきり見えます。',
       gfx: { layout: 'gyro', outer: { scale: 1.1 }, inner: { scale: 1.0, flat: 1.2 }, planet: { scale: 0.88 } },
-      conv: { count: 26, life: 6.5, size: 0.5, stay: 2, swirl: 2.6, fallCurve: 2.0 } },
+      conv: { count: 26, life: 6.5, size: 0.5, stay: 2, swirl: 2.6, fallCurve: 2.0 }, common: { orbitSpin: 0.4 } },
     { name: 'C ゆったり大回り', desc: '軌道を大きく広げて寝かせ、粒が長い時間かけて大きく回り込みます。惑星は小さめ。',
       gfx: { outer: { scale: 1.28, flat: 0.6 }, inner: { scale: 1.18, flat: 0.55 }, planet: { scale: 0.8, dy: 56 } },
-      conv: { count: 16, life: 9, size: 0.75, stay: 5, swirl: 0.25, fallCurve: 0.6 } },
+      conv: { count: 16, life: 9, size: 0.75, stay: 5, swirl: 0.25, fallCurve: 0.6 }, common: { orbitSpin: 0.2 } },
+    { name: 'D 立ちクロスの渦', desc: '起こして交差させた軌道から、粒が縦方向にも巻き込まれます。渦の軸が見えやすい配置です。',
+      gfx: GFX_LOOKS.upright, conv: { count: 30, life: 5.5, size: 0.55, stay: 2.4, swirl: 2.0, fallCurve: 1.5 },
+      common: { orbitSpin: 0.9 } },
+    { name: 'E 大きく包む渦', desc: '遠くの大きな軌道から、小さな惑星へ長い渦を描いて落ちていきます。',
+      gfx: GFX_LOOKS.wide, conv: { count: 22, life: 10, size: 0.68, stay: 4.5, swirl: 1.4, fallCurve: 1.2 },
+      common: { orbitSpin: 0.55 } },
+    { name: 'F 近くで速い渦', desc: '惑星のすぐ外で、粒が短くきつく巻き込まれます。密度が高くテンポが速い印象。',
+      gfx: GFX_LOOKS.tight, conv: { count: 34, life: 3, size: 0.45, stay: 1.2, swirl: 2.8, fallCurve: 2.2 },
+      common: { orbitSpin: 1.4 } },
   ],
   accre: [
     { name: 'A 標準の円盤', desc: '既定の円盤。惑星のまわりを粒が渦を巻いて落ちていきます。',
-      gfx: {}, conv: { scale: 1.15, count: 1000, size: 0.35, fall: 1, showOrbit: false, swirl: 1, fallCurve: 1 } },
-    { name: 'B 大きく薄い円盤', desc: '円盤をぐっと広げて粒を140個に。1粒を小さくして、細かい砂が漂うような密度にします。',
+      gfx: GFX_LOOKS.std, conv: { scale: 1.15, count: 1000, size: 0.35, fall: 1, showOrbit: false, swirl: 1, fallCurve: 1 },
+      common: { orbitSpin: 0 } },
+    { name: 'B 大きく薄い円盤', desc: '円盤をぐっと広げて粒を1800個に。1粒を小さくして、細かい砂が漂うような密度にします。',
       gfx: { planet: { scale: 0.82, dy: 52 } },
-      conv: { scale: 1.85, count: 1800, size: 0.22, fall: 0.7, wobble: 0.7, twinkle: 0.6, showOrbit: false, swirl: 0.6 } },
+      conv: { scale: 1.85, count: 1800, size: 0.22, fall: 0.7, wobble: 0.7, twinkle: 0.6, showOrbit: false, swirl: 0.6 },
+      common: { orbitSpin: 0 } },
     { name: 'C 軌道つき・きつい渦', desc: '軌道を出したまま、内側で小さくきつい渦を巻かせます。ジャイロ交差なので円盤と輪が立体的に絡みます。',
       gfx: { layout: 'gyro', inner: { scale: 0.92, flat: 1.1 }, planet: { scale: 0.95 } },
-      conv: { scale: 0.85, count: 700, size: 0.4, showOrbit: true, swirl: 2.4, fallCurve: 1.8, wobble: 0.2 } },
+      conv: { scale: 0.85, count: 700, size: 0.4, showOrbit: true, swirl: 2.4, fallCurve: 1.8, wobble: 0.2 },
+      common: { orbitSpin: 0.5 } },
+    { name: 'D 立ちクロス＋円盤', desc: '起こして交差させた輪を出したまま、その内側で円盤が渦を巻きます。輪と円盤が立体的に重なります。',
+      gfx: GFX_LOOKS.upright, conv: { scale: 1.0, count: 900, size: 0.34, showOrbit: true, swirl: 1.6, fallCurve: 1.3, wobble: 0.3 },
+      common: { orbitSpin: 1.0 } },
+    { name: 'E 大きく包む円盤', desc: '小さな惑星のまわりに、大きく薄い円盤が広がります。銀河のようなスケール感。',
+      gfx: GFX_LOOKS.wide, conv: { scale: 2.2, count: 1600, size: 0.24, fall: 0.6, showOrbit: false, swirl: 0.5, twinkle: 0.7 },
+      common: { orbitSpin: 0.4 } },
+    { name: 'F 惑星に密着', desc: '大きな惑星のすぐ表面近くを、粒が高速で回ります。密で熱そうな見え方。',
+      gfx: GFX_LOOKS.tight, conv: { scale: 0.65, count: 1200, size: 0.3, fall: 1.4, speed: 1.6, showOrbit: false, swirl: 2.2 },
+      common: { orbitSpin: 1.2 } },
   ],
   mesh: [
     { name: 'A ふわふわ漂う', desc: '既定。ノードがゆらゆら漂い、線で結ばれてデータが渡り歩きます。',
-      gfx: {}, conv: { style: 'organic', nodes: 14, span: 0.34, lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6, size: 0.6, hop: 0.55, rate: 1.2 } },
+      gfx: GFX_LOOKS.std,
+      conv: { style: 'organic', nodes: 14, span: 0.34, lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6, size: 0.6, hop: 0.55, rate: 1.2 },
+      common: { orbitSpin: 0 } },
     { name: 'B まばらな星座', desc: 'ノードを9個まで減らして間隔を広げ、線を薄く。ぽつぽつと星座のように見せます。',
       gfx: { planet: { scale: 0.92 } },
-      conv: { style: 'constellation', nodes: 9, span: 0.55, lineAlpha: 0.3, lineWidth: 1, drift: 1.7, random: 1, size: 0.75, hop: 0.75, rate: 0.9 } },
+      conv: { style: 'constellation', nodes: 9, span: 0.55, lineAlpha: 0.3, lineWidth: 1, drift: 1.7, random: 1, size: 0.75, hop: 0.75, rate: 0.9 },
+      common: { orbitSpin: 0 } },
     { name: 'C 包囲ケージ', desc: '惑星のまわりの球殻にノードを並べ、骨で結んだカゴがゆっくり回ります。手前の骨は惑星の前を、奥の骨は後ろを通るので、まるごと取り囲んでいるように見えます。',
       gfx: { layout: 'gyro', outer: { scale: 1.12 }, inner: { scale: 1.0, flat: 1.25 }, planet: { scale: 0.9, dy: 44 } },
       conv: { style: 'cage', nodes: 26, cageR: 1.8, cageSpin: 1, cageLinks: 3, cageTilt: -20,
-              lineAlpha: 0.5, lineWidth: 1.1, size: 0.5, random: 0.6, hop: 0.45, rate: 1.8 } },
+              lineAlpha: 0.5, lineWidth: 1.1, size: 0.5, random: 0.6, hop: 0.45, rate: 1.8 },
+      common: { orbitSpin: 0 } },
+    { name: 'D 大きいケージ', desc: '包囲ケージを大きく組み、骨を増やして密に。惑星を大きく囲い込む印象になります。',
+      gfx: GFX_LOOKS.wide,
+      conv: { style: 'cage', nodes: 40, cageR: 2.6, cageSpin: 0.6, cageLinks: 4, cageTilt: -14,
+              lineAlpha: 0.42, lineWidth: 0.9, size: 0.42, random: 0.4, hop: 0.5, rate: 2.2 },
+      common: { orbitSpin: 0 } },
+    { name: 'E 細かいケージ', desc: '惑星に近い小さなカゴを、細かい骨で速く回します。装置のような精密さが出ます。',
+      gfx: GFX_LOOKS.tight,
+      conv: { style: 'cage', nodes: 34, cageR: 1.35, cageSpin: 1.8, cageLinks: 3, cageTilt: -34,
+              lineAlpha: 0.55, lineWidth: 0.8, size: 0.36, random: 0.2, hop: 0.32, rate: 2.6 },
+      common: { orbitSpin: 0 } },
+    { name: 'F 立ちクロスの網', desc: '起こして交差させた広い範囲に網を張ります。奥行きのあるネットになります。',
+      gfx: GFX_LOOKS.upright,
+      conv: { style: 'organic', nodes: 22, span: 0.42, lineAlpha: 0.45, lineWidth: 1.2, drift: 1.3, random: 0.9, size: 0.5, hop: 0.5, rate: 1.6 },
+      common: { orbitSpin: 0.8 } },
   ],
   beads: [
     { name: 'A 標準', desc: '既定。点が等間隔に並んだ輪から、順に惑星へ吸い込まれます。',
-      gfx: {}, conv: { count: 300, size: 0.5, ratio: 0.22, speed: 0.26, spin: 0, jitter: 0 } },
+      gfx: GFX_LOOKS.std, conv: { count: 300, size: 0.5, ratio: 0.22, speed: 0.26, spin: 0, jitter: 0 },
+      common: { orbitSpin: 0 } },
     { name: 'B 細かい粒', desc: '1粒を小さくして、線に近い細かさに。流れがなめらかに見えます。',
       gfx: { outer: { scale: 1.06 }, inner: { scale: 1.02 }, planet: { scale: 1.02 } },
-      conv: { count: 300, size: 0.34, ratio: 0.16, speed: 0.34, spin: 0.5, jitter: 0.15 } },
+      conv: { count: 300, size: 0.34, ratio: 0.16, speed: 0.34, spin: 0.5, jitter: 0.15 },
+      common: { orbitSpin: 0.25 } },
     { name: 'C 交差する二重リング', desc: 'ジャイロ交差の2本に点を並べ、吸い込まれる時に渦を巻かせます。2本の重なりで奥行きが出ます。',
       gfx: { layout: 'gyro', outer: { scale: 1.02 }, inner: { scale: 0.94, flat: 1.2 }, planet: { scale: 0.9 } },
-      conv: { count: 300, size: 0.55, ratio: 0.3, spin: 1.3, spinEase: 1.4, backIn: 1.5 } },
+      conv: { count: 300, size: 0.55, ratio: 0.3, spin: 1.3, spinEase: 1.4, backIn: 1.5 },
+      common: { orbitSpin: 0.5 } },
+    { name: 'D 立ちクロスのリング', desc: '起こして交差させた2本の点リングが、天球儀のように回りながら吸い込まれます。',
+      gfx: GFX_LOOKS.upright, conv: { count: 300, size: 0.5, ratio: 0.24, speed: 0.3, spin: 1.0, spinEase: 1.2, backIn: 1.3 },
+      common: { orbitSpin: 1.0 } },
+    { name: 'E 大きいリング', desc: '大きく広げたリングから、小さな惑星へゆっくり吸い込まれます。',
+      gfx: GFX_LOOKS.wide, conv: { count: 300, size: 0.6, ratio: 0.16, speed: 0.2, life: 5, backIn: 1.8 },
+      common: { orbitSpin: 0.45 } },
+    { name: 'F 惑星に寄るリング', desc: '大きな惑星のすぐ外で、点が速く回りながら次々に吸い込まれます。',
+      gfx: GFX_LOOKS.tight, conv: { count: 300, size: 0.44, ratio: 0.34, speed: 0.44, life: 2.4, spin: 0.8 },
+      common: { orbitSpin: 1.4 } },
   ],
   duplex: [
     { name: 'A 標準', desc: '既定。ゆるく反った線の上を、粒が惑星と軌道の間で行き来します。',
-      gfx: {}, conv: { curve: 0.22, density: 1, lineAlpha: 0.16, lineWidth: 1, size: 0.6, speed: 1 } },
+      gfx: GFX_LOOKS.std, conv: { curve: 0.22, density: 1, lineAlpha: 0.16, lineWidth: 1, size: 0.6, speed: 1 },
+      common: { orbitSpin: 0 } },
     { name: 'B まっすぐ放射', desc: '線の反りをほぼ無くして放射状に。太く濃くして、配線図のようなはっきりした見え方にします。',
       gfx: { outer: { scale: 1.08 }, inner: { scale: 0.98 }, planet: { scale: 1.05 } },
-      conv: { curve: 0.03, density: 1.6, lineAlpha: 0.26, lineWidth: 2.2, size: 0.5, speed: 1.3 } },
+      conv: { curve: 0.03, density: 1.6, lineAlpha: 0.26, lineWidth: 2.2, size: 0.5, speed: 1.3 },
+      common: { orbitSpin: 0.2 } },
     { name: 'C 大きく弧を描く', desc: '線を大きく反らせて細く。ジャイロ交差の広い軌道と組み合わせ、弧が惑星の前後を回り込みます。',
       gfx: { layout: 'gyro', outer: { scale: 1.15, flat: 0.85 }, inner: { scale: 1.0, flat: 1.3 }, planet: { scale: 0.85, dy: 40 } },
-      conv: { curve: 0.62, density: 0.8, lineAlpha: 0.34, lineWidth: 0.6, size: 0.7, speed: 0.75, T: 4.2 } },
+      conv: { curve: 0.62, density: 0.8, lineAlpha: 0.34, lineWidth: 0.6, size: 0.7, speed: 0.75, T: 4.2 },
+      common: { orbitSpin: 0.4 } },
+    { name: 'D 立ちクロスの線', desc: '起こして交差させた軌道と惑星を結ぶので、線が縦にも走ります。立体的な配線に見えます。',
+      gfx: GFX_LOOKS.upright, conv: { curve: 0.3, density: 1.3, lineAlpha: 0.24, lineWidth: 1.2, size: 0.55, speed: 1.1 },
+      common: { orbitSpin: 0.9 } },
+    { name: 'E 遠くから長い線', desc: '大きく広げた軌道から、小さな惑星まで長い線が伸びます。粒がゆっくり長距離を移動します。',
+      gfx: GFX_LOOKS.wide, conv: { curve: 0.45, density: 1.1, lineAlpha: 0.2, lineWidth: 0.8, size: 0.62, speed: 0.7, T: 5 },
+      common: { orbitSpin: 0.45 } },
+    { name: 'F 密な短い線', desc: '大きな惑星のすぐ外から、短い線で密に行き来します。処理量が多そうな印象。',
+      gfx: GFX_LOOKS.tight, conv: { curve: 0.12, density: 2.4, lineAlpha: 0.3, lineWidth: 1.6, size: 0.45, speed: 1.6, T: 2.2 },
+      common: { orbitSpin: 1.3 } },
+  ],
+  gyro: [
+    { name: 'A 標準のジャイロ', desc: '2本の輪が直交して転がります。いちばんジャイロらしい形。',
+      gfx: GFX_LOOKS.std, conv: { tumble: 1, spin: 1, phase: 90, thin: 0.06, pull: 0.25, pullT: 5 },
+      common: { orbitSpin: 0 } },
+    { name: 'B 立ちクロスで転がる', desc: '起こして交差させた輪が転がるので、球体の骨組みが回っているように見えます。',
+      gfx: GFX_LOOKS.upright, conv: { tumble: 1.2, spin: 1.4, phase: 90, thin: 0.04, pull: 0.3, pullT: 4.4 },
+      common: { orbitSpin: 0.3 } },
+    { name: 'C ゆっくり大きく', desc: '大きく広げた輪が、ゆったりと転がりながら小さな惑星へ吸い寄せられます。',
+      gfx: GFX_LOOKS.wide, conv: { tumble: 0.45, spin: 0.5, phase: 90, thin: 0.08, pull: 0.4, pullT: 8 },
+      common: { orbitSpin: 0.2 } },
+    { name: 'D 高速スピン', desc: '惑星のすぐ外で輪が速く転がります。装置が高速で稼働しているような見え方。',
+      gfx: GFX_LOOKS.tight, conv: { tumble: 2.2, spin: 2.4, phase: 90, thin: 0.03, pull: 0.18, pullT: 2.6 },
+      common: { orbitSpin: 0.6 } },
+    { name: 'E 同じ向きで転がる', desc: '2本のずれを無くして同じ向きに転がします。1枚の板が回っているように見えます。',
+      gfx: GFX_LOOKS.dish, conv: { tumble: 0.9, spin: 0.8, phase: 0, thin: 0.05, pull: 0.22, pullT: 5.5 },
+      common: { orbitSpin: 0.25 } },
+    { name: 'F 片寄せジャイロ', desc: '惑星を右へ、輪を左へずらした非対称な配置で転がります。動きに癖が出ます。',
+      gfx: GFX_LOOKS.offset, conv: { tumble: 1.1, spin: 1.2, phase: 120, thin: 0.05, pull: 0.34, pullT: 4 },
+      common: { orbitSpin: 0.7 } },
   ],
 };
 /* 案キー → params.conv の中のどのつまみ束か (duplex だけ名前が link) */
-const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link' };
+const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link', gyro: 'gyro' };
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
 const CONV_LINKED = ['duplex'];
 function convOn() { return params.kvDesign === 'planet' && (params.converge || 'off') !== 'off'; }
@@ -7358,6 +7518,7 @@ function gfxSnapshotFull() {
       dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, glow: C.glow,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
+      orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
     /* ※「登場(出てくる順番)」は 2026-08-27 に削除。モックKV(iframe)専用で、
@@ -7380,6 +7541,10 @@ function gfxApplyFull(d) {
       if (!C.dotMove) C.dotMove = {};
       C.dotMove[mode] = d.common.dotMove;
     }
+    if (typeof d.common.orbitSpin === 'number') {
+      if (!C.orbitSpinBy) C.orbitSpinBy = {};
+      C.orbitSpinBy[mode] = d.common.orbitSpin;
+    }
   }
   const pk = CONV_PARAM_KEY[mode];
   if (d.mode && pk && C[pk]) Object.assign(C[pk], d.mode);
@@ -7401,6 +7566,15 @@ function applyGfxVariant(i) {
   });
   const pk = CONV_PARAM_KEY[mode];
   if (v.conv && pk && params.conv[pk]) Object.assign(params.conv[pk], v.conv);
+  /* common は params.conv の直下(共通の見せ方)へ。orbitSpin だけは案ごとの引き出しへ入れる */
+  if (v.common) {
+    for (const k in v.common) {
+      if (k === 'orbitSpin') {
+        if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
+        params.conv.orbitSpinBy[mode] = v.common[k];
+      } else params.conv[k] = v.common[k];
+    }
+  }
   if (!params.gfxVariantOn) params.gfxVariantOn = {};
   params.gfxVariantOn[mode] = i;
   markDirty();
@@ -7611,7 +7785,8 @@ function sub(target, html, deep, opts) {
                         '表示', '表示・大きさ', '模様',
                         'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
                         'この案の調整（粒の渦）', 'この案の調整（網でつながる）',
-                        'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）', '消え方（吸収の表現）'];
+                        'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）',
+                        'この案の調整（ジャイロ回転）', '動き（この案）'];
   /* 【2026-08-27 ヒデさん指定】グラフィックのセクションは、たためる所も既定で開いておく */
   const open = fixed ? true
     : (subOpen[key] === undefined ? (subDefaultOpen || GRAPHIC_OPEN.includes(key)) : subOpen[key]);
@@ -8190,6 +8365,7 @@ function buildPanel() {
       mesh:   '軌道の代わりに、ゆらぎ漂うノードの網ができます。データがノードからノードへ渡り歩いて惑星へ届きます。輪とドットは自動で隠れます。',
       beads:  '軌道の線を消して、点だけを密に並べて輪の形を作ります。並んだ点のうち一部が順に惑星へ吸い込まれます（輪の形は崩れません）。',
       duplex: '惑星とドットを線で結び、その線の上を粒が行き来します。青＝軌道から惑星へ、ピンク＝惑星から軌道へ。惑星に入った粒は消えます。',
+      gyro:   '2本の輪が独楽(ジャイロスコープ)のように立体的に転がります。輪を真横から見る瞬間があり、周期的に惑星へ引き寄せられて集約します。ドットは輪に乗ったまま一緒に転がります。',
     };
     window.__convDesc = CONV_DESC;
   }
@@ -8207,10 +8383,16 @@ function buildPanel() {
        案ごとに中身が変わるので、ここで案別に足していく */
     if (cvMode !== 'off') {
       const DM = params.conv.dotMove || (params.conv.dotMove = {});
-      sub(animModeBox, 'ドットの動き', true, { fixed: true });
-      segRow('周回', [['する', 1], ['しない', 0]],
+      sub(animModeBox, '動き（この案）', true, { fixed: true });
+      segRow('ドットの周回', [['する', 1], ['しない', 0]],
         () => (DM[cvMode] !== false) ? 1 : 0,
         v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
+      /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は案ごとに変えられる */
+      slider('軌道の回転', 0, 3, 0.05,
+        () => convOrbitSpinAmt(),
+        v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
+        v => v === 0 ? '回らない' : '×' + v.toFixed(2),
+        '軌道そのものが回ります（外と内は逆回り）。0だと形は止まったままです。');
       if (cvMode === 'reel') {
         const R0 = params.conv.reel;
         segRow('スピン', [['なし', 0], ['あり', 1]],
@@ -8330,6 +8512,21 @@ function buildPanel() {
         '0できっちり等間隔。上げるほど並びがばらつきます。', { fixedMax: true });
       slider('戻ってくる時間', 0.1, 5, 0.1, () => params.conv.beads.backIn, v => B.backIn = v, v => v.toFixed(1) + '秒',
         '吸い込まれた点が、空いた場所にゆっくり現れるまでの時間。', { fixedMax: true });
+    } else if (cvMode === 'gyro') {
+      const G = params.conv.gyro;
+      sub(animModeBox, 'この案の調整（ジャイロ回転）', true);
+      slider('転がる速さ', 0, 3, 0.05, () => params.conv.gyro.tumble, v => G.tumble = v,
+        v => v === 0 ? '転がらない' : '×' + v.toFixed(2), '輪が立体的に転がる速さ。0で止まります。');
+      slider('面が回る速さ', 0, 3, 0.05, () => params.conv.gyro.spin, v => G.spin = v,
+        v => v === 0 ? '回らない' : '×' + v.toFixed(2), '輪の向きそのものが回る速さ。外と内は逆回りです。');
+      slider('2本のずれ', 0, 180, 5, () => params.conv.gyro.phase, v => G.phase = v, v => v + '°',
+        '外と内の転がりをどれだけずらすか。90°で直交して、いちばんジャイロらしくなります。');
+      slider('真横の薄さ', 0.01, 0.5, 0.01, () => params.conv.gyro.thin, v => G.thin = v, v => v.toFixed(2),
+        '真横から見た瞬間にどこまで潰れるか。小さいほど線に近くなります。');
+      slider('吸い寄せの強さ', 0, 0.8, 0.02, () => params.conv.gyro.pull, v => G.pull = v, v => Math.round(v * 100) + '%',
+        '周期的に輪が惑星へ引き寄せられる量。0で引き寄せません。');
+      slider('吸い寄せの周期', 1, 14, 0.2, () => params.conv.gyro.pullT, v => G.pullT = v, v => v.toFixed(1) + '秒',
+        '引き寄せをくり返す間隔。');
     } else if (CONV_LINKED.includes(cvMode)) {
       const L = params.conv.link;
       sub(animModeBox, 'この案の調整（線で行き来）', true);
@@ -8371,10 +8568,7 @@ function buildPanel() {
     { name: 'ドット', get: () => params.conv.showDots,  set: v => params.conv.showDots = v,
       hint: '輪の上を回っている点' },
   ]);
-  note('輪を消すと、その輪のドットも消えます。粒の渦・網の案では自動で隠れます。');
-  slider('回る速さ', 0, 3, 0.05, () => params.conv.orbitSpin, v => params.conv.orbitSpin = v,
-    v => v === 0 ? '回らない' : '×' + v.toFixed(2),
-    '軌道そのものが回ります（外と内は逆回り）。0だと形は止まったままです。');
+  note('輪を消すと、その輪のドットも消えます。粒の渦・網の案では自動で隠れます。軌道の回転は案ごとなので「動き（この案）」にあります。');
   slider('漂う量', 0, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
     v => v === 0 ? '漂わない' : '×' + v.toFixed(2),
     '軌道そのものがゆっくり位置を変えます。0で固定。');
