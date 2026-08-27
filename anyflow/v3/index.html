@@ -1512,6 +1512,17 @@
   .pset { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 2px; }
   .pset-lab { flex: 0 0 auto; font-size: 11px; color: #999; line-height: 22px; }
   .pset-row { flex: 1 1 auto; margin: 0; }
+  /* 【2026-08-27 ヒデさん指定】✎ で 1/2/3 を打たせるのをやめ、小さなメニューにした */
+  .pmenu { position: fixed; z-index: 120; background: #fff; border: 1px solid #e4e4e4; border-radius: 9px;
+           box-shadow: 0 8px 24px rgba(0,0,0,.16); padding: 4px; min-width: 138px; }
+  .pmenu button { display: block; width: 100%; text-align: left; border: 0; background: none;
+                  font-family: inherit; font-size: 11px; padding: 7px 10px; border-radius: 6px;
+                  cursor: pointer; color: #222; }
+  .pmenu button:hover { background: #f2f2f2; }
+  .pmenu button.danger { color: #d94141; }
+  .pmenu button.danger:hover { background: #fdecec; }
+  .pname { flex: 0 0 auto; width: 104px; font-family: inherit; font-size: 11px; padding: 4px 10px;
+           border: 1px solid #0EBBFF; border-radius: 999px; outline: none; background: #fff; color: #111; }
   .sw-pill.sw-save {
     border-style: dashed; border-color: #c9c9c9; color: #666;
     background: transparent; font-weight: 400;
@@ -7309,6 +7320,13 @@ function gfxSnapshotFull() {
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
     },
     mode: pk && C[pk] ? { ...C[pk] } : null,
+    /* 【2026-08-27 ヒデさん指定】グラフィックのセクションにある物は全部入れる。
+       「登場(出てくる順番)」もここ */
+    intro: {
+      introLead: params.kv.introLead,
+      mockAt: params.kvIntro.mockAt, iconsAt: params.kvIntro.iconsAt,
+      iconsStagger: params.kvIntro.iconsStagger, orbitAt: params.kvIntro.orbitAt,
+    },
   };
 }
 function gfxApplyFull(d) {
@@ -7330,6 +7348,13 @@ function gfxApplyFull(d) {
   }
   const pk = CONV_PARAM_KEY[mode];
   if (d.mode && pk && C[pk]) Object.assign(C[pk], d.mode);
+  if (d.intro) {
+    if (typeof d.intro.introLead === 'number') params.kv.introLead = d.intro.introLead;
+    for (const k of ['mockAt', 'iconsAt', 'iconsStagger', 'orbitAt']) {
+      if (typeof d.intro[k] === 'number') params.kvIntro[k] = d.intro[k];
+    }
+    if (typeof kvSendIntroTiming === 'function') kvSendIntroTiming(true);
+  }
   markDirty();
   renderFrame();
 }
@@ -7546,6 +7571,7 @@ function category(title, open) {
 const subOpen = {};
 /* いま組み立て中のセクションに属する項目(リセット用)。sub() のたびに新しくする */
 let subItems = null;
+let subDefaultOpen = false;   /* true の間に作る小見出しは、既定で開いた状態にする */
 function sub(target, html, deep, opts) {
   const key = String(html).replace(/<[^>]*>/g, '').trim();
   const fixed = !!(opts && opts.fixed);   /* たためない＝常に開いたコンパクト表示 */
@@ -7557,7 +7583,9 @@ function sub(target, html, deep, opts) {
                         'この案の調整（輪が縮んで吸収）', 'この案の調整（粒が渦で吸収）',
                         'この案の調整（粒の渦）', 'この案の調整（網でつながる）',
                         'この案の調整（点が並ぶ軌道）', 'この案の調整（線で行き来）', '消え方（吸収の表現）'];
-  const open = fixed ? true : (subOpen[key] === undefined ? GRAPHIC_OPEN.includes(key) : subOpen[key]);
+  /* 【2026-08-27 ヒデさん指定】グラフィックのセクションは、たためる所も既定で開いておく */
+  const open = fixed ? true
+    : (subOpen[key] === undefined ? (subDefaultOpen || GRAPHIC_OPEN.includes(key)) : subOpen[key]);
   subOpen[key] = open;
   const bare = !!(opts && opts.bare);   /* 見出しそのものを出さない(中身だけ並べる) */
   const g = document.createElement('div');
@@ -7929,6 +7957,7 @@ function buildPanel() {
      右側のグラフィックの設定をここに集約する。いちばん上が「直接編集」。
      以下は全部この中の入れ子: 案を選ぶ / 出てくるタイミング / 惑星のアニメーション / 軌道 */
   liveEdit = true;
+  subDefaultOpen = true;      /* ここから下(グラフィック)は既定で開く */
   sub(catKv, '🎨 グラフィック');
   const gRoot = mount;
 
@@ -8024,14 +8053,36 @@ function buildPanel() {
     wrap.append(lab, presetRow);
     (mount || body).appendChild(wrap);
     /* 案ごとに中身が変わるので、行ごと作り直せるようにしておく(パネル全体は作り直さない) */
+    /* 【2026-08-27 ヒデさん指定】✎ で「1/2/3を打つ」のをやめ、
+       小さなメニューから選ぶ + 名前はその場で書き換える形にした */
+    let pmenu = null;
+    const closeMenu = () => { if (pmenu) { pmenu.remove(); pmenu = null; } };
+    document.addEventListener('pointerdown', e => { if (pmenu && !pmenu.contains(e.target)) closeMenu(); }, true);
+
     fillPresetRow = function () {
       const list = gfxPresetList();
+      closeMenu();
       presetRow.innerHTML = '';
+      /* 名前をその場で書き換える(Enterで確定 / Escで取り消し) */
+      const rename = (i, pillEl) => {
+        const ps = list[i];
+        const inp = document.createElement('input');
+        inp.className = 'pname';
+        inp.value = ps.name;
+        const done = ok => {
+          if (ok && inp.value.trim()) { ps.name = inp.value.trim(); markDirty(); }
+          fillPresetRow();
+        };
+        inp.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+        inp.onblur = () => done(true);
+        pillEl.replaceWith(inp);
+        inp.focus(); inp.select();
+      };
       list.forEach((ps, i) => {
         const b = document.createElement('button');
         b.className = 'sw-pill' + (gfxPresetOn() === i ? ' on' : '');
         b.textContent = ps.name;
-        b.title = 'この形に切り替える';
+        b.title = 'この設定を呼び出す（ダブルクリックで名前を変える）';
         b.onclick = () => {
           applyGfxPreset(i);
           syncPanelRows();
@@ -8039,37 +8090,51 @@ function buildPanel() {
           if (editHandles.on) editHandles.place();
           presetRow.querySelectorAll('.sw-pill:not(.sw-edit)').forEach((el, j) => el.classList.toggle('on', gfxPresetOn() === j));
         };
+        b.ondblclick = e => { e.preventDefault(); rename(i, b); };
         const e = document.createElement('button');
         e.className = 'sw-pill sw-edit';
-        e.textContent = '✎';
-        e.title = '名前の変更・上書き・削除';
-        e.onclick = () => {
-          const act = window.prompt(
-            `「${ps.name}」をどうしますか？\n  1 = 名前を変える\n  2 = 今の形で上書き\n  3 = 削除`, '1');
-          if (act === '1') {
-            const nm = window.prompt('新しい名前', ps.name);
-            if (nm && nm.trim()) { ps.name = nm.trim(); markDirty(); fillPresetRow(); }
-          } else if (act === '2') { ps.data = gfxSnapshotFull(); markDirty(); fillPresetRow(); }
-          else if (act === '3') {
-            if (window.confirm(`「${ps.name}」を削除します。よろしいですか？`)) {
-              list.splice(i, 1);
-              if (gfxPresetOn() === i) gfxPresetSetOn(null);
-              markDirty(); fillPresetRow();
-            }
-          }
+        e.textContent = '⋯';
+        e.title = '名前を変える / 上書き / 削除';
+        e.onclick = ev => {
+          ev.stopPropagation();
+          if (pmenu) { closeMenu(); return; }
+          pmenu = document.createElement('div');
+          pmenu.className = 'pmenu';
+          const mk = (label, fn, cls) => {
+            const m = document.createElement('button');
+            m.type = 'button';
+            m.textContent = label;
+            if (cls) m.className = cls;
+            m.onclick = () => { closeMenu(); fn(); };
+            pmenu.appendChild(m);
+          };
+          mk('✎ 名前を変える', () => rename(i, b));
+          mk('⤓ いまの設定で上書き', () => { list[i].data = gfxSnapshotFull(); markDirty(); fillPresetRow(); });
+          mk('🗑 削除', () => {
+            list.splice(i, 1);
+            if (gfxPresetOn() === i) gfxPresetSetOn(null);
+            markDirty(); fillPresetRow();
+          }, 'danger');
+          document.body.appendChild(pmenu);
+          const r = e.getBoundingClientRect();
+          pmenu.style.left = Math.min(r.left, innerWidth - pmenu.offsetWidth - 8) + 'px';
+          pmenu.style.top = Math.min(r.bottom + 4, innerHeight - pmenu.offsetHeight - 8) + 'px';
         };
         presetRow.append(b, e);
       });
+      /* 保存は押した瞬間に追加して、そのまま名前を書き換えられる状態にする */
       const add = document.createElement('button');
       add.className = 'sw-pill sw-save';
       add.textContent = '＋保存';
-      add.title = 'いまの形を、この案専用のプリセットとして保存する';
+      add.title = 'いまのグラフィックの設定を、この案専用のプリセットとして保存する';
       add.onclick = () => {
-        const nm = window.prompt('プリセットの名前', 'プリセット ' + (list.length + 1));
-        if (!nm || !nm.trim()) return;
-        list.push({ name: nm.trim(), data: gfxSnapshotFull() });
+        list.push({ name: 'プリセット ' + (list.length + 1), data: gfxSnapshotFull() });
         gfxPresetSetOn(list.length - 1);
-        markDirty(); fillPresetRow();
+        markDirty();
+        fillPresetRow();
+        const pills = presetRow.querySelectorAll('.sw-pill:not(.sw-edit)');
+        const last = pills[pills.length - 1];
+        if (last) rename(list.length - 1, last);   /* 追加したらすぐ名前を打てる */
       };
       presetRow.appendChild(add);
     };
@@ -8101,7 +8166,8 @@ function buildPanel() {
   }
   function fillAnimBody() {
     const keepScroll = body.scrollTop;      /* 見ていた位置を保つ */
-    const keepMount = mount, keepLive = liveEdit;
+    const keepMount = mount, keepLive = liveEdit, keepOpen = subDefaultOpen;
+    subDefaultOpen = true;                  /* 案を切り替えても、中の小見出しは開いたまま */
     animModeBox.innerHTML = '';
     mount = animModeBox;
     liveEdit = true;                        /* ここのつまみは触っても頭出ししない */
@@ -8254,6 +8320,7 @@ function buildPanel() {
 
 
     mount = keepMount;
+    subDefaultOpen = keepOpen;
     liveEdit = keepLive;
     body.scrollTop = keepScroll;
   }
@@ -8386,6 +8453,7 @@ function buildPanel() {
     '起点から何秒で軌道(輪+ドット)が出るか。'));
   liveEdit = false;
 
+  subDefaultOpen = false;     /* グラフィックはここまで */
   /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
   sub(catKv, '左側コピー');
   const copyRoot = mount;
