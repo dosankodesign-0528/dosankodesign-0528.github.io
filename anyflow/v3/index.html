@@ -2595,7 +2595,7 @@ const DEFAULTS = {
               blend: 0, blendAlpha: 0.45,   /* 外と内の間を埋める中間の輪(イラレのブレンドのイメージ) */
               /* データ粒: 最初は点線 → 圧縮されて1本の線になる。太さ/密度/ゆらぎを調整できる */
               pxWidth: 1.6, pxDensity: 1, pxWobble: 0,
-              glowWidth: 0.5,   /* 圧縮グローの線の太さ(細めが既定) */
+              glowWidth: 0.5, glowTone: 'now', glowPower: 1,   /* 圧縮グローの線の太さ・光り方・強さ */
               flow: 'down' },   // 流れの向き: down=外(上)→内(下)→吸収 / up=内(下)→外(上)→吸収(上がって見える)
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 5, speed: 1, size: 0.62, stay: 3 },
@@ -3353,11 +3353,32 @@ function convFrame(geoms) {
       else if (R.vanish === 'clip') { aB = aF = fadeA; clipOn = true; }// 前面カット=惑星に重なる部分だけ切る
       /* ===== 「別の物質に変わっていく」3案 (2026-08-27 ヒデさん指定) ===== */
       else if (R.vanish === 'compress') {
-        /* 圧縮グロー: 縮むほど色が濃く(彩度↑)なり白く発光。線の太さはパネルで調整(既定は細め) */
+        /* 圧縮グロー: 縮むほど発光して凝縮する。光り方は5種から選べる(2026-08-27 ヒデさん指定) */
         aB = aF = fadeA; clipOn = true;
+        const pw = (R.glowPower == null ? 1 : R.glowPower);
         RA.w = 3 * (R.glowWidth == null ? 0.5 : R.glowWidth) * (1 + k * 0.6);
-        RA.fx = `saturate(${(1 + k * 2.4).toFixed(2)}) brightness(${(1 + k * 0.45).toFixed(2)})`;
-        blur = k * 1.6;
+        const tone = R.glowTone || 'now';
+        if (tone === 'rainbow') {
+          /* 虹: 色相がゆっくり回りながら鮮やかになる */
+          RA.fx = `hue-rotate(${((elapsed * 40 + k * 180) % 360).toFixed(0)}deg) saturate(${(1 + k * 2.6 * pw).toFixed(2)}) brightness(${(1 + k * 0.35 * pw).toFixed(2)})`;
+          blur = k * 1.6 * pw;
+        } else if (tone === 'strong') {
+          /* 強発光: 白飛びするくらい明るく、にじみも強い */
+          RA.fx = `saturate(${(1 + k * 1.6 * pw).toFixed(2)}) brightness(${(1 + k * 1.5 * pw).toFixed(2)})`;
+          blur = k * 3.6 * pw;
+        } else if (tone === 'cool') {
+          /* 青に寄る: ブランドの水色側へ寄せて、涼しく光る */
+          RA.fx = `hue-rotate(${(-k * 32).toFixed(0)}deg) saturate(${(1 + k * 2.2 * pw).toFixed(2)}) brightness(${(1 + k * 0.4 * pw).toFixed(2)})`;
+          blur = k * 1.4 * pw;
+        } else if (tone === 'warm') {
+          /* ピンクに寄る: ブランドのピンク側へ寄せて、暖かく光る */
+          RA.fx = `hue-rotate(${(k * 30).toFixed(0)}deg) saturate(${(1 + k * 2.2 * pw).toFixed(2)}) brightness(${(1 + k * 0.4 * pw).toFixed(2)})`;
+          blur = k * 1.4 * pw;
+        } else {
+          /* いまの感じ(既定): 彩度が上がって白く発光 */
+          RA.fx = `saturate(${(1 + k * 2.4 * pw).toFixed(2)}) brightness(${(1 + k * 0.45 * pw).toFixed(2)})`;
+          blur = k * 1.6 * pw;
+        }
       }
       else if (R.vanish === 'pixel') {
         /* データ粒(2026-08-27 ヒデさん指定で逆転):
@@ -7537,6 +7558,16 @@ function buildPanel() {
       (mount || body).appendChild(vanishNoteEl);
       /* 選んだ消え方に合わせて、その表現専用のつまみを出す(2026-08-27 ヒデさん指定) */
       if ((R.vanish || 'clip') === 'compress') {
+        pillRow([{ key: 'now', name: 'いまの感じ' }, { key: 'strong', name: '強発光' },
+                 { key: 'rainbow', name: 'レインボー' }, { key: 'cool', name: '青に寄る' },
+                 { key: 'warm', name: 'ピンクに寄る' }],
+          it => (R.glowTone || 'now') === it.key,
+          it => { R.glowTone = it.key; markDirty(); renderFrame(); },
+          { get: () => params.conv.reel.glowTone, set: v => { R.glowTone = v; renderFrame(); } },
+          { noRebuild: true });
+        note('光り方。青に寄る／ピンクに寄るは、ブランドの水色・ピンクの側へ色を寄せます。');
+        slider('光の強さ', 0.2, 3, 0.05, () => params.conv.reel.glowPower, v => R.glowPower = v, v => '×' + v.toFixed(2),
+          '発光とにじみの強さ。', { fixedMax: true });
         slider('線の太さ', 0.1, 3, 0.05, () => params.conv.reel.glowWidth, v => R.glowWidth = v, v => '×' + v.toFixed(2),
           '圧縮されていく時の線の太さ。小さいほど細い線のまま光ります。', { fixedMax: true });
       }
