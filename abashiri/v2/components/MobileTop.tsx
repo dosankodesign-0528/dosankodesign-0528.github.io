@@ -196,7 +196,7 @@ export default function MobileTop() {
             <button
               type="button"
               onClick={() => goTo(2)}
-              className="mt-9 flex -translate-y-5 items-center justify-center rounded-full bg-white/10 px-8 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
+              className="mt-9 flex -translate-y-[30px] items-center justify-center rounded-full bg-white/10 px-5 py-[13px] text-[14px] font-medium leading-none text-white ring-1 ring-inset ring-white/45 backdrop-blur-[12px] transition-transform active:scale-95"
             >
               ぼーっとスポットを見る
             </button>
@@ -204,7 +204,7 @@ export default function MobileTop() {
           <img
             src="/img/illust-main.png"
             alt=""
-            className="pointer-events-none absolute -bottom-5 right-3 w-[90px]"
+            className="pointer-events-none absolute -bottom-[30px] right-3 w-[90px]"
           />
         </div>
       </section>
@@ -274,27 +274,34 @@ export default function MobileTop() {
           <br />
           そこの味が沁みちゃうんです。
         </h2>
-        <div className="no-scrollbar -mx-6 mt-8 flex gap-3 overflow-x-auto px-6">
-          {GOURMET.map((card) => (
-            <div
-              key={card.no}
-              className="relative w-[230px] shrink-0 overflow-hidden rounded-3xl"
-            >
-              <img
-                src={card.img}
-                alt={card.title}
-                className="h-[300px] w-full object-cover"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4 text-white">
-                <p className="text-[12px] font-extralight">
-                  素朴なグルメ {card.no}
-                </p>
-                <p className="mt-0.5 text-[16px] font-light leading-snug">
-                  {card.title}
-                </p>
+        {/* 自動スライドショー（連続スクロール＝gourmet-marquee を再利用）。
+            シームレスにループさせるためカードを2周ぶん並べる */}
+        <div className="-mx-6 mt-8 overflow-hidden">
+          <div
+            className="gourmet-marquee flex w-max gap-3 pl-6"
+            style={{ ["--gourmet-speed" as string]: "28s" }}
+          >
+            {[...GOURMET, ...GOURMET].map((card, idx) => (
+              <div
+                key={idx}
+                className="relative w-[230px] shrink-0 overflow-hidden rounded-3xl"
+              >
+                <img
+                  src={card.img}
+                  alt={card.title}
+                  className="h-[300px] w-full object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-4 text-white">
+                  <p className="text-[12px] font-extralight">
+                    素朴なグルメ {card.no}
+                  </p>
+                  <p className="mt-0.5 text-[16px] font-light leading-snug">
+                    {card.title}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
