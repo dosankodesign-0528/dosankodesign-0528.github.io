@@ -160,12 +160,6 @@
     height: 260px;
     z-index: 2;
   }
-  /* 【2026-08-28 ヒデさん指定】エコー「惑星のコピー」用。
-     惑星そのものの絵を複製して、ひと回り大きく後ろに重ねる。惑星の【後ろ】なので縁だけが見える */
-  .echo-can {
-    position: absolute; left: 306.06px; top: 112.32px; width: 260px; height: 260px;
-    z-index: 1; pointer-events: none; transform-origin: 50% 50%; opacity: 0;
-  }
   #sphere.fallback {
     background-size: 230px 230px;
     background-position: center;
@@ -2777,7 +2771,7 @@ const DEFAULTS = {
        ripple=波紋 / breath=呼吸
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
-    glowEcho: 'e2',     /* エコーの見え方(e1〜e5)。glowKind='echo' の時だけ効く。既定はくっきり輪郭 */
+    glowEcho: 'e3',     /* エコーの見え方(e1〜e4)。glowKind='echo' の時だけ効く。既定はふちが濃い */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3069,7 +3063,7 @@ function loadParams() {
   if (!['A1', 'A2', 'A3', 'B'].includes(merged.design)) merged.design = DEFAULTS.design;
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
-  if (!['e1', 'e2', 'e3', 'e4', 'e5'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e1';
+  if (!['e1', 'e2', 'e3', 'e4'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'e3';
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -4171,53 +4165,59 @@ function convDrawRipples(strength, hit, dt) {
     el.setAttribute('opacity', (0.55 * strength * (1 - k)).toFixed(3));
   }
 }
-/* ===== エコー (2026-08-28 ヒデさん指定・見え方を5案から選ぶ) =====
+/* ===== エコー (2026-08-28 ヒデさん指定・4案) =====
    データが取り込まれると、惑星の【丸いシルエット】がひと回り大きくなった残像として広がる。
    動きは「ひと膨らみ」で固定(1.0 → 1.4 倍へ ふわっと広がって消える)。
-   ⚠️ はじめは薄い水色の面だけで「残像だと分かりづらい」という指摘。
-      輪郭をしっかり出す案・色を変える案・惑星の絵そのものを複製する案を用意した。
+   ⚠️ はじめは輪郭線の案も混ぜていたが、「エコー＝残像が波紋として広がる」方向に統一する指定。
+      どれも【やわらかい面】で、線ではない。
    1 やわらかい面   … 薄い水色の面(はじめの形)
-   2 くっきり輪郭   … 塗りなし。濃いインクの線だけ。いちばんはっきり
-   3 二重の輪郭     … 細い外線＋太い内線のピンク。殻が2枚に見える
-   4 破線の輪郭     … 点線の輪郭。スキャンしているような見え方
-   5 惑星のコピー   … 惑星の絵そのものを複製して後ろに重ねる。縁に本物の質感が出る */
-let convEchoEls = null, convEchoes = [], convEchoCans = null;
+   2 惑星の色       … 惑星と同じ 青→ピンク のグラデーションの残像
+   3 ふちが濃い     … 中心は薄く、ふちに向かって濃くなる。いちばん波紋らしい
+   4 二重の残像     … 2枚が時間差で広がって重なる。奥行きが出る */
+let convEchoEls = null, convEchoes = [], convEchoDefs = false;
 const CONV_ECHO_MAX = 8;
-function convEchoCanvases() {
-  if (convEchoCans) return convEchoCans;
-  if (!sphereCanvasEl || !sphereCanvasEl.parentNode) return null;
-  convEchoCans = [];
-  for (let i = 0; i < 3; i++) {
-    const c = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-    c.width = sphereCanvasEl.width; c.height = sphereCanvasEl.height;
-    c.className = 'echo-can';
-    sphereCanvasEl.parentNode.insertBefore(c, sphereCanvasEl);   /* 惑星の後ろへ */
-    convEchoCans.push({ el: c, ctx: c.getContext('2d') });
-  }
-  return convEchoCans;
+/* 残像用のグラデーションを一度だけ作る */
+function convEchoEnsureDefs() {
+  if (convEchoDefs) return;
+  const svg = dotsBackG && dotsBackG.ownerSVGElement;
+  if (!svg) return;
+  let defs = svg.querySelector('defs');
+  if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); svg.insertBefore(defs, svg.firstChild); }
+  const mk = (id, stops) => {
+    if (svg.querySelector('#' + id)) return;
+    const g = document.createElementNS(SVG_NS, 'radialGradient');
+    g.setAttribute('id', id);
+    for (const [off, col, op] of stops) {
+      const st = document.createElementNS(SVG_NS, 'stop');
+      st.setAttribute('offset', off); st.setAttribute('stop-color', col); st.setAttribute('stop-opacity', op);
+      g.appendChild(st);
+    }
+    defs.appendChild(g);
+  };
+  /* 惑星と同じ色味(内が青・外がピンク) */
+  mk('echoG2', [['0%', '#4FC3F7', '0.05'], ['55%', '#7FD8FF', '0.30'], ['100%', '#FF7BAC', '0.55']]);
+  /* ふちが濃い: 中心は抜けて、ふちだけ濃い＝波紋らしい面 */
+  mk('echoG3', [['0%', '#7FD8FF', '0'], ['62%', '#7FD8FF', '0.05'], ['88%', '#5CC8F5', '0.55'], ['100%', '#5CC8F5', '0']]);
+  convEchoDefs = true;
 }
 function convDrawEchoes(strength, hit, dt, style) {
   const st = style || 'e1';
-  const useCanvas = (st === 'e5');
-  /* --- 図形のプール(円・線の案で使う) --- */
   if (!convEchoEls) {
     const host = dotsBackG && dotsBackG.parentNode;
     if (!host) return;
     convEchoEls = [];
     for (let i = 0; i < CONV_ECHO_MAX * 2; i++) {
       const e = document.createElementNS(SVG_NS, 'ellipse');
+      e.setAttribute('stroke', 'none');
       e.setAttribute('opacity', '0');
       e.style.pointerEvents = 'none';
       host.insertBefore(e, dotsBackG);
       convEchoEls.push(e);
     }
   }
-  const cans = useCanvas ? convEchoCanvases() : convEchoCans;
-  const hideAll = () => {
-    for (const e of convEchoEls) e.setAttribute('opacity', '0');
-    if (cans) for (const c of cans) c.el.style.opacity = '0';
-  };
+  const hideAll = () => { for (const e of convEchoEls) e.setAttribute('opacity', '0'); };
   if (strength <= 0.001) { convEchoes.length = 0; hideAll(); return; }
+  convEchoEnsureDefs();
   /* --- 生む: ひと膨らみ(吸収のたびに1つ) --- */
   if (hit > 0.35 && (!convEchoes.length || convEchoes[convEchoes.length - 1].t > 0.18)
       && convEchoes.length < CONV_ECHO_MAX) {
@@ -4229,47 +4229,28 @@ function convDrawEchoes(strength, hit, dt, style) {
   }
   hideAll();
   const cc = convCenter(), rx0 = convPlanetR(), ry0 = convPlanetRY();
-  /* --- 5 惑星のコピー: 惑星の絵をそのまま複製して、後ろにひと回り大きく重ねる --- */
-  if (useCanvas) {
-    if (!cans) return;
-    for (let i = 0; i < cans.length; i++) {
-      const q = convEchoes[i], c = cans[i];
-      if (!q) { c.el.style.opacity = '0'; continue; }
-      const u = Math.max(0, Math.min(1, q.t));
-      const grow = 1 + convSStep(u) * 0.34;
-      try {
-        c.ctx.clearRect(0, 0, c.el.width, c.el.height);
-        c.ctx.drawImage(sphereCanvasEl, 0, 0);
-      } catch (e) {}
-      const pl = params.planet, plFlat = pl.flat == null ? 1 : pl.flat;
-      c.el.style.transform = `translate(${pl.dx}px, ${pl.dy}px) scale(${(pl.scale * grow).toFixed(4)}, ${(pl.scale * plFlat * grow).toFixed(4)})`;
-      c.el.style.opacity = (0.85 * strength * (1 - u)).toFixed(3);
-    }
-    return;
-  }
-  /* --- 1〜4: 図形で描く --- */
   let slot = 0;
+  const put = (mul, grow, fill, a) => {
+    const el = convEchoEls[slot++]; if (!el) return;
+    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+    el.setAttribute('rx', (rx0 * grow * mul).toFixed(1));
+    el.setAttribute('ry', (ry0 * grow * mul).toFixed(1));
+    el.setAttribute('fill', fill);
+    el.setAttribute('opacity', Math.max(0, a).toFixed(3));
+  };
   for (let i = 0; i < convEchoes.length; i++) {
-    const q = convEchoes[i];
-    const u = Math.max(0, Math.min(1, q.t));
+    const u = Math.max(0, Math.min(1, convEchoes[i].t));
     const grow = 1 + convSStep(u) * 0.40;
-    const a = 1 - u;
-    const put = (mul, o) => {
-      const el = convEchoEls[slot++]; if (!el) return;
-      el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
-      el.setAttribute('rx', (rx0 * grow * mul).toFixed(1));
-      el.setAttribute('ry', (ry0 * grow * mul).toFixed(1));
-      el.setAttribute('fill', o.fill || 'none');
-      el.setAttribute('stroke', o.stroke || 'none');
-      el.setAttribute('stroke-width', (o.w || 0).toFixed(2));
-      if (o.dash) el.setAttribute('stroke-dasharray', o.dash); else el.removeAttribute('stroke-dasharray');
-      el.setAttribute('opacity', Math.max(0, o.a).toFixed(3));
-    };
-    if (st === 'e2')      put(1, { stroke: '#111', w: 2.2, a: 0.85 * strength * a });
-    else if (st === 'e3') { put(1, { stroke: '#FF5D97', w: 3.2, a: 0.8 * strength * a });
-                            put(1.09, { stroke: '#FF5D97', w: 1.2, a: 0.5 * strength * a }); }
-    else if (st === 'e4') put(1, { stroke: '#3A3A3A', w: 2, dash: '10 8', a: 0.9 * strength * a });
-    else                  put(1, { fill: '#7FD8FF', a: 0.30 * strength * a });
+    const fade = 1 - u;
+    if (st === 'e2')      put(1, grow, 'url(#echoG2)', 0.85 * strength * fade);
+    else if (st === 'e3') put(1, grow, 'url(#echoG3)', 0.95 * strength * fade);
+    else if (st === 'e4') {
+      /* 2枚目は少し遅れて、少し小さい。重なって濃淡が出る */
+      put(1, grow, '#7FD8FF', 0.26 * strength * fade);
+      const u2 = Math.max(0, u - 0.22), g2 = 1 + convSStep(u2 / 0.78) * 0.40;
+      if (u2 > 0) put(0.94, g2, '#9BE0FF', 0.22 * strength * (1 - u2 / 0.78));
+    }
+    else                  put(1, grow, '#7FD8FF', 0.30 * strength * fade);
   }
 }
 function convFrontCut() { return (params.conv && params.conv.frontCut) !== false; }
@@ -10076,13 +10057,13 @@ function buildPanel() {
     /* 【2026-08-28 ヒデさん指定】エコーを選んだ時だけ、出方の4パターンを下に出す */
     const echoBox = document.createElement('div');
     (mount || body).appendChild(echoBox);
-    /* 【2026-08-28 ヒデさん指定】動きは「ひと膨らみ」で固定。選ぶのは【見え方】5案 */
+    /* 【2026-08-28 ヒデさん指定】動きは「ひと膨らみ」で固定。
+       線の案はやめ、どれも【やわらかい残像が波紋として広がる】方向で4案 */
     const ECHOES = [
-      { key: 'e1', name: '1 やわらかい面', tip: '薄い水色の面。はじめの形です。いちばん静かですが、残像だとは分かりにくい。' },
-      { key: 'e2', name: '2 くっきり輪郭', tip: '塗りなしで、濃いインクの線だけ。輪郭がはっきり出るので残像だと分かりやすい。' },
-      { key: 'e3', name: '3 二重の輪郭',   tip: '太い内線＋細い外線のピンク。殻が2枚に見えて、広がりが読み取れます。' },
-      { key: 'e4', name: '4 破線の輪郭',   tip: '点線の輪郭。スキャンしているような、データらしい見え方。' },
-      { key: 'e5', name: '5 惑星のコピー', tip: '惑星の絵そのものを複製して、ひと回り大きく後ろに重ねます。縁に本物の質感が出るのでいちばんはっきり。' },
+      { key: 'e1', name: '1 やわらかい面', tip: '薄い水色の面がふわっと広がります。いちばん静か。' },
+      { key: 'e2', name: '2 惑星の色',     tip: '惑星と同じ 青→ピンク のグラデーションの残像。惑星の色をそのまま引き継ぎます。' },
+      { key: 'e3', name: '3 ふちが濃い',   tip: '中心は薄く、ふちに向かって濃くなる残像。いちばん波紋らしい広がり方です。' },
+      { key: 'e4', name: '4 二重の残像',   tip: '2枚が時間差で広がって重なります。濃淡が出て奥行きを感じます。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
