@@ -4214,9 +4214,15 @@ function convDrawShape() {
   for (let i = 0; i < n; i++) {
     let rx = R, ry = R * flat, rot = baseRot;
     if (shape === 'atom') {
-      rot = i * 180 / n + spin * 40;
-      const fore = 0.12 + 0.88 * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
-      ry = R * flat * fore;
+      /* 【2026-08-29 ヒデさん指定】横向きで始めたい/縦にならないように。
+         ・全体の回転はゆっくり(spin*12)にしてドリフトを抑える
+         ・「縦寄りの輪ほど開ききらない」ようにして、常に横長のアトムに保つ */
+      rot = i * 180 / n + spin * 12;
+      const horiz = Math.abs(Math.cos(rot * Math.PI / 180));   /* 1=横, 0=縦 */
+      const foreMax = 0.32 + 0.68 * horiz;                     /* 縦の輪は最大でも 0.32 までしか開かない */
+      const fore = 0.12 + (foreMax - 0.12) * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
+      rx = R * (0.62 + 0.38 * horiz);   /* 縦寄りの輪は長さも短く = 上下に伸びない = 横長のアトム */
+      ry = rx * flat * fore;
     } else if (shape === 'saturn') {
       const f = n === 1 ? 1 : (0.42 + 0.58 * i / (n - 1));
       rx = R * f; ry = R * f * flat;
