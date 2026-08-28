@@ -3533,6 +3533,12 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.tight,
       conv: { count: 34, life: 5, speed: 0.85, size: 0.45, stay: 2, swirl: 2.4, fallCurve: 1.9 },
       common: { orbitSpin: 0.3 }, root: { duration: 28 } },
+    /* 【2026-08-28 ヒデさん指定】「周回のみ」と同じカンプの2本の軌道のまま、粒が吸収される案。
+       レイアウトは std(カンプ通り)・回転なしで、周回のみの見た目を保ったまま粒だけ惑星へ落ちる。 */
+    { name: '周回レイアウトで吸収', desc: '周回のみと同じ2本の軌道(カンプ通り)のまま、粒がゆっくり惑星へ吸い込まれます。軌道の形は崩れません。',
+      gfx: GFX_LOOKS.std,
+      conv: { count: 14, life: 8, speed: 0.5, size: 0.62, stay: 5.5, swirl: 1, fallCurve: 1 },
+      common: { orbitSpin: 0 }, root: { duration: 34 } },
   ],
   accre: [
     { name: 'A 標準の円盤', desc: '既定の円盤。粒がゆっくり渦を巻きながら、少しずつ内へ落ちていきます。',
