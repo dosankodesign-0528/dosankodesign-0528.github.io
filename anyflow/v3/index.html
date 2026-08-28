@@ -5222,6 +5222,20 @@ const editHandles = (() => {
     /* 【2026-08-27 バグ修正】辺のリサイズが効かなかった原因は重なり順。
        選択用の当たり判定(透明な太い楕円)がハンドルの上にいて、辺を掴めなかった。
        枠(移動用) → 当たり判定 → ハンドル類 の順に重ねる。 */
+    /* 【2026-08-28 バグ修正】SVGの"空白"は普通ポインタを拾わないので、まとめて選択(マーキー)が
+       始まらなかった。透明な下敷きを一番下に敷いて、空白ドラッグを必ず拾わせる。
+       当たり判定(軌道・惑星)とハンドルはこの後に足すので、そちらが上=優先される。 */
+    const marqBg = document.createElementNS(SVG_NS, 'rect');
+    marqBg.setAttribute('x', -3000); marqBg.setAttribute('y', -3000);
+    marqBg.setAttribute('width', 9000); marqBg.setAttribute('height', 9000);
+    marqBg.setAttribute('fill', 'rgba(0,0,0,0)');
+    marqBg.style.pointerEvents = 'all';
+    marqBg.style.cursor = 'crosshair';
+    svg.appendChild(marqBg);
+    marqBg.addEventListener('pointerdown', e => {
+      const q = toLocal(e);
+      marq = { x0: q.x, y0: q.y, x1: q.x, y1: q.y, moved: false };
+    });
     boxBg = document.createElementNS(SVG_NS, 'g');
     svg.appendChild(boxBg);
     boxG = document.createElementNS(SVG_NS, 'g');   /* ハンドル類。当たり判定より後で足す */
@@ -5274,7 +5288,11 @@ const editHandles = (() => {
       if (key !== 'planet') { el.setAttribute('stroke', 'rgba(0,0,0,0)'); el.setAttribute('stroke-width', '30'); }
       el.style.cursor = 'move';   /* 描かれている所を触れば、そのまま掴んで動かせる */
       el.style.pointerEvents = key === 'planet' ? 'fill' : 'stroke';
-      el.addEventListener('pointerdown', e => { e.stopPropagation(); select(key); startDrag(e, { kind: 'move' }); });
+      el.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        if (e.shiftKey || e.metaKey || e.ctrlKey) { toggleInSel(key); return; }   /* Cmd/Shift+クリックで追加選択(移動はしない) */
+        select(key); startDrag(e, { kind: 'move' });
+      });
       svg.appendChild(el);
       hits[key] = el;
     }
@@ -5301,11 +5319,6 @@ const editHandles = (() => {
     marqRect.style.display = 'none';
     marqRect.style.pointerEvents = 'none';
     svg.appendChild(marqRect);
-    /* 何もない所を押したら: ドラッグで四角を描いてまとめて選択 / 動かさなければ選択解除 */
-    svg.addEventListener('pointerdown', e => {
-      const q = toLocal(e);
-      marq = { x0: q.x, y0: q.y, x1: q.x, y1: q.y, moved: false };
-    });
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', endDrag);
     return svg;
@@ -5355,6 +5368,17 @@ const editHandles = (() => {
     if (boxBg) boxBg.style.display = has ? '' : 'none';
     place();
     if (onSel) onSel(sel);      /* 複数の時は sel=null(数値パネルは単体用) */
+  }
+  /* Cmd/Shift+クリックで、その対象を選択に足す/外す */
+  function toggleInSel(key) {
+    const i = selKeys.indexOf(key);
+    if (i >= 0) selKeys.splice(i, 1); else selKeys.push(key);
+    sel = selKeys.length === 1 ? selKeys[0] : null;
+    const has = selKeys.length > 0;
+    if (boxG) boxG.style.display = has ? '' : 'none';
+    if (boxBg) boxBg.style.display = has ? '' : 'none';
+    place();
+    if (onSel) onSel(sel);
   }
   /* 複数選択時のまとめ枠 = 各対象の外接矩形の和(回転は無視した軸並行) */
   function groupAABB() {
