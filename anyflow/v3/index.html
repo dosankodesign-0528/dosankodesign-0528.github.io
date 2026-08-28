@@ -3623,10 +3623,10 @@ const GFX_VARIANTS = {
       conv: { style: 'cage', nodes: 40, cageR: 2.6, cageSpin: 0.6, cageLinks: 4, cageTilt: -14,
               lineAlpha: 0.42, lineWidth: 0.9, size: 0.42, random: 0.4, hop: 0.5, rate: 2.2 },
       common: { orbitSpin: 0 } },
-    { name: 'E 細かいケージ', desc: '惑星に近い小さなカゴを、細かい骨で速く回します。装置のような精密さが出ます。',
-      gfx: GFX_LOOKS.tight,
-      conv: { style: 'cage', nodes: 34, cageR: 1.35, cageSpin: 1.8, cageLinks: 3, cageTilt: -34,
-              lineAlpha: 0.55, lineWidth: 0.8, size: 0.36, random: 0.2, hop: 0.32, rate: 2.6 },
+    { name: 'E 細かいケージ', desc: '細かい骨のカゴが惑星を包んで速く回ります。手前の骨は惑星の前、奥は後ろを通って取り囲みます。',
+      gfx: GFX_LOOKS.std,
+      conv: { style: 'cage', nodes: 34, cageR: 1.7, cageSpin: 1.8, cageLinks: 3, cageTilt: -28,
+              lineAlpha: 0.6, lineWidth: 1.0, size: 0.4, random: 0.2, hop: 0.32, rate: 2.6 },
       common: { orbitSpin: 0 } },
     { name: 'F 立ちクロスの網', desc: '起こして交差させた広い範囲に網を張ります。奥行きのあるネットになります。',
       gfx: GFX_LOOKS.upright,
@@ -4126,6 +4126,31 @@ function convLinePool(n) {
   }
   return convLine;
 }
+/* 【2026-08-29 ヒデさん指定】網の線を「惑星の前」にも通すためのプール(手前レイヤー・下半分だけクリップ)。
+   これで平面の網でも、惑星が網の中に入れ子に見える。 */
+let convLineFront = null, convMeshFrontClip = null;
+function convLineFrontPool(n) {
+  if (convLineFront && convLineFront.length !== n) { for (const el of convLineFront) el.remove(); convLineFront = null; }
+  if (convLineFront) return convLineFront;
+  convLineFront = [];
+  const frontHost = dotsFrontG.parentNode;
+  if (!convMeshFrontClip) {
+    let defs = frontHost.querySelector('defs');
+    if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); frontHost.insertBefore(defs, frontHost.firstChild); }
+    const cp = document.createElementNS(SVG_NS, 'clipPath'); cp.setAttribute('id', 'meshFrontClip');
+    const r = document.createElementNS(SVG_NS, 'rect'); r.setAttribute('x', -4000); r.setAttribute('y', 0); r.setAttribute('width', 12000); r.setAttribute('height', 8000);
+    cp.appendChild(r); defs.appendChild(cp); convMeshFrontClip = r;
+  }
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS(SVG_NS, 'path');
+    el.setAttribute('fill', 'none'); el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('opacity', '0'); el.setAttribute('clip-path', 'url(#meshFrontClip)');
+    frontHost.insertBefore(el, dotsFrontG);
+    convLineFront.push(el);
+  }
+  return convLineFront;
+}
+function convHideLineFront() { if (convLineFront) for (const el of convLineFront) el.setAttribute('opacity', '0'); }
 /* 粒(circle)のプール。【2026-08-26 ヒデさん指定】惑星の後ろに回ったものは透けさせず消すため、
    奥(layer-back)と手前(layer-front)に1個ずつ持ち、front 判定で描くほうを切り替える。
    奥レイヤーは惑星canvas(z-index:2)の下にあるので、惑星に隠れて自然に見えなくなる。 */
@@ -4151,7 +4176,7 @@ function pktSet(pk, x, y, r, fill, op, front) {
   pk.el.setAttribute('opacity', front === false ? '0' : String(op));
   pk.back.setAttribute('opacity', front === false ? String(op) : '0');
 }
-function convHideLines() { if (convLine) for (const el of convLine) el.setAttribute('opacity', '0'); }
+function convHideLines() { if (convLine) for (const el of convLine) el.setAttribute('opacity', '0'); if (convLineFront) for (const el of convLineFront) el.setAttribute('opacity', '0'); }
 function convHidePkts() { if (convPkt) for (const p of convPkt) { p.el.setAttribute('opacity', '0'); p.back.setAttribute('opacity', '0'); p.k = -1; } }
 /* ドットの今の位置 (convFrame は renderFrame の描画前に走るので自前で出す) */
 function convDotPos(geoms, i) {
@@ -5202,6 +5227,18 @@ function convFrame(geoms) {
         lines[i].setAttribute('opacity', Math.max(0, al).toFixed(3));
       } else lines[i].setAttribute('opacity', '0');
     }
+    /* 【2026-08-29 ヒデさん指定】惑星の中心より下(手前側)の線は、惑星の前にも通す＝入れ子に見せる */
+    if (convMeshFrontClip) convMeshFrontClip.setAttribute('y', cc.y.toFixed(1));
+    const flines = convLineFrontPool(lines.length);
+    for (let i = 0; i < flines.length; i++) {
+      if (i < pairs.length) {
+        const [A, B, al] = pairs[i];
+        flines[i].setAttribute('d', `M${A.x.toFixed(1)},${A.y.toFixed(1)} L${B.x.toFixed(1)},${B.y.toFixed(1)}`);
+        flines[i].setAttribute('stroke', '#6B7690');
+        flines[i].setAttribute('stroke-width', String(M.lineWidth || 1));
+        flines[i].setAttribute('opacity', Math.max(0, al).toFixed(3));
+      } else flines[i].setAttribute('opacity', '0');
+    }
     /* --- ノードとパケット --- */
     const pkts = convPktPool(n + 12);
     for (let i = 0; i < n; i++) {
@@ -5209,7 +5246,8 @@ function convFrame(geoms) {
       const tw = style === 'constellation' ? 0.55 + 0.45 * Math.sin(elapsed * 1.6 + q.tw) : 0.85;
       /* 惑星に重なったノードは奥へ回して隠す(透けさせない) */
       const inPlanet = convFrontCut() && Math.hypot(P0.x - cc.x, P0.y - cc.y) < convPlanetR();
-      pktSet(pk, P0.x, P0.y, (DOT_R * M.size * convDotK(P0.y, cc.y, RY)).toFixed(2), q.c, tw.toFixed(3), !inPlanet);
+      /* 手前(下半分)のノードは惑星に重なっても前に出す=入れ子に見える。奥(上半分)は隠す */
+      pktSet(pk, P0.x, P0.y, (DOT_R * M.size * convDotK(P0.y, cc.y, RY)).toFixed(2), q.c, tw.toFixed(3), !inPlanet || P0.y > cc.y);
     }
     convMesh.next -= dt;
     if (convMesh.next <= 0 && convMesh.pk.length < 12) {
