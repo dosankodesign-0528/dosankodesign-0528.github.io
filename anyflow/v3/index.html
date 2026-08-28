@@ -1529,6 +1529,11 @@
   .np-head { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; font-size: 11px; color: #444; font-weight: 600; }
   .np-head .np-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
   .np-empty { font-size: 9.5px; color: #a6a6a6; padding: 6px 0 2px; line-height: 1.5; }
+  .np-fb { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .np-fb-lab { flex: 0 0 auto; font-size: 10px; color: #9a9a9a; font-weight: 500; }
+  .np-fb-b { flex: 1 1 auto; height: 26px; border: 1px solid #e2e2e2; border-radius: 6px; background: #fff; color: #666; font-size: 11px; cursor: pointer; }
+  .np-fb-b:hover { background: #f3f3f3; }
+  .np-fb-b.on { background: #0D99FF; border-color: #0D99FF; color: #fff; }
   /* カテゴリを開いてすぐの説明。小見出しより前に来るので上に余白がいる */
   .grp-note.cat-note { margin: 10px 0 0; }
   /* たたまれている時に「押せる」と分かるようにする小さい添え書き */
@@ -2804,6 +2809,7 @@ const DEFAULTS = {
     reel:   { T: 4.8, inDur: 0.14, shrinkAt: 0.30, endAt: 0.72, depth: 0.95, moveDur: 0.16,
               vanish: 'clip', fadeAt: 0.7, fadeTo: 0, spinUp: 0,   /* 2026-08-27 ヒデさん指定: スピンは既定オフ */
               blend: 0, blendAlpha: 0.45,   /* 外と内の間を埋める中間の輪(イラレのブレンドのイメージ) */
+              transRot: true,   /* 【2026-08-28】輪が入れ替わる時、傾きの違うスロットへ移ると回転して見える。offで回転しない */
               /* データ粒: 最初は点線 → 圧縮されて1本の線になる。太さ/密度/ゆらぎを調整できる */
               pxWidth: 1.6, pxDensity: 1, pxWobble: 0, pxSpin: 1,   /* pxSpin=ドットが軌道を回る速さ */
               pxJoinAt: 0, pxJoinEnd: 1,   /* 点がつながり始める / つながりきる タイミング(収縮の中の割合) */
@@ -4759,7 +4765,8 @@ function convFrame(geoms) {
       const k = convSStep((ph - eAt) / slideLen);
       gM = { cx: slotB.cx + (slotA.cx - slotB.cx) * k, cy: slotB.cy + (slotA.cy - slotB.cy) * k,
              rx: slotB.rx + (slotA.rx - slotB.rx) * k, ry: slotB.ry + (slotA.ry - slotB.ry) * k,
-             rot: slotB.rot + (slotA.rot - slotB.rot) * k };
+             /* 【2026-08-28 ヒデさん指定】移り変わりの回転 オン/オフ。offなら傾きを変えず(移動先の傾きのまま)すべり込む＝回らない */
+             rot: (R.transRot === false) ? slotA.rot : (slotB.rot + (slotA.rot - slotB.rot) * k) };
     } else if (ph >= eAt + slideLen) gM = slotA;
     if (ph >= eAt && ph - (dt / T) < eAt) convAddGlow(0.7);
     geoms[shrinkKey] = gS; geoms[slideKey] = gM;                       // ドットも輪ごと動く
@@ -10277,6 +10284,23 @@ function buildNumPanel(host) {
       fields.r = mkField('角度', '°', () => +(b.rot + O.angle).toFixed(1),
         v => O.angle = +(v - b.rot).toFixed(1), 0.5);
       grid.append(fields.x.el, fields.y.el, fields.w.el, fields.h.el, fields.r.el);
+      /* 【2026-08-28 ヒデさん指定】この軌道を手動で 前/裏 に。自動ボタンで両方裏になった時などの個別調整 */
+      const fbRow = document.createElement('div');
+      fbRow.className = 'np-fb';
+      const fbLab = document.createElement('span'); fbLab.className = 'np-fb-lab'; fbLab.textContent = '前後';
+      const bFront = document.createElement('button'); bFront.type = 'button'; bFront.textContent = '前に出す'; bFront.className = 'np-fb-b';
+      const bBack = document.createElement('button'); bBack.type = 'button'; bBack.textContent = '裏に回す'; bBack.className = 'np-fb-b';
+      const syncFB = () => { bFront.classList.toggle('on', !O.behind); bBack.classList.toggle('on', !!O.behind); };
+      const setFB = back => {
+        O.behind = back; markDirty(); renderFrame(); syncFB();
+        if (typeof editBar !== 'undefined' && editBar.sync) editBar.sync();
+        if (typeof editHistory !== 'undefined') { editHistory.push(); editBar.sync(); }
+      };
+      bFront.onclick = () => setFB(false);
+      bBack.onclick = () => setFB(true);
+      syncFB();
+      fbRow.append(fbLab, bFront, bBack);
+      wrap.appendChild(fbRow);
     }
   }
   function clamp01x(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
@@ -10770,8 +10794,13 @@ function buildPanel() {
         'ここまでは全周サイズでドットが回る。');
       slider('吸収し終わる', 0.4, 0.9, 0.01, () => params.conv.reel.endAt, v => R.endAt = v, pctF,
         'ここで吸収が完了し、もう1本が移動を始める。');
-      slider('移る長さ', 0.05, 0.35, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
-        '吸収後、もう1本がすべり込む時間。');
+      /* 【2026-08-28 ヒデさん指定】交差した配置(B以降)だと、輪が入れ替わる時に傾きが振れて回転して見える。
+         その回転をオン/オフできる。速さは下の「移る長さ」で(長いほどゆっくり)。 */
+      segRow('移り変わりの回転', [['する', 1], ['しない', 0]],
+        () => (params.conv.reel.transRot === false) ? 0 : 1,
+        v => { R.transRot = !!v; markDirty(); renderFrame(); });
+      slider('移る長さ（回転の速さ）', 0.05, 0.5, 0.01, () => params.conv.reel.moveDur, v => R.moveDur = v, pctF,
+        '吸収後、もう1本がすべり込む時間。長いほど回転もゆっくりになります（＝回転の速さ）。');
       slider('新しい輪が出る', 0.04, 0.3, 0.01, () => params.conv.reel.inDur, v => R.inDur = v, pctF,
         '空いた位置に新しい輪がフェードインする時間。');
       slider('どこまで縮むか', 0.5, 1, 0.01, () => params.conv.reel.depth, v => R.depth = v, pctF, '100%で惑星の中心まで縮む。');
