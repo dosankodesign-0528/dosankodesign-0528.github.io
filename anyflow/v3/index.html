@@ -2803,7 +2803,7 @@ const DEFAULTS = {
     echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
     echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
     /* 【2026-08-28 ヒデさん指定】複数軌道(アトム型/土星型/花型など)。ringCount>=2 で有効 */
-    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6,
+    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3,
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3109,7 +3109,7 @@ function loadParams() {
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k8';
   for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha', 'fxEvery', 'fxInertia', 'fxCount',
-                    'ringCount', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble'])
+                    'ringCount', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
   if (!['atom', 'saturn', 'rosette', 'globe'].includes(merged.conv.ringShape)) merged.conv.ringShape = DEFAULTS.conv.ringShape;
   if (typeof merged.conv.echoCrisp !== 'boolean') merged.conv.echoCrisp = DEFAULTS.conv.echoCrisp;
@@ -3235,7 +3235,7 @@ function save() {
    dirty = 保存していない変更があるか */
 let dirty = false;
 let syncSaveBtn = null;   /* パネルを組む時に、保存ボタンの表示を更新する関数が入る */
-function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); if (syncPresetPills) syncPresetPills(); }
+function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); if (syncPresetPills) syncPresetPills(); if (typeof gfxTouchVariant === 'function') gfxTouchVariant(); }
 
 /* ================= ドット要素 (奥/手前レイヤーに1個ずつ) ================= */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -3562,10 +3562,10 @@ const GFX_VARIANTS = {
       conv: { count: 14, life: 8, speed: 0.5, size: 0.62, stay: 5.5, swirl: 1, fallCurve: 1 },
       common: { orbitSpin: 0 }, root: { duration: 34 } },
     /* 【2026-08-29 ヒデさん指定】コメット: 大きめの粒が少数、軌道をくるくる回りながら、たまに1個ずつ惑星へ吸い込まれる。 */
-    { name: 'コメット', desc: '大きめの粒がゆっくり軌道を回り、たまに1つずつ惑星へ吸い込まれます。軌道もくるくる回ります。',
-      gfx: GFX_LOOKS.std,
-      conv: { count: 5, life: 3.6, speed: 0.5, size: 2.0, stay: 8, swirl: 1.3, fallCurve: 1.5 },
-      common: { orbitSpin: 0.4 }, root: { duration: 34 } },
+    { name: 'コメット', desc: '2本の軌道が斜めに交差してくるくる回り、大きめの粒がたまに1つずつ惑星へ吸い込まれます（Figmaカンプ準拠）。',
+      gfx: { layout: 'gyro', planet: { scale: 0.92 } },
+      conv: { count: 6, life: 3.6, speed: 0.5, size: 1.2, stay: 7, swirl: 0.6, fallCurve: 1.4 },
+      common: { orbitSpin: 0.35 }, root: { duration: 34 } },
     /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
     { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
       gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
@@ -3949,6 +3949,17 @@ function convDotMoves() {
 const convDotF = DOTS.map(() => 1);   // ドットごとの「惑星への寄せ」(1=軌道上 → 0=惑星中心)
 const convDotA = DOTS.map(() => 1);   // ドットごとの濃さ倍率 (集約アニメ用)
 let convGlow = 0;                     // 吸収の瞬間、惑星がふっと明るくなる(減衰)
+let applyingVariant = false;          // 案を適用中は「案ごとの調整の記録」を止める
+/* 【2026-08-29 ヒデさん指定】案ごとに調整値を独立させる: いま選んでいる案の状態を、その案専用に控える */
+function gfxTouchVariant() {
+  if (applyingVariant || !params || !params.conv) return;
+  const m = params.converge || 'off';
+  const idx = (params.gfxVariantOn || {})[m];
+  if (idx == null) return;
+  if (!params.gfxTweaks) params.gfxTweaks = {};
+  if (!params.gfxTweaks[m]) params.gfxTweaks[m] = {};
+  try { params.gfxTweaks[m][idx] = gfxSnapshotFull(); } catch (e) {}
+}
 let convGlowLast = -1e9;              // 最後に「エフェクトを出した」時刻
 let convGlowN = 0;                    // 取り込みイベントの通し番号(回数モード用)
 let convGlowBurst = -1e9;             // いま出している一連(バースト)の開始時刻
@@ -4186,7 +4197,7 @@ function convShapePool(n) {
   const mk = (host, before, clip) => {
     const el = document.createElementNS(SVG_NS, 'ellipse');
     el.setAttribute('fill', 'none'); el.setAttribute('stroke-width', '3');
-    el.setAttribute('stroke-linecap', 'round'); el.setAttribute('opacity', '0');
+    el.setAttribute('stroke-linecap', 'round'); el.setAttribute('opacity', '0'); el.setAttribute('data-shape', '1');
     if (clip) el.setAttribute('clip-path', 'url(#shapeFrontClip)');
     host.insertBefore(el, before);
     return el;
@@ -4247,6 +4258,7 @@ function convDrawShape() {
       el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
       el.setAttribute('transform', tr);
       el.setAttribute('stroke', col);
+      el.setAttribute('stroke-width', (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1));
       el.setAttribute('opacity', '0.9');
     }
   }
@@ -9686,7 +9698,7 @@ function gfxSnapshotFull() {
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
       fxMode: C.fxMode, fxCount: C.fxCount, fxEvery: C.fxEvery, fxInertia: C.fxInertia, echoCrisp: C.echoCrisp,
-      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble,
+      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble, ringWidth: C.ringWidth,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9716,7 +9728,7 @@ function gfxApplyFull(d) {
                      'glowKind', 'glowHold', 'glowEcho',
                      'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
                      'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp',
-                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble']) {
+                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9807,6 +9819,7 @@ function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
   const v = (GFX_VARIANTS[mode] || [])[i];
   if (!v) return;
+  applyingVariant = true;
   /* 【2026-08-28 ヒデさん指定・根治】案を選び直したら、その案が指定しない「回転・スピン系」は
      必ず 0 へ戻す。こうしないと、前に選んだジャイロ案やスピンの保存値がブラウザに残って
      「A カンプ通り」を選んでも回り続けてしまう。このあと root / gyro / common / conv が
@@ -9817,6 +9830,16 @@ function applyGfxVariant(i) {
   params.conv.gyroMixBy[mode] = 0;
   params.conv.ringCount = 0;   /* シェイプ(複数軌道)は、それを指定する案でだけオンにする */
   if (mode === 'reel' && params.conv.reel) params.conv.reel.spinUp = 0;
+  /* 【2026-08-29 ヒデさん指定】案ごとに独立させるため、案を選ぶ瞬間に「シェイプ共通」と
+     「この案のつまみ」を一旦すべて既定へ戻す。このあと 定義(common/conv) → 保存した調整 の順に
+     重ねるので、他の案でいじった値が漏れて残らない。 */
+  for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth'])
+    params.conv[rk] = DEFAULTS.conv[rk];
+  {
+    const pk0 = CONV_PARAM_KEY[mode];
+    if (pk0 && DEFAULTS.conv[pk0] && params.conv[pk0])
+      for (const kk in DEFAULTS.conv[pk0]) params.conv[pk0][kk] = DEFAULTS.conv[pk0][kk];
+  }
   const base = gfxDefault(), g = v.gfx || {};
   gfxApply({
     layout: g.layout || base.layout,
@@ -9852,6 +9875,10 @@ function applyGfxVariant(i) {
   }
   if (!params.gfxVariantOn) params.gfxVariantOn = {};
   params.gfxVariantOn[mode] = i;
+  /* 【2026-08-29 ヒデさん指定】この案で前に調整した値があれば重ねて復元(案ごとに独立) */
+  const tw = params.gfxTweaks && params.gfxTweaks[mode] && params.gfxTweaks[mode][i];
+  if (tw) gfxApplyFull(tw);
+  applyingVariant = false;
   markDirty();
   renderFrame();
 }
@@ -11156,6 +11183,7 @@ function buildPanel() {
       slider('奥行きの動き', 0, 1.5, 0.05, () => params.conv.ringTumble, v => params.conv.ringTumble = v, v => '×' + v.toFixed(2), 'アトム型・地球儀型で、奥行きの伸び縮みの速さ。');
       slider('つぶし', 0.15, 0.8, 0.02, () => params.conv.ringFlat, v => params.conv.ringFlat = v, v => v.toFixed(2), '軌道の縦のつぶし具合。小さいほど細長い輪。');
       slider('大きさ', 0.5, 1.6, 0.02, () => params.conv.ringSize, v => params.conv.ringSize = v, v => '×' + v.toFixed(2), '軌道全体の大きさ。');
+      slider('線の太さ', 0.5, 8, 0.1, () => params.conv.ringWidth, v => params.conv.ringWidth = v, v => v.toFixed(1) + 'px', '複数軌道の線の太さ。');
     }
     mount = keep;
   };
