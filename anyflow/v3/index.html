@@ -3561,6 +3561,11 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.std,
       conv: { count: 14, life: 8, speed: 0.5, size: 0.62, stay: 5.5, swirl: 1, fallCurve: 1 },
       common: { orbitSpin: 0 }, root: { duration: 34 } },
+    /* 【2026-08-29 ヒデさん指定】コメット: 大きめの粒が少数、軌道をくるくる回りながら、たまに1個ずつ惑星へ吸い込まれる。 */
+    { name: 'コメット', desc: '大きめの粒がゆっくり軌道を回り、たまに1つずつ惑星へ吸い込まれます。軌道もくるくる回ります。',
+      gfx: GFX_LOOKS.std,
+      conv: { count: 5, life: 3.6, speed: 0.5, size: 2.0, stay: 8, swirl: 1.3, fallCurve: 1.5 },
+      common: { orbitSpin: 0.4 }, root: { duration: 34 } },
     /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
     { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
       gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
@@ -10978,6 +10983,8 @@ function buildPanel() {
       slider('吸い込みの秒数', 0.5, 16, 0.1, () => params.conv.spiral.life, v => S.life = v, v => v.toFixed(1) + '秒',
         '軌道から離れて惑星に届くまでの秒数。', { fixedMax: true });
       slider('回転の速さ', 0.1, 5, 0.05, () => params.conv.spiral.speed, v => S.speed = v, v => '×' + v.toFixed(2), null, { fixedMax: true });
+      slider('粒の大きさ', 0.2, 3, 0.05, () => params.conv.spiral.size, v => S.size = v, v => '×' + v.toFixed(2),
+        '粒1つの大きさ。大きくすると「コメット」のような大きめの粒になります。', { fixedMax: true });
     } else if (cvMode === 'accre') {
       const AC = params.conv.accre;
       sub(animModeBox, 'この案の調整（粒の渦）', true);
