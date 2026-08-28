@@ -2569,6 +2569,7 @@ const DEFAULTS = {
   /* KV: グラフィック全体の位置と登場シーケンス(秒) */
   kv: {
     gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
+    rotX: 0, rotY: 0, rotZ: 0,   // 【2026-08-28】グラフィック全体の回転(XYZ・3D)
     headerAt: 0.25,   // ヘッダーがブラーで出る
     eyebrowGap: 0.14, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
     typeAt: 1.0,      // タイピング開始
@@ -2829,7 +2830,7 @@ const DEFAULTS = {
     /* mesh(メッシュ): ノードがランダムに漂う網。見た目は「ふわふわ」に固定(2026-08-26 ヒデさん指定) */
     /* pts = 頂点を手で置いた座標([{x,y}])。null なら自動配置。
        【2026-08-28 ヒデさん指定】「グラフィックを編集」から頂点をドラッグして決められる */
-    mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6, pts: null,
+    mesh:   { style: 'organic', nodes: 14, hop: 0.55, span: 0.34, rate: 1.2, size: 0.6, spread: 1, pts: null,
               cageR: 1.75, cageSpin: 1, cageLinks: 3, cageTilt: -20,   /* ケージ専用 */
               lineAlpha: 0.5, lineWidth: 1.4, drift: 1, random: 0.6 },
     /* link(⑮同時双方向): 惑星とドットをラインで結び、双方向にデータが飛び交う。
@@ -5137,7 +5138,7 @@ function convFrame(geoms) {
         });
       }
     }
-    const RX = orbitBase('outer').rx * 0.95, RY = RX * 0.5;
+    const RX = orbitBase('outer').rx * 0.95 * (M.spread == null ? 1 : M.spread), RY = RX * 0.5;
     const amp = M.random * 46;
     /* 【2026-08-28 ヒデさん指定】頂点を手で置いてあれば、その座標を基準にする。
        頂点編集の最中は漂いを止めて、掴んだ点が逃げないようにする */
@@ -6222,7 +6223,10 @@ function applySway() {
   const kv = params.kv;
   /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある) */
   const ob = isMobile ? ' scale(0.40)' : '';
-  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}`.trim();
+  /* 【2026-08-28 ヒデさん指定】グラフィック全体をひとまとまりで XYZ 回転(3D)。0のときは付けない */
+  const rX = kv.rotX || 0, rY = kv.rotY || 0, rZ = kv.rotZ || 0;
+  const rot3d = (rX || rY || rZ) ? ` perspective(1400px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
+  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}${rot3d}`.trim();
   swayEls.svgs.forEach(s => s.style.transform = svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
   const pl = params.planet;
@@ -11023,6 +11027,8 @@ function buildPanel() {
       }
       slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
         'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
+      slider('メッシュ全体の大きさ', 0.4, 2, 0.02, () => params.conv.mesh.spread == null ? 1 : params.conv.mesh.spread, v => M.spread = v,
+        v => '×' + v.toFixed(2), '網ぜんたいの広がり。大きいほどノードが外へ広がって大きな網になります。', { fixedMax: true });
       slider('線の濃さ', 0, 1, 0.01, () => params.conv.mesh.lineAlpha, v => M.lineAlpha = v, v => v.toFixed(2), null, { fixedMax: true });
       slider('線の太さ', 0.3, 6, 0.1, () => params.conv.mesh.lineWidth, v => M.lineWidth = v, v => v.toFixed(1) + 'px', null, { fixedMax: true });
       slider('つながる範囲', 0.05, 1.2, 0.01, () => params.conv.mesh.span, v => M.span = v, v => v.toFixed(2),
@@ -11293,6 +11299,15 @@ function buildPanel() {
     '取り込んだぶんが半分に戻るまでの時間。右へ動かすほど、強くなった状態が長く残ります（Aパルス以外で効きます）。');
 
   /* ---------- 惑星（模様） ---------- */
+  /* 【2026-08-28 ヒデさん指定】グラフィック全体(右側のKV)を、ひとまとまりで XYZ 回転できる */
+  sub(gRoot, '全体の回転（XYZ）', true);
+  slider('X（前後の傾き）', -80, 80, 1, () => params.kv.rotX || 0, v => { params.kv.rotX = v; applySway(); },
+    v => Math.round(v) + '°', '上下方向に倒す傾き（3D）。0で正面。', { signed: true });
+  slider('Y（左右の傾き）', -80, 80, 1, () => params.kv.rotY || 0, v => { params.kv.rotY = v; applySway(); },
+    v => Math.round(v) + '°', '左右方向に倒す傾き（3D）。0で正面。', { signed: true });
+  slider('Z（回転）', -180, 180, 1, () => params.kv.rotZ || 0, v => { params.kv.rotZ = v; applySway(); },
+    v => Math.round(v) + '°', '画面と平行にくるっと回す。', { signed: true });
+
   sub(gRoot, '惑星', true);
   const PLANET_SKINS = [
     { key: 'A1', name: '1 ビビッドブルー' },
