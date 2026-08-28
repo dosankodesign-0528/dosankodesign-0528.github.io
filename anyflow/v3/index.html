@@ -11103,6 +11103,11 @@ function buildPanel() {
     it => { params.design = it.key; markDirty(); renderFrame(); },
     { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
     { noRebuild: true });
+  /* 【2026-08-28 ヒデさん指定】惑星の大きさをパネルからも変えられるように */
+  slider('大きさ', 0.2, 3, 0.02, () => params.planet.scale, v => { params.planet.scale = v; if (editHandles.on) editHandles.place(); },
+    v => Math.round(v * 100) + '%', '惑星の大きさ。100%が基準です。編集モードで角をつまんでも変えられます。');
+  slider('つぶし', 0.4, 1.6, 0.02, () => (params.planet.flat == null ? 1 : params.planet.flat), v => { params.planet.flat = v; if (editHandles.on) editHandles.place(); },
+    v => v.toFixed(2), '縦横のつぶし具合。1.00が真円です。');
 
   /* 【2026-08-27 ヒデさん指摘・削除】「登場（出てくる順番）」の節はここにあったが丸ごと削除。
      理由: 中身(入場の起点 / モックが出る / アイコンが出る・ばらけ / 軌道が出る)は
