@@ -2161,6 +2161,9 @@ const DOTS = [
   { name: '水色 B',    color: '#0EBBFF', ellipse: 'inner', angle: 284 },
 ];
 const DOT_R = 5.606;
+/* 【2026-08-28 ヒデさん指定】軌道に乗る基準ドットは、カンプ(node 13951-13623 / 15886)の
+   12px 相当。半径6.0=直径12。やや大きめで、基本は透過させない(カンプに合わせる)。 */
+const BASE_DOT_R = 6.0;
 /* ===== ドットの間隔 (2026-08-19) =====
    「速さのゆらぎ(pulse)」の位相をドットごとにずらすと、等間隔に置いても
    走っているうちに間隔が崩れる。実測: outer は 120°のはずが 82°〜151° まで開閉した。
@@ -5799,7 +5802,10 @@ function renderFrame() {
     const dk = dotK[i] * convDotA[i] * dotShow * convDotK(pos.y, gRef.cy, gRef.ry);
     if (els.k !== dk) {
       els.k = dk;
-      const rr = (DOT_R * dk).toFixed(3), op = dk.toFixed(3);
+      /* 【2026-08-28 ヒデさん指定】カンプ準拠: 大きさ(奥行き)は dk で変えるが、
+         濃さは【取り込みの消え際(convDotA)と表示ON/OFFだけ】に連動させる。
+         奥のドットや粒サイズのばらつきで薄くならない(=基本は不透過)。 */
+      const rr = (BASE_DOT_R * dk).toFixed(3), op = Math.min(1, convDotA[i] * dotShow).toFixed(3);
       [els.back, els.front].forEach(el => { el.setAttribute('r', rr); el.setAttribute('opacity', op); });
     }
     els.front.style.display = pos.front ? '' : 'none';
