@@ -2801,6 +2801,8 @@ const DEFAULTS = {
        echoSpread=どこまで広がるか / echoStart=どこから始まるか / echoFade=消え方のなめらかさ */
     echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
     echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
+    /* 【2026-08-28 ヒデさん指定】複数軌道(アトム型/土星型/花型など)。ringCount>=2 で有効 */
+    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6,
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3105,8 +3107,10 @@ function loadParams() {
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k8';
-  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha', 'fxEvery', 'fxInertia', 'fxCount'])
+  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha', 'fxEvery', 'fxInertia', 'fxCount',
+                    'ringCount', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
+  if (!['atom', 'saturn', 'rosette', 'globe'].includes(merged.conv.ringShape)) merged.conv.ringShape = DEFAULTS.conv.ringShape;
   if (typeof merged.conv.echoCrisp !== 'boolean') merged.conv.echoCrisp = DEFAULTS.conv.echoCrisp;
   if (!['every', 'count', 'time'].includes(merged.conv.fxMode)) merged.conv.fxMode = DEFAULTS.conv.fxMode;
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
@@ -3664,6 +3668,18 @@ const GFX_VARIANTS = {
     { name: 'F 片寄せジャイロ', desc: '惑星を右へ、輪を左へずらした非対称な配置で転がります。動きに癖が出ます。',
       gfx: GFX_LOOKS.offset, conv: { tumble: 1.1, spin: 1.2, phase: 120, thin: 0.05, pull: 0.34, pullT: 4 },
       common: { orbitSpin: 0.7 } },
+    /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減できる)。
+       3案=アトム型(本数違い) / 4・5案目=別のシェイプ(土星型・花型)。 */
+    { name: 'アトム 4本', desc: '4本の軌道が原子模型のように、惑星の中心で均等に交差して回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
+    { name: 'アトム 6本', desc: '6本の軌道が原子模型のように交差。密度が上がって華やかになります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'atom' } },
+    { name: 'アトム 8本', desc: '8本の軌道が球状に張り巡らされ、複雑に回ります。いちばん密。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 8, ringShape: 'atom' } },
+    { name: '土星の輪', desc: '同じ傾きの輪を大きさ違いで同心に重ねた、土星の輪のような形。ゆっくり回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'saturn' } },
+    { name: '花のリング', desc: '同じ大きさの輪を均等に回して重ねた、花びらのような形。平面的に回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
 };
 /* ===== さらに5案 (2026-08-27 ヒデさん指定) =====
@@ -4105,6 +4121,69 @@ function convBez(p0, pc, p1, t) {
 }
 function convPathD(p0, pc, p1) { return `M${p0.x.toFixed(1)},${p0.y.toFixed(1)} Q${pc.x.toFixed(1)},${pc.y.toFixed(1)} ${p1.x.toFixed(1)},${p1.y.toFixed(1)}`; }
 
+/* 【2026-08-28 ヒデさん指定】複数軌道のシェイプ(アトム型/土星型/花型)。
+   ringCount>=2 で、惑星の中心に N 本の軌道を出す。本数はスライダー(リピート)で増減。 */
+let convShapeRings = null;
+function convShapePool(n) {
+  if (convShapeRings && convShapeRings.length !== n) { for (const e of convShapeRings) e.remove(); convShapeRings = null; }
+  if (convShapeRings) return convShapeRings;
+  convShapeRings = [];
+  const host = dotsBackG.parentNode;
+  for (let i = 0; i < n; i++) {
+    const el = document.createElementNS(SVG_NS, 'ellipse');
+    el.setAttribute('fill', 'none'); el.setAttribute('stroke-width', '3');
+    el.setAttribute('stroke-linecap', 'round'); el.setAttribute('opacity', '0');
+    host.insertBefore(el, dotsBackG);
+    convShapeRings.push(el);
+  }
+  return convShapeRings;
+}
+function convHideShape() { if (convShapeRings) for (const e of convShapeRings) e.setAttribute('opacity', '0'); }
+function convShapeOn() { return params.kvDesign === 'planet' && (params.conv && params.conv.ringCount || 0) >= 2; }
+const SHAPE_COLS = ['#FF5D97', '#0EBBFF'];
+function convDrawShape() {
+  if (!convShapeOn()) { convHideShape(); return false; }
+  const C = params.conv;
+  const n = Math.max(2, Math.min(12, Math.round(C.ringCount)));
+  const rings = convShapePool(n);
+  const cc = convCenter();
+  const R = orbitBase('outer').rx * (C.ringSize == null ? 1 : C.ringSize) * convOrbitScale();
+  const flat = C.ringFlat == null ? 0.42 : C.ringFlat;
+  const shape = C.ringShape || 'atom';
+  const spin = elapsed * (C.ringSpin == null ? 0.35 : C.ringSpin);
+  const tumble = C.ringTumble == null ? 0.6 : C.ringTumble;
+  const baseRot = orbitBase('outer').rot;    /* カンプの傾きを基準に */
+  for (let i = 0; i < n; i++) {
+    const el = rings[i];
+    let rx = R, ry = R * flat, rot = baseRot;
+    if (shape === 'atom') {
+      /* 均等に傾けた輪が、奥行きを伸び縮みさせながら回る = 原子模型のようなジャイロ */
+      rot = i * 180 / n + spin * 40;
+      const fore = 0.12 + 0.88 * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
+      ry = R * flat * fore;
+    } else if (shape === 'saturn') {
+      /* 土星型: 同じ傾きの輪を、大きさを変えて同心に重ねる。ゆっくり全体が回る */
+      const f = n === 1 ? 1 : (0.42 + 0.58 * i / (n - 1));
+      rx = R * f; ry = R * f * flat;
+      rot = baseRot + spin * 10;
+    } else if (shape === 'rosette') {
+      /* 花型: 同じ大きさの輪を均等に回して重ねる。奥行きは付けず平面的に回す */
+      rot = i * 180 / n + spin * 30;
+      ry = R * flat;
+    } else if (shape === 'globe') {
+      /* 地球儀型: 縦に細い輪を均等に回して球のワイヤーに。奥行きも少し付ける */
+      rot = i * 180 / n + spin * 26;
+      const fore = 0.2 + 0.8 * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
+      rx = R * (0.5 + 0.5 * fore); ry = R;
+    }
+    el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
+    el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
+    el.setAttribute('transform', `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`);
+    el.setAttribute('stroke', SHAPE_COLS[i % 2]);
+    el.setAttribute('opacity', '0.85');
+  }
+  return true;
+}
 /* ①の「中間の輪」(2026-08-27 ヒデさん指定)。外の輪と内の輪の間を、指定本数だけ埋める。
    イラストレーターのブレンドのように、2本の間を等間隔で補間した輪を描く。 */
 let convBlendRings = null;
@@ -6028,6 +6107,12 @@ function renderFrame() {
   applyRingBlur('outer', convReelA.outer.blur, convReelA.outer.fx, convReelA.outer.dashOff);
   applyRingBlur('inner', convReelA.inner.blur, convReelA.inner.fx, convReelA.inner.dashOff);
   updateOrbitSvg(geoms);
+  /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(アトム型など)がオンなら、通常の2本とドットは隠す */
+  const shapeOn = convDrawShape();
+  if (shapeOn) {
+    applyRingAlpha('outer', 0, 0); applyRingAlpha('inner', 0, 0);
+    if (params.orbits.outer.behind !== undefined) { /* 何もしない: 裏フラグはシェイプ時は無効 */ }
+  } else { convHideShape(); }
   DOTS.forEach((d, i) => {
     const p = params.dots[i];
     const deg = patternDeg(d, i, p) + convDotSpin[i];   /* 収縮中の回転アップ(①) */
@@ -6040,7 +6125,7 @@ function renderFrame() {
     });
     /* 出現度合いが変わった時だけ、半径と濃さを書き換える。
        ドット非表示(パネル)と、所属する輪が非表示の時はドットも消す */
-    const dotShow = cShowD && (d.ellipse === 'outer' ? cShowO : cShowI) ? 1 : 0;
+    const dotShow = (!shapeOn) && cShowD && (d.ellipse === 'outer' ? cShowO : cShowI) ? 1 : 0;
     const gRef = geoms[d.ellipse];
     const dk = dotK[i] * convDotA[i] * dotShow * convDotK(pos.y, gRef.cy, gRef.ry);
     if (els.k !== dk) {
@@ -9503,6 +9588,7 @@ function convSwitchTo(next) {
   const cur = params.converge || 'reel';
   if (cur === next) return;
   gfxStash();
+  if (params.conv) params.conv.ringCount = 0;   /* 案を切り替えたら複数軌道シェイプは一旦オフ */
   params.converge = next;
   if (!params.gfxByMode[next]) params.gfxByMode[next] = gfxDefault();
   gfxApply(params.gfxByMode[next]);
@@ -9529,6 +9615,7 @@ function gfxSnapshotFull() {
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
       fxMode: C.fxMode, fxCount: C.fxCount, fxEvery: C.fxEvery, fxInertia: C.fxInertia, echoCrisp: C.echoCrisp,
+      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9557,7 +9644,8 @@ function gfxApplyFull(d) {
                      'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
                      'glowKind', 'glowHold', 'glowEcho',
                      'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
-                     'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp']) {
+                     'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp',
+                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9656,6 +9744,7 @@ function applyGfxVariant(i) {
   if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
   params.conv.orbitSpinBy[mode] = 0;
   params.conv.gyroMixBy[mode] = 0;
+  params.conv.ringCount = 0;   /* シェイプ(複数軌道)は、それを指定する案でだけオンにする */
   if (mode === 'reel' && params.conv.reel) params.conv.reel.spinUp = 0;
   const base = gfxDefault(), g = v.gfx || {};
   gfxApply({
@@ -10969,6 +11058,33 @@ function buildPanel() {
   segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
   note('ゆらぎは軌道まわり全体がふわっと漂う動きです（惑星もわずかに一緒に動きます）。');
+
+  /* 【2026-08-28 ヒデさん指定】複数軌道(リピート): 本数を増やすと惑星の中心に軌道を張る(アトム型など) */
+  slider('軌道の本数', 0, 12, 1, () => params.conv.ringCount || 0,
+    v => { params.conv.ringCount = v; markDirty(); renderFrame(); fillRingSub(); },
+    v => (v < 2 ? '通常(2本)' : Math.round(v) + '本'),
+    '0〜1で通常の2本のまま。2以上にすると、惑星の中心に複数の軌道を張ります（アトム型など）。', { fixedMax: true });
+  const ringSubBox = document.createElement('div');
+  (mount || body).appendChild(ringSubBox);
+  var fillRingSub = function () {
+    const keep = mount; mount = ringSubBox; ringSubBox.innerHTML = '';
+    if ((params.conv.ringCount || 0) >= 2) {
+      const SHAPES = [
+        { key: 'atom', name: 'アトム' }, { key: 'saturn', name: '土星' },
+        { key: 'rosette', name: '花' }, { key: 'globe', name: '地球儀' },
+      ];
+      pillRow(SHAPES, it => (params.conv.ringShape || 'atom') === it.key,
+        it => { params.conv.ringShape = it.key; markDirty(); renderFrame(); },
+        { get: () => params.conv.ringShape, set: v => { params.conv.ringShape = v; renderFrame(); } },
+        { noRebuild: true });
+      slider('回る速さ', 0, 2, 0.05, () => params.conv.ringSpin, v => params.conv.ringSpin = v, v => '×' + v.toFixed(2), '軌道全体の回る速さ。');
+      slider('奥行きの動き', 0, 1.5, 0.05, () => params.conv.ringTumble, v => params.conv.ringTumble = v, v => '×' + v.toFixed(2), 'アトム型・地球儀型で、奥行きの伸び縮みの速さ。');
+      slider('つぶし', 0.15, 0.8, 0.02, () => params.conv.ringFlat, v => params.conv.ringFlat = v, v => v.toFixed(2), '軌道の縦のつぶし具合。小さいほど細長い輪。');
+      slider('大きさ', 0.5, 1.6, 0.02, () => params.conv.ringSize, v => params.conv.ringSize = v, v => '×' + v.toFixed(2), '軌道全体の大きさ。');
+    }
+    mount = keep;
+  };
+  fillRingSub();
 
   /* ---------- ④ ドット（粒） ---------- */
   sub(gRoot, 'ドット（粒）', true);
