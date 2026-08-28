@@ -2579,8 +2579,8 @@ const DEFAULTS = {
   },
   orbits: {
     /* 軌道ごと: サイズ倍率 / 角度ずらし(°) / 位置ずらし(px) / ゆれ(幅°・周期s・位相°) */
-    outer: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
-    inner: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
+    outer: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, behind: false, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 0 },
+    inner: { scale: 1, angle: 0, dx: 0, dy: 0, flat: 1, behind: false, wobbleAmp: 0, wobblePeriod: 12, wobblePhase: 180 },
   },
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   dotGap: 1,           // ドットの間隔 (DOT_GAPS) 1=きっちり等間隔 / 2=ばらつかせる
@@ -3944,6 +3944,23 @@ function convGeom(g, f) {
   const c = convCenter();
   return { cx: c.x + (g.cx - c.x) * f, cy: c.y + (g.cy - c.y) * f,
            rx: g.rx * f, ry: g.ry * f, rot: g.rot };
+}
+/* 【2026-08-28 ヒデさん指定】軌道の「手前側(前面に出る下半分)」が惑星の顔に重なっているか。
+   = その軌道が惑星の前を横切っている。編集モードの「裏に回す」ボタンの自動判定に使う。 */
+function orbitCrossesFace(key) {
+  const g = orbitGeom(key);
+  const pc = convCenter(), pr = Math.max(1, convPlanetR()), prY = Math.max(1, convPlanetRY());
+  const a = g.rot * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  for (let t = 0; t < 96; t++) {
+    const th = t / 96 * Math.PI * 2;
+    const lx = g.rx * Math.cos(th), ly = g.ry * Math.sin(th);
+    if (ly <= 0) continue;                          /* 手前(前面に出る下半分)だけ判定 */
+    const sx = g.cx + lx * ca - ly * sa;
+    const sy = g.cy + lx * sa + ly * ca;
+    const nx = (sx - pc.x) / pr, ny = (sy - pc.y) / prY;
+    if (nx * nx + ny * ny < 1) return true;         /* 惑星の丸の中に入っている */
+  }
+  return false;
 }
 /* --- 追加パーツのプール (見た目は既存パーツの複製) --- */
 let convSpiral = null;   // ②の粒: 既存ドットと同じ circle を back/front に1個ずつ
@@ -5793,6 +5810,25 @@ const editBar = (() => {
     };
     mk('undo', '↶', '元に戻す（⌘Z）').onclick = () => { editHistory.undo(); sync(); };
     mk('redo', '↷', 'やり直し（⌘⇧Z）').onclick = () => { editHistory.redo(); sync(); };
+    const sep0 = document.createElement('span');
+    sep0.className = 'eb-sep';
+    el.appendChild(sep0);
+    /* 【2026-08-28 ヒデさん指定】押すだけで、惑星の顔にかかっている軌道を自動で裏に回す。
+       もう一度押すと表に戻す(トグル)。「どこ」の指定は不要。 */
+    mk('behind', '🪐 軌道を裏へ', '押すと、惑星の顔にかかっている軌道を自動で見つけて裏に回します。もう一度で表に戻します。').onclick = () => {
+      const keys = ['outer', 'inner'];
+      const anyBehind = keys.some(k => params.orbits[k].behind);
+      if (anyBehind) {
+        keys.forEach(k => params.orbits[k].behind = false);   /* 表に戻す */
+      } else {
+        let any = false;
+        keys.forEach(k => { if (orbitCrossesFace(k)) { params.orbits[k].behind = true; any = true; } });
+        if (!any) keys.forEach(k => params.orbits[k].behind = true);  /* 顔にかかってなくても押したら裏へ(空振り防止) */
+      }
+      markDirty(); renderFrame();
+      if (typeof editHistory !== 'undefined') { editHistory.push(); }
+      sync();
+    };
     const sep = document.createElement('span');
     sep.className = 'eb-sep';
     el.appendChild(sep);
@@ -5820,6 +5856,11 @@ const editBar = (() => {
     if (!el) return;
     btns.undo.disabled = !editHistory.canUndo;
     btns.redo.disabled = !editHistory.canRedo;
+    if (btns.behind) {
+      const anyBehind = params.orbits.outer.behind || params.orbits.inner.behind;
+      btns.behind.textContent = anyBehind ? '↩ 軌道を表に' : '🪐 軌道を裏へ';
+      btns.behind.classList.toggle('primary', anyBehind);
+    }
   }
   return {
     show() { ensure(); el.style.display = 'flex'; sync(); },
@@ -5864,6 +5905,9 @@ function updateOrbitSvg(geoms) {
       el.setAttribute('rx', g.rx); el.setAttribute('ry', g.ry);
       el.setAttribute('transform', tr);
     }
+    /* 【2026-08-28 ヒデさん指定】「裏に回す」= 前面レイヤー(ellXxxF)を隠す。
+       奥のフル楕円(ellXxxB)だけが残り、惑星が重なる所を隠す → 土星の輪のように回り込む。 */
+    if (els.ells[1]) els.ells[1].style.display = params.orbits[key].behind ? 'none' : '';
     els.clip.setAttribute('x', -(g.rx + 24));
     els.clip.setAttribute('width', (g.rx + 24) * 2);
     els.clip.setAttribute('height', g.ry + 26);
@@ -9374,7 +9418,7 @@ function applyEdit(isLive, now) {
       いま画面に出ている値は今までどおり params.orbits / params.planet。
       案を離れる時にそれを params.gfxByMode[案] へしまい、入る時に取り出す。 */
 function gfxSnapshot() {
-  const pick = o => ({ dx: o.dx, dy: o.dy, scale: o.scale, flat: o.flat == null ? 1 : o.flat, angle: o.angle });
+  const pick = o => ({ dx: o.dx, dy: o.dy, scale: o.scale, flat: o.flat == null ? 1 : o.flat, angle: o.angle, behind: !!o.behind });
   const P = params.planet;
   return {
     layout: params.orbitLayout,
@@ -9402,6 +9446,7 @@ function gfxApply(d) {
     for (const k of ['dx', 'dy', 'scale', 'flat', 'angle']) {
       if (typeof d[key][k] === 'number') params.orbits[key][k] = d[key][k];
     }
+    if (typeof d[key].behind === 'boolean') params.orbits[key].behind = d[key].behind;
   }
   if (d.planet) {
     for (const k of ['dx', 'dy', 'scale', 'flat']) {
