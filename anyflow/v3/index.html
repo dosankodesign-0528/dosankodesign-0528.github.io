@@ -3512,6 +3512,17 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.tight,
       conv: { blend: 2, blendAlpha: 0.32, T: 5.6, shrinkAt: 0.34, endAt: 0.80, moveDur: 0.18, inDur: 0.20 },
       common: { orbitSpin: 0.12 }, root: { duration: 28 } },
+    /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
+    { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
+    { name: 'アトム 6本', desc: '6本の軌道が原子模型のように交差。密度が上がって華やかに。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'atom' } },
+    { name: 'アトム 8本', desc: '8本の軌道が球状に張り巡らされ、複雑に回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 8, ringShape: 'atom' } },
+    { name: '土星の輪', desc: '同心の輪が土星の輪のように重なってゆっくり回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'saturn' } },
+    { name: '花のリング', desc: '同じ大きさの輪を均等に回して重ねた花のような形。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
   /* 【2026-08-28 ヒデさん指定】②③は回る速さと取り込む速さが速かったので、全体にゆっくりへ。
      ・回る速さ(speed)を 1 → 0.3〜0.9 に
@@ -3549,6 +3560,17 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.std,
       conv: { count: 14, life: 8, speed: 0.5, size: 0.62, stay: 5.5, swirl: 1, fallCurve: 1 },
       common: { orbitSpin: 0 }, root: { duration: 34 } },
+    /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
+    { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
+    { name: 'アトム 6本', desc: '6本の軌道が原子模型のように交差。密度が上がって華やかに。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'atom' } },
+    { name: 'アトム 8本', desc: '8本の軌道が球状に張り巡らされ、複雑に回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 8, ringShape: 'atom' } },
+    { name: '土星の輪', desc: '同心の輪が土星の輪のように重なってゆっくり回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'saturn' } },
+    { name: '花のリング', desc: '同じ大きさの輪を均等に回して重ねた花のような形。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
   accre: [
     { name: 'A 標準の円盤', desc: '既定の円盤。粒がゆっくり渦を巻きながら、少しずつ内へ落ちていきます。',
@@ -3604,6 +3626,17 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.upright,
       conv: { style: 'organic', nodes: 22, span: 0.42, lineAlpha: 0.45, lineWidth: 1.2, drift: 1.3, random: 0.9, size: 0.5, hop: 0.5, rate: 1.6 },
       common: { orbitSpin: 0.8 } },
+    /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
+    { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
+    { name: 'アトム 6本', desc: '6本の軌道が原子模型のように交差。密度が上がって華やかに。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'atom' } },
+    { name: 'アトム 8本', desc: '8本の軌道が球状に張り巡らされ、複雑に回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 8, ringShape: 'atom' } },
+    { name: '土星の輪', desc: '同心の輪が土星の輪のように重なってゆっくり回ります。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'saturn' } },
+    { name: '花のリング', desc: '同じ大きさの輪を均等に回して重ねた花のような形。',
+      gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
   beads: [
     { name: 'A 標準', desc: '既定。点が等間隔に並んだ輪から、順に惑星へ吸い込まれます。',
