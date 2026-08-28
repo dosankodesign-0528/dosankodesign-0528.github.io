@@ -9346,6 +9346,15 @@ function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
   const v = (GFX_VARIANTS[mode] || [])[i];
   if (!v) return;
+  /* 【2026-08-28 ヒデさん指定・根治】案を選び直したら、その案が指定しない「回転・スピン系」は
+     必ず 0 へ戻す。こうしないと、前に選んだジャイロ案やスピンの保存値がブラウザに残って
+     「A カンプ通り」を選んでも回り続けてしまう。このあと root / gyro / common / conv が
+     上書きするので、回転を指定している案(ジャイロ案など)はちゃんと効く。 */
+  if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
+  if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
+  params.conv.orbitSpinBy[mode] = 0;
+  params.conv.gyroMixBy[mode] = 0;
+  if (mode === 'reel' && params.conv.reel) params.conv.reel.spinUp = 0;
   const base = gfxDefault(), g = v.gfx || {};
   gfxApply({
     layout: g.layout || base.layout,
