@@ -11,7 +11,7 @@
 export const BGM_VOLUME_MAX = 1;
 
 /** 初期音量（0〜1）。/mock や右下の調整パネルから触って詰められる */
-export const DEFAULT_BGM_VOLUME = 0.62;
+export const DEFAULT_BGM_VOLUME = 0.66; /* 基準音量。曲の進行で後半を絞る（下の envelope）。最初はしっかり聞こえる（2026-08-28 ヒデさん指示） */
 
 /** 調整パネルから音量を変える時に飛ばすイベント */
 export const BGM_VOLUME_EVENT = "abashiri:bgm-volume";

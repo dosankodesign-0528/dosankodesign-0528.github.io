@@ -9,7 +9,7 @@
  *   （ONにしたら鳴る／OFFにしたら止まる、が直感どおりになる）
  * - ぼーっと体験の動画再生中は環境音を自動で止め、動画が止まったら復帰
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { markConsentDone } from "./consentGate";
@@ -19,6 +19,7 @@ import {
   DEFAULT_BGM_VOLUME,
   clampVolume,
 } from "./bgmConfig";
+import { bgmGainAt } from "./bgmGain";
 
 /** 白モック内のボタン置き場（TopPage / ExperienceFlow が用意する） */
 const SLOT_ID = "abashiri-sound-slot";
@@ -109,14 +110,32 @@ export default function SoundUi({
     return () => obs.disconnect();
   }, [pathname]);
 
+  /* 後半がうるさいトラック対策：曲の進行に合わせて音量を少しずつ絞る。
+     最初はしっかり聞こえ、後半（うるさい所）は抑える。ループ先頭で音量は戻るが
+     中身も静かな頭に戻るので、体感の大きさは揃う（2026-08-28 ヒデさん指示）。 */
+  const applyVol = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    /* 実測ラウドネス（bgmGain.ts）を打ち消す。うるさい所ほど下げ、頭はそのまま */
+    a.volume = clampVolume(volRef.current * bgmGainAt(a.currentTime));
+  }, []);
+
   const play = () => {
     const a = audioRef.current;
     if (!a || duckRef.current) return;
     if (devSilent()) return; /* 開発中(localhost)は鳴らさない。?sound で解除 */
-    a.volume = clampVolume(volRef.current);
+    applyVol();
     a.muted = false;
     a.play().catch(() => {});
   };
+
+  /* 再生位置に合わせて常に音量エンベロープを反映する */
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    a.addEventListener("timeupdate", applyVol);
+    return () => a.removeEventListener("timeupdate", applyVol);
+  }, [applyVol]);
 
   const saveIntent = (next: boolean) => {
     intentRef.current = next;
@@ -131,8 +150,7 @@ export default function SoundUi({
       const v = (e as CustomEvent<{ v: number }>).detail?.v;
       if (typeof v !== "number") return;
       volRef.current = clampVolume(v);
-      const a = audioRef.current;
-      if (a) a.volume = volRef.current;
+      applyVol();
     };
     window.addEventListener(BGM_VOLUME_EVENT, onVol);
     return () => window.removeEventListener(BGM_VOLUME_EVENT, onVol);
