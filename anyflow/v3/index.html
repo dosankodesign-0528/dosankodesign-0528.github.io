@@ -2120,6 +2120,16 @@ const ORBIT_LAYOUTS = {
     inner: { cx: 436, cy: 253, rx: 397.09,  ry: 397.09  * 0.42, rot: 14 },
   },
 };
+/* 【2026-08-29 ヒデさん指定】回転アニメの時計。開始位相(startPhase)を足す。
+   ページを開いた時点の startPhase を1回だけ固定して覚え(kvStartAtLoad)、
+   そこに elapsed を足すので、ボタンで startPhase を保存しても今の表示は飛ばない(次回開いた時に効く)。 */
+let kvStartAtLoad = null, kvRevealElapsed = null;
+function kvGT() {
+  if (kvStartAtLoad == null) kvStartAtLoad = (params.conv && params.conv.startPhase) || 0;
+  /* 登場(KVが見え始める)までは開始位相のまま止める → 登場した瞬間が開始地点になる */
+  if (kvRevealElapsed == null) return kvStartAtLoad;
+  return kvStartAtLoad + (elapsed - kvRevealElapsed);
+}
 /* 軌道そのものの回転量(度)。0なら従来どおり形は固定 */
 /* いま選んでいる案の「軌道の回転」の量 */
 function convOrbitSpinAmt() {
@@ -2135,7 +2145,7 @@ function convOrbitSpin(key) {
   if (!amt) return 0;
   if (params.kvDesign !== 'planet') return 0;
   const dir = (key === 'inner') ? -1 : 1;   /* 2本が逆向きに回ると立体感が出る */
-  return elapsed * amt * 18 * dir;
+  return kvGT() * amt * 18 * dir;
 }
 function orbitBase(key) {
   return (ORBIT_LAYOUTS[params.orbitLayout] || ORBIT_LAYOUTS.figma)[key];
@@ -2804,6 +2814,7 @@ const DEFAULTS = {
     echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
     /* 【2026-08-28 ヒデさん指定】複数軌道(アトム型/土星型/花型など)。ringCount>=2 で有効 */
     ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3,
+    startPhase: 0,   /* 【2026-08-29】回転アニメの開始位相(「いまを開始地点にする」で設定) */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
        元の外の位置に新しい輪がフェードイン(inDur)、を交代でくり返す。
@@ -3109,7 +3120,7 @@ function loadParams() {
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k8';
   for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha', 'fxEvery', 'fxInertia', 'fxCount',
-                    'ringCount', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth'])
+                    'ringCount', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'startPhase'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
   if (!['atom', 'saturn', 'rosette', 'globe'].includes(merged.conv.ringShape)) merged.conv.ringShape = DEFAULTS.conv.ringShape;
   if (typeof merged.conv.echoCrisp !== 'boolean') merged.conv.echoCrisp = DEFAULTS.conv.echoCrisp;
@@ -3314,16 +3325,16 @@ function orbitGeom(key) {
       : Math.max(0, Math.min(1, ((params.conv.gyroMixBy || {})[params.converge] || 0))));
   if (gyMix > 0) {
     const G = params.conv.gyro;
-    const t = elapsed * Math.max(0, G.tumble == null ? 1 : G.tumble);
+    const t = kvGT() * Math.max(0, G.tumble == null ? 1 : G.tumble);
     const ph = (key === 'inner' ? (G.phase == null ? 90 : G.phase) : 0) * Math.PI / 180;
     const thin = Math.max(0.02, G.thin == null ? 0.06 : G.thin);
     const kFull = thin + (1 - thin) * Math.abs(Math.cos(t * 0.9 + ph));
     gyK = 1 + (kFull - 1) * gyMix;                            /* 混ぜ具合ぶんだけ潰す */
-    gyRot = elapsed * (G.spin == null ? 1 : G.spin) * 26 * (key === 'inner' ? -1 : 1) * gyMix;
+    gyRot = kvGT() * (G.spin == null ? 1 : G.spin) * 26 * (key === 'inner' ? -1 : 1) * gyMix;
     const pull = Math.max(0, G.pull == null ? 0.25 : G.pull);
     if (pull > 0) {
       const cyc = Math.max(0.5, G.pullT == null ? 5 : G.pullT);
-      const u = (elapsed % cyc) / cyc;                        /* 0→1 のくり返し */
+      const u = (kvGT() % cyc) / cyc;                        /* 0→1 のくり返し */
       gyPull = 1 - pull * gyMix * Math.pow(Math.sin(u * Math.PI), 2);
     }
   }
@@ -4249,7 +4260,7 @@ function convDrawShape() {
   const R = orbitBase('outer').rx * (C.ringSize == null ? 1 : C.ringSize) * convOrbitScale();
   const flat = C.ringFlat == null ? 0.42 : C.ringFlat;
   const shape = C.ringShape || 'atom';
-  const spin = elapsed * (C.ringSpin == null ? 0.35 : C.ringSpin);
+  const spin = kvGT() * (C.ringSpin == null ? 0.35 : C.ringSpin);
   const tumble = C.ringTumble == null ? 0.6 : C.ringTumble;
   const baseRot = orbitBase('outer').rot;    /* カンプの傾きを基準に */
   for (let i = 0; i < n; i++) {
@@ -4261,7 +4272,7 @@ function convDrawShape() {
       rot = i * 180 / n + spin * 12;
       const horiz = Math.abs(Math.cos(rot * Math.PI / 180));   /* 1=横, 0=縦 */
       const foreMax = 0.32 + 0.68 * horiz;                     /* 縦の輪は最大でも 0.32 までしか開かない */
-      const fore = 0.12 + (foreMax - 0.12) * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
+      const fore = 0.12 + (foreMax - 0.12) * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.62 + 0.38 * horiz);   /* 縦寄りの輪は長さも短く = 上下に伸びない = 横長のアトム */
       ry = rx * flat * fore;
     } else if (shape === 'saturn') {
@@ -4273,7 +4284,7 @@ function convDrawShape() {
       ry = R * flat;
     } else if (shape === 'globe') {
       rot = i * 180 / n + spin * 26;
-      const fore = 0.2 + 0.8 * Math.abs(Math.cos(elapsed * tumble + i * Math.PI / n));
+      const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
     const col = SHAPE_COLS[i % 2];
@@ -8469,7 +8480,9 @@ function updateKV() {
   const eyeAt = c.typeAt + typeEnd + c.eyebrowGap;
   rv(kvEls.eyebrow, easeOutQ(clamp01((t - eyeAt) / RD)), 8, 8);
   const gAt = eyeAt + c.graphicGap;
-  rv(kvEls.orbit, easeOutQ(clamp01((t - gAt) / (RD * 1.5))), 12);
+  const _orbReveal = easeOutQ(clamp01((t - gAt) / (RD * 1.5)));
+  if (kvRevealElapsed == null && _orbReveal > 0.5) kvRevealElapsed = elapsed;
+  rv(kvEls.orbit, _orbReveal, 12);
   rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
   /* 【2026-08-26 ヒデさん指定】1行目のタイピングが終わったあたりで、右のKV iframe に入場開始を合図する
      (モック→アイコン→軌道)。以前は全タイピング完了(gAt)を待っていた。introLead で前後にずらせる。 */
@@ -9736,7 +9749,7 @@ function gfxSnapshotFull() {
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
       fxMode: C.fxMode, fxCount: C.fxCount, fxEvery: C.fxEvery, fxInertia: C.fxInertia, echoCrisp: C.echoCrisp,
-      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble, ringWidth: C.ringWidth,
+      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble, ringWidth: C.ringWidth, startPhase: C.startPhase,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9766,7 +9779,7 @@ function gfxApplyFull(d) {
                      'glowKind', 'glowHold', 'glowEcho',
                      'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
                      'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp',
-                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth']) {
+                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'startPhase']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9871,7 +9884,7 @@ function applyGfxVariant(i) {
   /* 【2026-08-29 ヒデさん指定】案ごとに独立させるため、案を選ぶ瞬間に「シェイプ共通」と
      「この案のつまみ」を一旦すべて既定へ戻す。このあと 定義(common/conv) → 保存した調整 の順に
      重ねるので、他の案でいじった値が漏れて残らない。 */
-  for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth'])
+  for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'startPhase'])
     params.conv[rk] = DEFAULTS.conv[rk];
   {
     const pk0 = CONV_PARAM_KEY[mode];
@@ -11386,6 +11399,16 @@ function buildPanel() {
     v => Math.round(v) + '°', '左右方向に倒す傾き（3D）。0で正面。', { signed: true });
   slider('Z（回転）', -180, 180, 1, () => params.kv.rotZ || 0, v => { params.kv.rotZ = v; applySway(); },
     v => Math.round(v) + '°', '画面と平行にくるっと回す。', { signed: true });
+  /* 【2026-08-29 ヒデさん指定】いま表示されている回転の位置を、アニメの開始地点として保存する */
+  {
+    const row = document.createElement('div'); row.className = 'sw-row';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'sw-pill sw-save';
+    b.textContent = '▶ いまを開始地点にする';
+    b.title = 'いま表示されている回転の位置を、アニメーションの開始地点として保存します(次に開いた時ここから始まります)。';
+    b.onclick = () => { params.conv.startPhase = kvGT(); markDirty(); b.textContent = '✓ 開始地点にしました'; setTimeout(() => b.textContent = '▶ いまを開始地点にする', 1000); };
+    row.appendChild(b); (mount || body).appendChild(row);
+  }
+  note('回転(アトム・ジャイロ・軌道の回転)の「見えている向き」を開始地点にできます。次に開いた時、その向きから始まります。');
 
   sub(gRoot, '惑星', true);
   const PLANET_SKINS = [
