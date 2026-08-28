@@ -3210,7 +3210,7 @@ function save() {
    dirty = 保存していない変更があるか */
 let dirty = false;
 let syncSaveBtn = null;   /* パネルを組む時に、保存ボタンの表示を更新する関数が入る */
-function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); }
+function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); if (syncPresetPills) syncPresetPills(); }
 
 /* ================= ドット要素 (奥/手前レイヤーに1個ずつ) ================= */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -9278,6 +9278,7 @@ function gfxSnapshotFull() {
       glowKind: C.glowKind, glowHold: C.glowHold, glowEcho: C.glowEcho,
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
+      fxMode: C.fxMode, fxCount: C.fxCount, fxEvery: C.fxEvery, fxInertia: C.fxInertia, echoCrisp: C.echoCrisp,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9305,7 +9306,8 @@ function gfxApplyFull(d) {
     for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
                      'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
                      'glowKind', 'glowHold', 'glowEcho',
-                     'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha']) {
+                     'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
+                     'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9446,6 +9448,27 @@ function applyGfxVariant(i) {
 function gfxVariantOn() { return (params.gfxVariantOn || {})[params.converge || 'reel']; }
 
 /* --- 案ごとのプリセット --- */
+/* 【2026-08-28 ヒデさん指定】プリセットは「今の全設定と完全一致した時だけアクティブ」。
+   数値を1つでもいじると外れる。クリックで呼び出すと一致するので点灯する。
+   → 記録した「選択番号」ではなく、いまの値とプリセットの保存値を突き合わせて判定する。 */
+function gfxCanon(d) {
+  const round = x => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 1000) / 1000 : x;
+  const walk = o => {
+    if (Array.isArray(o)) return o.map(walk);
+    if (o && typeof o === 'object') {
+      const r = {};
+      for (const k of Object.keys(o).sort()) { const v = walk(o[k]); if (v !== undefined) r[k] = v; }
+      return r;
+    }
+    return round(o);
+  };
+  return JSON.stringify(walk(d));
+}
+function gfxPresetMatches(i) {
+  const ps = gfxPresetList()[i];
+  if (!ps || !ps.data) return false;
+  return gfxCanon(gfxSnapshotFull()) === gfxCanon(ps.data);
+}
 function gfxPresetList() {
   if (!params.gfxPresets) params.gfxPresets = {};
   const k = params.converge || 'reel';
@@ -9602,6 +9625,7 @@ function syncPanelRows() {
   body.querySelectorAll('.row').forEach(r => { if (r._sync) r._sync(); });
 }
 let mount = null;   // slider() などの追加先 (現在の小カテゴリの親)
+let syncPresetPills = null;   // プリセットの点灯を今の値で塗り直す(fillPresetRow の中で差し替え)
 
 /* 大カテゴリ (開閉できる箱) */
 /* ⚠️ 惑星やライトのピルを押すと buildPanel() でパネルを作り直すため、
@@ -10288,7 +10312,8 @@ function buildPanel() {
       };
       list.forEach((ps, i) => {
         const b = document.createElement('button');
-        b.className = 'sw-pill' + (gfxPresetOn() === i ? ' on' : '');
+        b.className = 'sw-pill pset-item' + (gfxPresetMatches(i) ? ' on' : '');
+        b.dataset.pi = i;
         b.textContent = ps.name;
         b.title = 'この設定を呼び出す（ダブルクリックで名前を変える）';
         b.onclick = () => {
@@ -10296,7 +10321,7 @@ function buildPanel() {
           syncPanelRows();
           fillAnimBody();                    /* 案のつまみも保存時の値に作り直す */
           if (editHandles.on) editHandles.place();
-          presetRow.querySelectorAll('.sw-pill:not(.sw-edit)').forEach((el, j) => el.classList.toggle('on', gfxPresetOn() === j));
+          if (syncPresetPills) syncPresetPills();
         };
         b.ondblclick = e => { e.preventDefault(); rename(i, b); };
         const e = document.createElement('button');
@@ -10345,6 +10370,12 @@ function buildPanel() {
         if (last) rename(list.length - 1, last);   /* 追加したらすぐ名前を打てる */
       };
       presetRow.appendChild(add);
+      /* いまの値と一致するプリセットだけ点灯させる(値を触ると markDirty から呼ばれて塗り直す) */
+      syncPresetPills = () => {
+        presetRow.querySelectorAll('.pset-item').forEach(el => {
+          el.classList.toggle('on', gfxPresetMatches(+el.dataset.pi));
+        });
+      };
     };
     fillPresetRow();
   }
