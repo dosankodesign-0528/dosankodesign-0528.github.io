@@ -4238,10 +4238,38 @@ function convShapePool(n) {
     host.insertBefore(el, before);
     return el;
   };
+  ensureShapeGrad(backHost, 'B'); ensureShapeGrad(frontHost, 'F');
   for (let i = 0; i < n; i++) {
     convShapeBack.push(mk(backHost, dotsBackG, false));    /* 惑星の裏(z1) */
     convShapeFront.push(mk(frontHost, dotsFrontG, true));  /* 惑星の前(z3)・下半分だけ */
   }
+}
+/* 【2026-08-29 ヒデさん指定】シェイプの線は、周回のみカンプと同じ「青→白→ピンク」のグラデにする。
+   userSpaceOnUse なので、毎フレーム y1/y2 をシェイプの縦の広がりに合わせて更新する。 */
+function ensureShapeGrad(host, sfx) {
+  if (host.querySelector('#gShapeA' + sfx)) return;
+  let defs = host.querySelector('defs');
+  if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); host.insertBefore(defs, host.firstChild); }
+  const mk = (id, c1, c2) => {
+    const g = document.createElementNS(SVG_NS, 'linearGradient');
+    g.setAttribute('id', id); g.setAttribute('gradientUnits', 'userSpaceOnUse');
+    const s1 = document.createElementNS(SVG_NS, 'stop'); s1.setAttribute('offset', '0'); s1.setAttribute('stop-color', c1);
+    const s2 = document.createElementNS(SVG_NS, 'stop'); s2.setAttribute('offset', '0.5'); s2.setAttribute('stop-color', 'white');
+    const s3 = document.createElementNS(SVG_NS, 'stop'); s3.setAttribute('offset', '1'); s3.setAttribute('stop-color', c2);
+    g.append(s1, s2, s3); defs.appendChild(g);
+  };
+  mk('gShapeA' + sfx, '#00ABEB', '#FF5D97');   /* 青→白→ピンク */
+  mk('gShapeB' + sfx, '#FF5D97', '#00ABEB');   /* ピンク→白→青(逆) */
+}
+function updateShapeGrad(cx, cy, R) {
+  ['B', 'F'].forEach(sfx => {
+    ['A', 'B'].forEach(ab => {
+      const g = document.getElementById('gShape' + ab + sfx);
+      if (!g) return;
+      g.setAttribute('x1', cx.toFixed(1)); g.setAttribute('x2', cx.toFixed(1));
+      g.setAttribute('y1', (cy - R).toFixed(1)); g.setAttribute('y2', (cy + R).toFixed(1));
+    });
+  });
 }
 function convHideShape() {
   if (convShapeBack) for (const e of convShapeBack) e.setAttribute('opacity', '0');
@@ -4258,6 +4286,7 @@ function convDrawShape() {
   /* 前面リングは惑星中心より下だけ = 上半分は裏、下半分は前 → 惑星に入れ子 */
   if (convShapeClipRect) convShapeClipRect.setAttribute('y', cc.y.toFixed(1));
   const R = orbitBase('outer').rx * (C.ringSize == null ? 1 : C.ringSize) * convOrbitScale();
+  updateShapeGrad(cc.x, cc.y, R);
   const flat = C.ringFlat == null ? 0.42 : C.ringFlat;
   const shape = C.ringShape || 'atom';
   const spin = kvGT() * (C.ringSpin == null ? 0.35 : C.ringSpin);
@@ -4287,16 +4316,18 @@ function convDrawShape() {
       const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
-    const col = SHAPE_COLS[i % 2];
+    /* 【2026-08-29 ヒデさん指定】カンプと同じ青→白→ピンクのグラデ。1本ごとに向きを入れ替える */
+    const ab = (i % 2) ? 'B' : 'A';
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
-    for (const el of [convShapeBack[i], convShapeFront[i]]) {
+    const sw = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1);
+    [[convShapeBack[i], 'B'], [convShapeFront[i], 'F']].forEach(([el, sfx]) => {
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
       el.setAttribute('transform', tr);
-      el.setAttribute('stroke', col);
-      el.setAttribute('stroke-width', (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1));
+      el.setAttribute('stroke', 'url(#gShape' + ab + sfx + ')');
+      el.setAttribute('stroke-width', sw);
       el.setAttribute('opacity', '0.9');
-    }
+    });
   }
   return true;
 }
