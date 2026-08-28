@@ -4210,6 +4210,7 @@ function convPathD(p0, pc, p1) { return `M${p0.x.toFixed(1)},${p0.y.toFixed(1)} 
 /* 【2026-08-28 ヒデさん指定】複数軌道のシェイプ(アトム型/土星型/花型)。
    ringCount>=2 で、惑星の中心に N 本の軌道を出す。本数はスライダー(リピート)で増減。 */
 let convShapeBack = null, convShapeFront = null, convShapeClipRect = null;
+let convShapeGradB = [], convShapeGradF = [];
 function convShapePool(n) {
   if (convShapeBack && convShapeBack.length !== n) {
     for (const e of convShapeBack) e.remove();
@@ -4238,38 +4239,31 @@ function convShapePool(n) {
     host.insertBefore(el, before);
     return el;
   };
-  ensureShapeGrad(backHost, 'B'); ensureShapeGrad(frontHost, 'F');
+  /* 【2026-08-29 ヒデさん指定】カンプ実測の青→白→ピンクを、輪ごとに個別グラデで持つ。
+     白の位置(カンプ 0.49/0.40)を輪ごとに少しずつずらして、単調に見えないようにする(特に土星)。 */
+  const ensureDefs = host => { let d = host.querySelector('defs'); if (!d) { d = document.createElementNS(SVG_NS, 'defs'); host.insertBefore(d, host.firstChild); } return d; };
+  [backHost, frontHost].forEach(host => host.querySelectorAll('linearGradient[id^="gShR"]').forEach(g => g.remove()));
+  const defsB = ensureDefs(backHost), defsF = ensureDefs(frontHost);
+  const mkGrad = (defs, id, dir, white) => {
+    const g = document.createElementNS(SVG_NS, 'linearGradient');
+    g.setAttribute('id', id); g.setAttribute('gradientUnits', 'userSpaceOnUse');
+    const c1 = dir ? '#FF5D97' : '#00ABEB', c2 = dir ? '#00ABEB' : '#FF5D97';
+    const s1 = document.createElementNS(SVG_NS, 'stop'); s1.setAttribute('offset', '0'); s1.setAttribute('stop-color', c1);
+    const s2 = document.createElementNS(SVG_NS, 'stop'); s2.setAttribute('offset', white.toFixed(4)); s2.setAttribute('stop-color', 'white');
+    const s3 = document.createElementNS(SVG_NS, 'stop'); s3.setAttribute('offset', '1'); s3.setAttribute('stop-color', c2);
+    g.append(s1, s2, s3); defs.appendChild(g); return g;
+  };
+  convShapeGradB = []; convShapeGradF = [];
   for (let i = 0; i < n; i++) {
+    const dir = i % 2;                                   /* 1本ごとに向きを入れ替え(カンプの外/内と同じ) */
+    const base = dir ? 0.403846 : 0.490385;              /* カンプ実測: 外=0.40 / 内=0.49 */
+    const shift = (n <= 1 ? 0 : (i / (n - 1) - 0.5)) * 0.30;   /* 輪ごとに白の位置をずらす */
+    const white = Math.max(0.12, Math.min(0.88, base + shift));
+    convShapeGradB.push(mkGrad(defsB, 'gShRB' + i, dir, white));
+    convShapeGradF.push(mkGrad(defsF, 'gShRF' + i, dir, white));
     convShapeBack.push(mk(backHost, dotsBackG, false));    /* 惑星の裏(z1) */
     convShapeFront.push(mk(frontHost, dotsFrontG, true));  /* 惑星の前(z3)・下半分だけ */
   }
-}
-/* 【2026-08-29 ヒデさん指定】シェイプの線は、周回のみカンプと同じ「青→白→ピンク」のグラデにする。
-   userSpaceOnUse なので、毎フレーム y1/y2 をシェイプの縦の広がりに合わせて更新する。 */
-function ensureShapeGrad(host, sfx) {
-  if (host.querySelector('#gShapeA' + sfx)) return;
-  let defs = host.querySelector('defs');
-  if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); host.insertBefore(defs, host.firstChild); }
-  const mk = (id, c1, c2) => {
-    const g = document.createElementNS(SVG_NS, 'linearGradient');
-    g.setAttribute('id', id); g.setAttribute('gradientUnits', 'userSpaceOnUse');
-    const s1 = document.createElementNS(SVG_NS, 'stop'); s1.setAttribute('offset', '0'); s1.setAttribute('stop-color', c1);
-    const s2 = document.createElementNS(SVG_NS, 'stop'); s2.setAttribute('offset', '0.5'); s2.setAttribute('stop-color', 'white');
-    const s3 = document.createElementNS(SVG_NS, 'stop'); s3.setAttribute('offset', '1'); s3.setAttribute('stop-color', c2);
-    g.append(s1, s2, s3); defs.appendChild(g);
-  };
-  mk('gShapeA' + sfx, '#00ABEB', '#FF5D97');   /* 青→白→ピンク */
-  mk('gShapeB' + sfx, '#FF5D97', '#00ABEB');   /* ピンク→白→青(逆) */
-}
-function updateShapeGrad(cx, cy, R) {
-  ['B', 'F'].forEach(sfx => {
-    ['A', 'B'].forEach(ab => {
-      const g = document.getElementById('gShape' + ab + sfx);
-      if (!g) return;
-      g.setAttribute('x1', cx.toFixed(1)); g.setAttribute('x2', cx.toFixed(1));
-      g.setAttribute('y1', (cy - R).toFixed(1)); g.setAttribute('y2', (cy + R).toFixed(1));
-    });
-  });
 }
 function convHideShape() {
   if (convShapeBack) for (const e of convShapeBack) e.setAttribute('opacity', '0');
@@ -4286,7 +4280,6 @@ function convDrawShape() {
   /* 前面リングは惑星中心より下だけ = 上半分は裏、下半分は前 → 惑星に入れ子 */
   if (convShapeClipRect) convShapeClipRect.setAttribute('y', cc.y.toFixed(1));
   const R = orbitBase('outer').rx * (C.ringSize == null ? 1 : C.ringSize) * convOrbitScale();
-  updateShapeGrad(cc.x, cc.y, R);
   const flat = C.ringFlat == null ? 0.42 : C.ringFlat;
   const shape = C.ringShape || 'atom';
   const spin = kvGT() * (C.ringSpin == null ? 0.35 : C.ringSpin);
@@ -4316,15 +4309,21 @@ function convDrawShape() {
       const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
-    /* 【2026-08-29 ヒデさん指定】カンプと同じ青→白→ピンクのグラデ。1本ごとに向きを入れ替える */
-    const ab = (i % 2) ? 'B' : 'A';
+    /* 【2026-08-29 ヒデさん指定】カンプの青→白→ピンクのグラデを、この輪の"画面上の縦の広がり"に
+       ぴったり合わせる(userSpaceOnUse)。こうすると平たい輪でも青とピンクが端まで届く。 */
+    const rr = rot * Math.PI / 180;
+    const halfH = Math.max(2, Math.sqrt(Math.pow(rx * Math.sin(rr), 2) + Math.pow(ry * Math.cos(rr), 2)));
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
     const sw = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1);
-    [[convShapeBack[i], 'B'], [convShapeFront[i], 'F']].forEach(([el, sfx]) => {
+    [[convShapeBack[i], convShapeGradB[i], 'gShRB' + i], [convShapeFront[i], convShapeGradF[i], 'gShRF' + i]].forEach(([el, grad, gid]) => {
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
       el.setAttribute('transform', tr);
-      el.setAttribute('stroke', 'url(#gShape' + ab + sfx + ')');
+      if (grad) {
+        grad.setAttribute('x1', cc.x.toFixed(1)); grad.setAttribute('x2', cc.x.toFixed(1));
+        grad.setAttribute('y1', (cc.y - halfH).toFixed(1)); grad.setAttribute('y2', (cc.y + halfH).toFixed(1));
+      }
+      el.setAttribute('stroke', 'url(#' + gid + ')');
       el.setAttribute('stroke-width', sw);
       el.setAttribute('opacity', '0.9');
     });
