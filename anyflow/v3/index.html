@@ -2783,6 +2783,11 @@ const DEFAULTS = {
        charge=データが溜まっていく度合い(0〜1)。吸収のたびに増え、ゆっくり戻る */
     glowKind: 'pulse',
     glowEcho: 'k8',     /* エコーの見え方(k1〜k9)。glowKind='echo' の時だけ効く。既定はくっきり尾を引く */
+    fxMode: 'every',    /* 【2026-08-28】エフェクトの出方。every=毎回 / count=N回に1回 / time=N秒に1回 */
+    fxCount: 10,        /* 【2026-08-28】count のとき、何回の取り込みに1回だすか */
+    fxEvery: 8,         /* 【2026-08-28】time のとき、何秒に1回だすか */
+    fxInertia: 0.5,     /* 【2026-08-28】広がりの慣性。0=一定(機械的)、1=最初速く→減速(自然な波紋) */
+    echoCrisp: false,   /* 【2026-08-28】くっきり表示。trueで残像のぼかしを切り、輪郭をはっきり見せる */
     /* 【2026-08-28 ヒデさん指定】エコーがガクガクして見えるので、細かく調整できるようにした。
        echoSpeed=広がる速さ(小さいほどゆっくり滑らか) / echoShells=重ねる枚数 /
        echoSpread=どこまで広がるか / echoStart=どこから始まるか / echoFade=消え方のなめらかさ */
@@ -3080,8 +3085,10 @@ function loadParams() {
   /* 光り方は 2026-08-28 に パルス/波紋 の2つへ。廃止した案を選んだままなら寄せる */
   if (!['pulse', 'ripple', 'echo'].includes(merged.conv.glowKind)) merged.conv.glowKind = 'pulse';
   if (!['k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 'k9'].includes(merged.conv.glowEcho)) merged.conv.glowEcho = 'k8';
-  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha'])
+  for (const kk of ['echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha', 'fxEvery', 'fxInertia', 'fxCount'])
     if (typeof merged.conv[kk] !== 'number') merged.conv[kk] = DEFAULTS.conv[kk];
+  if (typeof merged.conv.echoCrisp !== 'boolean') merged.conv.echoCrisp = DEFAULTS.conv.echoCrisp;
+  if (!['every', 'count', 'time'].includes(merged.conv.fxMode)) merged.conv.fxMode = DEFAULTS.conv.fxMode;
   if (!['planet', 'p7', 'p9'].includes(merged.kvDesign)) merged.kvDesign = DEFAULTS.kvDesign;
   if (merged.crossDelay == null) merged.crossDelay = DEFAULTS.crossDelay;
   if (merged.crossLead == null) merged.crossLead = DEFAULTS.crossLead;
@@ -3831,6 +3838,39 @@ function convDotMoves() {
 const convDotF = DOTS.map(() => 1);   // ドットごとの「惑星への寄せ」(1=軌道上 → 0=惑星中心)
 const convDotA = DOTS.map(() => 1);   // ドットごとの濃さ倍率 (集約アニメ用)
 let convGlow = 0;                     // 吸収の瞬間、惑星がふっと明るくなる(減衰)
+let convGlowLast = -1e9;              // 最後に「エフェクトを出した」時刻
+let convGlowN = 0;                    // 取り込みイベントの通し番号(回数モード用)
+let convGlowBurst = -1e9;             // いま出している一連(バースト)の開始時刻
+/* 【2026-08-28 ヒデさん指定】エフェクトの出方を3つから。
+     every … 取り込みのたびに毎回(従来)
+     count … N回の取り込みに1回だけ出す(粒が0.1秒ごとに入っても、まびいて出す)
+     time  … 前に出してから N秒たっていなければ出さない
+   ⚠️ 取り込みは1回でも「粒がパラパラ入る」と細かく何度も呼ばれる。
+      出したバーストの直後(0.4秒)は同じ取り込みの積み増しとして必ず通し、光を育てる。
+      それを1イベントとは数えない。 */
+function convAddGlow(amt) {
+  const C = params.conv || {};
+  const mode = C.fxMode || 'every';
+  const sinceBurst = elapsed - convGlowBurst;
+  if (sinceBurst >= 0 && sinceBurst < 0.4) {   // 同じ取り込みの続き = 常に通す
+    convGlow = Math.min(1.2, convGlow + amt);
+    return;
+  }
+  /* ここからは「新しい取り込みイベント」 */
+  convGlowN++;
+  let allow = true;
+  if (mode === 'count') {
+    const every = Math.max(1, Math.round(C.fxCount || 10));
+    allow = (convGlowN % every === 0);
+  } else if (mode === 'time') {
+    const every = Math.max(0, C.fxEvery || 0);
+    allow = (convGlowLast < -1e8) || (elapsed - convGlowLast >= every);
+  }
+  if (!allow) return;
+  convGlow = Math.min(1.2, convGlow + amt);
+  convGlowLast = elapsed;
+  convGlowBurst = elapsed;
+}
 /* 【2026-08-28 ヒデさん指定】吸収を重ねるほど「データが強くなっていく」感じを出すための蓄積。
    吸収のたびに増え、glowHold 秒でゆっくり半分へ戻る。0〜1 */
 let convCharge = 0;
@@ -3841,6 +3881,15 @@ let convLastT = null;                 // elapsed 基準の dt (一時停止に�
 let convWasOn = false;
 let convLastMode = null;              // モード切替の検知 (前のモードの粒・輪の片付け用)
 const convSStep = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+/* 【2026-08-28 ヒデさん指定】広がりの慣性。0=一定(なめらかステップ)、1=最初速く→だんだん減速。
+   水面の波紋のように、勢いよく広がってスッと落ち着く(慣性)見え方にする。 */
+function convFxEase(u) {
+  u = clamp01(u);
+  const inr = clamp01((params.conv && params.conv.fxInertia != null) ? params.conv.fxInertia : 0.5);
+  const smooth = u * u * (3 - 2 * u);
+  const easeOut = 1 - Math.pow(1 - u, 2.6);
+  return smooth * (1 - inr) + easeOut * inr;
+}
 /* 惑星(#sphere)の中心 = 集約先。CSS(left306.06 top112.32 260px角) + パネルの惑星オフセット */
 function convCenter() {
   const pl = params.planet || {};
@@ -4173,7 +4222,7 @@ function convDrawRipples(strength, hit, dt) {
   for (let i = 0; i < convRippleEls.length; i++) {
     const q = convRipples[i], el = convRippleEls[i];
     if (!q) { el.setAttribute('opacity', '0'); continue; }
-    const k = convSStep(q.t);
+    const k = convFxEase(q.t);
     const rx = pr * (1 + k * 0.95);
     el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
     el.setAttribute('rx', rx.toFixed(1));
@@ -4278,6 +4327,7 @@ function echoSmear(c, from, to, alpha, layers, eraseInner) {
 }
 function convDrawEchoes(strength, hit, dt, style) {
   const st = style || 'k1';
+  const crispB = (params.conv && params.conv.echoCrisp) ? 0.12 : 1;   /* くっきり表示: ぼかしをほぼ切る */
   const useEll = (st === 'k4');
   const cans = (!useEll && strength > 0.001) ? convEchoCanvases() : convEchoCans;
   const ells = (useEll && strength > 0.001) ? convEchoEllipses() : convEchoEls;
@@ -4323,20 +4373,20 @@ function convDrawEchoes(strength, hit, dt, style) {
     if (u < 0) { c0.el.style.opacity = '0'; return; }
     const uu = Math.max(0, Math.min(1, u));
     const layers = Math.max(6, Math.round(6 + (params.conv.echoShells ?? 3) * 6));
-    const from = 1.0, to = echoStartOf(0) + convSStep(uu) * spread * 1.6;
+    const from = 1.0, to = echoStartOf(0) + convFxEase(uu) * spread * 1.6;
     if (st === 'k7') {
       /* ぼけて溶ける: 重ね描き＋強いぼかし */
       echoSmear(c0, from, to, 0.9, layers, 0);
-      c0.el.style.filter = `blur(${(2 + uu * 22).toFixed(1)}px)`;
+      c0.el.style.filter = `blur(${((2 + uu * 22) * crispB).toFixed(1)}px)`;
     } else if (st === 'k6') {
       /* 内から溶ける: 内側を抜いて、外へ広がる輪にする。
          抜く範囲は「いまの広がり」の内側 55% ぶん。広がるほど輪も外へ移る */
       echoSmear(c0, from, to, 1.0, layers, from + (to - from) * 0.55);
-      c0.el.style.filter = `blur(${(1 + uu * 6).toFixed(1)}px)`;
+      c0.el.style.filter = `blur(${((1 + uu * 6) * crispB).toFixed(1)}px)`;
     } else {
       /* 連続ディゾルブ: 段差なく尾を引いて溶ける */
       echoSmear(c0, from, to, 0.95, layers, 0);
-      c0.el.style.filter = `blur(${(0.5 + uu * 3).toFixed(1)}px)`;
+      c0.el.style.filter = `blur(${((0.5 + uu * 3) * crispB).toFixed(1)}px)`;
     }
     c0.el.style.zIndex = '1';
     c0.el.style.transform = `translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale.toFixed(4)}, ${(pl.scale * plFlat).toFixed(4)})`;
@@ -4350,7 +4400,7 @@ function convDrawEchoes(strength, hit, dt, style) {
       const q = convEchoes[i], el = ells[i];
       if (!q || q.t < 0) { el.setAttribute('opacity', '0'); continue; }
       const u = Math.max(0, Math.min(1, q.t));
-      const grow = echoStartOf(q.step || 0) + convSStep(u) * spread;
+      const grow = echoStartOf(q.step || 0) + convFxEase(u) * spread;
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', (rx0 * grow).toFixed(1));
       el.setAttribute('ry', (ry0 * grow).toFixed(1));
@@ -4380,8 +4430,8 @@ function convDrawEchoes(strength, hit, dt, style) {
         u = Math.max(0, Math.min(1, q.t)); step = q.step || 0;
       }
       const base = echoStartOf(step);
-      const grow = base + convSStep(u) * spread;
-      const prev = base + convSStep(Math.max(0, u - 0.07)) * spread;   /* 少し前の位置 */
+      const grow = base + convFxEase(u) * spread;
+      const prev = base + convFxEase(Math.max(0, u - 0.07)) * spread;   /* 少し前の位置 */
       echoSmear(c, prev, grow, 1.15, 8, 0);
       c.el.style.filter = '';
       c.el.style.zIndex = '1';
@@ -4406,17 +4456,17 @@ function convDrawEchoes(strength, hit, dt, style) {
     } catch (e) {}
     let grow, a, fx = '';
     if (st === 'k2') {
-      grow = base + convSStep(u) * spread * 1.3;
+      grow = base + convFxEase(u) * spread * 1.3;
       a = 0.8 * strength * fadeOf(u) * dim;
-      fx = `blur(${(4 + (q.step || 0) * 3 + u * 12).toFixed(1)}px)`;
+      fx = `blur(${((4 + (q.step || 0) * 3 + u * 12) * crispB).toFixed(1)}px)`;
       c.el.style.zIndex = '1';
     } else if (st === 'k3') {
-      grow = base + convSStep(u) * spread;
+      grow = base + convFxEase(u) * spread;
       a = 0.4 * strength * fadeOf(u) * dim;
       fx = `saturate(${(1 + u * 0.6).toFixed(2)}) brightness(${(1 + u * 0.25).toFixed(2)})`;
       c.el.style.zIndex = '3';                 /* 惑星の手前へ */
     } else {
-      grow = base + convSStep(u) * spread;
+      grow = base + convFxEase(u) * spread;
       a = 0.95 * strength * fadeOf(u) * dim;
       c.el.style.zIndex = '1';
     }
@@ -4644,7 +4694,7 @@ function convFrame(geoms) {
              rx: slotB.rx + (slotA.rx - slotB.rx) * k, ry: slotB.ry + (slotA.ry - slotB.ry) * k,
              rot: slotB.rot + (slotA.rot - slotB.rot) * k };
     } else if (ph >= eAt + slideLen) gM = slotA;
-    if (ph >= eAt && ph - (dt / T) < eAt) convGlow = Math.min(1.2, convGlow + 0.7);
+    if (ph >= eAt && ph - (dt / T) < eAt) convAddGlow(0.7);
     geoms[shrinkKey] = gS; geoms[slideKey] = gM;                       // ドットも輪ごと動く
     /* --- 中間の輪(ブレンド): 収縮している輪と、もう1本の輪の間を等間隔で埋める --- */
     {
@@ -4721,7 +4771,7 @@ function convFrame(geoms) {
         const fc = Math.max(0.1, S.fallCurve == null ? 1 : S.fallCurve);
         p.f -= p.rate * dt * Math.pow(Math.max(0.15, p.f), 1 - fc);     // 螺旋で吸い込まれる
         if (p.f <= 0.12) {                                             // 吸収 → 軌道上に生まれ直す
-          convGlow = Math.min(1.2, convGlow + 0.18);
+          convAddGlow(0.18);
           p.mode = 0; p.age = 0; p.f = 1;
           p.hold = Math.max(0.3, S.stay * (0.5 + Math.random()));
           p.deg = Math.random() * 360;
@@ -4757,7 +4807,7 @@ function convFrame(geoms) {
       /* 落ち方のカーブ: 1で等速、大きいほど中心に近いほど速く吸い込まれる */
       const fc = Math.max(0.1, A.fallCurve == null ? 1 : A.fallCurve);
       p.f -= 0.022 * A.fall * dt * Math.pow(Math.max(0.15, p.f), 1 - fc);
-      if (p.f <= 0.16) { convGlow = Math.min(1.2, convGlow + 0.10);
+      if (p.f <= 0.16) { convAddGlow(0.10);
         p.f = 1.05 + Math.random() * 0.15; p.ang = Math.random() * 360; }
       /* 揺らぎ: 粒ごとに位相の違う波で半径をわずかに揺らす(0でぴたっと回る) */
       const wob = 1 + (A.wobble || 0) * 0.18 * Math.sin(elapsed * 1.7 + p.tw * 2.3);
@@ -4847,7 +4897,7 @@ function convFrame(geoms) {
     for (let i = convMesh.pk.length - 1; i >= 0; i--) {
       const q2 = convMesh.pk[i];
       q2.k += dt / Math.max(0.08, M.hop);
-      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convGlow = Math.min(1.2, convGlow + 0.3); convMesh.pk.splice(i, 1); continue; } }
+      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convAddGlow(0.3); convMesh.pk.splice(i, 1); continue; } }
       const A = q2.stage === 0 ? P[q2.from] : P[q2.via];
       const B = q2.stage === 0 ? P[q2.via] : { x: cc.x, y: cc.y, z: 1 };
       const k = convSStep(q2.k);
@@ -4936,7 +4986,7 @@ function convFrame(geoms) {
     for (let i = convMesh.pk.length - 1; i >= 0; i--) {
       const q2 = convMesh.pk[i];
       q2.k += dt / Math.max(0.08, M.hop);
-      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convGlow = Math.min(1.2, convGlow + 0.3); convMesh.pk.splice(i, 1); continue; } }
+      if (q2.k >= 1) { q2.k = 0; q2.stage++; if (q2.stage > 1) { convAddGlow(0.3); convMesh.pk.splice(i, 1); continue; } }
       const A = q2.stage === 0 ? np(q2.from) : np(q2.via);
       const B = q2.stage === 0 ? np(q2.via) : cc;
       const k = convSStep(q2.k);
@@ -4992,7 +5042,7 @@ function convFrame(geoms) {
         }
         if (k > 0.7) al = (1 - k) / 0.3;
         if (k >= 1) {
-          convGlow = Math.min(1.2, convGlow + 0.10);
+          convAddGlow(0.10);
           b.t = -1;
           b.back = 0;   /* 【2026-08-27 ヒデさん指定】空いた場所へは、ゆったりフェードインで戻す */
         }
@@ -5049,7 +5099,7 @@ function convFrame(geoms) {
         const out = j % 2 === 1;                          // 半分は行き(集約)、半分は帰り(配信)
         const t = out ? 1 - u : u;
         const q = convBez(cc, ctrls[i], ends[i], clamp01(t));
-        if (!out && t > 0.94) convGlow = Math.min(1.2, convGlow + 0.03);
+        if (!out && t > 0.94) convAddGlow(0.03);
         let al = 0.95, sz = L.size;
         /* 惑星のエリア(半径 pr)に入ったら完全に消す。
            入る手前 vanishK のぶんだけ「縮みながら」薄くなるので、パッと消えず吸い込まれて見える */
@@ -10620,61 +10670,75 @@ function buildPanel() {
   note('「軌道にそって回るかどうか」は案ごとの設定なので、① の中にあります。');
 
   /* ---------- ⑤ 惑星 ---------- */
-  sub(gRoot, '惑星', true);
-  const plRootEff = mount;   /* エフェクトの小見出しはこの中へ */
-  /* 【2026-08-28 ヒデさん指定】「手前のもの(隠す/前を通す)」のつまみはパネルから削除。
-     値(params.conv.frontCut)はバリエーションが使うので残してある
-     (例: ③「前後を貫く軌道」は前を通す設定で立体感を出している)。 */
-  const PLANET_SKINS = [
-    { key: 'A1', name: '1 ビビッドブルー' },
-    { key: 'A2', name: '2 ピンク×ブルー' },
-    { key: 'A3', name: '3 ライトグレイン' },
-    { key: 'B',  name: '4 ハーフトーン' },
-    /* 5〜7(波が流れるタイプ C1/C2/C3)は 2026-08-27 ヒデさん指定で削除 */
-  ];
-  pillRow(PLANET_SKINS, it => params.design === it.key,
-    it => { params.design = it.key; markDirty(); renderFrame(); },
-    { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
-    { noRebuild: true });
-  /* 【2026-08-28 ヒデさん指定】吸収のされ方は「エフェクト」の小見出しにまとめて、
-     上の模様の選択ピルと見分けがつくようにする */
-  sub(plRootEff, 'エフェクト（吸収のされ方）', true);
+  /* 【2026-08-28 ヒデさん指定】エフェクトを「惑星(模様)」の【上】へ。独立したセクションにする。 */
+  sub(gRoot, 'エフェクト（吸収のされ方）', true);
   {
-    /* 【2026-08-28 ヒデさん指定】色が変わる/芯が育つ/呼吸 は削除。パルスと波紋の2案だけ残す */
+    /* パルス / 波紋 / エコー = エフェクトの種類。ここは「選択ピル」で、下の番号ピルと役割を分ける */
     const GLOWS = [
-      { key: 'pulse',  name: 'A パルス', tip: '届いた瞬間だけ、ふっと明るくなります。' },
-      { key: 'ripple', name: 'B 波紋',   tip: '届いた瞬間、惑星から外へ輪が広がります。輪の形と傾きは軌道に合わせて自動で決まります。' },
-      { key: 'echo',   name: 'C エコー', tip: '惑星の丸いシルエットが、ひと回り大きくなった残像として外へ広がります。線ではなく“面”の波紋。' },
+      { key: 'pulse',  name: 'パルス', tip: '届いた瞬間だけ、ふっと明るくなります。' },
+      { key: 'ripple', name: '波紋',   tip: '届いた瞬間、惑星から外へ輪が広がります。輪の形と傾きは軌道に合わせて自動で決まります。' },
+      { key: 'echo',   name: 'エコー', tip: '惑星の丸いシルエットが、ひと回り大きくなった残像として外へ広がります。線ではなく“面”の波紋。' },
     ];
-    variantRow('glowKind', GLOWS,
-      () => params.conv.glowKind || 'pulse',
-      v => { params.conv.glowKind = v; fillGlowSub(); });
-    /* 【2026-08-28 ヒデさん指定】エコーを選んだ時だけ、出方の4パターンを下に出す */
+    pillRow(GLOWS, it => (params.conv.glowKind || 'pulse') === it.key,
+      it => { params.conv.glowKind = it.key; fillGlowSub(); markDirty(); renderFrame(); },
+      { get: () => params.conv.glowKind, set: v => { params.conv.glowKind = v; renderFrame(); } },
+      { noRebuild: true });
+
+    /* 【2026-08-28 ヒデさん指定】エフェクトの出方(タイミング)。データが取り込まれるたびに毎回だと、
+       粒がパラパラ入る案ではエフェクトが出っぱなしになる。「N回に1回」「N秒に1回」でまびける。 */
+    segRow('エフェクトの出方', [['毎回', 'every'], ['回数で', 'count'], ['秒で', 'time']],
+      () => params.conv.fxMode || 'every',
+      v => { params.conv.fxMode = v; markDirty(); renderFrame(); fillFxPeriod(); });
+    const fxPeriodBox = document.createElement('div');
+    (mount || body).appendChild(fxPeriodBox);
+    var fillFxPeriod = function () {
+      const keep = mount; mount = fxPeriodBox; fxPeriodBox.innerHTML = '';
+      const m = params.conv.fxMode || 'every';
+      if (m === 'count') {
+        slider('何回に1回', 1, 30, 1, () => params.conv.fxCount, v => params.conv.fxCount = v,
+          v => Math.round(v) + '回に1回',
+          '取り込みが何回起きるごとに1回エフェクトを出すか。大きいほど間引かれます。');
+      } else if (m === 'time') {
+        slider('何秒に1回', 0.5, 15, 0.5, () => params.conv.fxEvery, v => params.conv.fxEvery = v,
+          v => v.toFixed(1) + '秒に1回',
+          '前に出してからこの秒数がたつまで、次のエフェクトを出しません。');
+      }
+      mount = keep;
+    };
+
+    /* 【2026-08-28 ヒデさん指定】広がりの慣性(波紋・エコー共通)。水面の波紋のように、勢いよく広がってスッと落ち着く */
+    slider('広がりの慣性', 0, 1, 0.05, () => params.conv.fxInertia, v => params.conv.fxInertia = v,
+      v => v.toFixed(2),
+      '0＝一定の速さ（機械的）。右へ動かすほど、最初は勢いよく広がってだんだん減速します（自然な波紋）。波紋・エコーに効きます。');
+
+    /* エコーを選んだ時だけ、下に「バリエーション」の番号ピルと細かいつまみを出す */
     const echoBox = document.createElement('div');
     (mount || body).appendChild(echoBox);
-    /* 【2026-08-28 ヒデさん指定】残像は【惑星のグラフィックをまるごと複製して重ねる】方向で3案。
-       単色やグラデーションの面ではなく、本物の惑星の絵がそのまま残像になる */
     const ECHOES = [
       { key: 'k1', name: '1 うしろに重ねる', tip: '惑星の絵をそのまま複製して、ひと回り大きく後ろへ。ふちにリムのように出ます。いちばん自然。' },
       { key: 'k2', name: '2 ぼかして広がる', tip: '複製にぼかしをかけながら大きく広がります。やわらかい残像。' },
       { key: 'k3', name: '3 手前にゴースト', tip: '複製を惑星の手前へ薄く重ねます。透けた残像がいちばんはっきり見えます。' },
       { key: 'k4', name: '4 色が変わる面',   tip: '単色の面の残像。取り込むたびに色が変わります（青・ピンク・水色・藤・白からランダム）。' },
-      /* 【2026-08-28 ヒデさん指定】殻を重ねる作りだと段差が見えてガタつくので、
-         1枚の中に何十枚も薄く重ねて【溶けるように】広げる3案 */
       { key: 'k5', name: '5 連続ディゾルブ', tip: '惑星を少しずつ大きくしながら何十枚も薄く重ねます。段差が消えて、尾を引くように滑らかに溶けます。' },
       { key: 'k6', name: '6 内から溶ける',   tip: '同じ重ね方をしたうえで内側を抜き、外へ広がる輪にします。いちばん波紋らしい溶け方。' },
       { key: 'k7', name: '7 ぼけて溶ける',   tip: '重ねたうえで強くぼかします。輪郭が完全に消えて、光がにじむように広がります。' },
-      /* 【2026-08-28 ヒデさん指定】1のようにしっかり残像が見えて、かつ滑らかに */
       { key: 'k8', name: '8 くっきり尾を引く', tip: '1と同じで惑星をそのまま複製するのでハッキリ見えます。1コマぶんの進みを細かく重ねるので、段差が出ずになめらかです。' },
-      { key: 'k9', name: '9 連なる波',       tip: '殻を等間隔でずっと回し続けます。生まれる瞬間が無いので、途切れずに波が外へ流れ続けます。' },
+      { key: 'k9', name: '9 連なる波',       tip: '殻を等間隔でずっと回し続けます。生まれる瞬間が無いので、途切れずに波が外へ流れ続けます（この案だけ間引きの対象外）。' },
     ];
     var fillGlowSub = function () {
       const keep = mount; mount = echoBox; echoBox.innerHTML = '';
       if ((params.conv.glowKind || 'pulse') === 'echo') {
+        /* 見出し「バリエーション」= 上の選択ピル(種類)と、下の番号ピル(エコーの見た目)を分ける。
+           ⚠️ sub() は使わない(reset のグループを奪ってしまうため)。見た目だけの見出し。 */
+        { const vh = document.createElement('div'); vh.className = 'grp sub2 fixed';
+          const vt = document.createElement('div'); vt.className = 'grp-title'; vt.textContent = 'バリエーション';
+          vh.appendChild(vt); (mount || body).appendChild(vh); }
         variantRow('glowEcho', ECHOES,
           () => params.conv.glowEcho || 'k1',
           v => { params.conv.glowEcho = v; }, 'num');
-        /* 【2026-08-28 ヒデさん指定】ガクガクして見えるので、細かく調整できるようにした */
+        segRow('残像の輪郭', [['くっきり', 1], ['なめらか', 0]],
+          () => (params.conv.echoCrisp ? 1 : 0),
+          v => { params.conv.echoCrisp = !!v; markDirty(); renderFrame(); });
         slider('広がる速さ', 0.15, 2.5, 0.05, () => params.conv.echoSpeed, v => params.conv.echoSpeed = v,
           v => '×' + v.toFixed(2),
           '左へ動かすほどゆっくり広がります。1コマの変化が小さくなるので、なめらかに見えます。');
@@ -10693,12 +10757,26 @@ function buildPanel() {
       }
       mount = keep;
     };
+    fillFxPeriod();
     fillGlowSub();
   }
   slider('光の強さ', 0, 1, 0.05, () => params.conv.glow, v => params.conv.glow = v, v => v.toFixed(2),
     '右へ動かすほど強く光ります。0で光りません。');
   slider('溜まりの残り方', 1, 20, 0.5, () => params.conv.glowHold, v => params.conv.glowHold = v, v => v.toFixed(1) + '秒',
     '取り込んだぶんが半分に戻るまでの時間。右へ動かすほど、強くなった状態が長く残ります（Aパルス以外で効きます）。');
+
+  /* ---------- 惑星（模様） ---------- */
+  sub(gRoot, '惑星', true);
+  const PLANET_SKINS = [
+    { key: 'A1', name: '1 ビビッドブルー' },
+    { key: 'A2', name: '2 ピンク×ブルー' },
+    { key: 'A3', name: '3 ライトグレイン' },
+    { key: 'B',  name: '4 ハーフトーン' },
+  ];
+  pillRow(PLANET_SKINS, it => params.design === it.key,
+    it => { params.design = it.key; markDirty(); renderFrame(); },
+    { get: () => params.design, set: v => { params.design = v; renderFrame(); } },
+    { noRebuild: true });
 
   /* 【2026-08-27 ヒデさん指摘・削除】「登場（出てくる順番）」の節はここにあったが丸ごと削除。
      理由: 中身(入場の起点 / モックが出る / アイコンが出る・ばらけ / 軌道が出る)は
