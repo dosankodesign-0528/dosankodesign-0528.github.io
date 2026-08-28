@@ -2739,7 +2739,7 @@ const DEFAULTS = {
      ※ pin='on' のまま(=リビール演出は維持)、この scrollHold で“ロックの強さ”だけ切替える。 */
   scrollHold: 'smooth', // 2026-08-26 ヒデさん指定: サイト全体は「固定追従なし」を既定に(掴み無し・ロック無し)。固定は個別で必要な所だけ。切替は 固定追従なし / 固定 の2択
   kvDesign: 'planet',   // 右グラフィックの案。'planet'=V1.0の惑星(2026-08-26 復活・既定) / それ以外=iframe(kv/embed.html)の案
-  converge: 'reel',     // 惑星への集約アニメ (CONVERGES) 。惑星の案の時だけ効く。①収縮ループが既定(ヒデさん指定)
+  converge: 'off',      // 惑星への集約アニメ。既定は「周回のみ」(2026-08-28 ヒデさん指定・グループ再編)
   /* 集約アニメの調整つまみ (2026-08-26 ヒデさん指定: 各項目をパネルで調整できるように)
      pers: 'normal'=今の実装 / 'fix'=パース調整版(輪が先に惑星の真ん中へ寄ってから同心円ですぼまる)
      showOuter/showInner: 軌道の輪のオンオフ(輪を消すとその輪のドットも消える)
@@ -2982,6 +2982,17 @@ try {
     _s.sections.results.driveLen = D.driveLen;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
     localStorage.setItem('anyflow-migrate-resC2', '1');
+  }
+} catch (e) {}
+/* 【2026-08-28 ヒデさん指定】選択ピルをグループへ再編。既存の保存値は一度だけ「周回のみ(off)」を
+   デフォルトに寄せる(以後は保存値を尊重)。プリセットは別キー(PRESET_KEY)なので消えない。 */
+try {
+  if (localStorage.getItem(STORAGE_KEY) && !localStorage.getItem('anyflow-migrate-groups')) {
+    params.converge = 'off';
+    const _s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    _s.converge = 'off';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
+    localStorage.setItem('anyflow-migrate-groups', '1');
   }
 } catch (e) {}
 function loadParams() {
@@ -3390,6 +3401,36 @@ const CONVERGES = [
   { key: 'duplex', name: '⑥線で行き来' },
   { key: 'gyro',   name: '⑦ジャイロ回転' },   /* 2026-08-27 ヒデさん指定で追加 */
 ];
+/* ===== 選択ピルの「グループ」(2026-08-28 ヒデさん指定) =====
+   内部モード(converge)は上の CONVERGES のまま保持し、表示だけ束ねる。
+   こうするとプリセット(gfxPresets[mode])もバリエーション(GFX_VARIANTS[mode])も消えない。
+     周回のみ  … off。「線で行き来」(duplex)のオン/オフ＋ジャイロ(gyro)をバリエーションに
+     1 収縮    … reel
+     2 軌道と粒 … spiral + accre + beads を統合
+     3 ネットワーク … mesh */
+const CONV_GROUPS = [
+  { key: 'orbit',   name: '周回のみ',      modes: ['off', 'gyro'], line: 'duplex',
+    desc: '軌道をただ回り続けます。「線で行き来」をオンにすると、惑星とドットを線で結んで粒が行き来します。ジャイロ回転もバリエーションにあります。' },
+  { key: 'shrink',  name: '1 収縮',        modes: ['reel'],
+    desc: '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内へ下りてくるのをくり返します。' },
+  { key: 'orbdot',  name: '2 軌道と粒',    modes: ['spiral', 'accre', 'beads'],
+    desc: '粒が軌道の上で渦を巻いたり、並んだりしながら、順に惑星へ吸い込まれます。' },
+  { key: 'network', name: '3 ネットワーク', modes: ['mesh'],
+    desc: 'ゆらぎ漂うノードの網ができ、データがノードを渡り歩いて惑星へ届きます。' },
+];
+function convGroupOf(mode) {
+  mode = mode || 'off';
+  return CONV_GROUPS.find(g => g.modes.includes(mode) || g.line === mode) || CONV_GROUPS[0];
+}
+function convGroupDefaultMode(g) { return g.modes[0]; }
+/* 周回のみグループで「線で行き来」がオンか(=converge が duplex) */
+function convLineOn() { return (params.converge || 'off') === 'duplex'; }
+/* いまのグループで、バリエーション行に出すべき内部モードの一覧 */
+function convShowModes() {
+  const g = convGroupOf(params.converge);
+  if (g.key === 'orbit') return convLineOn() ? ['duplex'] : ['off', 'gyro'];
+  return g.modes;
+}
 /* ===== 案ごとのグラフィック6案 (2026-08-27 ヒデさん指定。3案→6案に増やした) =====
    ⚠️ デザインそのものは変えない。同じアニメーションの枠の中で
       【軌道と惑星の 位置・大きさ・つぶし・傾き・レイアウト】と
@@ -10159,10 +10200,34 @@ function buildPanel() {
     if (typeof meshHandles !== 'undefined') meshHandles.set(editHandles.on && meshHandles.usable);
     if (editHandles.on) editHandles.place();          /* 編集中なら枠も追いつかせる */
   };
-  pillRow(CONVERGES, it => (params.converge || 'reel') === it.key,
-    it => onConvSwitch(it.key),
-    { get: () => params.converge, set: v => onConvSwitch(v) },
-    { noRebuild: true, tip: it => (window.__convDesc || {})[it.key] || '' });
+  /* 【2026-08-28 ヒデさん指定】選択ピルは「グループ」で束ねる(周回のみ/1収縮/2軌道と粒/3ネットワーク)。
+     内部モードは保持したまま表示だけ組み替えるので、プリセット・バリエーションは消えない。 */
+  let lineToggleBox = null;   /* 「周回のみ」の“線で行き来”トグルの置き場所 */
+  const fillLineToggle = () => {
+    if (!lineToggleBox) return;
+    lineToggleBox.innerHTML = '';
+    if (convGroupOf(params.converge).key !== 'orbit') return;
+    const keep = mount; mount = lineToggleBox;
+    segRow('線で行き来', [['オフ', 0], ['オン', 1]],
+      () => convLineOn() ? 1 : 0,
+      v => {
+        if (v) convSwitchTo('duplex');
+        else if ((params.converge || 'off') === 'duplex') convSwitchTo('off');
+        markDirty(); renderFrame(); fillAnimBody(); syncPanelRows();
+        if (fillPresetRow) fillPresetRow(); fillVariantRow();
+      });
+    mount = keep;
+  };
+  const onGroupSwitch = (g) => {
+    if (convGroupOf(params.converge).key !== g.key) onConvSwitch(convGroupDefaultMode(g));
+    fillLineToggle();
+  };
+  pillRow(CONV_GROUPS, g => convGroupOf(params.converge).key === g.key,
+    g => onGroupSwitch(g),
+    { get: () => convGroupOf(params.converge).key, set: k => { const g = CONV_GROUPS.find(x => x.key === k); if (g) onGroupSwitch(g); } },
+    { noRebuild: true, tip: g => g.desc || '' });
+  lineToggleBox = document.createElement('div');
+  (mount || body).appendChild(lineToggleBox);
 
   /* --- この案のバリエーション (2026-08-27 ヒデさん指定) ---
      ⚠️ 上の「アニメーションの選択ピル」と見分けがつくよう、
@@ -10195,28 +10260,40 @@ function buildPanel() {
      例) C を消すと D が C になる。表示の記号は「残っている中の順番」で毎回付け直し、
      消した案の控えは元の名前で持つ(記号が動いても取り違えない)。 */
   const VAR_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const varSym = k => (k < 26) ? VAR_LETTERS[k] : (VAR_LETTERS[Math.floor(k / 26) - 1] + VAR_LETTERS[k % 26]);
   const varLabel = (v, k) => VAR_LETTERS[k] + ' ' + String(v.name).replace(/^[A-Z]\s+/, '');
   const fillVariantRow = function () {
-    const mode = params.converge || 'reel';
-    const list = GFX_VARIANTS[mode] || [];
-    const hid = varHidden();
+    /* 【2026-08-28 ヒデさん指定】グループ内の全モードのバリエーションを1列に集約。
+       記号は残っている中で通し(A,B,C…)。ピルを選ぶと、そのモードへ切り替えてから当てる。 */
+    const modes = convShowModes();
+    const items = [];
+    for (const m of modes) {
+      const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
+      (GFX_VARIANTS[m] || []).forEach((v, i) => {
+        if (hid.includes(v.name)) return;
+        items.push({ m, i, v });
+      });
+    }
     varRow.innerHTML = '';
-    const on = gfxVariantOn();
-    let k = 0;                                          /* 残っている中で何番目か = 記号 */
-    list.forEach((v, i) => {
-      if (hid.includes(v.name)) return;                 /* 消した案は出さない */
-      const label = varLabel(v, k); k++;
+    const curMode = params.converge || 'off';
+    const curOn = gfxVariantOn();
+    items.forEach((it, k) => {
+      const label = varSym(k) + ' ' + String(it.v.name).replace(/^[A-Z]{1,2}\s+/, '');
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'var-pill' + (on === i ? ' on' : '');
-      b.title = v.desc;                                 /* 説明は吹き出しで読む */
+      b.className = 'var-pill' + ((it.m === curMode && curOn === it.i) ? ' on' : '');
+      b.title = it.v.desc || '';
       b.append(document.createTextNode(label));
       b.onclick = () => {
-        applyGfxVariant(i);
-        syncPanelRows();
-        fillAnimBody();
+        if ((params.converge || 'off') !== it.m) convSwitchTo(it.m);
+        applyGfxVariant(it.i);
+        markDirty(); renderFrame();
+        fillAnimBody(); syncPanelRows();
+        if (fillPresetRow) fillPresetRow();
+        if (typeof meshHandles !== 'undefined') meshHandles.set(editHandles.on && meshHandles.usable);
         if (editHandles.on) editHandles.place();
-        varRow.querySelectorAll('.var-pill').forEach(el => el.classList.toggle('on', el === b));
+        fillLineToggle();
+        fillVariantRow();
       };
       const x = document.createElement('button');
       x.type = 'button';
@@ -10226,29 +10303,45 @@ function buildPanel() {
       x.onclick = ev => {
         ev.stopPropagation();
         askModal('削除しますか？', `バリエーション「${label}」を一覧から消します。以降の記号は自動で振り直します。あとで「消した案を戻す」で戻せます。`,
-          '削除する', () => { hid.push(v.name); presetStoreSave(); markDirty(); fillVariantRow(); });
+          '削除する', () => {
+            if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
+            const arr = params.gfxVariantHidden[it.m] || (params.gfxVariantHidden[it.m] = []);
+            arr.push(it.v.name);
+            presetStoreSave(); markDirty(); fillVariantRow();
+          });
       };
       b.appendChild(x);
       varRow.appendChild(b);
     });
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
-    if (hid.length) {
+    /* このグループで消した案をまとめて戻す */
+    const hiddenAll = [];
+    for (const m of modes) {
+      const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
+      hid.forEach(nm => hiddenAll.push({ m, nm }));
+    }
+    if (hiddenAll.length) {
       const back = document.createElement('button');
       back.type = 'button';
       back.className = 'var-pill var-back';
-      back.textContent = `↺ 消した案を戻す (${hid.length})`;
+      back.textContent = `↺ 消した案を戻す (${hiddenAll.length})`;
       back.title = '消した案の一覧から、戻したいものを選びます';
       back.onclick = () => {
         pickModal('消した案を戻す', '戻したい案の「戻す」を押してください。まとめて全部は戻しません。',
-          hid, name => {
-            const i2 = hid.indexOf(name);
-            if (i2 >= 0) hid.splice(i2, 1);
+          hiddenAll.map(h => h.nm), name => {
+            const h = hiddenAll.find(x => x.nm === name);
+            if (h && params.gfxVariantHidden[h.m]) {
+              const arr = params.gfxVariantHidden[h.m];
+              const i2 = arr.indexOf(name);
+              if (i2 >= 0) arr.splice(i2, 1);
+            }
             presetStoreSave(); markDirty(); fillVariantRow();
           });
       };
       varRow.appendChild(back);
     }
   };
+  fillLineToggle();
   fillVariantRow();
 
   /* ═══ グラフィックを編集 ── 直接編集とプリセット ═══
