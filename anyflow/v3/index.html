@@ -4246,19 +4246,20 @@ function convShapePool(n) {
   const defsB = ensureDefs(backHost), defsF = ensureDefs(frontHost);
   const mkGrad = (defs, id, dir, white) => {
     const g = document.createElementNS(SVG_NS, 'linearGradient');
-    g.setAttribute('id', id); g.setAttribute('gradientUnits', 'userSpaceOnUse');
+    /* 【2026-08-29 ヒデさん指定】1本1本の軌道それぞれにグラデを効かせる = objectBoundingBox。
+       各リングの長さ方向(major軸)に沿って、その輪自身の向きで色が流れる(回転に追従)。 */
+    g.setAttribute('id', id); g.setAttribute('gradientUnits', 'objectBoundingBox');
+    g.setAttribute('x1', '0'); g.setAttribute('y1', '0.5'); g.setAttribute('x2', '1'); g.setAttribute('y2', '0.5');
     const c1 = dir ? '#FF5D97' : '#00ABEB', c2 = dir ? '#00ABEB' : '#FF5D97';
     const s1 = document.createElementNS(SVG_NS, 'stop'); s1.setAttribute('offset', '0'); s1.setAttribute('stop-color', c1);
-    const s2 = document.createElementNS(SVG_NS, 'stop'); s2.setAttribute('offset', white.toFixed(4)); s2.setAttribute('stop-color', 'white');
+    const s2 = document.createElementNS(SVG_NS, 'stop'); s2.setAttribute('offset', white.toFixed(4)); s2.setAttribute('stop-color', 'white'); s2.setAttribute('class', 'shGWhite');
     const s3 = document.createElementNS(SVG_NS, 'stop'); s3.setAttribute('offset', '1'); s3.setAttribute('stop-color', c2);
     g.append(s1, s2, s3); defs.appendChild(g); return g;
   };
   convShapeGradB = []; convShapeGradF = [];
   for (let i = 0; i < n; i++) {
     const dir = i % 2;                                   /* 1本ごとに向きを入れ替え(カンプの外/内と同じ) */
-    const base = dir ? 0.403846 : 0.490385;              /* カンプ実測: 外=0.40 / 内=0.49 */
-    const shift = (n <= 1 ? 0 : (i / (n - 1) - 0.5)) * 0.30;   /* 輪ごとに白の位置をずらす */
-    const white = Math.max(0.12, Math.min(0.88, base + shift));
+    const white = dir ? 0.403846 : 0.490385;             /* カンプ実測: 外=0.40 / 内=0.49(白の位置は描画時に土星だけずらす) */
     convShapeGradB.push(mkGrad(defsB, 'gShRB' + i, dir, white));
     convShapeGradF.push(mkGrad(defsF, 'gShRF' + i, dir, white));
     convShapeBack.push(mk(backHost, dotsBackG, false));    /* 惑星の裏(z1) */
@@ -4309,20 +4310,18 @@ function convDrawShape() {
       const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
-    /* 【2026-08-29 ヒデさん指定】カンプの青→白→ピンクのグラデを、この輪の"画面上の縦の広がり"に
-       ぴったり合わせる(userSpaceOnUse)。こうすると平たい輪でも青とピンクが端まで届く。 */
-    const rr = rot * Math.PI / 180;
-    const halfH = Math.max(2, Math.sqrt(Math.pow(rx * Math.sin(rr), 2) + Math.pow(ry * Math.cos(rr), 2)));
+    /* 【2026-08-29 ヒデさん指定】1本1本の軌道それぞれにグラデ。白の位置は、土星のときだけ輪ごとにずらす。 */
+    const dir = i % 2, baseW = dir ? 0.403846 : 0.490385;
+    const white = (shape === 'saturn')
+      ? Math.max(0.18, Math.min(0.82, baseW + (n <= 1 ? 0 : (i / (n - 1) - 0.5)) * 0.26))
+      : baseW;
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
     const sw = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1);
     [[convShapeBack[i], convShapeGradB[i], 'gShRB' + i], [convShapeFront[i], convShapeGradF[i], 'gShRF' + i]].forEach(([el, grad, gid]) => {
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
       el.setAttribute('transform', tr);
-      if (grad) {
-        grad.setAttribute('x1', cc.x.toFixed(1)); grad.setAttribute('x2', cc.x.toFixed(1));
-        grad.setAttribute('y1', (cc.y - halfH).toFixed(1)); grad.setAttribute('y2', (cc.y + halfH).toFixed(1));
-      }
+      if (grad) { const w = grad.querySelector('.shGWhite'); if (w) w.setAttribute('offset', white.toFixed(4)); }
       el.setAttribute('stroke', 'url(#' + gid + ')');
       el.setAttribute('stroke-width', sw);
       el.setAttribute('opacity', '0.9');
