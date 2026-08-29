@@ -1277,30 +1277,38 @@
   }
   .cv-btn:hover { opacity: .75; }
 
-  /* ================= フッター (カンプ 15975:42992 実測) ================= */
+  /* ================= フッター (カンプ 15975:42992 全プロパティ実測で完全再現) ================= */
   #footer {
-    background: linear-gradient(180deg, #161616 0%, #434343 46.3%);
+    /* カンプ: 線形 90°(上→下) #161616(0%) → #434343(100%) */
+    background: linear-gradient(180deg, #161616 0%, #434343 100%);
     color: #fff;
   }
-  .ft-inner { width: min(1200px, calc(100% - 80px)); margin: 0 auto; padding: 100px 0 0; }
-  .ft-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  /* inner: 幅1200・左右120マージン(=1440基準)。上100 / 下40。要素間 gap60(縦) */
+  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 100px 0 40px; }
+  .ft-top { display: flex; justify-content: space-between; align-items: flex-start; height: 136px; }
+  .ft-left { display: flex; flex-direction: column; gap: 24px; }   /* ロゴ枠 gap24 */
   .ft-logo { width: 334px; height: 62px; display: block; }
-  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; margin-top: 24px; }   /* カンプ: ロゴ枠y86 */
-  .ft-msg  { font-weight: 300; font-size: 40px; line-height: 1.7; text-align: left; }
+  /* 住所: Noto Sans JP Light 12 / 白100% / 行間170% */
+  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; color: #fff; }
+  /* メッセージ: Noto Sans JP Thin / 40 / 行間170% / 不透明度 0.5(カンプのテキスト枠 opacity) */
+  .ft-msg  { font-weight: 100; font-size: 40px; line-height: 1.7; text-align: left; opacity: .5; white-space: nowrap; }
+  /* 区切り線+ナビ枠: 上に白10%の線 / 上下 padding 30。ナビ全体 opacity 0.5 */
   .ft-nav {
     display: flex; justify-content: center; gap: 10px;
-    border-top: 1px solid rgba(255,255,255,.28);
+    border-top: 1px solid rgba(255,255,255,.10);
     margin-top: 60px; padding: 31px 0 30px;
+    opacity: .5;
   }
   .ft-nav a {
     display: inline-flex; justify-content: center; align-items: center;
     width: 140px; color: #fff; text-decoration: none;
-    font-weight: 300; font-size: 14px; transition: opacity .25s ease;
+    font-weight: 300; font-size: 14px; transition: opacity .25s ease;   /* Noto Sans JP Light 14 */
   }
-  .ft-nav a:hover { opacity: .55; }
+  .ft-nav a:hover { opacity: .6; }
+  /* コピーライト: SF Pro Light 16 / 白 不透明度 0.4 / 中央 */
   .ft-copy {
-    text-align: center; padding: 30px 0 90px;
-    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: rgba(255,255,255,.5);
+    text-align: center; padding: 60px 0 90px;
+    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: #fff; opacity: .4;
   }
 
   /* ================= スマホ (設計フレーム 390×780) =================
@@ -3282,6 +3290,21 @@ try {
     _s.converge = 'off';
     localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
     localStorage.setItem('anyflow-migrate-groups', '1');
+  }
+} catch (e) {}
+/* 【2026-08-29 ヒデさん指定】開発者体験2はテキストスライドを既定に(listは廃止方向)。
+   ⚠️【重大バグ修正】以前は loadParams() の中で merged.sections.dev.ds2 だけ書き換えていたが、
+   その値を localStorage に保存し直していなかったため、次のリロードで保存値の 'list' に戻り、
+   「デザインが全く変わらない」症状になっていた。実績C/グループ化と同じく、ここで params と
+   保存の【両方】へ確実に焼く。キー d は新規なので、c まで踏んだ人にも一度だけ再適用される。 */
+try {
+  if (localStorage.getItem(STORAGE_KEY) && !localStorage.getItem('anyflow-dev-ds2-slide-20260829d')) {
+    if (params.sections && params.sections.dev) params.sections.dev.ds2 = 'slide';
+    const _s = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    _s.sections = _s.sections || {}; _s.sections.dev = _s.sections.dev || {};
+    _s.sections.dev.ds2 = 'slide';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(_s));
+    localStorage.setItem('anyflow-dev-ds2-slide-20260829d', '1');
   }
 } catch (e) {}
 function loadParams() {
