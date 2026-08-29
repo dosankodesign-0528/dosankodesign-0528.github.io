@@ -11678,14 +11678,7 @@ function buildPanel() {
   sub(gRoot, '全体の回転（自由回転）', true);
   note('四角い枠を「ドラッグ」すると、右のグラフィック全体がその向きに回ります（左右＝Y／上下＝X／Shift＋左右＝Z）。数値を直接入れてもOK。↺で正面に戻ります。');
   freeRotate();
-  slider('遠近感', 0, 100, 1,
-    () => Math.round(100 * (1 - ((params.kv.persp || 1400) - 400) / 3200)),
-    v => { const c = Math.max(0, Math.min(100, v)); params.kv.persp = 400 + (1 - c / 100) * 3200; applySway(); },
-    v => Math.round(Math.max(0, Math.min(100, v))) + '',
-    '奥行きの効き。大きいほど、手前が大きく奥が小さい“ぐっと寄った”見え方になります（回転しているときに効きます）。');
-  slider('立体の奥行き', 0, 60, 2, () => (params.kv.depth3d == null ? 26 : params.kv.depth3d),
-    v => { params.kv.depth3d = v; applySway(); }, v => Math.round(v) + '',
-    '回転したときの“厚み”。0だと軌道は平ら（惑星だけ球のまま）、大きいほど軌道が惑星を前後で包み込んで立体に見えます。回すとペラペラの紙になるのを防ぎます。');
+  note('惑星は動かさず、軌道だけを立体的に倒します（ペラペラの紙になりません）。');
   /* 【2026-08-29 ヒデさん指定】いま表示されている回転の位置を、アニメの開始地点として保存する */
   {
     const row = document.createElement('div'); row.className = 'sw-row';
