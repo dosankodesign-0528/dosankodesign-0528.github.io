@@ -274,6 +274,9 @@
   /* 【2026-08-29 ヒデさん指定】Vision だけは常に固定追従なし（普通に流れる）。
      実績・事例はピン留めのまま。 */
   #vision .pin-vp { position: relative; }
+  /* 【2026-08-29 ヒデさん指定】Our Vision セクションの中身を 200px ほど下へ下げる。
+     .pin-stage は translateY(-50%) で上下中央にしているので、そこへ +200px 足す(画面px)。 */
+  #vision .pin-stage { transform: translateY(calc(-50% + 200px)) scale(var(--sp)); }
   /* 【2026-08-29】実績→開発者体験「スムーズフェード」時は実績も固定追従なし。 */
   #results.res-smooth .pin-vp { position: relative; }
   /* 【2026-08-29】導入事例も固定追従なし（余分スクロールをなくす）。 */
