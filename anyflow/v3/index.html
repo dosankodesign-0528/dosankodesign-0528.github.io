@@ -2644,7 +2644,7 @@ void main(){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
-  sway: 1,   // 2026-08-27 ヒデさん指定: ゆらぎは既定オフ(①固定)
+  sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
@@ -3281,10 +3281,11 @@ function loadParams() {
       /* 削除済みの選択肢が保存されていた場合はデフォルトに戻す */
       if (!DESIGNS[merged.design]) merged.design = DEFAULTS.design;
       if (merged.sway < 1 || merged.sway > SWAYS.length) merged.sway = 1;
-      /* 【2026-08-27 ヒデさん指定】ゆらぎは既定オフ。保存値が残っている人も一度だけオフに揃える */
-      if (!localStorage.getItem('anyflow-sway-off-20260827')) {
-        merged.sway = 1;
-        localStorage.setItem('anyflow-sway-off-20260827', '1');
+      /* 【2026-08-29 ヒデさん指定】アニメ各案のフォーマット統一: 揺らぎは既定オン(②シーソー)・回転は既定オフ。
+         以前オフに揃えた保存値が残っている人も、一度だけオン(2)へ揃え直す。 */
+      if (!localStorage.getItem('anyflow-sway-on-20260829')) {
+        merged.sway = 2;
+        localStorage.setItem('anyflow-sway-on-20260829', '1');
       }
       /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
       /* 【2026-08-27 ヒデさん指定】①の流れは「上がる」で固定(選択UIは廃止)。保存値も揃える */
@@ -10289,6 +10290,10 @@ function applyGfxVariant(i) {
   if (params.conv.dotMove)      params.conv.dotMove[mode]      = (DEFAULTS.conv.dotMove || {})[mode];
   /* 自由回転(全体の回転)も案ごとに独立＝既定は正面(0) */
   if (params.kv) { params.kv.rotX = 0; params.kv.rotY = 0; params.kv.rotZ = 0; }
+  /* 【2026-08-29 ヒデさん指定・フォーマット統一】揺らぎも案ごとに独立＝既定はオン(②シーソー)。
+     この案で保存した値があれば、このあと gfxApplyFull で復元される。 */
+  params.sway = DEFAULTS.sway;
+  params.swayAmp = DEFAULTS.swayAmp;
   {
     const pk0 = CONV_PARAM_KEY[mode];
     if (pk0 && DEFAULTS.conv[pk0] && params.conv[pk0])
@@ -10313,8 +10318,12 @@ function applyGfxVariant(i) {
   if (v.common) {
     for (const k in v.common) {
       if (k === 'orbitSpin') {
-        if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
-        params.conv.orbitSpinBy[mode] = v.common[k];
+        /* 【2026-08-29 ヒデさん指定・フォーマット統一】軌道の回転は全案とも既定オフに統一する。
+           案が持っていた回転量は「回転をオンにした時に使う速さ」として控えておくだけで、
+           アクティブな値(orbitSpinBy)は 0(オフ)のまま。オンにするのはパネルのトグル。 */
+        if (!params.conv.spinDefBy) params.conv.spinDefBy = {};
+        params.conv.spinDefBy[mode] = v.common[k];
+        /* orbitSpinBy[mode] は上のリセットで 0(オフ)のまま。この案で回転オンを保存していれば後で復元 */
       } else if (k === 'gyroMix') {
         if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
         params.conv.gyroMixBy[mode] = v.common[k];
@@ -11475,13 +11484,36 @@ function buildPanel() {
     const cvMode = params.converge || 'reel';
     /* 【2026-08-27 ヒデさん指定】「ドットの周回」と「スピン」は同じ話なので1つのまとまりに置く。
        案ごとに中身が変わるので、ここで案別に足していく */
-    if (cvMode !== 'off') {
-      const DM = params.conv.dotMove || (params.conv.dotMove = {});
+    /* 【2026-08-29 ヒデさん指定・フォーマット統一】どの案でも「揺らぎ」「軌道の回転」を
+       ON/OFF トグルで揃える。既定は 揺らぎON・回転OFF。速さ等の細かい調整はトグルONの時だけ出す。
+       (以前は off 群だけこの「動き」セクションが無く、B/C/D 等は回転が焼き込みでいじれなかった) */
+    {
       sub(animModeBox, '動き（この案）', true, { fixed: true });
-      segRow('ドットの周回', [['する', 1], ['しない', 0]],
-        () => (DM[cvMode] !== false) ? 1 : 0,
-        v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
-      /* 【2026-08-27 ヒデさん指定】軌道そのものの回転は案ごとに変えられる */
+      /* 揺らぎ ON/OFF (既定オン=②シーソー。全案共通で効く緩やかな揺れ) */
+      segRow('揺らぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
+        v => { params.sway = v ? 2 : 1; markDirty(); renderFrame(); fillAnimBody(); });
+      if ((params.sway || 1) > 1) {
+        slider('揺らぎの強さ', 0, 3, 0.05, () => (params.swayAmp == null ? 1 : params.swayAmp),
+          v => { params.swayAmp = v; markDirty(); }, v => '×' + v.toFixed(2),
+          '揺らぎの振れ幅。0でぴたっと止まり、大きいほど大きく揺れます。');
+      }
+      /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30 */
+      segRow('軌道の回転', [['する', 1], ['しない', 0]], () => convOrbitSpinAmt() !== 0 ? 1 : 0,
+        v => {
+          if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
+          if (v) {
+            const def = (params.conv.spinDefBy || {})[cvMode];
+            params.conv.orbitSpinBy[cvMode] = (typeof def === 'number' && Math.abs(def) > 0.01) ? def : 0.3;
+          } else params.conv.orbitSpinBy[cvMode] = 0;
+          markDirty(); renderFrame(); fillAnimBody();
+        });
+      if (convOrbitSpinAmt() !== 0) {
+        slider('回転の速さ', -3, 3, 0.05, () => convOrbitSpinAmt(),
+          v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
+          v => '×' + v.toFixed(2),
+          '右へ動かすほど速く回り、左へ動かすと逆回りになります。', { signed: true });
+      }
+      /* 軌道のサイズ・線の太さ (全案共通) */
       slider('軌道のサイズ', 0.3, 2.5, 0.02,
         () => { const v = (params.conv.orbitScaleBy || {})[cvMode]; return (typeof v === 'number' && v > 0.05) ? v : 1; },
         v => { if (!params.conv.orbitScaleBy) params.conv.orbitScaleBy = {}; params.conv.orbitScaleBy[cvMode] = v; },
@@ -11492,12 +11524,13 @@ function buildPanel() {
         v => { if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {}; params.conv.orbitWidthBy[cvMode] = v; },
         v => (3 * v).toFixed(1) + 'px',
         '右へ動かすほど軌道の線が太くなります。カンプ通りは 3.0px。');
-      slider('軌道の回転', -3, 3, 0.05,
-        () => convOrbitSpinAmt(),
-        v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
-        v => '×' + v.toFixed(2),
-        '真ん中(0)で止まります。右へ動かすほど速く回り、左へ動かすと逆回りになります。',
-        { signed: true });
+      /* ドットの周回は周回系(off以外)のみ。周回のみ(off)はドットが常に周回する */
+      if (cvMode !== 'off') {
+        const DM = params.conv.dotMove || (params.conv.dotMove = {});
+        segRow('ドットの周回', [['する', 1], ['しない', 0]],
+          () => (DM[cvMode] !== false) ? 1 : 0,
+          v => { DM[cvMode] = !!v; markDirty(); renderFrame(); });
+      }
       if (cvMode === 'reel') {
         const R0 = params.conv.reel;
         segRow('スピン', [['なし', 0], ['あり', 1]],
@@ -11710,12 +11743,9 @@ function buildPanel() {
   slider('漂う量', -3, 3, 0.05, () => params.conv.orbitDrift, v => params.conv.orbitDrift = v,
     v => '×' + v.toFixed(2),
     '真ん中(0)で固定。右へ動かすほど大きく漂い、左へ動かすと逆向きに漂います。', { signed: true });
-  segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
-    v => { params.sway = v ? 3 : 1; markDirty(); });
-  slider('揺らぎの強さ', 0, 3, 0.05, () => (params.swayAmp == null ? 1 : params.swayAmp),
-    v => { params.swayAmp = v; markDirty(); }, v => '×' + v.toFixed(2),
-    '揺らぎの振れ幅。0でぴたっと止まり、大きいほど大きく揺れます（「ゆらぎ＝する」のときに効きます）。');
-  note('ゆらぎは軌道まわり全体がふわっと漂う動きです（惑星もわずかに一緒に動きます）。');
+  /* 【2026-08-29 ヒデさん指定・フォーマット統一】「揺らぎ」「軌道の回転」の ON/OFF は
+     案ごとに独立させたので「グラフィック > 動き（この案）」へ移動した。ここには置かない。 */
+  note('揺らぎ・軌道の回転の ON/OFF は、案ごとに「グラフィック」タブの「動き（この案）」にあります（既定は 揺らぎON・回転OFF）。');
 
   /* 【2026-08-28 ヒデさん指定】複数軌道(リピート): 本数を増やすと惑星の中心に軌道を張る(アトム型など) */
   slider('軌道の本数', 0, 12, 1, () => params.conv.ringCount || 0,
