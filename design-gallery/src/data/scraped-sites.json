@@ -46186,22 +46186,6 @@
     "lastCheckedAt": "2026-08-02T05:33:25.523Z"
   },
   {
-    "id": "8f407fd27808",
-    "title": "「等身大の投信だ。」セゾン投信",
-    "url": "https://www.saison-am.co.jp/promo/toushindai/",
-    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20251020_01-500x817.jpg",
-    "source": "webdesignclip",
-    "category": [
-      "金融・投資・保険"
-    ],
-    "taste": [],
-    "date": "2025-10",
-    "starred": false,
-    "firstSeen": "2026-04-19T11:40:43.578Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:33:25.789Z"
-  },
-  {
     "id": "c9394f67250f",
     "title": "Wave AI Note Taker",
     "url": "https://wave.co/",
@@ -46440,6 +46424,20 @@
     "firstSeen": "2026-04-19T11:40:43.578Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:33:31.351Z"
+  },
+  {
+    "id": "f441d3a5080d",
+    "title": "Euveka",
+    "url": "https://www.euveka.com/",
+    "thumbnailUrl": "https://lp.webdesignclip.com/wp-content/uploads/20250924_01-500x817.jpg",
+    "source": "webdesignclip",
+    "category": [
+      "家電・PC・玩具"
+    ],
+    "taste": [],
+    "date": "2025-09",
+    "starred": false,
+    "firstSeen": "2026-08-29T06:19:27.988Z"
   },
   {
     "id": "8719a750f6fe",
@@ -56569,6 +56567,30 @@
     "firstSeen": "2026-06-09T15:39:46.239Z",
     "isDead": false,
     "lastCheckedAt": "2026-08-02T05:36:13.108Z"
+  },
+  {
+    "id": "c1695dbe550f",
+    "title": "HOBRO DIGITAL",
+    "url": "https://hobro.digital",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a4d1831561c0031366784.png",
+    "source": "awwwards",
+    "category": [
+      "Business & Corporate",
+      "Design Agencies",
+      "Technology",
+      "Animation",
+      "Clean",
+      "Colorful",
+      "Node.js",
+      "GSAP",
+      "3D",
+      "UI design",
+      "Figma"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-29T06:19:27.988Z"
   },
   {
     "id": "efcc56029b58",
