@@ -825,7 +825,8 @@
      既定(list案・slide発火前)は width:0 で隠れ、「開発環境に柔軟に適応」と連続表示になる。 */
   .dc-one .ds-w { display: inline; }
   .dc-one .ds-box { display: inline-flex; vertical-align: middle; align-items: center; justify-content: center;
-    overflow: hidden; height: 42px; border-radius: 0; background: rgba(255,255,255,.09); width: 0; }  /* 2026-08-29 ヒデさん指定: 角丸なし */
+    overflow: hidden; height: 42px; border-radius: 0; background: rgba(255,255,255,.09); width: 0;
+    will-change: width; }  /* 2026-08-29 角丸なし / 2026-08-30 割れのカタつき低減(will-change) */
   .dc-one .ds-roll { position: relative; height: 34px; width: 100%; }
   .dc-one .ds-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: var(--ink-on-dark); white-space: nowrap;
@@ -1343,7 +1344,7 @@
     color: var(--ink-on-dark);
   }
   /* inner: 幅1200・左右120マージン(=1440基準)。上100 / 下40。要素間 gap60(縦) */
-  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 100px 0 var(--space-40); }
+  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 72px 0 var(--space-24); }   /* 2026-08-30: 縦をコンパクトに */
   .ft-top { display: flex; justify-content: space-between; align-items: flex-start; height: 136px; }
   .ft-left { display: flex; flex-direction: column; gap: var(--space-24); }   /* ロゴ枠 gap24 */
   .ft-logo { width: 334px; height: 62px; display: block; }
@@ -1355,7 +1356,7 @@
   .ft-nav {
     display: flex; justify-content: center; gap: var(--space-10);
     border-top: 1px solid var(--glass-10);
-    margin-top: var(--space-60); padding: 31px 0 30px;
+    margin-top: var(--space-40); padding: var(--space-24) 0;   /* 2026-08-30: コンパクトに */
     opacity: .5;
   }
   .ft-nav a {
@@ -1366,7 +1367,7 @@
   .ft-nav a:hover { opacity: .6; }
   /* コピーライト: SF Pro Light 16 / 白 不透明度 0.4 / 中央 */
   .ft-copy {
-    text-align: center; padding: var(--space-60) 0 90px;
+    text-align: center; padding: var(--space-40) 0 var(--space-40);   /* 2026-08-30: 下の余白を90→40に詰める */
     font-family: var(--font-en); font-weight: 300; font-size: 16px; color: var(--ink-on-dark); opacity: .4;
   }
 
@@ -7868,6 +7869,7 @@ const visEls = {
    文字カスケード(マスク登場)はそのまま活かしつつ、「強み」の2文字だけ .vl-strong で包んで
    強調エフェクト(発光・チカチカ 等 10案)を当てられるようにする。 */
 const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶん)
+let visStrGoPrev = false;  // 【2026-08-30】str-go の前フレーム状態(オフ→オンで flicker を確実に再スタートさせる)
 (function buildVisChars() {
   [visEls.l1, visEls.l2].forEach((line, i) => {
     const inner = line.firstElementChild;
@@ -8006,11 +8008,19 @@ function updateVision(p) {
        まだマスク内のうちにチカチカ(2秒・1回)が走り終わって「発火していない」ように見えていた。
        (「データを」追加で強みの位置が後ろへずれて悪化)。メッセージが出きってから発火する。 */
     const msgShown = A >= (l1At + c.revealDur + 0.2);
+    const goNow = msgShown && fx !== 'none';
     for (const el of [visEls.l1, visEls.l2]) {
       if (!el) continue;
       for (const f of VIS_STRONG_FX) el.classList.toggle('str-' + f.key, f.key === fx && fx !== 'none');
-      el.classList.toggle('str-go', msgShown && fx !== 'none');
+      el.classList.toggle('str-go', goNow);
     }
+    /* 【2026-08-30 ヒデさん指定・修正】強調アニメ(特にflickerチカチカ)が「効いていない」対策:
+       str-go がオフ→オンに変わった瞬間に、CSSアニメを一度リセットして確実に頭から再生させる
+       (ビューポート再入場のたびに毎回ちゃんとチカチカする)。 */
+    if (goNow && !visStrGoPrev && (fx === 'flicker')) {
+      for (const s of visStrongEls) { s.style.animation = 'none'; void s.offsetWidth; s.style.animation = ''; }
+    }
+    visStrGoPrev = goNow;
     /* スクロール連動の案: 「強み」が画面中央に来ると --str-k=1(完全に重なる)、遠いほど 0(ずれる) */
     if (VIS_STRONG_CONVERGE.includes(fx) && visStrongEls.length) {
       const r = visStrongEls[0].getBoundingClientRect();
@@ -9173,7 +9183,7 @@ function updateDevSlide(openK, s) {
   if (!dsEls.box) return;
   /* ① 箱が左右に分かれて開く = スクロール位置(openK 0→1)。 */
   const ok = clamp01(openK);
-  dsEls.box.style.width = (DS_BOX_W * ok).toFixed(1) + 'px';
+  dsEls.box.style.width = (DS_BOX_W * ok).toFixed(2) + 'px';   /* 2026-08-30: 0.1→0.01px精度でカタつき低減 */
   dsEls.box.style.margin = ok > 0.02 ? '0 12px' : '0';
   /* ② 語の自動カルーセル = 時間 s。箱が開ききって一呼吸おいてから回り始める。 */
   const N = DS_WORDS.length;
