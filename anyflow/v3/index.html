@@ -2554,6 +2554,7 @@ void main(){
 const DEFAULTS = {
   running: true,
   sway: 1,   // 2026-08-27 ヒデさん指定: ゆらぎは既定オフ(①固定)
+  swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
@@ -2813,7 +2814,7 @@ const DEFAULTS = {
     echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
     echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
     /* 【2026-08-28 ヒデさん指定】複数軌道(アトム型/土星型/花型など)。ringCount>=2 で有効 */
-    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3,
+    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3, ringRotate: true,
     startPhase: 0,   /* 【2026-08-29】回転アニメの開始位相(「いまを開始地点にする」で設定) */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
@@ -3304,7 +3305,7 @@ function orbitGeom(key) {
        ⚠️ 最初からクロスしているとカンプと違うので、はじめは平行(傾き0)にしておき、
           crossLead 秒かけてじわじわ交差しはじめる */
     const lead = clamp01((elapsed - params.crossDelay) / Math.max(0.1, params.crossLead));
-    wobble += (key === 'outer' ? 6 : -6) * Math.sin(2 * Math.PI * elapsed / 10) * easeIO(lead);
+    wobble += (key === 'outer' ? 6 : -6) * (params.swayAmp == null ? 1 : params.swayAmp) * Math.sin(2 * Math.PI * elapsed / 10) * easeIO(lead);
   }
   let dfx = 0, dfy = 0;
   const dr = (params.conv && params.conv.orbitDrift) || 0;
@@ -4283,8 +4284,9 @@ function convDrawShape() {
   const R = orbitBase('outer').rx * (C.ringSize == null ? 1 : C.ringSize) * convOrbitScale();
   const flat = C.ringFlat == null ? 0.42 : C.ringFlat;
   const shape = C.ringShape || 'atom';
-  const spin = kvGT() * (C.ringSpin == null ? 0.35 : C.ringSpin);
-  const tumble = C.ringTumble == null ? 0.6 : C.ringTumble;
+  const ringRot = (C.ringRotate === false) ? 0 : 1;   /* 2026-08-29 回転する/しないスイッチ。offで輪を静止 */
+  const spin = kvGT() * (C.ringSpin == null ? 0.35 : C.ringSpin) * ringRot;
+  const tumble = (C.ringTumble == null ? 0.6 : C.ringTumble) * ringRot;
   const baseRot = orbitBase('outer').rot;    /* カンプの傾きを基準に */
   for (let i = 0; i < n; i++) {
     let rx = R, ry = R * flat, rot = baseRot;
@@ -6316,7 +6318,7 @@ function applySway() {
   switch (SWAYS[(params.sway || 1) - 1].id) {
     case 'seesaw': /* シーソー: 全体がゆっくり傾く。①収縮ループ中は固定(ヒデさん指定) */
       if (!(params.kvDesign === 'planet' && params.converge === 'reel'))
-        orbit = `rotate(${(Math.sin(t * 0.4) * 3).toFixed(3)}deg)`;
+        orbit = `rotate(${(Math.sin(t * 0.4) * 3 * (params.swayAmp == null ? 1 : params.swayAmp)).toFixed(3)}deg)`;
       break;
     /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
@@ -9769,6 +9771,7 @@ function gfxSnapshotFull() {
     ...gfxSnapshot(),
     design: params.design,
     sway: params.sway,
+    swayAmp: params.swayAmp,            /* ゆらぎの強さ */
     duration: params.duration,          /* ドットが軌道を1周する秒数 */
     globalSpeed: params.globalSpeed,
     common: {
@@ -9778,7 +9781,7 @@ function gfxSnapshotFull() {
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
       fxMode: C.fxMode, fxCount: C.fxCount, fxEvery: C.fxEvery, fxInertia: C.fxInertia, echoCrisp: C.echoCrisp,
-      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble, ringWidth: C.ringWidth, startPhase: C.startPhase,
+      ringCount: C.ringCount, ringShape: C.ringShape, ringSpin: C.ringSpin, ringFlat: C.ringFlat, ringSize: C.ringSize, ringTumble: C.ringTumble, ringWidth: C.ringWidth, ringRotate: C.ringRotate, startPhase: C.startPhase,
       dotRandom: C.dotRandom, orbitSpin: C.orbitSpin, orbitDrift: C.orbitDrift,
       dotMove: C.dotMove ? C.dotMove[mode] : undefined,
       orbitSpin: convOrbitSpinAmt(),          /* 案ごとの軌道回転 */
@@ -9798,6 +9801,7 @@ function gfxApplyFull(d) {
   gfxApply(d);                                  /* まず形 (古いプリセットはここだけ入っている) */
   if (typeof d.design === 'string') params.design = d.design;
   if (typeof d.sway === 'number') params.sway = d.sway;
+  if (typeof d.swayAmp === 'number') params.swayAmp = d.swayAmp;
   if (typeof d.duration === 'number') params.duration = d.duration;
   if (typeof d.globalSpeed === 'number') params.globalSpeed = d.globalSpeed;
   const mode = params.converge || 'reel';
@@ -9808,7 +9812,7 @@ function gfxApplyFull(d) {
                      'glowKind', 'glowHold', 'glowEcho',
                      'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
                      'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp',
-                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'startPhase']) {
+                     'ringCount', 'ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'ringRotate', 'startPhase']) {
       if (d.common[k] !== undefined) C[k] = d.common[k];
     }
     if (d.common.dotMove !== undefined) {
@@ -9913,7 +9917,7 @@ function applyGfxVariant(i) {
   /* 【2026-08-29 ヒデさん指定】案ごとに独立させるため、案を選ぶ瞬間に「シェイプ共通」と
      「この案のつまみ」を一旦すべて既定へ戻す。このあと 定義(common/conv) → 保存した調整 の順に
      重ねるので、他の案でいじった値が漏れて残らない。 */
-  for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'startPhase'])
+  for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'ringRotate', 'startPhase'])
     params.conv[rk] = DEFAULTS.conv[rk];
   {
     const pk0 = CONV_PARAM_KEY[mode];
@@ -10329,7 +10333,15 @@ function chipRow(label, items) {
     items.forEach(it => { const d = defaultOf(it.get); if (d != null) it.set(d); });
     sync();
   } });
-  row.append(lab, box);
+  /* 2026-08-29 ヒデさん指定: この行にもリセット(↺)を置く(全チップを既定へ) */
+  const rst = document.createElement('button');
+  rst.type = 'button'; rst.className = 'rst'; rst.textContent = '↺'; rst.title = '既定に戻す';
+  rst.onclick = (e) => {
+    e.stopPropagation();
+    items.forEach(it => { const d = defaultOf(it.get); if (d != null) it.set(d); });
+    sync(); markDirty(); renderFrame();
+  };
+  row.append(lab, box, rst);
   (mount || body).appendChild(row);
 }
 
@@ -11239,6 +11251,9 @@ function buildPanel() {
     '真ん中(0)で固定。右へ動かすほど大きく漂い、左へ動かすと逆向きに漂います。', { signed: true });
   segRow('ゆらぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
     v => { params.sway = v ? 3 : 1; markDirty(); });
+  slider('揺らぎの強さ', 0, 3, 0.05, () => (params.swayAmp == null ? 1 : params.swayAmp),
+    v => { params.swayAmp = v; markDirty(); }, v => '×' + v.toFixed(2),
+    '揺らぎの振れ幅。0でぴたっと止まり、大きいほど大きく揺れます（「ゆらぎ＝する」のときに効きます）。');
   note('ゆらぎは軌道まわり全体がふわっと漂う動きです（惑星もわずかに一緒に動きます）。');
 
   /* 【2026-08-28 ヒデさん指定】複数軌道(リピート): 本数を増やすと惑星の中心に軌道を張る(アトム型など) */
@@ -11259,6 +11274,9 @@ function buildPanel() {
         it => { params.conv.ringShape = it.key; markDirty(); renderFrame(); },
         { get: () => params.conv.ringShape, set: v => { params.conv.ringShape = v; renderFrame(); } },
         { noRebuild: true });
+      segRow('回転', [['する', 1], ['しない', 0]], () => (params.conv.ringRotate === false ? 0 : 1),
+        v => { params.conv.ringRotate = !!v; markDirty(); renderFrame(); });
+      note('「しない」にすると、輪が回らず・奥行きも動かず、その向きでぴたっと止まります（下の「回る速さ」「奥行きの動き」は回転オンの時だけ効きます）。');
       slider('回る速さ', 0, 2, 0.05, () => params.conv.ringSpin, v => params.conv.ringSpin = v, v => '×' + v.toFixed(2), '軌道全体の回る速さ。');
       slider('奥行きの動き', 0, 1.5, 0.05, () => params.conv.ringTumble, v => params.conv.ringTumble = v, v => '×' + v.toFixed(2), 'アトム型・地球儀型で、奥行きの伸び縮みの速さ。');
       slider('つぶし', 0.15, 0.8, 0.02, () => params.conv.ringFlat, v => params.conv.ringFlat = v, v => v.toFixed(2), '軌道の縦のつぶし具合。小さいほど細長い輪。');
@@ -11314,7 +11332,13 @@ function buildPanel() {
     const plab = document.createElement('label');
     plab.textContent = '遠近';
     plab.title = '左＝どこでも同じ大きさ／右＝手前が大きく、奥が小さい';
-    prow.append(plab, wrap);
+    /* 2026-08-29 ヒデさん指定: 遠近トグルにもリセット(↺)を置く */
+    const perspRst = mkReset(() => (params.conv.dotPersp || 'flat'), v => {
+      params.conv.dotPersp = v;
+      wrap.querySelectorAll('.gmode-b').forEach((el, j) => el.classList.toggle('on', j === (v === 'flat' ? 0 : 1)));
+      markDirty(); renderFrame(); fillPersp();
+    }, null, false);
+    prow.append(plab, wrap, perspRst);
     (mount || body).appendChild(prow);
     (mount || body).appendChild(perspBox);
     fillPersp();
