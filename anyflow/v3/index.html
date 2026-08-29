@@ -12813,6 +12813,30 @@ function buildPanel() {
     it => { params.patterns.mock = it.key; mockNote(); }, null, { noRebuild: true });
 
   /* ========== 🗂 導入事例 ========== */
+  /* 【2026-08-29 ヒデさん指定】コンバージョン背景の流れるグラデ＋ディザリング調整 */
+  const catCv = category('💠 コンバージョン（お問い合わせの流れる背景）', false);
+  catNote(catCv, 'カンプのラジアルグラデを、惑星と同じ発想で流れさせ、Bayerディザで粒立たせています。');
+  const cvv = () => (params.cv || (params.cv = {}));
+  sub(catCv, 'ディザリング（粗さ・階調）');
+  rows.push(slider('粗さ（ドットの大きさ）', 1, 8, 0.5, () => cvv().cell, v => { cvv().cell = v; }, v => v.toFixed(1) + 'px',
+    '大きいほど粗い(ドットが大きい)ディザに。1でカンプ(Size1)。'));
+  rows.push(slider('階調（レベル）', 2, 12, 1, () => cvv().levels, v => { cvv().levels = v; }, v => Math.round(v) + '段',
+    '色を何段に量子化するか。少ないほどディザが強く出ます。カンプは3段。'));
+  rows.push(slider('ディザの散り', 0, 2, 0.05, () => cvv().spread, v => { cvv().spread = v; }, v => '×' + v.toFixed(2),
+    '大きいほど点のばらつきが強く、粒感が増します。'));
+  sub(catCv, '流れる雰囲気');
+  rows.push(slider('流れる速さ', 0, 1, 0.02, () => cvv().speed, v => { cvv().speed = v; }, v => '×' + v.toFixed(2),
+    'グラデが流れる速さ。0で止まります。'));
+  rows.push(slider('うねりの強さ', 0, 0.6, 0.02, () => cvv().swell, v => { cvv().swell = v; }, v => '×' + v.toFixed(2),
+    '流れのゆらぎ(うねり)の大きさ。大きいほど大きくうねります。'));
+  rows.push(slider('流れの細かさ', 1, 8, 0.2, () => cvv().flowScale, v => { cvv().flowScale = v; }, v => '×' + v.toFixed(1),
+    '大きいほど細かい流れ、小さいほど大きな流れになります。'));
+  sub(catCv, '明るさ・コントラスト');
+  rows.push(slider('明るさ', 0.7, 1.4, 0.01, () => cvv().bright, v => { cvv().bright = v; }, v => Math.round(v * 100) + '%',
+    'カンプは104%。'));
+  rows.push(slider('コントラスト', 0.8, 2, 0.02, () => cvv().contrast, v => { cvv().contrast = v; }, v => '×' + v.toFixed(2),
+    'カンプは 1.38。'));
+
   const catCase = category('🗂 導入事例（2×2グリッド）', false);
   catNote(catCase, '見出し → 水平線が左から3本 → 中央の縦線 → カード4枚がブラーで登場。');
 
