@@ -6734,7 +6734,7 @@ function playT(key, total, canStart, sec, pNow) {
      手を止めれば絵も止まり、上へ戻せばそのまま巻き戻る（逆再生の実装が要らない）
      ⚠️【2026-08-18 指定】実績だけは例外。スクロールに連動させず、ビューポート中央に来た段階で時間再生する。
      ⚠️【2026-08-25 ヒデさん指定】導入事例(cases)も同じく時間再生（ビューポートに入ったら自動再生）。 */
-  if (params.drive === 'scroll' && key !== 'results' && key !== 'cases') {
+  if (params.drive === 'scroll' && key !== 'results' && key !== 'cases' && key !== 'vision') {
     const raw = (pNow == null ? pinP(sec) : pNow);
     /* ⚠️【2026-08-19 バグ修正】この関数の約束は「まだ再生していない＝マイナスを返す」。
        スクロール駆動だけ 0 を返していたため、呼び出し側の `t < 0`（未再生）判定が
@@ -7574,7 +7574,9 @@ function updateVision(p) {
      以前は移動が終わった時点(mvT - moveDur)で出ていて、ドットはまだ回っていた */
   /* 左下に着いたら Platform → プラットフォーム → 2つの価値 → Point01 → Point02。
      ドットはこの間ずっと回っている */
-  const C = noPin ? 99 : (mvT < 0 ? -99 : mvT - c.moveDur);
+  /* 【2026-08-29 ヒデさん指定】no-pin は時間再生。グラフィックが出きった時点(miniAt+miniDur)を
+     起点に、そこからディレイで Platform → Point01 → Point02 を1つずつ出す(強制表示99をやめる) */
+  const C = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur)) : (mvT < 0 ? -99 : mvT - c.moveDur);
   rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
   rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
@@ -7587,7 +7589,7 @@ function updateVision(p) {
   rvAt(visEls.valP1,   easeOutQ(clamp01((C - 0.95) / T_IN)), B, 12, c.p1X * offX, c.p1Y);
   rvAt(visEls.valP2,   easeOutQ(clamp01((C - 1.35) / T_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
-  const D = noPin ? 99 : (S < 0 ? -99 : S - (brakeStart + brake));
+  const D = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur + 1.8)) : (S < 0 ? -99 : S - (brakeStart + brake));
   visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
 }
 
