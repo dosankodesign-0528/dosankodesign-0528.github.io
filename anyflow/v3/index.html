@@ -762,6 +762,19 @@
     font-size: 40px;
     line-height: normal;
   }
+  /* 【2026-08-29 ヒデさん指定】テキストスライド案の見出しの箱(CLI/SDK/API)。
+     既定(list案・slide発火前)は width:0 で隠れ、「開発環境に柔軟に適応」と連続表示になる。 */
+  .dc-one .ds-w { display: inline; }
+  .dc-one .ds-box { display: inline-flex; vertical-align: middle; align-items: center; justify-content: center;
+    overflow: hidden; height: 42px; border-radius: 8px; background: rgba(255,255,255,.09); width: 0; }
+  .dc-one .ds-roll { position: relative; height: 34px; width: 100%; }
+  .dc-one .ds-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: #fff; white-space: nowrap;
+    will-change: transform, opacity, filter; backface-visibility: hidden; }
+  /* テキストスライド案のレイアウト: 右リストを隠し、モックを dev1 と同じ原寸(等倍)で中央に */
+  #dev.ds2-slide .dev-list { display: none; }
+  #dev.ds2-slide .dev2-wrap { background: none; max-width: none; height: auto; justify-content: center; }
+  #dev.ds2-slide .dev2-stack { flex: 0 0 auto; width: 840px; height: 504px; margin: 0 auto; align-self: center; }
 
   /* ---- dev1: 単体パネル(エディタ+チャット) 840×504 を中央に (カンプ 24718) ---- */
   .dev1-mock { position: relative; width: 840px; height: 504px; max-width: 100%; }
@@ -2035,7 +2048,9 @@
   <div class="dev-block" id="devBlock2">
     <div class="dev-center" id="devH2">
       <span class="dc-label">Strength 02</span>
-      <span class="dc-one">開発環境に柔軟に適応</span>
+      <!-- 【2026-08-29 ヒデさん指定】テキストスライド案: 「開発環境 [CLI/SDK/API] に柔軟に適応」。
+           list案では箱は幅0で「開発環境に柔軟に適応」と連続表示。slide案でスクロール発火して箱が開く。 -->
+      <span class="dc-one" id="devH2One"><span class="ds-w">開発環境</span><span class="ds-box" id="dsBox"><span class="ds-roll" id="dsRoll"><span class="ds-word" id="dsOut">CLI</span><span class="ds-word" id="dsIn">SDK</span></span></span><span class="ds-w">に柔軟に適応</span></span>
     </div>
     <div class="dev2-wrap">
       <!-- 左: 2層カルーセル(CLI / SDK)。右のリストをホバーすると席が回って入れ替わる -->
@@ -2941,7 +2956,7 @@ const DEFAULTS = {
     echoSpeed: 0.7, echoShells: 3, echoSpread: 0.28, echoStart: 1.12, echoFade: 1.6,
     echoAlpha: 1,      /* 残像の濃さ(倍率)。1 が既定 */
     /* 【2026-08-28 ヒデさん指定】複数軌道(アトム型/土星型/花型など)。ringCount>=2 で有効 */
-    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3, ringRotate: true,
+    ringCount: 0, ringShape: 'atom', ringSpin: 0.35, ringFlat: 0.42, ringSize: 1, ringTumble: 0.6, ringWidth: 3, ringRotate: false,
     startPhase: 0,   /* 【2026-08-29】回転アニメの開始位相(「いまを開始地点にする」で設定) */
     glowHold: 6,        /* 溜まったものが半分に戻るまでの秒数 */                                              // 吸収の瞬間の惑星の光り方
     /* reel(①循環版 2026-08-26): 内の輪が吸収→外の輪が内の位置へ移動(moveDur)→
@@ -11676,14 +11691,19 @@ function buildPanel() {
         slider('周回速度', 0, 2, 0.05, () => NT.spd, v => { NT.spd = v; renderFrame(); },
           v => '×' + v.toFixed(2), 'ドットが軌道を回る速さ。');
       } else {
-      /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30 */
-      segRow('軌道の回転', [['する', 1], ['しない', 0]], () => convOrbitSpinAmt() !== 0 ? 1 : 0,
+      /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30。
+         【2026-08-29 ヒデさん指定・改】シェイプ案(アトム/土星/花)の回転(ringRotate)もこの1つのトグルで統一。
+         2本軌道は orbitSpin、シェイプは ringRotate を同時に切り替える(混在の解消)。 */
+      const isShapeV = (params.conv.ringCount || 0) >= 2;
+      segRow('軌道の回転', [['する', 1], ['しない', 0]],
+        () => (convOrbitSpinAmt() !== 0 || params.conv.ringRotate === true) ? 1 : 0,
         v => {
           if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
           if (v) {
             const def = (params.conv.spinDefBy || {})[cvMode];
             params.conv.orbitSpinBy[cvMode] = (typeof def === 'number' && Math.abs(def) > 0.01) ? def : 0.3;
-          } else params.conv.orbitSpinBy[cvMode] = 0;
+            params.conv.ringRotate = true;
+          } else { params.conv.orbitSpinBy[cvMode] = 0; params.conv.ringRotate = false; }
           markDirty(); renderFrame(); fillAnimBody();
         });
       if (convOrbitSpinAmt() !== 0) {
@@ -11691,6 +11711,10 @@ function buildPanel() {
           v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
           v => '×' + v.toFixed(2),
           '右へ動かすほど速く回り、左へ動かすと逆回りになります。', { signed: true });
+      } else if (isShapeV && params.conv.ringRotate) {
+        /* シェイプ案(アトム/土星/花)の回る速さは ringSpin */
+        slider('回転の速さ', 0, 2, 0.05, () => params.conv.ringSpin,
+          v => { params.conv.ringSpin = v; renderFrame(); }, v => '×' + v.toFixed(2), 'シェイプ(輪)の回る速さ。');
       }
       /* 軌道のサイズ・線の太さ (全案共通) */
       slider('軌道のサイズ', 0.3, 2.5, 0.02,
