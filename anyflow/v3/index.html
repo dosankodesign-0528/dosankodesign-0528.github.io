@@ -11395,6 +11395,12 @@ function buildPanel() {
   subDefaultOpen = true;      /* ここから下(グラフィック)は既定で開く */
   sub(catKv, '🎨 グラフィック');
   const gRoot = mount;
+  /* 【2026-08-29 ヒデさん指定】右グラフィックの登場タイミングは「左側コピー>タイミング」だと
+     見つけにくいので、ここ(グラフィック直下)にも同じスライダーを置く(同じ params.kv.graphicGap)。 */
+  liveEdit = true;
+  slider('この右グラフィックが出るタイミング', -2, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v,
+    v => v.toFixed(2) + '秒', 'マイナスにすると早く（タイピング中に）出ます。0で小ラベルと同時。', { signed: true });
+  note('※ 同じ設定は「左側コピー > タイミング」にもあります。');
 
   /* ═══ ① アニメーションを選ぶ ── いちばん上の考え方 (2026-08-27 ヒデさん指定) ═══
      ここで選んだ案が、以下すべての土台になる。
@@ -12836,10 +12842,11 @@ document.getElementById('panelHead').addEventListener('click', () => {
    透明ボックス(.tools-secret-hot)は残してあり、隠したい時だけ押せる。
    sessionStorage に明示的に '0'(隠す) が入っている時だけ隠した状態で始める。 */
 (() => {
-  /* 【2026-08-27 ヒデさん指定】既定は隠す。右上の空ボックスを押すと出る */
+  /* 【2026-08-29 ヒデさん指定】リロードしたら必ず「非表示」から始める(前回の表示状態を復元しない)。
+     右上の空ボックス(.tools-secret-hot)を押すと出てくる。 */
   const SKEY = 'anyflow-tools-secret';
   let shown = false;
-  try { if (sessionStorage.getItem(SKEY) === '1') shown = true; } catch (e) {}
+  try { sessionStorage.removeItem(SKEY); } catch (e) {}
   const panelEl2 = document.getElementById('panel');
   const apply = () => {
     toolsEl.classList.toggle('tools-hidden', !shown);
