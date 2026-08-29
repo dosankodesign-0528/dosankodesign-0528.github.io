@@ -10,7 +10,7 @@
 <title>Anyflow Embed — API連携でAIと事業を強くする</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;200;300;400&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -1531,6 +1531,20 @@
   }
   .panel-head:active { cursor: grabbing; }
   .panel-head .chev { transition: transform .25s; font-size: 10px; color: #888; }
+  /* 【2026-08-29 ヒデさん指定】タイトル横のコンパクトな編集ボタン。編集モード中は青 */
+  .panel-edit-btn {
+    margin-left: auto; margin-right: 10px; flex: 0 0 auto;
+    padding: 4px 10px; font-size: 11px; font-family: inherit;
+    border: 1px solid #d5d5d5; border-radius: 6px; background: #fff; color: #444; cursor: pointer;
+  }
+  .panel-edit-btn:hover { border-color: #0EBBFF; color: #0aa2dd; }
+  .panel-edit-btn.on { background: #0EBBFF; border-color: #0EBBFF; color: #fff; }
+  /* 【2026-08-29】✏️編集モード中: サイト内の主要オブジェクトをドラッグで動かせる(破線でハイライト) */
+  html.site-edit .se-hit {
+    outline: 1px dashed #0EBBFF; outline-offset: 3px;
+    cursor: move; pointer-events: auto !important;
+  }
+  html.site-edit .se-hit:hover { outline-color: #FF5D97; }
   .panel.closed .chev { transform: rotate(180deg); }
   .panel-body {
     flex: 1 1 auto;
@@ -7691,7 +7705,7 @@ function updateVision(p) {
      少し縮小(noPinScale)して 1画面に収め、下(noPinY)へずらす。 */
   if (noPin) {
     sc = scFinal * (c.noPinScale != null ? c.noPinScale : 1);   /* カンプの大きさ(縮小しない) */
-    tx = txFinal;
+    tx = txFinal + (c.noPinX || 0);                             /* 直接編集(ドラッグ)の横ずらし */
     ty = (c.noPinY != null ? c.noPinY : 90);                    /* メッセージの下へ置く */
   }
   const mapX = x => x * sc + tx;
@@ -12819,6 +12833,72 @@ document.getElementById('panelHead').addEventListener('click', () => {
   /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
   keepPanelInView();
 });
+/* ===== サイト全体の直接編集 (2026-08-29 ヒデさん指定) =====
+   ✏️編集モード中は、KVだけでなくサイト内の主要オブジェクトをドラッグで直接動かせる。
+   動かした量は既存の位置パラメータへ書くので、「これをデフォルトに設定」で保存できる。
+   対象: Visionの軌道グラフィック(noPinX/noPinY) / Point01(p1X/p1Y) / Point02(p2X/p2Y) / KVグラフィック(kv.gx/gy) */
+const siteEdit = (() => {
+  const V = () => params.sections.vision;
+  const TARGETS = [
+    { el: () => document.getElementById('pfWrap'),  name: 'Visionグラフィック',
+      get: () => ({ x: V().noPinX || 0, y: (V().noPinY != null ? V().noPinY : 90) }),
+      set: (x, y) => { V().noPinX = Math.round(x); V().noPinY = Math.round(y); } },
+    { el: () => document.getElementById('valP1'), name: 'Point 01',
+      get: () => ({ x: V().p1X || 0, y: V().p1Y || 0 }),
+      set: (x, y) => { V().p1X = Math.round(x); V().p1Y = Math.round(y); } },
+    { el: () => document.getElementById('valP2'), name: 'Point 02',
+      get: () => ({ x: V().p2X || 0, y: V().p2Y || 0 }),
+      set: (x, y) => { V().p2X = Math.round(x); V().p2Y = Math.round(y); } },
+    { el: () => document.querySelector('.orbit'), name: 'KVグラフィック',
+      get: () => ({ x: params.kv.gx || 0, y: params.kv.gy || 0 }),
+      set: (x, y) => { params.kv.gx = Math.round(x); params.kv.gy = Math.round(y); } },
+  ];
+  let on = false;
+  function scaleOf(el) {
+    /* 画面px → 設計px の換算。要素の見かけ幅 ÷ レイアウト幅 = 祖先ぶくみの実効スケール */
+    const w = el.offsetWidth;
+    if (!w) return 1;
+    const k = el.getBoundingClientRect().width / w;
+    return k > 0.01 ? k : 1;
+  }
+  function onDown(e) {
+    if (!on) return;
+    const t = this.__seTarget;
+    e.preventDefault(); e.stopPropagation();
+    const k = scaleOf(this);
+    const p0 = t.get(), sx = e.clientX, sy = e.clientY;
+    const move = ev => {
+      t.set(p0.x + (ev.clientX - sx) / k, p0.y + (ev.clientY - sy) / k);
+      markDirty(); renderFrame();
+    };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  }
+  function set(v) {
+    on = !!v;
+    document.documentElement.classList.toggle('site-edit', on);
+    for (const t of TARGETS) {
+      const el = t.el(); if (!el) continue;
+      el.classList.toggle('se-hit', on);
+      if (on && !el.__seBound) { el.__seTarget = t; el.addEventListener('pointerdown', onDown); el.__seBound = true; }
+    }
+  }
+  return { set, get on() { return on; } };
+})();
+/* 【2026-08-29 ヒデさん指定】タイトル横の✏️編集ボタン: 直接編集モードのオン/オフ(パネルの開閉はしない) */
+(() => {
+  const eb = document.getElementById('panelEditBtn');
+  if (!eb) return;
+  const syncEb = () => { eb.classList.toggle('on', !!editHandles.on); eb.textContent = editHandles.on ? '✏️ 編集中' : '✏️ 編集'; };
+  eb.addEventListener('click', (e) => {
+    e.stopPropagation();                       /* パネルの開閉と喧嘩させない */
+    editHandles.set(!editHandles.on);
+    siteEdit.set(editHandles.on);              /* サイト全体のオブジェクトも同じモードで編集可に */
+    syncEb();
+  });
+  eb.addEventListener('pointerdown', e => e.stopPropagation());   /* ドラッグ開始も抑止 */
+  syncEb();
+})();
 
 /* ===== 表示モード（2026-08-25 ヒデさん指定：V1.0同様に最初から表示） =====
    パネルは V1.0 と同じく最初から右下に表示（closed=見出しだけ・クリックで開く）。
