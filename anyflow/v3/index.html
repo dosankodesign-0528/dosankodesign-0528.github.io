@@ -1606,6 +1606,8 @@
     cursor: move; pointer-events: auto !important;
   }
   html.site-edit .se-hit:hover { outline-color: #FF5D97; }
+  /* 【2026-08-29 ヒデさん指定】複数選択されているオブジェクト＝ピンクの実線でハイライト。 */
+  html.site-edit .se-sel { outline: 2px solid #FF5D97 !important; outline-offset: 3px; }
   /* 【2026-08-29 ヒデさん指定】編集モード(✏️編集=html.site-edit)の時だけパネル上に出す項目。
      自由回転はここに入れ、編集ボタンを押した時だけ動的に現れる。 */
   .edit-only-grp { display: none; }
@@ -13225,14 +13227,30 @@ const siteEdit = (() => {
     const k = el.getBoundingClientRect().width / w;
     return k > 0.01 ? k : 1;
   }
+  /* 【2026-08-29 ヒデさん指定】オブジェクトの複数選択。選択中(.se-sel)はまとめてドラッグできる。 */
+  const selection = new Set();
+  function syncSel() {
+    for (const t of TARGETS) { const el = t.el(); if (el) el.classList.toggle('se-sel', selection.has(t)); }
+  }
   function onDown(e) {
     if (!on) return;
     const t = this.__seTarget;
     e.preventDefault(); e.stopPropagation();
-    const k = scaleOf(this);
-    const p0 = t.get(), sx = e.clientX, sy = e.clientY;
+    /* Shift/⌘/Ctrlクリックで選択に足し引き。通常クリックは、そのオブジェクトだけを選択
+       (すでに選択済みなら、選択を保ったまま複数まとめてドラッグ)。 */
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      if (selection.has(t)) selection.delete(t); else selection.add(t);
+    } else if (!selection.has(t)) {
+      selection.clear(); selection.add(t);
+    }
+    syncSel();
+    if (!selection.has(t)) return;   /* Shiftで選択を外した時はドラッグしない */
+    /* 選択中の全オブジェクトの「今の位置・実効スケール」を控え、同じ移動量で一緒に動かす */
+    const starts = [...selection].map(tt => ({ t: tt, p: tt.get(), k: scaleOf(tt.el()) }));
+    const sx = e.clientX, sy = e.clientY;
     const move = ev => {
-      t.set(p0.x + (ev.clientX - sx) / k, p0.y + (ev.clientY - sy) / k);
+      const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      for (const s of starts) s.t.set(s.p.x + dx / s.k, s.p.y + dy / s.k);
       markDirty(); renderFrame();
     };
     const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
@@ -13241,11 +13259,14 @@ const siteEdit = (() => {
   function set(v) {
     on = !!v;
     document.documentElement.classList.toggle('site-edit', on);
+    if (!on) selection.clear();
     for (const t of TARGETS) {
       const el = t.el(); if (!el) continue;
       el.classList.toggle('se-hit', on);
+      if (!on) el.classList.remove('se-sel');
       if (on && !el.__seBound) { el.__seTarget = t; el.addEventListener('pointerdown', onDown); el.__seBound = true; }
     }
+    if (on) syncSel();
   }
   return { set, get on() { return on; } };
 })();
