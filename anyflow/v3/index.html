@@ -424,26 +424,12 @@
   .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
   /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
   .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2s) steps(1,end) 1 both; }
-  /* 2026-08-30: 初期の点滅を“完全消灯(0)”にして、本物の蛍光灯のようにくっきり暗転→点灯を繰り返す(見逃し防止)。
-     さらに、灯る瞬間のシアン発光(ハロー)を足して一目で分かるように。発光は点灯し終える頃に消える。 */
+  /* 2026-08-30 ヒデさん指定: 発光(色)はナシ。シンプルな黒テキストのまま、完全消灯(0)↔点灯を繰り返す蛍光灯チカチカ。
+     初期はくっきり暗転で強く点滅し、後半に向けて徐々に点きっぱなしへ収束する。 */
   @keyframes strFlicker {
-    0%{opacity:0; text-shadow:none}
-    2%{opacity:1; text-shadow:0 0 16px var(--brand-cyan)}
-    4%{opacity:0; text-shadow:none}
-    6%{opacity:1; text-shadow:0 0 16px var(--brand-cyan)}
-    8%{opacity:0; text-shadow:none}
-    10%{opacity:1; text-shadow:0 0 14px var(--brand-cyan)}
-    13%{opacity:0; text-shadow:none}
-    15%{opacity:1; text-shadow:0 0 12px var(--brand-cyan)}
-    19%{opacity:.1; text-shadow:none}
-    21%{opacity:1; text-shadow:0 0 10px var(--brand-cyan)}
-    27%{opacity:.3; text-shadow:none}
-    29%{opacity:1; text-shadow:0 0 8px var(--brand-cyan)}
-    38%{opacity:.5}
-    40%{opacity:1; text-shadow:0 0 5px var(--brand-cyan)}
-    54%{opacity:1; text-shadow:0 0 3px var(--brand-cyan)}
-    72%{opacity:1; text-shadow:0 0 1px var(--brand-cyan)}
-    100%{opacity:1; text-shadow:none} }
+    0%{opacity:0} 2%{opacity:1} 4%{opacity:0} 6%{opacity:1} 8%{opacity:0} 10%{opacity:1}
+    13%{opacity:0} 15%{opacity:1} 19%{opacity:.1} 21%{opacity:1} 27%{opacity:.3} 29%{opacity:1}
+    38%{opacity:.5} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
   /* ②グラデ揺らぎ(生きたグラデ) */
   .vis-line.str-live .vl-strong {
     background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
