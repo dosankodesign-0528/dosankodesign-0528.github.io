@@ -1250,6 +1250,59 @@
     color: #000;
   }
 
+  /* ================= コンバージョン (カンプ 15993:43965 実測) ================= */
+  #conversion { padding: 160px 0 200px; }   /* 前後の余白はカンプから取れず仮置き */
+  .cv-inner {
+    position: relative;
+    width: min(1200px, calc(100% - 80px));
+    height: 416px;
+    margin: 0 auto;
+    overflow: hidden;
+  }
+  #cvCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 惑星グラフィック(カンプの Group1119 の見えている部分を 2倍PNGで)。右上に配置 */
+  .cv-planet { position: absolute; right: 0; top: 46px; width: 409.5px; height: 315px; pointer-events: none; }
+  .cv-content {
+    position: absolute; left: 50%; top: 100px; transform: translateX(-50%);
+    width: 497px; text-align: center; color: #000;
+  }
+  .cv-head { font-weight: 300; font-size: 34px; line-height: 1.7; }   /* Noto Sans JP Light 34 */
+  .cv-sub  { font-weight: 300; font-size: 16px; line-height: 1.8; margin: 30px 0 0; }
+  .cv-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 140px; height: 40px; margin-top: 30px;
+    background: #090909; color: #fff; border-radius: 4px;
+    font-weight: 300; font-size: 14px; text-decoration: none;
+    transition: opacity .25s ease;
+  }
+  .cv-btn:hover { opacity: .75; }
+
+  /* ================= フッター (カンプ 15975:42992 実測) ================= */
+  #footer {
+    background: linear-gradient(180deg, #161616 0%, #434343 46.3%);
+    color: #fff;
+  }
+  .ft-inner { width: min(1200px, calc(100% - 80px)); margin: 0 auto; padding: 100px 0 0; }
+  .ft-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .ft-logo { width: 334px; height: 62px; display: block; }
+  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; margin-top: 24px; }   /* カンプ: ロゴ枠y86 */
+  .ft-msg  { font-weight: 300; font-size: 40px; line-height: 1.7; text-align: left; }
+  .ft-nav {
+    display: flex; justify-content: center; gap: 10px;
+    border-top: 1px solid rgba(255,255,255,.28);
+    margin-top: 60px; padding: 31px 0 30px;
+  }
+  .ft-nav a {
+    display: inline-flex; justify-content: center; align-items: center;
+    width: 140px; color: #fff; text-decoration: none;
+    font-weight: 300; font-size: 14px; transition: opacity .25s ease;
+  }
+  .ft-nav a:hover { opacity: .55; }
+  .ft-copy {
+    text-align: center; padding: 30px 0 90px;
+    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: rgba(255,255,255,.5);
+  }
+
   /* ================= スマホ (設計フレーム 390×780) =================
      PCの1440×921をそのまま縮めると本文が4pxくらいになって読めないので、
      JS側(fit)で座標系ごと 390×780 に差し替え、ここで中身を組み直している。
@@ -2218,6 +2271,43 @@
   </div>
 </section>
 
+<!-- ================= コンバージョン (お問い合わせ / カンプ 15993:43965) =================
+     背景 = カンプのラジアルグラデを WebGL で再現し、惑星と同じ発想の「流れ」(ドメインワープ)＋
+     Bayer ディザリング(カンプは Bayer16×16 / Size1 / Levels3 / Brightness104% / Contrast1.38)。
+     粗さ・階調・流れは調整パネル「コンバージョン」でいじれる。 -->
+<section id="conversion">
+  <div class="cv-inner">
+    <canvas id="cvCanvas"></canvas>
+    <img class="cv-planet" src="assets/cv-planet.png" alt="">
+    <div class="cv-content">
+      <div class="cv-head">お問い合わせ</div>
+      <p class="cv-sub">弊社が事業の推進力を支えます。API連携にまつわるお悩み、その他<br>連携にまつわるご相談はAnyflowにお任せください。</p>
+      <a class="cv-btn" href="https://anyflow.jp/lp/embed" target="_blank" rel="noopener">フォームを記入</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= フッター (カンプ 15975:42992) ================= -->
+<footer id="footer">
+  <div class="ft-inner">
+    <div class="ft-top">
+      <div class="ft-left">
+        <img class="ft-logo" src="assets/footer-logo.svg" alt="Anyflow Embed">
+        <div class="ft-addr">〒105-0001　東京都港区虎ノ門1-3-1 東京虎ノ門グローバルスクエア6階</div>
+      </div>
+      <div class="ft-msg">データをつなぐことが、<br>強みになる時代へ。</div>
+    </div>
+    <nav class="ft-nav">
+      <a href="#vision">ビジョン</a>
+      <a href="#results">提供できること</a>
+      <a href="#dev">使用イメージ</a>
+      <a href="#cases">導入事例</a>
+      <a href="#conversion">お問い合わせ</a>
+    </nav>
+    <div class="ft-copy">© Anyflow Inc.</div>
+  </div>
+</footer>
+
 <!-- ================= 調整パネル (右下に1枚) ================= -->
 <div class="tools">
 <div class="panel closed" id="panel">
@@ -2707,6 +2797,9 @@ const DEFAULTS = {
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   /* 【2026-08-29 ヒデさん指定】ネットワーク3D案(Figma15970)のつまみ。mode=3d/2d。3D=手前太く奥細く＋物理 */
   net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7 },
+  /* 【2026-08-29 ヒデさん指定】コンバージョン背景(流れるグラデ+Bayerディザ)。
+     既定はカンプのディザ設定(Bayer16×16 / Size1 / Levels3 / Brightness104% / Contrast1.38)に合わせる */
+  cv: { cell: 1, levels: 3, spread: 1.0, speed: 0.25, swell: 0.12, flowScale: 3.0, bright: 1.04, contrast: 1.38 },
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
@@ -3788,6 +3881,130 @@ const net3d = (function () {
     });
   }
   return { update, setHidden, active };
+})();
+
+/* ===== コンバージョン背景: 流れるグラデ + Bayerディザ (2026-08-29 ヒデさん指定) =====
+   カンプ 15993:43966 のラジアルグラデ(5ストップ・gradientTransform実測)を WebGL で再現し、
+   惑星と同じ発想の「流れ」(fbmドメインワープ)を足して、Bayer行列で per-channel ディザ。
+   粗さ(セル)・階調(levels)・流れの速さ/うねり・明るさ/コントラストは params.cv(調整パネル)で。 */
+const cvBg = (function () {
+  const canvas = document.getElementById('cvCanvas');
+  if (!canvas) return {};
+  let gl = null, uni = {}, fail = false;
+  const t0 = performance.now();
+  const VS = 'attribute vec2 aP; void main(){ gl_Position = vec4(aP, 0.0, 1.0); }';
+  const FS = `
+precision mediump float;
+uniform vec2 uRes; uniform float uTime;
+uniform float uCell, uLevels, uSpread, uSpeed, uSwell, uFlowScale, uBright, uContrast;
+float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
+float bayer16(vec2 a){ return bayer8(0.5 * a) * 0.25 + bayer2(a); }
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y); }
+float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 3; i++) { v += a * vnoise(p); p *= 2.03; a *= 0.5; } return v; }
+/* カンプ実測の5ストップ(radial): 0=淡ピンク白 / 0.262=淡ブルー / 0.588=#0EBBFF / 0.763=青紫 / 1=#FF5D97 */
+vec3 stopCol(float t){
+  vec3 c0 = vec3(0.997, 0.878, 0.972);
+  vec3 c1 = vec3(0.713, 0.880, 1.000);
+  vec3 c2 = vec3(0.055, 0.733, 1.000);
+  vec3 c3 = vec3(0.280, 0.493, 0.820);
+  vec3 c4 = vec3(1.000, 0.365, 0.592);
+  t = clamp(t, 0.0, 1.0);
+  if (t < 0.262) return mix(c0, c1, t / 0.262);
+  if (t < 0.588) return mix(c1, c2, (t - 0.262) / 0.326);
+  if (t < 0.763) return mix(c2, c3, (t - 0.588) / 0.175);
+  return mix(c3, c4, (t - 0.763) / 0.237);
+}
+void main(){
+  float CELL = max(1.0, uCell);
+  vec2 cellId = floor(gl_FragCoord.xy / CELL);
+  vec2 fc = (cellId + 0.5) * CELL;
+  vec2 uv = fc / uRes;
+  uv.y = 1.0 - uv.y;                       /* Figmaのオブジェクト座標(y下向き)に合わせる */
+  /* 流れ: 惑星と同じ発想で、uv を fbm でゆらしてから色を引く(ドメインワープ) */
+  vec2 w = uv * uFlowScale;
+  float n1 = fbm(w + vec2(uTime * uSpeed, 0.0));
+  float n2 = fbm(w + vec2(0.0, uTime * uSpeed * 0.8) + 7.3);
+  vec2 uvW = uv + (vec2(n1, n2) - 0.5) * uSwell;
+  /* カンプの gradientTransform(実測) で radial の t を出す */
+  vec3 g = vec3(uvW, 1.0);
+  float gx = dot(vec3(-0.38077, 0.29537, 0.79503), g);
+  float gy = dot(vec3(-0.37953, -0.33868, 0.86993), g);
+  float t = length(vec2(gx, gy) - 0.5) * 2.0;
+  vec3 col = stopCol(t);
+  col = (col - 0.5) * uContrast + 0.5;     /* カンプのディザ設定: Contrast 1.38 */
+  col *= uBright;                          /* Brightness 104% */
+  float dith = bayer16(cellId);
+  vec3 q = clamp(floor(col * uLevels + vec3((dith - 0.5) * uSpread) + 0.5) / uLevels, 0.0, 1.0);
+  gl_FragColor = vec4(q, 1.0);
+}`;
+  function compile(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { fail = true; return null; }
+    return s;
+  }
+  function init() {
+    gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+    if (!gl) { fail = true; return; }
+    const p = gl.createProgram();
+    const v = compile(gl.VERTEX_SHADER, VS), f = compile(gl.FRAGMENT_SHADER, FS);
+    if (!v || !f) { fail = true; return; }
+    gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { fail = true; return; }
+    gl.useProgram(p);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(p, 'aP');
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    for (const k of ['uRes', 'uTime', 'uCell', 'uLevels', 'uSpread', 'uSpeed', 'uSwell', 'uFlowScale', 'uBright', 'uContrast'])
+      uni[k] = gl.getUniformLocation(p, k);
+  }
+  function visible() {
+    const r = canvas.getBoundingClientRect();
+    return r.width > 0 && r.bottom > -60 && r.top < (innerHeight || 1) + 60;
+  }
+  function draw() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.max(2, Math.round((canvas.clientWidth || 400) * dpr)), h = Math.max(2, Math.round((canvas.clientHeight || 200) * dpr));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
+    const c = params.cv || {};
+    gl.uniform2f(uni.uRes, w, h);
+    gl.uniform1f(uni.uTime, (performance.now() - t0) / 1000);
+    gl.uniform1f(uni.uCell, Math.max(1, (c.cell != null ? c.cell : 1)) * dpr);
+    gl.uniform1f(uni.uLevels, Math.max(2, c.levels != null ? c.levels : 3));
+    gl.uniform1f(uni.uSpread, c.spread != null ? c.spread : 1.0);
+    gl.uniform1f(uni.uSpeed, c.speed != null ? c.speed : 0.25);
+    gl.uniform1f(uni.uSwell, c.swell != null ? c.swell : 0.12);
+    gl.uniform1f(uni.uFlowScale, c.flowScale != null ? c.flowScale : 3.0);
+    gl.uniform1f(uni.uBright, c.bright != null ? c.bright : 1.04);
+    gl.uniform1f(uni.uContrast, c.contrast != null ? c.contrast : 1.38);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function frame() {
+    requestAnimationFrame(frame);
+    if (fail || !visible()) return;
+    if (!gl) { init(); if (fail || !gl) return; }
+    draw();
+  }
+  requestAnimationFrame(frame);
+  /* sample() = 描画直後に readPixels で色を返す(検証用。preserveDrawingBuffer なしでも同一フレームなら読める) */
+  function sample() {
+    if (fail) return { fail: true };
+    if (!gl) { init(); if (fail || !gl) return { fail: true }; }
+    draw();
+    const w = canvas.width || 2, h = canvas.height || 2;
+    const read = (fx, fy) => {
+      const p = new Uint8Array(4);
+      gl.readPixels(Math.round(w * fx), Math.round(h * fy), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
+      return [p[0], p[1], p[2]];
+    };
+    return { tl: read(0.05, 0.9), tr: read(0.95, 0.9), c: read(0.5, 0.5), bl: read(0.05, 0.1), br: read(0.95, 0.1) };
+  }
+  return { sample };
 })();
 
 /* ===== 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) =====
