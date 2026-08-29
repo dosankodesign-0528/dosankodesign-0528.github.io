@@ -3475,9 +3475,10 @@ function orbitGeom(key) {
   let gyK = 1, gyRot = 0, gyPull = 1;
   /* 【2026-08-28 ヒデさん指定】⑦だけの動きだった「転がり」を、どの案にも混ぜられるようにした。
      mix = 0 で混ぜない / 1 で⑦と同じだけ転がる。⑦を選んでいる時は常に 1 */
+  /* 【2026-08-29 ヒデさん指定】ジャイロの転がりも既定オフに統一。以前は converge==='gyro' で強制1(常に回転)
+     だったのをやめ、gyroMixBy(=軌道の回転トグルで制御)に一本化。0でジャイロも止まる。 */
   const gyMix = (params.kvDesign !== 'planet') ? 0
-    : (params.converge === 'gyro' ? 1
-      : Math.max(0, Math.min(1, ((params.conv.gyroMixBy || {})[params.converge] || 0))));
+    : Math.max(0, Math.min(1, ((params.conv.gyroMixBy || {})[params.converge] || 0)));
   if (gyMix > 0) {
     const G = params.conv.gyro;
     const t = kvGT() * Math.max(0, G.tumble == null ? 1 : G.tumble);
@@ -10572,8 +10573,9 @@ function applyGfxVariant(i) {
         params.conv.spinDefBy[mode] = v.common[k];
         /* orbitSpinBy[mode] は上のリセットで 0(オフ)のまま。この案で回転オンを保存していれば後で復元 */
       } else if (k === 'gyroMix') {
-        if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
-        params.conv.gyroMixBy[mode] = v.common[k];
+        /* 【2026-08-29 ヒデさん指定】ジャイロの転がりも既定オフに統一。値は「オンにした時用」に控える(gyroMixByは0のまま)。 */
+        if (!params.conv.gyroMixDefBy) params.conv.gyroMixDefBy = {};
+        params.conv.gyroMixDefBy[mode] = v.common[k];
       } else if (k === 'orbitWidth') {
         if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {};
         params.conv.orbitWidthBy[mode] = v.common[k];
@@ -11774,15 +11776,20 @@ function buildPanel() {
          【2026-08-29 ヒデさん指定・改】シェイプ案(アトム/土星/花)の回転(ringRotate)もこの1つのトグルで統一。
          2本軌道は orbitSpin、シェイプは ringRotate を同時に切り替える(混在の解消)。 */
       const isShapeV = (params.conv.ringCount || 0) >= 2;
+      const gyMixNow = () => ((params.conv.gyroMixBy || {})[cvMode] || 0);
       segRow('軌道の回転', [['する', 1], ['しない', 0]],
-        () => (convOrbitSpinAmt() !== 0 || params.conv.ringRotate === true) ? 1 : 0,
+        () => (convOrbitSpinAmt() !== 0 || params.conv.ringRotate === true || gyMixNow() !== 0) ? 1 : 0,
         v => {
           if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
+          if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
           if (v) {
             const def = (params.conv.spinDefBy || {})[cvMode];
             params.conv.orbitSpinBy[cvMode] = (typeof def === 'number' && Math.abs(def) > 0.01) ? def : 0.3;
             params.conv.ringRotate = true;
-          } else { params.conv.orbitSpinBy[cvMode] = 0; params.conv.ringRotate = false; }
+            /* ジャイロ系の案は「転がり(gyroMix)」も一緒にオンにする(案が持つ値、無ければ0=非ジャイロ) */
+            const gdef = (params.conv.gyroMixDefBy || {})[cvMode];
+            params.conv.gyroMixBy[cvMode] = (typeof gdef === 'number') ? gdef : 0;
+          } else { params.conv.orbitSpinBy[cvMode] = 0; params.conv.ringRotate = false; params.conv.gyroMixBy[cvMode] = 0; }
           markDirty(); renderFrame(); fillAnimBody();
         });
       if (convOrbitSpinAmt() !== 0) {
