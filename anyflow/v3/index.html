@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-ds="mid">
+<html lang="ja" data-ds="high">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -295,8 +295,10 @@
   }
   /* ── High（積極整備）：色数・トークンを最小化。小さな見た目差が出る ── */
   html[data-ds="high"]{
-    --surface-footer-bottom:#454545;                    /* 暗色下端を1つに */
-    --surface-mock-1:#232323; --surface-mock-3:#232323; /* モック地のグラデを単色寄りに集約 */
+    /* サーフェスを4色へ集約：地色#E7E7E7 / 黒#090909 / 暗#161616 / 中暗#454545 */
+    --surface-footer-bottom:#454545;                    /* フッター下端→開発下端に統合 */
+    --surface-terminal:#090909;                         /* 端末背景(#080A0E)→CTA黒に統合 */
+    --surface-mock-1:#161616; --surface-mock-2:#161616; --surface-mock-3:#161616; /* モック地(#232323)→暗セクション色に統合 */
     --line-grid:#D1D5DC;                                /* 罫線グレーを1つに（事例グリッドが少し明るく） */
     --code-string:#7CE7A6;                              /* コード緑を1つに */
     --ink-label:#101828;                                /* ラベルのグレーを本文インクへ寄せる */
