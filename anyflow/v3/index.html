@@ -9615,8 +9615,11 @@ function applyMarquee() {
 let lenis = null;
 if (window.Lenis && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
   lenis = new window.Lenis({
-    duration: 1.1,                                  // 追いつくまでの時間
-    easing: t => 1 - Math.pow(1 - t, 5),            // easeOutQuint (トークンと同じカーブ)
+    /* 【2026-08-29 ヒデさん指定】以前は duration:1.1 固定で、調整パネルの「慣性の強さ」を
+       0付近にしても実スクロールの慣性が全く弱まらなかった。lerp 方式に変え、下の raf で
+       毎フレーム params.sections.common.smooth から lerp を出して実スクロールの慣性へ反映する。
+       lerp 大=すぐ止まる(慣性弱) / lerp 小=長く流れる(慣性強)。 */
+    lerp: 0.1,
     smoothWheel: true,
     syncTouch: false,                               // スマホは端末標準に任せる
     /* ⚠️ 調整パネルの中でホイールを回した時にページが動かないようにする。
@@ -10387,7 +10390,13 @@ function drawValueIcons() {
 
 function frame(ts) {
   try {
-    if (lenis) lenis.raf(ts);
+    if (lenis) {
+      /* 【2026-08-29】実スクロールの慣性を「慣性の強さ」スライダー(smooth)に連動。
+         smooth 12(=つまみ左/弱)→lerp 0.5(すぐ止まる) / smooth 1(=つまみ右/強)→lerp 0.045(長く流れる)。 */
+      const sm = Math.max(1, Math.min(12, params.sections.common.smooth || 3));
+      lenis.options.lerp = 0.045 + (sm - 1) / 11 * (0.5 - 0.045);
+      lenis.raf(ts);
+    }
     if (lastTs !== null) {
       frameDt = Math.min(0.1, (ts - lastTs) / 1000);
       if (params.running) elapsed += frameDt;
