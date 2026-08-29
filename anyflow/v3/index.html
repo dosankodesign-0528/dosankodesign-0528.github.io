@@ -2668,6 +2668,8 @@ const DEFAULTS = {
   running: true,
   sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
+  /* 【2026-08-29 ヒデさん指定】ネットワーク3D案(Figma15970)のつまみ。mode=3d/2d。3D=手前太く奥細く＋物理 */
+  net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7 },
   crossDelay: 2.5,     // クロスが効き始めるまでの秒数 (それまではカンプ通り平行)
   crossLead: 6,        // 完全にクロスするまでにかける秒数           // ゆらぎ 1=固定 / 2=シーソー / 3=クロス
   design: 'B',       // 惑星デザイン B〜E ＋ F/G/H(波が流れる)
@@ -2890,6 +2892,7 @@ const DEFAULTS = {
   conv: {
     showOuter: true, showInner: true,
     showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
+    net3d: false,                                            // 2026-08-29: ネットワーク3D案のときだけ true(専用レンダラーに切替)
     /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定
        dotSize = 全部のドットの大きさ倍率
        dotPersp: 'flat'=どこでも同じ大きさ / 'persp'=手前が大きく奥が小さい(遠近感)
@@ -3641,6 +3644,106 @@ const kvRepro = (function () {
   return { update, setHidden };
 })();
 
+/* ===== ネットワーク周回 3D (2026-08-29 ヒデさん指定・Figma 15970-42735 の再現) =====
+   周回のみグループの新バリエーション。惑星は固定のまま、3本の軌道を「傾いた3Dの円」として描く。
+   3D=手前が太く奥が細い線幅テーパー＋物理(手前のドットは速く/奥はゆっくり)。2Dはフラット均一線。
+   実測(frame 850x521・惑星448.67,255.64)を KV座標系(915.483x630・惑星457.1,288.3)へ平行移動。 */
+const net3d = (function () {
+  const D2R = Math.PI / 180;
+  const SX = 457.1 - 448.67, SY = 288.3 - 255.64;   // 惑星中心をKVへ合わせる平行移動
+  const ORBITS = [
+    { key: 'big',   cx: 425.1 + SX, cy: 260.4 + SY, R: 441.5, phi: 81,   rho: -26.79, grad: 'gNet0', flipZ: 1, dot: { ang: 210, c: '#0EBBFF' } },
+    { key: 'horiz', cx: 425.1 + SX, cy: 284.1 + SY, R: 376.5, phi: 80.6, rho: 0,      grad: 'gNet1', flipZ: 1, dot: { ang: 205, c: '#0E4497' } },
+    { key: 'cross', cx: 437.5 + SX, cy: 263.7 + SY, R: 174,   phi: 80.6, rho: 27.34,  grad: 'gNet2', flipZ: 1, dot: { ang: 150, c: '#FF5D97' } },
+  ];
+  ORBITS.forEach(o => { o.theta = o.dot.ang * D2R; });
+  let bg, fg, dbg, dfg, ready = false, defsDone = false, lastT = null, wasActive = false;
+  function grp(p) { const g = document.createElementNS(SVG_NS, 'g'); p.appendChild(g); return g; }
+  function addDefs(svg) {
+    let defs = svg.querySelector('defs');
+    if (!defs) { defs = document.createElementNS(SVG_NS, 'defs'); svg.insertBefore(defs, svg.firstChild); }
+    ORBITS.forEach(o => {
+      if (defs.querySelector('#' + o.grad)) return;
+      const a = o.rho * D2R, L = o.R;
+      const x1 = o.cx - Math.cos(a) * L, y1 = o.cy - Math.sin(a) * L, x2 = o.cx + Math.cos(a) * L, y2 = o.cy + Math.sin(a) * L;
+      const lg = document.createElementNS(SVG_NS, 'linearGradient');
+      lg.id = o.grad; lg.setAttribute('gradientUnits', 'userSpaceOnUse');
+      lg.setAttribute('x1', x1.toFixed(1)); lg.setAttribute('y1', y1.toFixed(1));
+      lg.setAttribute('x2', x2.toFixed(1)); lg.setAttribute('y2', y2.toFixed(1));
+      [['0', '#00ABEB'], ['0.49', '#ffffff'], ['1', '#FF5D97']].forEach(s => {
+        const st = document.createElementNS(SVG_NS, 'stop'); st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]); lg.appendChild(st);
+      });
+      defs.appendChild(lg);
+    });
+  }
+  function ensure() {
+    if (ready) return;
+    const lb = document.querySelector('.orbit .layer-back'), lf = document.querySelector('.orbit .layer-front');
+    if (!lb || !lf) return;
+    bg = grp(lb); dbg = grp(lb); fg = grp(lf); dfg = grp(lf); ready = true;
+    if (!defsDone) { addDefs(lb); addDefs(lf); defsDone = true; }   /* グラデは両レイヤーに(別SVGなので)  */
+  }
+  function pt3(o, th) {
+    const x = o.R * Math.cos(th), y = o.R * Math.sin(th), ph = o.phi * D2R, rh = o.rho * D2R;
+    const y2 = y * Math.cos(ph), z2 = o.flipZ * (-y * Math.sin(ph));
+    const x3 = x * Math.cos(rh) - y2 * Math.sin(rh), y3 = x * Math.sin(rh) + y2 * Math.cos(rh);
+    return [o.cx + x3, o.cy + y3, z2];
+  }
+  function widthAt(z, R) {
+    const n = params.net3d || {};
+    if ((n.mode || '3d') === '2d') return (n.flatW != null ? n.flatW : 2);
+    const t = (z / R + 1) / 2, fw = n.frontW != null ? n.frontW : 5, bw = n.backW != null ? n.backW : 1;
+    return bw + (fw - bw) * t;
+  }
+  function path(parent, d, stroke, w) {
+    const p = document.createElementNS(SVG_NS, 'path'); p.setAttribute('d', d); p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', stroke); p.setAttribute('stroke-width', w.toFixed(2)); p.setAttribute('stroke-linecap', 'round'); parent.appendChild(p);
+  }
+  function clear() { for (const g of [bg, fg, dbg, dfg]) if (g) g.textContent = ''; }
+  const HIDE_IDS = ['ellOuterF', 'ellOuterB', 'ellInnerF', 'ellInnerB'];
+  function setHidden(hide) {
+    const d = hide ? 'none' : '';
+    for (const id of HIDE_IDS) { const e = document.getElementById(id); if (e) e.style.display = d; }
+    if (typeof dotsBackG !== 'undefined' && dotsBackG) dotsBackG.style.display = d;
+    if (typeof dotsFrontG !== 'undefined' && dotsFrontG) dotsFrontG.style.display = d;
+    if (typeof convShapeBack !== 'undefined' && convShapeBack) for (const e of convShapeBack) e.style.display = d;
+    if (typeof convShapeFront !== 'undefined' && convShapeFront) for (const e of convShapeFront) e.style.display = d;
+  }
+  function active() { return !!(params.conv && params.conv.net3d); }
+  function update() {
+    if (!active()) {
+      if (wasActive) { if (ready) { setHidden(false); clear(); } wasActive = false; }
+      lastT = null; return;
+    }
+    ensure(); if (!ready) return;
+    wasActive = true; setHidden(true); clear();
+    const n = params.net3d || {}, mode = n.mode || '3d';
+    const spd = (n.spd != null ? n.spd : 0.7) * 1.1, phys = (n.phys != null ? n.phys : 0.7);
+    let dt = (lastT == null ? 0 : Math.min(0.05, Math.max(0, elapsed - lastT))); lastT = elapsed;
+    if (params.running === false) dt = 0;
+    const N = 140;
+    ORBITS.forEach(o => {
+      const pts = [];
+      for (let i = 0; i <= N; i++) pts.push(pt3(o, i / N * 2 * Math.PI));
+      for (let i = 0; i < N; i++) {
+        const a = pts[i], b = pts[i + 1], zA = (a[2] + b[2]) / 2, w = widthAt(zA, o.R);
+        path(zA >= 0 ? fg : bg, `M${a[0].toFixed(1)} ${a[1].toFixed(1)} L${b[0].toFixed(1)} ${b[1].toFixed(1)}`, 'url(#' + o.grad + ')', w);
+      }
+      /* ドットの物理: 手前(zN>0)ほど速く・奥ほどゆっくり。2Dは一定 */
+      const zc = pt3(o, o.theta)[2], zN = zc / o.R;
+      const factor = mode === '3d' ? (1 + phys * zN) : 1;
+      o.theta += spd * Math.max(0.08, factor) * dt;
+      const p = pt3(o, o.theta);
+      const c = document.createElementNS(SVG_NS, 'circle');
+      const r = mode === '3d' ? Math.max(3, 5 + (p[2] / o.R) * 2.2) : 6;
+      c.setAttribute('cx', p[0].toFixed(1)); c.setAttribute('cy', p[1].toFixed(1));
+      c.setAttribute('r', r.toFixed(1)); c.setAttribute('fill', o.dot.c);
+      (p[2] >= 0 ? dfg : dbg).appendChild(c);
+    });
+  }
+  return { update, setHidden, active };
+})();
+
 /* ===== 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) =====
    大前提: デザインは V1.0 のまま一切変えない。既存の軌道・惑星・ドットに「動き」だけ足す。
    （既存パーツと同じ見た目の複製を増やすのは OK: スパイラルの粒・波の輪）
@@ -3733,6 +3836,10 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.wide, common: { orbitSpin: 0.5 } },
     { name: 'F 惑星に寄る', desc: '軌道を小さくたたんで惑星を大きく。密で力強い見え方になります。',
       gfx: GFX_LOOKS.tight, common: { orbitSpin: 1.2 } },
+    /* 【2026-08-29 ヒデさん指定】Figma 15970-42735 のネットワーク周回を3Dで再現した新案。
+       専用レンダラー(net3d)に切り替わる。2D/3D・手前奥の太さ・物理は下の「この案のつまみ」で。 */
+    { name: 'ネットワーク3D', desc: 'Figmaのネットワーク周回の再現。3本の軌道を傾いた3Dの円で描きます。3D＝手前が太く奥が細い線幅＋物理(手前のドットは速く/奥はゆっくり)。2D/3Dは下のつまみで切替。',
+      gfx: GFX_LOOKS.std, common: { net3d: true } },
   ],
   /* 【2026-08-27 ヒデさん指定】①はスピンが速すぎて狙う印象(ゆったり・先進・未来)から遠かった。
      ・1周の秒数(duration)を 24秒 → 30〜40秒 に伸ばして、ドットの流れ自体をゆっくりに
@@ -6552,6 +6659,7 @@ function renderFrame() {
     els.back.style.display = pos.front ? 'none' : '';
   });
   kvRepro.update(geoms, shapeOn);   /* 自由回転オン時=軌道を疑似3Dで再投影(惑星は動かさない) */
+  net3d.update();                    /* ネットワーク3D案(周回のみ)＝3軌道をテーパー＋物理で描く。kvReproの後に上書き */
   applySway();
   renderSphere();
   updateSections();
@@ -10311,7 +10419,7 @@ function applyGfxVariant(i) {
   for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp', 'perspK', 'perspScope',
                    'glow', 'frontCut', 'glowKind', 'glowHold', 'glowEcho',
                    'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
-                   'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp', 'dotRandom', 'orbitDrift'])
+                   'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp', 'dotRandom', 'orbitDrift', 'net3d'])
     if (DEFAULTS.conv[k] !== undefined) params.conv[k] = DEFAULTS.conv[k];
   /* 案ごとの引き出し(per-mode)も既定へ */
   if (params.conv.orbitWidthBy) params.conv.orbitWidthBy[mode] = (DEFAULTS.conv.orbitWidthBy || {})[mode];
@@ -11526,6 +11634,26 @@ function buildPanel() {
           v => { params.swayAmp = v; markDirty(); }, v => '×' + v.toFixed(2),
           '揺らぎの振れ幅。0でぴたっと止まり、大きいほど大きく揺れます。');
       }
+      const net3dOn = !!params.conv.net3d;
+      if (net3dOn) {
+        /* 【2026-08-29 ヒデさん指定】ネットワーク3D案の専用つまみ(2D/3D・手前奥の太さ・物理・周回速度)。 */
+        const NT = params.net3d || (params.net3d = { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7 });
+        segRow('見え方', [['2D（フラット）', 0], ['3D（奥行き）', 1]], () => (NT.mode === '2d' ? 0 : 1),
+          v => { NT.mode = v ? '3d' : '2d'; markDirty(); renderFrame(); fillAnimBody(); });
+        if (NT.mode !== '2d') {
+          slider('手前の太さ', 1, 10, 0.2, () => NT.frontW, v => { NT.frontW = v; renderFrame(); },
+            v => v.toFixed(1) + 'px', '手前(こちら側)の線の太さ。');
+          slider('奥の太さ', 0.3, 4, 0.1, () => NT.backW, v => { NT.backW = v; renderFrame(); },
+            v => v.toFixed(1) + 'px', '奥(向こう側)の線の太さ。小さいほど奥が細い＝立体的。');
+          slider('物理の強さ', 0, 0.95, 0.05, () => NT.phys, v => { NT.phys = v; renderFrame(); },
+            v => '×' + v.toFixed(2), '手前のドットほど速く過ぎ、奥ほどゆっくり流れる強さ。0で一定。');
+        } else {
+          slider('線の太さ', 0.5, 5, 0.1, () => NT.flatW, v => { NT.flatW = v; renderFrame(); },
+            v => v.toFixed(1) + 'px', '2D(フラット)時の均一な線の太さ。');
+        }
+        slider('周回速度', 0, 2, 0.05, () => NT.spd, v => { NT.spd = v; renderFrame(); },
+          v => '×' + v.toFixed(2), 'ドットが軌道を回る速さ。');
+      } else {
       /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30 */
       segRow('軌道の回転', [['する', 1], ['しない', 0]], () => convOrbitSpinAmt() !== 0 ? 1 : 0,
         v => {
@@ -11553,6 +11681,7 @@ function buildPanel() {
         v => { if (!params.conv.orbitWidthBy) params.conv.orbitWidthBy = {}; params.conv.orbitWidthBy[cvMode] = v; },
         v => (3 * v).toFixed(1) + 'px',
         '右へ動かすほど軌道の線が太くなります。カンプ通りは 3.0px。');
+      }
       /* ドットの周回は周回系(off以外)のみ。周回のみ(off)はドットが常に周回する */
       if (cvMode !== 'off') {
         const DM = params.conv.dotMove || (params.conv.dotMove = {});
