@@ -2976,7 +2976,7 @@ const DEFAULTS = {
        'slide'=テキストスライド(見出しの箱がCLI→SDK→APIと切替、モックも同期。dev1と同サイズ・モック内アニメOFF)。
        slideMotion=箱の切替モーション(snap/flip/blur)、slideHold=各語をホールドする割合、slideSnapK=スナップのキレ。 */
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1,
-               ds2: 'list', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4,
+               ds2: 'slide', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4,   /* 2026-08-29: テキストスライドを既定に */
                slideEvery: 3.0, slideDur: 0.5 },   /* 自動スロットの間隔と切替時間(秒) */
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
@@ -3450,6 +3450,18 @@ function loadParams() {
       if (!localStorage.getItem('anyflow-sway-on-20260829')) {
         merged.sway = 2;
         localStorage.setItem('anyflow-sway-on-20260829', '1');
+      }
+      /* 【2026-08-29 ヒデさん指定】開発者体験2はテキストスライドを既定に。保存値が残っている人も一度だけ揃える。 */
+      if (!localStorage.getItem('anyflow-dev-ds2-slide-20260829')) {
+        if (merged.sections && merged.sections.dev) {
+          merged.sections.dev.ds2 = 'slide';
+          if (merged.sections.dev.slideMotion == null) merged.sections.dev.slideMotion = 'snap';
+          if (merged.sections.dev.slideHold == null) merged.sections.dev.slideHold = 0.62;
+          if (merged.sections.dev.slideSnapK == null) merged.sections.dev.slideSnapK = 3.4;
+          if (merged.sections.dev.slideEvery == null) merged.sections.dev.slideEvery = 3.0;
+          if (merged.sections.dev.slideDur == null) merged.sections.dev.slideDur = 0.5;
+        }
+        localStorage.setItem('anyflow-dev-ds2-slide-20260829', '1');
       }
       /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
       /* 【2026-08-27 ヒデさん指定】①の流れは「上がる」で固定(選択UIは廃止)。保存値も揃える */
