@@ -423,13 +423,15 @@
   .vl-strong { display: inline-block; position: relative; color: var(--ink); }
   .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
   /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
-  .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2s) steps(1,end) 1 both; }
+  /* 2026-08-30 ヒデさん指定: 画面内にある間はチカチカし続ける(無限ループ)。一度で収束すると見逃すため。
+     1周期=短い点滅バースト→しばらく点灯、を繰り返す。 */
+  .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2.6s) steps(1,end) infinite both; }
   /* 2026-08-30 ヒデさん指定: 発光(色)はナシ。シンプルな黒テキストのまま、完全消灯(0)↔点灯を繰り返す蛍光灯チカチカ。
-     初期はくっきり暗転で強く点滅し、後半に向けて徐々に点きっぱなしへ収束する。 */
+     1周期の前半(〜25%)で短くくっきり点滅 → 残りは点灯。これを無限ループさせる(見逃し防止)。 */
   @keyframes strFlicker {
     0%{opacity:0} 2%{opacity:1} 4%{opacity:0} 6%{opacity:1} 8%{opacity:0} 10%{opacity:1}
-    13%{opacity:0} 15%{opacity:1} 19%{opacity:.1} 21%{opacity:1} 27%{opacity:.3} 29%{opacity:1}
-    38%{opacity:.5} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
+    12%{opacity:0} 14%{opacity:1} 17%{opacity:.15} 19%{opacity:1} 23%{opacity:.5} 25%{opacity:1}
+    100%{opacity:1} }
   /* ②グラデ揺らぎ(生きたグラデ) */
   .vis-line.str-live .vl-strong {
     background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
