@@ -8004,8 +8004,11 @@ function updateVision(p) {
   /* 【2026-08-29 ヒデさん指定】no-pin は時間再生。グラフィックが出きった時点(miniAt+miniDur)を
      起点に、そこからディレイで Platform → Point01 → Point02 を1つずつ出す(強制表示99をやめる) */
   const C = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur)) : (mvT < 0 ? -99 : mvT - c.moveDur);
-  rv(visEls.pfTitle, easeOutQ(clamp01((C - 0.05) / T_IN)), B);
-  rv(visEls.pfSub,   easeOutQ(clamp01((C - 0.20) / T_IN)), B);
+  /* 【2026-08-29 ヒデさん指定】no-pin では Platform・役割名・ドットを分けず、グラフィックごと
+     pfWrap の mi(ブラー)で一括登場させる(A>=miniAt で全部 1)。Point01/02 だけあとからディレイで出す。 */
+  const grOn = noPin ? (A >= miniAt ? 1 : 0) : 1;
+  rv(visEls.pfTitle, noPin ? grOn : easeOutQ(clamp01((C - 0.05) / T_IN)), B);
+  rv(visEls.pfSub,   noPin ? grOn : easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
   /* 位置は調整パネルから動かせる (カンプ位置からの相対ずらし) */
   /* ⚠️【2026-08-27】この横ズレは PC(1440座標系)で位置を合わせるためのもの。
@@ -8017,7 +8020,8 @@ function updateVision(p) {
   rvAt(visEls.valP2,   easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / T_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur + 1.8)) : (S < 0 ? -99 : S - (brakeStart + brake));
-  visEls.names.forEach((el, i) => rv(el, easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
+  /* no-pin は役割名もグラフィックと一括(grOn)。固定モードのみ従来のディレイ */
+  visEls.names.forEach((el, i) => rv(el, noPin ? grOn : easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -12598,7 +12602,13 @@ function buildPanel() {
     '真ん中(0)で行まるごと同時。左右どちらへ動かしても1文字ずつバラバラに出ます。', { signed: true }));
 
   sub(catVis, '③ 左のグラフィック（軌道）');
-  note('メッセージの下（左）にブラーで出る軌道グラフィック。出る“間隔”は下の「表示タイミング」で。');
+  note('メッセージの下（左）にブラーで出る軌道グラフィック。Platform・玉・役割名も分けず一括で出ます。出る“間隔”は下の「表示タイミング」で。');
+  rows.push(slider('横の位置', -600, 600, 5, () => sv().vision.noPinX || 0, v => sv().vision.noPinX = v, v => v + 'px',
+    '右へ動かすほど右へ。0 でカンプ位置。（✏️編集モードで直接ドラッグでも動かせます）', { signed: true }));
+  rows.push(slider('縦の位置', -400, 400, 5, () => (sv().vision.noPinY != null ? sv().vision.noPinY : 90), v => sv().vision.noPinY = v, v => v + 'px',
+    '下へ動かすほど下へ。'));
+  rows.push(slider('大きさ', 0.4, 1.6, 0.02, () => (sv().vision.noPinScale != null ? sv().vision.noPinScale : 1), v => sv().vision.noPinScale = v, v => '×' + v.toFixed(2),
+    'グラフィック全体の大きさ。1.00 でカンプ通り。'));
   rows.push(slider('出きるまで', 0.4, 3, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + '秒',
     'ぼけた状態からくっきり出るまでの時間。'));
   rows.push(slider('輪の線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
