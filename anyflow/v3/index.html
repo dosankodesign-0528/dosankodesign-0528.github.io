@@ -12049,6 +12049,10 @@ function buildPanel() {
      文面は選択ピルにマウスを乗せた時の吹き出しで読める */
   const animModeBox = document.createElement('div');
   animBody.appendChild(animModeBox);
+  /* 【2026-08-29 ヒデさん指定】エフェクト(吸収のされ方)節への参照。吸収する案でだけ表示するため、
+     案切替(fillAnimBody)のたびに表示/非表示を同期する。 */
+  let effectGrpEl = null;
+  const effectApplies = () => (params.converge && params.converge !== 'off') && !(params.conv && params.conv.net3d);
   {
     const CONV_DESC = {
       off:    '軌道をただ回り続けます。集約の動きはしません。',
@@ -12343,6 +12347,9 @@ function buildPanel() {
     }
 
 
+    /* 【2026-08-29 ヒデさん指定】吸収する案でだけ「エフェクト(吸収のされ方)」を出す。
+       周回のみ(off)/ネットワーク3D(net3d)は吸収が無く、いじっても何も起きないので隠す。 */
+    if (effectGrpEl) effectGrpEl.style.display = effectApplies() ? '' : 'none';
     mount = keepMount;
     subDefaultOpen = keepOpen;
     liveEdit = keepLive;
@@ -12474,6 +12481,8 @@ function buildPanel() {
   /* ---------- ⑤ 惑星 ---------- */
   /* 【2026-08-28 ヒデさん指定】エフェクトを「惑星(模様)」の【上】へ。独立したセクションにする。 */
   sub(gRoot, 'エフェクト（吸収のされ方）', true);
+  /* 【2026-08-29 ヒデさん指定】この節は「吸収する案」でだけ出す。参照を控え、いまの案に合わせて初期表示を決める。 */
+  if (mount && mount.parentElement) { effectGrpEl = mount.parentElement; effectGrpEl.style.display = effectApplies() ? '' : 'none'; }
   {
     /* パルス / 波紋 / エコー = エフェクトの種類。ここは「選択ピル」で、下の番号ピルと役割を分ける */
     const GLOWS = [
