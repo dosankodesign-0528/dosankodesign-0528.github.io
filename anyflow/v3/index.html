@@ -766,7 +766,7 @@
      既定(list案・slide発火前)は width:0 で隠れ、「開発環境に柔軟に適応」と連続表示になる。 */
   .dc-one .ds-w { display: inline; }
   .dc-one .ds-box { display: inline-flex; vertical-align: middle; align-items: center; justify-content: center;
-    overflow: hidden; height: 42px; border-radius: 8px; background: rgba(255,255,255,.09); width: 0; }
+    overflow: hidden; height: 42px; border-radius: 0; background: rgba(255,255,255,.09); width: 0; }  /* 2026-08-29 ヒデさん指定: 角丸なし */
   .dc-one .ds-roll { position: relative; height: 34px; width: 100%; }
   .dc-one .ds-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: #fff; white-space: nowrap;
@@ -2147,10 +2147,7 @@
               </div>
               <div class="dm-code code" id="dmCodeSdk"></div>
             </div>
-            <div class="dm-sdk">
-              <div class="dm-chat-head"><span class="ttl"><img src="assets/mock/sparkles.svg" alt="">SDK Reference</span><img src="assets/mock/ellipsis.svg" alt=""></div>
-              <div class="dm-sdk-list" id="dmSdkList2"></div>
-            </div>
+            <!-- 【2026-08-29 ヒデさん指定】SDK画面の右カラム「SDK Reference」は削除。左のコード画面のみ。 -->
           </div>
         </div>
         <!-- 【2026-08-29 ヒデさん指定】「APIの場合」モックを復活。左のコード画面だけ(右のAIチャットは無し)。 -->
@@ -2988,7 +2985,10 @@ const DEFAULTS = {
        slideMotion=箱の切替モーション(snap/flip/blur)、slideHold=各語をホールドする割合、slideSnapK=スナップのキレ。 */
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1,
                ds2: 'slide', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4,   /* 2026-08-29: テキストスライドを既定に */
-               slideEvery: 3.0, slideDur: 0.5 },   /* 自動スロットの間隔と切替時間(秒) */
+               slideEvery: 3.0, slideDur: 0.5,   /* 自動スロットの間隔と切替時間(秒) */
+               /* 【2026-08-29 ヒデさん指定】dev2の出入りを dev1 と同じスクロール位置駆動に。
+                  vpMode=出しきる基準位置(bottom=早め/center=中央/top=遅め)、splitAt=箱が左右に分かれ始めるスクロール位置(0〜1)。 */
+               vpMode: 'center', splitAt: 0.35 },
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
     cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
@@ -8646,7 +8646,7 @@ function dmAnimScreen(screen, ts) {
   }
   /* SDK: 右の一覧も1行ずつ (手前に来るのはゴースト側の一覧) */
   if (screen === 'sdk') {
-    if (!dm2SdkRows2) dm2SdkRows2 = [...document.getElementById('dmSdkList2').children];
+    if (!dm2SdkRows2) { const _sl = document.getElementById('dmSdkList2'); dm2SdkRows2 = _sl ? [..._sl.children] : []; }  /* 2026-08-29: SDK Reference 列を削除したので無い場合あり */
     dm2SdkRows2.forEach((el, i) => {
       const k = easeOutQ(clamp01((ts - DM2.rowsAt - i * DM2.rowGap) / DM2.lineDur));
       setStyle(el, 'opacity', (k * (1 - outK)).toFixed(3));   /* コードと一緒に消えて、一緒に出直す */
@@ -8698,7 +8698,7 @@ dmBuildScreen('editor');
 dmFillStatic('dmCodeCli', 'cli');
 dmFillStatic('dmCodeSdk', 'sdk');
 dmFillStatic('dmCodeApi', 'api');   /* 【2026-08-29】APIゴーストのコードを充填 */
-dmFillSdkList('dmSdkList2');
+if (document.getElementById('dmSdkList2')) dmFillSdkList('dmSdkList2');  /* 2026-08-29: SDK Reference 列は削除したので存在時のみ */
 /* dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
 let dev1Refs = null;   /* dev1(章①)の複製パネルの参照。updateDev がループ駆動に使う */
 (function cloneDev1Panel() {
@@ -8988,20 +8988,21 @@ function dsFillStaticAll() {
 /* 【2026-08-29 ヒデさん指定・改】スクロール連動をやめて【時間駆動の自動カルーセル】に。
    ビューポートに入ったら(=dev2の入場クロック s)、①語が左右に分かれて箱がマスクで開く →
    ②CLI→SDK→API と一定間隔(slideEvery)で自動で切り替わり続ける(ループ)。モックも同期。 */
-function updateDevSlide(s) {
+/* 【2026-08-29 改】箱の開き(左右に分かれる)はスクロール駆動(openK)、語の CLI→SDK→API 切替は
+   時間駆動の自動カルーセル(s)。openK/s は updateDev2Reveal が算出して渡す。 */
+function updateDevSlide(openK, s) {
   const d = params.sections.dev;
   if (!dsEls.box) return;
-  if (s < 0) { dsResetBox(); return; }
-  /* ① 入場から少し置いて(見出しが出たあと)、語が左右に開いて箱が出る */
-  const open = clamp01((s - 0.55) / 0.55), oe = 1 - Math.pow(1 - open, 3);
-  dsEls.box.style.width = (DS_BOX_W * oe).toFixed(1) + 'px';
-  dsEls.box.style.margin = oe > 0.02 ? '0 12px' : '0';
-  /* ② 自動スロット: 箱が開ききってから、slideEvery 秒ごとに次の語へ(ループ) */
+  /* ① 箱が左右に分かれて開く = スクロール位置(openK 0→1)。 */
+  const ok = clamp01(openK);
+  dsEls.box.style.width = (DS_BOX_W * ok).toFixed(1) + 'px';
+  dsEls.box.style.margin = ok > 0.02 ? '0 12px' : '0';
+  /* ② 語の自動カルーセル = 時間 s。箱が開ききって一呼吸おいてから回り始める。 */
   const N = DS_WORDS.length;
   const every = Math.max(1.2, d.slideEvery != null ? d.slideEvery : 3.0);
   const dur = Math.max(0.2, Math.min(every - 0.3, d.slideDur != null ? d.slideDur : 0.5));
-  const tSlot = s - (0.55 + 0.55 + 0.25);   /* 箱が開ききって一呼吸おいてから回り始める */
   let idx = 0, tr = 0;
+  const tSlot = (s < 0 || ok < 0.9) ? -1 : s - 0.35;
   if (tSlot > 0) {
     const cyc = tSlot / every;
     idx = Math.floor(cyc) % N;
@@ -9011,55 +9012,79 @@ function updateDevSlide(s) {
   }
   const nextIdx = (idx + 1) % N;
   dsEls.out.textContent = DS_WORDS[idx]; dsEls.in.textContent = DS_WORDS[nextIdx];
-  const motion = d.slideMotion || 'snap';
-  const e = motion === 'snap' ? dsSnapEase(tr, d.slideSnapK || 3.4) : tr;
-  if (motion === 'snap') {
-    dsEls.out.style.transform = `translateY(${(-e * DS_WH).toFixed(1)}px)`; dsEls.out.style.opacity = '1'; dsEls.out.style.filter = '';
-    dsEls.in.style.transform = `translateY(${((1 - e) * DS_WH).toFixed(1)}px)`; dsEls.in.style.opacity = '1'; dsEls.in.style.filter = '';
-  } else if (motion === 'flip') {
-    dsEls.roll.style.perspective = '300px';
-    dsEls.out.style.transform = `rotateX(${(e * 90).toFixed(1)}deg)`; dsEls.out.style.opacity = (1 - Math.min(1, e * 1.6)).toFixed(2); dsEls.out.style.filter = '';
-    dsEls.in.style.transform = `rotateX(${(-(1 - e) * 90).toFixed(1)}deg)`; dsEls.in.style.opacity = Math.min(1, e * 1.6).toFixed(2); dsEls.in.style.filter = '';
-  } else {
-    dsEls.out.style.transform = 'none'; dsEls.out.style.opacity = (1 - e).toFixed(2); dsEls.out.style.filter = `blur(${(e * 7).toFixed(1)}px)`;
-    dsEls.in.style.transform = 'none'; dsEls.in.style.opacity = e.toFixed(2); dsEls.in.style.filter = `blur(${((1 - e) * 7).toFixed(1)}px)`;
-  }
+  applyDsMotion(d.slideMotion || 'snap', tr, d);
   const shownIdx = tr >= 0.5 ? nextIdx : idx;
   const scr = DS_SCREENS[shownIdx];
   if (devScreen2 !== scr) { devScreen2 = scr; }   /* カルーセルが updateDev2Stack で同期して回る */
+}
+/* スロット(語)の切替モーション。スナップ/フリップ/ブラー＋横押し/ズーム/キューブ(2026-08-29 +3種)。 */
+function applyDsMotion(motion, tr, d) {
+  const o = dsEls.out, ins = dsEls.in, H = DS_WH, W = DS_BOX_W;
+  const e = motion === 'snap' ? dsSnapEase(tr, d.slideSnapK || 3.4) : tr;
+  o.style.filter = ''; ins.style.filter = '';
+  if (motion === 'flip') {
+    dsEls.roll.style.perspective = '300px';
+    o.style.transform = `rotateX(${(e * 90).toFixed(1)}deg)`; o.style.opacity = (1 - Math.min(1, e * 1.6)).toFixed(2);
+    ins.style.transform = `rotateX(${(-(1 - e) * 90).toFixed(1)}deg)`; ins.style.opacity = Math.min(1, e * 1.6).toFixed(2);
+  } else if (motion === 'blur') {
+    o.style.transform = 'none'; o.style.opacity = (1 - e).toFixed(2); o.style.filter = `blur(${(e * 7).toFixed(1)}px)`;
+    ins.style.transform = 'none'; ins.style.opacity = e.toFixed(2); ins.style.filter = `blur(${((1 - e) * 7).toFixed(1)}px)`;
+  } else if (motion === 'push') {
+    o.style.transform = `translateX(${(-e * W).toFixed(1)}px)`; o.style.opacity = (1 - e).toFixed(2);
+    ins.style.transform = `translateX(${((1 - e) * W).toFixed(1)}px)`; ins.style.opacity = e.toFixed(2);
+  } else if (motion === 'zoom') {
+    o.style.transform = `scale(${(1 - 0.5 * e).toFixed(3)})`; o.style.opacity = (1 - e).toFixed(2);
+    ins.style.transform = `scale(${(0.5 + 0.5 * e).toFixed(3)})`; ins.style.opacity = e.toFixed(2);
+  } else if (motion === 'cube') {
+    dsEls.roll.style.perspective = '340px';
+    o.style.transform = `rotateY(${(e * 90).toFixed(1)}deg)`; o.style.opacity = (1 - Math.min(1, e * 1.5)).toFixed(2);
+    ins.style.transform = `rotateY(${(-(1 - e) * 90).toFixed(1)}deg)`; ins.style.opacity = Math.min(1, e * 1.5).toFixed(2);
+  } else { // snap
+    o.style.transform = `translateY(${(-e * H).toFixed(1)}px)`; o.style.opacity = '1';
+    ins.style.transform = `translateY(${((1 - e) * H).toFixed(1)}px)`; ins.style.opacity = '1';
+  }
 }
 function dsResetBox() { if (dsEls.box) { dsEls.box.style.width = '0'; dsEls.box.style.margin = '0'; } }
 
 function updateDev2Reveal() {
   const b2 = devEls.block2; if (!b2) return;
   if (!dev2StackEl) dev2StackEl = b2.querySelector('.dev2-stack');
+  const d = params.sections.dev;
   /* 【2026-08-29】テキストスライド案の切替: #dev に .ds2-slide を付け、箱アニメを駆動、モックは静止。 */
-  const slide = params.sections.dev.ds2 === 'slide';
+  const slide = d.ds2 === 'slide';
   if (devEls.sec) devEls.sec.classList.toggle('ds2-slide', slide);
   const vh = innerHeight || 1;
   const r = rectOf(b2);
-  const centerY = r.top + r.height / 2;
-  const kBlock = easeOutQ(clamp01((vh - centerY) / (vh * 0.5)));   // ブロックが画面に入った度合い
-  /* 親ブロックは出しっぱなし(不透明1)。中の3要素を順にブラー出現させる */
+  const refY = r.top + r.height / 2;   // ブロック中心
+  /* 【2026-08-29 ヒデさん指定・重要修正】dev2 の出入りを dev1 と同じ【スクロール位置駆動】に統一。
+     以前は kBlock を越えた瞬間に時計(dev2SeqT0)で見出し→モック→右を再生していたため、上に戻ると
+     時計が -1 にリセットされて【パッと消える／変なスクロールリプレイ】になっていた。
+     ここでは revealK(スクロール位置)で3要素をずらして出す＝出も入りもなめらか＆対称。
+     vpMode=出しきる基準位置(bottom=早め/center=dev1と同じ/top=遅め)。 */
+  const FULL = { bottom: 0.72, center: 0.58, top: 0.44 };
+  const full = FULL[d.vpMode] || FULL.center;   // ブロック中心がこの高さ(画面上端からの割合)まで来たら出しきり
+  const revealK = easeOutQ(clamp01((vh - refY) / (vh * (1 - full))));
   b2.style.opacity = '1'; b2.style.filter = ''; b2.style.transform = '';
-  if (kBlock > 0.35) { if (dev2SeqT0 == null) dev2SeqT0 = elapsed; }
-  else if (kBlock < 0.05) dev2SeqT0 = null;
-  const s = dev2SeqT0 == null ? -1 : elapsed - dev2SeqT0;
-  const kHead = s < 0 ? 0 : easeOutQ(clamp01(s / 0.6));            // ① 見出し(親ボックス)
-  const kMock = s < 0 ? 0 : easeOutQ(clamp01((s - 0.45) / 0.6));   // ② モック
-  const kList = s < 0 ? 0 : easeOutQ(clamp01((s - 0.95) / 0.6));   // ③ 右テキスト
+  const stag = (a, b) => easeOutQ(clamp01((revealK - a) / (b - a)));
+  const kHead = stag(0.00, 0.55);   // ① 見出し
+  const kMock = stag(0.20, 0.82);   // ② モック
+  const kList = stag(0.42, 1.00);   // ③ 右テキスト
   revealEl(devEls.h2, kHead, 16, 24);
-  /* 【2026-08-26 ヒデさん指定】親ボックス(モック)は最初から出さず、ブラーでフェードイン。
-     .dm-panel は濃い下地も敷いているので、親 blur で backdrop-filter が一瞬切れても見た目は変わらない。 */
   revealEl(dev2StackEl, kMock, 16, 0);
   revealEl(devEls.list, kList, 16, 24);
-  /* モックはブロックが見えている間ずっと回す（API=本体 / CLI・SDK=ゴーストも同期して回す） */
-  const on = kBlock > 0.35;
+  const on = revealK > 0.35;
   if (slide) {
-    /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。
-       箱(CLI/SDK/API)はビューポート入場で発火する時間駆動の自動カルーセル。 */
+    /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。 */
     dsFillStaticAll();
-    updateDevSlide(s);   /* s = 入場からの経過秒(dev2SeqT0)。入場前は -1 */
+    /* 箱が左右に分かれて開く = スクロール(reveal)駆動。splitAt で開き始めを調整。 */
+    const splitAt = d.splitAt != null ? d.splitAt : 0.35;
+    const openK = easeOutQ(clamp01((revealK - splitAt) / 0.34));
+    /* 語 CLI→SDK→API の切替 = 時間駆動の自動カルーセル。十分見えている間だけ時計を進める。
+       (箱が開いてから回るだけ＝出入りの見た目には影響しない＝リプレイ感を出さない) */
+    if (revealK > 0.55) { if (dev2SeqT0 == null) dev2SeqT0 = elapsed; }
+    else if (revealK < 0.12) dev2SeqT0 = null;
+    const s = dev2SeqT0 == null ? -1 : elapsed - dev2SeqT0;
+    updateDevSlide(openK, s);
   } else {
     dsResetBox();
     driveEditorLoop(null, on, 'dev2');
@@ -12835,16 +12860,25 @@ function buildPanel() {
   pillRow([{ key: 'list', name: 'リスト（現行）' }, { key: 'slide', name: 'テキストスライド' }],
     it => (sv().dev.ds2 || 'list') === it.key,
     it => { sv().dev.ds2 = it.key; ds2Note(); renderFrame(); }, null, { noRebuild: true });
-  note('↓ テキストスライド案の切替モーション（見出しの箱）。');
+  sub(catDev, '② の出入り（スクロール位置）');
+  note('② は dev1 と同じくスクロール位置で出入りします（時間再生ではないので上に戻っても急に消えません）。');
+  const dsVpNote = noteLive(() => { const m = sv().dev.vpMode || 'center';
+    return m === 'bottom' ? '下部基準: 画面に入ってすぐ出しきる（早め）。' : m === 'top' ? '上部基準: 中央より上まで来てから出しきる（遅め）。' : '中央基準: dev1 と同じタイミング。'; });
+  pillRow([{ key: 'bottom', name: '下部で出す' }, { key: 'center', name: '中央で出す' }, { key: 'top', name: '上部で出す' }],
+    it => (sv().dev.vpMode || 'center') === it.key,
+    it => { sv().dev.vpMode = it.key; dsVpNote(); renderFrame(); }, null, { noRebuild: true });
+  rows.push(slider('箱が左右に分かれ始める', 0, 0.9, 0.02, () => sv().dev.splitAt, v => sv().dev.splitAt = v, v => Math.round(v * 100) + '%',
+    'スクロールで何割出たら CLI/SDK/API の箱が左右に開き始めるか。小さいほど早く開きます。'));
+
+  sub(catDev, 'スロット（語の切替モーション）');
+  note('↓ CLI→SDK→API の入れ替わりモーション（6種）。');
   const dsMotNote = noteLive(() => { const m = sv().dev.slideMotion || 'snap';
-    return m === 'flip' ? 'フリップ: 縦に3Dで倒れて入れ替わる。' : m === 'blur' ? 'ブラー: ぼけながら入れ替わる。' : 'スナップ: ホールド→素早く縦に切替（メリハリ）。'; });
-  pillRow([{ key: 'snap', name: 'スナップ' }, { key: 'flip', name: 'フリップ' }, { key: 'blur', name: 'ブラー' }],
+    return ({ snap: 'スナップ: ホールド→素早く縦に切替（メリハリ）。', flip: 'フリップ: 縦に3Dで倒れて入れ替わる。', blur: 'ブラー: ぼけながら入れ替わる。', push: '横押し: 左へ抜け、右から入る。', zoom: 'ズーム: 縮んで消え、拡大して現れる。', cube: 'キューブ: 横に3D回転して入れ替わる。' })[m] || ''; });
+  pillRow([{ key: 'snap', name: 'スナップ' }, { key: 'flip', name: 'フリップ' }, { key: 'blur', name: 'ブラー' }, { key: 'push', name: '横押し' }, { key: 'zoom', name: 'ズーム' }, { key: 'cube', name: 'キューブ' }],
     it => (sv().dev.slideMotion || 'snap') === it.key,
     it => { sv().dev.slideMotion = it.key; dsMotNote(); renderFrame(); }, null, { noRebuild: true });
-  rows.push(slider('語のホールド', 0.3, 0.9, 0.02, () => sv().dev.slideHold, v => sv().dev.slideHold = v, v => Math.round(v * 100) + '%',
-    '各語を止めておく割合。大きいほど切替がキビキビ(短い区間で一気に)。'));
   rows.push(slider('スナップのキレ', 1, 6, 0.2, () => sv().dev.slideSnapK, v => sv().dev.slideSnapK = v, v => '×' + v.toFixed(1),
-    'スナップの切替の急さ。大きいほどメリハリが強く。'));
+    'スナップの切替の急さ。大きいほどメリハリが強く（スナップ選択時）。'));
   rows.push(slider('自動で切り替わる間隔', 1.5, 8, 0.1, () => sv().dev.slideEvery, v => sv().dev.slideEvery = v, v => v.toFixed(1) + '秒',
     'CLI→SDK→API が自動で次へ進む間隔。'));
   rows.push(slider('切り替えにかける時間', 0.2, 1.5, 0.05, () => sv().dev.slideDur, v => sv().dev.slideDur = v, v => v.toFixed(2) + '秒',
