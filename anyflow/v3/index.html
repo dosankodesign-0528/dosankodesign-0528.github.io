@@ -7567,7 +7567,10 @@ function updateVision(p) {
      ①グラデ発光は「強み」が画面中央に近いほど強く光る(--str-k)＝スクロールで光る。 */
   {
     const fx = params.visStrongFx || 'flicker';
-    const msgShown = A >= (l1At + c.revealDur * 0.7);
+    /* 【2026-08-29 バグ修正】以前は revealDur*0.7 で発火していたが、文字カスケードで「強み」(文末側)が
+       まだマスク内のうちにチカチカ(2秒・1回)が走り終わって「発火していない」ように見えていた。
+       (「データを」追加で強みの位置が後ろへずれて悪化)。メッセージが出きってから発火する。 */
+    const msgShown = A >= (l1At + c.revealDur + 0.2);
     for (const el of [visEls.l1, visEls.l2]) {
       if (!el) continue;
       for (const f of VIS_STRONG_FX) el.classList.toggle('str-' + f.key, f.key === fx && fx !== 'none');
