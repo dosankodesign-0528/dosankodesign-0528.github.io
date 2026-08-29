@@ -11868,22 +11868,11 @@ function buildPanel() {
   };
   /* 【2026-08-28 ヒデさん指定】選択ピルは「グループ」で束ねる(周回のみ/1収縮/2軌道と粒/3ネットワーク)。
      内部モードは保持したまま表示だけ組み替えるので、プリセット・バリエーションは消えない。 */
-  /* 【2026-08-29 ヒデさん指定・大枠再編】A(軌道)の時だけ、下に「軌道の表示 / 粒 / 収縮」の絞り込みトグルを出し、
-     A内のカテゴリ(軌道のみ/粒とセット/収縮あり)の表示をオンオフする。旧「線で行き来」トグルは廃止。 */
+  /* 【2026-08-29 ヒデさん指定】カテゴリ絞り込みトグル(軌道の表示/粒/収縮)は一旦廃止。
+     A内のカテゴリ見出し(軌道のみ/粒とセット/収縮あり)は残し、全カテゴリを常時表示する。 */
   let catToggleBox = null;
   const fillCatToggles = () => {
-    if (!catToggleBox) return;
-    catToggleBox.innerHTML = '';
-    if (convGroupOf(params.converge).key !== 'orbit') return;   /* A(軌道)の時だけ絞り込みを出す */
-    const cf = convCatFilter();
-    const keep = mount; mount = catToggleBox;
-    const toggle = (label, key) => segRow(label, [['隠す', 0], ['出す', 1]],
-      () => cf[key] ? 1 : 0,
-      v => { cf[key] = !!v; markDirty(); fillVariantRow(); });
-    toggle('軌道の表示', 'plain');   /* 軌道のみ(off/gyro) */
-    toggle('粒', 'dot');             /* 粒とセット(spiral/accre/beads/線で行き来) */
-    toggle('収縮', 'shrink');        /* 収縮あり(reel) */
-    mount = keep;
+    if (catToggleBox) catToggleBox.innerHTML = '';   /* トグルは出さない(常に全カテゴリ表示) */
   };
   const onGroupSwitch = (g) => {
     if (convGroupOf(params.converge).key !== g.key) {
