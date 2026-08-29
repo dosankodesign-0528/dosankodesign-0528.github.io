@@ -6326,6 +6326,8 @@ function renderFrame() {
 const swayEls = {
   orbit: document.querySelector('.orbit'),
   svgs: [...document.querySelectorAll('.orbit svg')],
+  layerBack: document.querySelector('.orbit .layer-back'),
+  layerFront: document.querySelector('.orbit .layer-front'),
   sphere: document.getElementById('sphere'),
 };
 
@@ -6345,15 +6347,28 @@ function applySway() {
   const ob = isMobile ? ' scale(0.40)' : '';
   /* 【2026-08-28 ヒデさん指定】グラフィック全体をひとまとまりで XYZ 回転(3D)。0のときは付けない */
   const rX = kv.rotX || 0, rY = kv.rotY || 0, rZ = kv.rotZ || 0;
-  const rot3d = (rX || rY || rZ) ? ` perspective(${kv.persp || 1400}px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
+  const rotating = !!(rX || rY || rZ);
+  const rot3d = rotating ? ` perspective(${kv.persp || 1400}px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
+  /* 【2026-08-29 ヒデさん指定】回転時に「ペラペラの紙」にならないよう、回っている間だけ
+     本物の3D空間(preserve-3d)にして、裏軌道を奥・表軌道を手前へ実際に離し(奥行き)、
+     惑星は常に正面を向く(ビルボード)ことで球のまま維持する。回転0のときは今まで通り平面(z-index)。 */
+  const DEPTH = (kv.depth3d == null ? 26 : kv.depth3d);
+  swayEls.orbit.style.transformStyle = rotating ? 'preserve-3d' : '';
   swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}${rot3d}`.trim();
-  swayEls.svgs.forEach(s => s.style.transform = svg);
+  if (rotating) {
+    if (swayEls.layerBack)  swayEls.layerBack.style.transform  = `translateZ(${-DEPTH}px)`;
+    if (swayEls.layerFront) swayEls.layerFront.style.transform = `translateZ(${DEPTH}px)`;
+  } else {
+    swayEls.svgs.forEach(s => s.style.transform = svg);
+  }
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
   const pl = params.planet;
   const plFlat = pl.flat == null ? 1 : pl.flat;
   const plT = (pl.dx || pl.dy || pl.scale !== 1 || plFlat !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale}, ${pl.scale * plFlat})` : '';
-  swayEls.sphere.style.transform = (sph + plT).trim();
+  /* 惑星は回転中だけ逆回転させて常に正面(球のまま)を維持する(ビルボード) */
+  const billboard = rotating ? ` rotateZ(${-rZ}deg) rotateY(${-rY}deg) rotateX(${-rX}deg)` : '';
+  swayEls.sphere.style.transform = (sph + billboard + plT).trim();
 }
 
 /* ================= スクロール連動セクション ================= */
@@ -11564,6 +11579,9 @@ function buildPanel() {
     v => { const c = Math.max(0, Math.min(100, v)); params.kv.persp = 400 + (1 - c / 100) * 3200; applySway(); },
     v => Math.round(Math.max(0, Math.min(100, v))) + '',
     '奥行きの効き。大きいほど、手前が大きく奥が小さい“ぐっと寄った”見え方になります（回転しているときに効きます）。');
+  slider('立体の奥行き', 0, 60, 2, () => (params.kv.depth3d == null ? 26 : params.kv.depth3d),
+    v => { params.kv.depth3d = v; applySway(); }, v => Math.round(v) + '',
+    '回転したときの“厚み”。0だと軌道は平ら（惑星だけ球のまま）、大きいほど軌道が惑星を前後で包み込んで立体に見えます。回すとペラペラの紙になるのを防ぎます。');
   /* 【2026-08-29 ヒデさん指定】いま表示されている回転の位置を、アニメの開始地点として保存する */
   {
     const row = document.createElement('div'); row.className = 'sw-row';
