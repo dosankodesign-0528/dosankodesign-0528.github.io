@@ -3454,8 +3454,9 @@ function loadParams() {
         merged.sway = 2;
         localStorage.setItem('anyflow-sway-on-20260829', '1');
       }
-      /* 【2026-08-29 ヒデさん指定】開発者体験2はテキストスライドを既定に。保存値が残っている人も一度だけ揃える。 */
-      if (!localStorage.getItem('anyflow-dev-ds2-slide-20260829')) {
+      /* 【2026-08-29 ヒデさん指定】開発者体験2はテキストスライドを既定に(listは廃止方向)。
+         保存値が残っている人も一度だけ強制でスライドへ揃える。キーは更新のたびに上げて再適用させる。 */
+      if (!localStorage.getItem('anyflow-dev-ds2-slide-20260829c')) {
         if (merged.sections && merged.sections.dev) {
           merged.sections.dev.ds2 = 'slide';
           if (merged.sections.dev.slideMotion == null) merged.sections.dev.slideMotion = 'snap';
@@ -3464,7 +3465,7 @@ function loadParams() {
           if (merged.sections.dev.slideEvery == null) merged.sections.dev.slideEvery = 3.0;
           if (merged.sections.dev.slideDur == null) merged.sections.dev.slideDur = 0.5;
         }
-        localStorage.setItem('anyflow-dev-ds2-slide-20260829', '1');
+        localStorage.setItem('anyflow-dev-ds2-slide-20260829c', '1');
       }
       /* 【2026-08-27 ヒデさん指定】①のスピンも既定オフ。保存値が残っている人も一度だけ揃える */
       /* 【2026-08-27 ヒデさん指定】①の流れは「上がる」で固定(選択UIは廃止)。保存値も揃える */
