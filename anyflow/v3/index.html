@@ -4393,6 +4393,15 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
 };
+/* 【2026-08-29 ヒデさん指定】バリエーション一覧から「完全削除」した案(案キー→消した案名)。
+   ⚠️ 配列(GFX_VARIANTS)から要素を抜くと、案の並び順(インデックス)がズレて既存の調整値(gfxTweaks)が
+      別の案に化ける／共有バリエ(GFX_LOOKS2・ジャイロ版)は他案でも使うため配列削除は危険。
+      なので「表示・復元の両方から名前で恒久除外」する方式にする(コードに焼くので localStorage を消しても復活しない)。
+   これ以降ヒデさんが新たに案を完全削除したい時は、その案の名前をここへ足すだけでよい。 */
+const VARIANT_REMOVED = {
+  mesh: ['B まばらな星座', 'F 立ちクロスの網', 'アトム 4本', 'アトム 6本', 'アトム 8本', '土星の輪', '花のリング', 'G ヘアライン', 'H 縦のクロス', 'ジャイロ・速い'],
+};
+const variantRemoved = (m, name) => (VARIANT_REMOVED[m] || []).includes(name);
 /* ===== さらに5案 (2026-08-27 ヒデさん指定) =====
    狙う印象は【先進的 / 上品 / 洗練】。A〜F より思い切って見た目を変える。
    ⚠️ デザイン(惑星・軌道・ドットの絵)は変えない。変えるのは配置と、その案のつまみだけ。
@@ -11841,7 +11850,7 @@ function buildPanel() {
     for (const m of modes) {
       const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
       (GFX_VARIANTS[m] || []).forEach((v, i) => {
-        if (hid.includes(v.name)) return;
+        if (hid.includes(v.name) || variantRemoved(m, v.name)) return;   /* 完全削除(VARIANT_REMOVED)は名前で恒久除外 */
         items.push({ m, i, v });
       });
     }
@@ -11889,7 +11898,7 @@ function buildPanel() {
     const hiddenAll = [];
     for (const m of modes) {
       const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
-      hid.forEach(nm => hiddenAll.push({ m, nm }));
+      hid.forEach(nm => { if (!variantRemoved(m, nm)) hiddenAll.push({ m, nm }); });   /* 完全削除した案は「戻す」一覧にも出さない */
     }
     if (hiddenAll.length) {
       const back = document.createElement('button');
