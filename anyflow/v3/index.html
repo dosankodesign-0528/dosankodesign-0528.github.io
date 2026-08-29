@@ -10092,6 +10092,9 @@ function gfxSnapshotFull() {
     swayAmp: params.swayAmp,            /* ゆらぎの強さ */
     duration: params.duration,          /* ドットが軌道を1周する秒数 */
     globalSpeed: params.globalSpeed,
+    /* 【2026-08-29 ヒデさん指定】自由回転(全体の回転)は案ごとに独立させる。
+       案(バリエーション)ごとに保存し、切替時に復元・未設定は0へ戻す。 */
+    kv: { rotX: (params.kv && params.kv.rotX) || 0, rotY: (params.kv && params.kv.rotY) || 0, rotZ: (params.kv && params.kv.rotZ) || 0 },
     common: {
       showOuter: C.showOuter, showInner: C.showInner, showDots: C.showDots,
       dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, perspScope: C.perspScope, glow: C.glow, frontCut: C.frontCut,
@@ -10122,6 +10125,12 @@ function gfxApplyFull(d) {
   if (typeof d.swayAmp === 'number') params.swayAmp = d.swayAmp;
   if (typeof d.duration === 'number') params.duration = d.duration;
   if (typeof d.globalSpeed === 'number') params.globalSpeed = d.globalSpeed;
+  /* 【2026-08-29】自由回転(全体の回転)を案ごとに復元。無い案は0(=正面)。 */
+  if (params.kv) {
+    params.kv.rotX = (d.kv && typeof d.kv.rotX === 'number') ? d.kv.rotX : 0;
+    params.kv.rotY = (d.kv && typeof d.kv.rotY === 'number') ? d.kv.rotY : 0;
+    params.kv.rotZ = (d.kv && typeof d.kv.rotZ === 'number') ? d.kv.rotZ : 0;
+  }
   const mode = params.converge || 'reel';
   const C = params.conv;
   if (d.common) {
@@ -10237,6 +10246,20 @@ function applyGfxVariant(i) {
      重ねるので、他の案でいじった値が漏れて残らない。 */
   for (const rk of ['ringShape', 'ringSpin', 'ringFlat', 'ringSize', 'ringTumble', 'ringWidth', 'ringRotate', 'startPhase'])
     params.conv[rk] = DEFAULTS.conv[rk];
+  /* 【2026-08-29 ヒデさん指定・全項目を案ごとに独立】表示(外の輪/内の輪/ドット)・ドット設定・
+     光り方・エフェクト・遠近 なども、案を選ぶ瞬間に一旦すべて既定へ戻す。
+     このあと 定義(v.common) → その案で保存した調整 の順に重ねるので、他の案の値が漏れない。 */
+  for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp', 'perspK', 'perspScope',
+                   'glow', 'frontCut', 'glowKind', 'glowHold', 'glowEcho',
+                   'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
+                   'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp', 'dotRandom', 'orbitDrift'])
+    if (DEFAULTS.conv[k] !== undefined) params.conv[k] = DEFAULTS.conv[k];
+  /* 案ごとの引き出し(per-mode)も既定へ */
+  if (params.conv.orbitWidthBy) params.conv.orbitWidthBy[mode] = (DEFAULTS.conv.orbitWidthBy || {})[mode];
+  if (params.conv.orbitScaleBy) params.conv.orbitScaleBy[mode] = (DEFAULTS.conv.orbitScaleBy || {})[mode];
+  if (params.conv.dotMove)      params.conv.dotMove[mode]      = (DEFAULTS.conv.dotMove || {})[mode];
+  /* 自由回転(全体の回転)も案ごとに独立＝既定は正面(0) */
+  if (params.kv) { params.kv.rotX = 0; params.kv.rotY = 0; params.kv.rotZ = 0; }
   {
     const pk0 = CONV_PARAM_KEY[mode];
     if (pk0 && DEFAULTS.conv[pk0] && params.conv[pk0])
