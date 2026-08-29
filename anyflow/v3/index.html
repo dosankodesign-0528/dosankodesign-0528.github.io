@@ -2861,7 +2861,11 @@ const DEFAULTS = {
           ヒデさんが見比べて「前の方が良かった」とのことで元に戻した。
           既定は 1.3秒 × ①元の動き(easeOutQ)。
           他のカーブはパネルから選べるようにしてあるので、試したくなったらそこで。 */
-    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1 },
+    /* 【2026-08-29 ヒデさん指定】ds2=開発者体験2のデザイン。'list'=現行(右にAPI/CLI/SDKリスト) /
+       'slide'=テキストスライド(見出しの箱がCLI→SDK→APIと切替、モックも同期。dev1と同サイズ・モック内アニメOFF)。
+       slideMotion=箱の切替モーション(snap/flip/blur)、slideHold=各語をホールドする割合、slideSnapK=スナップのキレ。 */
+    dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1,
+               ds2: 'list', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4 },
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
     cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
@@ -8610,7 +8614,8 @@ let devFin = 0;
 /* 【2026-08-25 ヒデさん指定】dev2 の3枚カルーセル(V1.0踏襲)。右の API/CLI/SDK をホバーして
    devScreen2 が変わると席が回り、3Dっぽく入れ替わって見える。dev2 が画面に入っている間だけ毎フレーム位置を書く。
    全体を DEV2_SCALE で dev2 に収める。 */
-const DEV2_SCALE = 0.6;
+/* 【2026-08-29 ヒデさん指定】テキストスライド案は dev1 と同サイズ(等倍)。list案は従来どおり 0.6。 */
+function dev2Scale() { return (params.sections.dev.ds2 === 'slide') ? 0.92 : 0.6; }
 function updateDev2Stack() {
   if (!devEls.block2 || !devEls.mock) return;
   const r = rectOf(devEls.block2);
@@ -8643,8 +8648,8 @@ function updateDev2Stack() {
     el.style.opacity = cur.op.toFixed(3);
     el.style.zIndex = Math.round(cur.sc * 1000);
     el.style.transform =
-      `translate3d(${(cur.dx * DEV2_SCALE).toFixed(1)}px, ${(cur.dy * DEV2_SCALE).toFixed(1)}px, ${(cur.dz * DEV2_SCALE).toFixed(1)}px)` +
-      ` rotateY(${(cur.ry * swing).toFixed(2)}deg) scale(${(cur.sc * DEV2_SCALE).toFixed(4)})`;
+      `translate3d(${(cur.dx * dev2Scale()).toFixed(1)}px, ${(cur.dy * dev2Scale()).toFixed(1)}px, ${(cur.dz * dev2Scale()).toFixed(1)}px)` +
+      ` rotateY(${(cur.ry * swing).toFixed(2)}deg) scale(${(cur.sc * dev2Scale()).toFixed(4)})`;
   });
 }
 
@@ -8675,9 +8680,64 @@ function revealEl(el, k, blurMax, riseMax) {
 }
 let dev2SeqT0 = null, dev2StackEl = null;
 /* dev2(章②): 見出し → モック → 右テキスト の順で出現。モックはビューポート中はループ再生。 */
+/* ===== 開発者体験2「テキストスライド案」(2026-08-29 ヒデさん指定) =====
+   見出しの箱が CLI→SDK→API と切り替わり(スロット風)、モックのカルーセルも同期して回る。
+   スクロール駆動: セクションが画面下部に来たら発火し、スクロールで箱が開いて語が切り替わる。
+   モック内のアニメーション(タイピング)はオフ＝全要素が出た静止状態。 */
+const dsEls = {
+  box: document.getElementById('dsBox'), roll: document.getElementById('dsRoll'),
+  out: document.getElementById('dsOut'), in: document.getElementById('dsIn'),
+};
+const DS_WORDS = ['CLI', 'SDK', 'API'], DS_SCREENS = ['cli', 'sdk', 'api'];
+const DS_BOX_W = 112, DS_WH = 34;
+function dsSnapEase(t, k) { return Math.pow(clamp01(t), k); }
+let dsStaticFilled = false;
+function dsFillStaticAll() {
+  /* テキストスライド案はモック内アニメOFF＝全行を出しきった状態にする(clip全開) */
+  if (dsStaticFilled) return;
+  ['api', 'cli', 'sdk'].forEach(scr => {
+    const root = document.getElementById(DM2_ROOT[scr]); if (!root) return;
+    [...root.children].forEach(l => { l.style.clipPath = 'none'; l.style.opacity = '1'; });
+  });
+  dsStaticFilled = true;
+}
+function updateDevSlide(p) {
+  const d = params.sections.dev;
+  if (!dsEls.box) return;
+  const open = clamp01(p / 0.16), oe = 1 - Math.pow(1 - open, 3);
+  dsEls.box.style.width = (DS_BOX_W * oe).toFixed(1) + 'px';
+  dsEls.box.style.margin = oe > 0.02 ? '0 12px' : '0';
+  const q = clamp01((p - 0.16) / 0.84), N = DS_WORDS.length;
+  const raw = Math.min(N - 1e-6, q / (1 / N));
+  const idx = Math.floor(raw), within = raw - idx, hold = d.slideHold != null ? d.slideHold : 0.62;
+  const tr = within < hold ? 0 : (within - hold) / (1 - hold);
+  const nextIdx = Math.min(N - 1, idx + 1);
+  dsEls.out.textContent = DS_WORDS[idx]; dsEls.in.textContent = DS_WORDS[nextIdx];
+  const motion = d.slideMotion || 'snap';
+  const e = motion === 'snap' ? dsSnapEase(tr, d.slideSnapK || 3.4) : tr;
+  if (motion === 'snap') {
+    dsEls.out.style.transform = `translateY(${(-e * DS_WH).toFixed(1)}px)`; dsEls.out.style.opacity = '1'; dsEls.out.style.filter = '';
+    dsEls.in.style.transform = `translateY(${((1 - e) * DS_WH).toFixed(1)}px)`; dsEls.in.style.opacity = '1'; dsEls.in.style.filter = '';
+  } else if (motion === 'flip') {
+    dsEls.roll.style.perspective = '300px';
+    dsEls.out.style.transform = `rotateX(${(e * 90).toFixed(1)}deg)`; dsEls.out.style.opacity = (1 - Math.min(1, e * 1.6)).toFixed(2); dsEls.out.style.filter = '';
+    dsEls.in.style.transform = `rotateX(${(-(1 - e) * 90).toFixed(1)}deg)`; dsEls.in.style.opacity = Math.min(1, e * 1.6).toFixed(2); dsEls.in.style.filter = '';
+  } else {
+    dsEls.out.style.transform = 'none'; dsEls.out.style.opacity = (1 - e).toFixed(2); dsEls.out.style.filter = `blur(${(e * 7).toFixed(1)}px)`;
+    dsEls.in.style.transform = 'none'; dsEls.in.style.opacity = e.toFixed(2); dsEls.in.style.filter = `blur(${((1 - e) * 7).toFixed(1)}px)`;
+  }
+  const shownIdx = (oe < 0.5) ? 0 : (tr >= 0.5 ? nextIdx : idx);
+  const scr = DS_SCREENS[shownIdx];
+  if (devScreen2 !== scr) { devScreen2 = scr; }   /* カルーセルが updateDev2Stack で同期して回る */
+}
+function dsResetBox() { if (dsEls.box) { dsEls.box.style.width = '0'; dsEls.box.style.margin = '0'; } }
+
 function updateDev2Reveal() {
   const b2 = devEls.block2; if (!b2) return;
   if (!dev2StackEl) dev2StackEl = b2.querySelector('.dev2-stack');
+  /* 【2026-08-29】テキストスライド案の切替: #dev に .ds2-slide を付け、箱アニメを駆動、モックは静止。 */
+  const slide = params.sections.dev.ds2 === 'slide';
+  if (devEls.sec) devEls.sec.classList.toggle('ds2-slide', slide);
   const vh = innerHeight || 1;
   const r = rectOf(b2);
   const centerY = r.top + r.height / 2;
@@ -8697,10 +8757,20 @@ function updateDev2Reveal() {
   revealEl(devEls.list, kList, 16, 24);
   /* モックはブロックが見えている間ずっと回す（API=本体 / CLI・SDK=ゴーストも同期して回す） */
   const on = kBlock > 0.35;
-  driveEditorLoop(null, on, 'dev2');
-  if (on && typeof dmAnimScreen === 'function') {
-    const t = elapsed - (devMockT0.dev2 == null ? elapsed : devMockT0.dev2);
-    dmAnimScreen('api', t); dmAnimScreen('cli', t); dmAnimScreen('sdk', t);
+  if (slide) {
+    /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。
+       箱(CLI/SDK/API)はスクロールで駆動し、devScreen2 が切り替わってカルーセルが同期して回る。 */
+    dsFillStaticAll();
+    const vh2 = innerHeight || 1;
+    const pSlide = clamp01((vh2 * 0.9 - centerY) / (vh2 * 0.75));
+    updateDevSlide(pSlide);
+  } else {
+    dsResetBox();
+    driveEditorLoop(null, on, 'dev2');
+    if (on && typeof dmAnimScreen === 'function') {
+      const t = elapsed - (devMockT0.dev2 == null ? elapsed : devMockT0.dev2);
+      dmAnimScreen('api', t); dmAnimScreen('cli', t); dmAnimScreen('sdk', t);
+    }
   }
 }
 
@@ -12473,6 +12543,25 @@ function buildPanel() {
 
   sub(catDev, '基本（長さ）');
   sectionLenSlider('dev', 1600);
+
+  /* 【2026-08-29 ヒデさん指定】開発者体験2のデザイン: リスト(現行) / テキストスライド */
+  sub(catDev, '② のデザイン');
+  const ds2Note = noteLive(() => (sv().dev.ds2 === 'slide')
+    ? 'テキストスライド: 見出しの箱が CLI→SDK→API と切り替わり、モック(dev1と同サイズ)も同期して回ります。スクロールで発火。モック内アニメはオフ。'
+    : 'リスト(現行): 右の API/CLI/SDK にマウスを乗せると、左のモックが回って切り替わります。');
+  pillRow([{ key: 'list', name: 'リスト（現行）' }, { key: 'slide', name: 'テキストスライド' }],
+    it => (sv().dev.ds2 || 'list') === it.key,
+    it => { sv().dev.ds2 = it.key; ds2Note(); renderFrame(); }, null, { noRebuild: true });
+  note('↓ テキストスライド案の切替モーション（見出しの箱）。');
+  const dsMotNote = noteLive(() => { const m = sv().dev.slideMotion || 'snap';
+    return m === 'flip' ? 'フリップ: 縦に3Dで倒れて入れ替わる。' : m === 'blur' ? 'ブラー: ぼけながら入れ替わる。' : 'スナップ: ホールド→素早く縦に切替（メリハリ）。'; });
+  pillRow([{ key: 'snap', name: 'スナップ' }, { key: 'flip', name: 'フリップ' }, { key: 'blur', name: 'ブラー' }],
+    it => (sv().dev.slideMotion || 'snap') === it.key,
+    it => { sv().dev.slideMotion = it.key; dsMotNote(); renderFrame(); }, null, { noRebuild: true });
+  rows.push(slider('語のホールド', 0.3, 0.9, 0.02, () => sv().dev.slideHold, v => sv().dev.slideHold = v, v => Math.round(v * 100) + '%',
+    '各語を止めておく割合。大きいほど切替がキビキビ(短い区間で一気に)。'));
+  rows.push(slider('スナップのキレ', 1, 6, 0.2, () => sv().dev.slideSnapK, v => sv().dev.slideSnapK = v, v => '×' + v.toFixed(1),
+    'スナップの切替の急さ。大きいほどメリハリが強く。'));
 
   sub(catDev, '画面が切り替わる時の見え方');
   note('右の CLI / SDK にマウスを乗せると、左のモックが回って入れ替わります。');
