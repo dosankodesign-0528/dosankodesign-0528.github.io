@@ -2581,6 +2581,8 @@ const DEFAULTS = {
   kv: {
     gx: 0, gy: -70,   // 軌道グループ全体の位置ずらし
     rotX: 0, rotY: 0, rotZ: 0,   // 【2026-08-28】グラフィック全体の回転(XYZ・3D)
+    persp: 1400,   // 【2026-08-29】遠近感(3Dの奥行きの効き)。CSS perspective の距離px。小さいほど強い
+
     headerAt: 0.25,   // ヘッダーがブラーで出る
     eyebrowGap: 0.14, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
     typeAt: 1.0,      // タイピング開始
@@ -6328,7 +6330,7 @@ function applySway() {
   const ob = isMobile ? ' scale(0.40)' : '';
   /* 【2026-08-28 ヒデさん指定】グラフィック全体をひとまとまりで XYZ 回転(3D)。0のときは付けない */
   const rX = kv.rotX || 0, rY = kv.rotY || 0, rZ = kv.rotZ || 0;
-  const rot3d = (rX || rY || rZ) ? ` perspective(1400px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
+  const rot3d = (rX || rY || rZ) ? ` perspective(${kv.persp || 1400}px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
   swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}${rot3d}`.trim();
   swayEls.svgs.forEach(s => s.style.transform = svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
@@ -10139,6 +10141,94 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
   return row;
 }
 
+/* 【2026-08-29 ヒデさん指定】グラフィック全体の「自由回転」GUI。
+   Illustrator の 3D 自由回転のように、①ドラッグで直感的に奥行き(XY)を回す
+   ②数値でも入れられる ③遠近感(奥行きの効き)も変えられる。
+   ドラッグ: 左右=Y(左右にまわす) / 上下=X(前後に倒す) / Shift+左右=Z(画面内でくるっと) */
+let frStyleInjected = false;
+function freeRotate() {
+  if (!frStyleInjected) {
+    frStyleInjected = true;
+    const st = document.createElement('style');
+    st.textContent =
+      '.free-rot{display:flex;gap:14px;align-items:center;margin:8px 0 2px;}'
+    + '.fr-pad{width:118px;height:118px;flex:0 0 118px;border:1px solid #e3e3e3;border-radius:12px;'
+    + 'background:radial-gradient(circle at 50% 44%,#fafafa,#ececec);cursor:grab;position:relative;'
+    + 'perspective:460px;touch-action:none;overflow:hidden;}'
+    + '.fr-pad:active{cursor:grabbing;}'
+    + '.fr-pad::before{content:"";position:absolute;left:10px;right:10px;top:50%;height:1px;background:#e6e6e6;}'
+    + '.fr-pad::after{content:"";position:absolute;top:10px;bottom:10px;left:50%;width:1px;background:#e6e6e6;}'
+    + '.fr-cube{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;transform-style:preserve-3d;}'
+    + '.fr-face{position:absolute;width:52px;height:52px;box-sizing:border-box;border:1.5px solid #2ea6ff;background:rgba(46,166,255,0.10);}'
+    + '.fr-face.fx{border-color:#ff5d97;background:rgba(255,93,151,0.13);}'
+    + '.fr-face.fz{border-color:#7bd; background:rgba(120,210,220,0.10);}'
+    + '.fr-fields{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;}'
+    + '.fr-f{display:flex;align-items:center;gap:6px;}'
+    + '.fr-f>label{width:16px;font-weight:700;color:#666;font-size:13px;}'
+    + '.fr-f input{width:60px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:13px;text-align:right;}'
+    + '.fr-f>span{color:#aaa;font-size:12px;}';
+    document.head.appendChild(st);
+  }
+  const wrap = document.createElement('div'); wrap.className = 'free-rot';
+  const pad = document.createElement('div'); pad.className = 'fr-pad';
+  pad.title = 'ドラッグで回転（左右＝Y／上下＝X／Shift＋左右＝Z）';
+  const cube = document.createElement('div'); cube.className = 'fr-cube';
+  const faces = [
+    ['', 'translateZ(26px)'], ['', 'rotateY(180deg) translateZ(26px)'],
+    ['', 'rotateY(90deg) translateZ(26px)'], ['', 'rotateY(-90deg) translateZ(26px)'],
+    ['fx', 'rotateX(90deg) translateZ(26px)'], ['fx', 'rotateX(-90deg) translateZ(26px)'],
+  ];
+  faces.forEach(([cls, tf]) => { const f = document.createElement('div'); f.className = 'fr-face' + (cls ? ' ' + cls : ''); f.style.transform = tf; cube.appendChild(f); });
+  pad.appendChild(cube);
+  const fields = document.createElement('div'); fields.className = 'fr-fields';
+  const inputs = {};
+  const mkField = (key, name, tip) => {
+    const r = document.createElement('div'); r.className = 'fr-f';
+    const l = document.createElement('label'); l.textContent = name; l.title = tip;
+    const inp = document.createElement('input'); inp.type = 'number'; inp.step = '1'; inp.title = tip;
+    inp.addEventListener('input', () => { const v = parseFloat(inp.value); if (!isFinite(v)) return; params.kv[key] = v; markDirty(); applySway(); syncCube(); });
+    const s = document.createElement('span'); s.textContent = '°';
+    r.append(l, inp, s); fields.appendChild(r); inputs[key] = inp;
+  };
+  mkField('rotX', 'X', '前後に倒す（奥行き）');
+  mkField('rotY', 'Y', '左右にまわす');
+  mkField('rotZ', 'Z', '画面の中でくるっと回す');
+  const rst = document.createElement('button'); rst.type = 'button'; rst.className = 'rst'; rst.textContent = '↺'; rst.title = '回転を正面(0,0,0)に戻す';
+  rst.onclick = (e) => { e.stopPropagation(); params.kv.rotX = 0; params.kv.rotY = 0; params.kv.rotZ = 0; markDirty(); applySway(); syncAll(); };
+  fields.appendChild(rst);
+  function syncCube() {
+    const rx = params.kv.rotX || 0, ry = params.kv.rotY || 0, rz = params.kv.rotZ || 0;
+    cube.style.transform = 'rotateX(' + (-rx) + 'deg) rotateY(' + ry + 'deg) rotateZ(' + (-rz) + 'deg)';
+  }
+  function syncAll() {
+    inputs.rotX.value = Math.round(params.kv.rotX || 0);
+    inputs.rotY.value = Math.round(params.kv.rotY || 0);
+    inputs.rotZ.value = Math.round(params.kv.rotZ || 0);
+    syncCube();
+  }
+  syncAll();
+  if (rows) rows.push({ _sync: syncAll });
+  let dragging = false, lx = 0, ly = 0;
+  pad.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; try { pad.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
+  pad.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
+    if (e.shiftKey) {
+      let rz = (params.kv.rotZ || 0) + dx * 0.7; if (rz > 180) rz -= 360; if (rz < -180) rz += 360;
+      params.kv.rotZ = Math.round(rz);
+    } else {
+      let ry = (params.kv.rotY || 0) + dx * 0.7; if (ry > 180) ry -= 360; if (ry < -180) ry += 360;
+      let rx = Math.max(-85, Math.min(85, (params.kv.rotX || 0) - dy * 0.7));
+      params.kv.rotY = Math.round(ry); params.kv.rotX = Math.round(rx);
+    }
+    markDirty(); applySway(); syncAll();
+  });
+  const up = e => { if (dragging) { dragging = false; try { pad.releasePointerCapture(e.pointerId); } catch (_) {} } };
+  pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+  wrap.append(pad, fields);
+  (mount || body).appendChild(wrap);
+}
+
 const rows = [];
 /* ドラッグで params が変わった時に、開いているパネルの表示も追いつかせる */
 function syncPanelRows() {
@@ -11445,13 +11535,14 @@ function buildPanel() {
 
   /* ---------- 惑星（模様） ---------- */
   /* 【2026-08-28 ヒデさん指定】グラフィック全体(右側のKV)を、ひとまとまりで XYZ 回転できる */
-  sub(gRoot, '全体の回転（XYZ）', true);
-  slider('X（前後の傾き）', -80, 80, 1, () => params.kv.rotX || 0, v => { params.kv.rotX = v; applySway(); },
-    v => Math.round(v) + '°', '上下方向に倒す傾き（3D）。0で正面。', { signed: true });
-  slider('Y（左右の傾き）', -80, 80, 1, () => params.kv.rotY || 0, v => { params.kv.rotY = v; applySway(); },
-    v => Math.round(v) + '°', '左右方向に倒す傾き（3D）。0で正面。', { signed: true });
-  slider('Z（回転）', -180, 180, 1, () => params.kv.rotZ || 0, v => { params.kv.rotZ = v; applySway(); },
-    v => Math.round(v) + '°', '画面と平行にくるっと回す。', { signed: true });
+  sub(gRoot, '全体の回転（自由回転）', true);
+  note('四角い枠を「ドラッグ」すると、右のグラフィック全体がその向きに回ります（左右＝Y／上下＝X／Shift＋左右＝Z）。数値を直接入れてもOK。↺で正面に戻ります。');
+  freeRotate();
+  slider('遠近感', 0, 100, 1,
+    () => Math.round(100 * (1 - ((params.kv.persp || 1400) - 400) / 3200)),
+    v => { const c = Math.max(0, Math.min(100, v)); params.kv.persp = 400 + (1 - c / 100) * 3200; applySway(); },
+    v => Math.round(Math.max(0, Math.min(100, v))) + '',
+    '奥行きの効き。大きいほど、手前が大きく奥が小さい“ぐっと寄った”見え方になります（回転しているときに効きます）。');
   /* 【2026-08-29 ヒデさん指定】いま表示されている回転の位置を、アニメの開始地点として保存する */
   {
     const row = document.createElement('div'); row.className = 'sw-row';
