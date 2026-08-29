@@ -1485,6 +1485,24 @@
     .cg-tag { font-size: 12px; }
     .cg-company { font-size: 15px; }
 
+    /* --- コンバージョン (モバイル: 左右24px・1カラム。497px固定でのはみ出しを解消) --- */
+    #conversion { padding: 72px 0 96px; }
+    .cv-inner { width: calc(100% - 48px); height: 380px; }
+    .cv-content { left: 0; right: 0; transform: none; width: auto; padding: 0 var(--space-20); top: 60px; }
+    .cv-head { font-size: 24px; line-height: 1.5; }
+    .cv-sub  { font-size: 14px; line-height: 1.8; margin-top: var(--space-20); }
+    .cv-btn  { margin-top: var(--space-24); }
+    .cv-planet { display: none; }   /* 惑星は右上装飾。狭幅では省く */
+
+    /* --- フッター (モバイル: 左右24px・縦積み。ft-inner が calc(100%-240px)=150pxに潰れるのを解消) --- */
+    .ft-inner { width: calc(100% - 48px); padding: 56px 0 var(--space-32); }
+    .ft-top { flex-direction: column; align-items: flex-start; height: auto; gap: var(--space-32); }
+    .ft-logo { width: 200px; height: auto; }
+    .ft-msg  { font-size: 18px; line-height: 1.6; white-space: normal; }   /* 40→18・折り返し可 */
+    .ft-nav  { flex-wrap: wrap; justify-content: flex-start; gap: var(--space-4); margin-top: var(--space-32); padding: var(--space-20) 0; }
+    .ft-nav a { width: auto; padding: 6px 12px; font-size: 13px; }
+    .ft-copy { padding: var(--space-32) 0 var(--space-40); font-size: 12px; }
+
     /* --- 調整パネルは画面いっぱいに --- */
     .tools { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; }
   }
