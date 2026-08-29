@@ -2778,8 +2778,10 @@ const DEFAULTS = {
     /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定
        dotSize = 全部のドットの大きさ倍率
        dotPersp: 'flat'=どこでも同じ大きさ / 'persp'=手前が大きく奥が小さい(遠近感)
-       perspK = 遠近の強さ */
-    dotSize: 1, dotPersp: 'flat', perspK: 0.45,
+       perspK = 遠近の強さ
+       perspScope = 遠近を効かせる対象 'dots'=ドットのみ / 'orbit'=軌道の線のみ / 'both'=両方
+                    軌道は「手前(下)の線を太く・奥(上)を細く」で遠近を出す(2026-08-29 ヒデさん指定) */
+    dotSize: 1, dotPersp: 'flat', perspK: 0.45, perspScope: 'dots',
     /* 【2026-08-28 ヒデさん指定】惑星の手前に来たもの(輪のはみ出し・粒・パケット)を
        隠すかどうか。true=隠す(惑星の中へ入ったように見える) / false=そのまま前を通す */
     frontCut: true,
@@ -4320,14 +4322,19 @@ function convDrawShape() {
       ? Math.max(0.18, Math.min(0.82, baseW + (n <= 1 ? 0 : (i / (n - 1) - 0.5)) * 0.26))
       : baseW;
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
-    const sw = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth).toFixed(1);
-    [[convShapeBack[i], convShapeGradB[i], 'gShRB' + i], [convShapeFront[i], convShapeGradF[i], 'gShRF' + i]].forEach(([el, grad, gid]) => {
+    const swBase = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth);
+    /* 【2026-08-29 ヒデさん指定】遠近を軌道の線にも: 手前(下=front)を太く・奥(上=back)を細く */
+    const cP = params.conv || {};
+    const orbitPersp = (cP.dotPersp === 'persp') && (cP.perspScope === 'orbit' || cP.perspScope === 'both');
+    const pk = orbitPersp ? (cP.perspK == null ? 0.45 : cP.perspK) : 0;
+    [[convShapeBack[i], convShapeGradB[i], 'gShRB' + i], [convShapeFront[i], convShapeGradF[i], 'gShRF' + i]].forEach(([el, grad, gid], j) => {
       el.setAttribute('cx', cc.x.toFixed(1)); el.setAttribute('cy', cc.y.toFixed(1));
       el.setAttribute('rx', Math.max(2, rx).toFixed(1)); el.setAttribute('ry', Math.max(2, ry).toFixed(1));
       el.setAttribute('transform', tr);
       if (grad) { const w = grad.querySelector('.shGWhite'); if (w) w.setAttribute('offset', white.toFixed(4)); }
       el.setAttribute('stroke', 'url(#' + gid + ')');
-      el.setAttribute('stroke-width', sw);
+      const sw = Math.max(0.3, swBase * (1 + (j === 1 ? pk : -pk) * 0.7));
+      el.setAttribute('stroke-width', sw.toFixed(2));
       el.setAttribute('opacity', '0.9');
     });
   }
@@ -4426,19 +4433,27 @@ function convOrbitWidth() {
 }
 function applyRingStyle(key, w, dash, color, cap) {
   w = w * convOrbitWidth();          /* 案ごとの太さをここでまとめて掛ける */
-  const sig = w.toFixed(2) + '|' + dash + '|' + (color || '') + '|' + (cap || '');
+  /* 【2026-08-29 ヒデさん指定】遠近を「軌道の線」にも効かせる時は、手前(下=front)を太く・奥(上=back)を細く。
+     ells = [back(上), front(下)]。perspScope が orbit/both かつ 遠近=persp の時だけ効く。 */
+  const C = params.conv || {};
+  const orbitPersp = (C.dotPersp === 'persp') && (C.perspScope === 'orbit' || C.perspScope === 'both');
+  const pk = orbitPersp ? (C.perspK == null ? 0.45 : C.perspK) : 0;
+  const sig = w.toFixed(2) + '|' + dash + '|' + (color || '') + '|' + (cap || '') + '|' + pk.toFixed(3);
   if (sig === convRingStyleWritten[key]) return;
   convRingStyleWritten[key] = sig;
-  for (const el of orbitSvgEls[key].ells) {
-    el.setAttribute('stroke-width', w.toFixed(2));
+  const ells = orbitSvgEls[key].ells;
+  ells.forEach((el, i) => {
+    const isFront = (i === 1);
+    const wf = Math.max(0.2, w * (1 + (isFront ? pk : -pk) * 0.7));
+    el.setAttribute('stroke-width', wf.toFixed(2));
     /* 丸いドットに見せたい時は round(短い破線が丸い点になる) */
     if (cap) el.setAttribute('stroke-linecap', cap); else el.removeAttribute('stroke-linecap');
     if (dash) el.setAttribute('stroke-dasharray', dash); else el.removeAttribute('stroke-dasharray');
     if (color) el.setAttribute('stroke', color);
-    else el.setAttribute('stroke', el === orbitSvgEls[key].ells[0]
+    else el.setAttribute('stroke', i === 0
       ? (key === 'inner' ? 'url(#gInnerB)' : 'url(#gOuterB)')
       : (key === 'inner' ? 'url(#gInnerF)' : 'url(#gOuterF)'));
-  }
+  });
 }
 const convRingBlurWritten = { outer: '', inner: '' };
 /* にじみ(blur)だけでなく、彩度・明るさも掛けられるようにする(2026-08-27) */
@@ -9778,7 +9793,7 @@ function gfxSnapshotFull() {
     globalSpeed: params.globalSpeed,
     common: {
       showOuter: C.showOuter, showInner: C.showInner, showDots: C.showDots,
-      dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, glow: C.glow, frontCut: C.frontCut,
+      dotSize: C.dotSize, dotPersp: C.dotPersp, perspK: C.perspK, perspScope: C.perspScope, glow: C.glow, frontCut: C.frontCut,
       glowKind: C.glowKind, glowHold: C.glowHold, glowEcho: C.glowEcho,
       echoSpeed: C.echoSpeed, echoShells: C.echoShells, echoSpread: C.echoSpread,
       echoStart: C.echoStart, echoFade: C.echoFade, echoAlpha: C.echoAlpha,
@@ -9810,7 +9825,7 @@ function gfxApplyFull(d) {
   const C = params.conv;
   if (d.common) {
     for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
-                     'perspK', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
+                     'perspK', 'perspScope', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
                      'glowKind', 'glowHold', 'glowEcho',
                      'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
                      'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp',
@@ -11398,7 +11413,13 @@ function buildPanel() {
       const keep = mount; mount = perspBox;
       if ((params.conv.dotPersp || 'flat') === 'persp') {
         slider('遠近の強さ', 0, 0.9, 0.02, () => params.conv.perspK, v => params.conv.perspK = v, v => v.toFixed(2),
-          '手前と奥の大きさの差。大きいほど立体感が強くなります。');
+          '手前と奥の大きさ・太さの差。大きいほど立体感が強くなります。');
+        /* 【2026-08-29 ヒデさん指定】遠近を効かせる対象を選べる（ドット/軌道の線/両方）。
+           軌道は「手前(下)の線を太く・奥(上)を細く」で遠近を出す。 */
+        segRow('対象', [['ドット', 'dots'], ['軌道', 'orbit'], ['両方', 'both']],
+          () => params.conv.perspScope || 'dots',
+          v => { params.conv.perspScope = v; markDirty(); renderFrame(); });
+        note('「軌道」を選ぶと、手前(下)の線が太く・奥(上)の線が細くなって、輪にも奥行きが出ます。');
       }
       mount = keep;
     };
