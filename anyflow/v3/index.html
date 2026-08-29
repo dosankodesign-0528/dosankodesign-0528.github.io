@@ -696,6 +696,7 @@
   .res2-hl2 { display: flex; align-items: center; min-height: calc(34px * 1.7); }
   .res2-typed { white-space: pre; }
   .res2-caret { display: inline-block; width: 2px; height: 34px; background: var(--brand-cyan); margin-left: 2px; }
+  .res2-suffix { white-space: pre; }   /* 2026-08-30 ヒデさん指定: 「が支えます。」は静的表示、Anyflowだけタイピング */
   .res2-stats { display: flex; align-items: flex-start; gap: var(--space-44); }
   .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
   .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 300; font-size: 16px; line-height: 24px; color: var(--ink-label); white-space: nowrap; }
@@ -2165,7 +2166,7 @@
       <div class="res2-top">
         <div class="res2-head" id="resHead">
           <div class="res2-hl1" id="resHl1">事業の推進力を、</div>
-          <div class="res2-hl2"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span></div>
+          <div class="res2-hl2"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span><span class="res2-suffix" id="resSuffix">が支えます。</span></div>
         </div>
         <div class="res2-stats" id="resStats">
           <div class="r2s"><b>導入企業</b><span id="cntMain">200+</span></div>
@@ -8255,8 +8256,9 @@ function updateVision(p) {
 const resEls = {
   head: document.getElementById('resHead'),
   hl1: document.getElementById('resHl1'),     // 「事業の推進力を、」フェードイン
-  typed: document.getElementById('resTyped'), // 「Anyflowが支えます。」タイピング
+  typed: document.getElementById('resTyped'), // 「Anyflow」だけタイピング
   caret: document.getElementById('resCaret'),
+  suffix: document.getElementById('resSuffix'), // 「が支えます。」は静的表示(見出し1行目と一緒に出す)
   stats: document.getElementById('resStats'), // 3数値グループ
   vals: document.getElementById('resVals'),   // 2つの価値
   hr: document.getElementById('resHr'),       // 区切り線
@@ -8266,7 +8268,7 @@ const resEls = {
   cntSub1: document.getElementById('cntSub1'),
   cntSub2: document.getElementById('cntSub2'),
 };
-const RES_TYPE_TEXT = 'Anyflowが支えます。';   /* 見出し2行目=タイピングする文言(Figma準拠) */
+const RES_TYPE_TEXT = 'Anyflow';   /* 2026-08-30 ヒデさん指定: タイピングするのは「Anyflow」だけ。「が支えます。」は静的(resSuffix) */
 /* 黒せり上がりで白反転させる「濃い文字」。色付きタグ(for Saas/for AI)は反転しない */
 function resInvertEls() {
   return [resEls.hl1, resEls.typed,
@@ -8396,6 +8398,7 @@ function updateResults(p) {
     rv(resEls.hl1, 0, 0); rv(resEls.stats, 0, 0); rv(resEls.vals, 0, 0); rv(resEls.hr, 0, 0);
     resEls.typed.textContent = '';
     if (resEls.caret) resEls.caret.style.opacity = 0;
+    if (resEls.suffix) rv(resEls.suffix, 0, 0);
     renderSlots(-1);
     slotT0 = null;
     return;
@@ -8408,6 +8411,7 @@ function updateResults(p) {
   const l1Dur = c.softDur * 0.6;
   const l1k = easeOutQ(clamp01((t - c.typeAt) / l1Dur));
   rv(resEls.hl1, l1k, 0, 0);                            // ① フェード(blur=0)
+  if (resEls.suffix) rv(resEls.suffix, l1k, 0, 0);      // 「が支えます。」も見出し1行目と一緒に静的表示(Anyflowだけ後からタイピング)
 
   const typeStart = c.typeAt + (c.typeGap != null ? c.typeGap : 0.55);   // ② タイピング開始(見出し1行目からの間隔)
   const CH = 0.06, chars = RES_TYPE_TEXT.length;
