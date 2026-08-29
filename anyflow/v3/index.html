@@ -3172,6 +3172,8 @@ const DEFAULTS = {
               pxJoinAt: 0, pxJoinEnd: 1,   /* 点がつながり始める / つながりきる タイミング(収縮の中の割合) */
               glowWidth: 0.5, glowTone: 'now', glowPower: 1,   /* 圧縮グローの線の太さ・光り方・強さ */
               flow: 'up' },   // 2026-08-27 ヒデさん指定: 既定は「上がる」(内→外→吸収)
+    /* 【2026-08-29 ヒデさん指定】収縮(reel)に重ねる「粒が吸い込まれる」オプション(spiral と同じ設定形)。既定オフ。 */
+    reelP: { on: false, count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 },
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 },   /* 2026-08-28 ゆったりへ */   /* swirl=吸い込まれる間の巻き具合 */
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
@@ -4810,8 +4812,8 @@ function orbitCrossesFace(key) {
 /* --- 追加パーツのプール (見た目は既存パーツの複製) --- */
 let convSpiral = null;   // ②の粒: 既存ドットと同じ circle を back/front に1個ずつ
 let convSpiralBuilt = null;   // 作った時の {count, size}。パネルで変わったら作り直す
-function convSpiralPool() {
-  const S = params.conv.spiral;
+function convSpiralPool(S) {
+  S = S || params.conv.spiral;   /* 2026-08-29: reel でも同じ粒を使えるよう設定を引数化 */
   const n = Math.max(1, Math.round(S.count));
   if (convSpiral && convSpiralBuilt && (convSpiralBuilt.count !== n || convSpiralBuilt.size !== S.size)) {
     for (const p of convSpiral) { p.back.remove(); p.front.remove(); }
@@ -4839,6 +4841,44 @@ function convSpiralPool() {
       spd: (28 + Math.random() * 42), rate: 1 / (S.life * (0.7 + Math.random() * 0.6)) });
   }
   return convSpiral;
+}
+/* 【2026-08-29 ヒデさん指定】「粒が渦を描いて惑星へ吸い込まれる」動きを関数化。spiral 案の本体でもあり、
+   収縮(reel)案でも粒オプションとして同じ動きを重ねられるようにする。geoms=軌道の楕円、S=粒の設定、dt=経過秒。 */
+function runSpiralParticles(geoms, S, dt) {
+  const pool = convSpiralPool(S);
+  for (const p of pool) {
+    /* 吸い込まれる間のスピン(巻き具合)。軌道にいる間は普通に回り、吸い込まれ始めると中心に近いほど速く回る(swirl) */
+    const sw = Math.max(0, S.swirl == null ? 1 : S.swirl);
+    const boost = (p.mode === 1 && sw > 0) ? Math.pow(Math.max(0.15, p.f), -sw) : 1;
+    if (convDotMoves()) p.deg += p.spd * S.speed * boost * dt * (params.direction || 1);
+    p.age += dt;
+    if (p.mode === 0) {
+      p.f = 1;                                                       // 軌道上に乗って回る
+      if (p.age >= p.hold) p.mode = 1;
+    } else {
+      const fc = Math.max(0.1, S.fallCurve == null ? 1 : S.fallCurve);
+      p.f -= p.rate * dt * Math.pow(Math.max(0.15, p.f), 1 - fc);     // 螺旋で吸い込まれる
+      if (p.f <= 0.12) {                                             // 吸収 → 軌道上に生まれ直す
+        convAddGlow(0.18);
+        p.mode = 0; p.age = 0; p.f = 1;
+        p.hold = Math.max(0.3, S.stay * (0.5 + Math.random()));
+        p.deg = Math.random() * 360;
+        p.ell = Math.random() < 0.5 ? 'inner' : 'outer';
+        p.spd = 28 + Math.random() * 42;
+        p.rate = 1 / (S.life * (0.7 + Math.random() * 0.6));         // 吸い込みの秒数はパネルから
+      }
+    }
+    const fv = Math.max(0.12, Math.min(1, p.f));
+    let al = 1;
+    if (p.mode === 0 && p.age < 0.5) al = p.age / 0.5;               // 軌道上にフェードイン
+    else if (fv < 0.26) al = (fv - 0.12) / 0.14;                     // 惑星際でフェードアウト
+    const pos = posOn(convGeom(geoms[p.ell], fv), p.deg);
+    const op = clamp01(al) * 0.9;
+    const rr = (DOT_R * S.size * convDotK(pos.y, geoms[p.ell].cy, geoms[p.ell].ry)).toFixed(2);
+    [p.back, p.front].forEach(el => { el.setAttribute('cx', pos.x); el.setAttribute('cy', pos.y); el.setAttribute('r', rr); el.setAttribute('opacity', op.toFixed(3)); });
+    p.front.style.display = pos.front ? '' : 'none';
+    p.back.style.display = pos.front ? 'none' : '';
+  }
 }
 /* ===== 2026-08-26 追加: 糸 / メッシュ / ドット軌道 / 双方向(ラインで結ぶ7案) =====
    すべて「既存のドットと同じ circle」と「path(線)」だけで作る。惑星と軌道の見た目は変えない。 */
@@ -5818,45 +5858,8 @@ function convFrame(geoms) {
   }
 
   if (mode === 'spiral') {
-    /* 【2026-08-26 ヒデさん指定】粒はまず軌道上を回り(mode0)、hold秒たったら
-       螺旋で惑星へ吸い込まれ(mode1)、吸収されたらまた軌道上に生まれ直す */
-    const S = C.spiral;
-    const pool = convSpiralPool();
-    for (const p of pool) {
-      /* 【2026-08-27 ヒデさん指定】吸い込まれる間のスピン(巻き具合)を調整できる。
-         軌道にいる間は普通に回り、吸い込まれ始めると中心に近いほど速く回る(swirl) */
-      const sw = Math.max(0, S.swirl == null ? 1 : S.swirl);
-      const boost = (p.mode === 1 && sw > 0) ? Math.pow(Math.max(0.15, p.f), -sw) : 1;
-      if (convDotMoves()) p.deg += p.spd * S.speed * boost * dt * (params.direction || 1);
-      p.age += dt;
-      if (p.mode === 0) {
-        p.f = 1;                                                       // 軌道上に乗って回る
-        if (p.age >= p.hold) p.mode = 1;
-      } else {
-        /* 落ち方のカーブ: 1で一定、大きいほど中心の近くで一気に吸い込まれる */
-        const fc = Math.max(0.1, S.fallCurve == null ? 1 : S.fallCurve);
-        p.f -= p.rate * dt * Math.pow(Math.max(0.15, p.f), 1 - fc);     // 螺旋で吸い込まれる
-        if (p.f <= 0.12) {                                             // 吸収 → 軌道上に生まれ直す
-          convAddGlow(0.18);
-          p.mode = 0; p.age = 0; p.f = 1;
-          p.hold = Math.max(0.3, S.stay * (0.5 + Math.random()));
-          p.deg = Math.random() * 360;
-          p.ell = Math.random() < 0.5 ? 'inner' : 'outer';
-          p.spd = 28 + Math.random() * 42;
-          p.rate = 1 / (S.life * (0.7 + Math.random() * 0.6));         // 吸い込みの秒数はパネルから
-        }
-      }
-      const fv = Math.max(0.12, Math.min(1, p.f));
-      let al = 1;
-      if (p.mode === 0 && p.age < 0.5) al = p.age / 0.5;               // 軌道上にフェードイン
-      else if (fv < 0.26) al = (fv - 0.12) / 0.14;                     // 惑星際でフェードアウト
-      const pos = posOn(convGeom(geoms[p.ell], fv), p.deg);
-      const op = clamp01(al) * 0.9;
-      const rr = (DOT_R * S.size * convDotK(pos.y, geoms[p.ell].cy, geoms[p.ell].ry)).toFixed(2);
-      [p.back, p.front].forEach(el => { el.setAttribute('cx', pos.x); el.setAttribute('cy', pos.y); el.setAttribute('r', rr); el.setAttribute('opacity', op.toFixed(3)); });
-      p.front.style.display = pos.front ? '' : 'none';
-      p.back.style.display = pos.front ? 'none' : '';
-    }
+    /* 粒はまず軌道上を回り、hold秒たったら螺旋で惑星へ吸い込まれ、吸収されたらまた軌道上に生まれ直す */
+    runSpiralParticles(geoms, C.spiral, dt);
   } else if (mode === 'accre') {
     /* ⑦降着円盤: 惑星を中心にした薄い円盤。微粒子が回りながら内へ落ちて取り込まれる */
     const A = C.accre;
@@ -6201,6 +6204,11 @@ function convFrame(geoms) {
   } else {
     convHidePools();
   }
+  /* 【2026-08-29 ヒデさん指定】収縮(reel)の「粒が吸い込まれる」オプションは、ここ(プール片付けの後)で描く。
+     ⚠️ mode='reel' は上の spiral/accre… の if連鎖に含まれず、その連鎖の最後の else{convHidePools()} で
+        粒プールが毎フレーム消されてしまうため、必ずこの位置(convFrameの最後)で上書き描画する。
+        オフの時は convHidePools が既に隠しているので何もしなくてよい。 */
+  if (mode === 'reel' && params.conv.reelP && params.conv.reelP.on) runSpiralParticles(geoms, params.conv.reelP, dt);
 }
 const sphereCanvasEl = document.getElementById('sphere');
 
@@ -12350,6 +12358,21 @@ function buildPanel() {
       slider('中間の輪の数', 0, 12, 1, () => params.conv.reel.blend, v => R.blend = v, v => v + '本',
         '外の輪と内の輪の間を、この本数だけ埋めます（イラレのブレンドのイメージ）。0で無し。'
         + '軌道をそのまま複製したくっきりした線で出ます。', { fixedMax: true });
+      /* 【2026-08-29 ヒデさん指定】収縮に「粒が吸い込まれる」動き(標準の渦と同じ)をオプションで重ねる。 */
+      const RP = params.conv.reelP || (params.conv.reelP = { on: false, count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 });
+      segRow('粒（吸い込み）', [['なし', 0], ['あり', 1]],
+        () => RP.on ? 1 : 0,
+        v => { RP.on = !!v; markDirty(); renderFrame(); fillAnimBody(); });
+      if (RP.on) {
+        slider('粒の数', 2, 40, 1, () => RP.count, v => { RP.count = v; renderFrame(); }, v => Math.round(v) + '個',
+          '軌道の上を回って惑星へ吸い込まれる粒の数。', { fixedMax: true });
+        slider('粒の大きさ', 0.2, 1.5, 0.02, () => RP.size, v => { RP.size = v; renderFrame(); }, v => '×' + v.toFixed(2), '粒の大きさ。');
+        slider('回る速さ', 0.1, 2, 0.05, () => RP.speed, v => { RP.speed = v; renderFrame(); }, v => '×' + v.toFixed(2), '軌道を回る速さ。');
+        slider('吸い込みの秒数', 2, 16, 0.5, () => RP.life, v => { RP.life = v; renderFrame(); }, v => v.toFixed(1) + '秒', '吸い込まれきるまでの時間。長いほどゆっくり。', { fixedMax: true });
+        slider('軌道で待つ秒数', 1, 10, 0.5, () => RP.stay, v => { RP.stay = v; renderFrame(); }, v => v.toFixed(1) + '秒', '吸い込まれる前に軌道を回っている時間。');
+        slider('巻き具合', 0, 3, 0.05, () => RP.swirl, v => { RP.swirl = v; renderFrame(); }, v => '×' + v.toFixed(2), '吸い込まれる間の渦の巻き。0でまっすぐ。');
+        slider('落ち方のカーブ', 0.1, 3, 0.05, () => RP.fallCurve, v => { RP.fallCurve = v; renderFrame(); }, v => '×' + v.toFixed(2), '大きいほど中心の近くで一気に吸い込まれる。');
+      }
       /* 【2026-08-28 ヒデさん指定】「中間の輪の濃さ」は削除。薄くせず、くっきり出すため。 */
       /* 【2026-08-27 ヒデさん指定】ここにあった機能は全削除:
            ・消え方の3択(前面カット / 圧縮グロー / データ粒)とその説明
