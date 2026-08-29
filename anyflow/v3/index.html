@@ -3578,10 +3578,12 @@ function loadParams() {
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
       if (!['A', 'B', 'C'].includes(merged.patterns.mock)) merged.patterns.mock = 'B';
-      /* 【2026-08-30 ヒデさん指定】導入事例のホバーはパスのトリミング(trim)固定。選択UIを廃止したので、
-         保存値が残っている人も一度だけ trim へ寄せ直す。 */
+      /* 【2026-08-30 ヒデさん指定】導入事例のホバーはトリミング固定＋For SaaS/For AI の既定アニメを修正版に。
+         選択UIを廃止/既定を作り直したので、保存値が残っている人も一度だけ寄せ直す。 */
       if (!localStorage.getItem('anyflow-casehover-trim-20260830')) {
         merged.patterns.caseHover = 'trim';
+        merged.patterns.valSaas = 'S1';   /* 新For SaaS(点線→青/ピンク後追い) */
+        merged.patterns.valAi = 'A1';     /* For AI(終端三角なし・角丸なし・1px) */
         localStorage.setItem('anyflow-casehover-trim-20260830', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
@@ -4546,7 +4548,7 @@ const variantRemoved = (m, name) => (VARIANT_REMOVED[m] || []).includes(name);
 /* 【2026-08-29 ヒデさん指定】variantRow(glowEcho/valSaas/valAi)は key で管理するので、key で恒久除外する。 */
 const VARIANT_REMOVED_KEY = {
   glowEcho: ['k5', 'k6', 'k9', 'k1', 'k4', 'k8'],
-  valSaas:  ['S1', 'S13', 'S14', 'S12', 'S11', 'S6', 'S15'],
+  valSaas:  ['S13', 'S14', 'S12', 'S11', 'S6', 'S15'],   /* 2026-08-30: S1 を新For SaaS既定にしたので除外リストから外す */
   valAi:    ['A2', 'A11', 'A14', 'A15', 'A12', 'A9', 'A7', 'A19', 'A17', 'A3', 'A5', 'A18'],
 };
 const variantRemovedKey = (bucket, key) => (VARIANT_REMOVED_KEY[bucket] || []).includes(key);
@@ -10012,22 +10014,24 @@ const vLoop = (t, T) => (t % T) / T;                                     /* 0→
 
 /* ===================== for SaaS: リアルタイムにデータ同期 ===================== */
 const VAL_SAAS = {
-  /* S1 同期して回る二重リング: 2つの輪の中のマーカーが同じ角度で回る。
-     片方がわずかに遅れ、すっと追いつく＝「同期」 */
+  /* S1 【2026-08-30 ヒデさん指定・新規】点線が左→右へ伸びてから、青→ピンクの粒が後追いで流れる。
+     最初は点線は出ておらず、伸びきってから粒が追いかける。すべて1pxの枠線。 */
   S1(st, t) {
-    const C = VAL_VB / 2, R = 62;
-    const k = vLoop(t, 6);
-    const lag = k < 0.5 ? (1 - vE(k / 0.5)) * 46 : 0;      /* 前半は遅れ、後半で追いつく */
-    for (const [i, cx] of [[0, C - 34], [1, C + 34]].entries()) {
-      const x = cx[1], deg = t * 52 - (cx[0] ? lag : 0);
-      vCircle(st, x, C, 40, { a: 0.9 });
-      const a = deg * Math.PI / 180;
-      vRect(st, x + Math.cos(a) * 40, C + Math.sin(a) * 40, 11, 11,
-        { c: cx[0] ? VAL_ACC : VAL_PINK, w: 2 });
+    const C = VAL_VB / 2, x0 = 26, x1 = 194, span = x1 - x0;
+    const k = vLoop(t, 4.6);
+    /* ① 点線が左から右へ伸びる(トリミングで“描かれていく”) */
+    const draw = vE(Math.min(1, k / 0.42));
+    vTrim(vLine(st, x0, C, x1, C, { w: 1, dash: '4 5', a: 0.65 }), draw);
+    /* 端の小さな受け皿(1px枠) */
+    vCircle(st, x0, C, 5, { w: 1, a: 0.5 });
+    vCircle(st, x1, C, 5, { w: 1, a: 0.5 });
+    /* ② 伸びきってから、青が先・ピンクが少し後ろで後追い */
+    const fol = (k - 0.4) / 0.6;
+    if (fol > 0) {
+      const pB = vE(Math.min(1, fol));
+      vRect(st, x0 + span * pB, C, 12, 12, { c: VAL_ACC, w: 1 });
+      if (fol > 0.16) { const pP = vE(Math.min(1, fol - 0.16)); vRect(st, x0 + span * pP, C, 12, 12, { c: VAL_PINK, w: 1 }); }
     }
-    vLine(st, C - 12, C, C + 12, C, { a: 0.35, dash: '3 4' });
-    const sync = lag < 1;
-    vCircle(st, C, C, sync ? 7 : 4, { c: VAL_ACC, w: 2, a: sync ? 1 : 0.3 });
   },
   /* S2 双方向のやり取り: 2つの箱の間を小さな正方形が行き来し、届くと受け手の枠が太くなる */
   S2(st, t) {
@@ -10291,20 +10295,20 @@ const VAL_SAAS = {
 const VAL_AI = {
   /* A1 一方向のパイプライン: 円(取得)→正方形(処理)→三角(実行)。粒が左から右へ一方向に流れ、段ごとに形が変わる */
   A1(st, t) {
+    /* 【2026-08-30 ヒデさん指定】四角の角丸なし・点線をやめて実線・各要素1px枠・終端で光る三角は削除。 */
     const C = VAL_VB / 2, X = [44, 110, 176];
-    vCircle(st, X[0], C, 26, { a: 0.9 });
-    vRect(st, X[1], C, 46, 46, { rx: 3, a: 0.9 });
-    vTri(st, X[2], C, 28, 90, { a: 0.9 });
-    vLine(st, X[0] + 30, C, X[1] - 27, C, { a: 0.3, dash: '4 5' });
-    vLine(st, X[1] + 27, C, X[2] - 26, C, { a: 0.3, dash: '4 5' });
+    vCircle(st, X[0], C, 26, { a: 0.9, w: 1 });
+    vRect(st, X[1], C, 46, 46, { rx: 0, a: 0.9, w: 1 });
+    vTri(st, X[2], C, 28, 90, { a: 0.9, w: 1 });
+    vLine(st, X[0] + 30, C, X[1] - 27, C, { a: 0.3, w: 1 });
+    vLine(st, X[1] + 27, C, X[2] - 26, C, { a: 0.3, w: 1 });
     for (let i = 0; i < 2; i++) {
       const u = vLoop(t * 0.5 + i / 2, 1);
       const x = X[0] + (X[2] - X[0]) * u;
-      if (u < 0.5) vCircle(st, x, C, 7, { c: VAL_ACC, w: 2.2 });
-      else vRect(st, x, C, 12, 12, { c: VAL_ACC, w: 2.2, rot: u * 240, rx0: x, ry0: C });
+      if (u < 0.5) vCircle(st, x, C, 7, { c: VAL_ACC, w: 1 });
+      else vRect(st, x, C, 12, 12, { c: VAL_ACC, w: 1, rot: u * 240, rx0: x, ry0: C });
     }
-    const fire = vLoop(t * 0.5, 1) > 0.94;
-    if (fire) vTri(st, X[2], C, 34, 90, { c: VAL_ACC, w: 2.4, a: 0.8 });
+    /* 終端で光る三角(fire)は削除(ヒデさん指定) */
   },
   /* A2 形が変わる: 円 → 正方形 → 三角 と姿を変え、三角になった瞬間に外へ線が飛ぶ＝実行 */
   A2(st, t) {
