@@ -277,7 +277,11 @@
   /* 【2026-08-29】実績→開発者体験「スムーズフェード」時は実績も固定追従なし。 */
   #results.res-smooth .pin-vp { position: relative; }
   /* 【2026-08-29】導入事例も固定追従なし（余分スクロールをなくす）。 */
-  #cases .pin-vp { position: relative; }
+  /* 【2026-08-29 ヒデさん指定】dev→導入事例の境界を感じさせないため、導入事例の地色は不透明にしない。
+     地色は body と同じ #e7e7e7 なので透明でも見た目は同じ。遷移中は後ろの暗幕(dev-bg)が
+     そのまま透けて連続し、暗幕が leave で引くと下地の #e7e7e7 へ自然にクロスフェードする
+     （＝不透明な上端が下から硬く重なる「プツン」が出ない）。 */
+  #cases .pin-vp { position: relative; background: transparent; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
@@ -8560,7 +8564,11 @@ function updateDev(pRaw) {
       const enter = resSmooth()
         ? easeIO(clamp01((vh - r.top) / (vh * 0.7)))
         : clamp01((vh * 0.15 - r.top) / (vh * 0.25));
-      const leave = clamp01(r.bottom / (vh * 0.4));                // 下端が抜けていく
+      /* 【2026-08-29 ヒデさん指定】dev→導入事例の境界を「実績→dev」と同じく境界を感じないフェードに。
+         導入事例(下端=cases上端)がせり上がってくる分だけ、暗幕をゆっくり(easeIO)引いていく。 */
+      const leave = resSmooth()
+        ? easeIO(clamp01(r.bottom / (vh * 0.85)))
+        : clamp01(r.bottom / (vh * 0.4));                          // 下端が抜けていく
       bgK = Math.min(enter, leave);
     }
     devEls.bg.style.opacity = bgK.toFixed(3);
