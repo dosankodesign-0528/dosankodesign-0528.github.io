@@ -1606,6 +1606,10 @@
     cursor: move; pointer-events: auto !important;
   }
   html.site-edit .se-hit:hover { outline-color: #FF5D97; }
+  /* 【2026-08-29 ヒデさん指定】編集モード(✏️編集=html.site-edit)の時だけパネル上に出す項目。
+     自由回転はここに入れ、編集ボタンを押した時だけ動的に現れる。 */
+  .edit-only-grp { display: none; }
+  html.site-edit .edit-only-grp { display: block; }
   .panel.closed .chev { transform: rotate(180deg); }
   .panel-body {
     flex: 1 1 auto;
@@ -6783,6 +6787,7 @@ const editBar = (() => {
     mk('cancel', 'やめる', '保存せずに編集モードを抜ける').onclick = () => {
       editHistory.revert();
       editHandles.set(false);
+      if (typeof siteEdit !== 'undefined') siteEdit.set(false);   /* 2026-08-29: html.site-edit を同期(自由回転の表示を戻す) */
       if (typeof buildPanel === 'function') buildPanel();
     };
     mk('save', '保存', 'いまの形で保存して編集モードを抜ける', 'primary').onclick = () => {
@@ -6791,6 +6796,7 @@ const editBar = (() => {
       setTimeout(() => {
         btns.save.textContent = '保存';
         editHandles.set(false);
+        if (typeof siteEdit !== 'undefined') siteEdit.set(false);   /* 2026-08-29: html.site-edit を同期(自由回転の表示を戻す) */
         if (typeof buildPanel === 'function') buildPanel();
       }, 700);
     };
@@ -12563,8 +12569,10 @@ function buildPanel() {
 
   /* ---------- 惑星（模様） ---------- */
   /* 【2026-08-28 ヒデさん指定】グラフィック全体(右側のKV)を、ひとまとまりで XYZ 回転できる */
-  sub(gRoot, '全体の回転（自由回転）', true);
-  note('四角い枠を「ドラッグ」すると、右のグラフィック全体がその向きに回ります（左右＝Y／上下＝X／Shift＋左右＝Z）。数値を直接入れてもOK。↺で正面に戻ります。');
+  /* 【2026-08-29 ヒデさん指定】名称を「自由回転」に。右上の ✏️編集 を押した時だけ動的に出る(edit-only-grp)。 */
+  sub(gRoot, '自由回転', true);
+  if (mount && mount.parentElement) mount.parentElement.classList.add('edit-only-grp');
+  note('右上の ✏️編集 中に、四角い枠を「ドラッグ」すると右のグラフィック全体がその向きに回ります（左右＝Y／上下＝X／Shift＋左右＝Z）。数値直接入力もOK。↺で正面に戻ります。');
   freeRotate();
   note('惑星は動かさず、軌道だけを立体的に倒します（ペラペラの紙になりません）。');
   /* 【2026-08-29 ヒデさん指定】いま表示されている回転の位置を、アニメの開始地点として保存する */
