@@ -12051,10 +12051,12 @@ function buildPanel() {
      文面は選択ピルにマウスを乗せた時の吹き出しで読める */
   const animModeBox = document.createElement('div');
   animBody.appendChild(animModeBox);
-  /* 【2026-08-29 ヒデさん指定】エフェクト(吸収のされ方)節への参照。吸収する案でだけ表示するため、
-     案切替(fillAnimBody)のたびに表示/非表示を同期する。 */
-  let effectGrpEl = null;
+  /* 【2026-08-29 ヒデさん指定】案ごとに「効く項目だけ」出す仕組み。グループ要素と表示条件を控え、
+     案切替(fillAnimBody)のたびに表示/非表示を同期する。使わない案では丸ごと隠す。 */
+  const dynGroups = [];   /* {el, vis:()=>bool} */
   const effectApplies = () => (params.converge && params.converge !== 'off') && !(params.conv && params.conv.net3d);
+  const notNet3d = () => !(params.conv && params.conv.net3d);   /* ネットワーク3Dは固定座標の再現なので、汎用の軌道/ドット調整は効かない */
+  const addDynGroup = (vis) => { if (mount && mount.parentElement) { const el = mount.parentElement; dynGroups.push({ el, vis }); el.style.display = vis() ? '' : 'none'; } };
   {
     const CONV_DESC = {
       off:    '軌道をただ回り続けます。集約の動きはしません。',
@@ -12349,9 +12351,9 @@ function buildPanel() {
     }
 
 
-    /* 【2026-08-29 ヒデさん指定】吸収する案でだけ「エフェクト(吸収のされ方)」を出す。
-       周回のみ(off)/ネットワーク3D(net3d)は吸収が無く、いじっても何も起きないので隠す。 */
-    if (effectGrpEl) effectGrpEl.style.display = effectApplies() ? '' : 'none';
+    /* 【2026-08-29 ヒデさん指定】案ごとに「効く項目だけ」出す。使わない案では丸ごと隠す。
+       例: エフェクトは吸収する案だけ / 汎用の軌道・ドット調整はネットワーク3D(固定再現)では効かない。 */
+    for (const g of dynGroups) if (g.el) g.el.style.display = g.vis() ? '' : 'none';
     mount = keepMount;
     subDefaultOpen = keepOpen;
     liveEdit = keepLive;
@@ -12365,6 +12367,7 @@ function buildPanel() {
   /* ---------- ③ 軌道（輪） ---------- */
   liveEdit = true;
   sub(gRoot, '軌道（輪）', true);
+  addDynGroup(notNet3d);   /* 2026-08-29: ネットワーク3D(固定再現)では軌道調整が効かないので隠す */
   /* 【2026-08-27 ヒデさん指定】「表示」の中に「表示」の行、のような入れ子の重複をやめ、
      モノの箱の中は小見出しを置かずにフラットに並べる */
   chipRow('表示', [
@@ -12416,6 +12419,7 @@ function buildPanel() {
 
   /* ---------- ④ ドット（粒） ---------- */
   sub(gRoot, 'ドット（粒）', true);
+  addDynGroup(notNet3d);   /* 2026-08-29: ネットワーク3Dでは汎用ドット調整が効かないので隠す */
   slider('大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
     v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。');
   {
@@ -12483,8 +12487,8 @@ function buildPanel() {
   /* ---------- ⑤ 惑星 ---------- */
   /* 【2026-08-28 ヒデさん指定】エフェクトを「惑星(模様)」の【上】へ。独立したセクションにする。 */
   sub(gRoot, 'エフェクト（吸収のされ方）', true);
-  /* 【2026-08-29 ヒデさん指定】この節は「吸収する案」でだけ出す。参照を控え、いまの案に合わせて初期表示を決める。 */
-  if (mount && mount.parentElement) { effectGrpEl = mount.parentElement; effectGrpEl.style.display = effectApplies() ? '' : 'none'; }
+  /* 【2026-08-29 ヒデさん指定】この節は「吸収する案」でだけ出す。 */
+  addDynGroup(effectApplies);
   {
     /* パルス / 波紋 / エコー = エフェクトの種類。ここは「選択ピル」で、下の番号ピルと役割を分ける */
     const GLOWS = [
