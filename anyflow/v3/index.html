@@ -274,6 +274,8 @@
   /* 【2026-08-29 ヒデさん指定】Vision だけは常に固定追従なし（普通に流れる）。
      実績・事例はピン留めのまま。 */
   #vision .pin-vp { position: relative; }
+  /* 【2026-08-29】実績→開発者体験「スムーズフェード」時は実績も固定追従なし。 */
+  #results.res-smooth .pin-vp { position: relative; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
@@ -2873,6 +2875,10 @@ const DEFAULTS = {
   kvIntro: { mockAt: 0.08, iconsAt: 0.7, iconsStagger: 0.11, orbitAt: 1.5 },
   patterns: {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
+    /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「切替演出」。
+       'black' = 黒オブジェクトがせり上がる(既定・従来) / 'smooth' = スムーズフェード
+       (スクロールジャック/固定追従なし・背景が自然にクロスフェード・黒オブジェクトなし) */
+    resTrans: 'black',
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
     caseHover: 'zoom',   // 導入事例のホバー (2026-08-27 ヒデさん指定・5案から選ぶ)
@@ -6524,6 +6530,9 @@ const SECS = {
    updateVision が持つ登場(Our Vision→本文マスク→グラフィックのブラー→右のブラー)で見せる。
    グラフィックの回転アニメは保持。 */
 const VIS_NOPIN = true;
+/* 【2026-08-29 ヒデさん指定】実績→開発者体験の「スムーズフェード」= 実績も固定追従なし＋
+   背景を自然にクロスフェード＋黒オブジェクトなし。'smooth' のとき true。 */
+function resSmooth() { return !!(params.patterns && params.patterns.resTrans === 'smooth'); }
 
 /* ピン留めセクションのスクロール進捗 0〜1 */
 const progOverride = {};   // デバッグ用: __anim.setProgress で固定できる
@@ -7664,6 +7673,20 @@ function updateResults(p) {
     grinShown = grin;   // 固定モード: レート制限なし(従来どおり)
   }
   resBlackK = grinShown;   // dev1 の出現ゲート用に共有
+  if (resSmooth()) {
+    /* 【2026-08-29 スムーズフェード】黒オブジェクトなし・文字反転なし。
+       背景の自然なクロスフェード(updateDev の dev-bg)で開発者体験へ渡す。 */
+    resBlackK = 0;
+    if (resEls.grow) resEls.grow.style.opacity = 0;
+    resEls.dark.style.opacity = 0;
+    if (resInvertOn) {
+      resInvertOn = false;
+      resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+      if (resEls.hr) resEls.hr.style.background = '';
+      SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
+    }
+    return;
+  }
   const gv = grinShown;
   const riseK   = easeOutC(clamp01(gv / 0.40));
   const spreadK = easeIO(clamp01((gv - 0.36) / 0.64));
@@ -8389,7 +8412,8 @@ function updateDev(pRaw) {
   const posK = easeOutQ(clamp01((vh * 0.15 - b1top) / (vh * 0.25)));   // 中央付近に着いたか
   /* 固定追従なし(smooth)は黒がゆったり時間追従なので、dev1 も“黒が覆う瞬間(resBlackK)”に合わせて出す
      (せり上がりを黒の裏に隠す)。「固定」モードは前の実装どおり位置だけで出す(黒はスクロール駆動)。 */
-  const blackK = (params.scrollHold === 'smooth') ? easeOutQ(clamp01((resBlackK - 0.55) / 0.35)) : 1;
+  /* 【2026-08-29】スムーズフェード時は黒オブジェクトが無いので、dev1 は位置(posK)だけで出す(黒待ちにしない)。 */
+  const blackK = resSmooth() ? 1 : ((params.scrollHold === 'smooth') ? easeOutQ(clamp01((resBlackK - 0.55) / 0.35)) : 1);
   const k1 = posK * blackK;
   applyBlock(devEls.block1, k1);
   driveEditorLoop(dev1Refs, k1 > 0.35, 'dev1');
@@ -8406,7 +8430,11 @@ function updateDev(pRaw) {
     const r = rectOf(devEls.sec);
     let bgK = 0;
     if (r.bottom > 0 && r.top < vh) {
-      const enter = clamp01((vh * 0.15 - r.top) / (vh * 0.25));   // dev1が中央付近に来てから
+      /* 【2026-08-29】スムーズフェード= dev が入ってくる分だけ背景を自然にクロスフェード(黒の裏に隠さない)。
+         従来(黒オブジェクト)= dev1 が中央付近に来てから出す。 */
+      const enter = resSmooth()
+        ? easeIO(clamp01((vh - r.top) / (vh * 0.7)))
+        : clamp01((vh * 0.15 - r.top) / (vh * 0.25));
       const leave = clamp01(r.bottom / (vh * 0.4));                // 下端が抜けていく
       bgK = Math.min(enter, leave);
     }
@@ -8688,7 +8716,9 @@ function updateSections() {
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
   updateDev2Stack();   /* dev2 の3枚カルーセル(ホバー切替) */
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
-  updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', prog(SECS.results)));
+  /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝入場進捗(preP)で自動再生。 */
+  const resProg = resSmooth() ? clamp01(preP(SECS.results)) : prog(SECS.results);
+  updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', resProg));
   if (params.pin === 'off') renderNoPin();
 }
 
@@ -9778,7 +9808,9 @@ function fit() {
      中身なりの高さ(auto=約200vh)にする。pin用の H('dev')(=600vh)は使わない。 */
   SECS.dev.style.height = 'auto';
   SECS.cases.style.height = H('cases');
-  SECS.results.style.height = H('results');
+  /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝1画面(100vh)で普通に流す。 */
+  SECS.results.style.height = resSmooth() ? '100vh' : H('results');
+  SECS.results.classList.toggle('res-smooth', resSmooth());
 }
 fitReady = true;
 window.addEventListener('resize', fit);
@@ -11865,6 +11897,13 @@ function buildPanel() {
   /* ========== 📈 実績 ========== */
   const catRes = category('📈 実績（導入企業◯◯社などの数字）', false);
   catNote(catRes, '見出し → 数字と本文 → 見終わると暗くなって次のセクションへ。');
+
+  /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「切替演出」を選べる */
+  sub(catRes, '開発者体験への切替演出');
+  segRow('切替', [['黒オブジェクト', 'black'], ['スムーズフェード', 'smooth']],
+    () => (params.patterns.resTrans || 'black'),
+    v => { params.patterns.resTrans = v; markDirty(); if (typeof fit === 'function') fit(); renderFrame(); });
+  note('「スムーズフェード」＝スクロールジャック・固定追従なしで普通に下へ流せます。背景が自然にクロスフェードで暗くなって開発者体験に切り替わり、黒オブジェクトは出ません。');
 
   /* ⚠️【2026-08-26 ヒデさん指定】「レイアウトを選ぶ」(案A/B/C)は削除。実績は新デザイン1本に統一。 */
   sub(catRes, '基本（長さ・ぼけ具合）');
