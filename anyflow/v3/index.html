@@ -12055,7 +12055,16 @@ function buildPanel() {
      案切替(fillAnimBody)のたびに表示/非表示を同期する。使わない案では丸ごと隠す。 */
   const dynGroups = [];   /* {el, vis:()=>bool} */
   const effectApplies = () => (params.converge && params.converge !== 'off') && !(params.conv && params.conv.net3d);
-  const notNet3d = () => !(params.conv && params.conv.net3d);   /* ネットワーク3Dは固定座標の再現なので、汎用の軌道/ドット調整は効かない */
+  /* 【2026-08-29 ヒデさん指定】汎用の「軌道(輪)」「ドット(粒)」調整が“描画に効く”案かどうか。
+     render 側(convFrame)の hideAll と同じ判定: ネットワーク3D(固定再現)・網でつながる(mesh)・
+     粒が並ぶ(beads)・粒の渦(accre で軌道を出していない)は、輪もドットも自動で隠れるので調整は無効。 */
+  const orbitsUsed = () => {
+    if (params.conv && params.conv.net3d) return false;
+    const cv = params.converge;
+    const accreShows = cv === 'accre' && !!(params.conv && params.conv.accre && params.conv.accre.showOrbit);
+    const hideAll = (cv === 'accre' && !accreShows) || cv === 'mesh' || cv === 'beads';
+    return !hideAll;
+  };
   const addDynGroup = (vis) => { if (mount && mount.parentElement) { const el = mount.parentElement; dynGroups.push({ el, vis }); el.style.display = vis() ? '' : 'none'; } };
   {
     const CONV_DESC = {
@@ -12087,6 +12096,7 @@ function buildPanel() {
        (以前は off 群だけこの「動き」セクションが無く、B/C/D 等は回転が焼き込みでいじれなかった) */
     {
       sub(animModeBox, '動き（この案）', true, { fixed: true });
+      const moveGrpBody = mount;   /* 2026-08-29: あとで「スイッチ→スライダー」に並べ替えるため控える */
       /* 揺らぎ ON/OFF (既定オン=②シーソー。全案共通で効く緩やかな揺れ) */
       segRow('揺らぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
         v => { params.sway = v ? 2 : 1; markDirty(); renderFrame(); fillAnimBody(); });
@@ -12191,6 +12201,13 @@ function buildPanel() {
           v => '×' + v.toFixed(2), '0で巻かずにまっすぐ。大きいほど中心に近づくほど速く回り、きつく巻き込みます。');
         slider('落ち方のカーブ', 0.1, 3, 0.05, () => params.conv[params.converge].fallCurve, v => K0.fallCurve = v,
           v => '×' + v.toFixed(2), '1で一定の速さ。大きいほど中心の近くで一気に吸い込まれます。');
+      }
+      /* 【2026-08-29 ヒデさん指定】UIを見やすく: この節のスイッチ(する/しない)を上へ、スライダーを下へまとめる
+         (スイッチ・スライダーが交互に並ぶのを避ける)。DOMを並べ替えるだけで挙動は不変。 */
+      if (moveGrpBody) {
+        const kids = [...moveGrpBody.children];
+        [...kids.filter(k => k.classList.contains('seg-row')), ...kids.filter(k => !k.classList.contains('seg-row'))]
+          .forEach(k => moveGrpBody.appendChild(k));
       }
     }
     if (cvMode === 'reel') {
@@ -12367,7 +12384,7 @@ function buildPanel() {
   /* ---------- ③ 軌道（輪） ---------- */
   liveEdit = true;
   sub(gRoot, '軌道（輪）', true);
-  addDynGroup(notNet3d);   /* 2026-08-29: ネットワーク3D(固定再現)では軌道調整が効かないので隠す */
+  addDynGroup(orbitsUsed);   /* 2026-08-29: 輪が自動で隠れる案(net3d/mesh/beads/accre)では軌道調整が効かないので隠す */
   /* 【2026-08-27 ヒデさん指定】「表示」の中に「表示」の行、のような入れ子の重複をやめ、
      モノの箱の中は小見出しを置かずにフラットに並べる */
   chipRow('表示', [
@@ -12419,7 +12436,7 @@ function buildPanel() {
 
   /* ---------- ④ ドット（粒） ---------- */
   sub(gRoot, 'ドット（粒）', true);
-  addDynGroup(notNet3d);   /* 2026-08-29: ネットワーク3Dでは汎用ドット調整が効かないので隠す */
+  addDynGroup(orbitsUsed);   /* 2026-08-29: ドットが自動で隠れる案(net3d/mesh/beads/accre)では汎用ドット調整が効かないので隠す */
   slider('大きさ', 0.1, 4, 0.02, () => params.conv.dotSize, v => params.conv.dotSize = v,
     v => '×' + v.toFixed(2), 'すべての案のドット・粒にまとめて効きます。');
   {
