@@ -271,6 +271,9 @@
   }
   /* 固定追従なし: 貼りつけをやめ、重ねも解除する（普通に上から下へ流れる） */
   html.nopin .pin-vp { position: relative; }
+  /* 【2026-08-29 ヒデさん指定】Vision だけは常に固定追従なし（普通に流れる）。
+     実績・事例はピン留めのまま。 */
+  #vision .pin-vp { position: relative; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
@@ -6516,6 +6519,11 @@ const SECS = {
   dev: document.getElementById('dev'),
   cases: document.getElementById('cases'),
 };
+/* 【2026-08-29 ヒデさん指定】Vision だけ固定追従(ピン留め)をやめる。
+   実績・事例は従来どおりピン留めのまま。Vision は「入場した瞬間に時間で自動再生」＋
+   updateVision が持つ登場(Our Vision→本文マスク→グラフィックのブラー→右のブラー)で見せる。
+   グラフィックの回転アニメは保持。 */
+const VIS_NOPIN = true;
 
 /* ピン留めセクションのスクロール進捗 0〜1 */
 const progOverride = {};   // デバッグ用: __anim.setProgress で固定できる
@@ -7209,7 +7217,7 @@ function updateVision(p) {
      「後ろから拡大 → 左下へ移動」をやめ、最初から所定の位置（左下・実寸）で組み上がった
      状態にする。出現はブロックごとのブラー（renderNoPin）に任せる。
      ドットだけは止まらずに回り続ける */
-  const noPin = params.pin === 'off';
+  const noPin = params.pin === 'off' || VIS_NOPIN;   /* 2026-08-29: Vision は常に no-pin */
 
   /* ⚠️ 2026-08-14 まで、このセクションは【全部が時間駆動】だった。
      つまりピン留めされている1.6画面ぶん、いくらスクロールしても進捗が1ミリも動かず、
@@ -8674,7 +8682,9 @@ function updateSections() {
      一切進まず、軌道が小さいまま止まる（2026-08-18 ヒデさん報告）。
      固定なしの時は「セクションが画面下から上がってくる分」を進行度として渡す。 */
   const prog = el => (params.pin === 'off' ? clamp01(preP(el)) : pinP(el));
-  updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', prog(SECS.vision)));
+  /* 【2026-08-29】Vision だけは固定追従なし＝入場進捗(preP)で自動再生。実績・事例は従来どおり。 */
+  const visProg = VIS_NOPIN ? clamp01(preP(SECS.vision)) : prog(SECS.vision);
+  updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', visProg));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
   updateDev2Stack();   /* dev2 の3枚カルーセル(ホバー切替) */
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
@@ -9761,7 +9771,9 @@ function fit() {
   /* 固定なしでは 1ブロック=100vh。ビジョンと開発者体験は2ブロック積むので 200vh 必要 */
   const NP_BLOCKS = { vision: 2, dev: 2, results: 1, cases: 1 };
   const H = key => (noPin ? 100 * NP_BLOCKS[key] : Math.round(params.sections[key].lenVh * lenMul(key))) + 'vh';
-  SECS.vision.style.height = H('vision');
+  /* 【2026-08-29】Vision は常に固定追従なし＝1画面(100vh)で普通に流す(スクロールジャックしない)。
+     登場は入場トリガーで updateVision が時間で自動再生する。 */
+  SECS.vision.style.height = VIS_NOPIN ? '100vh' : H('vision');
   /* 【2026-08-25 リデザイン】開発者体験は非pin・2ブロック(各min-height:100vh)なので、
      中身なりの高さ(auto=約200vh)にする。pin用の H('dev')(=600vh)は使わない。 */
   SECS.dev.style.height = 'auto';
