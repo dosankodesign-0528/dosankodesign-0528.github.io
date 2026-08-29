@@ -4231,10 +4231,7 @@ function convCatFilter() {
 function convVarIsNetwork(v) { return !!(v && v.common && v.common.net3d); }
 function convGroupOf(mode) {
   mode = mode || 'off';
-  /* ネットワーク3D(off + net3d フラグ)は、見た目上 B ネットワークのグループとして扱う */
-  if (mode === (params && params.converge) && params && params.conv && params.conv.net3d) {
-    return CONV_GROUPS.find(g => g.key === 'network') || CONV_GROUPS[0];
-  }
+  /* 【2026-08-30 ヒデさん指定】ネットワーク3D(off + net3d)は A 軌道のバリエーションに置く(off の所属=A)。 */
   return CONV_GROUPS.find(g => g.modes.includes(mode) || g.line === mode) || CONV_GROUPS[0];
 }
 function convGroupDefaultMode(g) { return g.modes[0]; }
@@ -12065,14 +12062,14 @@ function buildPanel() {
       for (const cat of CONV_CATS) {
         if (!cf[cat.key]) continue;   /* 絞り込みでオフのカテゴリは出さない */
         let catItems = [];
-        for (const m of cat.modes) catItems = catItems.concat(collect(m, 'exclude'));   /* ネットワーク3DはBへ回す */
+        for (const m of cat.modes) catItems = catItems.concat(collect(m, null));   /* 2026-08-30: ネットワーク3DもAに含める */
         if (!catItems.length) continue;
         addHead(cat.name);
         catItems.forEach(makePill);
       }
     } else {
-      /* B ネットワーク: mesh の全部 + off内のネットワーク3D */
-      collect('mesh', null).concat(collect('off', 'only')).forEach(makePill);
+      /* B ネットワーク: mesh のみ(ネットワーク3Dは A へ移した) */
+      collect('mesh', null).forEach(makePill);
     }
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
     /* このグループで消した案をまとめて戻す */
