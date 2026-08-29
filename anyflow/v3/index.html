@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-ds="high">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +25,7 @@
     --font-jp: 'Noto Sans JP', sans-serif;
   }
   html, body {
-    background: #e7e7e7;   /* 2026-08-25: 全セクション地色を #E7E7E7 で統一(KVと同じ) */
+    background: var(--surface);   /* 2026-08-25: 全セクション地色を var(--surface) で統一(KVと同じ) */
     font-family: 'Noto Sans JP', sans-serif;
     /* overflow-x: hidden は position: sticky を殺すため clip を使う
        (clip はスクロールコンテナを作らないので sticky が生きる) */
@@ -35,7 +35,7 @@
 
   /* ---- ステージ: 高さ921pxのカンプ座標系のまま、幅だけ画面いっぱいに広げる（フィル） ----
      左右の要素は left:120px / right:120px でアンカーするので、幅が変わっても余白は120pxのまま */
-  .stage-wrap { width: 100%; overflow: hidden; background: #E7E7E7; }  /* KVの地色を全幅で。1440幅のiframeの左右も#E7E7E7で埋める(フレーム幅の切れ防止) */
+  .stage-wrap { width: 100%; overflow: hidden; background: var(--surface); }  /* KVの地色を全幅で。1440幅のiframeの左右もvar(--surface)で埋める(フレーム幅の切れ防止) */
   .stage {
     position: relative;
     width: var(--sw, 1440px);
@@ -56,32 +56,32 @@
     opacity: 0;
   }
   .header .logo img { width: 255px; height: 47px; display: block; }
-  .nav { display: flex; align-items: center; gap: 32px; }
-  .nav-links { display: flex; gap: 20px; align-items: center; }
+  .nav { display: flex; align-items: center; gap: var(--space-32); }
+  .nav-links { display: flex; gap: var(--space-20); align-items: center; }
   .nav-links a {
     font-weight: 300;
     font-size: 16px;
-    color: #101828;
+    color: var(--ink);
     text-decoration: none;
     white-space: nowrap;
-    transition: opacity var(--t-fast) var(--e-fast);
+    transition:opacity var(--t-fast) var(--e-fast);
   }
   .nav-links a:hover { opacity: .55; }
   .cta {
-    background: #090909;
-    color: #fff;
+    background: var(--surface-cta);
+    color: var(--ink-on-dark);
     font-weight: 300;
     font-size: 14px;
     width: 140px;
-    padding: 10px 16px;
-    border-radius: 4px;
+    padding: var(--space-10) var(--space-16);
+    border-radius: var(--radius-xs);
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     font-family: inherit;
-    transition: opacity var(--t-fast) var(--e-fast);
+    transition:opacity var(--t-fast) var(--e-fast);
   }
   .cta:hover { opacity: .78; }
 
@@ -91,22 +91,22 @@
     position: absolute;
     left: 120px;
     top: 263px;
-    color: #101828;
+    color: var(--ink);
     white-space: nowrap;
   }
   .hl-eyebrow {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-10);
     font-weight: 400;
     font-size: 14px;
-    color: #000;
+    color: var(--ink-strong);
     opacity: 0;
   }
-  .hl-eyebrow i { display: block; width: 26px; height: 1px; background: #000; }
+  .hl-eyebrow i { display: block; width: 26px; height: 1px; background: var(--ink-strong); }
   .hl-main {
     display: block;
-    margin-top: 8px;
+    margin-top: var(--space-8);
     font-weight: 100;
     font-size: 70px;
     line-height: 1.4;
@@ -118,7 +118,7 @@
     display: inline-block;
     width: 2px;
     height: 62px;
-    background: #101828;
+    background: var(--ink);
     vertical-align: -12px;
     opacity: 0;
   }
@@ -179,7 +179,7 @@
 
   /* === V2 KV: 惑星を隠して「パターン群」(iframe)に差し替え（2026-08-25 移行） ===
      iframe にしている理由: すりガラス(backdrop-filter)を本体の transform:scale から隔離し、
-     kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は Figma実測の #E7E7E7（白フロストが#EEEに浮き出る）。 */
+     kv/embed.html の 1440 座標系で 1:1 描画させるため。地色は Figma実測の var(--surface)（白フロストが#EEEに浮き出る）。 */
   .orbit { display: none !important; }
   /* 【2026-08-26 ヒデさん指定】V1.0 の惑星ビジュアルを KV に復活。
      調整パネルの「KV案」で 惑星(V1) を選ぶと html.kv-planet が付き、
@@ -243,7 +243,7 @@
   /* ===== 動きの共通トークン =====
      参考36サイトの実測から。ぜんぶこの3段階に寄せる。
        小さい反応(ホバー等) 0.25s / 出現 0.8s / 大きい移動 1.3s
-     カーブは easeOutQuint = cubic-bezier(.22,1,.36,1) を基準にする
+     カーブは easeOutQuint = var(--e-out) を基準にする
      (実測でいちばん多かった。JS側の easeOutQ = 1-(1-t)^5 と同じカーブ) */
   :root {
     --s: 1; --sp: 1; --dh: 921px;
@@ -251,6 +251,65 @@
     --e-fast: cubic-bezier(.4, 0, .2, 1);
     --e-out: cubic-bezier(.22, 1, .36, 1);
   }
+/*DS-TOKENS-START*/
+  /* ============================================================
+     デザインシステム トークン（本番サイトの唯一の出どころ / 2026-08-29 整備）
+     対象=本番サイトのみ。KV(iframe)・惑星&軌道 canvas・調整パネルは対象外(生成アート/開発UI)。
+     既定= mid（<html data-ds="mid">・2026-08-29 ヒデさん採用）。見た目は現行とほぼ同じでトークンが素直。
+     ?ds=low で現行と完全一致 / ?ds=high で積極整備に切替えて比較できる（/mock/design-system/）。
+     命名: 大きさで決まる物=カテゴリ+値 / 意味で決まる物=カテゴリ+役割
+     ============================================================ */
+  :root{
+    /* 色：ブランド */
+    --brand-cyan:#0EBBFF; --brand-pink:#FF5D97; --brand-blue-deep:#0E4497;
+    /* 色：インク（文字・マーク） */
+    --ink:#101828; --ink-strong:#000; --ink-label:#333333; --ink-on-dark:#fff;
+    /* 色：サーフェス（背景） */
+    --surface:#E7E7E7; --surface-dark-top:#161616; --surface-dark-bottom:#454545;
+    --surface-footer-bottom:#434343; --surface-cta:#090909; --surface-terminal:#080A0E;
+    --surface-mock-1:#2B2B2B; --surface-mock-2:#232323; --surface-mock-3:#1B1B1B;
+    /* 色：線 */
+    --line:#D1D5DC; --line-grid:#ACACAC;
+    /* 色：コード構文（開発モック） */
+    --code-green:#7CE7A6; --code-string:#9BE8A4;
+    /* 色：ガラス（暗い面の上の白） */
+    --glass-10:rgba(255,255,255,.10); --glass-06:rgba(255,255,255,.06);
+    /* 角丸 */
+    --radius-xs:4px; --radius-sm:8px; --radius-md:14px; --radius-lg:24px;
+    --radius-pill:999px; --radius-full:50%;
+    /* 影 */
+    --shadow-mock-panel:0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
+    /* ぼかし */
+    --blur-panel:75px;
+    /* 余白（4pxグリッド。gap/padding/margin用。配置座標(left/top)には使わない） */
+    --space-4:4px; --space-5:5px; --space-6:6px; --space-8:8px; --space-10:10px;
+    --space-12:12px; --space-16:16px; --space-20:20px; --space-24:24px; --space-32:32px;
+    --space-40:40px; --space-44:44px; --space-56:56px; --space-60:60px; --space-72:72px;
+    /* モーション：追加イージング（速さ/基本カーブは上の :root と共通） */
+    --e-soft:cubic-bezier(.22,.8,.28,1);
+  }
+  /* ── Mid（バランス）：見分けのつかない重複だけ統合。見た目はほぼ不変 ── */
+  html[data-ds="mid"]{
+    --surface-footer-bottom:#454545;   /* フッター下端(#434343)を開発下端(#454545)へ。差わずか＝不可視 */
+    --code-string:#7CE7A6;             /* コード緑2色を1つに */
+  }
+  /* ── High（積極整備）：色数・トークンを最小化。小さな見た目差が出る ── */
+  html[data-ds="high"]{
+    /* サーフェスを4色へ集約：地色#E7E7E7 / 黒#090909 / 暗#161616 / 中暗#454545 */
+    --surface-footer-bottom:#454545;                    /* フッター下端→開発下端に統合 */
+    --surface-terminal:#090909;                         /* 端末背景(#080A0E)→CTA黒に統合 */
+    --surface-mock-1:#161616; --surface-mock-2:#161616; --surface-mock-3:#161616; /* モック地(#232323)→暗セクション色に統合 */
+    --line-grid:#D1D5DC;                                /* 罫線グレーを1つに（事例グリッドが少し明るく） */
+    --code-string:#7CE7A6;                              /* コード緑を1つに */
+    --ink-label:#101828;                                /* ラベルのグレーを本文インクへ寄せる */
+    --radius-md:8px; --radius-lg:16px;                  /* 角丸の段数を削減(14→8 / 24→16) */
+  }
+  /* High：グリッド外の余白(27/34/59px)を8pxグリッドへスナップ */
+  html[data-ds="high"] .res-main{ gap:32px; }
+  html[data-ds="high"] #results.pat-b .res-col{ gap:60px; }
+  html[data-ds="high"] .cg-body{ gap:24px; }
+/*DS-TOKENS-END*/
+
 
   /* ピン留めセクション: 高さ=スクロール尺、中身は sticky で画面に固定 */
   .pin { position: relative; }
@@ -267,7 +326,7 @@
     top: 0;
     height: 100vh;
     overflow: hidden;
-    background: #e7e7e7;   /* 2026-08-25: #E7E7E7 に統一(Vision等が薄グレーだったのを解消) */
+    background: var(--surface);   /* 2026-08-25: var(--surface) に統一(Vision等が薄グレーだったのを解消) */
   }
   /* 固定追従なし: 貼りつけをやめ、重ねも解除する（普通に上から下へ流れる） */
   html.nopin .pin-vp { position: relative; }
@@ -281,14 +340,14 @@
   #results.res-smooth .pin-vp { position: relative; }
   /* 【2026-08-29】導入事例も固定追従なし（余分スクロールをなくす）。 */
   /* 【2026-08-29 ヒデさん指定】dev→導入事例の境界を感じさせないため、導入事例の地色は不透明にしない。
-     地色は body と同じ #e7e7e7 なので透明でも見た目は同じ。遷移中は後ろの暗幕(dev-bg)が
-     そのまま透けて連続し、暗幕が leave で引くと下地の #e7e7e7 へ自然にクロスフェードする
+     地色は body と同じ var(--surface) なので透明でも見た目は同じ。遷移中は後ろの暗幕(dev-bg)が
+     そのまま透けて連続し、暗幕が leave で引くと下地の var(--surface) へ自然にクロスフェードする
      （＝不透明な上端が下から硬く重なる「プツン」が出ない）。 */
   #cases .pin-vp { position: relative; background: transparent; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
-  html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
-  html.nopin #dev .np-vp { background: #161616; }
+  html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: var(--surface); }
+  html.nopin #dev .np-vp { background: var(--surface-dark-top); }
   /* 章①用の静止モック（複製）。ホバーも動きも持たない見せ物 */
   /* 章①用の静止モック。JS で動かさないので、CSS で中央に置いて見出しの下に収める */
   html.nopin .np-mock {
@@ -328,8 +387,8 @@
   /* ---- Vision セクション ----
      【2026-08-25 ヒデさん指定・Figma 15764:55503 準拠】中央そろえ → 左寄せに変更。
        枠は左端 126.66px (=1440基準で calc(50% - 593.34px))・items-start・gap 12px・top 269px
-       Our Vision = SF Pro Text Regular(400) 20px / 行間 1 / #000
-       本文       = Noto Sans JP Thin(100) 90px / 行間 1.7(=153px) / #101828
+       Our Vision = SF Pro Text Regular(400) 20px / 行間 1 / var(--ink-strong)
+       本文       = Noto Sans JP Thin(100) 90px / 行間 1.7(=153px) / var(--ink)
      ⚠️ 以前(〜2026-08-15)は中央そろえ・Our Vision 26px・本文 100px だった。 */
   .vis-label {
     position: absolute;
@@ -341,7 +400,7 @@
     font-weight: 400;
     font-size: 20px;
     line-height: 1;
-    color: #000;
+    color: var(--ink-strong);
   }
   .vis-line {
     position: absolute;
@@ -352,7 +411,7 @@
     font-weight: 200;               /* Noto Sans JP ExtraLight (カンプ 15966:42707) */
     font-size: 50px;                /* 2026-08-29 ヒデさん指定・カンプ 15966:42707: 60 → 50・冒頭に「データを」 */
     line-height: 85px;              /* 50px × 行間1.7 */
-    color: #101828;
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;               /* 下からのトリミング出現用マスク */
   }
@@ -361,7 +420,7 @@
 
   /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ 10案。
      .vis-line に str-<案>(選択中)を付け、登場しきったら str-go で発火。上品・誠実・自信・ちょいハイテク。 */
-  .vl-strong { display: inline-block; position: relative; color: #101828; }
+  .vl-strong { display: inline-block; position: relative; color: var(--ink); }
   .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
   /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
   .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2s) steps(1,end) 1 both; }
@@ -371,14 +430,14 @@
     38%{opacity:.55} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
   /* ②グラデ揺らぎ(生きたグラデ) */
   .vis-line.str-live .vl-strong {
-    background: linear-gradient(67deg,#0E4497,#FF5D97,#0E4497); background-size:300% 100%;
+    background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
     -webkit-background-clip:text; background-clip:text; color:transparent;
     animation: strLive 7s ease-in-out infinite;
   }
   @keyframes strLive { 0%,100%{background-position:0 0} 50%{background-position:100% 0} }
   /* 【2026-08-29 ヒデさん指定】「つなぐ」に常時グラデ揺らぎ(生きたグラデ)。強みの効果とは独立して常に流れる。 */
   .vl-nagu { display:inline-block; position:relative;
-    background: linear-gradient(67deg,#0E4497,#FF5D97,#0E4497); background-size:300% 100%;
+    background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
     -webkit-background-clip:text; background-clip:text; color:transparent;
     animation: strLive 7s ease-in-out infinite; }
   /* ↓ ③〜⑦ スクロール連動。--str-k=1(画面中央)で「強み」が完全に重なって黒に締まる。 */
@@ -405,7 +464,7 @@
   }
   /* ⑦グラデ→黒(中央で1つの黒に締まる) */
   .vis-line.str-grad .vl-strong {
-    background: linear-gradient(90deg,#0E4497,#FF5D97);
+    background: linear-gradient(90deg,var(--brand-blue-deep),var(--brand-pink));
     -webkit-background-clip:text; background-clip:text; color:transparent;
     filter: saturate(calc(1 - var(--str-k,0))) brightness(calc(1 - var(--str-k,0) * .82));
   }
@@ -435,7 +494,7 @@
     position: absolute;
     width: 13.378px;
     height: 13.378px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     margin: -6.689px 0 0 -6.689px;
   }
   /* カンプ 14693:28351 の実測: 役割ラベルは Noto Sans JP Light 14px / 字間の指定なし。
@@ -446,7 +505,7 @@
     font-weight: 300;
     font-size: 14px;
     line-height: normal;
-    color: #000;
+    color: var(--ink-strong);
     white-space: nowrap;
   }
   .pf-name.is-center { transform: translateX(-50%); }
@@ -459,7 +518,7 @@
     font-weight: 200;          /* カンプ 14693:28354: SF Pro Text Thin 50px / 字間なし */
     font-size: 50px;
     line-height: 1;
-    color: #000;
+    color: var(--ink-strong);
     white-space: nowrap;
   }
   .pf-sub {
@@ -469,7 +528,7 @@
     font-weight: 300;          /* カンプ 14693:28355: Noto Sans JP Light 16px / 字間なし */
     font-size: 16px;
     line-height: normal;
-    color: #000;
+    color: var(--ink-strong);
     white-space: nowrap;
   }
   /* 右カラム: カンプでは Point02 の右端がちょうど余白120px。そこを基準に右アンカーする */
@@ -487,12 +546,12 @@
     left: -99.05px;
     top: 148.11px;
     width: 272px;
-    color: #101828;
+    color: var(--ink);
     display: none;
   }
   .val-head .vh-s { display: block; font-weight: 400; font-size: 20px; line-height: normal; }
   .val-head .vh-l { display: block; font-weight: 100; font-size: 60px; line-height: normal; }
-  .val-point { position: absolute; width: 328px; color: #101828; }
+  .val-point { position: absolute; width: 328px; color: var(--ink); }
   .val-p1 { left: -58.05px; top: 342.19px; }
   .val-p2 { left: 0; top: 529.02px; }
   .val-point .vp-tag {
@@ -503,18 +562,18 @@
     font-weight: 300;
     font-size: 20px;
     line-height: 1;
-    color: #000;
+    color: var(--ink-strong);
   }
   .val-point .vp-tag i {
     display: inline-block;
     width: 7px; height: 7px;
-    background: #FF5D97;
+    background: var(--brand-pink);
   }
-  .val-point .vp-tag em { font-style: normal; color: #FF5D97; }
+  .val-point .vp-tag em { font-style: normal; color: var(--brand-pink); }
   /* カンプでは Point 02 の数字だけ水色 (■ は両方ピンクのまま) */
-  .val-p2 .vp-tag em { color: #0EBBFF; }
-  .val-point h3 { font-weight: 300; font-size: 26px; line-height: normal; margin-top: 4px; }
-  .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: 24px; }
+  .val-p2 .vp-tag em { color: var(--brand-cyan); }
+  .val-point h3 { font-weight: 300; font-size: 26px; line-height: normal; margin-top: var(--space-4); }
+  .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: var(--space-24); }
 
   /* ---- 実績セクション ---- */
   #results .pin-stage { height: var(--dh, 921px); }
@@ -532,9 +591,9 @@
   /* ---- 共通の見た目 ---- */
   .res-head { width: 100%; font-weight: 300; font-size: 34px; line-height: 1.7; text-align: right; }
   .res-head .rh-ch { display: inline-block; white-space: pre; }
-  .res-line { width: 100%; height: 1px; background: #D1D5DC; }
-  .res-nums { display: flex; align-items: center; gap: 44px; width: 100%; }
-  .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .res-line { width: 100%; height: 1px; background: var(--line); }
+  .res-nums { display: flex; align-items: center; gap: var(--space-44); width: 100%; }
+  .res-nums .rn { flex: 1 0 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-8); }
   .res-nums .rn b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
   .res-nums .rn span {
     display: block; width: 100%;
@@ -550,12 +609,12 @@
   .slot .stp { font-style: normal; display: block; will-change: transform; }
   .slot .stp em { font-style: normal; display: block; height: 1em; line-height: 1; text-align: center; }
   .slot .fx { font-style: normal; display: inline-block; }
-  .res-main { display: flex; flex-direction: column; gap: 34px; color: #000; }
-  .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: #101828; }
-  .res-stats { display: flex; align-items: center; color: #000; }
+  .res-main { display: flex; flex-direction: column; gap: 34px; color: var(--ink-strong); }
+  .res-text { font-weight: 300; font-size: 14px; line-height: 1.9; color: var(--ink); }
+  .res-stats { display: flex; align-items: center; color: var(--ink-strong); }
   .res-stats .st {
     display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-    gap: 12px; padding-left: 32px; padding-right: 33px; border-right: 1px solid #d1d5dc;
+    gap: var(--space-12); padding-left: var(--space-32); padding-right: 33px; border-right: 1px solid var(--line);
   }
   .res-stats .st:last-child { border-right: none; padding-right: 0; }
   .res-stats .st b { font-weight: 300; font-size: 16px; line-height: 24px; white-space: nowrap; }
@@ -571,7 +630,7 @@
   .res-dark {
     position: fixed;
     inset: 0;
-    background: linear-gradient(180deg, #161616 0%, #454545 100%);
+    background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-dark-bottom) 100%);
     opacity: 0;
     pointer-events: none;
     z-index: 5;
@@ -581,17 +640,17 @@
         テキストは一番上に残り、棒が広がるにつれて溶け込む(ブラーで消える)。動きは JS(updateResults)。 */
   .res-grow {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(180deg, #161616 0%, #454545 100%);   /* 開発者体験の暗背景と同一グラデ＝受け渡しで差分が出ない(ヒデさん指定) */
+    background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-dark-bottom) 100%);   /* 開発者体験の暗背景と同一グラデ＝受け渡しで差分が出ない(ヒデさん指定) */
     transform-origin: 50% 50%;
     transform: translateY(80%) scale(0.07, 0.55);   /* 初期＝下・縦長の細い棒。実際の動きは JS */
     border-radius: 0;                                 /* 角丸なしの単純なレクタングル（ヒデさん指定 2026-08-25） */
     opacity: 0; pointer-events: none; z-index: 1;
     will-change: transform, opacity;
   }
-  /* 案C: 画像なし・中央テキストのみ。地色は絵コンテの #E7E7E7 を全幅で */
+  /* 案C: 画像なし・中央テキストのみ。地色は絵コンテの var(--surface) を全幅で */
   /* ⚠️【2026-08-26】#results を z-index:1 で前に出したので、pin-vp の背景を不透明にすると
      実績尾部に重ねた開発者体験1(dev1)を覆い隠してしまう(dev1が消える)。
-     ページ地色が同じ #e7e7e7 なので、pin-vp は transparent にする(見た目は不変・dev1 が透けて見える)。 */
+     ページ地色が同じ var(--surface) なので、pin-vp は transparent にする(見た目は不変・dev1 が透けて見える)。 */
   #results.pat-c .pin-vp { background: transparent; }
   #results.pat-c .pin-stage { z-index: 2; }         /* 文字を黒オブジェクトの上のレイヤーに */
   #results.pat-c .res-img-frame { display: none; }
@@ -600,23 +659,23 @@
   #results.pat-c .res-col {
     position: absolute; inset: 0;
     display: flex; flex-wrap: wrap; align-items: center; align-content: center; justify-content: center;
-    text-align: center; row-gap: 44px; column-gap: 72px; padding: 0 72px;
+    text-align: center; row-gap: var(--space-44); column-gap: var(--space-72); padding: 0 var(--space-72);
   }
   #results.pat-c .res-main { display: contents; }
   #results.pat-c .res-head { flex-basis: 100%; text-align: center; }
   #results.pat-c .res-line { display: none; }
   #results.pat-c .res-nums,
-  #results.pat-c .res-stats { display: flex; column-gap: 72px; justify-content: center; align-items: flex-start; margin: 0; width: auto; }
+  #results.pat-c .res-stats { display: flex; column-gap: var(--space-72); justify-content: center; align-items: flex-start; margin: 0; width: auto; }
   #results.pat-c .rn,
   #results.pat-c .st {
-    flex: 0 0 auto; width: auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    flex: 0 0 auto; width: auto; display: flex; flex-direction: column; align-items: center; gap: var(--space-10);
     padding: 0; border: none;
   }
   #results.pat-c .res-stats .st:nth-child(2) { display: none; }   /* 最短リリース(1week)は隠す＝数値3つ */
   /* 2026-08-25 精査(カンプ 15779:30326): ラベルは Noto Light 16px・黒(グレー#8a8f98→黒)・行間24。 */
-  /* 2026-08-25: ラベルは色を変えず #333333 固定(ヒデさん指定)。 */
+  /* 2026-08-25: ラベルは色を変えず var(--ink-label) 固定(ヒデさん指定)。 */
   #results.pat-c .rn b,
-  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: #333333 !important; text-align: center; }
+  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ink-label) !important; text-align: center; }
   /* 数値は SF Pro Text Ultralight(100)・80px（カンプ一致）。 */
   #results.pat-c .rn span,
   #results.pat-c .st span { display: block; width: auto; font-weight: 100; font-size: 80px; line-height: 1; text-align: center; }
@@ -629,36 +688,36 @@
      これで dev1 は黒(resGrow)の【裏】に入り、黒がフェードした所で“その場”に現れる(下からせり上がらない)。 */
   #results { position: relative; z-index: 1; }
   #results .pin-stage { display: flex; align-items: center; justify-content: center; }
-  .res2 { width: 1138px; max-width: calc(100% - 96px); display: flex; flex-direction: column; gap: 40px; color: #000; }
+  .res2 { width: 1138px; max-width: calc(100% - 96px); display: flex; flex-direction: column; gap: var(--space-40); color: var(--ink-strong); }
   /* 上段: 見出し(左) + 3数値(右)。フレーム 1138×116・数値グループ 631×102 */
-  .res2-top { display: flex; align-items: center; justify-content: space-between; gap: 44px; }
-  .res2-head { font-family: var(--font-jp); font-weight: 300; font-size: 34px; line-height: 1.7; color: #000; white-space: nowrap; }
+  .res2-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-44); }
+  .res2-head { font-family: var(--font-jp); font-weight: 300; font-size: 34px; line-height: 1.7; color: var(--ink-strong); white-space: nowrap; }
   .res2-hl1, .res2-hl2 { display: block; }
   .res2-hl2 { display: flex; align-items: center; min-height: calc(34px * 1.7); }
   .res2-typed { white-space: pre; }
-  .res2-caret { display: inline-block; width: 2px; height: 34px; background: #0EBBFF; margin-left: 2px; }
-  .res2-stats { display: flex; align-items: flex-start; gap: 44px; }
-  .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-  .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 300; font-size: 16px; line-height: 24px; color: #333; white-space: nowrap; }
-  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 100; font-size: 70px; line-height: 1; color: #000; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .res2-caret { display: inline-block; width: 2px; height: 34px; background: var(--brand-cyan); margin-left: 2px; }
+  .res2-stats { display: flex; align-items: flex-start; gap: var(--space-44); }
+  .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
+  .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 300; font-size: 16px; line-height: 24px; color: var(--ink-label); white-space: nowrap; }
+  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 100; font-size: 70px; line-height: 1; color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
   /* 区切り線(横・全幅) */
-  .res2-hr { width: 100%; height: 1px; background: #D1D5DC; }
+  .res2-hr { width: 100%; height: 1px; background: var(--line); }
   /* 下段: 2つの価値。フレーム 1138×220・各カラム 512(text260 + gap32 + graphic220)・中央に縦線182 */
   .res2-vals { display: flex; align-items: center; justify-content: space-between; }
-  .res2-vals .r2v { display: flex; align-items: center; gap: 32px; }
-  .res2-vals .r2v-text { width: 260px; display: flex; flex-direction: column; gap: 16px; }
-  .r2v-tagh { display: flex; flex-direction: column; gap: 8px; }
+  .res2-vals .r2v { display: flex; align-items: center; gap: var(--space-32); }
+  .res2-vals .r2v-text { width: 260px; display: flex; flex-direction: column; gap: var(--space-16); }
+  .r2v-tagh { display: flex; flex-direction: column; gap: var(--space-8); }
   .r2v-tag { font-family: var(--font-en); font-weight: 400; font-size: 20px; line-height: 1; }
-  .r2v-tag-saas { color: #FF5D97; }
-  .r2v-tag-ai { color: #0E4497; }
-  .r2v-h { font-family: var(--font-jp); font-weight: 300; font-size: 26px; line-height: 1.6; color: #000; }
-  .r2v-p { font-family: var(--font-jp); font-weight: 300; font-size: 14px; line-height: 1.8; color: #101828; margin: 0; }
+  .r2v-tag-saas { color: var(--brand-pink); }
+  .r2v-tag-ai { color: var(--brand-blue-deep); }
+  .r2v-h { font-family: var(--font-jp); font-weight: 300; font-size: 26px; line-height: 1.6; color: var(--ink-strong); }
+  .r2v-p { font-family: var(--font-jp); font-weight: 300; font-size: 14px; line-height: 1.8; color: var(--ink); margin: 0; }
   .r2v-graphic { width: 220px; height: 220px; flex: 0 0 auto; }
   .r2v-graphic img { width: 100%; height: 100%; display: block; }
   /* 【2026-08-28 ヒデさん指定】仮置きの画像をやめ、枠線だけの幾何学図形で動くピクトグラムにする */
   .r2v-graphic svg { width: 100%; height: 100%; display: block; overflow: visible; }
   .r2v-graphic svg * { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-  .res2-vline { width: 1px; height: 182px; background: #D1D5DC; flex: 0 0 auto; }
+  .res2-vline { width: 1px; height: 182px; background: var(--line); flex: 0 0 auto; }
 
   /* ---- 案A: 画像が左に横長 ----
      右端が画面右から683px固定 / 左端-183px → 画面幅ぶん横に伸びる */
@@ -704,7 +763,7 @@
 
   /* ⚠️ 2026-08-15 に旧 .dev-strength の CSS を消した時、この2つを巻き添えで消してしまい
      「開発者体験が真っ白」になった。暗いグラデ背景の本体なので絶対に消さないこと */
-  /* カンプ 14937:23887: 上から下へ #161616 → #454545 (2026-08-15 更新) */
+  /* カンプ 14937:23887: 上から下へ var(--surface-dark-top) → var(--surface-dark-bottom) (2026-08-15 更新) */
   /* 暗い地色: sticky で画面高さ100vhに固定＝実績の resGrow(黒)と同じ「伸び方」のグラデになり、
      受け渡しで継ぎ目が出ない(ヒデさん指定)。margin-bottom:-100vh でレイアウト高さを消し、
      dev1/dev2 のブロックはこの暗幕の上を流れる。 */
@@ -721,13 +780,13 @@
     position: fixed;
     left: 0; top: 0;
     width: 100%; height: 100vh;
-    background: linear-gradient(180deg, #161616 0%, #454545 100%);
+    background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-dark-bottom) 100%);
     opacity: 0;
     z-index: 0;
     pointer-events: none;
   }
   /* 予備の板(いまは未使用・opacity0固定) */
-  .dev-bg2 { position: fixed; inset: 0; height: 100vh; background: #e7e7e7; opacity: 0; z-index: 0; pointer-events: none; }
+  .dev-bg2 { position: fixed; inset: 0; height: 100vh; background: var(--surface); opacity: 0; z-index: 0; pointer-events: none; }
 
   /* ===== dev1/dev2 ブロック: 画面高さ100vhに中央寄せ。JS(updateDev)がブラー+フェードで出現→出っ放し ===== */
   .dev-block {
@@ -738,14 +797,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 56px;                 /* 見出しと本体の間(カンプ 24777 は 59) */
+    gap: var(--space-56);                 /* 見出しと本体の間(カンプ 24777 は 59) */
     padding: 90px 120px;
     box-sizing: border-box;
-    color: #fff;
+    color: var(--ink-on-dark);
     will-change: opacity, filter, transform;
   }
-  /* 見出し(中央): ラベル SF Pro Thin 20px #0EBBFF / 本文 Noto Sans JP Thin 40px 白 (カンプ 24778) */
-  .dev-center { text-align: center; color: #fff; }
+  /* 見出し(中央): ラベル SF Pro Thin 20px var(--brand-cyan) / 本文 Noto Sans JP Thin 40px 白 (カンプ 24778) */
+  .dev-center { text-align: center; color: var(--ink-on-dark); }
   .dev-center .dc-label {
     display: block;
     font-family: var(--font-en);
@@ -753,8 +812,8 @@
     font-size: 20px;
     letter-spacing: -1px;
     line-height: 1;
-    color: #0EBBFF;
-    margin-bottom: 12px;
+    color: var(--brand-cyan);
+    margin-bottom: var(--space-12);
   }
   .dev-center .dc-one {
     display: block;
@@ -769,7 +828,7 @@
     overflow: hidden; height: 42px; border-radius: 0; background: rgba(255,255,255,.09); width: 0; }  /* 2026-08-29 ヒデさん指定: 角丸なし */
   .dc-one .ds-roll { position: relative; height: 34px; width: 100%; }
   .dc-one .ds-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: #fff; white-space: nowrap;
+    font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: var(--ink-on-dark); white-space: nowrap;
     will-change: transform, opacity, filter; backface-visibility: hidden; }
   /* テキストスライド案のレイアウト: 右リストを隠し、モックを dev1 と同じ原寸(840×504)で中央に。
      左後ろ・右後ろのカードが見えるよう perspective とゆとりを持たせる(V1.0の3枚カルーセル) */
@@ -785,7 +844,7 @@
   .dev2-wrap {
     display: flex;
     align-items: stretch;
-    gap: 10px;
+    gap: var(--space-10);
     width: 100%;
     max-width: 1200px;
     height: 483px;
@@ -817,7 +876,7 @@
     backface-visibility: hidden;
     will-change: transform, opacity;
   }
-  .dev2-stack .dm-panel { position: absolute; inset: 0; border-radius: 24px; }
+  .dev2-stack .dm-panel { position: absolute; inset: 0; border-radius: var(--radius-lg); }
   .dm-ghost .dm-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
   /* 右: API/CLI/SDK リスト。3行を縦に均等。API=活性(左罫線+不透明1)、他=不透明0.2 (カンプ 24845) */
@@ -829,21 +888,21 @@
     flex-direction: column;
     justify-content: center;
     background: rgba(255,255,255,.05);
-    color: #fff;
+    color: var(--ink-on-dark);
   }
   .dl-item {
     display: flex;
     align-items: center;
-    padding: 32px 40px;
+    padding: var(--space-32) var(--space-40);
     box-sizing: border-box;
     opacity: .2;
     cursor: pointer;
-    transition: opacity .3s var(--e-out, ease);
+    transition:opacity .3s var(--e-out, ease);
     will-change: opacity;
   }
   .dl-item.is-on { opacity: 1; border-left: 1px solid rgba(255,255,255,.8); }
-  .dl-body { display: flex; flex-direction: column; gap: 4px; }
-  .dl-head { display: flex; align-items: flex-end; gap: 5px; white-space: nowrap; }
+  .dl-body { display: flex; flex-direction: column; gap: var(--space-4); }
+  .dl-head { display: flex; align-items: flex-end; gap: var(--space-5); white-space: nowrap; }
   .dl-head b { font-family: var(--font-en); font-weight: 100; font-size: 24px; line-height: 1; }   /* API= SF Pro Ultralight 24 */
   .dl-head span { font-weight: 300; font-size: 14px; line-height: normal; }                        /* の場合= Noto Light 14 */
   .dl-body p { font-weight: 300; font-size: 12px; line-height: 1.9; }                              /* 本文= Noto Light 12 */
@@ -854,55 +913,55 @@
     inset: 0;
     display: flex;
     align-items: stretch;
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 24px;
+    border: 1px solid var(--glass-10);
+    border-radius: var(--radius-lg);
     /* ⚠️ backdrop-filter だけだと後ろのカードが透けて見えてしまう。
        濃い下地を敷いた上に、カンプの白10%を重ねる（見た目はほぼ同じで、後ろは透けない） */
     background:
-      linear-gradient(rgba(255,255,255,.10), rgba(255,255,255,.10)),
-      linear-gradient(160deg, #2b2b2b 0%, #232323 55%, #1b1b1b 100%);
-    backdrop-filter: blur(75px);
-    -webkit-backdrop-filter: blur(75px);
-    box-shadow: 0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
+      linear-gradient(var(--glass-10), var(--glass-10)),
+      linear-gradient(160deg, var(--surface-mock-1) 0%, var(--surface-mock-2) 55%, var(--surface-mock-3) 100%);
+    backdrop-filter: blur(var(--blur-panel));
+    -webkit-backdrop-filter: blur(var(--blur-panel));
+    box-shadow: var(--shadow-mock-panel);
     overflow: hidden;
   }
   .dm-editor { flex: 1 0 0; min-width: 0; display: flex; align-items: stretch; position: relative; }
   /* editor-sidebar: w52 / py24 / gap24 */
   .dm-side {
     flex: 0 0 52px;
-    background: rgba(255,255,255,.1);
-    border-right: 1px solid rgba(255,255,255,.1);
-    padding: 24px 0;
+    background: var(--glass-10);
+    border-right: 1px solid var(--glass-10);
+    padding: var(--space-24) 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    gap: var(--space-24);
   }
   .dm-side .dm-logo { width: 8px; height: 40px; display: block; }
-  .dm-side .dm-divider { width: 24px; height: 1px; background: rgba(255,255,255,.1); }
-  .dm-side .dm-icons { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+  .dm-side .dm-divider { width: 24px; height: 1px; background: var(--glass-10); }
+  .dm-side .dm-icons { display: flex; flex-direction: column; align-items: center; gap: var(--space-16); width: 100%; }
   .dm-side .dm-icons img { width: 16px; height: 16px; display: block; }
   /* editor-code-view: p32 / gap12 / 行h16 gap6 / バーh6 r3 */
   .dm-code {
     flex: 1 0 0;
     min-width: 0;
-    padding: 32px;
+    padding: var(--space-32);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-12);
     align-items: flex-start;
     overflow: hidden;
   }
   .dm-row {
     display: flex;
-    gap: 6px;
+    gap: var(--space-6);
     align-items: center;
     height: 16px;
     flex: 0 0 auto;
     max-width: 100%;
   }
   /* 実コード表示 */
-  .dm-code.code { gap: 5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .dm-code.code { gap: var(--space-5); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .dm-line {
     height: 16px;
     line-height: 16px;
@@ -912,37 +971,37 @@
     color: rgba(255,255,255,.9);
     clip-path: inset(0 100% 0 0);
   }
-  .dm-line .kw { color: #FF5D97; }
-  .dm-line .id { color: #0EBBFF; }
-  .dm-line .st { color: #9BE8A4; }
+  .dm-line .kw { color: var(--brand-pink); }
+  .dm-line .id { color: var(--brand-cyan); }
+  .dm-line .st { color: var(--code-string); }
   .dm-line .cm { color: rgba(255,255,255,.32); }
   .dm-line .pl { color: rgba(255,255,255,.82); }
-  .dm-line .ok { color: #7CE7A6; }
+  .dm-line .ok { color: var(--code-green); }
   /* 生成前のローディング (スケルトンがシマーする) */
   .dm-load {
     position: absolute;
     left: 52px; right: 0; top: 0; bottom: 0;
-    padding: 32px;
+    padding: var(--space-32);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-12);
     align-items: flex-start;
     opacity: 0;
     pointer-events: none;
   }
   .dm-load .sk {
     height: 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: linear-gradient(100deg,
-      rgba(255,255,255,.06) 30%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.06) 70%);
+      var(--glass-06) 30%, rgba(255,255,255,.34) 50%, var(--glass-06) 70%);
     background-size: 260% 100%;
   }
-  .dm-row .b { height: 6px; border-radius: 4px; flex: 0 0 auto; }
+  .dm-row .b { height: 6px; border-radius: var(--radius-xs); flex: 0 0 auto; }
   .dm-row .sp { flex: 0 0 auto; height: 6px; }
-  .b.cp { background: #FF5D97; }
-  .b.cb { background: #0EBBFF; }
-  .b.cw { background: #fff; }
-  .b.cf { background: rgba(255,255,255,.1); }
+  .b.cp { background: var(--brand-pink); }
+  .b.cb { background: var(--brand-cyan); }
+  .b.cw { background: var(--ink-on-dark); }
+  .b.cf { background: var(--glass-10); }
   .dm-gap { height: 8px; flex: 0 0 auto; }
   /* 案B/C: 生成中の行を光のグラデーションが走る (スケルトンローディング風) */
   .dm-row.sweep .b {
@@ -954,7 +1013,7 @@
   /* chat-pane: w400 */
   .dm-chat {
     flex: 0 0 400px;
-    border-left: 1px solid rgba(255,255,255,.1);
+    border-left: 1px solid var(--glass-10);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -963,37 +1022,37 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
+    padding: var(--space-16) var(--space-20);
+    border-bottom: 1px solid var(--glass-10);
     flex: 0 0 auto;
   }
   .dm-chat-head .ttl {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-family: 'Inter', var(--font-en);
     font-weight: 600;
     font-size: 14px;
-    color: #fff;
+    color: var(--ink-on-dark);
   }
   .dm-chat-head img { width: 16px; height: 16px; display: block; }
   .dm-history {
     flex: 1 0 0;
     min-height: 0;
-    padding: 20px;
+    padding: var(--space-20);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-16);
     align-items: flex-start;
     overflow: hidden;
   }
-  .dm-msg { display: flex; gap: 12px; align-items: flex-start; width: 100%; opacity: 0; }
+  .dm-msg { display: flex; gap: var(--space-12); align-items: flex-start; width: 100%; opacity: 0; }
   /* ユーザーの発言: アイコンなし。打った文字がそのまま入る */
   .dm-msg.dm-user { justify-content: flex-end; }
   .dm-msg.dm-user p {
     max-width: 86%;
-    padding: 10px 14px;
-    border-radius: 14px 14px 4px 14px;
+    padding: var(--space-10) 14px;
+    border-radius: var(--radius-md) var(--radius-md) var(--radius-xs) var(--radius-md);
     background: rgba(255,255,255,.14);
     font-size: 12px;
     line-height: 1.7;
@@ -1006,39 +1065,39 @@
     font-size: 12px;
     line-height: 1.85;
     color: rgba(255,255,255,.82);
-    padding-top: 4px;
+    padding-top: var(--space-4);
   }
   .dm-msg .av {
     flex: 0 0 28px;
     width: 28px; height: 28px;
-    border-radius: 14px;
-    background: #0EBBFF;
+    border-radius: var(--radius-md);
+    background: var(--brand-cyan);
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .dm-msg .av.pk { background: #FF5D97; }
+  .dm-msg .av.pk { background: var(--brand-pink); }
   .dm-msg .av img { width: 14px; height: 14px; display: block; }
   .dm-msg .lines {
     flex: 1 0 0;
     min-width: 0;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 14px;
-    padding: 12px;
+    background: var(--glass-10);
+    border: 1px solid var(--glass-10);
+    border-radius: var(--radius-md);
+    padding: var(--space-12);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-8);
     align-items: flex-start;
   }
-  .dm-msg .lines i { display: block; height: 6px; border-radius: 4px; background: #fff; }
+  .dm-msg .lines i { display: block; height: 6px; border-radius: var(--radius-xs); background: var(--ink-on-dark); }
   .dm-input-c {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 20px;
-    border-top: 1px solid rgba(255,255,255,.1);
+    gap: var(--space-12);
+    padding: var(--space-20);
+    border-top: 1px solid var(--glass-10);
     flex: 0 0 auto;
   }
   .dm-input {
@@ -1064,15 +1123,15 @@
   .dm-send {
     flex: 0 0 28px;
     width: 28px; height: 28px;
-    border-radius: 14px;
-    background: rgba(255,255,255,.1);
+    border-radius: var(--radius-md);
+    background: var(--glass-10);
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .dm-send img { width: 12px; height: 12px; display: block; }
-  .dm-send { transition: transform .18s var(--e-fast), background-color .18s var(--e-fast); }
-  .dm-send.is-hit { transform: scale(.84); background: #0EBBFF; }
+  .dm-send { transition:transform .18s var(--e-fast), background-color .18s var(--e-fast); }
+  .dm-send.is-hit { transform: scale(.84); background: var(--brand-cyan); }
   /* AIが考えている3点 */
   /* 見出しの文字が出るまで、モックは「空の枠」だけにする (2026-08-15 指定)。
      ヘッダーの AI Assistant やロボットのアイコン、入力欄も含めて全部隠す */
@@ -1087,38 +1146,38 @@
   .dm-panel.is-term .dm-side,
   .dm-panel.is-term .dm-chat,
   .dm-panel.is-term .dm-sdk { display: none; }
-  .dm-panel.is-term { background: #080a0e; }
+  .dm-panel.is-term { background: var(--surface-terminal); }
   .dm-panel.is-term .dm-code { padding: 28px 36px; }
   .dm-term-bar {
     display: none;
     position: absolute; left: 0; right: 0; top: 0; height: 40px;
-    align-items: center; gap: 8px; padding: 0 18px;
+    align-items: center; gap: var(--space-8); padding: 0 18px;
     border-bottom: 1px solid rgba(255,255,255,.08);
     font-size: 12px; font-weight: 300; color: rgba(255,255,255,.4);
   }
   .dm-panel.is-term .dm-term-bar { display: flex; }
   .dm-panel.is-term .dm-code { padding-top: 62px; }
-  .dm-term-bar i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.18); }
+  .dm-term-bar i { width: 9px; height: 9px; border-radius: var(--radius-full); background: rgba(255,255,255,.18); }
   /* ===== SDK: 右ペインをリファレンス一覧に差し替える (トンマナはAIペインを踏襲) ===== */
-  .dm-sdk { flex: 0 0 400px; border-left: 1px solid rgba(255,255,255,.1); display: none; flex-direction: column; min-height: 0; }
+  .dm-sdk { flex: 0 0 400px; border-left: 1px solid var(--glass-10); display: none; flex-direction: column; min-height: 0; }
   .dm-panel.is-sdk .dm-sdk { display: flex; }
   .dm-panel.is-sdk .dm-chat { display: none; }
-  .dm-sdk-list { flex: 1 0 0; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .dm-sdk-list { flex: 1 0 0; min-height: 0; padding: var(--space-20); display: flex; flex-direction: column; gap: var(--space-10); overflow: hidden; }
   .dm-sdk-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 8px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.06);
+    display: flex; align-items: center; gap: var(--space-10);
+    padding: var(--space-10) var(--space-12); border-radius: var(--radius-sm);
+    background: var(--glass-06);
+    border: 1px solid var(--glass-06);
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 12px; color: rgba(255,255,255,.82);
     opacity: 0;
   }
-  .dm-sdk-row .k { color: #0EBBFF; }
+  .dm-sdk-row .k { color: var(--brand-cyan); }
   .dm-sdk-row .t { margin-left: auto; font-size: 10px; color: rgba(255,255,255,.34); }
-  .dm-sdk-row .dot { width: 6px; height: 6px; border-radius: 50%; background: #FF5D97; flex: none; }
+  .dm-sdk-row .dot { width: 6px; height: 6px; border-radius: var(--radius-full); background: var(--brand-pink); flex: none; }
 
-  .dm-think-b { display: flex !important; flex-direction: row !important; gap: 5px; }
-  .dm-think-b i { width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+  .dm-think-b { display: flex !important; flex-direction: row !important; gap: var(--space-5); }
+  .dm-think-b i { width: 5px; height: 5px; border-radius: var(--radius-full); background: var(--ink-on-dark); }
   /* カンプ 14708:37856 (x118.65 y4174.10 / セクション上端4752.97 からの相対) */
   /* ---- 導入事例 (2×2グリッド・カンプ 15800:24526) ---- */
   .case-title {
@@ -1128,7 +1187,7 @@
     font-weight: 200;          /* カンプ 15800:24527: Noto Sans JP ExtraLight 44px */
     font-size: 44px;
     line-height: 64px;
-    color: #101828;
+    color: var(--ink);
   }
   /* グリッド全体。左右は画面いっぱい、中身は 1440基準の座標で置く */
   .case-grid {
@@ -1138,13 +1197,13 @@
     width: 100%;
     height: 589px;             /* 2行 295+294 */
   }
-  /* 罫線 = カンプ #acacac。JSで scaleX / scaleY を 0→1 にして「左/上から引く」 */
+  /* 罫線 = カンプ var(--line-grid)。JSで scaleX / scaleY を 0→1 にして「左/上から引く」 */
   .cg-hline {
     position: absolute;
     left: 0;
     width: 100%;
     height: 1px;
-    background: #acacac;
+    background: var(--line-grid);
     transform-origin: left center;
     transform: scaleX(0);
     will-change: transform;
@@ -1158,7 +1217,7 @@
     top: 0;
     width: 1px;
     height: 100%;
-    background: #acacac;
+    background: var(--line-grid);
     transform-origin: center top;
     transform: scaleY(0);
     will-change: transform;
@@ -1168,9 +1227,9 @@
     position: absolute;
     width: 50%;
     box-sizing: border-box;
-    padding: 60px;
+    padding: var(--space-60);
     display: flex;
-    gap: 32px;
+    gap: var(--space-32);
     align-items: flex-start;
     will-change: opacity, filter;
   }
@@ -1178,9 +1237,9 @@
      ⚠️ セルの opacity と filter は【登場アニメでJSが毎フレーム書く】ので、ホバーでは絶対に触らない。
         触ってよいのは セルの transform と、中の要素(画像・文字)のスタイルだけ。
      どの案かは #caseGrid の data-hover で切り替える。 */
-  .cg-cell { transition: transform .32s cubic-bezier(.22,.8,.28,1); }
+  .cg-cell { transition:transform .32s var(--e-soft); }
   .cg-img img, .cg-quote, .cg-tag, .cg-company, .cg-img, .cg-body {
-    transition: transform .38s cubic-bezier(.22,.8,.28,1), opacity .3s ease,
+    transition:transform .38s var(--e-soft), opacity .3s ease,
                 color .3s ease, border-color .3s ease, filter .38s ease;
   }
   /* A 写真が寄る: 写真だけゆっくり拡大。いちばん静か */
@@ -1193,8 +1252,8 @@
         ::after は JS から状態を読めず、動いているか確かめられないため(2026-08-27) */
   .cg-uline {
     position: absolute; left: 60px; right: 60px; bottom: 46px; height: 1px;
-    background: #0EBBFF; transform: scaleX(0); transform-origin: left center; opacity: 0;
-    transition: transform .42s cubic-bezier(.22,.8,.28,1), opacity .2s ease; pointer-events: none;
+    background: var(--brand-cyan); transform: scaleX(0); transform-origin: left center; opacity: 0;
+    transition:transform .42s var(--e-soft), opacity .2s ease; pointer-events: none;
   }
   [data-hover="line"] .cg-cell:hover .cg-uline { transform: scaleX(1); opacity: 1; }
   [data-hover="line"] .cg-cell:hover .cg-company { transform: translateX(6px); }
@@ -1204,21 +1263,21 @@
   /* E 写真が色づく: ふだんは白黒、触ると色が戻ってタグも水色に */
   [data-hover="color"] .cg-img img { filter: grayscale(1) contrast(1.02); }
   [data-hover="color"] .cg-cell:hover .cg-img img { filter: none; transform: scale(1.04); }
-  [data-hover="color"] .cg-cell:hover .cg-tag { border-color: #0EBBFF; color: #0EBBFF; }
+  [data-hover="color"] .cg-cell:hover .cg-tag { border-color: var(--brand-cyan); color: var(--brand-cyan); }
   /* F パスのトリミング (2026-08-29 ヒデさん指定):
      サムネイルの4辺が、それぞれの「時計回りの始点」から同時に伸びて矩形を閉じる。
      一筆書き(SVG dasharray)ではなく、4辺独立の scaleX/scaleY で。四隅で同時に出会う。
        上辺 origin:left(左上→右) / 右辺 origin:top(右上→下) / 下辺 origin:right(右下→左) / 左辺 origin:bottom(左下→上)
-     線: #000 1px・角丸なし・画像の輪郭にぴったり(外へオフセットなし)。描く0.55s / 戻る0.5s / ease相当。
+     線: var(--ink-strong) 1px・角丸なし・画像の輪郭にぴったり(外へオフセットなし)。描く0.55s / 戻る0.5s / ease相当。
      画像は同時に scale1.0→1.04(中央基点・0.35sで線より先に着地)。文字・浮き・影・背景は一切変化なし。 */
-  .cg-edge { position: absolute; background: #000; pointer-events: none; z-index: 2;
-             transition: transform .5s cubic-bezier(.25,.1,.25,1); }
+  .cg-edge { position: absolute; background: var(--ink-strong); pointer-events: none; z-index: 2;
+             transition:transform .5s cubic-bezier(.25,.1,.25,1); }
   .cg-e-t { top: 0; left: 0; right: 0; height: 1px; transform: scaleX(0); transform-origin: left center; }
   .cg-e-r { top: 0; right: 0; bottom: 0; width: 1px; transform: scaleY(0); transform-origin: center top; }
   .cg-e-b { bottom: 0; left: 0; right: 0; height: 1px; transform: scaleX(0); transform-origin: right center; }
   .cg-e-l { top: 0; left: 0; bottom: 0; width: 1px; transform: scaleY(0); transform-origin: center bottom; }
   [data-hover="trim"] .cg-cell:hover .cg-edge { transform: scale(1); transition-duration: .55s; }
-  [data-hover="trim"] .cg-img img { transition: transform .35s cubic-bezier(.25,.1,.25,1); }
+  [data-hover="trim"] .cg-img img { transition:transform .35s cubic-bezier(.25,.1,.25,1); }
   [data-hover="trim"] .cg-cell:hover .cg-img img { transform: scale(1.04); }
   .cg-tl { left: 0;   top: 0;     height: 295px; }
   .cg-tr { left: 50%; top: 0;     height: 295px; }
@@ -1231,23 +1290,23 @@
     font-weight: 300;          /* カンプ 15800:24533: Noto Sans JP Light 20px */
     font-size: 20px;
     line-height: normal;
-    color: #000;
+    color: var(--ink-strong);
   }
-  .cg-meta { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .cg-meta { display: flex; flex-direction: column; gap: var(--space-8); align-items: flex-start; }
   .cg-tag {
     display: inline-flex;
     align-items: center;
-    padding: 1px 10px;
-    border: 0.5px solid #000;  /* カンプ 15800:24535: 0.5px 黒 */
+    padding: 1px var(--space-10);
+    border: 0.5px solid var(--ink-strong);  /* カンプ 15800:24535: 0.5px 黒 */
     font-weight: 300;
     font-size: 10px;           /* カンプ 15800:24536: Light 10px */
-    color: #000;
+    color: var(--ink-strong);
     white-space: nowrap;
   }
   .cg-company {
     font-weight: 300;          /* カンプ 15800:24537: Noto Sans JP Light 20px */
     font-size: 20px;
-    color: #000;
+    color: var(--ink-strong);
   }
 
   /* ================= コンバージョン (カンプ 15993:43965 実測) ================= */
@@ -1264,51 +1323,51 @@
   .cv-planet { position: absolute; right: 0; top: 46px; width: 409.5px; height: 315px; pointer-events: none; }
   .cv-content {
     position: absolute; left: 50%; top: 100px; transform: translateX(-50%);
-    width: 497px; text-align: center; color: #000;
+    width: 497px; text-align: center; color: var(--ink-strong);
   }
   .cv-head { font-weight: 300; font-size: 34px; line-height: 1.7; }   /* Noto Sans JP Light 34 */
   .cv-sub  { font-weight: 300; font-size: 16px; line-height: 1.8; margin: 30px 0 0; }
   .cv-btn {
     display: inline-flex; align-items: center; justify-content: center;
     width: 140px; height: 40px; margin-top: 30px;
-    background: #090909; color: #fff; border-radius: 4px;
+    background: var(--surface-cta); color: var(--ink-on-dark); border-radius: var(--radius-xs);
     font-weight: 300; font-size: 14px; text-decoration: none;
-    transition: opacity .25s ease;
+    transition:opacity var(--t-fast) ease;
   }
   .cv-btn:hover { opacity: .75; }
 
   /* ================= フッター (カンプ 15975:42992 全プロパティ実測で完全再現) ================= */
   #footer {
-    /* カンプ: 線形 90°(上→下) #161616(0%) → #434343(100%) */
-    background: linear-gradient(180deg, #161616 0%, #434343 100%);
-    color: #fff;
+    /* カンプ: 線形 90°(上→下) var(--surface-dark-top)(0%) → var(--surface-footer-bottom)(100%) */
+    background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-footer-bottom) 100%);
+    color: var(--ink-on-dark);
   }
   /* inner: 幅1200・左右120マージン(=1440基準)。上100 / 下40。要素間 gap60(縦) */
-  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 100px 0 40px; }
+  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 100px 0 var(--space-40); }
   .ft-top { display: flex; justify-content: space-between; align-items: flex-start; height: 136px; }
-  .ft-left { display: flex; flex-direction: column; gap: 24px; }   /* ロゴ枠 gap24 */
+  .ft-left { display: flex; flex-direction: column; gap: var(--space-24); }   /* ロゴ枠 gap24 */
   .ft-logo { width: 334px; height: 62px; display: block; }
   /* 住所: Noto Sans JP Light 12 / 白100% / 行間170% */
-  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; color: #fff; }
+  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; color: var(--ink-on-dark); }
   /* メッセージ: Noto Sans JP Thin / 40 / 行間170% / 不透明度 0.5(カンプのテキスト枠 opacity) */
   .ft-msg  { font-weight: 100; font-size: 40px; line-height: 1.7; text-align: left; opacity: .5; white-space: nowrap; }
   /* 区切り線+ナビ枠: 上に白10%の線 / 上下 padding 30。ナビ全体 opacity 0.5 */
   .ft-nav {
-    display: flex; justify-content: center; gap: 10px;
-    border-top: 1px solid rgba(255,255,255,.10);
-    margin-top: 60px; padding: 31px 0 30px;
+    display: flex; justify-content: center; gap: var(--space-10);
+    border-top: 1px solid var(--glass-10);
+    margin-top: var(--space-60); padding: 31px 0 30px;
     opacity: .5;
   }
   .ft-nav a {
     display: inline-flex; justify-content: center; align-items: center;
-    width: 140px; color: #fff; text-decoration: none;
-    font-weight: 300; font-size: 14px; transition: opacity .25s ease;   /* Noto Sans JP Light 14 */
+    width: 140px; color: var(--ink-on-dark); text-decoration: none;
+    font-weight: 300; font-size: 14px; transition:opacity var(--t-fast) ease;   /* Noto Sans JP Light 14 */
   }
   .ft-nav a:hover { opacity: .6; }
   /* コピーライト: SF Pro Light 16 / 白 不透明度 0.4 / 中央 */
   .ft-copy {
-    text-align: center; padding: 60px 0 90px;
-    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: #fff; opacity: .4;
+    text-align: center; padding: var(--space-60) 0 90px;
+    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: var(--ink-on-dark); opacity: .4;
   }
 
   /* ================= スマホ (設計フレーム 390×780) =================
@@ -1320,7 +1379,7 @@
      「小さくなりすぎて読めない文字」を持ち上げ、左右の余白を整える。 */
   @media (min-width: 781px) and (max-width: 1100px) {
     .header { left: 32px; right: 32px; }
-    .nav-links { gap: 20px; }
+    .nav-links { gap: var(--space-20); }
     .nav-links a { font-size: 15px; }
     .cta { font-size: 15px; }
     .headline { left: 32px; }
@@ -1330,7 +1389,7 @@
     .val-point p { font-size: 15px; line-height: 24px; }
     .cg-quote { font-size: 15px; }
     .cg-tag { font-size: 13px; }
-    .dev-block { padding: 72px 32px; }
+    .dev-block { padding: var(--space-72) var(--space-32); }
     .dl-head span { font-size: 15px; }
   }
 
@@ -1339,13 +1398,13 @@
     .header { left: 24px; right: 24px; top: 18px; }
     .header .logo img { width: 148px; height: 27px; }
     .nav-links { display: none; }            /* ナビは省略 (後で必要ならハンバーガー化) */
-    .cta { width: 112px; font-size: 14px; padding: 9px 10px; }
+    .cta { width: 112px; font-size: 14px; padding: 9px var(--space-10); }
 
     /* --- キービジュアル --- */
     .headline { left: 24px; top: 104px; }
-    .hl-eyebrow { font-size: 14px; gap: 8px; }
+    .hl-eyebrow { font-size: 14px; gap: var(--space-8); }
     .hl-eyebrow i { width: 18px; }
-    .hl-main { font-size: 40px; line-height: 1.35; margin-top: 8px; }
+    .hl-main { font-size: 40px; line-height: 1.35; margin-top: var(--space-8); }
     .hl-caret { height: 34px; vertical-align: -6px; }
     /* 軌道は JS 側で 0.40 倍。原点を左上にして左寄せで置く */
     .orbit { right: auto; left: -22px; top: 280px; transform-origin: 0 0; }
@@ -1373,8 +1432,8 @@
     .val-p2 { left: 24px; top: 600px; }
     .val-point .vp-tag { font-size: 14px; line-height: 16px; }
     .val-point .vp-tag i { width: 6px; height: 6px; }
-    .val-point h3 { font-size: 20px; margin-top: 8px; }
-    .val-point p { font-size: 14px; line-height: 22px; margin-top: 12px; }
+    .val-point h3 { font-size: 20px; margin-top: var(--space-8); }
+    .val-point p { font-size: 14px; line-height: 22px; margin-top: var(--space-12); }
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1390,16 +1449,16 @@
     #results.pat-a .res-stats, #results.pat-b .res-stats { position: static; width: 100%; }
     #results.pat-a .res-text, #results.pat-b .res-text { position: static; width: 100%; font-size: 14px; }
     .res-head { font-size: 22px; line-height: 1.7; }
-    .res-nums { gap: 16px; }
+    .res-nums { gap: var(--space-16); }
     .res-nums .rn b { font-size: 14px; line-height: 20px; }
     .res-nums .rn span { font-size: 44px; }
-    .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: 6px; align-items: center; }
+    .res-stats .st { flex: 1; padding-left: 0; padding-right: 0; gap: var(--space-6); align-items: center; }
     .res-stats .st b { font-size: 14px; line-height: 18px; }
     .res-stats .st span { font-size: 28px; }
 
     /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
     .dev-block { padding: 64px 18px; gap: 28px; }
-    .dev-center .dc-label { font-size: 14px; margin-bottom: 8px; }
+    .dev-center .dc-label { font-size: 14px; margin-bottom: var(--space-8); }
     .dev-center .dc-one { font-size: 24px; line-height: 1.4; }
     /* dev1: 840×504 の実寸パネルを 0.40倍。余白ぶんは負マージンで詰める */
     .dev1-mock { transform: scale(0.40); transform-origin: center top; margin: -151px auto; }
@@ -1417,11 +1476,11 @@
     .case-grid { left: 0; top: 118px; width: 100%; height: 620px; }
     .cg-vline { display: none; }
     #cgH0 { top: 0; } #cgH1 { top: 310px; } #cgH2 { top: 620px; }
-    .cg-cell { width: 100%; padding: 20px 24px; gap: 14px; height: 155px; }
+    .cg-cell { width: 100%; padding: var(--space-20) var(--space-24); gap: 14px; height: 155px; }
     .cg-tl { left: 0; top: 0; }   .cg-tr { left: 0; top: 155px; }
     .cg-bl { left: 0; top: 310px; } .cg-br { left: 0; top: 465px; }
     .cg-img { flex: 0 0 120px; width: 120px; height: 80px; }
-    .cg-body { gap: 10px; }
+    .cg-body { gap: var(--space-10); }
     .cg-quote { font-size: 14px; line-height: 22px; }
     .cg-tag { font-size: 12px; }
     .cg-company { font-size: 15px; }
@@ -1900,6 +1959,7 @@
   .row.seg-row label { flex: 0 0 74px; }
   .seg button.on { background: #090909; color: #fff; }
 </style>
+  <script>(function(){try{var m=(location.search+location.hash).match(/ds=(low|mid|high)/);if(m)document.documentElement.setAttribute("data-ds",m[1]);}catch(e){}})();</script>
 </head>
 <body>
 
