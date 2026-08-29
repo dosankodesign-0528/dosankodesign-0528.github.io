@@ -329,7 +329,7 @@
     left: 126.66px;
     right: auto;
     text-align: left;
-    top: 269px;
+    top: 40px;   /* 2026-08-29: カンプ 15900:38405 準拠。メッセージの下にグラフィックを収めるため上へ(旧269) */
     font-family: var(--font-en);
     font-weight: 400;
     font-size: 20px;
@@ -351,8 +351,8 @@
   }
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
-  .vis-l1 { top: 301px; }   /* Our Vision(269+20) + gap12 = 301 */
-  .vis-l2 { top: 403px; }   /* 1行化で実質未使用。念のため行間102ぶん下へ */
+  .vis-l1 { top: 72px; }    /* 2026-08-29: Our Vision(40+20)+gap12 = 72。カンプ準拠で上へ(旧301) */
+  .vis-l2 { top: 174px; }   /* 1行化で実質未使用 */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -421,13 +421,15 @@
     width: 328px;
     height: 100%;
   }
-  /* 「連携が生む、2つの価値」= Regular 20px + Thin 60px (カンプ 14693:28340) */
+  /* 「連携が生む、2つの価値」= 2026-08-29: カンプ 15900:38405 では右カラムは Point 01/02 のみ。
+     この見出しはカンプに無く、メッセージと重なるため非表示。 */
   .val-head {
     position: absolute;
     left: -99.05px;
     top: 148.11px;
     width: 272px;
     color: #101828;
+    display: none;
   }
   .val-head .vh-s { display: block; font-weight: 400; font-size: 20px; line-height: normal; }
   .val-head .vh-l { display: block; font-weight: 100; font-size: 60px; line-height: normal; }
@@ -7392,9 +7394,9 @@ function updateVision(p) {
      軌道グラフィックを「Our Vision / メッセージ」の【下】へ置き、重なりを解消する。
      少し縮小(noPinScale)して 1画面に収め、下(noPinY)へずらす。 */
   if (noPin) {
-    sc = scFinal * (c.noPinScale != null ? c.noPinScale : 0.82);
+    sc = scFinal * (c.noPinScale != null ? c.noPinScale : 1);   /* カンプの大きさ(縮小しない) */
     tx = txFinal;
-    ty = (c.noPinY != null ? c.noPinY : 235);
+    ty = (c.noPinY != null ? c.noPinY : 90);                    /* メッセージの下へ置く */
   }
   const mapX = x => x * sc + tx;
   const mapY = y => (y - 333.5) * sc + 333.5 + ty;
@@ -7600,7 +7602,7 @@ function renderSlots(ts) {
 function resTotal() {
   const c = params.sections.results;
   const l1Dur = c.softDur * 0.6;
-  const typeStart = c.typeAt + l1Dur + 0.15;
+  const typeStart = c.typeAt + l1Dur * 0.45 + 0.1;   /* 2026-08-29: タイピング開始を早める(本文が半分出た頃) */
   const typeEnd = typeStart + RES_TYPE_TEXT.length * 0.06;
   const restEnd = typeStart + 0.1 + c.softDur * 0.8;
   return Math.max(typeEnd, restEnd, slotEnd() + 0.3) + 0.4;
@@ -7643,7 +7645,7 @@ function updateResults(p) {
   const l1k = easeOutQ(clamp01((t - c.typeAt) / l1Dur));
   rv(resEls.hl1, l1k, 0, 0);                            // ① フェード(blur=0)
 
-  const typeStart = c.typeAt + l1Dur + 0.15;           // ② タイピング開始
+  const typeStart = c.typeAt + l1Dur * 0.45 + 0.1;   /* 2026-08-29: タイピング開始を早める(本文が半分出た頃) */           // ② タイピング開始
   const CH = 0.06, chars = RES_TYPE_TEXT.length;
   const typeEnd = typeStart + chars * CH;
   const nTyped = t < typeStart ? 0 : Math.min(chars, Math.floor((t - typeStart) / CH));
