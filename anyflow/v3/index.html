@@ -7963,12 +7963,22 @@ function updateResults(p) {
   }
   resBlackK = grinShown;   // dev1 の出現ゲート用に共有
   if (resSmooth()) {
-    /* 【2026-08-29 スムーズフェード】黒オブジェクトなし・文字反転なし。
-       背景の自然なクロスフェード(updateDev の dev-bg)で開発者体験へ渡す。 */
+    /* 【2026-08-29 ヒデさん指定】スムーズフェードでも、背景が暗くなるぶんだけ上に残る実績の文字を
+       徐々に白へ色調反転する(黒オブジェクトは無し)。暗さは updateDev の dev-bg と同じ「dev の入り」で。 */
     resBlackK = 0;
     if (resEls.grow) resEls.grow.style.opacity = 0;
     resEls.dark.style.opacity = 0;
-    if (resInvertOn) {
+    const vh2 = innerHeight || 1;
+    const devR = SECS.dev ? rectOf(SECS.dev) : { top: vh2, bottom: 0 };
+    const darkK = (devR.bottom > 0 && devR.top < vh2) ? easeIO(clamp01((vh2 - devR.top) / (vh2 * 0.7))) : 0;
+    if (darkK > 0.002) {
+      resInvertOn = true;
+      const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * darkK)},${Math.round(b[1] + (255 - b[1]) * darkK)},${Math.round(b[2] + (255 - b[2]) * darkK)})`;
+      resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+      const lc = `rgba(${Math.round(209 + (255 - 209) * darkK)},${Math.round(213 + (255 - 213) * darkK)},${Math.round(220 + (255 - 220) * darkK)},${(0.6 + 0.4 * darkK).toFixed(2)})`;
+      if (resEls.hr) resEls.hr.style.background = lc;
+      SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = lc);
+    } else if (resInvertOn) {
       resInvertOn = false;
       resInvertEls().forEach(el => { if (el) el.style.color = ''; });
       if (resEls.hr) resEls.hr.style.background = '';
