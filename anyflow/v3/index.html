@@ -276,6 +276,8 @@
   #vision .pin-vp { position: relative; }
   /* 【2026-08-29】実績→開発者体験「スムーズフェード」時は実績も固定追従なし。 */
   #results.res-smooth .pin-vp { position: relative; }
+  /* 【2026-08-29】導入事例も固定追従なし（余分スクロールをなくす）。 */
+  #cases .pin-vp { position: relative; }
   html.nopin #dev, html.nopin #cases { margin-top: 0; }
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: #e7e7e7; }
@@ -6533,6 +6535,10 @@ const VIS_NOPIN = true;
 /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「スムーズフェード」= 実績も固定追従なし＋
    背景を自然にクロスフェード＋黒オブジェクトなし。'smooth' のとき true。 */
 function resSmooth() { return !!(params.patterns && params.patterns.resTrans === 'smooth'); }
+/* 【2026-08-29 ヒデさん指定】導入事例(cases)も固定追従なし。
+   従来はピン用に 200×driveLen=最大600vh の長い尺があり「余分にスクロールできる」状態だった。
+   固定追従なし＝1画面(100vh)で普通に流し、入場で自動再生する。 */
+const CASES_NOPIN = true;
 
 /* ピン留めセクションのスクロール進捗 0〜1 */
 const progOverride = {};   // デバッグ用: __anim.setProgress で固定できる
@@ -7376,12 +7382,20 @@ function updateVision(p) {
   const miniCX = (c.miniCX != null ? c.miniCX : 1134);
   const miniCY = (c.miniCY != null ? c.miniCY : 417);
   const txMini = miniCX - 363.5 * scMini;
-  const sc = scMini + (scFinal - scMini) * mvS;   /* 拡大は mvS (じわじわ) */
-  const tx = txMini + (txFinal - txMini) * mv;
+  let sc = scMini + (scFinal - scMini) * mvS;   /* 拡大は mvS (じわじわ) */
+  let tx = txMini + (txFinal - txMini) * mv;
   /* 楕円中心を miniCY(ステージ座標) に合わせる。
      ⚠️ .pf-wrap は top:127px なので、楕円中心のステージ座標は 127 + 333.5 + ty になる */
   const tyMini = miniCY - (127 + 333.5) + c.miniY;
-  const ty = (1 - mv) * tyMini;
+  let ty = (1 - mv) * tyMini;
+  /* 【2026-08-29 ヒデさん指定・カンプ 15900:38405】固定追従なし＝静止レイアウト。
+     軌道グラフィックを「Our Vision / メッセージ」の【下】へ置き、重なりを解消する。
+     少し縮小(noPinScale)して 1画面に収め、下(noPinY)へずらす。 */
+  if (noPin) {
+    sc = scFinal * (c.noPinScale != null ? c.noPinScale : 0.82);
+    tx = txFinal;
+    ty = (c.noPinY != null ? c.noPinY : 235);
+  }
   const mapX = x => x * sc + tx;
   const mapY = y => (y - 333.5) * sc + 333.5 + ty;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
@@ -8478,7 +8492,8 @@ function updateCases(pRaw) {
      開発者体験が実績に対して同じ手当てをしているのと同様に、
      定位置(top:0)に着くまでは板そのものを透明にしておく。 */
   const casTop = rectOf(SECS.cases).top;
-  const casHidden = (params.pin !== 'off' && casTop > 2);
+  /* 【2026-08-29】固定追従なしでは「top:0 に着くまで隠す」をやめ、入場で普通に見せる。 */
+  const casHidden = (!CASES_NOPIN && params.pin !== 'off' && casTop > 2);
   setStyle(caseEls.vp, 'opacity', casHidden ? '0' : '1');
   /* ⚠️【2026-08-19 バグ修正】透明でもマウスの当たり判定は生きている。
      導入事例の板は margin-top:-100vh で開発者体験の上に重なっているので、
@@ -8715,7 +8730,9 @@ function updateSections() {
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', visProg));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
   updateDev2Stack();   /* dev2 の3枚カルーセル(ホバー切替) */
-  updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', prog(SECS.cases)));
+  /* 【2026-08-29】導入事例も固定追従なし＝入場進捗(preP)で自動再生。 */
+  const casesProg = CASES_NOPIN ? clamp01(preP(SECS.cases)) : prog(SECS.cases);
+  updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', casesProg));
   /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝入場進捗(preP)で自動再生。 */
   const resProg = resSmooth() ? clamp01(preP(SECS.results)) : prog(SECS.results);
   updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', resProg));
@@ -9807,7 +9824,10 @@ function fit() {
   /* 【2026-08-25 リデザイン】開発者体験は非pin・2ブロック(各min-height:100vh)なので、
      中身なりの高さ(auto=約200vh)にする。pin用の H('dev')(=600vh)は使わない。 */
   SECS.dev.style.height = 'auto';
-  SECS.cases.style.height = H('cases');
+  /* 【2026-08-29 ヒデさん指定】スムーズフェード時は実績に被せない＝#dev の -100vh 重なりを外して普通に下へ置く。 */
+  SECS.dev.style.marginTop = resSmooth() ? '0' : '';
+  /* 【2026-08-29】導入事例も固定追従なし＝1画面(100vh)。長いピン尺(最大600vh)の余分スクロールを解消。 */
+  SECS.cases.style.height = CASES_NOPIN ? '100vh' : H('cases');
   /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝1画面(100vh)で普通に流す。 */
   SECS.results.style.height = resSmooth() ? '100vh' : H('results');
   SECS.results.classList.toggle('res-smooth', resSmooth());
