@@ -2977,7 +2977,7 @@ const DEFAULTS = {
       miniDur: 1.1,      // 軌道グラフィックの出現時間
       /* 【2026-08-29 ヒデさん指定】固定追従なし(no-pin)の時間再生の「ブロック間隔」。パネルで調整可。
          npGap=メッセージ後グラフィックが出るまで / npP1=グラフィック後ポイント1 / npP2=ポイント2 (秒) */
-      npGap: 0.35, npP1: 0.95, npP2: 1.35,
+      npGap: 0.35, npP1: 0.40, npP2: 0.80,   /* 2026-08-29: 「2つの価値」見出しを非表示にしたので、その待ち(旧0.95/1.35)を詰めてポイントを早めに */
       moveLead: 0.35,    // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
       moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
       /* 【2026-08-25・Figma 15764:55518】軌道が最初に小さく現れる中心位置(ステージ座標)。
@@ -3521,6 +3521,9 @@ function loadParams() {
         if (Math.abs(_visV.splitAmt  - 92)   < 1e-6) _visV.splitAmt  = DEFAULTS.sections.vision.splitAmt;   // 92 → 0
         if (Math.abs(_visV.driftAmt  - 130)  < 1e-6) _visV.driftAmt  = DEFAULTS.sections.vision.driftAmt;   // 130 → 0
         if (Math.abs(_visV.miniScale - 0.16) < 1e-6) _visV.miniScale = DEFAULTS.sections.vision.miniScale;  // 0.16 → 0.31
+        /* 【2026-08-29】「2つの価値」見出しを非表示にしたので、その待ちを詰める。旧既定のままの人だけ寄せ直す */
+        if (Math.abs(_visV.npP1 - 0.95) < 1e-6) _visV.npP1 = DEFAULTS.sections.vision.npP1;   // 0.95 → 0.40
+        if (Math.abs(_visV.npP2 - 1.35) < 1e-6) _visV.npP2 = DEFAULTS.sections.vision.npP2;   // 1.35 → 0.80
       }
       /* 【2026-08-25】導入事例: カードスタック → 2×2グリッド＋ライン描画に刷新。
          カード出現の意味(基準)が devFin→再生進捗p に変わったので、旧既定のまま保存されていたら
