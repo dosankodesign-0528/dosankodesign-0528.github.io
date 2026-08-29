@@ -1805,7 +1805,21 @@
   /* プリセットを1行に収める (2026-08-27 ヒデさん指定でコンパクト化) */
   .pset { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 2px; }
   .pset-lab { flex: 0 0 auto; font-size: 11px; color: #999; line-height: 22px; }
-  .pset-row { flex: 1 1 auto; margin: 0; }
+  .pset-row { flex: 1 1 auto; margin: 0; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  /* 【2026-08-29 ヒデさん指定】プリセットの見せ方2案(チップ/リスト)の切替 */
+  .pset-style { flex: 1 0 100%; display: flex; gap: 4px; margin-bottom: 4px; }
+  .pset-style-b { font-size: 10.5px; padding: 2px 10px; border: 1px solid #e0e0e0; background: #fafafa; border-radius: 999px; cursor: pointer; color: #777; }
+  .pset-style-b.on { background: #090909; color: #fff; border-color: #090909; }
+  /* A: コンパクト・チップ(名前＋小さな⋯を1粒に。折り返して縦を詰める) */
+  .pset-chip { display: inline-flex; align-items: stretch; border: 1px solid #e2e2e2; border-radius: 999px; overflow: hidden; background: #fff; }
+  .pset-chip.on { border-color: #0EBBFF; box-shadow: 0 0 0 1px #0EBBFF inset; }
+  .pset-chip-name { border: 0; background: transparent; padding: 3px 4px 3px 11px; font-size: 11px; color: #333; cursor: pointer; max-width: 128px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pset-chip.on .pset-chip-name { color: #0a86b8; font-weight: 600; }
+  .pset-chip-menu { border: 0; background: transparent; padding: 3px 8px 3px 3px; font-size: 12px; color: #bbb; cursor: pointer; }
+  .pset-chip-menu:hover { color: #666; }
+  /* B: ドロップダウン(いちばんコンパクト) */
+  .pset-drop { flex: 1 0 100%; display: flex; gap: 6px; align-items: center; }
+  .pset-select { flex: 1 1 auto; min-width: 0; font-size: 12px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #333; }
   /* 【2026-08-27 ヒデさん指定】✎ で 1/2/3 を打たせるのをやめ、小さなメニューにした */
   .pmenu { position: fixed; z-index: 120; background: #fff; border: 1px solid #e4e4e4; border-radius: 9px;
            box-shadow: 0 8px 24px rgba(0,0,0,.16); padding: 4px; min-width: 138px; }
@@ -3109,6 +3123,8 @@ const DEFAULTS = {
   gfxPresetOn: {},       // { 案キー: 選んでいる番号 }
   gfxVariantOn: {},      // { 案キー: 選んでいるバリエーションの番号 }
   gfxVariantHidden: {},  // { 案キー: [消したバリエーションの名前] } UI から削除したもの
+  gfxPresetTrash: {},    // { 案キー: [{name, data}] } 削除したプリセットのゴミ箱(復元用・2026-08-29)
+  presetUiStyle: 'chips',// プリセットの見せ方: 'chips'(コンパクトチップ) / 'drop'(ドロップダウン)。2026-08-29
   conv: {
     showOuter: true, showInner: true,
     showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
@@ -3326,6 +3342,8 @@ function presetStoreSave() {
       v: 1, presets: params.gfxPresets || {}, on: params.gfxPresetOn || {},
       /* 消したバリエーションの控えもここに置く。パネルを作り替えても残るように */
       hidden: params.gfxVariantHidden || {},
+      /* 【2026-08-29】削除したプリセットのゴミ箱(復元用)もここに置く */
+      trash: params.gfxPresetTrash || {},
     }));
   } catch (e) {}
 }
@@ -3598,6 +3616,7 @@ function load() {
     /* ⚠️ hidden が入っていない古い保管を読んだ時に {} で上書きすると、
        消した案が勝手に戻ってしまう。入っている時だけ差し替える (2026-08-28) */
     if (st.hidden && typeof st.hidden === 'object') merged.gfxVariantHidden = st.hidden;
+    if (st.trash && typeof st.trash === 'object') merged.gfxPresetTrash = st.trash;   /* 2026-08-29: 削除プリセットのゴミ箱を復元 */
   } else if (merged.gfxPresets && Object.keys(merged.gfxPresets).length) {
     /* まだ別置きしていない古い持ち物は、ここで引っ越す */
     try { localStorage.setItem(PRESET_KEY, JSON.stringify({ v: 1, presets: merged.gfxPresets, on: merged.gfxPresetOn || {} })); } catch (e) {}
@@ -12077,90 +12096,102 @@ function buildPanel() {
     const closeMenu = () => { if (pmenu) { pmenu.remove(); pmenu = null; } };
     document.addEventListener('pointerdown', e => { if (pmenu && !pmenu.contains(e.target)) closeMenu(); }, true);
 
+    /* 削除したプリセットのゴミ箱(案ごと・復元できる) */
+    const presetTrash = () => {
+      if (!params.gfxPresetTrash) params.gfxPresetTrash = {};
+      const k = params.converge || 'reel';
+      return params.gfxPresetTrash[k] || (params.gfxPresetTrash[k] = []);
+    };
     fillPresetRow = function () {
       const list = gfxPresetList();
       closeMenu();
       presetRow.innerHTML = '';
+      const style = params.presetUiStyle || 'chips';
       /* 名前をその場で書き換える(Enterで確定 / Escで取り消し) */
       const rename = (i, pillEl) => {
-        const ps = list[i];
+        const ps = list[i]; if (!ps || !pillEl) return;
         const inp = document.createElement('input');
-        inp.className = 'pname';
-        inp.value = ps.name;
-        const done = ok => {
-          if (ok && inp.value.trim()) { ps.name = inp.value.trim(); presetStoreSave(); markDirty(); }
-          fillPresetRow();
-        };
+        inp.className = 'pname'; inp.value = ps.name;
+        const done = ok => { if (ok && inp.value.trim()) { ps.name = inp.value.trim(); presetStoreSave(); markDirty(); } fillPresetRow(); };
         inp.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
         inp.onblur = () => done(true);
-        pillEl.replaceWith(inp);
-        inp.focus(); inp.select();
+        pillEl.replaceWith(inp); inp.focus(); inp.select();
       };
-      list.forEach((ps, i) => {
-        const b = document.createElement('button');
-        b.className = 'sw-pill pset-item' + (gfxPresetMatches(i) ? ' on' : '');
-        b.dataset.pi = i;
-        b.textContent = ps.name;
-        b.title = 'この設定を呼び出す（ダブルクリックで名前を変える）';
-        b.onclick = () => {
-          applyGfxPreset(i);
-          syncPanelRows();
-          fillAnimBody();                    /* 案のつまみも保存時の値に作り直す */
-          if (editHandles.on) editHandles.place();
-          if (syncPresetPills) syncPresetPills();
+      const applyAt = i => { applyGfxPreset(i); syncPanelRows(); fillAnimBody(); if (editHandles.on) editHandles.place(); if (syncPresetPills) syncPresetPills(); };
+      const delAt = i => { const ps = list[i]; if (ps) presetTrash().push(ps); list.splice(i, 1); if (gfxPresetOn() === i) gfxPresetSetOn(null); presetStoreSave(); markDirty(); fillPresetRow(); };
+      const openMenu = (i, anchor, renameTarget) => {
+        if (pmenu) { closeMenu(); return; }
+        pmenu = document.createElement('div'); pmenu.className = 'pmenu';
+        const mk = (label, fn, cls) => { const m = document.createElement('button'); m.type = 'button'; m.textContent = label; if (cls) m.className = cls; m.onclick = () => { closeMenu(); fn(); }; pmenu.appendChild(m); };
+        mk('✎ 名前を変える', () => rename(i, renameTarget));
+        mk('⤓ いまの設定で上書き', () => { list[i].data = gfxSnapshotFull(); presetStoreSave(); markDirty(); fillPresetRow(); });
+        mk('🗑 削除', () => delAt(i), 'danger');
+        document.body.appendChild(pmenu);
+        const r = anchor.getBoundingClientRect();
+        pmenu.style.left = Math.min(r.left, innerWidth - pmenu.offsetWidth - 8) + 'px';
+        pmenu.style.top = Math.min(r.bottom + 4, innerHeight - pmenu.offsetHeight - 8) + 'px';
+      };
+      const addBtn = () => {
+        const add = document.createElement('button'); add.type = 'button'; add.className = 'sw-pill sw-save'; add.textContent = '＋保存';
+        add.title = 'いまのグラフィックの設定を、この案専用のプリセットとして保存する';
+        add.onclick = () => {
+          list.push({ name: 'プリセット ' + (list.length + 1), data: gfxSnapshotFull() });
+          gfxPresetSetOn(list.length - 1); markDirty(); fillPresetRow();
+          const chips = presetRow.querySelectorAll('.pset-chip-name');
+          const last = chips[chips.length - 1];
+          if (last) rename(list.length - 1, last);
         };
-        b.ondblclick = e => { e.preventDefault(); rename(i, b); };
-        const e = document.createElement('button');
-        e.className = 'sw-pill sw-edit';
-        e.textContent = '⋯';
-        e.title = '名前を変える / 上書き / 削除';
-        e.onclick = ev => {
-          ev.stopPropagation();
-          if (pmenu) { closeMenu(); return; }
-          pmenu = document.createElement('div');
-          pmenu.className = 'pmenu';
-          const mk = (label, fn, cls) => {
-            const m = document.createElement('button');
-            m.type = 'button';
-            m.textContent = label;
-            if (cls) m.className = cls;
-            m.onclick = () => { closeMenu(); fn(); };
-            pmenu.appendChild(m);
-          };
-          mk('✎ 名前を変える', () => rename(i, b));
-          mk('⤓ いまの設定で上書き', () => { list[i].data = gfxSnapshotFull(); presetStoreSave(); markDirty(); fillPresetRow(); });
-          mk('🗑 削除', () => {
-            list.splice(i, 1);
-            if (gfxPresetOn() === i) gfxPresetSetOn(null);
-            presetStoreSave(); markDirty(); fillPresetRow();
-          }, 'danger');
-          document.body.appendChild(pmenu);
-          const r = e.getBoundingClientRect();
-          pmenu.style.left = Math.min(r.left, innerWidth - pmenu.offsetWidth - 8) + 'px';
-          pmenu.style.top = Math.min(r.bottom + 4, innerHeight - pmenu.offsetHeight - 8) + 'px';
-        };
-        presetRow.append(b, e);
+        return add;
+      };
+      /* 【2026-08-29 ヒデさん指定】見せ方の2案(チップ / ドロップダウン)を切り替えて比べられる */
+      const styleRow = document.createElement('div'); styleRow.className = 'pset-style';
+      [['chips', 'チップ'], ['drop', 'リスト']].forEach(([k, label]) => {
+        const t = document.createElement('button'); t.type = 'button'; t.className = 'pset-style-b' + (style === k ? ' on' : ''); t.textContent = label;
+        t.onclick = () => { params.presetUiStyle = k; markDirty(); fillPresetRow(); };
+        styleRow.appendChild(t);
       });
-      /* 保存は押した瞬間に追加して、そのまま名前を書き換えられる状態にする */
-      const add = document.createElement('button');
-      add.className = 'sw-pill sw-save';
-      add.textContent = '＋保存';
-      add.title = 'いまのグラフィックの設定を、この案専用のプリセットとして保存する';
-      add.onclick = () => {
-        list.push({ name: 'プリセット ' + (list.length + 1), data: gfxSnapshotFull() });
-        gfxPresetSetOn(list.length - 1);   /* この中でプリセット保管場所へ書き込む */
-        markDirty();
-        fillPresetRow();
-        const pills = presetRow.querySelectorAll('.sw-pill:not(.sw-edit)');
-        const last = pills[pills.length - 1];
-        if (last) rename(list.length - 1, last);   /* 追加したらすぐ名前を打てる */
-      };
-      presetRow.appendChild(add);
-      /* いまの値と一致するプリセットだけ点灯させる(値を触ると markDirty から呼ばれて塗り直す) */
-      syncPresetPills = () => {
-        presetRow.querySelectorAll('.pset-item').forEach(el => {
-          el.classList.toggle('on', gfxPresetMatches(+el.dataset.pi));
+      presetRow.appendChild(styleRow);
+
+      if (style === 'drop') {
+        /* B: ドロップダウン(いちばんコンパクト) */
+        const box = document.createElement('div'); box.className = 'pset-drop';
+        const sel = document.createElement('select'); sel.className = 'pset-select';
+        const ph = document.createElement('option'); ph.value = ''; ph.textContent = list.length ? 'プリセットを選ぶ…' : '(まだありません)'; sel.appendChild(ph);
+        let curSel = -1;
+        list.forEach((ps, i) => { const o = document.createElement('option'); o.value = String(i); o.textContent = ps.name; if (gfxPresetMatches(i)) { o.selected = true; curSel = i; } sel.appendChild(o); });
+        sel.onchange = () => { if (sel.value !== '') applyAt(+sel.value); };
+        const menuBtn = document.createElement('button'); menuBtn.type = 'button'; menuBtn.className = 'sw-pill sw-edit'; menuBtn.textContent = '⋯'; menuBtn.title = '選んでいるプリセットの 名前 / 上書き / 削除';
+        menuBtn.onclick = ev => { ev.stopPropagation(); const i = sel.value !== '' ? +sel.value : curSel; if (i >= 0) openMenu(i, menuBtn, null); };
+        box.append(sel, menuBtn, addBtn());
+        presetRow.appendChild(box);
+      } else {
+        /* A: コンパクト・チップ(名前チップに小さな⋯を内蔵。折り返して縦を詰める) */
+        list.forEach((ps, i) => {
+          const chip = document.createElement('span'); chip.className = 'pset-chip' + (gfxPresetMatches(i) ? ' on' : ''); chip.dataset.pi = i;
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'pset-chip-name'; b.textContent = ps.name; b.title = 'この設定を呼び出す（ダブルクリックで名前）';
+          b.onclick = () => applyAt(i); b.ondblclick = e => { e.preventDefault(); rename(i, b); };
+          const mb = document.createElement('button'); mb.type = 'button'; mb.className = 'pset-chip-menu'; mb.textContent = '⋯'; mb.title = '名前 / 上書き / 削除';
+          mb.onclick = ev => { ev.stopPropagation(); openMenu(i, mb, b); };
+          chip.append(b, mb); presetRow.appendChild(chip);
         });
+        presetRow.appendChild(addBtn());
+      }
+      /* 削除したプリセットを戻す(共通) */
+      const trash = presetTrash();
+      if (trash.length) {
+        const back = document.createElement('button'); back.type = 'button'; back.className = 'sw-pill var-back'; back.textContent = `↺ 削除したプリセットを戻す (${trash.length})`;
+        back.title = '削除したプリセットの一覧から、戻したいものを選びます';
+        back.onclick = () => {
+          pickModal('削除したプリセットを戻す', '戻したいプリセットの「戻す」を押してください。', trash.map(t => t.name), name => {
+            const idx = trash.findIndex(t => t.name === name);
+            if (idx >= 0) { list.push(trash[idx]); trash.splice(idx, 1); presetStoreSave(); markDirty(); fillPresetRow(); }
+          });
+        };
+        presetRow.appendChild(back);
+      }
+      /* いまの値と一致するプリセットだけ点灯させる */
+      syncPresetPills = () => {
+        presetRow.querySelectorAll('.pset-chip').forEach(el => { el.classList.toggle('on', gfxPresetMatches(+el.dataset.pi)); });
       };
     };
     fillPresetRow();
