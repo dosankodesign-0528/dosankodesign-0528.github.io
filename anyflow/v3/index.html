@@ -1828,6 +1828,9 @@
   }
   /* 【2026-08-28 ヒデさん指定】スクロールで隠すのはやめ、案は全部そのまま並べる */
   .var-box { margin: 2px 0 0; }
+  /* 【2026-08-29 ヒデさん指定】A(軌道)内のカテゴリ見出し(軌道のみ/粒とセット/収縮あり)。行の頭で改行して見出しに */
+  .var-cat-head { flex: 1 0 100%; width: 100%; margin: 6px 0 2px; font-size: 10.5px; font-weight: 600; color: #888; letter-spacing: .02em; }
+  .var-cat-head:first-child { margin-top: 0; }
   .var-pill:hover { border-color: #9fdcf5; background: #f4fbfe; }
   .var-pill.on { background: #0EBBFF; border-color: #0EBBFF; color: #fff; }
   .var-x {
@@ -4147,28 +4150,47 @@ const CONVERGES = [
      1 収縮    … reel
      2 軌道と粒 … spiral + accre + beads を統合
      3 ネットワーク … mesh */
+/* 【2026-08-29 ヒデさん指定・大枠再編】選択ピルは 2グループに統合:
+     A 軌道     … 周回のみ(off/gyro) + 収縮(reel) + 軌道と粒(spiral/accre/beads) + 線で行き来(duplex) を統合。
+                   中を「軌道のみ / 粒とセット / 収縮あり」のカテゴリに分け、下のトグルで絞り込める。
+     B ネットワーク … 網(mesh) + ネットワーク3D。
+   内部モード(converge)・プリセット(gfxPresets)・バリエーション(GFX_VARIANTS)は保持したまま表示だけ束ねる。 */
 const CONV_GROUPS = [
-  { key: 'orbit',   name: '周回のみ',      modes: ['off', 'gyro'], line: 'duplex',
-    desc: '軌道をただ回り続けます。「線で行き来」をオンにすると、惑星とドットを線で結んで粒が行き来します。ジャイロ回転もバリエーションにあります。' },
-  { key: 'shrink',  name: '1 収縮',        modes: ['reel'],
-    desc: '内側の輪がドットごと惑星へ縮んで吸い込まれ、外側の輪が内へ下りてくるのをくり返します。' },
-  { key: 'orbdot',  name: '2 軌道と粒',    modes: ['spiral', 'accre', 'beads'],
-    desc: '粒が軌道の上で渦を巻いたり、並んだりしながら、順に惑星へ吸い込まれます。' },
-  { key: 'network', name: '3 ネットワーク', modes: ['mesh'],
-    desc: 'ゆらぎ漂うノードの網ができ、データがノードを渡り歩いて惑星へ届きます。' },
+  { key: 'orbit',   name: 'A 軌道',
+    modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex'],
+    desc: '軌道をベースにした案をまとめたグループ。下の「軌道のみ / 粒とセット / 収縮あり」で絞り込めます。' },
+  { key: 'network', name: 'B ネットワーク', modes: ['mesh'],
+    desc: 'ゆらぎ漂うノードの網、または3Dネットワーク。データがノードを渡り歩いて惑星へ届きます。' },
 ];
+/* A(軌道)の中のカテゴリ。各内部モードをタグ付けし、バリエーション行を振り分ける＋オンオフで絞り込む。 */
+const CONV_CATS = [
+  { key: 'plain',  name: '軌道のみ',  modes: ['off', 'gyro'] },
+  { key: 'dot',    name: '粒とセット', modes: ['spiral', 'accre', 'beads', 'duplex'] },
+  { key: 'shrink', name: '収縮あり',  modes: ['reel'] },
+];
+function convCatOf(mode) { return (CONV_CATS.find(c => c.modes.includes(mode)) || CONV_CATS[0]).key; }
+function convCatFilter() {
+  if (!params.convCatFilter || typeof params.convCatFilter !== 'object') params.convCatFilter = { plain: true, dot: true, shrink: true };
+  return params.convCatFilter;
+}
+/* あるバリエーションが「B ネットワーク」に属するか(=ネットワーク3D。off内に定義があるので名前でBへ回す) */
+function convVarIsNetwork(v) { return !!(v && v.common && v.common.net3d); }
 function convGroupOf(mode) {
   mode = mode || 'off';
+  /* ネットワーク3D(off + net3d フラグ)は、見た目上 B ネットワークのグループとして扱う */
+  if (mode === (params && params.converge) && params && params.conv && params.conv.net3d) {
+    return CONV_GROUPS.find(g => g.key === 'network') || CONV_GROUPS[0];
+  }
   return CONV_GROUPS.find(g => g.modes.includes(mode) || g.line === mode) || CONV_GROUPS[0];
 }
 function convGroupDefaultMode(g) { return g.modes[0]; }
-/* 周回のみグループで「線で行き来」がオンか(=converge が duplex) */
+/* 旧「線で行き来」トグルは廃止(duplex は「粒とセット」カテゴリの通常バリエーションに)。互換のため関数だけ残す */
 function convLineOn() { return (params.converge || 'off') === 'duplex'; }
 /* いまのグループで、バリエーション行に出すべき内部モードの一覧 */
 function convShowModes() {
   const g = convGroupOf(params.converge);
-  if (g.key === 'orbit') return convLineOn() ? ['duplex'] : ['off', 'gyro'];
-  return g.modes;
+  if (g.key === 'orbit') return ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex'];
+  return g.modes;   // network → mesh (ネットワーク3Dは off 定義を名前で拾って足す)
 }
 /* ===== 案ごとのグラフィック6案 (2026-08-27 ヒデさん指定。3案→6案に増やした) =====
    ⚠️ デザインそのものは変えない。同じアニメーションの枠の中で
@@ -4453,6 +4475,15 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.std, common: { ringCount: 6, ringShape: 'rosette' } },
   ],
 };
+/* 【2026-08-29 ヒデさん指定】バリエーション一覧から「完全削除」した案(案キー→消した案名)。
+   ⚠️ 配列(GFX_VARIANTS)から要素を抜くと、案の並び順(インデックス)がズレて既存の調整値(gfxTweaks)が
+      別の案に化ける／共有バリエ(GFX_LOOKS2・ジャイロ版)は他案でも使うため配列削除は危険。
+      なので「表示・復元の両方から名前で恒久除外」する方式にする(コードに焼くので localStorage を消しても復活しない)。
+   これ以降ヒデさんが新たに案を完全削除したい時は、その案の名前をここへ足すだけでよい。 */
+const VARIANT_REMOVED = {
+  mesh: ['B まばらな星座', 'F 立ちクロスの網', 'アトム 4本', 'アトム 6本', 'アトム 8本', '土星の輪', '花のリング', 'G ヘアライン', 'H 縦のクロス', 'ジャイロ・速い'],
+};
+const variantRemoved = (m, name) => (VARIANT_REMOVED[m] || []).includes(name);
 /* ===== さらに5案 (2026-08-27 ヒデさん指定) =====
    狙う印象は【先進的 / 上品 / 洗練】。A〜F より思い切って見た目を変える。
    ⚠️ デザイン(惑星・軌道・ドットの絵)は変えない。変えるのは配置と、その案のつまみだけ。
@@ -11833,32 +11864,36 @@ function buildPanel() {
   };
   /* 【2026-08-28 ヒデさん指定】選択ピルは「グループ」で束ねる(周回のみ/1収縮/2軌道と粒/3ネットワーク)。
      内部モードは保持したまま表示だけ組み替えるので、プリセット・バリエーションは消えない。 */
-  let lineToggleBox = null;   /* 「周回のみ」の“線で行き来”トグルの置き場所 */
-  const fillLineToggle = () => {
-    if (!lineToggleBox) return;
-    lineToggleBox.innerHTML = '';
-    if (convGroupOf(params.converge).key !== 'orbit') return;
-    const keep = mount; mount = lineToggleBox;
-    segRow('線で行き来', [['オフ', 0], ['オン', 1]],
-      () => convLineOn() ? 1 : 0,
-      v => {
-        if (v) convSwitchTo('duplex');
-        else if ((params.converge || 'off') === 'duplex') convSwitchTo('off');
-        markDirty(); renderFrame(); fillAnimBody(); syncPanelRows();
-        if (fillPresetRow) fillPresetRow(); fillVariantRow();
-      });
+  /* 【2026-08-29 ヒデさん指定・大枠再編】A(軌道)の時だけ、下に「軌道の表示 / 粒 / 収縮」の絞り込みトグルを出し、
+     A内のカテゴリ(軌道のみ/粒とセット/収縮あり)の表示をオンオフする。旧「線で行き来」トグルは廃止。 */
+  let catToggleBox = null;
+  const fillCatToggles = () => {
+    if (!catToggleBox) return;
+    catToggleBox.innerHTML = '';
+    if (convGroupOf(params.converge).key !== 'orbit') return;   /* A(軌道)の時だけ絞り込みを出す */
+    const cf = convCatFilter();
+    const keep = mount; mount = catToggleBox;
+    const toggle = (label, key) => segRow(label, [['隠す', 0], ['出す', 1]],
+      () => cf[key] ? 1 : 0,
+      v => { cf[key] = !!v; markDirty(); fillVariantRow(); });
+    toggle('軌道の表示', 'plain');   /* 軌道のみ(off/gyro) */
+    toggle('粒', 'dot');             /* 粒とセット(spiral/accre/beads/線で行き来) */
+    toggle('収縮', 'shrink');        /* 収縮あり(reel) */
     mount = keep;
   };
   const onGroupSwitch = (g) => {
-    if (convGroupOf(params.converge).key !== g.key) onConvSwitch(convGroupDefaultMode(g));
-    fillLineToggle();
+    if (convGroupOf(params.converge).key !== g.key) {
+      if (params.conv) params.conv.net3d = false;   /* グループを跨ぐ時はネットワーク3Dフラグを解除 */
+      onConvSwitch(convGroupDefaultMode(g));
+    }
+    fillCatToggles();
   };
   pillRow(CONV_GROUPS, g => convGroupOf(params.converge).key === g.key,
     g => onGroupSwitch(g),
     { get: () => convGroupOf(params.converge).key, set: k => { const g = CONV_GROUPS.find(x => x.key === k); if (g) onGroupSwitch(g); } },
     { noRebuild: true, tip: g => g.desc || '' });
-  lineToggleBox = document.createElement('div');
-  (mount || body).appendChild(lineToggleBox);
+  catToggleBox = document.createElement('div');
+  (mount || body).appendChild(catToggleBox);
 
   /* --- この案のバリエーション (2026-08-27 ヒデさん指定) ---
      ⚠️ 上の「アニメーションの選択ピル」と見分けがつくよう、
@@ -11894,36 +11929,52 @@ function buildPanel() {
   const varSym = k => (k < 26) ? VAR_LETTERS[k] : (VAR_LETTERS[Math.floor(k / 26) - 1] + VAR_LETTERS[k % 26]);
   const varLabel = (v, k) => VAR_LETTERS[k] + ' ' + String(v.name).replace(/^[A-Z]\s+/, '');
   const fillVariantRow = function () {
-    /* 【2026-08-28 ヒデさん指定】グループ内の全モードのバリエーションを1列に集約。
-       記号は残っている中で通し(A,B,C…)。ピルを選ぶと、そのモードへ切り替えてから当てる。 */
-    const modes = convShowModes();
-    const items = [];
-    for (const m of modes) {
-      const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
-      (GFX_VARIANTS[m] || []).forEach((v, i) => {
-        if (hid.includes(v.name)) return;
-        items.push({ m, i, v });
-      });
-    }
+    /* 【2026-08-29 ヒデさん指定・大枠再編】A(軌道)はカテゴリ(軌道のみ/粒とセット/収縮あり)に分けて表示し、
+       下のトグルで絞り込む。B(ネットワーク)は mesh + ネットワーク3D。記号は残っている中で通し(A,B,C…)。 */
+    const modes = convShowModes();   /* 下の「消した案を戻す」で使う */
+    const g = convGroupOf(params.converge);
+    const isA = g.key === 'orbit';
     varRow.innerHTML = '';
     const curMode = params.converge || 'off';
     const curOn = gfxVariantOn();
-    items.forEach((it, k) => {
+    const curNet = !!(params.conv && params.conv.net3d);
+    let k = 0;
+    const collect = (m, net) => {   /* net: 'only'=net3dだけ / 'exclude'=net3d以外 / null=全部 */
+      const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
+      const out = [];
+      (GFX_VARIANTS[m] || []).forEach((v, i) => {
+        if (hid.includes(v.name) || variantRemoved(m, v.name)) return;
+        const isNet = convVarIsNetwork(v);
+        if (net === 'only' && !isNet) return;
+        if (net === 'exclude' && isNet) return;
+        out.push({ m, i, v });
+      });
+      return out;
+    };
+    const addHead = (name) => {
+      const h = document.createElement('div');
+      h.className = 'var-cat-head';
+      h.textContent = name;
+      varRow.appendChild(h);
+    };
+    const makePill = (it) => {
       const label = varSym(k) + ' ' + String(it.v.name).replace(/^[A-Z]{1,2}\s+/, '');
+      k++;
+      const selected = (it.m === curMode && curOn === it.i && convVarIsNetwork(it.v) === curNet);
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'var-pill' + ((it.m === curMode && curOn === it.i) ? ' on' : '');
+      b.className = 'var-pill' + (selected ? ' on' : '');
       b.title = it.v.desc || '';
       b.append(document.createTextNode(label));
       b.onclick = () => {
         if ((params.converge || 'off') !== it.m) convSwitchTo(it.m);
         applyGfxVariant(it.i);
+        if (params.conv) params.conv.net3d = convVarIsNetwork(it.v);   /* ネットワーク3Dフラグを選択に合わせる */
         markDirty(); renderFrame();
         fillAnimBody(); syncPanelRows();
         if (fillPresetRow) fillPresetRow();
         if (typeof meshHandles !== 'undefined') meshHandles.set(editHandles.on && meshHandles.usable);
         if (editHandles.on) editHandles.place();
-        fillLineToggle();
         fillVariantRow();
       };
       const x = document.createElement('button');
@@ -11943,13 +11994,27 @@ function buildPanel() {
       };
       b.appendChild(x);
       varRow.appendChild(b);
-    });
+    };
+    if (isA) {
+      const cf = convCatFilter();
+      for (const cat of CONV_CATS) {
+        if (!cf[cat.key]) continue;   /* 絞り込みでオフのカテゴリは出さない */
+        let catItems = [];
+        for (const m of cat.modes) catItems = catItems.concat(collect(m, 'exclude'));   /* ネットワーク3DはBへ回す */
+        if (!catItems.length) continue;
+        addHead(cat.name);
+        catItems.forEach(makePill);
+      }
+    } else {
+      /* B ネットワーク: mesh の全部 + off内のネットワーク3D */
+      collect('mesh', null).concat(collect('off', 'only')).forEach(makePill);
+    }
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
     /* このグループで消した案をまとめて戻す */
     const hiddenAll = [];
     for (const m of modes) {
       const hid = (params.gfxVariantHidden && params.gfxVariantHidden[m]) || [];
-      hid.forEach(nm => hiddenAll.push({ m, nm }));
+      hid.forEach(nm => { if (!variantRemoved(m, nm)) hiddenAll.push({ m, nm }); });   /* 完全削除した案は「戻す」一覧にも出さない */
     }
     if (hiddenAll.length) {
       const back = document.createElement('button');
@@ -11972,7 +12037,7 @@ function buildPanel() {
       varRow.appendChild(back);
     }
   };
-  fillLineToggle();
+  fillCatToggles();
   fillVariantRow();
 
   /* ═══ グラフィックを編集 ── 直接編集とプリセット ═══
