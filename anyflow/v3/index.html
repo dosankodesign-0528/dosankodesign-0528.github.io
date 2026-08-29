@@ -3406,6 +3406,121 @@ function posOn(g, deg) {
   };
 }
 
+/* ================= 【2026-08-29 ヒデさん指定】自由回転＝軌道の疑似3D =================
+   惑星は動かさず、軌道(楕円)を「3Dの円」として捉え、傾けた分だけ形を計算し直して
+   2Dのまま描く(ペラペラにならない)。惑星中心を軸に system 全体を倒す。前後(z)で分割し、
+   手前(z>=0)は惑星の前(layer-front)、奥(z<0)は惑星の後ろ(layer-back)に描く。 */
+const kvRepro = (function () {
+  const D2R = Math.PI / 180;
+  const C0X = 457.1, C0Y = 288.3;   // 惑星(グラフィック)の中心＝倒す時の軸
+  let bg, fg, dbg, dfg, ready = false;
+  function grp(parent) { const g = document.createElementNS(SVG_NS, 'g'); parent.appendChild(g); return g; }
+  function ensure() {
+    if (ready) return;
+    const lb = document.querySelector('.orbit .layer-back'), lf = document.querySelector('.orbit .layer-front');
+    if (!lb || !lf) return;
+    bg = grp(lb); dbg = grp(lb);   // 奥の軌道 / 奥のドット
+    fg = grp(lf); dfg = grp(lf);   // 手前の軌道 / 手前のドット
+    ready = true;
+  }
+  function rot3(x, y, z, ax, ay, az) {
+    ax *= D2R; ay *= D2R; az *= D2R;
+    let y1 = y * Math.cos(ax) - z * Math.sin(ax), z1 = y * Math.sin(ax) + z * Math.cos(ax);   // X(奥に倒す)
+    let x2 = x * Math.cos(ay) + z1 * Math.sin(ay), z2 = -x * Math.sin(ay) + z1 * Math.cos(ay); // Y
+    let x3 = x2 * Math.cos(az) - y1 * Math.sin(az), y3 = x2 * Math.sin(az) + y1 * Math.cos(az); // Z
+    return [x3, y3, z2];
+  }
+  /* 楕円 g={cx,cy,rx,ry,rot} 上の角度 th(ラジアン) の点を、傾いた円として3D化 → 自由回転 → 投影 */
+  function pt3(g, th, ax, ay, az) {
+    const rx = g.rx, ry = g.ry, rot = g.rot * D2R;
+    const wide = rx >= ry;
+    const R = wide ? rx : ry;
+    const phi = Math.acos(Math.max(0, Math.min(1, wide ? ry / rx : rx / ry)));
+    let lx, ly, lz;
+    if (wide) { lx = R * Math.cos(th); ly = R * Math.sin(th) * Math.cos(phi); lz = R * Math.sin(th) * Math.sin(phi); }
+    else { lx = R * Math.cos(th) * Math.cos(phi); ly = R * Math.sin(th); lz = R * Math.cos(th) * Math.sin(phi); }
+    const x3 = lx * Math.cos(rot) - ly * Math.sin(rot), y3 = lx * Math.sin(rot) + ly * Math.cos(rot);
+    const p = rot3(g.cx + x3 - C0X, g.cy + y3 - C0Y, lz, ax, ay, az);
+    return [C0X + p[0], C0Y + p[1], p[2]];   // [x, y, depth(手前が+)]
+  }
+  function ringPaths(g, ax, ay, az) {
+    const N = 128, pts = [];
+    for (let i = 0; i <= N; i++) pts.push(pt3(g, i / N * 2 * Math.PI, ax, ay, az));
+    const segs = { front: [], back: [] }; let cur = null, sign = null;
+    for (const p of pts) {
+      const s = p[2] >= 0 ? 'front' : 'back';
+      if (s !== sign) { if (cur && cur.length > 1) segs[sign].push(cur); cur = [p]; sign = s; }
+      else cur.push(p);
+    }
+    if (cur && cur.length > 1) segs[sign].push(cur);
+    const toD = run => 'M' + run.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L');
+    return { front: segs.front.map(toD), back: segs.back.map(toD) };
+  }
+  function path(parent, d, stroke, w) {
+    const p = document.createElementNS(SVG_NS, 'path');
+    p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', stroke);
+    p.setAttribute('stroke-width', w); p.setAttribute('stroke-linecap', 'round');
+    parent.appendChild(p);
+  }
+  function readEll(e) {
+    const tr = e.getAttribute('transform') || ''; const m = /rotate\(([-\d.]+)/.exec(tr);
+    return { cx: +e.getAttribute('cx'), cy: +e.getAttribute('cy'), rx: +e.getAttribute('rx'), ry: +e.getAttribute('ry'), rot: m ? +m[1] : 0 };
+  }
+  const HIDE_IDS = ['ellOuterF', 'ellOuterB', 'ellInnerF', 'ellInnerB'];
+  function setHidden(hide) {
+    const d = hide ? 'none' : '';
+    for (const id of HIDE_IDS) { const e = document.getElementById(id); if (e) e.style.display = d; }
+    if (dotsBackG) dotsBackG.style.display = d;
+    if (dotsFrontG) dotsFrontG.style.display = d;
+    if (typeof convShapeBack !== 'undefined' && convShapeBack) for (const e of convShapeBack) e.style.display = d;
+    if (typeof convShapeFront !== 'undefined' && convShapeFront) for (const e of convShapeFront) e.style.display = d;
+  }
+  function clear() { for (const g of [bg, fg, dbg, dfg]) if (g) g.textContent = ''; }
+  function update(geoms, shapeOn) {
+    ensure(); if (!ready) return;
+    const kv = params.kv || {}; const ax = kv.rotX || 0, ay = kv.rotY || 0, az = kv.rotZ || 0;
+    const active = !!(ax || ay || az);
+    if (!active) { setHidden(false); clear(); return; }
+    setHidden(true); clear();
+    /* いま出ている軌道リングを集める */
+    const rings = [];
+    if (shapeOn && typeof convShapeBack !== 'undefined' && convShapeBack) {
+      for (let i = 0; i < convShapeBack.length; i++) {
+        const e = convShapeBack[i]; if (+(e.getAttribute('opacity') || 0) < 0.02) continue;
+        const w = e.getAttribute('stroke-width') || '3';
+        rings.push({ g: readEll(e), gf: 'url(#gShRF' + i + ')', gb: 'url(#gShRB' + i + ')', w });
+      }
+    } else {
+      const oW = (document.getElementById('ellOuterF') || {}).getAttribute ? document.getElementById('ellOuterF').getAttribute('stroke-width') : '3';
+      const iW = (document.getElementById('ellInnerF') || {}).getAttribute ? document.getElementById('ellInnerF').getAttribute('stroke-width') : '3';
+      const C = params.conv || {};
+      if (C.showOuter !== false) rings.push({ g: geoms.outer, gf: 'url(#gOuterF)', gb: 'url(#gOuterB)', w: oW || '3' });
+      if (C.showInner !== false) rings.push({ g: geoms.inner, gf: 'url(#gInnerF)', gb: 'url(#gInnerB)', w: iW || '3' });
+    }
+    for (const r of rings) {
+      const { front, back } = ringPaths(r.g, ax, ay, az);
+      for (const d of back) path(bg, d, r.gb, r.w);
+      for (const d of front) path(fg, d, r.gf, r.w);
+    }
+    /* ドット(基本の7個)も同じ変換で再投影。シェイプ時はドット無し */
+    if (!shapeOn) {
+      const C = params.conv || {};
+      const showD = C.showDots !== false;
+      if (showD) DOTS.forEach((d, i) => {
+        if (d.ellipse === 'outer' && C.showOuter === false) return;
+        if (d.ellipse === 'inner' && C.showInner === false) return;
+        const deg = patternDeg(d, i, params.dots[i]) + (convDotSpin[i] || 0);
+        const p = pt3(geoms[d.ellipse], deg * D2R, ax, ay, az);
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('cx', p[0].toFixed(1)); c.setAttribute('cy', p[1].toFixed(1));
+        c.setAttribute('r', (BASE_DOT_R * (dotK[i] || 1)).toFixed(2)); c.setAttribute('fill', d.color);
+        (p[2] >= 0 ? dfg : dbg).appendChild(c);
+      });
+    }
+  }
+  return { update, setHidden };
+})();
+
 /* ===== 惑星への集約アニメ (2026-08-26 ヒデさん指定・①②④⑩) =====
    大前提: デザインは V1.0 のまま一切変えない。既存の軌道・惑星・ドットに「動き」だけ足す。
    （既存パーツと同じ見た目の複製を増やすのは OK: スパイラルの粒・波の輪）
@@ -6316,6 +6431,7 @@ function renderFrame() {
     els.front.style.display = pos.front ? '' : 'none';
     els.back.style.display = pos.front ? 'none' : '';
   });
+  kvRepro.update(geoms, shapeOn);   /* 自由回転オン時=軌道を疑似3Dで再投影(惑星は動かさない) */
   applySway();
   renderSphere();
   updateSections();
@@ -6346,29 +6462,17 @@ function applySway() {
   /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある) */
   const ob = isMobile ? ' scale(0.40)' : '';
   /* 【2026-08-28 ヒデさん指定】グラフィック全体をひとまとまりで XYZ 回転(3D)。0のときは付けない */
-  const rX = kv.rotX || 0, rY = kv.rotY || 0, rZ = kv.rotZ || 0;
-  const rotating = !!(rX || rY || rZ);
-  const rot3d = rotating ? ` perspective(${kv.persp || 1400}px) rotateX(${rX}deg) rotateY(${rY}deg) rotateZ(${rZ}deg)` : '';
-  /* 【2026-08-29 ヒデさん指定】回転時に「ペラペラの紙」にならないよう、回っている間だけ
-     本物の3D空間(preserve-3d)にして、裏軌道を奥・表軌道を手前へ実際に離し(奥行き)、
-     惑星は常に正面を向く(ビルボード)ことで球のまま維持する。回転0のときは今まで通り平面(z-index)。 */
-  const DEPTH = (kv.depth3d == null ? 26 : kv.depth3d);
-  swayEls.orbit.style.transformStyle = rotating ? 'preserve-3d' : '';
-  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}${rot3d}`.trim();
-  if (rotating) {
-    if (swayEls.layerBack)  swayEls.layerBack.style.transform  = `translateZ(${-DEPTH}px)`;
-    if (swayEls.layerFront) swayEls.layerFront.style.transform = `translateZ(${DEPTH}px)`;
-  } else {
-    swayEls.svgs.forEach(s => s.style.transform = svg);
-  }
-  /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成 */
+  /* 【2026-08-29 ヒデさん指定・A案】自由回転(XYZ)は kvRepro が「軌道の疑似3D」で担当する。
+     ここではグラフィック全体をCSSで3D回転しない(＝惑星を潰さない)。位置ずらし・ゆらぎだけ。 */
+  swayEls.orbit.style.transformStyle = '';
+  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}`.trim();
+  swayEls.svgs.forEach(s => s.style.transform = svg);
+  /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成。惑星は固定(回転させない) */
   const pl = params.planet;
   const plFlat = pl.flat == null ? 1 : pl.flat;
   const plT = (pl.dx || pl.dy || pl.scale !== 1 || plFlat !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale}, ${pl.scale * plFlat})` : '';
-  /* 惑星は回転中だけ逆回転させて常に正面(球のまま)を維持する(ビルボード) */
-  const billboard = rotating ? ` rotateZ(${-rZ}deg) rotateY(${-rY}deg) rotateX(${-rX}deg)` : '';
-  swayEls.sphere.style.transform = (sph + billboard + plT).trim();
+  swayEls.sphere.style.transform = (sph + plT).trim();
 }
 
 /* ================= スクロール連動セクション ================= */
