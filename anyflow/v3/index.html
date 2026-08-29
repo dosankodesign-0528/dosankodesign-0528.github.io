@@ -4505,10 +4505,23 @@ const GFX_VARIANTS = {
       なので「表示・復元の両方から名前で恒久除外」する方式にする(コードに焼くので localStorage を消しても復活しない)。
    これ以降ヒデさんが新たに案を完全削除したい時は、その案の名前をここへ足すだけでよい。 */
 const VARIANT_REMOVED = {
-  mesh: ['B まばらな星座', 'F 立ちクロスの網', 'アトム 4本', 'アトム 6本', 'アトム 8本', '土星の輪', '花のリング', 'G ヘアライン', 'H 縦のクロス', 'ジャイロ・速い'],
-  reel: ['B 深く交差', 'C 薄い皿', 'E 大きく包む'],   /* 2026-08-29: 収縮(reel)で削除 */
+  off:    ['F 惑星に寄る', 'I 大小の入れ子', 'J 地平線', 'K 斜めの流れ', 'ジャイロ・速い', 'E 大きく包む', 'G ヘアライン', 'B ジャイロ交差', 'ジャイロ・直交'],
+  reel:   ['C 薄い皿', 'D 立ちクロス', 'I 大小の入れ子', 'A カンプ通り', 'B 深く交差', 'E 大きく包む', 'アトム 4本', 'アトム 6本', 'アトム 8本', '花のリング', 'H 縦のクロス', 'J 地平線', 'K 斜めの流れ', 'ジャイロ・直交', 'ジャイロ・斜めの流れ', 'G ヘアライン', 'ジャイロ・速い'],
+  mesh:   ['J 地平線', 'F 立ちクロスの網', 'ジャイロ・斜めの流れ', 'H 縦のクロス', '花のリング', '土星の輪', 'G ヘアライン', 'ジャイロ・縦のクロス', 'アトム 8本', 'アトム 6本', 'アトム 4本', 'ジャイロ・直交', 'ジャイロ・ゆるやか', 'B まばらな星座', 'ジャイロ・速い'],
+  accre:  ['B 大きく薄い円盤', 'E 大きく包む円盤', 'F 惑星に密着', 'G ヘアライン', 'J 地平線', 'ジャイロ・直交', 'L 前後を貫く軌道', 'H 縦のクロス', 'I 大小の入れ子', 'K 斜めの流れ', 'C 軌道つき・きつい渦', 'ジャイロ・速い', 'ジャイロ・斜めの流れ', 'ジャイロ・縦のクロス', 'ジャイロ・ゆるやか'],
+  duplex: ['C 大きく弧を描く', 'G ヘアライン', 'I 大小の入れ子', 'J 地平線', 'ジャイロ・直交', 'ジャイロ・速い', 'E 遠くから長い線', 'B まっすぐ放射', 'F 密な短い線', 'H 縦のクロス', 'K 斜めの流れ', 'ジャイロ・縦のクロス', 'ジャイロ・斜めの流れ', 'D 立ちクロスの線'],
+  gyro:   ['F 片寄せジャイロ', 'G ヘアライン', 'I 大小の入れ子', 'J 地平線', 'D 高速スピン', 'A 標準のジャイロ', 'E 同じ向きで転がる', '花のリング', 'アトム 4本', 'アトム 6本', 'アトム 8本', '土星の輪', 'C ゆっくり大きく', 'K 斜めの流れ'],
+  beads:  ['G ヘアライン', 'J 地平線', 'ジャイロ・斜めの流れ', 'ジャイロ・縦のクロス', 'ジャイロ・速い', 'ジャイロ・直交', 'H 縦のクロス', 'A 標準', 'B 細かい粒', 'I 大小の入れ子', 'K 斜めの流れ', 'F 惑星に寄るリング', 'D 立ちクロスのリング', 'E 大きいリング', 'ジャイロ・ゆるやか'],
+  spiral: ['C ゆったり大回り', 'E 大きく包む渦', 'F 近くで速い渦', 'G ヘアライン', 'I 大小の入れ子', 'K 斜めの流れ', 'H 縦のクロス', 'B 大げさな渦巻き', 'アトム 8本', '花のリング', 'アトム 6本', 'ジャイロ・縦のクロス', 'ジャイロ・斜めの流れ'],
 };
 const variantRemoved = (m, name) => (VARIANT_REMOVED[m] || []).includes(name);
+/* 【2026-08-29 ヒデさん指定】variantRow(glowEcho/valSaas/valAi)は key で管理するので、key で恒久除外する。 */
+const VARIANT_REMOVED_KEY = {
+  glowEcho: ['k5', 'k6', 'k9', 'k1', 'k4', 'k8'],
+  valSaas:  ['S1', 'S13', 'S14', 'S12', 'S11', 'S6', 'S15'],
+  valAi:    ['A2', 'A11', 'A14', 'A15', 'A12', 'A9', 'A7', 'A19', 'A17', 'A3', 'A5', 'A18'],
+};
+const variantRemovedKey = (bucket, key) => (VARIANT_REMOVED_KEY[bucket] || []).includes(key);
 /* ===== さらに5案 (2026-08-27 ヒデさん指定) =====
    狙う印象は【先進的 / 上品 / 洗練】。A〜F より思い切って見た目を変える。
    ⚠️ デザイン(惑星・軌道・ドットの絵)は変えない。変えるのは配置と、その案のつまみだけ。
@@ -11556,7 +11569,7 @@ function variantRow(bucket, items, getSel, setSel, mark) {
     row.innerHTML = '';
     let k = 0;
     items.forEach(it => {
-      if (hid.includes(it.key)) return;
+      if (hid.includes(it.key) || variantRemovedKey(bucket, it.key)) return;   /* 完全削除(VARIANT_REMOVED_KEY)は key で恒久除外 */
       const label = (mark === 'num' ? String(k + 1) : LET[k]) + ' '
         + String(it.name).replace(/^[A-Za-z]{0,2}\d{0,2}\s+/, '');
       k++;
@@ -11588,14 +11601,15 @@ function variantRow(bucket, items, getSel, setSel, mark) {
       b.appendChild(x);
       row.appendChild(b);
     });
-    if (hid.length) {
+    const restorable = hid.filter(kk => !variantRemovedKey(bucket, kk));   /* 完全削除(VARIANT_REMOVED_KEY)は復元一覧にも出さない */
+    if (restorable.length) {
       const back = document.createElement('button');
       back.type = 'button';
       back.className = 'var-pill var-back';
-      back.textContent = `↺ 消した案を戻す (${hid.length})`;
+      back.textContent = `↺ 消した案を戻す (${restorable.length})`;
       back.onclick = () => {
         pickModal('消した案を戻す', '戻したい案の「戻す」を押してください。まとめて全部は戻しません。',
-          hid.map(kk => (items.find(q => q.key === kk) || {}).name || kk),
+          restorable.map(kk => (items.find(q => q.key === kk) || {}).name || kk),
           nm => {
             const it = items.find(q => q.name === nm);
             const i2 = hid.indexOf(it ? it.key : nm);
