@@ -5086,8 +5086,8 @@ function convShapePool(n) {
   };
   convShapeGradB = []; convShapeGradF = [];
   for (let i = 0; i < n; i++) {
-    const dir = i % 2;                                   /* 1本ごとに向きを入れ替え(カンプの外/内と同じ) */
-    const white = dir ? 0.403846 : 0.490385;             /* カンプ実測: 外=0.40 / 内=0.49(白の位置は描画時に土星だけずらす) */
+    const dir = i % 2;                                   /* 1本ごとに向きを入れ替え(カンプの外/内と同じ・色の向きだけ) */
+    const white = 0.490385;                              /* 2026-08-29 ヒデさん指定: 白位置のずらし(0.40/0.49)を撤去。全リング同じ白位置 */
     convShapeGradB.push(mkGrad(defsB, 'gShRB' + i, dir, white));
     convShapeGradF.push(mkGrad(defsF, 'gShRF' + i, dir, white));
     convShapeBack.push(mk(backHost, dotsBackG, false));    /* 惑星の裏(z1) */
@@ -5139,9 +5139,8 @@ function convDrawShape() {
       const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
-    /* 【2026-08-29 ヒデさん指定・改】白位置の「輪ごとのずらし」は不自然だったので削除。全リング同じ白位置に。 */
-    const dir = i % 2, baseW = dir ? 0.403846 : 0.490385;
-    const white = baseW;
+    /* 【2026-08-29 ヒデさん指定】白位置のずらし(0.40/0.49の交互)を撤去。全リング同じ白位置に統一。 */
+    const white = 0.490385;
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
     const swBase = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth);
     /* 【2026-08-29 ヒデさん指定】遠近を軌道の線にも: 手前(下=front)を太く・奥(上=back)を細く */
