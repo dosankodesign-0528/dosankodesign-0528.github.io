@@ -1183,11 +1183,26 @@
   [data-hover="color"] .cg-img img { filter: grayscale(1) contrast(1.02); }
   [data-hover="color"] .cg-cell:hover .cg-img img { filter: none; transform: scale(1.04); }
   [data-hover="color"] .cg-cell:hover .cg-tag { border-color: #0EBBFF; color: #0EBBFF; }
+  /* F パスのトリミング (2026-08-29 ヒデさん指定):
+     サムネイルの4辺が、それぞれの「時計回りの始点」から同時に伸びて矩形を閉じる。
+     一筆書き(SVG dasharray)ではなく、4辺独立の scaleX/scaleY で。四隅で同時に出会う。
+       上辺 origin:left(左上→右) / 右辺 origin:top(右上→下) / 下辺 origin:right(右下→左) / 左辺 origin:bottom(左下→上)
+     線: #000 1px・角丸なし・画像の輪郭にぴったり(外へオフセットなし)。描く0.55s / 戻る0.5s / ease相当。
+     画像は同時に scale1.0→1.04(中央基点・0.35sで線より先に着地)。文字・浮き・影・背景は一切変化なし。 */
+  .cg-edge { position: absolute; background: #000; pointer-events: none; z-index: 2;
+             transition: transform .5s cubic-bezier(.25,.1,.25,1); }
+  .cg-e-t { top: 0; left: 0; right: 0; height: 1px; transform: scaleX(0); transform-origin: left center; }
+  .cg-e-r { top: 0; right: 0; bottom: 0; width: 1px; transform: scaleY(0); transform-origin: center top; }
+  .cg-e-b { bottom: 0; left: 0; right: 0; height: 1px; transform: scaleX(0); transform-origin: right center; }
+  .cg-e-l { top: 0; left: 0; bottom: 0; width: 1px; transform: scaleY(0); transform-origin: center bottom; }
+  [data-hover="trim"] .cg-cell:hover .cg-edge { transform: scale(1); transition-duration: .55s; }
+  [data-hover="trim"] .cg-img img { transition: transform .35s cubic-bezier(.25,.1,.25,1); }
+  [data-hover="trim"] .cg-cell:hover .cg-img img { transform: scale(1.04); }
   .cg-tl { left: 0;   top: 0;     height: 295px; }
   .cg-tr { left: 50%; top: 0;     height: 295px; }
   .cg-bl { left: 0;   top: 295px; height: 294px; }
   .cg-br { left: 50%; top: 295px; height: 294px; }
-  .cg-img { flex: 0 0 260px; width: 260px; height: 173px; overflow: hidden; }
+  .cg-img { position: relative; flex: 0 0 260px; width: 260px; height: 173px; overflow: hidden; }
   .cg-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .cg-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 27px; }
   .cg-quote {
@@ -9072,6 +9087,15 @@ function applyCaseHover() {
       i.className = 'cg-uline';
       c.appendChild(i);
     }
+    /* F案「パスのトリミング」で使う4辺の線を、まだ無ければサムネイルに入れる(実体要素) */
+    const img = c && c.querySelector('.cg-img');
+    if (img && !img.querySelector('.cg-edge')) {
+      ['t', 'r', 'b', 'l'].forEach(side => {
+        const e = document.createElement('span');
+        e.className = 'cg-edge cg-e-' + side;
+        img.appendChild(e);
+      });
+    }
   });
 }
 function applyMarquee() {
@@ -12277,6 +12301,7 @@ function buildPanel() {
     { key: 'line',  name: 'C 下線が伸びる', tip: '水色の線が左から引かれ、社名が少し右へずれます。読ませたい時向き。' },
     { key: 'focus', name: 'D ほかが引く', tip: '触った1枚だけが残り、他の3枚が薄くなります。1件に集中させたい時。' },
     { key: 'color', name: 'E 写真が色づく', tip: 'ふだんは白黒で、触ると色が戻ります。タグも水色になります。' },
+    { key: 'trim',  name: 'F パスのトリミング', tip: 'サムネイルの4辺が、各辺の始点から同時に伸びて矩形を囲み、画像がゆっくり拡大します。文字・影・浮きは変化しません。' },
   ];
   pillRow(CASE_HOVERS, it => (params.patterns.caseHover || 'zoom') === it.key,
     it => { params.patterns.caseHover = it.key; applyCaseHover(); markDirty(); },
