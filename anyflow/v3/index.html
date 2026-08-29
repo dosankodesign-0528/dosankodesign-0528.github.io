@@ -771,10 +771,11 @@
   .dc-one .ds-word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     font-family: var(--font-en); font-weight: 200; font-size: 34px; letter-spacing: 1.7px; color: #fff; white-space: nowrap;
     will-change: transform, opacity, filter; backface-visibility: hidden; }
-  /* テキストスライド案のレイアウト: 右リストを隠し、モックを dev1 と同じ原寸(等倍)で中央に */
+  /* テキストスライド案のレイアウト: 右リストを隠し、モックを dev1 と同じ原寸(840×504)で中央に。
+     左後ろ・右後ろのカードが見えるよう perspective とゆとりを持たせる(V1.0の3枚カルーセル) */
   #dev.ds2-slide .dev-list { display: none; }
-  #dev.ds2-slide .dev2-wrap { background: none; max-width: none; height: auto; justify-content: center; }
-  #dev.ds2-slide .dev2-stack { flex: 0 0 auto; width: 840px; height: 504px; margin: 0 auto; align-self: center; }
+  #dev.ds2-slide .dev2-wrap { background: none; max-width: none; height: auto; justify-content: center; overflow: visible; }
+  #dev.ds2-slide .dev2-stack { flex: 0 0 auto; width: 840px; height: 520px; margin: 0 auto; align-self: center; perspective: 1600px; overflow: visible; }
 
   /* ---- dev1: 単体パネル(エディタ+チャット) 840×504 を中央に (カンプ 24718) ---- */
   .dev1-mock { position: relative; width: 840px; height: 504px; max-width: 100%; }
@@ -2207,7 +2208,9 @@
 <div class="tools">
 <div class="panel closed" id="panel">
   <div class="panel-head" id="panelHead">
-    <span>⚙️ モーション調整パネル<span class="panel-head-sub">クリックで開く</span></span>
+    <span>⚙️ 調整パネル<span class="panel-head-sub">クリックで開く</span></span>
+    <!-- 【2026-08-29 ヒデさん指定】タイトル横にコンパクトな「編集する」ボタン。クリックで直接編集モードのオン/オフ。 -->
+    <button class="panel-edit-btn" id="panelEditBtn" title="オブジェクトを直接編集">✏️ 編集</button>
     <span class="chev">▲</span>
   </div>
   <div class="panel-body" id="panelBody"></div>
@@ -2865,7 +2868,8 @@ const DEFAULTS = {
        'slide'=テキストスライド(見出しの箱がCLI→SDK→APIと切替、モックも同期。dev1と同サイズ・モック内アニメOFF)。
        slideMotion=箱の切替モーション(snap/flip/blur)、slideHold=各語をホールドする割合、slideSnapK=スナップのキレ。 */
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1,
-               ds2: 'list', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4 },
+               ds2: 'list', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4,
+               slideEvery: 3.0, slideDur: 0.5 },   /* 自動スロットの間隔と切替時間(秒) */
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
     cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
@@ -8615,8 +8619,9 @@ let devFin = 0;
 /* 【2026-08-25 ヒデさん指定】dev2 の3枚カルーセル(V1.0踏襲)。右の API/CLI/SDK をホバーして
    devScreen2 が変わると席が回り、3Dっぽく入れ替わって見える。dev2 が画面に入っている間だけ毎フレーム位置を書く。
    全体を DEV2_SCALE で dev2 に収める。 */
-/* 【2026-08-29 ヒデさん指定】テキストスライド案は dev1 と同サイズ(等倍)。list案は従来どおり 0.6。 */
-function dev2Scale() { return (params.sections.dev.ds2 === 'slide') ? 0.92 : 0.6; }
+/* 【2026-08-29 ヒデさん指定】テキストスライド案は手前のモックが dev1 と同サイズ(840×504)になるよう
+   1/0.905(front席のsc)=1.105 で等倍化。list案は従来どおり 0.6。 */
+function dev2Scale() { return (params.sections.dev.ds2 === 'slide') ? 1.105 : 0.6; }
 function updateDev2Stack() {
   if (!devEls.block2 || !devEls.mock) return;
   const r = rectOf(devEls.block2);
@@ -8702,17 +8707,31 @@ function dsFillStaticAll() {
   });
   dsStaticFilled = true;
 }
-function updateDevSlide(p) {
+/* 【2026-08-29 ヒデさん指定・改】スクロール連動をやめて【時間駆動の自動カルーセル】に。
+   ビューポートに入ったら(=dev2の入場クロック s)、①語が左右に分かれて箱がマスクで開く →
+   ②CLI→SDK→API と一定間隔(slideEvery)で自動で切り替わり続ける(ループ)。モックも同期。 */
+function updateDevSlide(s) {
   const d = params.sections.dev;
   if (!dsEls.box) return;
-  const open = clamp01(p / 0.16), oe = 1 - Math.pow(1 - open, 3);
+  if (s < 0) { dsResetBox(); return; }
+  /* ① 入場から少し置いて(見出しが出たあと)、語が左右に開いて箱が出る */
+  const open = clamp01((s - 0.55) / 0.55), oe = 1 - Math.pow(1 - open, 3);
   dsEls.box.style.width = (DS_BOX_W * oe).toFixed(1) + 'px';
   dsEls.box.style.margin = oe > 0.02 ? '0 12px' : '0';
-  const q = clamp01((p - 0.16) / 0.84), N = DS_WORDS.length;
-  const raw = Math.min(N - 1e-6, q / (1 / N));
-  const idx = Math.floor(raw), within = raw - idx, hold = d.slideHold != null ? d.slideHold : 0.62;
-  const tr = within < hold ? 0 : (within - hold) / (1 - hold);
-  const nextIdx = Math.min(N - 1, idx + 1);
+  /* ② 自動スロット: 箱が開ききってから、slideEvery 秒ごとに次の語へ(ループ) */
+  const N = DS_WORDS.length;
+  const every = Math.max(1.2, d.slideEvery != null ? d.slideEvery : 3.0);
+  const dur = Math.max(0.2, Math.min(every - 0.3, d.slideDur != null ? d.slideDur : 0.5));
+  const tSlot = s - (0.55 + 0.55 + 0.25);   /* 箱が開ききって一呼吸おいてから回り始める */
+  let idx = 0, tr = 0;
+  if (tSlot > 0) {
+    const cyc = tSlot / every;
+    idx = Math.floor(cyc) % N;
+    const within = cyc - Math.floor(cyc);
+    const trStart = 1 - dur / every;          /* 各サイクルの終わり dur 秒で切り替える(それまでホールド) */
+    tr = within < trStart ? 0 : (within - trStart) / (dur / every);
+  }
+  const nextIdx = (idx + 1) % N;
   dsEls.out.textContent = DS_WORDS[idx]; dsEls.in.textContent = DS_WORDS[nextIdx];
   const motion = d.slideMotion || 'snap';
   const e = motion === 'snap' ? dsSnapEase(tr, d.slideSnapK || 3.4) : tr;
@@ -8727,7 +8746,7 @@ function updateDevSlide(p) {
     dsEls.out.style.transform = 'none'; dsEls.out.style.opacity = (1 - e).toFixed(2); dsEls.out.style.filter = `blur(${(e * 7).toFixed(1)}px)`;
     dsEls.in.style.transform = 'none'; dsEls.in.style.opacity = e.toFixed(2); dsEls.in.style.filter = `blur(${((1 - e) * 7).toFixed(1)}px)`;
   }
-  const shownIdx = (oe < 0.5) ? 0 : (tr >= 0.5 ? nextIdx : idx);
+  const shownIdx = tr >= 0.5 ? nextIdx : idx;
   const scr = DS_SCREENS[shownIdx];
   if (devScreen2 !== scr) { devScreen2 = scr; }   /* カルーセルが updateDev2Stack で同期して回る */
 }
@@ -8760,11 +8779,9 @@ function updateDev2Reveal() {
   const on = kBlock > 0.35;
   if (slide) {
     /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。
-       箱(CLI/SDK/API)はスクロールで駆動し、devScreen2 が切り替わってカルーセルが同期して回る。 */
+       箱(CLI/SDK/API)はビューポート入場で発火する時間駆動の自動カルーセル。 */
     dsFillStaticAll();
-    const vh2 = innerHeight || 1;
-    const pSlide = clamp01((vh2 * 0.9 - centerY) / (vh2 * 0.75));
-    updateDevSlide(pSlide);
+    updateDevSlide(s);   /* s = 入場からの経過秒(dev2SeqT0)。入場前は -1 */
   } else {
     dsResetBox();
     driveEditorLoop(null, on, 'dev2');
@@ -12530,6 +12547,10 @@ function buildPanel() {
     '各語を止めておく割合。大きいほど切替がキビキビ(短い区間で一気に)。'));
   rows.push(slider('スナップのキレ', 1, 6, 0.2, () => sv().dev.slideSnapK, v => sv().dev.slideSnapK = v, v => '×' + v.toFixed(1),
     'スナップの切替の急さ。大きいほどメリハリが強く。'));
+  rows.push(slider('自動で切り替わる間隔', 1.5, 8, 0.1, () => sv().dev.slideEvery, v => sv().dev.slideEvery = v, v => v.toFixed(1) + '秒',
+    'CLI→SDK→API が自動で次へ進む間隔。'));
+  rows.push(slider('切り替えにかける時間', 0.2, 1.5, 0.05, () => sv().dev.slideDur, v => sv().dev.slideDur = v, v => v.toFixed(2) + '秒',
+    '1回の切替アニメの長さ。短いほどパキッと。'));
 
   sub(catDev, '画面が切り替わる時の見え方');
   note('右の CLI / SDK にマウスを乗せると、左のモックが回って入れ替わります。');
