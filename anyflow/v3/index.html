@@ -274,9 +274,9 @@
   /* 【2026-08-29 ヒデさん指定】Vision だけは常に固定追従なし（普通に流れる）。
      実績・事例はピン留めのまま。 */
   #vision .pin-vp { position: relative; }
-  /* 【2026-08-29 ヒデさん指定】Our Vision セクションの中身を 200px ほど下へ下げる。
-     .pin-stage は translateY(-50%) で上下中央にしているので、そこへ +200px 足す(画面px)。 */
-  #vision .pin-stage { transform: translateY(calc(-50% + 200px)) scale(var(--sp)); }
+  /* 【2026-08-29 ヒデさん指定】Our Vision は「セクション内で下げる」と中身が 100vh からはみ出して
+     見切れるので、セクションごと 200px 下へ下げる(前に 200px の余白を足す)。中身は中央のまま＝見切れない。 */
+  #vision { margin-top: 200px; }
   /* 【2026-08-29】実績→開発者体験「スムーズフェード」時は実績も固定追従なし。 */
   #results.res-smooth .pin-vp { position: relative; }
   /* 【2026-08-29】導入事例も固定追従なし（余分スクロールをなくす）。 */
@@ -7360,7 +7360,10 @@ function updateVision(p) {
   const l1At = c.line1At;
   const l2At = c.line1At + c.line2Gap;
   const splitAt = l2At + c.revealDur + c.splitGap;
-  const miniAt = splitAt + c.splitDur * c.miniGap;   /* 軌道がブラーで出る = ドットも回りはじめる */
+  /* 軌道がブラーで出る = ドットも回りはじめる。
+     【2026-08-29 ヒデさん指定】no-pin は「メッセージが出たらすぐ」グラフィックをブラー出現させる
+     (メッセージの登場が終わった直後 +0.35秒)。そのあと Point1 → Point2 の順。 */
+  const miniAt = noPin ? (l1At + c.revealDur + 0.35) : (splitAt + c.splitDur * c.miniGap);
   /* 【2026-08-15】以前は「軌道が出きってから左下へ移動」だったので待ちが長かった。
      いま は 出はじめ(moveLead 割)で もう動き出す ＝ 濃くなりながら同時に左下へ流れる */
   const autoEnd = miniAt + c.miniDur * c.moveLead;
