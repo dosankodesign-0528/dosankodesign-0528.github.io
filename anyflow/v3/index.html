@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-ds="mid">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -255,8 +255,8 @@
   /* ============================================================
      デザインシステム トークン（本番サイトの唯一の出どころ / 2026-08-29 整備）
      対象=本番サイトのみ。KV(iframe)・惑星&軌道 canvas・調整パネルは対象外(生成アート/開発UI)。
-     既定(data-ds 未指定)= low = 現行V3と完全に同じ見た目。
-     data-ds="mid" / "high" で整備レベルを切替えて比較できる（/mock/design-system/）。
+     既定= mid（<html data-ds="mid">・2026-08-29 ヒデさん採用）。見た目は現行とほぼ同じでトークンが素直。
+     ?ds=low で現行と完全一致 / ?ds=high で積極整備に切替えて比較できる（/mock/design-system/）。
      命名: 大きさで決まる物=カテゴリ+値 / 意味で決まる物=カテゴリ+役割
      ============================================================ */
   :root{
@@ -1954,7 +1954,7 @@
   .row.seg-row label { flex: 0 0 74px; }
   .seg button.on { background: #090909; color: #fff; }
 </style>
-  <script>(function(){try{var m=(location.search+location.hash).match(/ds=(low|mid|high)/);document.documentElement.setAttribute("data-ds",m?m[1]:"low");}catch(e){}})();</script>
+  <script>(function(){try{var m=(location.search+location.hash).match(/ds=(low|mid|high)/);if(m)document.documentElement.setAttribute("data-ds",m[1]);}catch(e){}})();</script>
 </head>
 <body>
 
