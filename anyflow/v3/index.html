@@ -354,59 +354,49 @@
 
   /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ 10案。
      .vis-line に str-<案>(選択中)を付け、登場しきったら str-go で発火。上品・誠実・自信・ちょいハイテク。 */
-  .vl-strong { display: inline-block; position: relative; }
+  .vl-strong { display: inline-block; position: relative; color: #101828; }
   .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
-  /* ①グラデ発光(スクロール連動): 紺→ピンクのグラデ文字＋スクロールで光る(--str-k 0〜1) */
-  .vis-line.str-glow .vl-strong {
-    background: linear-gradient(67deg,#0E4497 4%,#FF5D97 84%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 0 calc(var(--str-k,0) * 16px) rgba(255,93,151,0.6));
-    transition: filter .15s linear;
-  }
-  /* ②蛍光灯チカチカ(色は変えず点滅) */
-  .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker 1.5s steps(1,end) 1 both; }
-  @keyframes strFlicker { 0%{opacity:0} 3%{opacity:1} 5%{opacity:.2} 8%{opacity:1} 12%{opacity:.3}
-    14%{opacity:1} 20%{opacity:.5} 22%{opacity:1} 31%{opacity:.85} 33%{opacity:1} 46%{opacity:.7} 48%{opacity:1} 100%{opacity:1} }
-  /* ③シマー(光のスイープ) */
-  .vis-line.str-shimmer.str-go .vl-strong {
-    background: linear-gradient(100deg,#101828 42%,#ffffff 50%,#101828 58%); background-size:260% 100%;
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    animation: strShimmer 1.6s ease-in-out 1 both;
-  }
-  @keyframes strShimmer { from{background-position:130% 0} to{background-position:-30% 0} }
-  /* ④インク(左から色が満ちる) */
-  .vis-line.str-ink.str-go .vl-strong {
-    background: linear-gradient(90deg,#0E4497 0,#FF5D97 42%,#101828 42.01%); background-size:240% 100%; background-position:100% 0;
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    animation: strInk 1.05s cubic-bezier(.2,.7,.2,1) 1 both;
-  }
-  @keyframes strInk { from{background-position:100% 0} to{background-position:0 0} }
-  /* ⑤フォーカス(ぼけ→くっきり) */
-  .vis-line.str-focus.str-go .vl-strong { animation: strFocus 1s cubic-bezier(.2,.7,.2,1) 1 both; }
-  @keyframes strFocus { from{filter:blur(9px);opacity:.25;letter-spacing:8px} to{filter:blur(0);opacity:1;letter-spacing:0} }
-  /* ⑥太さ強調(細→標準) */
-  .vis-line.str-weight.str-go .vl-strong { animation: strWeight 1.1s ease-out 1 both; }
-  @keyframes strWeight { from{-webkit-text-stroke:0 rgba(16,24,40,0)} to{-webkit-text-stroke:.7px #101828} }
-  /* ⑦グロー呼吸 */
-  .vis-line.str-pulse.str-go .vl-strong { animation: strPulse 2.6s ease-in-out infinite; }
-  @keyframes strPulse { 0%,100%{filter:drop-shadow(0 0 0 rgba(255,93,151,0))} 50%{filter:drop-shadow(0 0 12px rgba(255,93,151,.5))} }
-  /* ⑧走査線(スキャン・ハイテク) */
-  .vis-line.str-scan.str-go .vl-strong {
-    background: linear-gradient(0deg,#101828 44%,#2ea6ff 50%,#101828 56%); background-size:100% 320%;
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    animation: strScan 1.5s linear 1 both;
-  }
-  @keyframes strScan { from{background-position:0 -110%} to{background-position:0 210%} }
-  /* ⑨色差(RGBずれが収束・ハイテク) */
-  .vis-line.str-chroma.str-go .vl-strong { animation: strChroma .85s cubic-bezier(.2,.7,.2,1) 1 both; }
-  @keyframes strChroma { 0%{text-shadow:-3px 0 rgba(255,93,151,.9),3px 0 rgba(14,68,151,.9);opacity:.7} 100%{text-shadow:0 0 transparent;opacity:1} }
-  /* ⑩グラデ揺らぎ(生きたグラデ) */
+  /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
+  .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2s) steps(1,end) 1 both; }
+  @keyframes strFlicker {
+    0%{opacity:0} 2%{opacity:1} 4%{opacity:.08} 6%{opacity:1} 8%{opacity:.15} 10%{opacity:1}
+    13%{opacity:.1} 15%{opacity:1} 19%{opacity:.25} 21%{opacity:1} 27%{opacity:.4} 29%{opacity:1}
+    38%{opacity:.55} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
+  /* ②グラデ揺らぎ(生きたグラデ) */
   .vis-line.str-live .vl-strong {
     background: linear-gradient(67deg,#0E4497,#FF5D97,#0E4497); background-size:300% 100%;
     -webkit-background-clip:text; background-clip:text; color:transparent;
     animation: strLive 7s ease-in-out infinite;
   }
   @keyframes strLive { 0%,100%{background-position:0 0} 50%{background-position:100% 0} }
+  /* ↓ ③〜⑦ スクロール連動。--str-k=1(画面中央)で「強み」が完全に重なって黒に締まる。 */
+  /* ③上下ずれ→重なる */
+  .vis-line.str-splitV .vl-strong {
+    text-shadow: 0 calc((1 - var(--str-k,0)) * -8px) rgba(255,93,151, calc((1 - var(--str-k,0)) * .85)),
+                 0 calc((1 - var(--str-k,0)) *  8px) rgba(14,68,151,  calc((1 - var(--str-k,0)) * .85));
+  }
+  /* ④左右ずれ→重なる */
+  .vis-line.str-splitH .vl-strong {
+    text-shadow: calc((1 - var(--str-k,0)) * -8px) 0 rgba(255,93,151, calc((1 - var(--str-k,0)) * .85)),
+                 calc((1 - var(--str-k,0)) *  8px) 0 rgba(14,68,151,  calc((1 - var(--str-k,0)) * .85));
+  }
+  /* ⑤色差→収束(RGBずれ) */
+  .vis-line.str-chroma .vl-strong {
+    text-shadow: calc((1 - var(--str-k,0)) * -5px) 0 rgba(255,0,72, calc((1 - var(--str-k,0)) * .9)),
+                 calc((1 - var(--str-k,0)) *  5px) 0 rgba(0,122,255, calc((1 - var(--str-k,0)) * .9));
+  }
+  /* ⑥ぼけ→くっきり */
+  .vis-line.str-focus .vl-strong {
+    filter: blur(calc((1 - var(--str-k,0)) * 8px));
+    opacity: calc(.35 + var(--str-k,0) * .65);
+    letter-spacing: calc((1 - var(--str-k,0)) * 6px);
+  }
+  /* ⑦グラデ→黒(中央で1つの黒に締まる) */
+  .vis-line.str-grad .vl-strong {
+    background: linear-gradient(90deg,#0E4497,#FF5D97);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter: saturate(calc(1 - var(--str-k,0))) brightness(calc(1 - var(--str-k,0) * .82));
+  }
 
   .vis-l1 { top: 72px; }    /* 2026-08-29: Our Vision(40+20)+gap12 = 72。カンプ準拠で上へ(旧301) */
   .vis-l2 { top: 174px; }   /* 1行化で実質未使用 */
@@ -2271,18 +2261,17 @@ const SWAYS = [
 /* 【2026-08-29 ヒデさん指定】Vision メッセージの「強み」強調アニメ 10案。
    先進的・洗練・ちょいハイテク、でも上品・誠実・自信のトンマナ。 */
 const VIS_STRONG_FX = [
-  { key: 'glow',    name: 'グラデ発光',   tip: '紺→ピンクのグラデ文字。スクロールに合わせて光ります(カンプ 15965:42705)。' },
-  { key: 'flicker', name: '蛍光灯チカチカ', tip: '色は変えず、蛍光灯が点くようにチカチカッと点滅してから点灯。' },
-  { key: 'shimmer', name: 'シマー',       tip: '金属のような光の帯が「強み」をスッと横切る。' },
-  { key: 'ink',     name: 'インク',       tip: '左から紺→ピンクの色がスッと満ちていく。' },
-  { key: 'focus',   name: 'フォーカス',   tip: 'ぼけた状態から、ピントが合ってくっきり締まる。' },
-  { key: 'weight',  name: '太さ強調',     tip: '細い字が、少しだけ芯の通った太さに締まる(誠実・自信)。' },
-  { key: 'pulse',   name: 'グロー呼吸',   tip: 'ピンクの淡い光がゆっくり呼吸するように明滅。' },
-  { key: 'scan',    name: '走査線',       tip: '水色の走査線が上から下へ1回流れる(ハイテク)。' },
-  { key: 'chroma',  name: '色差',         tip: 'RGBが一瞬ずれて、スッと1つに収束する(ハイテク)。' },
-  { key: 'live',    name: 'グラデ揺らぎ', tip: '紺⇄ピンクのグラデがゆっくり生きているように流れ続ける。' },
-  { key: 'none',    name: 'なし',         tip: '強調アニメなし。' },
+  { key: 'flicker', name: '蛍光灯チカチカ', tip: '最初は細かくパッ、パッと点滅して、だんだん余韻のように減って点灯。速さは下のスライダーで。' },
+  { key: 'live',    name: 'グラデ揺らぎ',   tip: '紺⇄ピンクのグラデがゆっくり生きているように流れ続ける。' },
+  /* ↓ スクロール連動。ビューポート中央で「強み」が完全に重なる(--str-k=1)。 */
+  { key: 'splitV',  name: '上下ずれ→重なる', tip: '「強み」が上下に半ずれ(残像)し、スクロールで画面中央に来ると重なって黒に締まる。' },
+  { key: 'splitH',  name: '左右ずれ→重なる', tip: '「強み」が左右に半ずれし、中央で重なって黒に締まる。' },
+  { key: 'chroma',  name: '色差→収束',     tip: 'RGBがずれた状態から、中央で1つに収束して黒に締まる(ハイテク)。' },
+  { key: 'focus',   name: 'ぼけ→くっきり', tip: 'ぼけて薄い状態から、中央でピントが合ってくっきり締まる。' },
+  { key: 'grad',    name: 'グラデ→黒',     tip: '紺→ピンクのグラデが、中央で1つの黒に締まる。' },
+  { key: 'none',    name: 'なし',          tip: '強調アニメなし。' },
 ];
+const VIS_STRONG_CONVERGE = ['splitV', 'splitH', 'chroma', 'focus', 'grad'];   // スクロール連動(--str-k)
 
 /* ================= ディザ演出 (惑星B ハーフトーン専用) ================= */
 const DITHERS = [
@@ -2673,7 +2662,7 @@ const DEFAULTS = {
     charDur2: 0.088,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
     typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
     lineGap: 0.20,    // 改行の間
-    graphicGap: 0.10, // 小ラベルのあとグラフィックが出るまで（早めに出す）
+    graphicGap: -0.45, // 小ラベル基準の前後。マイナス=小ラベルより前(タイピング中)に出す(2026-08-29 早める)
     revealDur: 1.5,   // ブラーで出てくる所の所要時間 (大きいほどゆったり)
     /* 【2026-08-26 ヒデさん指定】右グラフィックの入場を「1行目タイピング完了」から始める。
        introLead = 1行目完了からの前後ずらし(秒。マイナスで1行目完了より前、プラスで後)。 */
@@ -2687,7 +2676,8 @@ const DEFAULTS = {
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   dotGap: 1,           // ドットの間隔 (DOT_GAPS) 1=きっちり等間隔 / 2=ばらつかせる
   visReveal: 2,        // (未使用) 2026-08-25 以降、Our Vision=ブラー / 2行=マスク を updateVision に直書き
-  visStrongFx: 'glow', // 2026-08-29 ヒデさん指定: 「強み」強調アニメ (VIS_STRONG_FX)
+  visStrongFx: 'flicker', // 2026-08-29 ヒデさん指定: 「強み」強調アニメ (VIS_STRONG_FX)。既定=蛍光灯チカチカ
+  visFlickerDur: 2.0,  // 蛍光灯チカチカの尺(秒)。大きいほどゆっくり余韻が長い
   visSpin: 2,          // ドットの回り方は「②速く回って減速」で確定（パネルからは外した）
   visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
@@ -7370,21 +7360,23 @@ function updateVision(p) {
      選んだ案(str-<key>)を l1/l2 に付け、メッセージが出きったら str-go で発火。
      ①グラデ発光は「強み」が画面中央に近いほど強く光る(--str-k)＝スクロールで光る。 */
   {
-    const fx = params.visStrongFx || 'glow';
+    const fx = params.visStrongFx || 'flicker';
     const msgShown = A >= (l1At + c.revealDur * 0.7);
     for (const el of [visEls.l1, visEls.l2]) {
       if (!el) continue;
       for (const f of VIS_STRONG_FX) el.classList.toggle('str-' + f.key, f.key === fx && fx !== 'none');
       el.classList.toggle('str-go', msgShown && fx !== 'none');
     }
-    if (fx === 'glow' && visStrongEls.length && msgShown) {
+    /* スクロール連動の案: 「強み」が画面中央に来ると --str-k=1(完全に重なる)、遠いほど 0(ずれる) */
+    if (VIS_STRONG_CONVERGE.includes(fx) && visStrongEls.length) {
       const r = visStrongEls[0].getBoundingClientRect();
       const cy = r.top + r.height / 2;
-      const k = Math.max(0, 1 - Math.abs(cy - innerHeight * 0.5) / (innerHeight * 0.55));
+      const k = Math.max(0, Math.min(1, 1 - Math.abs(cy - innerHeight * 0.5) / (innerHeight * 0.5)));
       visEls.l1.style.setProperty('--str-k', k.toFixed(3));
     } else {
       visEls.l1.style.removeProperty('--str-k');
     }
+    if (fx === 'flicker') visEls.l1.style.setProperty('--flick-dur', (params.visFlickerDur || 2) + 's');
   }
 
   /* --- 自動パートが終わったら、続けて軌道が左下へ (同じ時計で動かす) --- */
@@ -8843,15 +8835,18 @@ function updateSections() {
      固定なしの時は「セクションが画面下から上がってくる分」を進行度として渡す。 */
   const prog = el => (params.pin === 'off' ? clamp01(preP(el)) : pinP(el));
   /* 【2026-08-29】Vision だけは固定追従なし＝入場進捗(preP)で自動再生。実績・事例は従来どおり。 */
-  const visProg = VIS_NOPIN ? clamp01(preP(SECS.vision)) : prog(SECS.vision);
+  /* 【2026-08-29 ヒデさん指定】固定追従なしは「入った瞬間に発火」だと画面外(下に peek)で
+     もう再生されてしまう。セクションがある程度画面に入ってから(上端が約75%より上)発火させる。 */
+  const NOPIN_ENTER = 0.25;   // preP をこのぶん遅らせて発火(大きいほど中に入ってから)
+  const visProg = VIS_NOPIN ? clamp01(preP(SECS.vision) - NOPIN_ENTER) : prog(SECS.vision);
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', visProg));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
   updateDev2Stack();   /* dev2 の3枚カルーセル(ホバー切替) */
   /* 【2026-08-29】導入事例も固定追従なし＝入場進捗(preP)で自動再生。 */
-  const casesProg = CASES_NOPIN ? clamp01(preP(SECS.cases)) : prog(SECS.cases);
+  const casesProg = CASES_NOPIN ? clamp01(preP(SECS.cases) - NOPIN_ENTER) : prog(SECS.cases);
   updateCases(progOverride.cases != null ? progOverride.cases : smoothTo('cases', casesProg));
   /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝入場進捗(preP)で自動再生。 */
-  const resProg = resSmooth() ? clamp01(preP(SECS.results)) : prog(SECS.results);
+  const resProg = resSmooth() ? clamp01(preP(SECS.results) - NOPIN_ENTER) : prog(SECS.results);
   updateResults(progOverride.results != null ? progOverride.results : smoothTo('results', resProg));
   if (params.pin === 'off') renderNoPin();
 }
@@ -11942,8 +11937,8 @@ function buildPanel() {
     '1行目を打ち終わってから、2行目を打ち始めるまでの間。'));
   rows.push(slider('打ち終わり→一言', 0, 3, 0.05, () => params.kv.eyebrowGap, v => params.kv.eyebrowGap = v, v => v.toFixed(2) + '秒',
     '打ち終わってから、上の「APIでデータを繋ぐ〜」が出るまで。'));
-  rows.push(slider('→ 右のグラフィックが出る', 0, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
-    'その一言（タイピング）が出てから、右のモック→アイコン→軌道が動き始めるまで。'));
+  rows.push(slider('→ 右のグラフィックが出る', -2, 2, 0.05, () => params.kv.graphicGap, v => params.kv.graphicGap = v, v => v.toFixed(2) + '秒',
+    '小ラベル基準で、右のモック→アイコン→軌道が出るタイミング。マイナスにすると小ラベルより前（タイピング中）に前倒しできます。', { signed: true }));
   rows.push(slider('ブラー解除の時間', 0.4, 3, 0.05, () => params.kv.revealDur, v => params.kv.revealDur = v, v => v.toFixed(2) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
 
@@ -11955,10 +11950,13 @@ function buildPanel() {
 
   /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ 10案 */
   sub(catVis, '「強み」の強調アニメ（10案）');
-  pillRow(VIS_STRONG_FX, it => (params.visStrongFx || 'glow') === it.key,
+  pillRow(VIS_STRONG_FX, it => (params.visStrongFx || 'flicker') === it.key,
     it => { params.visStrongFx = it.key; markDirty(); renderFrame(); },
     { get: () => params.visStrongFx, set: v => { params.visStrongFx = v; renderFrame(); } });
-  note('メッセージ「強みになる時代へ」の“強み”だけに効く強調アニメ。①グラデ発光=スクロールで光る（カンプ 15965:42705）／②蛍光灯チカチカ など。上品・誠実・自信＋ちょいハイテク。');
+  note('メッセージ「強みになる時代へ」の“強み”だけに効く強調アニメ。上下ずれ〜グラデ→黒 はスクロール連動で、画面中央に来ると完全に重なって締まります。');
+  rows.push(slider('チカチカの尺', 0.5, 5, 0.1, () => (params.visFlickerDur == null ? 2 : params.visFlickerDur),
+    v => { params.visFlickerDur = v; markDirty(); renderFrame(); }, v => v.toFixed(1) + '秒',
+    '「蛍光灯チカチカ」の長さ。大きいほど、点滅が減っていく“余韻”がゆっくり長くなります。'));
 
   /* 【2026-08-26 整理】1項目だけの見出しが並んで冗長だったので「基本」にまとめた */
   sub(catVis, '基本（長さ・ぼけ具合）');
