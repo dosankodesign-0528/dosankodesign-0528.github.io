@@ -3249,7 +3249,7 @@ const DEFAULTS = {
     resTrans: 'smooth',
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
-    caseHover: 'zoom',   // 導入事例のホバー (2026-08-27 ヒデさん指定・5案から選ぶ)
+    caseHover: 'trim',   // 導入事例のホバー = パスのトリミングを既定に (2026-08-30 ヒデさん指定)
     /* 【2026-08-28 ヒデさん指定】実績の2つの価値の、右側ピクトグラムの動き(各5案) */
     valSaas: 'S1',       // for SaaS「リアルタイムにデータ同期」
     valAi: 'A1',         // for AI「コンテキスト取得から実行」
@@ -3578,6 +3578,12 @@ function loadParams() {
       if (!['A', 'B', 'C'].includes(merged.patterns.dev)) merged.patterns.dev = 'A';
       if (!['A', 'B'].includes(merged.patterns.cases)) merged.patterns.cases = 'A';
       if (!['A', 'B', 'C'].includes(merged.patterns.mock)) merged.patterns.mock = 'B';
+      /* 【2026-08-30 ヒデさん指定】導入事例のホバーはパスのトリミング(trim)固定。選択UIを廃止したので、
+         保存値が残っている人も一度だけ trim へ寄せ直す。 */
+      if (!localStorage.getItem('anyflow-casehover-trim-20260830')) {
+        merged.patterns.caseHover = 'trim';
+        localStorage.setItem('anyflow-casehover-trim-20260830', '1');
+      }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
       merged.dots = DEFAULTS.dots.map((d, i) => ({ ...d, ...(s.dots[i] || {}) }));
@@ -13101,14 +13107,7 @@ function buildPanel() {
   sub(catDev, '基本（長さ）');
   sectionLenSlider('dev', 1600);
 
-  /* 【2026-08-29 ヒデさん指定】開発者体験2のデザイン: リスト(現行) / テキストスライド */
-  sub(catDev, '② のデザイン');
-  const ds2Note = noteLive(() => (sv().dev.ds2 === 'slide')
-    ? 'テキストスライド: 見出しの箱が CLI→SDK→API と切り替わり、モック(dev1と同サイズ)も同期して回ります。スクロールで発火。モック内アニメはオフ。'
-    : 'リスト(現行): 右の API/CLI/SDK にマウスを乗せると、左のモックが回って切り替わります。');
-  pillRow([{ key: 'list', name: 'リスト（現行）' }, { key: 'slide', name: 'テキストスライド' }],
-    it => (sv().dev.ds2 || 'list') === it.key,
-    it => { sv().dev.ds2 = it.key; ds2Note(); renderFrame(); }, null, { noRebuild: true });
+  /* 【2026-08-30 ヒデさん指定】② はテキストスライド固定(既定)。リスト/スライドの選択UIは廃止。 */
   sub(catDev, '② の出入り（スクロール位置）');
   note('② は dev1 と同じくスクロール位置で出入りします（時間再生ではないので上に戻っても急に消えません）。');
   const dsVpNote = noteLive(() => { const m = sv().dev.vpMode || 'center';
@@ -13136,57 +13135,10 @@ function buildPanel() {
   rows.push(slider('切り替えにかける時間', 0.2, 1.5, 0.05, () => sv().dev.slideDur, v => sv().dev.slideDur = v, v => v.toFixed(2) + '秒',
     '1回の切替アニメの長さ。短いほどパキッと。'));
 
-  sub(catDev, '画面が切り替わる時の見え方');
-  note('右の CLI / SDK にマウスを乗せると、左のモックが回って入れ替わります。');
-  const easeNote = noteLive(() => DEV_SWAP_EASES[(sv().dev.swapEase || 1) - 1].desc);
-  pillRow(DEV_SWAP_EASES, (_, i) => (sv().dev.swapEase || 1) === i + 1,
-    (_, i) => { sv().dev.swapEase = i + 1; easeNote(); }, null, { noRebuild: true });
-  rows.push(slider('入れ替わる時間', 0.4, 4, 0.1, () => sv().dev.stackDur, v => sv().dev.stackDur = v, v => v.toFixed(1) + '秒',
-    '3枚が回って入れ替わりきるまでの時間。大きいほどゆったり。'));
-  rows.push(slider('切り替わりのぼかし', 0, 30, 1, () => sv().dev.swapBlur, v => sv().dev.swapBlur = v, v => v + 'px',
-    '入れ替わる瞬間のぼけの強さ。0でパキッと切り替わります。'));
-
-  sub(catDev, '後ろに重なるカード');
-  const stackNote = noteLive(() => params.patterns.devStack === 'off'
-    ? '手前の1枚だけ。すっきりしますが奥行きは出ません。'
-    : '後ろに2枚が少しずれて重なり、トランプの束のような奥行きが出ます。');
-  pillRow([{ key: 'on', name: 'あり（デザイン通り）' }, { key: 'off', name: 'なし' }],
-    it => (params.patterns.devStack || 'on') === it.key,
-    it => { params.patterns.devStack = it.key; stackNote(); }, null, { noRebuild: true });
-
-  sub(catDev, '画面の中のコードの見せ方');
-  const mockNote = noteLive(() => params.patterns.mock === 'B' ? '書き出した直後の文字だけ、白くにじんで見えます。'
-    : params.patterns.mock === 'C' ? '文字が光りながら現れます。'
-    : 'そのまま素直に出します。');
-  pillRow([{ key: 'A', name: '案A そのまま' }, { key: 'B', name: '案B 白くにじむ' }, { key: 'C', name: '案C 光って出る' }],
-    it => params.patterns.mock === it.key,
-    it => { params.patterns.mock = it.key; mockNote(); }, null, { noRebuild: true });
+  /* 【2026-08-30 ヒデさん指定】リスト案用の「画面が切り替わる見え方 / 後ろに重なるカード / コードの見せ方」は廃止
+     (② はテキストスライド固定のため)。関連パラメータは既定のまま残るが、パネルからは出さない。 */
 
   /* ========== 🗂 導入事例 ========== */
-  /* 【2026-08-29 ヒデさん指定】コンバージョン背景の流れるグラデ＋ディザリング調整 */
-  const catCv = category('💠 コンバージョン（お問い合わせの流れる背景）', false);
-  catNote(catCv, 'カンプのラジアルグラデを、惑星と同じ発想で流れさせ、Bayerディザで粒立たせています。');
-  const cvv = () => (params.cv || (params.cv = {}));
-  sub(catCv, 'ディザリング（粗さ・階調）');
-  rows.push(slider('粗さ（ドットの大きさ）', 1, 8, 0.5, () => cvv().cell, v => { cvv().cell = v; }, v => v.toFixed(1) + 'px',
-    '大きいほど粗い(ドットが大きい)ディザに。1でカンプ(Size1)。'));
-  rows.push(slider('階調（レベル）', 2, 12, 1, () => cvv().levels, v => { cvv().levels = v; }, v => Math.round(v) + '段',
-    '色を何段に量子化するか。少ないほどディザが強く出ます。カンプは3段。'));
-  rows.push(slider('ディザの散り', 0, 2, 0.05, () => cvv().spread, v => { cvv().spread = v; }, v => '×' + v.toFixed(2),
-    '大きいほど点のばらつきが強く、粒感が増します。'));
-  sub(catCv, '流れる雰囲気');
-  rows.push(slider('流れる速さ', 0, 1, 0.02, () => cvv().speed, v => { cvv().speed = v; }, v => '×' + v.toFixed(2),
-    'グラデが流れる速さ。0で止まります。'));
-  rows.push(slider('うねりの強さ', 0, 0.6, 0.02, () => cvv().swell, v => { cvv().swell = v; }, v => '×' + v.toFixed(2),
-    '流れのゆらぎ(うねり)の大きさ。大きいほど大きくうねります。'));
-  rows.push(slider('流れの細かさ', 1, 8, 0.2, () => cvv().flowScale, v => { cvv().flowScale = v; }, v => '×' + v.toFixed(1),
-    '大きいほど細かい流れ、小さいほど大きな流れになります。'));
-  sub(catCv, '明るさ・コントラスト');
-  rows.push(slider('明るさ', 0.7, 1.4, 0.01, () => cvv().bright, v => { cvv().bright = v; }, v => Math.round(v * 100) + '%',
-    'カンプは104%。'));
-  rows.push(slider('コントラスト', 0.8, 2, 0.02, () => cvv().contrast, v => { cvv().contrast = v; }, v => '×' + v.toFixed(2),
-    'カンプは 1.38。'));
-
   const catCase = category('🗂 導入事例（2×2グリッド）', false);
   catNote(catCase, '見出し → 水平線が左から3本 → 中央の縦線 → カード4枚がブラーで登場。');
 
@@ -13225,23 +13177,33 @@ function buildPanel() {
   rows.push(slider('1枚が出きるまで', 0.05, 1, 0.02, () => sv().cases.cardDur, v => sv().cases.cardDur = v, v => v.toFixed(2),
     '1枚がぼけから出きるまでの長さ。'));
 
-  /* 【2026-08-27 ヒデさん指定】カードにマウスを乗せた時の動きを5案から選ぶ */
-  liveEdit = true;
-  sub(catCase, 'カードのホバー', true, { fixed: true });
-  const CASE_HOVERS = [
-    { key: 'off',   name: 'なし',        tip: 'ホバーしても何も起きません。' },
-    { key: 'zoom',  name: 'A 写真が寄る', tip: '写真だけがゆっくり拡大します。いちばん静かで、いまのトーンを崩しません。' },
-    { key: 'lift',  name: 'B 手前に浮く', tip: 'カードごと少し持ち上がり、写真もわずかに寄ります。触れる物だと分かりやすい。' },
-    { key: 'line',  name: 'C 下線が伸びる', tip: '水色の線が左から引かれ、社名が少し右へずれます。読ませたい時向き。' },
-    { key: 'focus', name: 'D ほかが引く', tip: '触った1枚だけが残り、他の3枚が薄くなります。1件に集中させたい時。' },
-    { key: 'color', name: 'E 写真が色づく', tip: 'ふだんは白黒で、触ると色が戻ります。タグも水色になります。' },
-    { key: 'trim',  name: 'F パスのトリミング', tip: 'サムネイルの4辺が、各辺の始点から同時に伸びて矩形を囲み、画像がゆっくり拡大します。文字・影・浮きは変化しません。' },
-  ];
-  pillRow(CASE_HOVERS, it => (params.patterns.caseHover || 'zoom') === it.key,
-    it => { params.patterns.caseHover = it.key; applyCaseHover(); markDirty(); },
-    { get: () => params.patterns.caseHover, set: v => { params.patterns.caseHover = v; applyCaseHover(); } },
-    { noRebuild: true, tip: it => it.tip });
+  /* 【2026-08-30 ヒデさん指定】カードのホバーは「パスのトリミング(trim)」固定(既定)。選択UIは廃止。
+     ホバーは case-grid の data-hover(= params.patterns.caseHover)で常に適用される。 */
   liveEdit = false;
+
+  /* 【2026-08-30 ヒデさん指定】コンバージョンは導入事例の下（ページ順と同じ並び）に置く。 */
+  const catCv = category('💠 コンバージョン（お問い合わせの流れる背景）', false);
+  catNote(catCv, 'カンプのラジアルグラデを、惑星と同じ発想で流れさせ、Bayerディザで粒立たせています。');
+  const cvv = () => (params.cv || (params.cv = {}));
+  sub(catCv, 'ディザリング（粗さ・階調）');
+  rows.push(slider('粗さ（ドットの大きさ）', 1, 8, 0.5, () => cvv().cell, v => { cvv().cell = v; }, v => v.toFixed(1) + 'px',
+    '大きいほど粗い(ドットが大きい)ディザに。1でカンプ(Size1)。'));
+  rows.push(slider('階調（レベル）', 2, 12, 1, () => cvv().levels, v => { cvv().levels = v; }, v => Math.round(v) + '段',
+    '色を何段に量子化するか。少ないほどディザが強く出ます。カンプは3段。'));
+  rows.push(slider('ディザの散り', 0, 2, 0.05, () => cvv().spread, v => { cvv().spread = v; }, v => '×' + v.toFixed(2),
+    '大きいほど点のばらつきが強く、粒感が増します。'));
+  sub(catCv, '流れる雰囲気');
+  rows.push(slider('流れる速さ', 0, 1, 0.02, () => cvv().speed, v => { cvv().speed = v; }, v => '×' + v.toFixed(2),
+    'グラデが流れる速さ。0で止まります。'));
+  rows.push(slider('うねりの強さ', 0, 0.6, 0.02, () => cvv().swell, v => { cvv().swell = v; }, v => '×' + v.toFixed(2),
+    '流れのゆらぎ(うねり)の大きさ。大きいほど大きくうねります。'));
+  rows.push(slider('流れの細かさ', 1, 8, 0.2, () => cvv().flowScale, v => { cvv().flowScale = v; }, v => '×' + v.toFixed(1),
+    '大きいほど細かい流れ、小さいほど大きな流れになります。'));
+  sub(catCv, '明るさ・コントラスト');
+  rows.push(slider('明るさ', 0.7, 1.4, 0.01, () => cvv().bright, v => { cvv().bright = v; }, v => Math.round(v * 100) + '%',
+    'カンプは104%。'));
+  rows.push(slider('コントラスト', 0.8, 2, 0.02, () => cvv().contrast, v => { cvv().contrast = v; }, v => '×' + v.toFixed(2),
+    'カンプは 1.38。'));
 
   /* ボタン。
      ⚠️【2026-08-19 ヒデさん指定】「動きを止める」「先頭から見直す」は削除。
