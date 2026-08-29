@@ -26,6 +26,7 @@
 | [SCROLL-RULES.md](general/SCROLL-RULES.md) | スクロール事故の防止（1画面超えは必ずスクロールバー・実測してから渡す） |
 | [general/DESIGN-SYSTEM-RULES.md](general/DESIGN-SYSTEM-RULES.md) | Figma カンプの読み方（数値を推測で埋めない） | カンプ通りに実装する時 |
 | [general/FIGMA-EFFECTS-RULES.md](general/FIGMA-EFFECTS-RULES.md) | ブラー/影を正しく実装（🔴 backdrop-blurはSVG/PNGに焼けない＝ライブCSS必須。値はFigma実測） | Figmaのガラス/影を実装する時 |
+| [general/FIGMA-OUTPUT-WORKFLOW.md](general/FIGMA-OUTPUT-WORKFLOW.md) | Web→Figma出力（ベクターはSVG取込・惑星等は2倍PNG・🔴セクションの子は相対座標で範囲内へ→appendChild） | グラフィックをFigmaのセクションへ出力する時 |
 | [general/DESIGN-SYSTEM-WORKFLOW.md](general/DESIGN-SYSTEM-WORKFLOW.md) | 既存サイトを棚卸ししてデザインシステムに整える手順 | スタイルを整理する時 |
 | [general/VERCEL-PROJECTS.md](general/VERCEL-PROJECTS.md) | 各プロジェクトの本番 URL・Vercel 設定・デプロイ手順 | デプロイ・本番反映の確認 |
 | [general/FOLDER-RESTRUCTURE-RUNBOOK.md](general/FOLDER-RESTRUCTURE-RUNBOOK.md) | フォルダ構成の整理手順（settings/ への集約・バージョンフォルダの親子化。Vercel 設定の直し方つき） | フォルダを動かす時 |
