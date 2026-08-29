@@ -5829,7 +5829,11 @@ function convFrame(geoms) {
     const cy = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
     /* 息をするようにわずかに伸び縮み(0にすると完全に固い球) */
     const breathe = 1 + Math.sin(elapsed * 0.55) * 0.03 * (M.random || 0);
-    const Rc = convPlanetR() * (M.cageR == null ? 1.75 : M.cageR) * breathe;
+    /* 【2026-08-29 ヒデさん指定】ケージ(外のネットワーク)の大きさを惑星サイズから独立させる。
+       以前は convPlanetR()(=130×惑星スケール)基準だったので「惑星を大きくすると外のケージも一緒に大きくなる」
+       状態だった。基準を固定の 130(=惑星スケール1相当)にし、ケージは cageR だけで大きさが決まるように。
+       これで「大きさ」スライダーは惑星だけを大きくする。 */
+    const Rc = 130 * (M.cageR == null ? 1.75 : M.cageR) * breathe;
     const proj = q => {
       const x1 = q.x * cy + q.z * sy, z1 = -q.x * sy + q.z * cy, y1 = q.y;      /* 縦軸まわりに回す */
       const y2 = y1 * ct - z1 * st, z2 = y1 * st + z1 * ct;                      /* 少し傾ける */
@@ -11910,23 +11914,13 @@ function buildPanel() {
   liveEdit = true;
   sub(aRoot, '', true, { fixed: true, bare: true });
   {
-    /* 「編集する」は実行ボタン。下の「いまの形を保存」とは見た目をはっきり分ける */
-    const b2 = document.createElement('button');
-    b2.type = 'button';
-    b2.className = 'gfx-edit' + (editHandles.on ? ' on' : '');
-    b2.textContent = editHandles.on ? '✏️ 編集モード中' : '✏️ グラフィックを編集する';
-    b2.onclick = () => {
-      editHandles.set(true);
-      b2.classList.add('on');
-      b2.textContent = '✏️ 編集モード中';
-    };
-    (mount || body).appendChild(b2);
-    /* 【2026-08-27 ヒデさん指定】補足は1行に。「初期の配置に戻す」ボタンは廃止 */
+    /* 【2026-08-29 ヒデさん指定】パネル内の「グラフィックを編集する」ボタンは削除。
+       グラフィック編集は調整パネル右上の ✏️編集 ボタンが担う(押すと editHandles＋siteEdit が入る)。
+       ここには編集モード中に動的に出る数値パネル(X/Y/W/H/角度)と、行き先の案内だけ残す。 */
     const n2 = document.createElement('div');
     n2.className = 'grp-note';
-    n2.textContent = '輪や惑星をクリック → 辺で幅・高さ、角で縦横（縦横比は保ちません）、角の外で回転。';
+    n2.textContent = '右上の ✏️編集 を押すと編集モード。輪や惑星をクリック → 辺で幅・高さ、角で縦横、角の外で回転。';
     (mount || body).appendChild(n2);
-    /* 選んだオブジェクトの数値パネル(X/Y/W/H/角度)。編集モード中に動的に出る ← 仕様は変更なし */
     buildNumPanel(mount || body);
   }
 
@@ -12261,8 +12255,8 @@ function buildPanel() {
         row.appendChild(b);
         (mount || body).appendChild(row);
         note((params.conv.mesh.style || 'organic') === 'cage'
-          ? 'ケージ(球殻)は立体の並びなので、頂点の手置きはできません。上の「グラフィックを編集する」で輪と惑星を動かせます。'
-          : '「グラフィックを編集する」を押すと、各ノードに丸いつまみが出ます。ドラッグで頂点の位置を決められます（編集中は漂いが止まります）。');
+          ? 'ケージ(球殻)は立体の並びなので、頂点の手置きはできません。右上の ✏️編集 で輪と惑星を動かせます。'
+          : '右上の ✏️編集 を押すと、各ノードに丸いつまみが出ます。ドラッグで頂点の位置を決められます（編集中は漂いが止まります）。');
       }
       slider('ノードの数', 3, 60, 1, () => params.conv.mesh.nodes,
         v => { M.nodes = v; if (M.pts && M.pts.length !== Math.round(v)) M.pts = null; },
