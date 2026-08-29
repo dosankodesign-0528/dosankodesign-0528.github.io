@@ -12977,12 +12977,7 @@ function buildPanel() {
   const catRes = category('📈 実績（導入企業◯◯社などの数字）', false);
   catNote(catRes, '見出し → 数字と本文 → 見終わると暗くなって次のセクションへ。');
 
-  /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「切替演出」を選べる */
-  sub(catRes, '開発者体験への切替演出');
-  segRow('切替', [['スムーズフェード', 'smooth'], ['黒オブジェクト', 'black']],
-    () => (params.patterns.resTrans === 'black' ? 'black' : 'smooth'),
-    v => { params.patterns.resTrans = v; markDirty(); if (typeof fit === 'function') fit(); renderFrame(); });
-  note('「スムーズフェード」＝スクロールジャック・固定追従なしで普通に下へ流せます。背景が自然にクロスフェードで暗くなって開発者体験に切り替わり、黒オブジェクトは出ません。');
+  /* 【2026-08-30 ヒデさん指定】実績→開発者体験の切替は「スムーズフェード」固定(既定)。選択UIは廃止。 */
 
   /* ⚠️【2026-08-26 ヒデさん指定】「レイアウトを選ぶ」(案A/B/C)は削除。実績は新デザイン1本に統一。 */
   sub(catRes, '基本（長さ・ぼけ具合）');
@@ -13004,13 +12999,7 @@ function buildPanel() {
     '見出しが何割出たら数字が出るか。大きいほど後から出ます。'));
   rows.push(slider('数字と本文が出る', 0.4, 4, 0.1, () => sv().results.softDur, v => sv().results.softDur = v, v => v.toFixed(1) + '秒',
     '線・数字・本文がぼけから出きるまで。'));
-  rows.push(slider('写真が出るまで', 0, 3, 0.05, () => sv().results.imgAt, v => sv().results.imgAt = v, v => v.toFixed(2) + '秒後',
-    '案Aのみ。文字が出たあと、何秒で写真が現れるか。'));
-
-  sub(catRes, '写真の奥行き');
-  rows.push(slider('スクロールでのズレ', -60, 60, 2, () => sv().results.parallax, v => sv().results.parallax = v, v => v + '%',
-    '真ん中(0)でズレません。右へ動かすほど奥行きが出ます。左は逆向きのズレです。',
-    { signed: true }));
+  /* 【2026-08-30 ヒデさん指定】「写真が出るまで」「写真の奥行き」は、いま写真を置いていないので廃止。 */
 
   sub(catRes, '数字が回って止まる演出');
   note('数字が桁ごとに回り、左の桁から順に止まります。');
