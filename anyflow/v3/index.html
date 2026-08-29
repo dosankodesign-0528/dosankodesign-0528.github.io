@@ -12319,65 +12319,29 @@ function buildPanel() {
     '文字が出る時・消える時のぼやけの強さ。'));
 
   sub(catVis, '① 「Our Vision」の小さい文字');
-  note('キーメッセージの上に出る小さいラベル。文字とぶつからないよう先に消します。');
+  note('メッセージの上に出る小さいラベル。いまは消えず出しっぱなしです。');
   rows.push(slider('出るまで', 0, 3, 0.05, () => sv().vision.labelAt, v => sv().vision.labelAt = v, v => v.toFixed(2) + '秒後',
-    'セクションが始まってから「Our Vision」が出るまでの時間。'));
+    'セクションに入って(発火して)から「Our Vision」が出るまでの時間。'));
   rows.push(slider('出きるまで', 0.4, 4, 0.1, () => sv().vision.labelDur, v => sv().vision.labelDur = v, v => v.toFixed(1) + '秒',
     'ぼやけた状態からくっきりするまで。大きいほどゆったり。'));
-  rows.push(slider('消し始める', 0, 2, 0.05, () => sv().vision.labelOutLead, v => sv().vision.labelOutLead = v, v => v.toFixed(2) + '秒前',
-    '分かれ始める何秒前から消すか。大きいほど早めに消えます。'));
-  rows.push(slider('消えきるまで', 0.2, 2, 0.05, () => sv().vision.labelOutDur, v => sv().vision.labelOutDur = v, v => v.toFixed(2) + '秒',
-    '消えきるまでの時間。小さいほどサッと消えます。'));
 
-  sub(catVis, '② キーメッセージ2行が出る');
-  note('「つなぐことが、」「強みになる時代へ。」の2行です。');
-  rows.push(slider('1行目が出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
-    'セクションが始まってから1行目が出るまでの時間。'));
-  rows.push(slider('2行目のディレイ', 0.1, 3, 0.05, () => sv().vision.line2Gap, v => sv().vision.line2Gap = v, v => v.toFixed(2) + '秒',
-    '大きいほど、ひと呼吸おいてから2行目が出ます。'));
-  rows.push(slider('1行が出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
-    '1行がぼけた状態から出きるまでの時間。'));
+  /* 【2026-08-29 ヒデさん指定・整理】いまは「1行・分裂なし・その場で出す(固定追従なし)」なので、
+     旧「2行/消える・分裂/左下へ移動」の節は廃止。塊は メッセージ / 左グラフィック / ポイント1・2 だけ。 */
+  sub(catVis, '② メッセージ');
+  note('「データをつなぐことが、強みになる時代へ。」がマスクで出ます。出る“間隔”は下の「表示タイミング」で。');
+  rows.push(slider('メッセージが出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
+    'セクションに入って(発火して)からメッセージが出るまでの時間。'));
+  rows.push(slider('メッセージが出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
+    'ぼけた状態から出きるまでの時間。'));
   rows.push(slider('1文字ずつずらす', -0.9, 0.9, 0.05, () => sv().vision.charLag, v => sv().vision.charLag = v, v => Math.round(v * 100) + '%',
-    '真ん中(0)で行まるごと同時。左右どちらへ動かしても1文字ずつバラバラになります（順番が逆になります）。',
-    { signed: true }));
+    '真ん中(0)で行まるごと同時。左右どちらへ動かしても1文字ずつバラバラに出ます。', { signed: true }));
 
-  sub(catVis, '③ キーメッセージが消える');
-  note('2行が出そろったあと、その場でブラーで消えます（上下に分かれる演出は廃止・既定オフ）。');
-  rows.push(slider('消え始めるまで', -0.6, 2, 0.05, () => sv().vision.splitGap, v => sv().vision.splitGap = v, v => v.toFixed(2) + '秒',
-    '0で出そろってすぐ。マイナスで出きる前から消え始めます。'));
-  rows.push(slider('消えのタイミング幅', 0.4, 4, 0.1, () => sv().vision.splitDur, v => sv().vision.splitDur = v, v => v.toFixed(1) + '秒',
-    '消えるタイミングと、輪が現れるタイミングの基準になる時間。'));
-  rows.push(slider('消え始める', 0, 1, 0.05, () => sv().vision.vanishAt, v => sv().vision.vanishAt = v, v => Math.round(v * 100) + '%',
-    '基準時間の何割で消え始めるか。小さいほど早く薄くなります。'));
-  rows.push(slider('消えきるまで', 0.3, 3, 0.05, () => sv().vision.vanishDur, v => sv().vision.vanishDur = v, v => v.toFixed(2) + '秒',
-    '消えきるまでの時間。小さいほどサッと消えます。'));
-  rows.push(slider('上下に開く量（任意）', -260, 260, 4, () => sv().vision.splitAmt, v => sv().vision.splitAmt = v, v => v + 'px',
-    '真ん中(0)で分かれません（既定）。右へ動かすと上下に開き、左へ動かすと逆向きに開きます。',
-    { signed: true }));
-  rows.push(slider('開いて流れる量（任意）', -320, 320, 5, () => sv().vision.driftAmt, v => sv().vision.driftAmt = v, v => v + 'px',
-    '真ん中(0)で流れません（既定）。左右どちらへ動かしても流れます（向きが逆になります）。',
-    { signed: true }));
-
-  sub(catVis, '④ 輪が現れて左下へ移動する');
-  note('右側に小さく現れ（デザイン位置）、メッセージが消えたあと左下へ動きながら実物大になります。');
-  rows.push(slider('現れる横位置', 0, 1440, 5, () => sv().vision.miniCX, v => sv().vision.miniCX = v, v => Math.round(v) + 'px',
-    '小さく現れる時の左右位置（中心）。デザインは 1134px（右寄り）。'));
-  rows.push(slider('現れる縦位置', 0, 921, 5, () => sv().vision.miniCY, v => sv().vision.miniCY = v, v => Math.round(v) + 'px',
-    '小さく現れる時の上下位置（中心）。デザインは 417px。'));
-  rows.push(slider('現れるまで', 0, 1, 0.05, () => sv().vision.miniGap, v => sv().vision.miniGap = v, v => Math.round(v * 100) + '%',
-    '開く動きの何割で輪が現れるか。小さいほど早く現れます。'));
-  rows.push(slider('現れきるまで', 0.4, 3, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + '秒',
-    'ぼやけた状態からくっきり現れるまでの時間。'));
-  rows.push(slider('動き出すまで', 0, 1, 0.05, () => sv().vision.moveLead, v => sv().vision.moveLead = v, v => Math.round(v * 100) + '%',
-    '輪が何割見えたら左下へ動き出すか。0%で現れると同時。'));
-  rows.push(slider('左下へ着くまで', 0.8, 6, 0.1, () => sv().vision.moveDur, v => sv().vision.moveDur = v, v => v.toFixed(1) + '秒',
-    '左下の定位置まで移動する時間。大きいほどゆったり。'));
-  rows.push(slider('現れる時の小ささ', 0.1, 0.6, 0.01, () => sv().vision.miniScale, v => sv().vision.miniScale = v, v => '×' + v.toFixed(2),
-    '現れた時点の大きさ。デザイン(幅約293px)は ×0.31。小さいほど、そのあと大きく育ちます。'));
-  rows.push(slider('現れる縦位置の微調整', -300, 300, 5, () => sv().vision.miniY, v => sv().vision.miniY = v, v => v + 'px',
-    '「現れる縦位置」からのさらに微調整。プラスで下へ。'));
+  sub(catVis, '③ 左のグラフィック（軌道）');
+  note('メッセージの下（左）にブラーで出る軌道グラフィック。出る“間隔”は下の「表示タイミング」で。');
+  rows.push(slider('出きるまで', 0.4, 3, 0.1, () => sv().vision.miniDur, v => sv().vision.miniDur = v, v => v.toFixed(1) + '秒',
+    'ぼけた状態からくっきり出るまでの時間。'));
   rows.push(slider('輪の線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
-    '2本の輪の線の太さ。'));
+    '軌道の線の太さ。'));
 
   /* 【2026-08-29 ヒデさん指定】固定追従なし(時間再生)の「ブロックの表示タイミング」を細かく調整。
      塊＝メッセージ / グラフィック / ポイント1 / ポイント2。メッセージ自体は上の「1行目が出るまで」。 */
@@ -12399,22 +12363,13 @@ function buildPanel() {
   rows.push(slider('1個が出きるまで', 0.1, 2, 0.05, () => sv().vision.dotsInDur, v => sv().vision.dotsInDur = v, v => v.toFixed(2) + '秒',
     '長いほど、ゆっくり膨らんで濃くなります。'));
 
+  /* 【2026-08-29 整理】Vision は常に固定追従なし。固定用(何周して止まる等)の分岐は廃止。 */
   sub(catVis, '⑥ 図の玉が回って止まる');
-  if (params.pin === 'off') {
-    note('画面に入ってから少し回って、デザイン通りの位置で止まります。');
-    rows.push(slider('回る角度', 0, 180, 5, () => sv().vision.npSpinDeg, v => sv().vision.npSpinDeg = v, v => v.toFixed(0) + '°',
-      '止まるまでに回る角度。0でまったく回りません。'));
-    rows.push(slider('止まるまで', 0.2, 3, 0.1, () => sv().vision.npSpinDur, v => sv().vision.npSpinDur = v, v => v.toFixed(1) + '秒',
-      '短いほど「サッと動いてすぐ止まる」感じになります。'));
-  } else {
-    note('定位置に着いたあとしばらく回り、減速して止まってから役割名が出ます。');
-    rows.push(slider('何周して止まるか', 0.25, 4, 0.25, () => sv().vision.spinLaps, v => sv().vision.spinLaps = v, v => v.toFixed(2) + '周',
-      '1.00周できっちり一周し、デザイン通りの位置で止まります。'));
-    rows.push(slider('回り続ける時間', 0.5, 10, 0.1, () => sv().vision.spinHold, v => sv().vision.spinHold = v, v => v.toFixed(1) + '秒',
-      '止まり始めるまで。この間に Platform と2つの価値が出ます。'));
-    rows.push(slider('減速して止まる時間', 0.5, 6, 0.5, () => sv().vision.spinBrake, v => sv().vision.spinBrake = v, v => v.toFixed(1) + '秒',
-      '大きいほど、じわーっと粘って止まります。'));
-  }
+  note('画面に入ってから少し回って、デザイン通りの位置で止まります。');
+  rows.push(slider('回る角度', 0, 180, 5, () => sv().vision.npSpinDeg, v => sv().vision.npSpinDeg = v, v => v.toFixed(0) + '°',
+    '止まるまでに回る角度。0でまったく回りません。'));
+  rows.push(slider('止まるまで', 0.2, 3, 0.1, () => sv().vision.npSpinDur, v => sv().vision.npSpinDur = v, v => v.toFixed(1) + '秒',
+    '短いほど「サッと動いてすぐ止まる」感じになります。'));
 
   /* 【2026-08-26 整理】見出しだけが空で、中身(見出し/Point01/Point02)が同じ階層に並んでいたので入れ子に直した */
   sub(catVis, '⑦ 「2つの価値」の文字の位置');
