@@ -376,6 +376,11 @@
     animation: strLive 7s ease-in-out infinite;
   }
   @keyframes strLive { 0%,100%{background-position:0 0} 50%{background-position:100% 0} }
+  /* 【2026-08-29 ヒデさん指定】「つなぐ」に常時グラデ揺らぎ(生きたグラデ)。強みの効果とは独立して常に流れる。 */
+  .vl-nagu { display:inline-block; position:relative;
+    background: linear-gradient(67deg,#0E4497,#FF5D97,#0E4497); background-size:300% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation: strLive 7s ease-in-out infinite; }
   /* ↓ ③〜⑦ スクロール連動。--str-k=1(画面中央)で「強み」が完全に重なって黒に締まる。 */
   /* ③上下ずれ→重なる */
   .vis-line.str-splitV .vl-strong {
@@ -7395,13 +7400,15 @@ const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶ�
     const text = inner.textContent;
     inner.textContent = '';
     const strongStart = text.indexOf('強み');
-    let strongWrap = null;
+    const naguStart = text.indexOf('つなぐ');   /* 【2026-08-29 ヒデさん指定】「つなぐ」に常時グラデ揺らぎ */
+    let strongWrap = null, naguWrap = null;
     [...text].forEach((ch, idx) => {
       const s = document.createElement('span');
       s.className = 'vl-ch';
       s.textContent = ch;
       visEls.chars[i].push(s);
       const isStrong = strongStart >= 0 && idx >= strongStart && idx < strongStart + 2;
+      const isNagu = naguStart >= 0 && idx >= naguStart && idx < naguStart + 3;
       if (isStrong) {
         if (!strongWrap) {
           strongWrap = document.createElement('span');
@@ -7410,6 +7417,13 @@ const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶ�
           visStrongEls.push(strongWrap);
         }
         strongWrap.appendChild(s);
+      } else if (isNagu) {
+        if (!naguWrap) {
+          naguWrap = document.createElement('span');
+          naguWrap.className = 'vl-nagu';
+          inner.appendChild(naguWrap);
+        }
+        naguWrap.appendChild(s);
       } else {
         inner.appendChild(s);
       }
