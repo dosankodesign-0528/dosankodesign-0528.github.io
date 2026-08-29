@@ -2057,6 +2057,19 @@
             </div>
           </div>
         </div>
+        <!-- 【2026-08-29 ヒデさん指定】「APIの場合」モックを復活。左のコード画面だけ(右のAIチャットは無し)。 -->
+        <div class="dm-ghost" id="dmGhost2" aria-hidden="true">
+          <div class="dm-panel is-api">
+            <div class="dm-editor">
+              <div class="dm-side">
+                <img class="dm-logo" src="assets/mock/logo.svg" alt="">
+                <div class="dm-divider"></div>
+                <div class="dm-icons"><img src="assets/mock/side1.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""><img src="assets/mock/side2.svg" alt=""></div>
+              </div>
+              <div class="dm-code code" id="dmCodeApi"></div>
+            </div>
+          </div>
+        </div>
         <div class="dev-mock" id="devMock">
           <div class="dm-panel" id="dmPanel">
             <div class="dm-editor">
@@ -2100,8 +2113,14 @@
       </div>
       <!-- 右: CLI/SDK リスト。先頭を活性(左罫線+不透明1)、他は不透明0.2 -->
       <div class="dev-list" id="devList">
-        <!-- 【2026-08-27 ヒデさん指定】API(右にAIチャットが入るモック)は削除 -->
-        <div class="dl-item is-on" data-screen="cli">
+        <!-- 【2026-08-29 ヒデさん指定】「APIの場合」を復活(左のコードだけ・AIチャット無し)。先頭=活性 -->
+        <div class="dl-item is-on" data-screen="api">
+          <div class="dl-body">
+            <div class="dl-head"><b>API</b><span>の場合</span></div>
+            <p>REST で直接叩けます。フローIDを指定して実行すれば、結果がそのまま返る。既存の仕組みへ最短で組み込めます。</p>
+          </div>
+        </div>
+        <div class="dl-item" data-screen="cli">
           <div class="dl-body">
             <div class="dl-head"><b>CLI</b><span>の場合</span></div>
             <p>手元のターミナルで試して、そのままCI/CDへ。ユーザー単位で実行ログを追えるので、運用も開発の延長で回せます。</p>
@@ -7882,7 +7901,8 @@ const devEls = {
   panel: document.getElementById('dmPanel'),
   list: document.getElementById('devList'),
   listItems: [...document.querySelectorAll('#devList .dl-item')],
-  ghosts: [document.getElementById('dmGhost0'), document.getElementById('dmGhost1')],
+  /* 【2026-08-29】DEV_SCREENS の順(api,cli,sdk)に合わせて並べる。cards の席割りがこの順に対応する */
+  ghosts: [document.getElementById('dmGhost2'), document.getElementById('dmGhost0'), document.getElementById('dmGhost1')],
 };
 /* 絵コンテのコマ順:
    ①真っ黒→「自動生成で開発スピードを加速」(1行)がブラー出現・下にモックちら見え
@@ -7937,7 +7957,8 @@ const DEV_STACK = [
 /* 【2026-08-27 ヒデさん指定】カルーセルから「右にAIチャットが入っているモック(API)」を削除。
    ⚠️ #dmPanel(API本体) は dev1(Strength 01)の単体パネルの複製元なので、DOMからは消さない。
       dev2 では隠して、カルーセルの席にも並べない。 */
-const DEV_SCREENS = ['cli', 'sdk'];
+/* 【2026-08-29 ヒデさん指定】「APIの場合」を復活(左のコードだけ・AIチャット無し)。API を先頭(既定・手前)に。 */
+const DEV_SCREENS = ['api', 'cli', 'sdk'];
 /* ===== カードが入れ替わる時の動き出し方 (2026-08-19) =====
    「半分まで進むのに全体の何割の時間を使うか」で急さが決まる。
    ⚠️【2026-08-19 ヒデさん指定】右のリストのホバー表示（縦バー・下線・文字色）は、
@@ -8135,12 +8156,13 @@ let dm2Spin, dm2SpinLine = -1;
 /* ⚠️ 手前に来るカードは画面ごとに違う。
    API は本体パネル(#dmCode)、CLI と SDK は「ゴースト」と呼んでいる複製カードが前に回ってくる。
    本体を animate しても後ろに隠れていて見えないので、必ず手前のカードを動かすこと。 */
-const DM2_ROOT = { api: 'dmCode', cli: 'dmCodeCli', sdk: 'dmCodeSdk' };
+/* 【2026-08-29 ヒデさん指定】API は「左のコードだけ」の静止ゴースト(#dmCodeApi)に付け替え。
+   以前は本体パネル(#dmCode+AIチャット)だったが、チャットは削除したので専用ゴーストへ。 */
+const DM2_ROOT = { api: 'dmCodeApi', cli: 'dmCodeCli', sdk: 'dmCodeSdk' };
 const dm2Cache = {};
 function dm2Lines(screen) {
   const id = DM2_ROOT[screen];
   if (!id) return [];
-  if (screen === 'api') return dmLineEls;          /* 本体は作り直されるので毎回取り直す */
   if (!dm2Cache[id]) dm2Cache[id] = [...document.getElementById(id).children];
   return dm2Cache[id];
 }
@@ -8240,6 +8262,7 @@ dmBuildScreen('editor');
 /* dev2 カルーセルの後ろ2枚(CLI/SDK)の中身を静止で充填(V1.0踏襲)。 */
 dmFillStatic('dmCodeCli', 'cli');
 dmFillStatic('dmCodeSdk', 'sdk');
+dmFillStatic('dmCodeApi', 'api');   /* 【2026-08-29】APIゴーストのコードを充填 */
 dmFillSdkList('dmSdkList2');
 /* dev1(Strength01) 用に本体パネルを複製して単体で置く（中身は同じエディタ+チャット）。 */
 let dev1Refs = null;   /* dev1(章①)の複製パネルの参照。updateDev がループ駆動に使う */
@@ -8413,7 +8436,7 @@ function devMockContent(mode, t, screen, R) {
 
 let devHoldT0 = null, devScreenT0 = null, devStarted = false;
 /* ②で選ばれている画面。既定は API (カンプで選択状態になっているもの)。ホバーで変わる */
-let devScreen2 = 'cli', devSwapT0 = null;   /* API を外したので既定は CLI (2026-08-27) */
+let devScreen2 = 'api', devSwapT0 = null;   /* 【2026-08-29】API(左コードのみ)を復活し既定=API(手前) */
 /* 開発者体験の「暗い背景 → 明るい背景」の進み具合 (0→1)。導入事例が参照する */
 let devFin = 0;
 
@@ -8447,8 +8470,8 @@ function updateDev2Stack() {
   const c = params.sections.dev;
   const swapE = DEV_SWAP_EASES[(c.swapEase || 1) - 1] || DEV_SWAP_EASES[0];
   const sel = Math.max(0, DEV_SCREENS.indexOf(devScreen2));
-  /* 【2026-08-27】API(AIチャット付き)を外したので 2枚。席は「手前」と「左後ろ」を使う */
-  const cards = [devEls.ghosts[0], devEls.ghosts[1]];   // 0=CLI 1=SDK
+  /* 【2026-08-29 ヒデさん指定】API(左コードのみ)を復活し 3枚に。ghosts=api,cli,sdk の順。席は手前/左後ろ/右後ろ */
+  const cards = [devEls.ghosts[0], devEls.ghosts[1], devEls.ghosts[2]];   // 0=API 1=CLI 2=SDK
   const nSeat = cards.length;
   cards.forEach((el, i) => {
     if (!el) return;
@@ -8529,7 +8552,7 @@ function updateDev2Reveal() {
   driveEditorLoop(null, on, 'dev2');
   if (on && typeof dmAnimScreen === 'function') {
     const t = elapsed - (devMockT0.dev2 == null ? elapsed : devMockT0.dev2);
-    dmAnimScreen('cli', t); dmAnimScreen('sdk', t);
+    dmAnimScreen('api', t); dmAnimScreen('cli', t); dmAnimScreen('sdk', t);
   }
 }
 
@@ -8709,7 +8732,7 @@ function resetSectionClock(k) {
   if (k === 'vision')  { visAutoT0 = null; visAutoDone = false; visMoveT0 = null; visT = -1; }
   if (k === 'results') { resT0 = null; resT = -1; }
   if (k === 'dev')     { devHoldT0 = null; devScreenT0 = null; devStarted = false;
-                         devScreen2 = 'cli'; devSwapT0 = null; dmBuildScreen('editor'); }
+                         devScreen2 = 'api'; devSwapT0 = null; dmBuildScreen('editor'); }
 }
 
 function resetSectionClocks() {
