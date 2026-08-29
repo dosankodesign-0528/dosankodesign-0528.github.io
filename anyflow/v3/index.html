@@ -424,10 +424,11 @@
   .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
   /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
   .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2s) steps(1,end) 1 both; }
+  /* 2026-08-30: 初期の点滅を“完全消灯(0)”にして、本物の蛍光灯のようにくっきり暗転→点灯を繰り返す(見逃し防止) */
   @keyframes strFlicker {
-    0%{opacity:0} 2%{opacity:1} 4%{opacity:.08} 6%{opacity:1} 8%{opacity:.15} 10%{opacity:1}
-    13%{opacity:.1} 15%{opacity:1} 19%{opacity:.25} 21%{opacity:1} 27%{opacity:.4} 29%{opacity:1}
-    38%{opacity:.55} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
+    0%{opacity:0} 2%{opacity:1} 4%{opacity:0} 6%{opacity:1} 8%{opacity:0} 10%{opacity:1}
+    13%{opacity:0} 15%{opacity:1} 19%{opacity:.1} 21%{opacity:1} 27%{opacity:.3} 29%{opacity:1}
+    38%{opacity:.5} 40%{opacity:1} 52%{opacity:.7} 54%{opacity:1} 70%{opacity:.85} 72%{opacity:1} 100%{opacity:1} }
   /* ②グラデ揺らぎ(生きたグラデ) */
   .vis-line.str-live .vl-strong {
     background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
@@ -2905,7 +2906,7 @@ const DEFAULTS = {
   sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   /* 【2026-08-29 ヒデさん指定】ネットワーク3D案(Figma15970)のつまみ。mode=3d/2d。3D=手前太く奥細く＋物理 */
-  net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7, dots: 1 },   /* dots=1本の軌道に流すドット数(2026-08-29) */
+  net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7, dots: 1, spin: 0, spinDots: true, showDots: true },   /* dots=1本の軌道に流すドット数(2026-08-29) / spin=軌道の回転・spinDots=粒も連動・showDots=粒表示(2026-08-30) */
   /* 【2026-08-29 ヒデさん指定】コンバージョン背景(流れるグラデ+Bayerディザ)。
      既定はカンプのディザ設定(Bayer16×16 / Size1 / Levels3 / Brightness104% / Contrast1.38)に合わせる */
   cv: { cell: 1, levels: 3, spread: 1.0, speed: 0.25, swell: 0.12, flowScale: 3.0, bright: 1.04, contrast: 1.38 },
@@ -12359,10 +12360,26 @@ function buildPanel() {
           slider('線の太さ', 0.5, 5, 0.1, () => NT.flatW, v => { NT.flatW = v; renderFrame(); },
             v => v.toFixed(1) + 'px', '2D(フラット)時の均一な線の太さ。');
         }
+        /* 【2026-08-30 ヒデさん指定】軌道の回転(3D構造まるごとスピン)。しない＝形は固定。 */
+        segRow('軌道の回転', [['する', 1], ['しない', 0]], () => (NT.spin ? 1 : 0),
+          v => { NT.spin = v ? (Math.abs(NT.spin || 0) > 0.01 ? NT.spin : 0.4) : 0; markDirty(); renderFrame(); fillAnimBody(); });
+        if (NT.spin) {
+          slider('回転の速さ', -2, 2, 0.05, () => NT.spin,
+            v => { NT.spin = v; renderFrame(); }, v => '×' + v.toFixed(2),
+            '右で速く、左で逆回り。3D構造ぜんぶが縦軸まわりに回ります。', { signed: true });
+          /* 【2026-08-30 ヒデさん指定】軌道の回転に粒を連動させるか。連動しない＝線だけ回って粒は元の回転軸のまま。 */
+          segRow('粒も一緒に回す', [['連動する', 1], ['連動しない', 0]], () => (NT.spinDots === false ? 0 : 1),
+            v => { NT.spinDots = !!v; markDirty(); renderFrame(); });
+        }
         slider('周回速度', 0, 2, 0.05, () => NT.spd, v => { NT.spd = v; renderFrame(); },
           v => '×' + v.toFixed(2), 'ドットが軌道を回る速さ。');
-        slider('飛び交うドット数', 1, 12, 1, () => (NT.dots != null ? NT.dots : 1), v => { NT.dots = v; renderFrame(); },
-          v => Math.round(v) + '個', '1本の軌道に流すドットの数。等間隔で並んで回ります。');
+        /* 【2026-08-30 ヒデさん指定】粒(飛び交うドット)の表示/非表示。 */
+        segRow('粒(ドット)', [['表示', 1], ['非表示', 0]], () => (NT.showDots === false ? 0 : 1),
+          v => { NT.showDots = !!v; markDirty(); renderFrame(); fillAnimBody(); });
+        if (NT.showDots !== false) {
+          slider('飛び交うドット数', 1, 12, 1, () => (NT.dots != null ? NT.dots : 1), v => { NT.dots = v; renderFrame(); },
+            v => Math.round(v) + '個', '1本の軌道に流すドットの数。等間隔で並んで回ります。');
+        }
       } else {
       /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30。
          【2026-08-29 ヒデさん指定・改】シェイプ案(アトム/土星/花)の回転(ringRotate)もこの1つのトグルで統一。
