@@ -4663,11 +4663,9 @@ function convDrawShape() {
       const fore = 0.2 + 0.8 * Math.abs(Math.cos(kvGT() * tumble + i * Math.PI / n));
       rx = R * (0.5 + 0.5 * fore); ry = R;
     }
-    /* 【2026-08-29 ヒデさん指定】1本1本の軌道それぞれにグラデ。白の位置は、土星のときだけ輪ごとにずらす。 */
+    /* 【2026-08-29 ヒデさん指定・改】白位置の「輪ごとのずらし」は不自然だったので削除。全リング同じ白位置に。 */
     const dir = i % 2, baseW = dir ? 0.403846 : 0.490385;
-    const white = (shape === 'saturn')
-      ? Math.max(0.18, Math.min(0.82, baseW + (n <= 1 ? 0 : (i / (n - 1) - 0.5)) * 0.26))
-      : baseW;
+    const white = baseW;
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
     const swBase = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth);
     /* 【2026-08-29 ヒデさん指定】遠近を軌道の線にも: 手前(下=front)を太く・奥(上=back)を細く */
