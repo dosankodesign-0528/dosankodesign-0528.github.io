@@ -7463,7 +7463,7 @@ function updateVision(p) {
   /* 軌道グラフィック: 上下に分かれた文字の間に小さくブラー出現(自動) → ワンスクロールで左下へ＋実寸。
      CSSのscaleで拡大するとラスタライズ済みの絵が引き伸ばされて粗くなるため、
      楕円の座標・半径・ドット位置を毎フレーム計算して SVG に反映する (常にシャープ) */
-  const mi = noPin ? 1 : easeOutQ(clamp01((A - miniAt) / c.miniDur));
+  const mi = easeOutQ(clamp01((A - miniAt) / c.miniDur));  /* no-pinでも時間クロックAで出す=入場前は0(真っ白)→入場でブラー登場 */
   /* 【2026-08-17 指定】ドットは軌道が出たあと、1つずつ順に出てくる。
      以前は軌道が出た時点でもう6個そろっていた。
      ⚠️ A<0（まだ再生していない）ときは 1 に戻す。KV でも同じ SVG を使っているため */
@@ -8837,7 +8837,7 @@ function updateSections() {
   /* 【2026-08-29】Vision だけは固定追従なし＝入場進捗(preP)で自動再生。実績・事例は従来どおり。 */
   /* 【2026-08-29 ヒデさん指定】固定追従なしは「入った瞬間に発火」だと画面外(下に peek)で
      もう再生されてしまう。セクションがある程度画面に入ってから(上端が約75%より上)発火させる。 */
-  const NOPIN_ENTER = 0.25;   // preP をこのぶん遅らせて発火(大きいほど中に入ってから)
+  const NOPIN_ENTER = 0.45;   // preP をこのぶん遅らせて発火(大きいほど中に入ってから)。0.45=セクションが半分以上入ってから
   const visProg = VIS_NOPIN ? clamp01(preP(SECS.vision) - NOPIN_ENTER) : prog(SECS.vision);
   updateVision(progOverride.vision != null ? progOverride.vision : smoothTo('vision', visProg));
   updateDev(progOverride.dev != null ? progOverride.dev : smoothTo('dev', prog(SECS.dev)));
