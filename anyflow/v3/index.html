@@ -9074,13 +9074,13 @@ function updateDev2Reveal() {
   const full = FULL[d.vpMode] || FULL.center;   // ブロック中心がこの高さ(画面上端からの割合)まで来たら出しきり
   const revealK = easeOutQ(clamp01((vh - refY) / (vh * (1 - full))));
   b2.style.opacity = '1'; b2.style.filter = ''; b2.style.transform = '';
-  const stag = (a, b) => easeOutQ(clamp01((revealK - a) / (b - a)));
-  const kHead = stag(0.00, 0.55);   // ① 見出し
-  const kMock = stag(0.20, 0.82);   // ② モック
-  const kList = stag(0.42, 1.00);   // ③ 右テキスト
-  revealEl(devEls.h2, kHead, 16, 24);
-  revealEl(dev2StackEl, kMock, 16, 0);
-  revealEl(devEls.list, kList, 16, 24);
+  /* 【2026-08-29 ヒデさん指定・再修正】dev1 と挙動を完全一致に。以前は revealK で easeOutQ を1回、
+     さらに段差(stag)でもう1回 easeOutQ を掛けて【二重イージング】になっていた。easeOutQ=1-(1-t)^5 は
+     非常に急峻なので、二重に掛かると極小のスクロール幅で一気に出入り＝スクロールバックで“パッと消える”。
+     段差も二重イージングもやめ、dev1 と同じ単一 easeOutQ の revealK で3要素をまとめて出入りさせる。 */
+  revealEl(devEls.h2, revealK, 16, 24);
+  revealEl(dev2StackEl, revealK, 16, 0);
+  revealEl(devEls.list, revealK, 16, 24);
   const on = revealK > 0.35;
   if (slide) {
     /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。 */
