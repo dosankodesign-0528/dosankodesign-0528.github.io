@@ -2802,7 +2802,7 @@ const DEFAULTS = {
   sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   /* 【2026-08-29 ヒデさん指定】ネットワーク3D案(Figma15970)のつまみ。mode=3d/2d。3D=手前太く奥細く＋物理 */
-  net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7 },
+  net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7, dots: 1 },   /* dots=1本の軌道に流すドット数(2026-08-29) */
   /* 【2026-08-29 ヒデさん指定】コンバージョン背景(流れるグラデ+Bayerディザ)。
      既定はカンプのディザ設定(Bayer16×16 / Size1 / Levels3 / Brightness104% / Contrast1.38)に合わせる */
   cv: { cell: 1, levels: 3, spread: 1.0, speed: 0.25, swell: 0.12, flowScale: 3.0, bright: 1.04, contrast: 1.38 },
@@ -2986,9 +2986,10 @@ const DEFAULTS = {
     dev:     { lenVh: 200, driveLen: 3.0, swapBlur: 14, stackDur: 1.3, swapEase: 1,
                ds2: 'slide', slideMotion: 'snap', slideHold: 0.62, slideSnapK: 3.4,   /* 2026-08-29: テキストスライドを既定に */
                slideEvery: 3.0, slideDur: 0.5,   /* 自動スロットの間隔と切替時間(秒) */
-               /* 【2026-08-29 ヒデさん指定】dev2の出入りを dev1 と同じスクロール位置駆動に。
-                  vpMode=出しきる基準位置(bottom=早め/center=中央/top=遅め)、splitAt=箱が左右に分かれ始めるスクロール位置(0〜1)。 */
-               vpMode: 'center', splitAt: 0.35 },
+               /* 【2026-08-29 ヒデさん指定】dev2: ブロックの出入り(フェード)は dev1 と同じスクロール位置駆動(vpMode)。
+                  ただし箱が左右に割れて開く所は【時間再生】でゆったり。splitDelay=登場から割れ始めるまでの間(秒)、
+                  splitDur=割れきるまでの時間(秒。大きいほどゆったり)。 */
+               vpMode: 'center', splitDelay: 0.45, splitDur: 1.2 },
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
     cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
@@ -3912,12 +3913,16 @@ const net3d = (function () {
       const zc = pt3(o, o.theta)[2], zN = zc / o.R;
       const factor = mode === '3d' ? (1 + phys * zN) : 1;
       o.theta += spd * Math.max(0.08, factor) * dt;
-      const p = pt3(o, o.theta);
-      const c = document.createElementNS(SVG_NS, 'circle');
-      const r = mode === '3d' ? Math.max(3, 5 + (p[2] / o.R) * 2.2) : 6;
-      c.setAttribute('cx', p[0].toFixed(1)); c.setAttribute('cy', p[1].toFixed(1));
-      c.setAttribute('r', r.toFixed(1)); c.setAttribute('fill', o.dot.c);
-      (p[2] >= 0 ? dfg : dbg).appendChild(c);
+      /* 【2026-08-29 ヒデさん指定】飛び交うドット数を可変に。1本の軌道に等間隔で並べて流す。 */
+      const cnt = Math.max(1, Math.min(12, Math.round(n.dots != null ? n.dots : 1)));
+      for (let k = 0; k < cnt; k++) {
+        const p = pt3(o, o.theta + k * (2 * Math.PI / cnt));
+        const c = document.createElementNS(SVG_NS, 'circle');
+        const r = mode === '3d' ? Math.max(3, 5 + (p[2] / o.R) * 2.2) : 6;
+        c.setAttribute('cx', p[0].toFixed(1)); c.setAttribute('cy', p[1].toFixed(1));
+        c.setAttribute('r', r.toFixed(1)); c.setAttribute('fill', o.dot.c);
+        (p[2] >= 0 ? dfg : dbg).appendChild(c);
+      }
     });
   }
   return { update, setHidden, active };
@@ -9076,14 +9081,15 @@ function updateDev2Reveal() {
   if (slide) {
     /* テキストスライド案: モック内アニメーションはオフ(全要素を出しきった静止状態)。 */
     dsFillStaticAll();
-    /* 箱が左右に分かれて開く = スクロール(reveal)駆動。splitAt で開き始めを調整。 */
-    const splitAt = d.splitAt != null ? d.splitAt : 0.35;
-    const openK = easeOutQ(clamp01((revealK - splitAt) / 0.34));
-    /* 語 CLI→SDK→API の切替 = 時間駆動の自動カルーセル。十分見えている間だけ時計を進める。
-       (箱が開いてから回るだけ＝出入りの見た目には影響しない＝リプレイ感を出さない) */
-    if (revealK > 0.55) { if (dev2SeqT0 == null) dev2SeqT0 = elapsed; }
+    /* 時計 s: セクションが十分見えている間だけ進める(箱の割れ＝時間再生の起点)。 */
+    if (revealK > 0.5) { if (dev2SeqT0 == null) dev2SeqT0 = elapsed; }
     else if (revealK < 0.12) dev2SeqT0 = null;
     const s = dev2SeqT0 == null ? -1 : elapsed - dev2SeqT0;
+    /* 【2026-08-29 ヒデさん指定】箱が左右に割れて開く所は【時間再生】でゆったり。
+       splitDelay 秒おいてから splitDur 秒かけて easeIO でなめらかに開く(スクロール駆動をやめる)。 */
+    const splitDelay = d.splitDelay != null ? d.splitDelay : 0.45;
+    const splitDur = Math.max(0.2, d.splitDur != null ? d.splitDur : 1.2);
+    const openK = s < 0 ? 0 : easeIO(clamp01((s - splitDelay) / splitDur));
     updateDevSlide(openK, s);
   } else {
     dsResetBox();
@@ -12100,6 +12106,8 @@ function buildPanel() {
         }
         slider('周回速度', 0, 2, 0.05, () => NT.spd, v => { NT.spd = v; renderFrame(); },
           v => '×' + v.toFixed(2), 'ドットが軌道を回る速さ。');
+        slider('飛び交うドット数', 1, 12, 1, () => (NT.dots != null ? NT.dots : 1), v => { NT.dots = v; renderFrame(); },
+          v => Math.round(v) + '個', '1本の軌道に流すドットの数。等間隔で並んで回ります。');
       } else {
       /* 軌道の回転 ON/OFF (既定オフ)。ONにした時の速さは案が持つ値、無ければ 0.30。
          【2026-08-29 ヒデさん指定・改】シェイプ案(アトム/土星/花)の回転(ringRotate)もこの1つのトグルで統一。
@@ -12867,8 +12875,11 @@ function buildPanel() {
   pillRow([{ key: 'bottom', name: '下部で出す' }, { key: 'center', name: '中央で出す' }, { key: 'top', name: '上部で出す' }],
     it => (sv().dev.vpMode || 'center') === it.key,
     it => { sv().dev.vpMode = it.key; dsVpNote(); renderFrame(); }, null, { noRebuild: true });
-  rows.push(slider('箱が左右に分かれ始める', 0, 0.9, 0.02, () => sv().dev.splitAt, v => sv().dev.splitAt = v, v => Math.round(v * 100) + '%',
-    'スクロールで何割出たら CLI/SDK/API の箱が左右に開き始めるか。小さいほど早く開きます。'));
+  note('↓ CLI/SDK/API の箱が「左右に割れて開く」動きは時間再生（ゆったり）。登場後に自動で開きます。');
+  rows.push(slider('割れ始めるまでの間', 0, 2, 0.05, () => sv().dev.splitDelay, v => sv().dev.splitDelay = v, v => v.toFixed(2) + '秒',
+    '② が登場してから、箱が左右に割れ始めるまでの待ち時間。'));
+  rows.push(slider('割れきる時間（ゆったり）', 0.2, 3, 0.05, () => sv().dev.splitDur, v => sv().dev.splitDur = v, v => v.toFixed(2) + '秒',
+    '箱が完全に開ききるまでの時間。大きいほどゆったり開きます。'));
 
   sub(catDev, 'スロット（語の切替モーション）');
   note('↓ CLI→SDK→API の入れ替わりモーション（6種）。');
