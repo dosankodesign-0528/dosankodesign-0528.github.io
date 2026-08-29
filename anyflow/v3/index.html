@@ -3963,6 +3963,7 @@ const net3d = (function () {
   ];
   ORBITS.forEach(o => { o.theta = o.dot.ang * D2R; });
   let bg, fg, dbg, dfg, ready = false, defsDone = false, lastT = null, wasActive = false;
+  let spinAng = 0;   /* 【2026-08-30】軌道の回転の累積角(時間で回す) */
   function grp(p) { const g = document.createElementNS(SVG_NS, 'g'); p.appendChild(g); return g; }
   function addDefs(svg) {
     let defs = svg.querySelector('defs');
@@ -3988,11 +3989,15 @@ const net3d = (function () {
     bg = grp(lb); dbg = grp(lb); fg = grp(lf); dfg = grp(lf); ready = true;
     if (!defsDone) { addDefs(lb); addDefs(lf); defsDone = true; }   /* グラデは両レイヤーに(別SVGなので)  */
   }
-  function pt3(o, th) {
+  function pt3(o, th, spin) {
     const x = o.R * Math.cos(th), y = o.R * Math.sin(th), ph = o.phi * D2R, rh = o.rho * D2R;
     const y2 = y * Math.cos(ph), z2 = o.flipZ * (-y * Math.sin(ph));
-    const x3 = x * Math.cos(rh) - y2 * Math.sin(rh), y3 = x * Math.sin(rh) + y2 * Math.cos(rh);
-    return [o.cx + x3, o.cy + y3, z2];
+    let x3 = x * Math.cos(rh) - y2 * Math.sin(rh); const y3 = x * Math.sin(rh) + y2 * Math.cos(rh);
+    let z = z2;
+    /* 【2026-08-30 ヒデさん指定】軌道の回転: 3D構造ぜんぶを縦(画面Y)軸まわりに回す。
+       横(x3)と奥行き(z)を混ぜる=惑星が回るような立体スピン。y3(縦)は不動。 */
+    if (spin) { const cs = Math.cos(spin), sn = Math.sin(spin); const nx = x3 * cs - z * sn; z = x3 * sn + z * cs; x3 = nx; }
+    return [o.cx + x3, o.cy + y3, z];
   }
   function widthAt(z, R) {
     const n = params.net3d || {};
@@ -4026,22 +4031,30 @@ const net3d = (function () {
     const spd = (n.spd != null ? n.spd : 0.7) * 1.1, phys = (n.phys != null ? n.phys : 0.7);
     let dt = (lastT == null ? 0 : Math.min(0.05, Math.max(0, elapsed - lastT))); lastT = elapsed;
     if (params.running === false) dt = 0;
+    /* 【2026-08-30 ヒデさん指定】軌道の回転(3D構造まるごとスピン)と、それに粒を連動させるか。 */
+    const orbitSpin = (n.spin != null ? n.spin : 0);
+    spinAng += orbitSpin * 0.7 * dt;
+    const lineSpin = orbitSpin ? spinAng : 0;
+    /* 連動オフ(spinDots=false)なら、線だけ回して粒は元の軌道面のまま(粒の回転軸を変えない) */
+    const dotSpin = (orbitSpin && n.spinDots !== false) ? spinAng : 0;
+    const showDots = n.showDots !== false;
     const N = 140;
     ORBITS.forEach(o => {
       const pts = [];
-      for (let i = 0; i <= N; i++) pts.push(pt3(o, i / N * 2 * Math.PI));
+      for (let i = 0; i <= N; i++) pts.push(pt3(o, i / N * 2 * Math.PI, lineSpin));
       for (let i = 0; i < N; i++) {
         const a = pts[i], b = pts[i + 1], zA = (a[2] + b[2]) / 2, w = widthAt(zA, o.R);
         path(zA >= 0 ? fg : bg, `M${a[0].toFixed(1)} ${a[1].toFixed(1)} L${b[0].toFixed(1)} ${b[1].toFixed(1)}`, 'url(#' + o.grad + ')', w);
       }
+      if (!showDots) return;   /* 粒オフ: この軌道のドットは描かない(周回計算も不要) */
       /* ドットの物理: 手前(zN>0)ほど速く・奥ほどゆっくり。2Dは一定 */
-      const zc = pt3(o, o.theta)[2], zN = zc / o.R;
+      const zc = pt3(o, o.theta, dotSpin)[2], zN = zc / o.R;
       const factor = mode === '3d' ? (1 + phys * zN) : 1;
       o.theta += spd * Math.max(0.08, factor) * dt;
       /* 【2026-08-29 ヒデさん指定】飛び交うドット数を可変に。1本の軌道に等間隔で並べて流す。 */
       const cnt = Math.max(1, Math.min(12, Math.round(n.dots != null ? n.dots : 1)));
       for (let k = 0; k < cnt; k++) {
-        const p = pt3(o, o.theta + k * (2 * Math.PI / cnt));
+        const p = pt3(o, o.theta + k * (2 * Math.PI / cnt), dotSpin);
         const c = document.createElementNS(SVG_NS, 'circle');
         const r = mode === '3d' ? Math.max(3, 5 + (p[2] / o.R) * 2.2) : 6;
         c.setAttribute('cx', p[0].toFixed(1)); c.setAttribute('cy', p[1].toFixed(1));
@@ -8009,7 +8022,18 @@ function updateVision(p) {
        まだマスク内のうちにチカチカ(2秒・1回)が走り終わって「発火していない」ように見えていた。
        (「データを」追加で強みの位置が後ろへずれて悪化)。メッセージが出きってから発火する。 */
     const msgShown = A >= (l1At + c.revealDur + 0.2);
-    const goNow = msgShown && fx !== 'none';
+    /* 【2026-08-30 ヒデさん指定・再修正】「何も動いていないように見える」原因:
+       A は max保持で巻き戻らないため str-go は一度オンになると二度と外れず、
+       初回の一瞬(2秒)を見逃すと「光った後の静止」しか見えなかった。
+       → 強みが実際に画面内にある時だけ str-go を立て、画面外に出たら外す。
+         こうすると ①ビューポートに入って強みが見えた瞬間に発火、
+         ②スクロールで外して戻すたびに毎回ちゃんとチカチカ再生される。 */
+    let strInView = true;
+    if (visStrongEls.length && innerHeight) {
+      const rr = visStrongEls[0].getBoundingClientRect();
+      strInView = rr.bottom > innerHeight * 0.12 && rr.top < innerHeight * 0.92;
+    }
+    const goNow = msgShown && strInView && fx !== 'none';
     for (const el of [visEls.l1, visEls.l2]) {
       if (!el) continue;
       for (const f of VIS_STRONG_FX) el.classList.toggle('str-' + f.key, f.key === fx && fx !== 'none');
