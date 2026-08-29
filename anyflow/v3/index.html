@@ -336,8 +336,8 @@
     right: auto;
     text-align: left;
     font-weight: 100;
-    font-size: 100px;               /* 2026-08-26 ヒデさん指定: 90 → 100 */
-    line-height: 170px;             /* 100px × 行間1.7 */
+    font-size: 60px;                /* 2026-08-29 ヒデさん指定・カンプ 15900:38408: 100 → 60(あっさり・1行) */
+    line-height: 102px;             /* 60px × 行間1.7 */
     color: #101828;
     white-space: nowrap;
     overflow: hidden;               /* 下からのトリミング出現用マスク */
@@ -345,7 +345,7 @@
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
   .vis-l1 { top: 301px; }   /* Our Vision(269+20) + gap12 = 301 */
-  .vis-l2 { top: 471px; }   /* + 行間170 (font 100 に合わせて 454→471) */
+  .vis-l2 { top: 403px; }   /* 1行化で実質未使用。念のため行間102ぶん下へ */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
      top:127px は カンプ y1851.98 をステージ中央に収めた位置 */
@@ -1827,8 +1827,9 @@
   <div class="pin-vp">
     <div class="pin-stage">
       <div class="vis-label rv" id="visLabel">Our Vision</div>
-      <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、</span></div>
-      <div class="vis-line vis-l2" id="visL2"><span class="vl-in">強みになる時代へ。</span></div>
+      <!-- 2026-08-29 ヒデさん指定・カンプ 15900:38408: 2行→1行・100px→60px であっさり -->
+      <div class="vis-line vis-l1" id="visL1"><span class="vl-in">つなぐことが、強みになる時代へ。</span></div>
+      <div class="vis-line vis-l2" id="visL2"><span class="vl-in"></span></div>
 
       <div class="pf-wrap" id="pfWrap">
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
