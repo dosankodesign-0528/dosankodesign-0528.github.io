@@ -319,7 +319,7 @@
   #dev { position: relative; z-index: 0; }
   /* 【2026-08-25 リデザイン】開発者体験を非pin(縦2ブロック)にしたので、
      導入事例の -100vh 重なりは廃止（重なると dev2 を覆ってしまう）。実績の直後ならぬ dev の直後に普通に置く。 */
-  #cases { margin-top: 0; }
+  #cases { margin-top: 96px; }   /* 2026-08-29 ヒデさん指定: 開発者体験との距離が近すぎたので上に余白 */
 
   .pin-vp {
     position: sticky;
@@ -344,7 +344,7 @@
      そのまま透けて連続し、暗幕が leave で引くと下地の var(--surface) へ自然にクロスフェードする
      （＝不透明な上端が下から硬く重なる「プツン」が出ない）。 */
   #cases .pin-vp { position: relative; background: transparent; }
-  html.nopin #dev, html.nopin #cases { margin-top: 0; }
+  html.nopin #dev { margin-top: 0; }   /* 2026-08-29: #cases は上余白(96px)を活かすので nopin では強制0にしない */
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: var(--surface); }
   html.nopin #dev .np-vp { background: var(--surface-dark-top); }
