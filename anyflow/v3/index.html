@@ -2878,9 +2878,9 @@ const DEFAULTS = {
   patterns: {
     results: 'C',   // 実績のレイアウト A=横長画像 / B=左端の縦帯 / C=中央テキスト＋黒オブジェクトで開発者体験へ(既定)
     /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「切替演出」。
-       'black' = 黒オブジェクトがせり上がる(既定・従来) / 'smooth' = スムーズフェード
+       'black' = 黒オブジェクトがせり上がる(従来) / 'smooth' = スムーズフェード(既定・2026-08-29)
        (スクロールジャック/固定追従なし・背景が自然にクロスフェード・黒オブジェクトなし) */
-    resTrans: 'black',
+    resTrans: 'smooth',
     devStack: 'on', // 開発者体験②で後ろに2枚控えるか (カンプ 14924:21985)
     dev: 'A', cases: 'A', mock: 'B',
     caseHover: 'zoom',   // 導入事例のホバー (2026-08-27 ヒデさん指定・5案から選ぶ)
@@ -6534,7 +6534,7 @@ const SECS = {
 const VIS_NOPIN = true;
 /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「スムーズフェード」= 実績も固定追従なし＋
    背景を自然にクロスフェード＋黒オブジェクトなし。'smooth' のとき true。 */
-function resSmooth() { return !!(params.patterns && params.patterns.resTrans === 'smooth'); }
+function resSmooth() { return !(params.patterns && params.patterns.resTrans === 'black'); }   /* 既定=smooth。明示的にblackの時だけ黒オブジェクト */
 /* 【2026-08-29 ヒデさん指定】導入事例(cases)も固定追従なし。
    従来はピン用に 200×driveLen=最大600vh の長い尺があり「余分にスクロールできる」状態だった。
    固定追従なし＝1画面(100vh)で普通に流し、入場で自動再生する。 */
@@ -8422,8 +8422,11 @@ function updateDev(pRaw) {
   /* dev1(章①): ブロックを出現＋モックをループ駆動(表示中は流れっぱなし)。
      【2026-08-26】実績尾部に重ねているので、dev1 は「中央に着いてから」フェードインさせ、
      下からのせり上がりは黒(resGrow)の裏に隠す（黒がフェードするのと入れ替わりで“その場”に出る）。 */
-  const b1top = rectOf(devEls.block1).top;
-  const posK = easeOutQ(clamp01((vh * 0.15 - b1top) / (vh * 0.25)));   // 中央付近に着いたか
+  /* 【2026-08-29 ヒデさん指定】開発者体験①(開発スピード加速)は「もっと早めにブラーで出す」。
+     下から上がってくる間に出しはじめ、中下部〜中央(center が vh*0.58 付近)でブラー0=一番くっきり。 */
+  const b1r = rectOf(devEls.block1);
+  const b1c = b1r.top + b1r.height / 2;
+  const posK = easeOutQ(clamp01((vh - b1c) / (vh * 0.42)));   // center が vh*0.58 でくっきり(=1)
   /* 固定追従なし(smooth)は黒がゆったり時間追従なので、dev1 も“黒が覆う瞬間(resBlackK)”に合わせて出す
      (せり上がりを黒の裏に隠す)。「固定」モードは前の実装どおり位置だけで出す(黒はスクロール駆動)。 */
   /* 【2026-08-29】スムーズフェード時は黒オブジェクトが無いので、dev1 は位置(posK)だけで出す(黒待ちにしない)。 */
@@ -10408,9 +10411,12 @@ function freeRotate() {
   syncAll();
   if (rows) rows.push({ _sync: syncAll });
   let dragging = false, lx = 0, ly = 0;
-  pad.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; try { pad.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
+  /* 【2026-08-29 ヒデさん指定】パッドのドラッグは【このウィジェット内だけ】で完結させ、
+     調整パネル本体のドラッグ(移動)と競合しないよう stopPropagation する。 */
+  pad.addEventListener('pointerdown', e => { e.stopPropagation(); dragging = true; lx = e.clientX; ly = e.clientY; try { pad.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
   pad.addEventListener('pointermove', e => {
     if (!dragging) return;
+    e.stopPropagation();
     const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
     if (e.shiftKey) {
       let rz = (params.kv.rotZ || 0) + dx * 0.7; if (rz > 180) rz -= 360; if (rz < -180) rz += 360;
@@ -11920,8 +11926,8 @@ function buildPanel() {
 
   /* 【2026-08-29 ヒデさん指定】実績→開発者体験の「切替演出」を選べる */
   sub(catRes, '開発者体験への切替演出');
-  segRow('切替', [['黒オブジェクト', 'black'], ['スムーズフェード', 'smooth']],
-    () => (params.patterns.resTrans || 'black'),
+  segRow('切替', [['スムーズフェード', 'smooth'], ['黒オブジェクト', 'black']],
+    () => (params.patterns.resTrans === 'black' ? 'black' : 'smooth'),
     v => { params.patterns.resTrans = v; markDirty(); if (typeof fit === 'function') fit(); renderFrame(); });
   note('「スムーズフェード」＝スクロールジャック・固定追従なしで普通に下へ流せます。背景が自然にクロスフェードで暗くなって開発者体験に切り替わり、黒オブジェクトは出ません。');
 
