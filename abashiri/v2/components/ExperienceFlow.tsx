@@ -88,8 +88,8 @@ export type IntroPace = {
 /* 2026-08-22 ヒデさん依頼で調整パネルから触れるようにした。ここは既定値 */
 export const DEFAULT_INTRO_PACE: IntroPace = {
   startDelay: 0.8,
-  stagger: 0.5,
-  duration: 1.7,
+  stagger: 0.35,
+  duration: 1.15,
   blur: 18,
 };
 

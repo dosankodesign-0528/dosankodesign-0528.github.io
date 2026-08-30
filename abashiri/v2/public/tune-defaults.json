@@ -119,8 +119,8 @@
   },
   "expIntro": {
     "startDelay": 0.8,
-    "stagger": 0.5,
-    "duration": 1.7,
+    "stagger": 0.35,
+    "duration": 1.15,
     "blur": 18
   },
   "expPick": {
