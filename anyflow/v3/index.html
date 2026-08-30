@@ -419,23 +419,11 @@
   .vis-line .vl-in { display: inline-block; }
   .vis-line .vl-ch { display: inline-block; }   /* 案C 文字ごとカスケード用 */
 
-  /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ 10案。
-     .vis-line に str-<案>(選択中)を付け、登場しきったら str-go で発火。上品・誠実・自信・ちょいハイテク。 */
+  /* 【2026-08-30 ヒデさん指定】メッセージの「強み」強調は【グラデ揺らぎ(live)】で確定。
+     他の9案(チカチカ/上下ずれ/色差/ぼけ/グラデ→黒…)と選択パネルは削除した。 */
   .vl-strong { display: inline-block; position: relative; color: var(--ink); }
-  .vis-line.str-go { overflow: visible; }   /* 登場後は発光がはみ出せるように */
-  /* ①蛍光灯チカチカ: 最初は細かく点滅→だんだん減って点灯。尺は --flick-dur(パネル)で。 */
-  /* 2026-08-30 ヒデさん指定: 画面内にある間はチカチカし続ける(無限ループ)。一度で収束すると見逃すため。
-     1周期=短い点滅バースト→しばらく点灯、を繰り返す。 */
-  .vis-line.str-flicker.str-go .vl-strong { animation: strFlicker var(--flick-dur,2.6s) steps(1,end) infinite both; }
-  /* 2026-08-30 ヒデさん指定: 等間隔にせず「最初ちょっと速く・少しランダムにパッパッパッ」。
-     前半は不規則な間隔で速くくっきり点滅 → だんだん間隔が開いて → 点灯に収束。黒テキストのみ(発光なし)。無限ループ。 */
-  @keyframes strFlicker {
-    0%{opacity:0}
-    1%{opacity:1} 2.4%{opacity:0} 3.1%{opacity:1} 4%{opacity:0} 5.3%{opacity:1} 6%{opacity:0} 7.4%{opacity:1}
-    10%{opacity:0} 11.2%{opacity:1} 14%{opacity:0} 15.6%{opacity:1}
-    19%{opacity:0} 21%{opacity:1} 25%{opacity:0} 27.5%{opacity:1} 32%{opacity:0} 34%{opacity:1}
-    100%{opacity:1} }
-  /* ②グラデ揺らぎ(生きたグラデ) */
+  .vis-line.str-go { overflow: visible; }   /* 発光がはみ出せるように */
+  /* グラデ揺らぎ(生きたグラデ): 紺⇄ピンクがゆっくり流れ続ける */
   .vis-line.str-live .vl-strong {
     background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
     -webkit-background-clip:text; background-clip:text; color:transparent;
@@ -447,34 +435,6 @@
     background: linear-gradient(67deg,var(--brand-blue-deep),var(--brand-pink),var(--brand-blue-deep)); background-size:300% 100%;
     -webkit-background-clip:text; background-clip:text; color:transparent;
     animation: strLive 7s ease-in-out infinite; }
-  /* ↓ ③〜⑦ スクロール連動。--str-k=1(画面中央)で「強み」が完全に重なって黒に締まる。 */
-  /* ③上下ずれ→重なる */
-  .vis-line.str-splitV .vl-strong {
-    text-shadow: 0 calc((1 - var(--str-k,0)) * -8px) rgba(255,93,151, calc((1 - var(--str-k,0)) * .85)),
-                 0 calc((1 - var(--str-k,0)) *  8px) rgba(14,68,151,  calc((1 - var(--str-k,0)) * .85));
-  }
-  /* ④左右ずれ→重なる */
-  .vis-line.str-splitH .vl-strong {
-    text-shadow: calc((1 - var(--str-k,0)) * -8px) 0 rgba(255,93,151, calc((1 - var(--str-k,0)) * .85)),
-                 calc((1 - var(--str-k,0)) *  8px) 0 rgba(14,68,151,  calc((1 - var(--str-k,0)) * .85));
-  }
-  /* ⑤色差→収束(RGBずれ) */
-  .vis-line.str-chroma .vl-strong {
-    text-shadow: calc((1 - var(--str-k,0)) * -5px) 0 rgba(255,0,72, calc((1 - var(--str-k,0)) * .9)),
-                 calc((1 - var(--str-k,0)) *  5px) 0 rgba(0,122,255, calc((1 - var(--str-k,0)) * .9));
-  }
-  /* ⑥ぼけ→くっきり */
-  .vis-line.str-focus .vl-strong {
-    filter: blur(calc((1 - var(--str-k,0)) * 8px));
-    opacity: calc(.35 + var(--str-k,0) * .65);
-    letter-spacing: calc((1 - var(--str-k,0)) * 6px);
-  }
-  /* ⑦グラデ→黒(中央で1つの黒に締まる) */
-  .vis-line.str-grad .vl-strong {
-    background: linear-gradient(90deg,var(--brand-blue-deep),var(--brand-pink));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    filter: saturate(calc(1 - var(--str-k,0))) brightness(calc(1 - var(--str-k,0) * .82));
-  }
 
   .vis-l1 { top: 72px; }    /* 2026-08-29: Our Vision(40+20)+gap12 = 72。カンプ準拠で上へ(旧301) */
   .vis-l2 { top: 174px; }   /* 1行化で実質未使用 */
@@ -2557,18 +2517,12 @@ const SWAYS = [
 
 /* 【2026-08-29 ヒデさん指定】Vision メッセージの「強み」強調アニメ 10案。
    先進的・洗練・ちょいハイテク、でも上品・誠実・自信のトンマナ。 */
+/* 【2026-08-30 ヒデさん指定】「強み」の強調は【グラデ揺らぎ(live)】で確定。
+   他の9案(チカチカ/上下ずれ/色差/ぼけ…)とパネルの選択セクションは削除した。 */
 const VIS_STRONG_FX = [
-  { key: 'flicker', name: '蛍光灯チカチカ', tip: '最初は細かくパッ、パッと点滅して、だんだん余韻のように減って点灯。速さは下のスライダーで。' },
-  { key: 'live',    name: 'グラデ揺らぎ',   tip: '紺⇄ピンクのグラデがゆっくり生きているように流れ続ける。' },
-  /* ↓ スクロール連動。ビューポート中央で「強み」が完全に重なる(--str-k=1)。 */
-  { key: 'splitV',  name: '上下ずれ→重なる', tip: '「強み」が上下に半ずれ(残像)し、スクロールで画面中央に来ると重なって黒に締まる。' },
-  { key: 'splitH',  name: '左右ずれ→重なる', tip: '「強み」が左右に半ずれし、中央で重なって黒に締まる。' },
-  { key: 'chroma',  name: '色差→収束',     tip: 'RGBがずれた状態から、中央で1つに収束して黒に締まる(ハイテク)。' },
-  { key: 'focus',   name: 'ぼけ→くっきり', tip: 'ぼけて薄い状態から、中央でピントが合ってくっきり締まる。' },
-  { key: 'grad',    name: 'グラデ→黒',     tip: '紺→ピンクのグラデが、中央で1つの黒に締まる。' },
-  { key: 'none',    name: 'なし',          tip: '強調アニメなし。' },
+  { key: 'live', name: 'グラデ揺らぎ', tip: '紺⇄ピンクのグラデがゆっくり生きているように流れ続ける。' },
 ];
-const VIS_STRONG_CONVERGE = ['splitV', 'splitH', 'chroma', 'focus', 'grad'];   // スクロール連動(--str-k)
+const VIS_STRONG_CONVERGE = [];   // スクロール連動案は廃止
 
 /* ================= ディザ演出 (惑星B ハーフトーン専用) ================= */
 const DITHERS = [
@@ -2980,8 +2934,7 @@ const DEFAULTS = {
   orbitEase: 1,        // 軌道の回り方の緩急 (ORBIT_EASES)
   dotGap: 1,           // ドットの間隔 (DOT_GAPS) 1=きっちり等間隔 / 2=ばらつかせる
   visReveal: 2,        // (未使用) 2026-08-25 以降、Our Vision=ブラー / 2行=マスク を updateVision に直書き
-  visStrongFx: 'flicker', // 2026-08-29 ヒデさん指定: 「強み」強調アニメ (VIS_STRONG_FX)。既定=蛍光灯チカチカ
-  visFlickerDur: 2.6,  // 蛍光灯チカチカの尺(秒)。大きいほどゆっくり余韻が長い(2026-08-30: 2.0→2.6 見逃し防止)
+  visStrongFx: 'live', // 2026-08-30 ヒデさん指定: 「強み」強調はグラデ揺らぎで確定(他の案とパネルは削除)
   visSpin: 2,          // ドットの回り方は「②速く回って減速」で確定（パネルからは外した）
   visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
@@ -3143,7 +3096,7 @@ const DEFAULTS = {
   /* 【2026-08-19 ヒデさん指定】既定は「スクロール駆動 × 固定追従あり」。
      ⚠️ 保存があればそちらが優先される（＝最後に保存した設定が引き継がれる）。
         ここは「まだ一度も保存していない人／元に戻したあと」の初期値。 */
-  drive: 'scroll',
+  drive: 'time',   /* 2026-08-30 ヒデさん指定: 自動再生(時間)で確定。パネルの切替も削除した */
   /* 【2026-08-18 指定】固定追従(sticky)を使うか。
        on  = 従来。セクションを画面に貼りつけて見せる
        off = 貼りつけない。セクションは普通に流れ、画面に入った時に中で再生する
@@ -3630,10 +3583,13 @@ function loadParams() {
       /* 【2026-08-30 ヒデさん指定】強み強調(蛍光灯チカチカ)を見逃しにくく: 発光ハロー追加＋尺を延長。
          既定=flicker を維持しつつ、旧既定の尺(2.0)のままの人だけ 2.6 へ寄せ直す(触っていれば尊重)。 */
       if (!localStorage.getItem('anyflow-flicker-glow-20260830')) {
-        if (merged.visStrongFx == null) merged.visStrongFx = 'flicker';
-        if (merged.visFlickerDur == null || Math.abs(merged.visFlickerDur - 2.0) < 0.001) merged.visFlickerDur = 2.6;
         localStorage.setItem('anyflow-flicker-glow-20260830', '1');
       }
+      /* 【2026-08-30 ヒデさん指定】強み強調はグラデ揺らぎ(live)で確定。保存値がどれでも live へ */
+      merged.visStrongFx = 'live';
+      /* 【2026-08-30 ヒデさん指定・パネル整理】進み方=自動再生(時間)・固定なし で確定。保存値がどれでもこの組に */
+      merged.drive = 'time';
+      merged.scrollHold = 'smooth';
       /* 【2026-08-30 ヒデさん指定】全体的にアニメの出はじめを前倒し(尺=ゆったり感は不変)。
          旧既定のままの保存値だけ新既定へ寄せ直す(パネルで触った値は尊重)。 */
       if (!localStorage.getItem('anyflow-timing-earlier-20260830')) {
@@ -7970,7 +7926,6 @@ const visEls = {
    文字カスケード(マスク登場)はそのまま活かしつつ、「強み」の2文字だけ .vl-strong で包んで
    強調エフェクト(発光・チカチカ 等 10案)を当てられるようにする。 */
 const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶん)
-let visStrGoPrev = false;  // 【2026-08-30】str-go の前フレーム状態(オフ→オンで flicker を確実に再スタートさせる)
 (function buildVisChars() {
   [visEls.l1, visEls.l2].forEach((line, i) => {
     const inner = line.firstElementChild;
@@ -8104,49 +8059,12 @@ function updateVision(p) {
 
   if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
-  /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ。
-     選んだ案(str-<key>)を l1/l2 に付け、メッセージが出きったら str-go で発火。
-     ①グラデ発光は「強み」が画面中央に近いほど強く光る(--str-k)＝スクロールで光る。 */
-  {
-    const fx = params.visStrongFx || 'flicker';
-    /* 【2026-08-29 バグ修正】以前は revealDur*0.7 で発火していたが、文字カスケードで「強み」(文末側)が
-       まだマスク内のうちにチカチカ(2秒・1回)が走り終わって「発火していない」ように見えていた。
-       (「データを」追加で強みの位置が後ろへずれて悪化)。メッセージが出きってから発火する。 */
-    const msgShown = A >= (l1At + c.revealDur + 0.2);
-    /* 【2026-08-30 ヒデさん指定・再修正】「何も動いていないように見える」原因:
-       A は max保持で巻き戻らないため str-go は一度オンになると二度と外れず、
-       初回の一瞬(2秒)を見逃すと「光った後の静止」しか見えなかった。
-       → 強みが実際に画面内にある時だけ str-go を立て、画面外に出たら外す。
-         こうすると ①ビューポートに入って強みが見えた瞬間に発火、
-         ②スクロールで外して戻すたびに毎回ちゃんとチカチカ再生される。 */
-    let strInView = true;
-    if (visStrongEls.length && innerHeight) {
-      const rr = visStrongEls[0].getBoundingClientRect();
-      strInView = rr.bottom > innerHeight * 0.12 && rr.top < innerHeight * 0.92;
-    }
-    const goNow = msgShown && strInView && fx !== 'none';
-    for (const el of [visEls.l1, visEls.l2]) {
-      if (!el) continue;
-      for (const f of VIS_STRONG_FX) el.classList.toggle('str-' + f.key, f.key === fx && fx !== 'none');
-      el.classList.toggle('str-go', goNow);
-    }
-    /* 【2026-08-30 ヒデさん指定・修正】強調アニメ(特にflickerチカチカ)が「効いていない」対策:
-       str-go がオフ→オンに変わった瞬間に、CSSアニメを一度リセットして確実に頭から再生させる
-       (ビューポート再入場のたびに毎回ちゃんとチカチカする)。 */
-    if (goNow && !visStrGoPrev && (fx === 'flicker')) {
-      for (const s of visStrongEls) { s.style.animation = 'none'; void s.offsetWidth; s.style.animation = ''; }
-    }
-    visStrGoPrev = goNow;
-    /* スクロール連動の案: 「強み」が画面中央に来ると --str-k=1(完全に重なる)、遠いほど 0(ずれる) */
-    if (VIS_STRONG_CONVERGE.includes(fx) && visStrongEls.length) {
-      const r = visStrongEls[0].getBoundingClientRect();
-      const cy = r.top + r.height / 2;
-      const k = Math.max(0, Math.min(1, 1 - Math.abs(cy - innerHeight * 0.5) / (innerHeight * 0.5)));
-      visEls.l1.style.setProperty('--str-k', k.toFixed(3));
-    } else {
-      visEls.l1.style.removeProperty('--str-k');
-    }
-    if (fx === 'flicker') visEls.l1.style.setProperty('--flick-dur', (params.visFlickerDur || 2) + 's');
+  /* 【2026-08-30 ヒデさん指定】メッセージの「強み」強調は【グラデ揺らぎ(live)】で確定。
+     str-live は CSS の常時アニメ(紺⇄ピンクのグラデがゆっくり流れる)。他の案とパネルは削除した。 */
+  for (const el of [visEls.l1, visEls.l2]) {
+    if (!el) continue;
+    el.classList.add('str-live');
+    el.classList.add('str-go');   /* 発光がはみ出せるように(overflow:visible) */
   }
 
   /* --- 自動パートが終わったら、続けて軌道が左下へ (同じ時計で動かす) --- */
@@ -10116,7 +10034,7 @@ function valTake(st, tag) {
   st.used++;
   el.setAttribute('opacity', '1');
   el.setAttribute('stroke', valInkCur);
-  el.setAttribute('stroke-width', '1.6');
+  el.setAttribute('stroke-width', '1');   /* 2026-08-30 ヒデさん指定: ピクトグラムの線幅は全部1px */
   el.removeAttribute('transform');
   return el;
 }
@@ -10230,8 +10148,8 @@ const VAL_SAAS = {
     const fol = (k - 0.4) / 0.6;
     if (fol > 0) {
       const pB = vE(Math.min(1, fol));
-      vRect(st, x0 + span * pB, C, 12, 12, { c: VAL_ACC, w: 1 });
-      if (fol > 0.16) { const pP = vE(Math.min(1, fol - 0.16)); vRect(st, x0 + span * pP, C, 12, 12, { c: VAL_PINK, w: 1 }); }
+      vRect(st, x0 + span * pB, C, 12, 12, { c: VAL_ACC, w: 1});
+      if (fol > 0.16) { const pP = vE(Math.min(1, fol - 0.16)); vRect(st, x0 + span * pP, C, 12, 12, { c: VAL_PINK, w: 1}); }
     }
   },
   /* S2 双方向のやり取り: 2つの箱の間を小さな正方形が行き来し、届くと受け手の枠が太くなる */
@@ -10241,11 +10159,11 @@ const VAL_SAAS = {
     const u = vE(fwd ? k / 0.5 : (k - 0.5) / 0.5);
     const x = fwd ? L + (R - L) * u : R - (R - L) * u;
     const hitL = !fwd && u > 0.86, hitR = fwd && u > 0.86;
-    vRect(st, L, C, 46, 60, { rx: 4, w: hitL ? 3 : 1.6, c: hitL ? VAL_ACC : VAL_INK });
-    vRect(st, R, C, 46, 60, { rx: 4, w: hitR ? 3 : 1.6, c: hitR ? VAL_ACC : VAL_INK });
+    vRect(st, L, C, 46, 60, { rx: 4, w: 1, c: hitL ? VAL_ACC : VAL_INK });
+    vRect(st, R, C, 46, 60, { rx: 4, w: 1, c: hitR ? VAL_ACC : VAL_INK });
     for (let i = 0; i < 3; i++) vLine(st, L - 14, C - 16 + i * 16, L + 14, C - 16 + i * 16, { a: 0.3 });
     for (let i = 0; i < 3; i++) vLine(st, R - 14, C - 16 + i * 16, R + 14, C - 16 + i * 16, { a: 0.3 });
-    vRect(st, x, C, 13, 13, { c: fwd ? VAL_ACC : VAL_PINK, w: 2, rot: u * 180, rx0: x, ry0: C });
+    vRect(st, x, C, 13, 13, { c: fwd ? VAL_ACC : VAL_PINK, w: 1, rot: u * 180, rx0: x, ry0: C });
   },
   /* S3 重なって1つになる: 2つの円が寄って重なり、中央に正方形が生まれる＝統合 */
   S3(st, t) {
@@ -10260,8 +10178,8 @@ const VAL_SAAS = {
     vCircle(st, C + gap, C, 46, { c: VAL_ACC, a: 0.95 });
     const one = Math.max(0, (close - 0.72) / 0.28);
     if (one > 0) {
-      vRect(st, C, C, 30 * vE(one), 30 * vE(one), { w: 2, a: one });
-      vCircle(st, C, C, 46 + (1 - one) * 10, { w: 2, a: one * 0.5 });
+      vRect(st, C, C, 30 * vE(one), 30 * vE(one), { w: 1, a: one });
+      vCircle(st, C, C, 46 + (1 - one) * 10, { w: 1, a: one * 0.5 });
     }
   },
   /* S4 一斉にそろう: 3×3 の升目がバラバラに光り、最後に全部が同じ状態へ揃う */
@@ -10274,7 +10192,7 @@ const VAL_SAAS = {
       const ph = ((i * 7) % 9) / 9;
       const lit = settle > 0.1 ? settle : (Math.sin((k + ph) * Math.PI * 4) > 0.55 ? 1 : 0);
       vRect(st, C + (c - 1) * (S + G), C + (r - 1) * (S + G), S, S,
-        { rx: 3, w: lit ? 2.2 : 1.4, c: lit ? VAL_ACC : VAL_INK, a: lit ? 1 : 0.4 });
+        { rx: 3, w: 1, c: lit ? VAL_ACC : VAL_INK, a: lit ? 1 : 0.4 });
     }
   },
   /* S5 すれ違う2本の流れ: 上下の線を、円と正方形が逆向きに流れる。交差で一瞬ふくらむ */
@@ -10286,9 +10204,9 @@ const VAL_SAAS = {
       const u = vLoop(t * 0.42 + i / 3, 1);
       const x = 26 + 168 * u;
       const near = Math.abs(x - C) < 16 ? 1 : 0;
-      vCircle(st, x, C - 26, 8 + near * 3, { c: VAL_ACC, w: near ? 2.4 : 1.6 });
+      vCircle(st, x, C - 26, 8 + near * 3, { c: VAL_ACC, w: 1});
       const x2 = 194 - 168 * u;
-      vRect(st, x2, C + 26, 15 + near * 4, 15 + near * 4, { c: VAL_PINK, w: near ? 2.4 : 1.6 });
+      vRect(st, x2, C + 26, 15 + near * 4, 15 + near * 4, { c: VAL_PINK, w: 1});
     }
   },
   /* ===== ここから 2026-08-28 追加分 =====
@@ -10301,12 +10219,12 @@ const VAL_SAAS = {
     const draw = Math.min(1, k / 0.42);                 /* 速く引く */
     const land = Math.max(0, (k - 0.44) / 0.3);         /* 受け手が一周描かれる */
     const rest = Math.max(0, (k - 0.8) / 0.2);          /* 余韻はゆっくり */
-    vRect(st, L, C, 44, 56, { rx: 4, w: 1.8 });
-    vTrim(vRect(st, R, C, 44, 56, { rx: 4, w: 2.4, c: VAL_ACC, a: land > 0 ? 1 : 0 }), vE(land));
-    vTrim(vLine(st, L + 24, C, R - 24, C, { c: VAL_ACC, w: 2.2 }), vE(draw));
+    vRect(st, L, C, 44, 56, { rx: 4, w: 1});
+    vTrim(vRect(st, R, C, 44, 56, { rx: 4, w: 1, c: VAL_ACC, a: land > 0 ? 1 : 0 }), vE(land));
+    vTrim(vLine(st, L + 24, C, R - 24, C, { c: VAL_ACC, w: 1}), vE(draw));
     vLine(st, L + 24, C, R - 24, C, { a: 0.16, dash: '4 6' });
     const px = L + 24 + (R - L - 48) * vE(draw);
-    vRect(st, px, C, 10, 10, { c: VAL_ACC, w: 2, a: draw < 1 ? 1 : 1 - rest });
+    vRect(st, px, C, 10, 10, { c: VAL_ACC, w: 1, a: draw < 1 ? 1 : 1 - rest });
     vCircle(st, L, C, 8, { a: 0.4 });
   },
   /* S7 4つが1つに: 四隅の四角が中央へ集まり、重なって1つになる。合流の瞬間に外周が一周描かれる */
@@ -10317,19 +10235,19 @@ const VAL_SAAS = {
     for (let i = 0; i < 4; i++) {
       const a = (i * 90 + 45) * Math.PI / 180;
       vRect(st, C + Math.cos(a) * d, C + Math.sin(a) * d, 30, 30,
-        { rx: 3, w: 1.8, c: i % 2 ? VAL_ACC : VAL_PINK, a: 0.9 });
+        { rx: 3, w: 1, c: i % 2 ? VAL_ACC : VAL_PINK, a: 0.9 });
     }
-    vTrim(vCircle(st, C, C, 52, { w: 2.2, c: VAL_ACC, a: hold > 0 ? 1 - back : 0 }), vE(hold));
+    vTrim(vCircle(st, C, C, 52, { w: 1, c: VAL_ACC, a: hold > 0 ? 1 - back : 0 }), vE(hold));
   },
   /* S8 満ちて同期: 外周が0→100%まで描かれ(進捗)、満ちた瞬間に内側の四角がパッと出る */
   S8(st, t) {
     const C = VAL_VB / 2, T = 3.8, k = vLoop(t, T);
     const fill = Math.min(1, k / 0.72), pop = Math.max(0, (k - 0.72) / 0.28);
     vCircle(st, C, C, 62, { a: 0.16, dash: '3 5' });
-    vTrim(vCircle(st, C, C, 62, { w: 2.6, c: VAL_ACC }), fill);
+    vTrim(vCircle(st, C, C, 62, { w: 1, c: VAL_ACC }), fill);
     vCircle(st, C, C, 40, { a: 0.28 });
     const sz = 34 * (pop > 0 ? (1 + (1 - vE(Math.min(1, pop * 2.4))) * 0.5) : 0);
-    if (pop > 0) vRect(st, C, C, sz, sz, { rx: 3, w: 2.4, c: VAL_ACC, a: 1 - pop * 0.5 });
+    if (pop > 0) vRect(st, C, C, sz, sz, { rx: 3, w: 1, c: VAL_ACC, a: 1 - pop * 0.5 });
     for (let i = 0; i < 4; i++) {
       const a = (i * 90 - 90) * Math.PI / 180;
       vLine(st, C + Math.cos(a) * 70, C + Math.sin(a) * 70, C + Math.cos(a) * 78, C + Math.sin(a) * 78, { a: 0.3 });
@@ -10344,7 +10262,7 @@ const VAL_SAAS = {
       const pts = []; const seg = 26;
       for (let i = 0; i <= seg; i++) { const a = (a0 + (a1 - a0) * (i / seg)) * Math.PI / 180;
         pts.push([C + Math.cos(a) * R, C + Math.sin(a) * R]); }
-      vTrim(vPath(st, pts, { c: col, w: lock > 0 ? 2.8 : 2, a: 1 - off }), vE(kk));
+      vTrim(vPath(st, pts, { c: col, w: 1, a: 1 - off }), vE(kk));
     };
     arc(180, 360, grow, VAL_ACC);
     arc(0, 180, grow, VAL_PINK);
@@ -10352,7 +10270,7 @@ const VAL_SAAS = {
     /* 常設の印(左右の合わせ目)。どの場面でも密度が落ちないように */
     vLine(st, C - R - 12, C, C - R + 2, C, { a: 0.25 });
     vLine(st, C + R - 2, C, C + R + 12, C, { a: 0.25 });
-    if (lock > 0) vCircle(st, C, C, 12 + vE(Math.min(1, lock * 2)) * 6, { c: VAL_ACC, w: 2.2, a: 1 - lock });
+    if (lock > 0) vCircle(st, C, C, 12 + vE(Math.min(1, lock * 2)) * 6, { c: VAL_ACC, w: 1, a: 1 - lock });
   },
   /* S10 積層して重なる: 3つの円がずれて重なっていき、完全に重なると1つに見える */
   S10(st, t) {
@@ -10361,9 +10279,9 @@ const VAL_SAAS = {
     const sp = 34 * (1 - vE(stack)) + 34 * vE(open);
     for (let i = 0; i < 3; i++) {
       const dy = (i - 1) * sp;
-      vCircle(st, C, C + dy, 44, { w: 1.8, c: i === 1 ? VAL_INK : (i ? VAL_ACC : VAL_PINK), a: 0.9 });
+      vCircle(st, C, C + dy, 44, { w: 1, c: i === 1 ? VAL_INK : (i ? VAL_ACC : VAL_PINK), a: 0.9 });
     }
-    vTrim(vCircle(st, C, C, 44, { w: 2.8, c: VAL_ACC, a: one > 0 ? 1 - open : 0 }), vE(one));
+    vTrim(vCircle(st, C, C, 44, { w: 1, c: VAL_ACC, a: one > 0 ? 1 - open : 0 }), vE(one));
     vLine(st, C - 66, C, C + 66, C, { a: 0.14, dash: '4 6' });
   },
   /* ===== ここから 2026-08-28 追加分(躍動感・回転・奥行き) =====
@@ -10375,13 +10293,13 @@ const VAL_SAAS = {
     const C = VAL_VB / 2, R = 66;
     const a = t * 46, b = -t * 38;
     const f1 = Math.abs(Math.cos(t * 0.8)), f2 = Math.abs(Math.sin(t * 0.8));
-    vEll(st, C, C, R, Math.max(5, R * f1), a, { c: VAL_ACC, w: 1.8 });
-    vEll(st, C, C, R, Math.max(5, R * f2), b, { c: VAL_PINK, w: 1.8 });
+    vEll(st, C, C, R, Math.max(5, R * f1), a, { c: VAL_ACC, w: 1});
+    vEll(st, C, C, R, Math.max(5, R * f2), b, { c: VAL_PINK, w: 1});
     for (let i = 0; i < 2; i++) {
       const p = vOn(C, C, R, Math.max(5, R * f1), t * 120 + i * 180, a);
-      vRect(st, p.x, p.y, 9 + p.depth * 6, 9 + p.depth * 6, { w: 1.8, a: 0.4 + p.depth * 0.6 });
+      vRect(st, p.x, p.y, 9 + p.depth * 6, 9 + p.depth * 6, { w: 1, a: 0.4 + p.depth * 0.6 });
     }
-    vCircle(st, C, C, 9, { w: 2, a: 0.9 });
+    vCircle(st, C, C, 9, { w: 1, a: 0.9 });
   },
   /* S12 立方体が回る: 前後2枚の正方形を線で結んだ枠。横幅の伸び縮みで回転して見せる */
   S12(st, t) {
@@ -10391,22 +10309,22 @@ const VAL_SAAS = {
     const off = 22 * k;
     const A = { x: C - off, y: C - 10, s: S * far },
           B = { x: C + off, y: C + 10, s: S * near };
-    vRect(st, A.x, A.y, A.s, A.s, { w: 1.5, a: 0.45 });
+    vRect(st, A.x, A.y, A.s, A.s, { w: 1, a: 0.45 });
     for (const [dx, dy] of [[-1,-1],[1,-1],[1,1],[-1,1]])
       vLine(st, A.x + dx * A.s / 2, A.y + dy * A.s / 2, B.x + dx * B.s / 2, B.y + dy * B.s / 2, { a: 0.3 });
-    vRect(st, B.x, B.y, B.s, B.s, { w: 2.2, c: VAL_ACC });
-    vCircle(st, B.x, B.y, 7, { c: VAL_PINK, w: 2 });
+    vRect(st, B.x, B.y, B.s, B.s, { w: 1, c: VAL_ACC });
+    vCircle(st, B.x, B.y, 7, { c: VAL_PINK, w: 1});
   },
   /* S13 手前と奥をめぐる: 寝かせた輪の上を四角が周回。手前で大きく前面、奥で小さく背面 */
   S13(st, t) {
     const C = VAL_VB / 2, RX = 82, RY = 30, ROT = -18;
     vEll(st, C, C, RX, RY, ROT, { a: 0.4 });
     vEll(st, C, C, RX * 0.62, RY * 0.62, ROT, { a: 0.2, dash: '4 6' });
-    vCircle(st, C, C, 16, { w: 2 });
+    vCircle(st, C, C, 16, { w: 1});
     for (let i = 0; i < 4; i++) {
       const p = vOn(C, C, RX, RY, t * 66 + i * 90, ROT);
       const sz = 8 + p.depth * 12;
-      vRect(st, p.x, p.y, sz, sz, { w: 1.4 + p.depth * 1.2,
+      vRect(st, p.x, p.y, sz, sz, { w: 1,
         c: i % 2 ? VAL_ACC : VAL_PINK, a: 0.35 + p.depth * 0.65 });
     }
   },
@@ -10415,11 +10333,11 @@ const VAL_SAAS = {
     const C = VAL_VB / 2, RX = 74;
     const tilt = 0.14 + 0.76 * (0.5 + 0.5 * Math.sin(t * 0.55));   /* 寝る↔立つ */
     const RY = RX * tilt, ROT = -14;
-    vEll(st, C, C, RX, RY, ROT, { c: VAL_ACC, w: 2 });
+    vEll(st, C, C, RX, RY, ROT, { c: VAL_ACC, w: 1});
     for (let i = 0; i < 3; i++) {
       const p = vOn(C, C, RX, RY, t * 54 + i * 120, ROT);
       const sz = 10 + p.depth * 8;
-      vTri(st, p.x, p.y, sz, t * 40 + i * 120, { w: 1.6, a: 0.4 + p.depth * 0.6 });
+      vTri(st, p.x, p.y, sz, t * 40 + i * 120, { w: 1, a: 0.4 + p.depth * 0.6 });
     }
     vLine(st, C - RX - 10, C, C - RX + 4, C, { a: 0.25 });
     vLine(st, C + RX - 4, C, C + RX + 10, C, { a: 0.25 });
@@ -10430,11 +10348,11 @@ const VAL_SAAS = {
     const close = k < 0.46 ? vE(k / 0.46) : (k < 0.74 ? 1 : 1 - vE((k - 0.74) / 0.26));
     const gap = 40 * (1 - close);
     const sp = close * 45;
-    vRect(st, C - gap, C, 62, 62, { w: 2, c: VAL_PINK, rot: -sp, rx0: C - gap, ry0: C });
-    vRect(st, C + gap, C, 62, 62, { w: 2, c: VAL_ACC, rot: sp, rx0: C + gap, ry0: C });
+    vRect(st, C - gap, C, 62, 62, { w: 1, c: VAL_PINK, rot: -sp, rx0: C - gap, ry0: C });
+    vRect(st, C + gap, C, 62, 62, { w: 1, c: VAL_ACC, rot: sp, rx0: C + gap, ry0: C });
     vCircle(st, C, C, 62 * 0.72, { a: 0.14, dash: '4 6' });
     const lock = Math.max(0, (close - 0.85) / 0.15);
-    if (lock > 0) vCircle(st, C, C, 10 + lock * 8, { c: VAL_ACC, w: 2.4, a: 1 - lock * 0.5 });
+    if (lock > 0) vCircle(st, C, C, 10 + lock * 8, { c: VAL_ACC, w: 1, a: 1 - lock * 0.5 });
   },
   /* ===== 2026-08-28 追加: 開く → グリンと回る → 重なる =====
      ヒデさん指定「一旦上下に開いた後に右回転でグリンとスピンして、また重なる」。
@@ -10450,12 +10368,12 @@ const VAL_SAAS = {
     const COL = [VAL_PINK, VAL_INK, VAL_ACC];
     for (let i = 0; i < 3; i++) {
       const y = C + (i - 1) * gap;
-      vRect(st, C, y, 76, 48, { rx: 5, w: 2, c: COL[i],
+      vRect(st, C, y, 76, 48, { rx: 5, w: 1, c: COL[i],
         rot: spin, rx0: C, ry0: y });
     }
     vCircle(st, C, C, 66, { a: 0.13, dash: '4 6' });
     const lock = Math.max(0, (back - 0.86) / 0.14);
-    if (lock > 0) vCircle(st, C, C, 12 + lock * 10, { c: VAL_ACC, w: 2.4, a: 1 - lock });
+    if (lock > 0) vCircle(st, C, C, 12 + lock * 10, { c: VAL_ACC, w: 1, a: 1 - lock });
   },
   /* S17 花のように開いて閉じる: 4枚が放射状に開き、全体が回ってから中央へ戻る */
   S17(st, t) {
@@ -10468,10 +10386,10 @@ const VAL_SAAS = {
     for (let i = 0; i < 4; i++) {
       const a = (i * 90 + 45 + spin) * Math.PI / 180;
       const x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
-      vRect(st, x, y, 40, 40, { rx: 4, w: 2, c: i % 2 ? VAL_ACC : VAL_PINK,
+      vRect(st, x, y, 40, 40, { rx: 4, w: 1, c: i % 2 ? VAL_ACC : VAL_PINK,
         rot: spin + i * 90, rx0: x, ry0: y });
     }
-    vCircle(st, C, C, 10, { w: 2, a: 0.4 + back * 0.6 });
+    vCircle(st, C, C, 10, { w: 1, a: 0.4 + back * 0.6 });
   },
   /* S18 カードを配って束ねる: 3枚が扇に開き、グリンと回って、パチンと束に戻る */
   S18(st, t) {
@@ -10483,12 +10401,12 @@ const VAL_SAAS = {
     for (let i = 0; i < 3; i++) {
       const off = (i - 1) * 34 * sp;
       const tilt = (i - 1) * 16 * sp + spin;
-      vRect(st, C + off, C, 66, 88, { rx: 5, w: 2,
+      vRect(st, C + off, C, 66, 88, { rx: 5, w: 1,
         c: [VAL_PINK, VAL_INK, VAL_ACC][i], rot: tilt, rx0: C + off, ry0: C });
     }
     vLine(st, C - 74, C + 56, C + 74, C + 56, { a: 0.25 });
     const lock = Math.max(0, (back - 0.88) / 0.12);
-    if (lock > 0) vRect(st, C, C, 66 + lock * 12, 88 + lock * 12, { rx: 6, c: VAL_ACC, w: 2.2, a: 1 - lock });
+    if (lock > 0) vRect(st, C, C, 66 + lock * 12, 88 + lock * 12, { rx: 6, c: VAL_ACC, w: 1, a: 1 - lock });
   },
 };
 
@@ -10498,15 +10416,15 @@ const VAL_AI = {
   A1(st, t) {
     /* 【2026-08-30 ヒデさん指定】四角の角丸なし・点線をやめて実線・各要素1px枠・終端で光る三角は削除。 */
     const C = VAL_VB / 2, X = [44, 110, 176];
-    vCircle(st, X[0], C, 26, { a: 0.9, w: 1 });
-    vRect(st, X[1], C, 46, 46, { rx: 0, a: 0.9, w: 1 });
-    vTri(st, X[2], C, 28, 90, { a: 0.9, w: 1 });
-    vLine(st, X[0] + 30, C, X[1] - 27, C, { a: 0.3, w: 1 });
-    vLine(st, X[1] + 27, C, X[2] - 26, C, { a: 0.3, w: 1 });
+    vCircle(st, X[0], C, 26, { a: 0.9, w: 1});
+    vRect(st, X[1], C, 46, 46, { rx: 0, a: 0.9, w: 1});
+    vTri(st, X[2], C, 28, 90, { a: 0.9, w: 1});
+    vLine(st, X[0] + 30, C, X[1] - 27, C, { a: 0.3, w: 1});
+    vLine(st, X[1] + 27, C, X[2] - 26, C, { a: 0.3, w: 1});
     for (let i = 0; i < 2; i++) {
       const u = vLoop(t * 0.5 + i / 2, 1);
       const x = X[0] + (X[2] - X[0]) * u;
-      if (u < 0.5) vCircle(st, x, C, 7, { c: VAL_ACC, w: 1 });
+      if (u < 0.5) vCircle(st, x, C, 7, { c: VAL_ACC, w: 1});
       else vRect(st, x, C, 12, 12, { c: VAL_ACC, w: 1, rot: u * 240, rx0: x, ry0: C });
     }
     /* 終端で光る三角(fire)は削除(ヒデさん指定) */
@@ -10522,16 +10440,16 @@ const VAL_AI = {
     const u = vE(seg === 0 ? k / 0.34 : seg === 1 ? (k - 0.34) / 0.34 : (k - 0.68) / 0.32);
     /* 見えている形を切り替えつつ、大きさを合わせて「変形」に見せる */
     const R = 52;
-    if (seg === 0) { vCircle(st, C, C, R * (0.9 + 0.1 * u), { w: 2 }); vRect(st, C, C, R * 1.5 * u, R * 1.5 * u, { w: 2, a: u * 0.9 }); }
-    else if (seg === 1) { vRect(st, C, C, R * 1.5, R * 1.5, { w: 2, a: 1 - u * 0.1 }); vTri(st, C, C, R * u, 90, { w: 2, a: u }); }
-    else { vTri(st, C, C, R, 90, { w: 2.2 }); }
+    if (seg === 0) { vCircle(st, C, C, R * (0.9 + 0.1 * u), { w: 1}); vRect(st, C, C, R * 1.5 * u, R * 1.5 * u, { w: 1, a: u * 0.9 }); }
+    else if (seg === 1) { vRect(st, C, C, R * 1.5, R * 1.5, { w: 1, a: 1 - u * 0.1 }); vTri(st, C, C, R * u, 90, { w: 1, a: u }); }
+    else { vTri(st, C, C, R, 90, { w: 1}); }
     if (seg === 2) for (let i = 0; i < 4; i++) {
       const d = 60 + u * 34;
       const a = (-90 + i * 90) * Math.PI / 180;
       vLine(st, C + Math.cos(a) * d, C + Math.sin(a) * d,
-               C + Math.cos(a) * (d + 16), C + Math.sin(a) * (d + 16), { c: VAL_ACC, w: 2, a: 1 - u });
+               C + Math.cos(a) * (d + 16), C + Math.sin(a) * (d + 16), { c: VAL_ACC, w: 1, a: 1 - u });
     }
-    vCircle(st, C, C, 6, { c: VAL_PINK, w: 2, a: 0.8 });
+    vCircle(st, C, C, 6, { c: VAL_PINK, w: 1, a: 0.8 });
   },
   /* A3 集めて撃つ: 散らばった小さな正方形が中央の円へ集まり、満ちたら右へ三角が飛ぶ */
   A3(st, t) {
@@ -10542,11 +10460,11 @@ const VAL_AI = {
       const a = (i / 5) * Math.PI * 2 + t * 0.35;
       const d = 86 * (1 - vE(gather)) + 26 * vE(gather);
       vRect(st, C - 18 + Math.cos(a) * d, C + Math.sin(a) * d, 12, 12,
-        { c: VAL_ACC, w: 1.8, a: 1 - shoot * 0.7, rot: a * 57, rx0: C - 18 + Math.cos(a) * d, ry0: C + Math.sin(a) * d });
+        { c: VAL_ACC, w: 1, a: 1 - shoot * 0.7, rot: a * 57, rx0: C - 18 + Math.cos(a) * d, ry0: C + Math.sin(a) * d });
     }
     if (shoot > 0) {
       const x = C - 18 + vE(shoot) * 96;
-      vTri(st, x, C, 22, 90, { c: VAL_ACC, w: 2.4, a: 1 - shoot * 0.3, rot: 90, rx0: x, ry0: C });
+      vTri(st, x, C, 22, 90, { c: VAL_ACC, w: 1, a: 1 - shoot * 0.3, rot: 90, rx0: x, ry0: C });
     }
   },
   /* A4 走査してから実行: 大きな正方形の中を線が上から下へ走る(取得)。走り終わると三角に変わって右へ抜ける */
@@ -10559,15 +10477,15 @@ const VAL_AI = {
     vLine(st, C + S / 2 + 24, C - 14, C + S / 2 + 24, C + 14, { a: 0.22 });
     vLine(st, C - S / 2 - 24, C - 14, C - S / 2 - 24, C + 14, { a: 0.22 });
     if (go < 0.5) {
-      vRect(st, C, C, S * (1 - go * 0.5), S * (1 - go * 0.5), { rx: 0, w: 2, a: 1 - go });
+      vRect(st, C, C, S * (1 - go * 0.5), S * (1 - go * 0.5), { rx: 0, w: 1, a: 1 - go });
       const y = C - S / 2 + S * vE(scan);
-      vLine(st, C - S / 2 + 6, y, C + S / 2 - 6, y, { c: VAL_ACC, w: 2.4, a: scan < 1 ? 1 : 0.2 });
+      vLine(st, C - S / 2 + 6, y, C + S / 2 - 6, y, { c: VAL_ACC, w: 1, a: scan < 1 ? 1 : 0.2 });
       for (let i = 0; i < 3; i++) {
         const yy = C - 26 + i * 26;
         vLine(st, C - 30, yy, C + 30, yy, { a: yy < y ? 0.55 : 0.15, dash: '5 6' });
       }
     }
-    if (go > 0) vTri(st, slideX, C, 30, 90, { c: VAL_ACC, w: 2.4, a: Math.min(1, go * 2) * (1 - go * 0.4) });
+    if (go > 0) vTri(st, slideX, C, 30, 90, { c: VAL_ACC, w: 1, a: Math.min(1, go * 2) * (1 - go * 0.4) });
   },
   /* A5 積んで実行 (2026-08-28 ヒデさん指定で作り直し):
      ・フェードインをやめ、【下から入ってくる】動きにした
@@ -10592,7 +10510,7 @@ const VAL_AI = {
       for (let r = q + 1; r < N; r++) lift += vE3(Math.max(0, Math.min(1, (k - at(r)) / dur)));
       const y0 = baseY - lift * (BH + GAP);
       const y = fromY + (y0 - fromY) * vE2(kk);
-      vRect(st, C, y, BW, BH, { rx: 0, w: 2, c: q === N - 1 ? VAL_ACC : VAL_INK });
+      vRect(st, C, y, BW, BH, { rx: 0, w: 1, c: q === N - 1 ? VAL_ACC : VAL_INK });
       vLine(st, C - BW / 2 + 12, y, C - BW / 2 + 38, y, { a: 0.35 });
     }
   },
@@ -10606,14 +10524,14 @@ const VAL_AI = {
     const draw = Math.min(1, k / 0.5), fire = Math.max(0, (k - 0.52) / 0.28), off = Math.max(0, (k - 0.84) / 0.16);
     const P = [[46, C + 34], [92, C + 34], [92, C - 30], [166, C - 30]];
     vPath(st, P, { a: 0.15, dash: '4 6' });
-    vTrim(vPath(st, P, { c: VAL_ACC, w: 2.2, a: 1 - off }), vE(draw));
-    vCircle(st, 46, C + 34, 15, { w: 1.8 });
-    vTrim(vTri(st, 178, C - 30, 22, 90, { c: VAL_ACC, w: 2.6, a: fire > 0 ? 1 - off : 0 }), vE(fire));
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 1, a: 1 - off }), vE(draw));
+    vCircle(st, 46, C + 34, 15, { w: 1});
+    vTrim(vTri(st, 178, C - 30, 22, 90, { c: VAL_ACC, w: 1, a: fire > 0 ? 1 - off : 0 }), vE(fire));
     vTri(st, 178, C - 30, 22, 90, { a: 0.16 });
     const kk = vE(draw), idx = Math.min(P.length - 2, Math.floor(kk * 3));
     const seg = kk * 3 - idx;
     vRect(st, P[idx][0] + (P[idx+1][0] - P[idx][0]) * seg, P[idx][1] + (P[idx+1][1] - P[idx][1]) * seg,
-      9, 9, { c: VAL_ACC, w: 2, a: draw < 1 ? 1 : 0 });
+      9, 9, { c: VAL_ACC, w: 1, a: draw < 1 ? 1 : 0 });
   },
   /* A7 3ステップ: 取得→解釈→実行の枠が順に描かれて満ちる。最後に三角。時系列そのもの */
   A7(st, t) {
@@ -10622,10 +10540,10 @@ const VAL_AI = {
       const y = C - 46 + i * 40;
       const at = i * 0.2, kk = Math.max(0, Math.min(1, (k - at) / 0.2));
       vRect(st, C - 12, y, 116, 26, { rx: 0, a: 0.16, dash: '4 6' });
-      vTrim(vRect(st, C - 12, y, 116, 26, { rx: 0, c: kk >= 1 ? VAL_INK : VAL_ACC, w: kk >= 1 ? 1.8 : 2.4 }), vE(kk));
+      vTrim(vRect(st, C - 12, y, 116, 26, { rx: 0, c: kk >= 1 ? VAL_INK : VAL_ACC, w: 1}), vE(kk));
     }
     const go = Math.max(0, (k - 0.66) / 0.34);
-    if (go > 0) vTrim(vTri(st, C + 74, C + 34, 20, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.3 }), vE(Math.min(1, go * 2)));
+    if (go > 0) vTrim(vTri(st, C + 74, C + 34, 20, 90, { c: VAL_ACC, w: 1, a: 1 - go * 0.3 }), vE(Math.min(1, go * 2)));
     vLine(st, C - 70, C + 62, C + 86, C + 62, { a: 0.2 });
   },
   /* A8 満ちて発射 (2026-08-28 ヒデさん指定): 発射は三角ではなく【矢印】に。
@@ -10634,11 +10552,11 @@ const VAL_AI = {
     const C = VAL_VB / 2, T = 3.2, k = vLoop(t, T);
     const load = Math.min(1, k / 0.62), shoot = Math.max(0, (k - 0.62) / 0.38);
     vCircle(st, C - 30, C, 46, { a: 0.16, dash: '3 5' });
-    vTrim(vCircle(st, C - 30, C, 46, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.8 }), load);
-    vRect(st, C - 30, C, 20, 20, { w: 1.8, a: 0.5 + load * 0.5, rot: load * 90, rx0: C - 30, ry0: C });
+    vTrim(vCircle(st, C - 30, C, 46, { c: VAL_ACC, w: 1, a: 1 - shoot * 0.8 }), load);
+    vRect(st, C - 30, C, 20, 20, { w: 1, a: 0.5 + load * 0.5, rot: load * 90, rx0: C - 30, ry0: C });
     if (shoot > 0) {
       const e = vE2(shoot);
-      vArrow(st, C - 24 + e * 44, C, 50, 0, { c: VAL_ACC, w: 2.6, a: 1 - shoot * 0.35 });
+      vArrow(st, C - 24 + e * 44, C, 50, 0, { c: VAL_ACC, w: 1, a: 1 - shoot * 0.35 });
     } else {
       vArrow(st, C + 24, C, 44, 0, { a: 0.16 });     /* 出口の目印 */
     }
@@ -10653,13 +10571,13 @@ const VAL_AI = {
     for (let i = 0; i < 3; i++) {
       const a = (i * 120 - 90) * Math.PI / 180;
       vCircle(st, C + Math.cos(a) * d, C + Math.sin(a) * d, 40,
-        { w: 1.8, c: [VAL_PINK, VAL_ACC, VAL_INK][i], a: 0.9 - go * 0.6 });
+        { w: 1, c: [VAL_PINK, VAL_ACC, VAL_INK][i], a: 0.9 - go * 0.6 });
     }
     /* 常設の当たり。場面が変わっても図形の数がそろうように */
     vCircle(st, C, C, 82, { a: 0.13, dash: '4 6' });
     vLine(st, C + 88, C - 14, C + 88, C + 14, { a: 0.22 });
-    if (born > 0 && morph <= 0) vTrim(vRect(st, C, C, 30, 30, { rx: 0, c: VAL_ACC, w: 2.4 }), vE(born));
-    if (morph > 0) vTri(st, C + vE(go) * 62, C, 22 + morph * 6, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.4 });
+    if (born > 0 && morph <= 0) vTrim(vRect(st, C, C, 30, 30, { rx: 0, c: VAL_ACC, w: 1}), vE(born));
+    if (morph > 0) vTri(st, C + vE(go) * 62, C, 22 + morph * 6, 90, { c: VAL_ACC, w: 1, a: 1 - go * 0.4 });
   },
   /* A10 一本の線が折れて進む: 線が描かれながら3回折れ、先端が三角になって抜ける */
   A10(st, t) {
@@ -10667,13 +10585,13 @@ const VAL_AI = {
     const draw = Math.min(1, k / 0.7), tip = Math.max(0, (k - 0.7) / 0.3);
     const P = [[36, C + 46], [78, C + 46], [78, C], [130, C], [130, C - 44], [172, C - 44]];
     vPath(st, P, { a: 0.14, dash: '4 6' });
-    vTrim(vPath(st, P, { c: VAL_ACC, w: 2.2 }), vE(draw));
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 1}), vE(draw));
     /* 折れ点に小さな印(＝段を越えた印。時系列が読める) */
     for (let i = 1; i < P.length - 1; i++) {
       const at = i / (P.length - 1);
-      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1.6, a: vE(draw) > at ? 0.9 : 0.18 });
+      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1, a: vE(draw) > at ? 0.9 : 0.18 });
     }
-    if (tip > 0) vTrim(vTri(st, 182, C - 44, 20, 90, { c: VAL_ACC, w: 2.6 }), vE(Math.min(1, tip * 1.6)));
+    if (tip > 0) vTrim(vTri(st, 182, C - 44, 20, 90, { c: VAL_ACC, w: 1}), vE(Math.min(1, tip * 1.6)));
     else vTri(st, 182, C - 44, 20, 90, { a: 0.16 });
   },
   /* ===== ここから 2026-08-28 追加分(躍動感・回転・奥行き) ===== */
@@ -10682,22 +10600,22 @@ const VAL_AI = {
   A11(st, t) {
     const C = VAL_VB / 2, RX = 80, RY = 28, ROT = -16, T = 3.6, k = vLoop(t, T);
     vEll(st, C, C, RX, RY, ROT, { a: 0.35 });
-    vCircle(st, C, C, 20, { w: 1.8 });
+    vCircle(st, C, C, 20, { w: 1});
     for (let i = 0; i < 3; i++) {
       const p = vOn(C, C, RX, RY, k * 360 + i * 120, ROT);
-      vCircle(st, p.x, p.y, 4 + p.depth * 6, { c: VAL_ACC, w: 1.4 + p.depth, a: 0.35 + p.depth * 0.65 });
+      vCircle(st, p.x, p.y, 4 + p.depth * 6, { c: VAL_ACC, w: 1, a: 0.35 + p.depth * 0.65 });
     }
     const fire = Math.max(0, (k - 0.72) / 0.28);
     if (fire > 0) {
       const x = C + vE(fire) * 78;
-      vTri(st, x, C, 20 - fire * 4, 90, { c: VAL_ACC, w: 2.4, a: 1 - fire * 0.4 });
+      vTri(st, x, C, 20 - fire * 4, 90, { c: VAL_ACC, w: 1, a: 1 - fire * 0.4 });
     }
   },
   /* A12 球を走査する: 寝かせた輪を何本も重ねて球の骨組みに。走査線が上から下へ、終わると三角 */
   A12(st, t) {
     const C = VAL_VB / 2, R = 62, T = 4.4, k = vLoop(t, T);
     const scan = Math.min(1, k / 0.62), go = Math.max(0, (k - 0.68) / 0.32);
-    vCircle(st, C, C, R, { w: 1.6, a: 0.8 - go * 0.6 });
+    vCircle(st, C, C, R, { w: 1, a: 0.8 - go * 0.6 });
     for (let i = 1; i <= 3; i++) {
       const f = Math.cos((i / 4) * Math.PI * 0.5 + t * 0.5);
       vEll(st, C, C, R, Math.max(3, R * Math.abs(f)), 0, { a: (0.5 - go * 0.4) * 0.8 });
@@ -10705,9 +10623,9 @@ const VAL_AI = {
     const y = C - R + 2 * R * vE(scan);
     if (go <= 0) {
       const w = Math.sqrt(Math.max(0, R * R - (y - C) * (y - C)));
-      vLine(st, C - w, y, C + w, y, { c: VAL_ACC, w: 2.4 });
+      vLine(st, C - w, y, C + w, y, { c: VAL_ACC, w: 1});
     }
-    if (go > 0) vTri(st, C + vE(go) * 62, C, 24, 90, { c: VAL_ACC, w: 2.6, a: 1 - go * 0.35 });
+    if (go > 0) vTri(st, C + vE(go) * 62, C, 24, 90, { c: VAL_ACC, w: 1, a: 1 - go * 0.35 });
   },
   /* A13 カードがめくれる: 長方形が横幅の伸び縮みで3回めくれる。
      【2026-08-30 ヒデさん指定】最後の三角は削除・角丸もすべて無し。 */
@@ -10717,25 +10635,25 @@ const VAL_AI = {
     const u = Math.min(1, (k - step * 0.3) / 0.3);
     const w = W * Math.abs(Math.cos(u * Math.PI));       /* 0 を通る＝真横を向く */
     vRect(st, C, C, W, H, { rx: 0, a: 0.14, dash: '4 6' });
-    vRect(st, C, C, Math.max(2, w), H, { rx: 0, w: 2.2, c: [VAL_INK, VAL_ACC, VAL_PINK][step] });
+    vRect(st, C, C, Math.max(2, w), H, { rx: 0, w: 1, c: [VAL_INK, VAL_ACC, VAL_PINK][step] });
     for (let i = 0; i < 3; i++)
-      vRect(st, C - 34 + i * 34, C + 54, 24, 6, { rx: 0, w: 1.4, a: i <= step ? 0.9 : 0.2 });
+      vRect(st, C - 34 + i * 34, C + 54, 24, 6, { rx: 0, w: 1, a: i <= step ? 0.9 : 0.2 });
   },
   /* A14 螺旋で落ちて撃つ: 粒が寝かせた軌道を回りながら中心へ。着いた瞬間に三角が上へ抜ける */
   A14(st, t) {
     const C = VAL_VB / 2, RX = 78, RY = 27, ROT = -20, T = 4.2, k = vLoop(t, T);
     vEll(st, C, C, RX, RY, ROT, { a: 0.28, dash: '4 6' });
     vEll(st, C, C, RX * 0.5, RY * 0.5, ROT, { a: 0.2, dash: '4 6' });
-    vCircle(st, C, C, 14, { w: 1.8 });
+    vCircle(st, C, C, 14, { w: 1});
     for (let i = 0; i < 3; i++) {
       const kk = Math.max(0, Math.min(1, (k - i * 0.14) / 0.66));
       const f = 1 - vE(kk) * 0.9;
       const p = vOn(C, C, RX * f, RY * f, k * 520 + i * 120, ROT);
       vRect(st, p.x, p.y, 6 + p.depth * 8, 6 + p.depth * 8,
-        { c: VAL_ACC, w: 1.4 + p.depth, a: (0.35 + p.depth * 0.65) * (1 - kk * 0.4) });
+        { c: VAL_ACC, w: 1, a: (0.35 + p.depth * 0.65) * (1 - kk * 0.4) });
     }
     const up = Math.max(0, (k - 0.76) / 0.24);
-    if (up > 0) vTri(st, C, C - vE(up) * 66, 22, 0, { c: VAL_ACC, w: 2.6, a: 1 - up * 0.4 });
+    if (up > 0) vTri(st, C, C - vE(up) * 66, 22, 0, { c: VAL_ACC, w: 1, a: 1 - up * 0.4 });
   },
   /* A15 板が立ち上がる: 寝ていた3枚が順に立ち上がり、揃うと三角に変わって抜ける */
   A15(st, t) {
@@ -10747,10 +10665,10 @@ const VAL_AI = {
       const h = 8 + vE(kk) * 62;                        /* 寝ている → 立つ */
       const w = 44 - vE(kk) * 16;
       vRect(st, x, C + 34 - h / 2, w, Math.max(4, h),
-        { rx: 0, w: kk >= 1 ? 2.2 : 1.6, c: kk >= 1 ? VAL_ACC : VAL_INK, a: (0.4 + kk * 0.6) * (1 - done * 0.7) });
+        { rx: 0, w: 1, c: kk >= 1 ? VAL_ACC : VAL_INK, a: (0.4 + kk * 0.6) * (1 - done * 0.7) });
     }
     vEll(st, C, C + 44, 86, 12, 0, { a: 0.22 });        /* 床(寝かせた楕円)＝奥行き */
-    if (done > 0) vTri(st, C, C + 4 - vE(done) * 48, 24, 90, { c: VAL_ACC, w: 2.6, a: 1 - done * 0.3 });
+    if (done > 0) vTri(st, C, C + 4 - vE(done) * 48, 24, 90, { c: VAL_ACC, w: 1, a: 1 - done * 0.3 });
   },
   /* ===== 2026-08-28 追加: 矢印で「実行」を表す3案 =====
      ヒデさん指定。三角だけでなく、ふつうの矢印も使ってよいとのこと。 */
@@ -10761,12 +10679,12 @@ const VAL_AI = {
     const grow = vE2(Math.min(1, k / 0.46));
     const hitK = Math.max(0, (k - 0.48) / 0.2);
     const rest = Math.max(0, (k - 0.76) / 0.24);
-    vCircle(st, 40, C, 17, { w: 1.8 });
-    vRect(st, 172, C, 46, 62, { rx: 0, w: hitK > 0 && hitK < 1 ? 3.2 : 1.8,
+    vCircle(st, 40, C, 17, { w: 1});
+    vRect(st, 172, C, 46, 62, { rx: 0, w: 1,
       c: hitK > 0 && hitK < 1 ? VAL_ACC : VAL_INK });
     for (let i = 0; i < 3; i++) vLine(st, 158, C - 18 + i * 18, 186, C - 18 + i * 18, { a: 0.3 });
     vArrow(st, 60, C, 88, 0, { a: 0.14 });
-    if (grow > 0.01) vArrow(st, 60, C, 88 * grow, 0, { c: VAL_ACC, w: 2.6, a: 1 - rest * 0.5 });
+    if (grow > 0.01) vArrow(st, 60, C, 88 * grow, 0, { c: VAL_ACC, w: 1, a: 1 - rest * 0.5 });
   },
   /* A17 三方向へ配信: 中央の四角から矢印が3本、同時に外へ飛ぶ */
   A17(st, t) {
@@ -10774,14 +10692,14 @@ const VAL_AI = {
     const load = Math.min(1, k / 0.34);
     const go = Math.max(0, (k - 0.38) / 0.42);
     const out = vE2(go);
-    vRect(st, C, C, 46, 46, { rx: 0, w: 2, c: go > 0 ? VAL_ACC : VAL_INK,
+    vRect(st, C, C, 46, 46, { rx: 0, w: 1, c: go > 0 ? VAL_ACC : VAL_INK,
       rot: load * 45, rx0: C, ry0: C });
     vCircle(st, C, C, 78, { a: 0.12, dash: '4 6' });
     for (let i = 0; i < 3; i++) {
       const a = -90 + i * 120;
       const r = a * Math.PI / 180;
       const sx = C + Math.cos(r) * (30 + out * 16), sy = C + Math.sin(r) * (30 + out * 16);
-      vArrow(st, sx, sy, 46 * out, a, { c: VAL_ACC, w: 2.4, a: out > 0.02 ? 1 - go * 0.35 : 0 });
+      vArrow(st, sx, sy, 46 * out, a, { c: VAL_ACC, w: 1, a: out > 0.02 ? 1 - go * 0.35 : 0 });
       vArrow(st, C + Math.cos(r) * 46, C + Math.sin(r) * 46, 40, a, { a: 0.13 });
     }
   },
@@ -10799,8 +10717,8 @@ const VAL_AI = {
     }
     const r = deg * Math.PI / 180;
     const sx = C + Math.cos(r) * out * 54, sy = C + Math.sin(r) * out * 54;
-    vArrow(st, sx, sy, 50, deg, { c: go > 0 ? VAL_ACC : VAL_INK, w: 2.6, a: 1 - go * 0.3 });
-    vCircle(st, C, C, 9, { w: 2, c: VAL_PINK, a: 0.85 });
+    vArrow(st, sx, sy, 50, deg, { c: go > 0 ? VAL_ACC : VAL_INK, w: 1, a: 1 - go * 0.3 });
+    vCircle(st, C, C, 9, { w: 1, c: VAL_PINK, a: 0.85 });
   },
   /* A19 ひし形を貫く (2026-08-28 ヒデさん指定・Figma 15888:25154 のピクトグラムをもとに)
      ひし形が左から順に現れて右へ4つまで増え、そこを矢印が左から右へ貫く。
@@ -10815,20 +10733,20 @@ const VAL_AI = {
     const XS = [86, 104.6, 123.2, 141.8];
     /* 1) 左からの線が引かれる */
     const lineK = Math.min(1, k / 0.14);
-    vTrim(vLine(st, 15, C, 70, C, { c: VAL_INK, w: 1.8 }), vE2(lineK));
+    vTrim(vLine(st, 15, C, 70, C, { c: VAL_INK, w: 1}), vE2(lineK));
     /* 2) ひし形が左から順に現れる(常設の当たりを薄く置いて、空の瞬間を作らない) */
     for (let i = 0; i < 4; i++) {
       const x = XS[i];
       const pts = [[x, C - HH], [x + HW, C], [x, C + HH], [x - HW, C], [x, C - HH]];
       vPath(st, pts, { a: 0.1 });
       const at = 0.16 + i * 0.09, kk = Math.max(0, Math.min(1, (k - at) / 0.09));
-      if (kk > 0) vTrim(vPath(st, pts, { c: VAL_INK, w: 1.6 }), vE2(kk));
+      if (kk > 0) vTrim(vPath(st, pts, { c: VAL_INK, w: 1}), vE2(kk));
     }
     /* 3) 矢印が左から右へ貫く。ためてから一気に */
     const shoot = vHold(Math.max(0, Math.min(1, (k - 0.56) / 0.34)), 0.22);
     const x0 = 58, x1 = 152;                 /* 矢印の【根元】が動く範囲 */
     const ax = x0 + (x1 - x0) * shoot;
-    vArrow(st, ax, C, 43, 0, { c: VAL_ACC, w: 3.4, a: shoot > 0.01 ? 1 : 0 });
+    vArrow(st, ax, C, 43, 0, { c: VAL_ACC, w: 1, a: shoot > 0.01 ? 1 : 0 });
     if (shoot <= 0.01) vArrow(st, 152, C, 43, 0, { a: 0.14 });   /* 出口の目印 */
   },
 };
@@ -12064,26 +11982,9 @@ function buildPanel() {
   /* ========== 🌊 全体 ========== */
   const catAll = category('🌊 全体（サイト全体のモーション）', false);
 
-  /* 【2026-08-27 ヒデさん指定】①②③はたたまず、コンパクトに並べる。補足文は削除 */
-  sub(catAll, 'モーションの進み方', null, { fixed: true });
-  segRow('進み方', [['時間で再生', 'time'], ['スクロール駆動', 'scroll']],
-    () => params.drive, v => { params.drive = v; resetSectionClocks(); fit(); markDirty(); buildPanel(); });
-  note(params.drive === 'scroll'
-    ? '動かした分だけ絵が進みます。手を止めれば絵も止まります。'
-    : 'セクションに着いたら、決まった秒数の映像として流します。');
-
-  liveEdit = true;
-  sub(catAll, 'スクロールの固定', null, { fixed: true });
-  let holdNote = null;
-  pillRow([{ key: 'lock', name: '固定' }, { key: 'smooth', name: '固定追従なし' }],
-    it => (params.scrollHold || 'lock') === it.key,
-    it => { params.scrollHold = it.key; scrollLocked = false; if (lenis) lenis.start(); if (holdNote) holdNote(); },
-    { get: () => params.scrollHold, set: v => { params.scrollHold = v; scrollLocked = false; if (lenis) lenis.start(); if (holdNote) holdNote(); } },
-    { noRebuild: true });
-  holdNote = noteLive(() => (params.scrollHold || 'lock') === 'smooth'
-      ? '固定追従なし＝再生中も自由に上下できます。'
-      : '固定＝再生中はその場に貼りつけて動かしません。');
-  liveEdit = false;
+  /* 【2026-08-30 ヒデさん指定・パネル整理】「モーションの進み方(時間/スクロール駆動)」と
+     「スクロールの固定(固定/固定追従なし)」の項目は削除。
+     自動再生(時間)×固定追従なしで確定し、値もコード側で固定している。 */
 
   sub(catAll, '慣性スクロール', null, { fixed: true });
   /* ⚠️【2026-08-28 ヒデさん指定】ここは「値が小さいほど慣性が強い」逆向きの作りで、
@@ -13109,15 +13010,7 @@ function buildPanel() {
   const catVis = category('📖 ビジョン（つなぐことが、強みになる時代へ）', false);
   catNote(catVis, 'Our Vision(ブラー) → メッセージがマスクで出る → 左に軌道グラフィック・右に Point 01/02。');
 
-  /* 【2026-08-29 ヒデさん指定】メッセージの「強み」強調アニメ 10案 */
-  sub(catVis, '「強み」の強調アニメ（10案）');
-  pillRow(VIS_STRONG_FX, it => (params.visStrongFx || 'flicker') === it.key,
-    it => { params.visStrongFx = it.key; markDirty(); renderFrame(); },
-    { get: () => params.visStrongFx, set: v => { params.visStrongFx = v; renderFrame(); } });
-  note('メッセージ「強みになる時代へ」の“強み”だけに効く強調アニメ。上下ずれ〜グラデ→黒 はスクロール連動で、画面中央に来ると完全に重なって締まります。');
-  rows.push(slider('チカチカの尺', 0.5, 5, 0.1, () => (params.visFlickerDur == null ? 2 : params.visFlickerDur),
-    v => { params.visFlickerDur = v; markDirty(); renderFrame(); }, v => v.toFixed(1) + '秒',
-    '「蛍光灯チカチカ」の長さ。大きいほど、点滅が減っていく“余韻”がゆっくり長くなります。'));
+  /* 【2026-08-30 ヒデさん指定】「強み」の強調はグラデ揺らぎで確定。他の案とこのセクション自体を削除した */
 
   /* 【2026-08-26 整理】1項目だけの見出しが並んで冗長だったので「基本」にまとめた */
   sub(catVis, '基本（長さ・ぼけ具合）');
