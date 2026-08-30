@@ -40,7 +40,7 @@
     "illustEnter": 3,
     "tamaranee": 1,
     "bouncePattern": 1,
-    "bounceStrength": 20,
+    "bounceStrength": 10,
     "illustDelay": 0.5
   },
   "intro": {
@@ -149,7 +149,7 @@
     "blurMid": 0
   },
   "loop": {
-    "cycle": 10,
+    "cycle": 8,
     "show": 2.6,
     "swayFirst": true
   }

@@ -2299,7 +2299,8 @@
         <div class="dl-item" data-screen="cli">
           <div class="dl-body">
             <div class="dl-head"><b>CLI</b><span>の場合</span></div>
-            <p>手元のターミナルで試して、そのままCI/CDへ。ユーザー単位で実行ログを追えるので、運用も開発の延長で回せます。</p>
+            <!-- 【2026-08-30 エンジニアレビュー(FigJam 557:4135)】文言変更 -->
+            <p>ワークフローのソースコードを手元のローカルに落としてきて、AI コーディングエージェントやCI/CDと連携できます。</p>
           </div>
         </div>
         <div class="dl-item" data-screen="sdk">
@@ -8765,66 +8766,82 @@ function devHeading(el, inK, outK) {
 /* ===== モックの中身: 画面ごとの実コード (ダミー) =====
    [クラス, 文字列] のトークン列。kw=キーワード / id=識別子 / st=文字列 / cm=コメント / ok=成功表示 */
 const DM_CODE = {
+  /* 【2026-08-30 エンジニアレビュー(大久保さん・FigJam 553:3892)】実際のワークフローコードに差し替え */
   editor: [
-    [['kw', 'import'], ['pl', ' { '], ['id', 'Anyflow'], ['pl', ' } '], ['kw', 'from'], ['st', ' "@anyflow/sdk"'], ['pl', ';']],
+    [['kw', 'import type'], ['pl', ' { '], ['id', 'TriggerOutput'], ['pl', ', '], ['id', 'WorkflowContext'], ['pl', ' }']],
+    [['pl', '  '], ['kw', 'from'], ['st', ' "@anyflowinc/embed-types"'], ['pl', ';']],
+    [['kw', 'import'], ['pl', ' { '], ['id', 'Kintone'], ['pl', ' } '], ['kw', 'from'], ['st', ' "@anyflowinc/kintone"'], ['pl', ';']],
     [],
-    [['cm', '// Slack の通知を kintone へ連携する']],
-    [['kw', 'const'], ['pl', ' '], ['id', 'flow'], ['pl', ' = '], ['id', 'anyflow'], ['pl', '.'], ['id', 'createFlow'], ['pl', '({']],
-    [['pl', '  name: '], ['st', '"slack-to-kintone"'], ['pl', ',']],
-    [['pl', '  trigger: '], ['id', 'slack'], ['pl', '.'], ['id', 'onMessage'], ['pl', '('], ['st', '"#sales"'], ['pl', '),']],
-    [['pl', '});']],
+    [['kw', 'export async function'], ['pl', ' '], ['id', 'workflow'], ['pl', '(']],
+    [['pl', '  triggerOutput: '], ['id', 'TriggerOutput'], ['pl', ',']],
+    [['pl', '  _context: '], ['id', 'WorkflowContext'], ['pl', ',']],
+    [['pl', '): '], ['id', 'Promise'], ['pl', '<'], ['kw', 'void'], ['pl', '> {']],
+    [['pl', '  '], ['kw', 'const'], ['pl', ' client = '], ['kw', 'new'], ['pl', ' '], ['id', 'Kintone'], ['pl', '();']],
+    [['pl', '  '], ['kw', 'await'], ['pl', ' client.record.'], ['id', 'addRecord'], ['pl', '({']],
+    [['pl', '    app: _context.endUserInputs.'], ['id', 'kintoneAppId'], ['pl', ',']],
+    [['pl', '    record: '], ['id', 'toKintoneRecord'], ['pl', '(triggerOutput.payload),']],
+    [['pl', '  });']],
+    [['pl', '}']],
     [],
-    [['id', 'flow'], ['pl', '.'], ['id', 'step'], ['pl', '('], ['st', '"transform"'], ['pl', ', (msg) => ({']],
-    [['pl', '  title: msg.text,']],
-    [['pl', '  user:  msg.user.name,']],
-    [['pl', '}));']],
-    [],
-    [['id', 'flow'], ['pl', '.'], ['id', 'step'], ['pl', '('], ['st', '"create"'], ['pl', ', '], ['id', 'kintone'], ['pl', '.'], ['id', 'addRecord'], ['pl', ');']],
-    [['kw', 'export'], ['pl', ' '], ['kw', 'default'], ['pl', ' '], ['id', 'flow'], ['pl', ';']],
+    [['cm', '/** Webhook の payload を']],
+    [['cm', '    kintone のレコード形式に変換する */']],
+    [['kw', 'export function'], ['pl', ' '], ['id', 'toKintoneRecord'], ['pl', '(']],
+    [['pl', '  payload: '], ['id', 'TriggerOutput'], ['pl', '['], ['st', '"payload"'], ['pl', ']) {']],
+    [['pl', '  '], ['kw', 'return'], ['pl', ' {']],
+    [['pl', '    '], ['st', '"名前"'], ['pl', ': { value: payload?.name },']],
+    [['pl', '    '], ['st', '"メールアドレス"'], ['pl', ': { value: payload?.email }']],
+    [['pl', '  };']],
+    [['pl', '}']],
   ],
+  /* 【2026-08-30 エンジニアレビュー(FigJam 557:4090)】embed CLI の実フローに差し替え */
   cli: [
-    [['kw', '$'], ['pl', ' anyflow connectors list']],
-    [['cm', '  salesforce  hubspot  slack  kintone  …  '], ['ok', '200+ connectors']],
+    [['kw', '%'], ['pl', ' embed version']],
+    [['ok', '    ______          __             __   ________    ____']],
+    [['ok', '   / ____/___ ___  / /_  ___  ____/ /  / ____/ /   /  _/']],
+    [['ok', '  / __/ / __ `__ \\/ __ \\/ _ \\/ __  /  / /   / /    / /']],
+    [['ok', ' / /___/ / / / / / /_/ /  __/ /_/ /  / /___/ /____/ /']],
+    [['ok', '/_____/_/ /_/ /_/_.___/\\___/\\__,_/   \\____/_____/___/']],
+    [['cm', '                                              v0.1.2']],
     [],
-    [['kw', '$'], ['pl', ' anyflow flows run '], ['id', 'flw_8Xk2'], ['pl', ' --as-user '], ['id', 'usr_9f2']],
-    [['cm', '  \u280b'], ['cm', ' running…']],
-    [['ok', '  \u2714'], ['cm', ' succeeded · '], ['id', '3 records'], ['cm', ' · 128ms']],
+    [['kw', '$'], ['pl', ' embed pull']],
+    [['ok', '  \u2714'], ['cm', ' 4 files synced']],
     [],
-    [['kw', '$'], ['pl', ' anyflow logs --follow']],
-    [['cm', '  12:04:31  '], ['id', 'usr_9f2'], ['cm', '  slack → kintone     '], ['ok', 'succeeded']],
-    [['cm', '  12:04:36  '], ['id', 'usr_1a8'], ['cm', '  hubspot → slack     '], ['ok', 'succeeded']],
-    [['cm', '  12:04:41  '], ['id', 'usr_3c7'], ['cm', '  salesforce → slack  '], ['ok', 'succeeded']],
+    [['kw', '$'], ['pl', ' claude '], ['st', '"CSV\u306e\u9867\u5ba2\u30c7\u30fc\u30bf\u3092HubSpot\u3078"']],
+    [['ok', '  \u270e'], ['cm', ' main.ts generated']],
+    [],
+    [['kw', '$'], ['pl', ' embed push']],
+    [['ok', '  \u2714'], ['cm', ' ready for test run']],
   ],
+  /* 【2026-08-30 エンジニアレビュー(FigJam 557:4184)】request_trigger の実リクエストに差し替え */
   api: [
-    [['kw', 'POST'], ['pl', ' /v1/flows/'], ['id', 'flw_8Xk2'], ['pl', '/run']],
-    [['pl', 'Host: '], ['id', 'api.anyflow.jp']],
-    [['pl', 'Authorization: '], ['kw', 'Bearer'], ['st', ' sk_live_••••']],
+    [['kw', 'POST'], ['pl', ' /request_trigger HTTP/1.1']],
+    [['pl', 'Host: '], ['id', 'embed-vender-api.anyflow.jp']],
+    [['pl', 'Authorization: '], ['kw', 'Bearer'], ['st', ' YOUR_SECRET_TOKEN']],
     [['pl', 'Content-Type: '], ['st', 'application/json']],
     [],
     [['pl', '{']],
-    [['pl', '  '], ['st', '"input"'], ['pl', ': {']],
-    [['pl', '    '], ['st', '"channel"'], ['pl', ': '], ['st', '"#sales"']],
+    [['pl', '  '], ['st', '"solution_instance_id"'], ['pl', ': '], ['st', '"123"'], ['pl', ',']],
+    [['pl', '  '], ['st', '"payload"'], ['pl', ': {']],
+    [['pl', '    '], ['st', '"action"'], ['pl', ': '], ['st', '"add_lead"'], ['pl', ',']],
+    [['pl', '    '], ['st', '"name"'], ['pl', ': '], ['st', '"Dummy Corp"'], ['pl', ',']],
+    [['pl', '    '], ['st', '"employees"'], ['pl', ': '], ['id', '30']],
     [['pl', '  }']],
     [['pl', '}']],
     [],
-    [['ok', '200 OK'], ['cm', '  · 128ms']],
-    [['pl', '{ '], ['st', '"status"'], ['pl', ': '], ['ok', '"succeeded"'], ['pl', ', '], ['st', '"records"'], ['pl', ': '], ['id', '3'], ['pl', ' }']],
+    [['ok', '200 OK'], ['cm', '  \u00b7 128ms']],
+    [['pl', '{ '], ['st', '"job"'], ['pl', ': { '], ['st', '"id"'], ['pl', ': '], ['st', '"456"'], ['pl', ', '], ['st', '"state"'], ['pl', ': '], ['ok', '"succeeded"'], ['pl', ' },']],
+    [['pl', '  '], ['st', '"payload"'], ['pl', ': { '], ['st', '"records"'], ['pl', ': '], ['id', '1'], ['pl', ' } }']],
   ],
+  /* 【2026-08-30 エンジニアレビュー(FigJam 556:4025)】SDK＝ウィザード埋め込みの実コードに差し替え */
   sdk: [
-    [['kw', 'import'], ['pl', ' {']],
-    [['pl', '  '], ['id', 'AnyflowProvider'], ['pl', ', '], ['id', 'ConnectButton'], ['pl', ',']],
-    [['pl', '} '], ['kw', 'from'], ['st', ' "@anyflow/react"'], ['pl', ';']],
+    [['cm', '// SDK \u3092\u521d\u671f\u5316']],
+    [['kw', 'const'], ['pl', ' sdk = '], ['id', 'AnyflowSDK'], ['pl', '.'], ['id', 'init'], ['pl', '('], ['id', 'fetchJwt'], ['pl', ');']],
     [],
-    [['kw', 'export function'], ['pl', ' '], ['id', 'Integrations'], ['pl', '({ '], ['id', 'userToken'], ['pl', ' }) {']],
-    [['pl', '  '], ['kw', 'return'], ['pl', ' (']],
-    [['pl', '    <'], ['id', 'AnyflowProvider'], ['pl', ' token={'], ['id', 'userToken'], ['pl', '}>']],
-    [['pl', '      <'], ['id', 'ConnectButton']],
-    [['pl', '        connector='], ['st', '"salesforce"']],
-    [['pl', '        onSuccess={(c) => '], ['id', 'console'], ['pl', '.log(c.status)}  '], ['cm', '// "connected"']],
-    [['pl', '      />']],
-    [['pl', '    </'], ['id', 'AnyflowProvider'], ['pl', '>']],
-    [['pl', '  );']],
-    [['pl', '}']],
+    [['cm', '// iframe\u5185\u306b\u30a6\u30a3\u30b6\u30fc\u30c9\u753b\u9762\u3092\u8868\u793a']],
+    [['kw', 'const'], ['pl', ' iframe = document.'], ['id', 'getElementById'], ['pl', '('], ['st', '"wizard"'], ['pl', ');']],
+    [['kw', 'const'], ['pl', ' solutionWizard: '], ['id', 'SolutionWizard'], ['pl', ' =']],
+    [['pl', '  sdk.'], ['id', 'createWizard'], ['pl', '(iframe);']],
+    [['id', 'solutionWizard'], ['pl', '.'], ['id', 'load'], ['pl', '('], ['id', 'solution_id'], ['pl', ');']],
   ],
 };
 /* 画面ごとのテンポ: chat=会話パートの有無 / load=ローディング開始 / hold=溜め / burst=一気に書く */
@@ -9032,8 +9049,9 @@ let dev1Refs = null;   /* dev1(章①)の複製パネルの参照。updateDev �
 })();
 
 /* ---- モック内アニメ: ローディング → 溜め → 一気にコードを書き出す ---- */
-const DM_TEXT = 'Slackの通知をkintoneに連携したい';
-const DM_REPLY = 'Slack と kintone をつなぐフローを作成します。トリガーと変換処理まで一式生成しますね。';
+/* 【2026-08-30 エンジニアレビュー(FigJam 557:4145)】実際のユースケースに近づける: 入力文言を変更 */
+const DM_TEXT = 'kintone にユーザデータを連携したい';
+const DM_REPLY = 'Webhook のユーザデータを kintone のレコードに変換して登録するワークフローを作成します。';
 /* ⚠️ id ではなく class で拾う（写しでも同じコードが使えるようにするため）。
    dmRefs は関数宣言なので、下で定義していてもここから呼べる */
 const dmEls = dmRefs(document.getElementById('dmPanel')).els;
