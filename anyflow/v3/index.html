@@ -4835,6 +4835,19 @@ GFX_VARIANTS.accre.push({
   common: { orbitSpin: 0.22, frontCut: false, dotSize: 1.1 },
   root: { duration: 34 },
 });
+/* 【2026-08-30 ヒデさん指定】プリセット(devで保存した35個)を正式バリエーションへ昇格。
+   preset: を持つバリエーションは、適用時にプリセットとまったく同じ関数(gfxApplyFull)で
+   全設定を再現する(変換ロスなし)。プリセットのチップ自体は「確認できるまで」残してある。 */
+for (const _pm in SHIPPED_PRESETS) {
+  if (!GFX_VARIANTS[_pm]) continue;
+  (SHIPPED_PRESETS[_pm] || []).forEach((p, pi) => {
+    GFX_VARIANTS[_pm].push({
+      name: 'P' + (pi + 1) + ' ' + p.name,   /* 同名プリセットがあっても取り違えないよう一意化 */
+      desc: 'プリセット「' + p.name + '」から昇格した案。',
+      preset: p.data,
+    });
+  });
+}
 /* 案キー → params.conv の中のどのつまみ束か (duplex だけ名前が link) */
 const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link', gyro: 'gyro' };
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
@@ -11173,6 +11186,19 @@ function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
   const v = (GFX_VARIANTS[mode] || [])[i];
   if (!v) return;
+  /* 【2026-08-30 ヒデさん指定】プリセット昇格バリエーション: プリセットとまったく同じ適用で全設定を再現 */
+  if (v.preset) {
+    applyingVariant = true;
+    gfxApplyFull(JSON.parse(JSON.stringify(v.preset)));
+    if (!params.gfxVariantOn) params.gfxVariantOn = {};
+    params.gfxVariantOn[mode] = i;
+    const tw0 = params.gfxTweaks && params.gfxTweaks[mode] && params.gfxTweaks[mode][i];
+    if (tw0) gfxApplyFull(tw0);
+    applyingVariant = false;
+    markDirty();
+    renderFrame();
+    return;
+  }
   applyingVariant = true;
   /* 【2026-08-28 ヒデさん指定・根治】案を選び直したら、その案が指定しない「回転・スピン系」は
      必ず 0 へ戻す。こうしないと、前に選んだジャイロ案やスピンの保存値がブラウザに残って
