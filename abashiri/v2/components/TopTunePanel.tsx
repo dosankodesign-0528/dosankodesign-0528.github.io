@@ -20,7 +20,11 @@
 import { useEffect, useRef } from "react";
 import { DEFAULT_BO } from "./boPatterns";
 import { DEFAULT_SPOT_TRANSITION, type SpotTransition } from "./spotTransition";
-import { BGM_VOLUME_EVENT, DEFAULT_BGM_VOLUME } from "./bgmConfig";
+import {
+  BGM_VOLUME_EVENT,
+  BGM_VOLUME_UI_EVENT,
+  DEFAULT_BGM_VOLUME,
+} from "./bgmConfig";
 import { DEFAULT_FACE, type FaceConfig } from "./faceConfig";
 import { DEFAULT_KV_EXIT, type KvExit } from "./kvExitConfig";
 import { DEFAULT_HERO_ENTER, type HeroEnter } from "./heroEnterConfig";
@@ -1359,6 +1363,22 @@ export default function TopTunePanel({
       applyVars();
       applyVolume();
       pushValues();
+
+      /* 画面上の音量インジケーター（SoundUi）で変えたら、パネルの
+         スライダー表示も追従させる（逆方向同期。2026-08-30） */
+      const onUiVol = (e: Event) => {
+        const v = (e as CustomEvent<{ v: number }>).detail?.v;
+        if (typeof v !== "number") return;
+        params.sound.volume = Math.round(v * 100);
+        panel?.sync?.();
+      };
+      window.addEventListener(BGM_VOLUME_UI_EVENT, onUiVol);
+      const origDestroy = panel?.destroy;
+      if (panel)
+        panel.destroy = () => {
+          window.removeEventListener(BGM_VOLUME_UI_EVENT, onUiVol);
+          origDestroy?.call(panel);
+        };
     };
 
     if (window.TunePanel) {

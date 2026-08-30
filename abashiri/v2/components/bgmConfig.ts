@@ -16,6 +16,10 @@ export const DEFAULT_BGM_VOLUME = 0.66; /* 基準音量。曲の進行で後半�
 /** 調整パネルから音量を変える時に飛ばすイベント */
 export const BGM_VOLUME_EVENT = "abashiri:bgm-volume";
 
+/** 逆方向：画面上の音量インジケーターで変えた時に、調整パネルへ知らせるイベント
+    （パネルのスライダー表示を追従させる。2026-08-30） */
+export const BGM_VOLUME_UI_EVENT = "abashiri:bgm-volume-ui";
+
 /** 0〜1 に収める（1を超えさせない） */
 export function clampVolume(v: number): number {
   return Math.min(BGM_VOLUME_MAX, Math.max(0, v));

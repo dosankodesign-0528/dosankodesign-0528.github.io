@@ -16,6 +16,7 @@ import { markConsentDone } from "./consentGate";
 import { devSilent } from "./devSound";
 import {
   BGM_VOLUME_EVENT,
+  BGM_VOLUME_UI_EVENT,
   DEFAULT_BGM_VOLUME,
   clampVolume,
 } from "./bgmConfig";
@@ -376,6 +377,10 @@ export default function SoundUi({
                     volRef.current = v;
                     setVol(v);
                     applyVol();
+                    /* 調整パネルのスライダーにも追従してもらう（逆方向同期） */
+                    window.dispatchEvent(
+                      new CustomEvent(BGM_VOLUME_UI_EVENT, { detail: { v } })
+                    );
                   }}
                   className="bgm-vol-slider h-[4px] min-w-0 flex-1 cursor-pointer appearance-none rounded-full"
                   style={{
