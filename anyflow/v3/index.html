@@ -2901,7 +2901,7 @@ const DEFAULTS = {
   direction: 1,      // 1=時計回り / -1=反時計回り
   ramp: 1.5,         // 動き出しのなめらか加速(秒)
   pulse: {
-    amp: 0.5,        // 緩急の強さ (0=一定速度, 1=一瞬止まるくらい)
+    amp: 0,          // 緩急の強さ (0=一定速度)。2026-08-30 ヒデさん指定: 「急に速く/遅く」に見えるので削除(0固定)
     period: 8,       // 緩急の周期(秒)
   },
   sphere: {
@@ -3598,6 +3598,8 @@ function loadParams() {
       /* 【2026-08-30 ヒデさん指定・パネル整理】進み方=自動再生(時間)・固定なし で確定。保存値がどれでもこの組に */
       merged.drive = 'time';
       merged.scrollHold = 'smooth';
+      /* 【2026-08-30 ヒデさん指定】軌道ドットの周回の緩急(pulse)は「急に速く/遅く」に見えるため削除(0固定) */
+      if (merged.pulse) merged.pulse.amp = 0;
       /* 【2026-08-30 ヒデさん指定】全体的にアニメの出はじめを前倒し(尺=ゆったり感は不変)。
          旧既定のままの保存値だけ新既定へ寄せ直す(パネルで触った値は尊重)。 */
       if (!localStorage.getItem('anyflow-timing-earlier-20260830')) {
@@ -4900,6 +4902,7 @@ let convRipples = [];
 let convRippleEls = null;
 let convLastT = null;                 // elapsed 基準の dt (一時停止に追従)
 let convWasOn = false;
+let reelPWasOn = false;   /* 【2026-08-30】off(軌道のみ)での粒(吸い込み)の後片付け用 */
 let convLastMode = null;              // モード切替の検知 (前のモードの粒・輪の片付け用)
 const convSStep = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
 /* 【2026-08-28 ヒデさん指定】広がりの慣性。0=一定(なめらかステップ)、1=最初速く→だんだん減速。
@@ -5773,6 +5776,16 @@ function convFrame(geoms) {
       if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
       convWasOn = false;
     }
+    /* 【2026-08-30 ヒデさん指定・バグ修正】「軌道のみ(off)」でも粒(吸い込み)オプションを効かせる。
+       ⚠️ convFrame は off だとここで return するため、粒の描画コード(関数の最後)に届かず
+       「粒ありにしても1つも出ない」になっていた。off ではここで直接描く。 */
+    if (params.conv && params.conv.reelP && params.conv.reelP.on && !params.conv.net3d) {
+      const pg = (params.conv.reelP.link === false)
+        ? { outer: orbitGeom('outer', true), inner: orbitGeom('inner', true) }
+        : geoms;
+      runSpiralParticles(pg, params.conv.reelP, dt);
+      reelPWasOn = true;
+    } else if (reelPWasOn) { convHidePools(); reelPWasOn = false; }   /* オフに切ったら粒を片付ける */
     return;
   }
   convWasOn = true;

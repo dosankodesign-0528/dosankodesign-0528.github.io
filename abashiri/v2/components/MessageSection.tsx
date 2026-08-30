@@ -16,21 +16,11 @@
  */
 import { useState } from "react";
 import { useMotionValueEvent, type MotionValue } from "framer-motion";
-import { mergeMsg, type MsgTune } from "./msgConfig";
+import { mergeMsg, parseMsgBody, type MsgTune } from "./msgConfig";
 
-/* カンプ 15480:22896 の文言そのまま。空行区切りで5ブロック */
-const TITLE = "網走は何もない。";
-const BLOCKS: string[][] = [
-  ["よくそんなことを言われます。", "ただ、それがいいんです。魅力なんです。"],
-  [
-    "いまの情報過多な日本で暮らしていると、考えることが多すぎです。",
-    "休んでいるあいだも、頭が動き続けている。",
-  ],
-  ["網走は何も考えなくていい時間、ぼーっとする時間をお届けします。"],
-  ["オホーツクの海と、広大な大地と、空。", "それ以外は、何もありません。"],
-  ["網走は何もない。だから、たまらない。"],
-];
-const ALL_LINES = BLOCKS.flat();
+/* 文言は msgConfig.ts の DEFAULT_MSG（title / body）から取り、
+   パネルの「メッセージ｜文言」で編集できる（2026-08-30 ヒデさん依頼）。
+   body は空行＝段落・改行＝行 で parseMsgBody が段落配列に変換する */
 
 /** 0〜1 に丸めた区間進捗 */
 const seg = (p: number, from: number, span: number) =>
@@ -47,6 +37,10 @@ export default function MessageSection({
   tune?: Partial<MsgTune> | null;
 }) {
   const M = mergeMsg(tune);
+  /* 文言（パネル編集対応）。空なら段落0件になり、見出しだけが出る */
+  const TITLE = M.title;
+  const BLOCKS = parseMsgBody(M.body);
+  const ALL_LINES = BLOCKS.flat();
   const [v, setV] = useState(0);
   useMotionValueEvent(scrollY, "change", (val) => setV(val));
 

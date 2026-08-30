@@ -36,6 +36,11 @@ export type MsgTune = {
   bodyWeight: number;
   /** 本文の行間。カンプは2 */
   bodyLeading: number;
+  /* ── 文言（2026-08-30 ヒデさん依頼でパネルから編集できるように） ── */
+  /** 見出し（大きい文字）。本文の「よくそんなことを言われます」はこれへの返し */
+  title: string;
+  /** 本文。空行で段落を分け、段落内は改行で行を分ける（パネルの本文欄と同じ書き方） */
+  body: string;
 };
 
 export const DEFAULT_MSG: MsgTune = {
@@ -53,7 +58,37 @@ export const DEFAULT_MSG: MsgTune = {
   titleLeading: 1,
   bodyWeight: 300,
   bodyLeading: 2,
+  /* 2026-08-30 ヒデさん差し替え。空行＝段落の区切り、改行＝段落内の行 */
+  title: "網走は何もない。",
+  body: [
+    "よくそんなことを言われます。",
+    "ただ、それ逆によくないですか？ むしろ魅力かも。",
+    "",
+    "いまの情報過多な社会で暮らしていると、考えることが多すぎるかもです。",
+    "職場にいても、家にいても、何かしら考えて頭が動き続けて疲れる。",
+    "",
+    "網走は何もないからこそ、余計なことを考える必要ない、ぼーっとする時間をお届けします。",
+    "",
+    "オホーツクの海と、広大な大地と、空。あるのはそれだけ。",
+    "それ以外は、何もありません。",
+    "網走は何もない。だから、たまらない。",
+  ].join("\n"),
 };
+
+/** パネルの本文（複数行文字列）を段落→行の二次元配列に変換。
+    空行で段落を区切り、段落内は改行で行に分ける（空行・空白は捨てる） */
+export function parseMsgBody(body: string): string[][] {
+  return (body || "")
+    .replace(/\r\n/g, "\n")
+    .split(/\n[ \t]*\n+/) /* 空行（空白のみ含む）で段落分割 */
+    .map((block) =>
+      block
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0)
+    )
+    .filter((block) => block.length > 0);
+}
 
 export const MSG_PATTERNS: Record<number, { name: string; note: string }> = {
   1: {

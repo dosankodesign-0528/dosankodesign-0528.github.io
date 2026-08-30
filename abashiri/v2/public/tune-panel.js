@@ -183,6 +183,10 @@
     '.tp-row select,.tp-row input[type=text],.tp-row input[type=number]{flex:1;min-width:0;padding:5px 7px;',
     '  border:1px solid #d8d8d8;border-radius:6px;font:inherit;background:#fff;color:inherit;}',
     '.tp-row input[type=color]{flex:0 0 34px;height:24px;padding:0;border:1px solid #d8d8d8;border-radius:5px;background:#fff;}',
+    /* 複数行テキスト（textarea）：ラベルを上に置いて縦並び */
+    '.tp-row.tp-row-col{flex-direction:column;align-items:stretch;gap:5px;}',
+    '.tp-row textarea{width:100%;min-width:0;box-sizing:border-box;padding:7px 8px;',
+    '  border:1px solid #d8d8d8;border-radius:6px;font:inherit;line-height:1.7;background:#fff;color:inherit;resize:vertical;}',
     /* セグメント */
     '.tp-seg{display:flex;border:1px solid #d8d8d8;border-radius:6px;overflow:hidden;flex:1;}',
     '.tp-seg button{flex:1;border:none;background:#fff;font-family:inherit;font-size:11px;padding:5px 0;cursor:pointer;color:#555;}',
@@ -224,7 +228,7 @@
     '.tp.dark .tp-val{color:#ddd;}',
     '.tp.dark .tp-grp{border-top-color:#2e2e32;}',
     '.tp.dark .tp-seg,.tp.dark .tp-pill,.tp.dark .tp-btns button,.tp.dark .tp-search,',
-    '.tp.dark .tp-row select,.tp.dark .tp-row input[type=text],.tp.dark .tp-row input[type=number]',
+    '.tp.dark .tp-row select,.tp.dark .tp-row input[type=text],.tp.dark .tp-row input[type=number],.tp.dark .tp-row textarea',
     '  {background:#1b1b1e;border-color:#3a3a3f;color:#eee;}',
     '.tp.dark .tp-seg button{background:#1b1b1e;color:#bbb;}',
     '.tp.dark .tp-seg button.on,.tp.dark .tp-pill.on{background:#fff;color:#111;border-color:#fff;}',
@@ -1068,11 +1072,12 @@
   Panel.prototype._text = function (item, mount) {
     var self = this;
     var row = document.createElement('div');
-    row.className = 'tp-row';
+    /* multiline:true で textarea（本文など長い文字用）。ラベルは上に置く */
+    row.className = 'tp-row' + (item.multiline ? ' tp-row-col' : '');
     var lab = document.createElement('label');
     lab.textContent = item.text;
-    var inp = document.createElement('input');
-    inp.type = 'text';
+    var inp = document.createElement(item.multiline ? 'textarea' : 'input');
+    if (item.multiline) inp.rows = item.rows || 8; else inp.type = 'text';
     function sync() { inp.value = self._get(item) == null ? '' : self._get(item); }
     inp.addEventListener('input', function () {
       self._set(item, inp.value);
