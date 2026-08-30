@@ -3635,11 +3635,10 @@ function loadParams() {
         localStorage.setItem('anyflow-timing-earlier-20260830', '1');
       }
       /* 【2026-08-30 ヒデさん指定】導入事例のカードは1枚ずつでなく4枚同時にブラーで出す(線のアニメはそのまま)。
-         旧既定(0.06)のままの保存値だけ 0(同時) へ。 */
-      if (!localStorage.getItem('anyflow-cases-cards-together-20260830')) {
-        if (merged.sections.cases && (merged.sections.cases.cardGap == null || Math.abs(merged.sections.cases.cardGap - 0.06) < 1e-6))
-          merged.sections.cases.cardGap = 0;
-        localStorage.setItem('anyflow-cases-cards-together-20260830', '1');
+         確定指示なので、保存値がいくつでも一度だけ 0(同時) に寄せる(そのあとパネルで変えれば尊重)。 */
+      if (!localStorage.getItem('anyflow-cases-cards-together-20260830b')) {
+        if (merged.sections.cases) merged.sections.cases.cardGap = 0;
+        localStorage.setItem('anyflow-cases-cards-together-20260830b', '1');
       }
       /* 【2026-08-30 ヒデさん指定】Our Vision: グラフィックをメッセージのマスク出現と同時に(npGap基準変更・0=同時)。
          ポイント1/2もさらに前倒し。旧既定のままの保存値だけ新既定へ。 */
