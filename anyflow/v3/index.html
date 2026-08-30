@@ -8581,6 +8581,9 @@ function updateResults(p) {
 
 /* ---------- 開発者体験 (ダーク・ピン留め) ---------- */
 const devBg2 = document.getElementById('devBg2');
+/* 【2026-08-30 ヒデさん指定】反転ルールの統一: dev の暗幕(dev-bg)の濃さ。updateDev が毎フレーム更新し、
+   導入事例(cases)など「暗幕の上に見える黒テキスト」はこれに連動して白へ反転する(実績と同じルール)。 */
+let devDarkK = 0;
 const devEls = {
   sec: document.getElementById('dev'),
   bg: document.querySelector('#dev .dev-bg'),      // 暗い地色(fixed 100vh)。可視時のみ opacity を上げる
@@ -9414,6 +9417,7 @@ function updateDev(pRaw) {
       bgK = Math.min(enter, leave);
     }
     devEls.bg.style.opacity = bgK.toFixed(3);
+    devDarkK = bgK;   /* 【2026-08-30 ヒデさん指定】暗幕の濃さを共有 → 導入事例の黒テキストも同じルールで白反転 */
   }
 
   /* 導入事例(cases)の見出しゲートに使われる devFin は、もう開発者体験に依存させない。
@@ -9475,6 +9479,16 @@ function updateCases(pRaw) {
   const intro = noPin ? easeOutQ(clamp01(npT / 0.55))
                       : seg(p, 0, 0.12, easeOutQ);
   rv(caseEls.title, intro, 8, 8);
+  /* 【2026-08-30 ヒデさん指定】反転ルールの統一: dev の暗幕がまだ濃いうちに見えている「導入事例」は
+     実績と同じく暗さに連動して白へ反転(明るくなったら元の黒に戻る)。 */
+  if (caseEls.title) {
+    if (devDarkK > 0.002) {
+      const b = [16, 24, 40];   // .case-title の元色 #101828
+      caseEls.title.style.color = `rgb(${Math.round(b[0] + (255 - b[0]) * devDarkK)},${Math.round(b[1] + (255 - b[1]) * devDarkK)},${Math.round(b[2] + (255 - b[2]) * devDarkK)})`;
+    } else if (caseEls.title.style.color) {
+      caseEls.title.style.color = '';
+    }
+  }
 
   /* 【2026-08-25 刷新・カンプ 15800:24258】
      水平線3本(上→下でディレイ) が左から引かれる → 中央の垂直線が上から引かれる → カード4枚がブラーで登場。
