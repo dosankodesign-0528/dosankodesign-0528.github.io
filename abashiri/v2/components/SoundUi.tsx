@@ -80,6 +80,11 @@ export default function SoundUi({
   const duckRef = useRef(false); /* 動画再生中フラグ（動画の音声優先） */
   /* 環境音の音量（0〜1）。既定は bgmConfig.ts。調整パネルから変えられる */
   const volRef = useRef(DEFAULT_BGM_VOLUME);
+  /* 音量インジケーター（ONの状態でもう一度ONを押すと出るスライダー。
+     2026-08-30 ヒデさん依頼）。vol はスライダー表示用の state（volRef と同期） */
+  const [showVol, setShowVol] = useState(false);
+  const [vol, setVol] = useState(DEFAULT_BGM_VOLUME);
+  const wrapRef = useRef<HTMLDivElement>(null);
   /* 最初のHTML（JSが動く前）からモーダルを出しておく。
      「立ち上げ直後にグラデの画面だけが見える」（2026-08-21 ヒデさん指摘）の対策。
      同じタブで2回目以降（記憶あり）の時は、下の初期化ですぐ閉じる */
@@ -150,11 +155,29 @@ export default function SoundUi({
       const v = (e as CustomEvent<{ v: number }>).detail?.v;
       if (typeof v !== "number") return;
       volRef.current = clampVolume(v);
+      setVol(volRef.current); /* インジケーターのスライダーも追従 */
       applyVol();
     };
     window.addEventListener(BGM_VOLUME_EVENT, onVol);
     return () => window.removeEventListener(BGM_VOLUME_EVENT, onVol);
   }, []);
+
+  /* インジケーターは「鳴っている時」だけ意味を持つ。OFFになったら閉じる */
+  useEffect(() => {
+    if (!audible) setShowVol(false);
+  }, [audible]);
+
+  /* インジケーターの外側をクリックしたら閉じる（ボタン自身の中は閉じない） */
+  useEffect(() => {
+    if (!showVol) return;
+    const onDown = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setShowVol(false);
+      }
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [showVol]);
 
   /* 表示状態は audio の実際の再生状態に常に同期 */
   useEffect(() => {
@@ -292,8 +315,15 @@ export default function SoundUi({
               <button
                 key={label}
                 onClick={() => {
-                  if (active) return;
+                  if (active) {
+                    /* ONが青い（＝鳴っている）状態でもう一度ONを押したら、
+                       音量インジケーターを出し入れする（2026-08-30 ヒデさん依頼）。
+                       OFF側の再クリックでは何も出さない */
+                    if (on) setShowVol((s) => !s);
+                    return;
+                  }
                   if (on) {
+                    /* OFF→ON にした時はインジケーターは出さない（仕様） */
                     saveIntent(true);
                     play();
                   } else {
@@ -315,13 +345,47 @@ export default function SoundUi({
           };
           const btn = (
             <div
-              className={`${
-                slot ? "" : "fixed bottom-4 left-4 z-50 "
-              }bgm-switch flex items-center justify-center rounded-full bg-white/40 p-[2px] backdrop-blur-[62px] transition-colors duration-500 ease-standard`}
+              ref={wrapRef}
+              className={`${slot ? "relative" : "fixed bottom-4 left-4 z-50"}`}
             >
-              {/* アイコンは状態ごとに別アセット（カンプ 15492:21886=ON時 / 15492:22168=OFF時） */}
-              {seg(true, "ON", "/img/icon-bgm-on.svg", "/img/icon-bgm-on-dim.svg")}
-              {seg(false, "OFF", "/img/icon-bgm-off-active.svg", "/img/icon-bgm-off.svg")}
+              <div className="bgm-switch flex items-center justify-center rounded-full bg-white/40 p-[2px] backdrop-blur-[62px] transition-colors duration-500 ease-standard">
+                {/* アイコンは状態ごとに別アセット（カンプ 15492:21886=ON時 / 15492:22168=OFF時） */}
+                {seg(true, "ON", "/img/icon-bgm-on.svg", "/img/icon-bgm-on-dim.svg")}
+                {seg(false, "OFF", "/img/icon-bgm-off-active.svg", "/img/icon-bgm-off.svg")}
+              </div>
+
+              {/* 音量インジケーター：ONが鳴っている状態でもう一度ONを押すと出る。
+                  スイッチと同じ白ガラスのピルに、スピーカー小アイコン＋スライダー＋% */}
+              <div
+                className={`bgm-switch absolute left-0 top-[calc(100%+8px)] flex w-[184px] items-center gap-2 rounded-full bg-white/40 py-[7px] pl-3 pr-4 backdrop-blur-[62px] transition-all duration-300 ease-standard ${
+                  showVol
+                    ? "pointer-events-auto translate-y-0 opacity-100"
+                    : "pointer-events-none -translate-y-1 opacity-0"
+                }`}
+              >
+                <img src="/img/icon-bgm-on.svg" alt="" className="size-[16px] shrink-0" />
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={Math.round(vol * 100)}
+                  aria-label="環境音の音量"
+                  onChange={(e) => {
+                    const v = clampVolume(Number(e.target.value) / 100);
+                    volRef.current = v;
+                    setVol(v);
+                    applyVol();
+                  }}
+                  className="bgm-vol-slider h-[4px] min-w-0 flex-1 cursor-pointer appearance-none rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, #fff ${Math.round(vol * 100)}%, rgba(255,255,255,0.35) ${Math.round(vol * 100)}%)`,
+                  }}
+                />
+                <span className="font-num w-[34px] shrink-0 text-right text-[13px] font-light leading-none text-white">
+                  {Math.round(vol * 100)}%
+                </span>
+              </div>
             </div>
           );
           return slot ? createPortal(btn, slot) : btn;

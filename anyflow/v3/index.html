@@ -5786,7 +5786,14 @@ function convFrame(geoms) {
       convReelAReset(); applyRingBlur('outer', 0, '', 0); applyRingBlur('inner', 0, '', 0);
       convSetClip('outer', false); convSetClip('inner', false);
       convHidePools(); convHideBlend(); convGlow = 0;
-      if (sphereCanvasEl) sphereCanvasEl.style.filter = '';
+      /* 【2026-08-30 ヒデさん指定・バグ修正】吸収の光(エコー/波紋)の器と蓄積も片付ける。
+         ⚠️ これらは集約オンの間しか描き直されないため、「軌道のみ(off)」へ切り替えた瞬間に
+            最後に描いた輪が画面に固まって【常時表示】のまま残っていた。 */
+      convEchoes.length = 0; convRipples.length = 0; convCharge = 0;
+      if (convEchoCans) for (const c of convEchoCans) c.el.style.opacity = '0';
+      if (convEchoEls) for (const e of convEchoEls) e.setAttribute('opacity', '0');
+      if (convRippleEls) for (const e of convRippleEls) e.setAttribute('opacity', '0');
+      if (sphereCanvasEl) { sphereCanvasEl.style.filter = ''; sphereCanvasEl.style.removeProperty('--conv-breath'); }
       convWasOn = false;
     }
     /* 【2026-08-30 ヒデさん指定・バグ修正】「軌道のみ(off)」でも粒(吸い込み)オプションを効かせる。

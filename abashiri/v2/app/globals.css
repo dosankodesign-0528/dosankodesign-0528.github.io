@@ -200,6 +200,28 @@ html[data-header-dark="1"] .bgm-switch .bgm-seg-inactive img {
   opacity: 0.45;
 }
 
+/* ===== BGM音量インジケーターのスライダー（2026-08-30 ヒデさん依頼） =====
+   トラックは inline style のグラデ（進捗ぶんだけ白）で描くので、
+   ここでは「つまみ」だけ白い丸に整える */
+.bgm-vol-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.bgm-vol-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
 /* ===== カモメ（2コマ切り替えのGIF風パタパタ） ===== */
 @keyframes bird-frame-a {
   0%, 49.99% {
