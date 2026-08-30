@@ -253,7 +253,7 @@ export default function Stage({
   tamaranee,
   bo,
   illustEnter,
-  bouncePattern = 3,
+  bouncePattern = 1,
   bounceStrength = 1,
   tamaLoop = { cycle: 15, show: 2.6, swayFirst: false },
   tamaIntro = TAMA_INTRO_DEFAULT,

@@ -25,7 +25,7 @@ export default function Home() {
   const [tune, setTune] = useState<TopTuneValues>({
     boPattern: DEFAULT_BO,
     illustEnter: 3,
-    bouncePattern: 3,
+    bouncePattern: 1,
     bounceStrength: 100,
     illustDelay: 0.5,
     loop: { cycle: 10, show: 2.6, swayFirst: false },

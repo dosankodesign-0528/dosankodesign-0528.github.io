@@ -180,6 +180,12 @@
     '.tp-row>label{flex:0 0 92px;color:#555;font-weight:300;}',
     '.tp-row input[type=range]{flex:1;accent-color:#090909;min-width:0;}',
     '.tp-val{flex:0 0 46px;text-align:right;font-variant-numeric:tabular-nums;color:#333;}',
+    '.tp-val-edit{cursor:pointer;border-bottom:1px dashed #bbb;}',
+    '.tp-val-edit:hover{color:#000;border-bottom-color:#666;}',
+    '.tp-row .tp-val-input{flex:0 0 64px;min-width:0;padding:3px 5px;border:1px solid #0070c9;border-radius:5px;',
+    '  font:inherit;text-align:right;background:#fff;color:inherit;}',
+    '.tp.dark .tp-row .tp-val-input{background:#1b1b1e;border-color:#7ab8ff;color:#eee;}',
+    '.tp.dark .tp-val-edit{border-bottom-color:#555;}',
     '.tp-row select,.tp-row input[type=text],.tp-row input[type=number]{flex:1;min-width:0;padding:5px 7px;',
     '  border:1px solid #d8d8d8;border-radius:6px;font:inherit;background:#fff;color:inherit;}',
     '.tp-row input[type=color]{flex:0 0 34px;height:24px;padding:0;border:1px solid #d8d8d8;border-radius:5px;background:#fff;}',
@@ -869,27 +875,97 @@
     lab.textContent = item.slider;
     var input = document.createElement('input');
     input.type = 'range';
-    input.min = min; input.max = max; input.step = step;
-    input.value = this._get(item);
+
+    /* ── 既定値がつまみの真ん中に来るスケール（2026-08-30 ヒデさん依頼） ──
+       左半分＝min〜既定値、右半分＝既定値〜max を割り当てる折れ線スケール。
+       範囲は書いたまま削らず、既定値がどこにあっても中央スタートになる。
+       cfg.centerDefault:false（パネル全体）/ item.center:false（個別）で切れる */
+    var d0 = this._default(item);
+    var useCenter = this.cfg.centerDefault !== false && item.center !== false &&
+      typeof d0 === 'number' && isFinite(d0) && d0 > min && d0 < max;
+    var decimals = (String(step).split('.')[1] || '').length;
+    var snap = function (v) {
+      var s = Math.round((v - min) / step) * step + min;
+      return +s.toFixed(decimals);
+    };
+    var toPos = function (v) {
+      if (v <= d0) return ((v - min) / (d0 - min)) * 500;
+      return 500 + ((v - d0) / (max - d0)) * 500;
+    };
+    var toVal = function (p) {
+      var v = p <= 500 ? min + (p / 500) * (d0 - min) : d0 + ((p - 500) / 500) * (max - d0);
+      return snap(Math.max(min, Math.min(max, v)));
+    };
+    if (useCenter) {
+      input.min = 0; input.max = 1000; input.step = 1;
+      input.value = toPos(this._get(item));
+    } else {
+      input.min = min; input.max = max; input.step = step;
+      input.value = this._get(item);
+    }
+    var readVal = function () {
+      var raw = parseFloat(input.value);
+      return useCenter ? toVal(raw) : raw;
+    };
+
     var val = document.createElement('span');
     val.className = 'tp-val';
     var fmt = toFmt(item.fmt, step, item);
     val.textContent = fmt(this._get(item));
 
     input.addEventListener('input', function () {
-      var v = parseFloat(input.value);
+      var v = readVal();
       self._set(item, v);
       val.textContent = fmt(v);
       self._changed({ item: item, path: item.path, value: v, immediate: false });
     });
     input.addEventListener('change', function () {
-      self._changed({ item: item, path: item.path, value: parseFloat(input.value), immediate: true });
+      self._changed({ item: item, path: item.path, value: readVal(), immediate: true });
+    });
+
+    /* ── 数値の直打ち（2026-08-30 ヒデさん依頼）──
+       右の数値をクリックすると入力欄になる。Enter/フォーカスを外すと確定、
+       Escで取り消し。スライダーの範囲外の値も入れられる（実装側のガードに任せる） */
+    val.classList.add('tp-val-edit');
+    val.title = 'クリックで数値を直接入力';
+    val.addEventListener('click', function () {
+      if (row.querySelector('.tp-val-input')) return;
+      var ed = document.createElement('input');
+      ed.type = 'number';
+      ed.step = step;
+      ed.className = 'tp-val-input';
+      ed.value = self._get(item);
+      val.style.display = 'none';
+      row.appendChild(ed);
+      ed.focus();
+      ed.select();
+      var done = function (commit) {
+        var v = parseFloat(ed.value);
+        ed.remove();
+        val.style.display = '';
+        if (!commit || !isFinite(v)) return;
+        self._set(item, v);
+        val.textContent = fmt(v);
+        if (useCenter) input.value = toPos(Math.max(min, Math.min(max, v)));
+        else input.value = Math.max(min, Math.min(max, v));
+        self._changed({ item: item, path: item.path, value: v, immediate: true });
+      };
+      ed.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') done(true);
+        else if (e.key === 'Escape') done(false);
+        e.stopPropagation();
+      });
+      ed.addEventListener('blur', function () { done(true); });
     });
 
     row.append(lab, input, val);
     mount.appendChild(row);
     row._label = item.slider;
-    row._sync = function () { input.value = self._get(item); val.textContent = fmt(self._get(item)); };
+    row._sync = function () {
+      var cur = self._get(item);
+      input.value = useCenter ? toPos(Math.max(min, Math.min(max, cur))) : cur;
+      val.textContent = fmt(cur);
+    };
     return row;
   };
 

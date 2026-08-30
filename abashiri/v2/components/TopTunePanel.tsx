@@ -198,7 +198,7 @@ export default function TopTunePanel({
 
     const DEFAULTS: Params = {
       pos: { ...POS_DEFAULTS },
-      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bouncePattern: 3, bounceStrength: 100, illustDelay: 0.5 },
+      anim: { boPattern: DEFAULT_BO, illustEnter: 3, tamaranee: 1, bouncePattern: 1, bounceStrength: 100, illustDelay: 0.5 },
       intro: { delay: 350, hold: 3000 },
       preview: { faceOn: false, patchRed: false },
       /* 音量は % で持つ（スライダーが扱いやすいので）。0〜100 = 0〜1 */
@@ -433,7 +433,10 @@ export default function TopTunePanel({
                  数値は heroEnterConfig.ts / kvExitConfig.ts の既定値で固定 */
               /* ── メッセージ文言（テキスト編集。2026-08-30 ヒデさん依頼）。
                  長いのでアコーディオン（タブ内の小見出しは折りたたみ・既定で閉じる） ── */
-              { sub: "メッセージ｜文言（テキスト編集）" },
+              /* ── メッセージ（KV直下・カンプ 15480:22896）。
+                 文言・出方・見た目を1セクションに統合（2026-08-30 ヒデさん指示） ── */
+              { sub: "メッセージ（作字のあと）" },
+              { sub: "文言（テキスト編集）", deep: true },
               {
                 note: "ここで文章そのものを差し替えられます。本文は「空行で段落を分け、段落内は改行で行を分ける」書き方です。入力するとその場で反映されます。",
               },
@@ -445,8 +448,7 @@ export default function TopTunePanel({
                 rows: 14,
                 hint: "空行を1つ入れると段落が分かれ、改行だけなら同じ段落の次の行になります。",
               },
-              /* ── メッセージ（KV直下・カンプ 15480:22896。2026-08-21） ── */
-              { sub: "メッセージ（作字のあと）" },
+              { sub: "出方とスクロール", deep: true },
               {
                 note: "作字が消えたあと、ブラーの背景の上に「網走は何もない。」の文章が出ます。スクロールで読み進み、読み終わるとぼーっとスポットへ。",
               },
@@ -514,7 +516,7 @@ export default function TopTunePanel({
                 step: 0.5,
                 hint: "1つの行・段落のアニメーション時間の倍率。大きいほどゆっくりにじみながら出ます。",
               },
-              { sub: "メッセージ｜見た目", deep: true },
+              { sub: "見た目", deep: true },
               {
                 slider: "見出しが出るまでのスクロール量",
                 path: "msg.titleDelay",
@@ -655,7 +657,8 @@ export default function TopTunePanel({
                 hint: "右のカモメの回転。マイナスで左へ、プラスで右へ傾きます。",
               },
               /* ── KV → ぼーっとスポット ─────────── */
-              { sub: "キービジュアル → ぼーっとスポット（入り）" },
+              { sub: "ぼーっとスポット" },
+              { sub: "入り（キービジュアルから）", deep: true },
               {
                 note: "作字の消え方は上の「作字｜スクロールでの消え方」にまとめました（同じ項目が2つあったため統合。2026-08-21）。",
               },
@@ -720,7 +723,7 @@ export default function TopTunePanel({
                 fmt: "px",
                 hint: "グルメが出たあと、下に残しておくスクロールの余白です。",
               },
-              { sub: "ぼーっとスポット｜写真の切替" },
+              { sub: "写真の切替", deep: true },
               {
                 note: "切替はブラーで確定（2026-08-21）。写真とテキストが同時に切り替わります。",
               },
@@ -749,7 +752,8 @@ export default function TopTunePanel({
                 path: "gourmet.pauseOnHover",
                 hint: "ONだと、カードにカーソルを乗せている間は流れが止まり、ホバーの文字をゆっくり読めます。",
               },
-              { sub: "人物イラスト｜登場のタイミング" },
+              { sub: "人物イラスト" },
+              { sub: "登場のタイミング", deep: true },
               {
                 slider: "人物の登場ディレイ",
                 path: "anim.illustDelay",
@@ -759,24 +763,14 @@ export default function TopTunePanel({
                 fmt: "s",
                 hint: "ボタンが出てから人物が登場するまでの待ち時間。上げると登場が遅くなり「間」ができ、下げるとすぐ出ます。変えると人物登場の直前から再生し直します。",
               },
-              { sub: "人物イラスト｜バウンスとループ" },
+              { sub: "バウンスとループ", deep: true },
               {
                 note: "バウンスはホバーもループも同じ動き。ループでは、たまらねーとキラキラも一緒に出ます。",
               },
+              /* バウンスの動き5案ピルは撤去。案1（ぴょこっ）で確定
+                 （2026-08-30 ヒデさん指示。パターン本体は Stage.tsx の BOUNCES） */
               {
-                pills: "バウンスの動き",
-                path: "anim.bouncePattern",
-                immediate: true,
-                options: [
-                  { name: "案1", value: 1, swatch: "#0070c9", desc: "ぴょこっ。ひとつだけ素直に弾む" },
-                  { name: "案2", value: 2, swatch: "#0070c9", desc: "ぴょこぴょこ。大→小と2回弾む" },
-                  { name: "案3", value: 3, swatch: "#0070c9", desc: "プルン。着地でつぶれて戻る（登場と同じ・いままでの既定）" },
-                  { name: "案4", value: 4, swatch: "#0070c9", desc: "ちょんちょん。小さく速く2回" },
-                  { name: "案5", value: 5, swatch: "#0070c9", desc: "大きくジャンプ。高く跳んで弾んで収まる" },
-                ],
-              },
-              {
-                note: "人物にカーソルを乗せると、その場で試せます。",
+                note: "強さを変えると、その場で人物が1回バウンスして違いを見せます。カーソルを乗せても試せます。",
               },
               {
                 toggle: "ループの前に横揺れ",
@@ -809,8 +803,7 @@ export default function TopTunePanel({
                 step: 0.5,
                 fmt: "s",
               },
-              { sub: "人物イラスト｜置き場所" },
-              { sub: "枠ごと動かす", deep: true },
+              { sub: "置き場所｜枠ごと動かす", deep: true },
               {
                 slider: "右端からの距離",
                 path: "pos.frameRight",
@@ -828,7 +821,7 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "人物そのもの", deep: true },
+              { sub: "置き場所｜人物そのもの", deep: true },
               {
                 slider: "横ずれ",
                 path: "pos.personX",
@@ -855,13 +848,13 @@ export default function TopTunePanel({
                 hint: "横幅。縦は元の比率のまま付いてきます。",
               },
               /* ── 表情 ─────────────────────────── */
-              { sub: "表情（ホバー時）" },
+              { sub: "表情（ホバー時）", deep: true },
               /* ホバーの縦バウンスは既定（案1 ぴょこっ）で確定（2026-08-22 ヒデさん指示。
                  案ピルは撤去。パターン本体は hoverBouncePatterns.ts） */
               {
                 note: "眉が上がり、口がぽかんと開きます（切替はパキッと・フェード無し）。位置調整は下の「出しっぱなし」をONにするとラクです。",
               },
-              { sub: "眉", deep: true },
+              { sub: "表情｜眉", deep: true },
               {
                 slider: "持ち上げる量",
                 path: "face.browLift",
@@ -898,7 +891,7 @@ export default function TopTunePanel({
                 fmt: "",
                 hint: "眉を上げた時に元の眉がはみ出したら、ここを上げます。",
               },
-              { sub: "口", deep: true },
+              { sub: "表情｜口", deep: true },
               {
                 slider: "横ずれ",
                 path: "face.mouthX",
@@ -943,10 +936,9 @@ export default function TopTunePanel({
                 path: "preview.patchRed",
               },
               /* ── たまらねー ────────────────────── */
-              { sub: "たまらねー" },
               /* 出方は現状の案で確定（2026-08-22 ヒデさん指示。案ピルは撤去。
                  パターン本体は tamaraneePatterns.ts） */
-              { sub: "位置と大きさ", deep: true },
+              { sub: "たまらねー｜位置と大きさ", deep: true },
               {
                 slider: "横ずれ",
                 path: "pos.tamaraneeX",
@@ -971,7 +963,7 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "初回のお披露目（登場のあと1回だけ）", deep: true },
+              { sub: "たまらねー｜初回のお披露目（登場のあと1回だけ）", deep: true },
               {
                 slider: "表示ディレイ",
                 path: "intro.delay",
@@ -990,8 +982,7 @@ export default function TopTunePanel({
                 hint: "出したまま留めておく長さ。このあと引っ込みます。",
               },
               /* ── キラキラ ─────────────────────── */
-              { sub: "キラキラ（2コマ）" },
-              { sub: "1コマ目（基準の位置）", deep: true },
+              { sub: "キラキラ｜1コマ目（基準の位置）", deep: true },
               {
                 slider: "横ずれ",
                 path: "pos.sparkleX",
@@ -1016,7 +1007,7 @@ export default function TopTunePanel({
                 step: 1,
                 fmt: "px",
               },
-              { sub: "2コマ目（どこへ跳ぶか）", deep: true },
+              { sub: "キラキラ｜2コマ目（どこへ跳ぶか）", deep: true },
               {
                 slider: "横のずらし",
                 path: "pos.sparkle2Dx",
@@ -1103,7 +1094,8 @@ export default function TopTunePanel({
               {
                 note: "案を押すと、その場で場所えらびの画面から登場を再生し直します。",
               },
-              { sub: "「ぼーっ」の吹き出し（動画再生中）" },
+              { sub: "動画まわり（遷移と再生画面）" },
+              { sub: "「ぼーっ」の吹き出し", deep: true },
               /* 出方は現状の案で確定（2026-08-21 ヒデさん指示。案ピルは撤去。
                  パターン本体は boPatterns.ts の DEFAULT_BO） */
               { sub: "位置と大きさ", deep: true },
@@ -1132,7 +1124,7 @@ export default function TopTunePanel({
                 fmt: "px",
               },
 
-              { sub: "動画への遷移（この場所にする → 再生画面）" },
+              { sub: "遷移（この場所にする → 再生画面）", deep: true },
               {
                 note: "選んだカードが窓になって向こう側へ入る遷移（吸い込まれる案がベース）。値を変えて手を止めると、場面選択に戻って自動でボタンが押され、その場で遷移をプレビューできます。",
               },
@@ -1185,7 +1177,7 @@ export default function TopTunePanel({
                 fmt: "px",
                 hint: "くぐる途中で一度ピントがぼける量。0でオフ。上げると夢に入るような感触になります。",
               },
-              { sub: "ぼーっとTips（動画再生中のモーダル）" },
+              { sub: "ぼーっとTips（再生中のモーダル）", deep: true },
               {
                 note: "流氷クルーズの動画を再生してしばらくすると、中央に「今、何が聞こえる？」のモーダルがふわっと出ます（カンプ 15564:22022）。×で閉じられます。",
               },
@@ -1207,7 +1199,7 @@ export default function TopTunePanel({
                 fmt: "s",
                 hint: "フェードイン/アウトにかける時間。長いほどふわーっと出入りします。",
               },
-              { sub: "動画の音" },
+              { sub: "動画の音", deep: true },
               {
                 toggle: "音量を徐々に大きくする",
                 path: "videoVol.fadeIn",
@@ -1222,7 +1214,7 @@ export default function TopTunePanel({
                 fmt: "s",
                 hint: "音量が最大になるまでの時間。長いほどゆっくり大きくなります。",
               },
-              { sub: "再生ボタンとタイマー" },
+              { sub: "再生ボタンとタイマー", deep: true },
               {
                 slider: "表示時間",
                 path: "videoVol.uiHideSec",
