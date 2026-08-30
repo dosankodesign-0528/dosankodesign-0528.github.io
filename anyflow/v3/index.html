@@ -3127,8 +3127,8 @@ const DEFAULTS = {
       lineDur: 0.28,     // 水平線1本を左から引き切るまで
       vlineAt: 0.28,     // 中央の垂直線を引き始める 0.34→0.28
       vlineDur: 0.30,    // 垂直線を上から引き切るまで
-      cardAt: 0.40,      // 1枚目のカードがブラーで出はじめる 0.56→0.40
-      cardGap: 0.06,     // カードごとの遅れ
+      cardAt: 0.40,      // カード4枚がブラーで出はじめる 0.56→0.40
+      cardGap: 0,        // カードごとの遅れ。2026-08-30 ヒデさん指定: 1枚ずつでなく4枚同時にブラーで出す(0=同時)
       cardDur: 0.25,     // カード1枚が出きるまで
     },
   },
@@ -3633,6 +3633,13 @@ function loadParams() {
           [['lineStagger', 0.10], ['lineDur', 0.30], ['vlineAt', 0.34], ['vlineDur', 0.34],
            ['cardAt', 0.56], ['cardDur', 0.22]]);
         localStorage.setItem('anyflow-timing-earlier-20260830', '1');
+      }
+      /* 【2026-08-30 ヒデさん指定】導入事例のカードは1枚ずつでなく4枚同時にブラーで出す(線のアニメはそのまま)。
+         旧既定(0.06)のままの保存値だけ 0(同時) へ。 */
+      if (!localStorage.getItem('anyflow-cases-cards-together-20260830')) {
+        if (merged.sections.cases && (merged.sections.cases.cardGap == null || Math.abs(merged.sections.cases.cardGap - 0.06) < 1e-6))
+          merged.sections.cases.cardGap = 0;
+        localStorage.setItem('anyflow-cases-cards-together-20260830', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
