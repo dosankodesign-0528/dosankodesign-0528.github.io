@@ -940,11 +940,13 @@
     max-width: 100%;
   }
   /* 実コード表示 */
-  .dm-code.code { gap: var(--space-5); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  /* 【2026-08-30 ヒデさん指定】レビュー反映でエディタのコードが24行になり下端が29px見切れたため、
+     12px/16px → 11px/14px に。VS Codeでも11pxは常用域で、等幅・インデント・配色は不変＝違和感なし */
+  .dm-code.code { gap: 3px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   .dm-line {
-    height: 16px;
-    line-height: 16px;
-    font-size: 12px;
+    height: 14px;
+    line-height: 14px;
+    font-size: 11px;
     white-space: pre;
     flex: 0 0 auto;
     color: rgba(255,255,255,.9);
