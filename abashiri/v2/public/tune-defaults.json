@@ -40,7 +40,7 @@
     "illustEnter": 3,
     "tamaranee": 1,
     "bouncePattern": 1,
-    "bounceStrength": 50,
+    "bounceStrength": 20,
     "illustDelay": 0.5
   },
   "intro": {

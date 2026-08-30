@@ -3132,6 +3132,7 @@ const DEFAULTS = {
   gfxVariantOn: {},      // { 案キー: 選んでいるバリエーションの番号 }
   gfxVariantHidden: {},  // { 案キー: [消したバリエーションの名前] } UI から削除したもの
   gfxPresetTrash: {},    // { 案キー: [{name, data}] } 削除したプリセットのゴミ箱(復元用・2026-08-29)
+  gfxVarOverride: {},    // { 案キー: { バリエーション名: 全設定 } } 「この設定で上書き」の控え(2026-08-30)
   presetUiStyle: 'chips',// プリセットの見せ方: 'chips'(コンパクトチップ) / 'drop'(ドロップダウン)。2026-08-29
   conv: {
     showOuter: true, showInner: true,
@@ -3363,6 +3364,8 @@ function presetStoreSave() {
       hidden: params.gfxVariantHidden || {},
       /* 【2026-08-29】削除したプリセットのゴミ箱(復元用)もここに置く */
       trash: params.gfxPresetTrash || {},
+      /* 【2026-08-30 ヒデさん指定】バリエーションの「この設定で上書き」の控え(案名→全設定) */
+      over: params.gfxVarOverride || {},
     }));
   } catch (e) {}
 }
@@ -3699,6 +3702,7 @@ function load() {
        消した案が勝手に戻ってしまう。入っている時だけ差し替える (2026-08-28) */
     if (st.hidden && typeof st.hidden === 'object') merged.gfxVariantHidden = st.hidden;
     if (st.trash && typeof st.trash === 'object') merged.gfxPresetTrash = st.trash;   /* 2026-08-29: 削除プリセットのゴミ箱を復元 */
+    if (st.over && typeof st.over === 'object') merged.gfxVarOverride = st.over;      /* 2026-08-30: バリエーション上書きの控えを復元 */
   } else if (merged.gfxPresets && Object.keys(merged.gfxPresets).length) {
     /* まだ別置きしていない古い持ち物は、ここで引っ越す */
     try { localStorage.setItem(PRESET_KEY, JSON.stringify({ v: 1, presets: merged.gfxPresets, on: merged.gfxPresetOn || {} })); } catch (e) {}
@@ -11252,11 +11256,14 @@ function applyGfxVariant(i) {
      上の「一旦すべて既定へ」を通した上で、プリセットの全設定(gfxApplyFull)をそのまま重ねる。
      ⚠️ 以前は既定リセットを通さない別分岐だったため、プリセットに無い古い項目(ringRotate等)へ
         直前の案の値が漏れて「プリセットの数値と違う」が起きていた。 */
-  if (v.preset) {
-    gfxApplyFull(JSON.parse(JSON.stringify(v.preset)));
+  /* 【2026-08-30 ヒデさん指定】「この設定で上書き」した案は、その控え(全設定)が最優先。
+     無ければ昇格プリセットの数値。どちらも既定リセット後にフル適用＝決定的。 */
+  const _ov = ((params.gfxVarOverride || {})[mode] || {})[v.name];
+  if (_ov || v.preset) {
+    gfxApplyFull(JSON.parse(JSON.stringify(_ov || v.preset)));
     if (!params.gfxVariantOn) params.gfxVariantOn = {};
     params.gfxVariantOn[mode] = i;
-    /* 昇格案は「常にプリセットの数値で開く」が正。調整の控え(gfxTweaks)は復元しない(汚染上書き防止) */
+    /* 上書き/昇格は「保存した数値で開く」が正。調整の控え(gfxTweaks)は復元しない(汚染上書き防止) */
     applyingVariant = false;
     markDirty();
     renderFrame();
@@ -12210,7 +12217,8 @@ function buildPanel() {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'var-pill' + (selected ? ' on' : '');
-      b.title = String(it.v.name) + (it.v.desc ? ' — ' + it.v.desc : '');
+      b.title = String(it.v.name) + (it.v.desc ? ' — ' + it.v.desc : '')
+        + (((params.gfxVarOverride || {})[it.m] || {})[it.v.name] ? '（⤓ 上書き済み・⋯から解除できます）' : '');
       b.append(document.createTextNode(label));
       b.onclick = () => {
         if ((params.converge || 'off') !== it.m) convSwitchTo(it.m);
@@ -12223,20 +12231,50 @@ function buildPanel() {
         if (editHandles.on) editHandles.place();
         fillVariantRow();
       };
+      /* 【2026-08-30 ヒデさん指定】プリセットと同じ「⋯」メニューに。削除 / この設定で上書き / 上書きを解除 */
       const x = document.createElement('button');
       x.type = 'button';
       x.className = 'var-x';
-      x.textContent = '×';
-      x.title = 'このバリエーションを消す';
+      x.textContent = '⋯';
+      x.title = 'この設定で上書き / 削除';
       x.onclick = ev => {
         ev.stopPropagation();
-        askModal('削除しますか？', `バリエーション「${label}（${it.v.name}）」を一覧から消します。以降の番号は自動で詰めます。あとで「消した案を戻す」で戻せます。`,
-          '削除する', () => {
-            if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
-            const arr = params.gfxVariantHidden[it.m] || (params.gfxVariantHidden[it.m] = []);
-            arr.push(it.v.name);
-            presetStoreSave(); markDirty(); fillVariantRow();
+        const old = document.querySelector('.pmenu'); if (old) old.remove();
+        const menu = document.createElement('div'); menu.className = 'pmenu';
+        const close = () => menu.remove();
+        const mk = (lbl, fn, cls) => { const m = document.createElement('button'); m.type = 'button'; m.textContent = lbl; if (cls) m.className = cls; m.onclick = () => { close(); fn(); }; menu.appendChild(m); };
+        mk('⤓ いまの設定で上書き', () => {
+          if (!params.gfxVarOverride) params.gfxVarOverride = {};
+          if (!params.gfxVarOverride[it.m]) params.gfxVarOverride[it.m] = {};
+          params.gfxVarOverride[it.m][it.v.name] = gfxSnapshotFull();
+          presetStoreSave(); markDirty(); fillVariantRow();
+        });
+        if (((params.gfxVarOverride || {})[it.m] || {})[it.v.name]) {
+          mk('↺ 上書きを解除（元の設定に戻す）', () => {
+            delete params.gfxVarOverride[it.m][it.v.name];
+            /* 「元の設定に戻す」なので、この案の調整の控え(gfxTweaks)も一緒に消す(残すと調整値が復元されて戻らない) */
+            if (params.gfxTweaks && params.gfxTweaks[it.m]) delete params.gfxTweaks[it.m][it.i];
+            /* 元の定義をその場で適用(画面も即戻る)。⚠️ ここで markDirty だけ呼ぶと、消した直後の
+               「上書き値のままの画面」が控えに再保存されて戻らない(実測)。適用してから保存する。 */
+            if ((params.converge || 'off') !== it.m) convSwitchTo(it.m);
+            applyGfxVariant(it.i);
+            presetStoreSave(); fillVariantRow();
           });
+        }
+        mk('🗑 削除', () => {
+          askModal('削除しますか？', `バリエーション「${label}（${it.v.name}）」を一覧から消します。以降の番号は自動で詰めます。あとで「消した案を戻す」で戻せます。`,
+            '削除する', () => {
+              if (!params.gfxVariantHidden) params.gfxVariantHidden = {};
+              const arr = params.gfxVariantHidden[it.m] || (params.gfxVariantHidden[it.m] = []);
+              arr.push(it.v.name);
+              presetStoreSave(); markDirty(); fillVariantRow();
+            });
+        }, 'danger');
+        document.body.appendChild(menu);
+        const r = x.getBoundingClientRect();
+        menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
+        menu.style.top = Math.min(r.bottom + 4, innerHeight - menu.offsetHeight - 8) + 'px';
+        setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
       };
       b.appendChild(x);
       varRow.appendChild(b);
