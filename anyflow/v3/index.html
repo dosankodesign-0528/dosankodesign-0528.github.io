@@ -13084,7 +13084,10 @@ function buildPanel() {
     '大きいほど、写真がぼんやりした状態から現れます。'));
 
   sub(catRes, '出てくる順番とタイミング');
-  note('「事業の推進力を、」(見出し1行目) → タイピング「Anyflowが支えます。」 → その他(区切り線・3数値・2つの価値)。それぞれの間隔を分けて調整できます。');
+  note('「事業の推進力を、」(見出し1行目) → タイピング「Anyflow」→「が支えます。」 → その他(区切り線・3数値・2つの価値)。それぞれの間隔を分けて調整できます。');
+  segRow('Anyflowの見せ方', [['下線に打ち込む', 'slot'], ['押し広げる', 'push']],
+    () => (sv().results.typeStyle || 'slot'),
+    v => { sv().results.typeStyle = v; markDirty(); renderFrame(); });
   rows.push(slider('見出し1行目が出るまで', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + '秒後',
     'セクションに入って(発火して)から「事業の推進力を、」が出るまで。'));
   rows.push(slider('→ タイピングが始まる', 0, 2.5, 0.05, () => (sv().results.typeGap != null ? sv().results.typeGap : 0.55), v => sv().results.typeGap = v, v => v.toFixed(2) + '秒',
