@@ -2953,9 +2953,10 @@ const DEFAULTS = {
     rotX: 0, rotY: 0, rotZ: 0,   // 【2026-08-28】グラフィック全体の回転(XYZ・3D)
     persp: 1400,   // 【2026-08-29】遠近感(3Dの奥行きの効き)。CSS perspective の距離px。小さいほど強い
 
-    headerAt: 0.25,   // ヘッダーがブラーで出る
-    eyebrowGap: 0.14, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
-    typeAt: 1.0,      // タイピング開始
+    /* 【2026-08-30 ヒデさん指定】全体的に出はじめを前倒し(尺=ゆったり感は不変)。headerAt 0.25→0.15 / typeAt 1.0→0.7 / eyebrowGap 0.14→0.10 */
+    headerAt: 0.15,   // ヘッダーがブラーで出る
+    eyebrowGap: 0.10, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
+    typeAt: 0.7,      // タイピング開始
     charDur: 0.042,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
     charDur2: 0.088,   // 2行目「強くする」の1文字あたり(平均)。ゆったり打つ
     typeEase: 0.55,   // タイピングの緩急 (0=一定, 1=最初ゆっくり→加速)
@@ -3011,23 +3012,24 @@ const DEFAULTS = {
       /* ⚠️ 再生中はスクロールを止めているので、lenVh はまるごと「再生後の空スクロール」になる。
          長いと「終わったのに何度もスクロールしないと次へ行けない」になるので短くする */
       lenVh: 150,
-      labelAt: 0.15,     // Our Vison がブラーで出る
+      /* 【2026-08-30 ヒデさん指定】出はじめを前倒し(尺は不変): labelAt 0.15→0.10 / line1At 0.45→0.32 / line2Gap 0.55→0.40 */
+      labelAt: 0.10,     // Our Vison がブラーで出る
       labelDur: 1.0,     // その所要時間
       labelOutLead: 0.5, // 上下に分かれ始める何秒前から「Our Vison」を消し始めるか
       labelOutDur: 0.6,  // 消えきるまでの秒数
-      line1At: 0.45,     // 1行目 (Our Vison に続けてすぐ)
-      line2Gap: 0.55,    // 2行目までの間 (1行目が出きる前に始まってよい＝絵コンテ指定)
+      line1At: 0.32,     // 1行目 (Our Vison に続けてすぐ)
+      line2Gap: 0.40,    // 2行目までの間 (1行目が出きる前に始まってよい＝絵コンテ指定)
       revealDur: 0.9,    // 1行の出現時間
       splitGap: 0,       // 2行そろってから「消え始める／軌道が出る」までの間 (0=そのまま)
       splitDur: 0.9,     // 消え・軌道出現のタイミングの基準になる時間
       /* 【2026-08-25 ヒデさん指定】上下に分かれる演出は廃止。2行はその場でブラーで消える。
          上下の開き量 splitAmt と 流れる量 driftAmt は 0（＝分かれない）が既定。 */
       splitAmt: 0,       // 上下に開く量(px・片側)。0=分かれない
-      miniGap: 0.45,     // 2行が出そろってから軌道が出るまで (splitDur に対する割合)
+      miniGap: 0.32,     // 2行が出そろってから軌道が出るまで (splitDur に対する割合) 2026-08-30: 0.45→0.32 前倒し
       miniDur: 1.1,      // 軌道グラフィックの出現時間
       /* 【2026-08-29 ヒデさん指定】固定追従なし(no-pin)の時間再生の「ブロック間隔」。パネルで調整可。
          npGap=メッセージ後グラフィックが出るまで / npP1=グラフィック後ポイント1 / npP2=ポイント2 (秒) */
-      npGap: 0.35, npP1: 0.40, npP2: 0.80,   /* 2026-08-29: 「2つの価値」見出しを非表示にしたので、その待ち(旧0.95/1.35)を詰めてポイントを早めに */
+      npGap: 0.25, npP1: 0.30, npP2: 0.60,   /* 2026-08-30: 全体前倒し(0.35/0.40/0.80→0.25/0.30/0.60) */
       moveLead: 0.35,    // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
       moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
       /* 【2026-08-25・Figma 15764:55518】軌道が最初に小さく現れる中心位置(ステージ座標)。
@@ -3038,7 +3040,7 @@ const DEFAULTS = {
       miniScale: 0.248,  // ミニ楕円の縮小率 2026-08-26 ヒデさん指定: 出現サイズ0.8倍 (0.31×0.8≒0.248)
       strokeW: 3,        // 軌道線の太さ(px) ※カンプの stroke-width は 3
       /* 軌道上のドットの出方 (2026-08-17 指定)。以前は軌道が出た時点で6個そろっていた */
-      dotsInAt: 0.25,      // 軌道が出はじめてから、1個目が出るまでの秒数
+      dotsInAt: 0.18,      // 軌道が出はじめてから、1個目が出るまでの秒数 (2026-08-30: 0.25→0.18 前倒し)
       dotsInStagger: 0.14, // ドットごとの遅れ (大きいほど1つずつ順に出る)
       dotsInDur: 0.5,      // 1個が出きるまでの秒数 (点が膨らみながら濃くなる)
       spinLaps: 1,       // 止まるまでに何周するか (2026-08-15: きっちり1周)
@@ -3071,12 +3073,12 @@ const DEFAULTS = {
       /* スクロールで画像の中身がずれる量。
          【2026-08-19 ヒデさん指定】左のグラデーション画像はパララックスなしにする → 0 */
       parallax: 0,
-      typeAt: 0.15,    // 見出し1行目「事業の推進力を、」が出はじめるまで
+      typeAt: 0.10,    // 見出し1行目「事業の推進力を、」が出はじめるまで (2026-08-30: 0.15→0.10 前倒し)
       charDur: 0.055,  // 1文字あたりの秒数(案B)
       softDur: 1.6,    // まわりの要素がブラーから出そろうまで
       /* 【2026-08-29 ヒデさん指定】タイピングテキストと、その他の要素(区切り線/3数値/2つの価値)の
          出るタイミングを別々に。typeGap=見出し1行目→タイピング開始 / restGap=タイピング開始→その他 */
-      typeGap: 0.55, restGap: 0.1,
+      typeGap: 0.40, restGap: 0.05,   /* 2026-08-30: 前倒し(0.55/0.1→0.40/0.05) */
       typeStyle: 'slot',   // 2026-08-30 ヒデさん指定: Anyflowのタイピング見せ方 slot=下線に打ち込む(既定)/push=押し広げる
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
       outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
@@ -3085,7 +3087,7 @@ const DEFAULTS = {
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
          ⚠️ 下の4つは「回転が見えるように」仮で置いた値。パネルで詰めてください */
-      slotAt: 0.3,       // 再生開始から回り出すまでの秒数 (0 で即スタート)
+      slotAt: 0.2,       // 再生開始から回り出すまでの秒数 (0 で即スタート) (2026-08-30: 0.3→0.2 前倒し)
       slotDur: 1.4,      // 1桁が回り終わるまでの秒数
       slotStagger: 0.12, // 桁ごとの遅れ (左から順に止まる)
       slotCycles: 3,     // 止まるまでに 0〜9 を何周流すか
@@ -3109,7 +3111,7 @@ const DEFAULTS = {
                /* 【2026-08-29 ヒデさん指定】dev2: ブロックの出入り(フェード)は dev1 と同じスクロール位置駆動(vpMode)。
                   ただし箱が左右に割れて開く所は【時間再生】でゆったり。splitDelay=登場から割れ始めるまでの間(秒)、
                   splitDur=割れきるまでの時間(秒。大きいほどゆったり)。 */
-               vpMode: 'center', splitDelay: 0.45, splitDur: 1.2 },
+               vpMode: 'center', splitDelay: 0.32, splitDur: 1.2 },   /* 2026-08-30: splitDelay 0.45→0.32 前倒し(splitDur=尺は不変) */
     /* 【2026-08-25 刷新・カンプ 15800:24526/24258】導入事例 = 2×2グリッド。
        見出し(ブラー) → 水平線3本が左から(上→下でディレイ) → 中央の垂直線 → カード4枚がブラーで登場。 */
     cases:   { lenVh: 200, driveLen: 3.0, playSec: 2.0, inBlur: 20,
@@ -3117,14 +3119,17 @@ const DEFAULTS = {
       introAt: 0.72,   // 見出し「導入事例」が出はじめる位置 (devFin の何割地点か)
       introDur: 0.22,  // 見出しが出きるまで
       /* 以下はこのセクションの再生進捗 p(0→1) 基準 */
+      /* 【2026-08-30 ヒデさん指定】前倒し(尺は不変)。⚠️ これまで固定追従なし(常時no-pin)ではハードコード値
+         (0.25s/0.7s/0.9s…)が使われ、パネルのつまみが効いていなかった。updateCases を「playSec に対する割合」で
+         共通化したので、いまはパネルの値=実際の動きになっている。 */
       lineAt: 0.08,      // 1本目(上)の水平線を引き始める
-      lineStagger: 0.10, // 水平線ごとの遅れ (上→下で順に)
-      lineDur: 0.30,     // 水平線1本を左から引き切るまで
-      vlineAt: 0.34,     // 中央の垂直線を引き始める
-      vlineDur: 0.34,    // 垂直線を上から引き切るまで
-      cardAt: 0.56,      // 1枚目のカードがブラーで出はじめる
+      lineStagger: 0.07, // 水平線ごとの遅れ (上→下で順に) 0.10→0.07
+      lineDur: 0.28,     // 水平線1本を左から引き切るまで
+      vlineAt: 0.28,     // 中央の垂直線を引き始める 0.34→0.28
+      vlineDur: 0.30,    // 垂直線を上から引き切るまで
+      cardAt: 0.40,      // 1枚目のカードがブラーで出はじめる 0.56→0.40
       cardGap: 0.06,     // カードごとの遅れ
-      cardDur: 0.22,     // カード1枚が出きるまで
+      cardDur: 0.25,     // カード1枚が出きるまで
     },
   },
   /* 【2026-08-18】アニメーションの駆動方式。参考サイト調査を受けて2軸を用意した。
@@ -3611,6 +3616,23 @@ function loadParams() {
         if (merged.visStrongFx == null) merged.visStrongFx = 'flicker';
         if (merged.visFlickerDur == null || Math.abs(merged.visFlickerDur - 2.0) < 0.001) merged.visFlickerDur = 2.6;
         localStorage.setItem('anyflow-flicker-glow-20260830', '1');
+      }
+      /* 【2026-08-30 ヒデさん指定】全体的にアニメの出はじめを前倒し(尺=ゆったり感は不変)。
+         旧既定のままの保存値だけ新既定へ寄せ直す(パネルで触った値は尊重)。 */
+      if (!localStorage.getItem('anyflow-timing-earlier-20260830')) {
+        const _set = (obj, defs, list) => { if (!obj) return;
+          for (const [k, oldV] of list) { if (obj[k] == null || Math.abs(obj[k] - oldV) < 1e-6) obj[k] = defs[k]; } };
+        _set(merged.kv, DEFAULTS.kv, [['headerAt', 0.25], ['typeAt', 1.0], ['eyebrowGap', 0.14]]);
+        _set(merged.sections.vision, DEFAULTS.sections.vision,
+          [['labelAt', 0.15], ['line1At', 0.45], ['line2Gap', 0.55], ['miniGap', 0.45],
+           ['npGap', 0.35], ['npP1', 0.40], ['npP2', 0.80], ['dotsInAt', 0.25]]);
+        _set(merged.sections.results, DEFAULTS.sections.results,
+          [['typeAt', 0.15], ['typeGap', 0.55], ['restGap', 0.1], ['slotAt', 0.3]]);
+        _set(merged.sections.dev, DEFAULTS.sections.dev, [['splitDelay', 0.45]]);
+        _set(merged.sections.cases, DEFAULTS.sections.cases,
+          [['lineStagger', 0.10], ['lineDur', 0.30], ['vlineAt', 0.34], ['vlineDur', 0.34],
+           ['cardAt', 0.56], ['cardDur', 0.22]]);
+        localStorage.setItem('anyflow-timing-earlier-20260830', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
@@ -9493,18 +9515,20 @@ function updateCases(pRaw) {
   /* 【2026-08-25 刷新・カンプ 15800:24258】
      水平線3本(上→下でディレイ) が左から引かれる → 中央の垂直線が上から引かれる → カード4枚がブラーで登場。
      線は CSS の scaleX / scaleY を 0→1 にして「左から / 上から引く」。線・カードは再生進捗 p 基準。 */
+  /* 【2026-08-30 ヒデさん指定】固定追従なし(no-pin)でもパネルの値で動くよう共通化。
+     ⚠️ 以前は no-pin だと npT(秒)のハードコード(0.25s/0.7s/0.9s…)で、パネルのつまみが効いていなかった。
+     いまは no-pin では q = npT / playSec(再生尺に対する割合)にして、pin と同じ lineAt/vlineAt/cardAt を使う。 */
+  const q = noPin ? clamp01(npT / Math.max(0.1, c.playSec)) : p;
   /* 水平線: 上(i=0)が先。下へ行くほど lineStagger だけ遅れて引き始める */
   caseEls.hlines.forEach((el, i) => {
     if (!el) return;
     const a = c.lineAt + i * c.lineStagger;
-    const k = noPin ? easeOutQ(clamp01((npT - (0.25 + i * 0.14)) / 0.5))
-                    : seg(p, a, a + c.lineDur, easeOutQ);
+    const k = seg(q, a, a + c.lineDur, easeOutQ);
     el.style.transform = `scaleX(${k.toFixed(4)})`;
   });
   /* 中央の垂直線: 上から下へ (水平線が進んだあと) */
   if (caseEls.vline) {
-    const vk = noPin ? easeOutQ(clamp01((npT - 0.7) / 0.5))
-                     : seg(p, c.vlineAt, c.vlineAt + c.vlineDur, easeOutQ);
+    const vk = seg(q, c.vlineAt, c.vlineAt + c.vlineDur, easeOutQ);
     caseEls.vline.style.transform = `scaleY(${vk.toFixed(4)})`;
   }
   /* カード4枚: 罫線が引けたあと、左上→右上→左下→右下 の順にブラーで登場。
@@ -9512,8 +9536,7 @@ function updateCases(pRaw) {
   caseEls.cards.forEach((el, i) => {
     if (!el) return;
     const a = c.cardAt + i * c.cardGap;
-    const k = noPin ? easeOutQ(clamp01((npT - (0.9 + i * 0.12)) / 0.5))
-                    : seg(p, a, a + c.cardDur, easeOutQ);
+    const k = seg(q, a, a + c.cardDur, easeOutQ);
     el.style.opacity = Math.min(1, k * 2).toFixed(3);
     const bl = noPin ? 0 : (1 - k) * c.inBlur;
     el.style.filter = bl > 0.05 ? `blur(${bl.toFixed(2)}px)` : '';
