@@ -3197,7 +3197,10 @@ const DEFAULTS = {
               glowWidth: 0.5, glowTone: 'now', glowPower: 1,   /* 圧縮グローの線の太さ・光り方・強さ */
               flow: 'up' },   // 2026-08-27 ヒデさん指定: 既定は「上がる」(内→外→吸収)
     /* 【2026-08-29 ヒデさん指定】収縮(reel)に重ねる「粒が吸い込まれる」オプション(spiral と同じ設定形)。既定オフ。 */
-    reelP: { on: false, count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1, link: true },   /* link=軌道の回転と粒を連動(2026-08-30) */
+    reelP: { on: false, count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 },
+    /* 【2026-08-30 ヒデさん指定】軌道の回転と「粒」(各案の内蔵の粒＝渦/円盤/粒リング＋追加の粒(吸い込み))を
+       連動させるか。false=軌道の線だけ回り、粒の回転軸は固定のまま。パネル「動き(この案)>粒も一緒に回す」。 */
+    spinLink: true,
     /* spiral(② 2026-08-26): 粒はまず軌道上を stay 秒ほど回り、それから惑星へ吸い込まれる */
     spiral: { count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 },   /* 2026-08-28 ゆったりへ */   /* swirl=吸い込まれる間の巻き具合 */
     /* beads(⑬ドットの軌道): 軌道の線の代わりに、ドットが密に並んで「輪」に見せる。
@@ -3600,6 +3603,9 @@ function loadParams() {
       merged.scrollHold = 'smooth';
       /* 【2026-08-30 ヒデさん指定】軌道ドットの周回の緩急(pulse)は「急に速く/遅く」に見えるため削除(0固定) */
       if (merged.pulse) merged.pulse.amp = 0;
+      /* 【2026-08-30】旧「粒(吸い込み)専用の連動(reelP.link)」を共通トグル(spinLink)へ引き継ぎ */
+      if (merged.conv && merged.conv.reelP && merged.conv.reelP.link === false && merged.conv.spinLink == null)
+        merged.conv.spinLink = false;
       /* 【2026-08-30 ヒデさん指定】全体的にアニメの出はじめを前倒し(尺=ゆったり感は不変)。
          旧既定のままの保存値だけ新既定へ寄せ直す(パネルで触った値は尊重)。 */
       if (!localStorage.getItem('anyflow-timing-earlier-20260830')) {
@@ -5808,9 +5814,9 @@ function convFrame(geoms) {
        ⚠️ convFrame は off だとここで return するため、粒の描画コード(関数の最後)に届かず
        「粒ありにしても1つも出ない」になっていた。off ではここで直接描く。 */
     if (params.conv && params.conv.reelP && params.conv.reelP.on && !params.conv.net3d) {
-      const pg = (params.conv.reelP.link === false)
+      const pg = (params.conv.spinLink === false)
         ? { outer: orbitGeom('outer', true), inner: orbitGeom('inner', true) }
-        : geoms;
+        : geoms;   /* 2026-08-30: 連動は共通トグル(spinLink)に統一 */
       runSpiralParticles(pg, params.conv.reelP, dt);
       reelPWasOn = true;
     } else if (reelPWasOn) { convHidePools(); reelPWasOn = false; }   /* オフに切ったら粒を片付ける */
@@ -5819,6 +5825,12 @@ function convFrame(geoms) {
   convWasOn = true;
   const mode = params.converge;
   const C = params.conv;
+  /* 【2026-08-30 ヒデさん指定】粒用ジオメトリ。「粒も一緒に回す=連動しない」の時は、
+     軌道自体の回転(convOrbitSpin/ジャイロ回転)を除いた形で粒を描く(粒の回転軸が変わらない)。
+     輪(軌道の線)・reelの輪・基準ドットは geoms のまま＝軌道と一緒に回る。 */
+  const pGeoms = (C.spinLink === false)
+    ? { outer: orbitGeom('outer', true), inner: orbitGeom('inner', true) }
+    : geoms;
   if (convLastMode !== mode) { convHidePools(); convLastMode = mode; }   // 切替時に前のモードの粒・輪を片付ける
   /* 惑星の「受け止め」= 明るさ。WebGL/フォールバック両対応の CSS filter で */
   if (sphereCanvasEl) {
@@ -6029,13 +6041,13 @@ function convFrame(geoms) {
 
   if (mode === 'spiral') {
     /* 粒はまず軌道上を回り、hold秒たったら螺旋で惑星へ吸い込まれ、吸収されたらまた軌道上に生まれ直す */
-    runSpiralParticles(geoms, C.spiral, dt);
+    runSpiralParticles(pGeoms, C.spiral, dt);   /* 2026-08-30: 連動しない時は回転を除いた粒用ジオメトリ */
   } else if (mode === 'accre') {
     /* ⑦降着円盤: 惑星を中心にした薄い円盤。微粒子が回りながら内へ落ちて取り込まれる */
     const A = C.accre;
     const pool = convAccrePool();
     const cc = convCenter();
-    const disk = { cx: cc.x, cy: cc.y, rx: orbitBase('inner').rx * A.scale, ry: orbitBase('inner').rx * A.scale * 0.335, rot: geoms.inner.rot };
+    const disk = { cx: cc.x, cy: cc.y, rx: orbitBase('inner').rx * A.scale, ry: orbitBase('inner').rx * A.scale * 0.335, rot: pGeoms.inner.rot };   /* 2026-08-30: 円盤(粒)も連動切替に従う */
     for (const p of pool) {
       /* 【2026-08-27 ヒデさん指定】渦の巻き具合を調整できる。
          swirl=0 でどこでも同じ速さ(ゆるい渦) / 大きいほど内側で急に速くなり、きつく巻き込む */
@@ -6284,7 +6296,7 @@ function convFrame(geoms) {
     }
     for (let i = 0; i < n; i++) {
       const b = convBeads[i];
-      const g = b.ring ? geoms.inner : geoms.outer;
+      const g = b.ring ? pGeoms.inner : pGeoms.outer;   /* 2026-08-30: 粒リングも連動切替に従う */
       let f = 1, al = 0.95, swirl = 0;
       if (b.t >= 0) {
         b.t += dt;
@@ -6380,12 +6392,7 @@ function convFrame(geoms) {
         必ずこの位置(convFrameの最後)で上書き描画する。オフの時は convHidePools が既に隠している。 */
   if (params.conv.reelP && params.conv.reelP.on && mode !== 'spiral' && !params.conv.net3d
       && convGroupOf(mode).key === 'orbit') {
-    /* 【2026-08-30 ヒデさん指定】軌道の回転と粒を「連動する/しない」で切替可能に。
-       連動しない(link=false)＝軌道の線だけ回り、粒はスピン前の軌道面を回る(粒の回転軸が変わらない)。 */
-    const pg = (params.conv.reelP.link === false)
-      ? { outer: orbitGeom('outer', true), inner: orbitGeom('inner', true) }
-      : geoms;
-    runSpiralParticles(pg, params.conv.reelP, dt);
+    runSpiralParticles(pGeoms, params.conv.reelP, dt);   /* 2026-08-30: 連動は共通トグル(spinLink)に統一 */
   }
 }
 const sphereCanvasEl = document.getElementById('sphere');
@@ -12549,6 +12556,11 @@ function buildPanel() {
           v => { if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {}; params.conv.orbitSpinBy[cvMode] = v; },
           v => '×' + v.toFixed(2),
           '右へ動かすほど速く回り、左へ動かすと逆回りになります。グラグラの時は揺れの速さ。', { signed: true });
+        /* 【2026-08-30 ヒデさん指定】軌道の回転と粒の連動を、案の内蔵の粒(渦/円盤/粒リング)＋
+           追加の粒(吸い込み)ぜんぶまとめて切替。連動しない=粒の回転軸は固定のまま。 */
+        segRow('粒も一緒に回す', [['連動する', 1], ['連動しない', 0]],
+          () => (params.conv.spinLink === false ? 0 : 1),
+          v => { params.conv.spinLink = !!v; markDirty(); renderFrame(); });
         if (((params.conv.spinStyleBy || {})[cvMode] || 'turn') === 'wobble') {
           slider('揺れ幅', 2, 60, 1, () => (params.conv.spinWobbleDeg != null ? params.conv.spinWobbleDeg : 16),
             v => { params.conv.spinWobbleDeg = v; renderFrame(); }, v => Math.round(v) + '°',
@@ -12779,10 +12791,7 @@ function buildPanel() {
         () => RP.on ? 1 : 0,
         v => { RP.on = !!v; markDirty(); renderFrame(); fillAnimBody(); });
       if (RP.on) {
-        /* 【2026-08-30 ヒデさん指定】軌道の回転と粒の連動を切替。連動しない=粒の回転軸は固定のまま */
-        segRow('軌道の回転と連動', [['連動する', 1], ['連動しない', 0]],
-          () => (RP.link === false ? 0 : 1),
-          v => { RP.link = !!v; markDirty(); renderFrame(); });
+        /* 連動の切替は「動き(この案) > 粒も一緒に回す」に統一(2026-08-30) */
         slider('粒の数', 2, 40, 1, () => RP.count, v => { RP.count = v; renderFrame(); }, v => Math.round(v) + '個',
           '軌道の上を回って惑星へ吸い込まれる粒の数。', { fixedMax: true });
         slider('粒の大きさ', 0.2, 1.5, 0.02, () => RP.size, v => { RP.size = v; renderFrame(); }, v => '×' + v.toFixed(2), '粒の大きさ。');
