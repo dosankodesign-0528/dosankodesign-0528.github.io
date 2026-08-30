@@ -2467,8 +2467,13 @@ function convOrbitSpin(key) {
      wobble = グラグラ揺れる(往復)。振れ幅は spinWobbleDeg(°)、速さは「回転の速さ」を流用 */
   const style = ((params.conv.spinStyleBy || {})[params.converge || 'off']) || 'turn';
   if (style === 'wobble') {
+    /* 【2026-08-30 ヒデさん指定・改】グラグラがガタガタして見えたので滑らかに:
+       速度を落とし(2.4→1.4)、周期の違う2つの波を混ぜて「端でピタッと折り返す」感じを消す。
+       一周はせず、揺れ幅(spinWobbleDeg)の範囲内でぬるっと行き来する。 */
     const deg = (params.conv.spinWobbleDeg != null ? params.conv.spinWobbleDeg : 16);
-    return Math.sin(kvGT() * Math.abs(amt) * 2.4) * deg * dir;
+    const ph = kvGT() * Math.abs(amt) * 1.4;
+    const s = Math.sin(ph) * 0.7 + Math.sin(ph * 0.53 + 1.3) * 0.3;
+    return s * deg * dir;
   }
   return kvGT() * amt * 18 * dir;
 }
@@ -2889,6 +2894,7 @@ const DEFAULTS = {
   running: true,
   sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
+  swayDir: 'tilt',   /* 【2026-08-30 ヒデさん指定】揺らぎの動き: tilt=傾き(従来) / h=左右 / v=上下 / diag=斜め */
   /* 【2026-08-29 ヒデさん指定】ネットワーク3D案(Figma15970)のつまみ。mode=3d/2d。3D=手前太く奥細く＋物理 */
   net3d: { mode: '3d', frontW: 5, backW: 1, phys: 0.7, flatW: 2, spd: 0.7, dots: 1, spin: 0, spinDots: true, showDots: true },   /* dots=1本の軌道に流すドット数(2026-08-29) / spin=軌道の回転・spinDots=粒も連動・showDots=粒表示(2026-08-30) */
   /* 【2026-08-29 ヒデさん指定】コンバージョン背景(流れるグラデ+Bayerディザ)。
@@ -7299,9 +7305,19 @@ function applySway() {
   const t = elapsed;
   let orbit = '', svg = '', sph = '';
   switch (SWAYS[(params.sway || 1) - 1].id) {
-    case 'seesaw': /* シーソー: 全体がゆっくり傾く。①収縮ループ中は固定(ヒデさん指定) */
-      if (!(params.kvDesign === 'planet' && params.converge === 'reel'))
-        orbit = `rotate(${(Math.sin(t * 0.4) * 3 * (params.swayAmp == null ? 1 : params.swayAmp)).toFixed(3)}deg)`;
+    case 'seesaw': /* ゆらぎ: 全体がゆっくり動く。①収縮ループ中は固定(ヒデさん指定) */
+      if (!(params.kvDesign === 'planet' && params.converge === 'reel')) {
+        /* 【2026-08-30 ヒデさん指定】揺らぎの動きを選べるように:
+           tilt=傾き(従来±3°) / h=左右 / v=上下 / diag=斜め。強さは共通の swayAmp。 */
+        const swA = (params.swayAmp == null ? 1 : params.swayAmp);
+        const swS = Math.sin(t * 0.4) * swA;
+        switch (params.swayDir || 'tilt') {
+          case 'h':    orbit = `translateX(${(swS * 14).toFixed(2)}px)`; break;
+          case 'v':    orbit = `translateY(${(swS * 12).toFixed(2)}px)`; break;
+          case 'diag': orbit = `translate(${(swS * 10).toFixed(2)}px, ${(swS * 8).toFixed(2)}px)`; break;
+          default:     orbit = `rotate(${(swS * 3).toFixed(3)}deg)`;
+        }
+      }
       break;
     /* cross は orbitGeom() 側で軌道の角度に効かせる */
   }
@@ -11104,6 +11120,7 @@ function gfxSnapshotFull() {
     design: params.design,
     sway: params.sway,
     swayAmp: params.swayAmp,            /* ゆらぎの強さ */
+    swayDir: params.swayDir || 'tilt',  /* 揺らぎの動き(2026-08-30) */
     duration: params.duration,          /* ドットが軌道を1周する秒数 */
     globalSpeed: params.globalSpeed,
     /* 【2026-08-29 ヒデさん指定】自由回転(全体の回転)は案ごとに独立させる。
@@ -11137,6 +11154,7 @@ function gfxApplyFull(d) {
   if (typeof d.design === 'string') params.design = d.design;
   if (typeof d.sway === 'number') params.sway = d.sway;
   if (typeof d.swayAmp === 'number') params.swayAmp = d.swayAmp;
+  if (typeof d.swayDir === 'string') params.swayDir = d.swayDir;
   if (typeof d.duration === 'number') params.duration = d.duration;
   if (typeof d.globalSpeed === 'number') params.globalSpeed = d.globalSpeed;
   /* 【2026-08-29】自由回転(全体の回転)を案ごとに復元。無い案は0(=正面)。 */
@@ -11278,6 +11296,7 @@ function applyGfxVariant(i) {
      この案で保存した値があれば、このあと gfxApplyFull で復元される。 */
   params.sway = DEFAULTS.sway;
   params.swayAmp = DEFAULTS.swayAmp;
+  params.swayDir = DEFAULTS.swayDir;
   {
     const pk0 = CONV_PARAM_KEY[mode];
     if (pk0 && DEFAULTS.conv[pk0] && params.conv[pk0])
@@ -12553,6 +12572,12 @@ function buildPanel() {
       /* 揺らぎ ON/OFF (既定オン=②シーソー。全案共通で効く緩やかな揺れ) */
       segRow('揺らぎ', [['する', 1], ['しない', 0]], () => (params.sway || 1) > 1 ? 1 : 0,
         v => { params.sway = v ? 2 : 1; markDirty(); renderFrame(); fillAnimBody(); });
+      if ((params.sway || 1) > 1) {
+        /* 【2026-08-30 ヒデさん指定】揺らぎの動きを選べるように(傾き/左右/上下/斜め) */
+        segRow('揺らぎの動き', [['傾き', 'tilt'], ['左右', 'h'], ['上下', 'v'], ['斜め', 'diag']],
+          () => (params.swayDir || 'tilt'),
+          v => { params.swayDir = v; markDirty(); renderFrame(); });
+      }
       if ((params.sway || 1) > 1) {
         slider('揺らぎの強さ', 0, 3, 0.05, () => (params.swayAmp == null ? 1 : params.swayAmp),
           v => { params.swayAmp = v; markDirty(); }, v => '×' + v.toFixed(2),
