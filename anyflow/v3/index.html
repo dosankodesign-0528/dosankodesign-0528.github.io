@@ -2017,7 +2017,10 @@
   <div class="stage" id="stage">
 
     <!-- V2 KV: 右側グラフィック（パターン群）。惑星の代わり。ヘッダー等より背面に置く -->
-    <iframe class="kv-graphic-embed" src="kv/embed.html?v=10" title="キービジュアル" loading="eager" scrolling="no"></iframe>
+    <!-- 【2026-08-30 ヒデさん指定・軽量化】旧KV(モック案A/B)の iframe は遅延ロード。
+         既定の「惑星」では読み込まず(以前は毎回 約850KB+フォント二重取得が走っていた)、
+         パネルで A案/B案 を選んだ瞬間に kvEnsureIframe() が data-src → src へ入れて読み込む。 -->
+    <iframe class="kv-graphic-embed" data-src="kv/embed.html?v=10" title="キービジュアル" loading="eager" scrolling="no"></iframe>
     <!-- 調整パネルを開く透明ボックス（右上・ヘッダーの下）。iframe内のパネルをトグル -->
     <div class="kvp-secret" id="kvpSecret" title="調整パネル"></div>
 
@@ -2362,21 +2365,21 @@
         <div class="cg-vline" id="cgV"></div>
         <!-- 4セル(左上→右上→左下→右下)。ブラーで登場 -->
         <div class="cg-cell cg-tl" id="caseCard0">
-          <div class="cg-img"><img src="assets/case-smarthr.png" alt="株式会社SmartHR"></div>
+          <div class="cg-img"><img src="assets/case-smarthr.webp" alt="株式会社SmartHR"></div>
           <div class="cg-body">
             <div class="cg-quote">1年で15種類の連携機能を提供！！外部データ連携のインフラとしてAnyflowを活用</div>
             <div class="cg-meta"><span class="cg-tag">HRテック</span><div class="cg-company">株式会社SmartHR</div></div>
           </div>
         </div>
         <div class="cg-cell cg-tr" id="caseCard1">
-          <div class="cg-img"><img src="assets/case-deex.png" alt="deex株式会社"></div>
+          <div class="cg-img"><img src="assets/case-deex.webp" alt="deex株式会社"></div>
           <div class="cg-body">
             <div class="cg-quote">CRMと自社プロダクトを相互連携。実物の連携画面で商談を推進！！</div>
             <div class="cg-meta"><span class="cg-tag">セールステック</span><div class="cg-company">deex株式会社</div></div>
           </div>
         </div>
         <div class="cg-cell cg-bl" id="caseCard2">
-          <div class="cg-img"><img src="assets/case-salesgo.png" alt="SALES GO 株式会社"></div>
+          <div class="cg-img"><img src="assets/case-salesgo.webp" alt="SALES GO 株式会社"></div>
           <div class="cg-body">
             <div class="cg-quote">単なるデジタル化でなく”真の営業DX”へ。100種以上のツール連携を推進中！！</div>
             <div class="cg-meta"><span class="cg-tag">セールステック</span><div class="cg-company">SALES GO 株式会社</div></div>
@@ -2384,7 +2387,7 @@
         </div>
         <!-- 4枚目: 株式会社インフォボックス (anyflow.jp/case)。※画像は暫定。本物のインフォボックス写真に差し替え要 -->
         <div class="cg-cell cg-br" id="caseCard3">
-          <div class="cg-img"><img src="assets/case-infobox.png" alt="株式会社インフォボックス"></div>
+          <div class="cg-img"><img src="assets/case-infobox.webp" alt="株式会社インフォボックス"></div>
           <div class="cg-body">
             <div class="cg-quote">要望の多かったCRM連携を拡充。ペンディングだった商談が進捗するように！！</div>
             <div class="cg-meta"><span class="cg-tag">セールステック</span><div class="cg-company">株式会社インフォボックス</div></div>
@@ -9659,8 +9662,25 @@ function kvSendIntroTiming(replay) {
   const ifr = document.querySelector('.kv-graphic-embed');
   if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: replay ? 'kvIntroReplay' : 'kvIntroTiming', timing: params.kvIntro }, '*');
 }
+/* 【2026-08-30 ヒデさん指定・軽量化】旧KV iframe の遅延ロード。
+   惑星が既定の今、kv/embed.html(画像724KB+JS/CSS+フォント)を毎回読むのは無駄なので、
+   A案/B案が選ばれた時に初めて src を入れて読み込む。ロード完了(kvReady)後に選択案を送る。 */
+let kvPendingDesign = null;
+function kvEnsureIframe() {
+  const ifr = document.querySelector('.kv-graphic-embed');
+  if (!ifr) return null;
+  if (!ifr.src && ifr.dataset.src) ifr.src = ifr.dataset.src;
+  return ifr;
+}
 window.addEventListener('message', (e) => {
-  if (e && e.data && e.data.type === 'kvReady') { kvIframeReady = true; kvSendIntro(); }
+  if (e && e.data && e.data.type === 'kvReady') {
+    kvIframeReady = true; kvSendIntro();
+    if (kvPendingDesign) {   /* 遅延ロード完了後に、選ばれていた案を反映 */
+      const ifr = document.querySelector('.kv-graphic-embed');
+      if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: kvPendingDesign }, '*');
+      kvPendingDesign = null;
+    }
+  }
 });
 
 /* 調整パネルから選べる「右グラフィックの案」。key は iframe(embed.html) の data-design に対応。 */
@@ -9675,11 +9695,14 @@ function kvSetDesign(d) {
   params.kvDesign = d;
   document.documentElement.classList.toggle('kv-planet', d === 'planet');
   if (d === 'planet') return;
-  const ifr = document.querySelector('.kv-graphic-embed');
-  if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: d }, '*');
+  const ifr = kvEnsureIframe();   /* 遅延ロード: A案/B案を選んだ瞬間に読み込む */
+  if (ifr && kvIframeReady && ifr.contentWindow) ifr.contentWindow.postMessage({ type: 'kvSetDesign', design: d }, '*');
+  else kvPendingDesign = d;       /* まだロード中なら kvReady 受信時に送る */
 }
-/* 読み込み時に保存値どおりのモードにしておく（既定は惑星） */
+/* 読み込み時に保存値どおりのモードにしておく（既定は惑星）。
+   保存が A案/B案 なら iframe をこの時点で読み込む(惑星なら読まない=軽量化) */
 document.documentElement.classList.toggle('kv-planet', params.kvDesign === 'planet');
+if (params.kvDesign !== 'planet') { kvPendingDesign = params.kvDesign; kvEnsureIframe(); }
 
 function updateKV() {
   const c = params.kv, t = elapsed;
@@ -9887,23 +9910,37 @@ void main(){
     };
     if (!ds.fragment) {
       gl.uniform1i(gl.getUniformLocation(prog, 'uTex'), 0);
-      /* カンプ画像をテクスチャとして読み込み (読み込み完了したら描画) */
-      const tex = gl.createTexture();
-      const img = new Image();
-      img.onload = () => {
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        progs[key].tex = tex;
-        renderSphere();
-      };
-      img.src = ds.src;
+      /* 【2026-08-30 ヒデさん指定・軽量化】カンプ画像はここでは読まない(遅延ロード)。
+         ⚠️ 以前は全デザイン(B/C/D)の画像を起動時に全部ロードしていて、表示に使わない
+         2.6MB を毎回ダウンロードしていた。いまは「選ばれているデザインだけ」読む
+         (下の loadSphereTex。パネルで切り替えたらその時に読む)。 */
+      progs[key].src = ds.src;
     }
   }
   sphereGL = { gl, progs };
+  loadSphereTex(params.design);   /* 現在のデザインの画像だけ先に読む */
+}
+/* テクスチャのオンデマンド読み込み。多重ロード防止に loading フラグを持つ */
+function loadSphereTex(key) {
+  if (!sphereGL) return;
+  const pr = sphereGL.progs[key];
+  if (!pr || !pr.needsTex || pr.tex || pr.loading || !pr.src) return;
+  pr.loading = true;
+  const gl = sphereGL.gl;
+  const tex = gl.createTexture();
+  const img = new Image();
+  img.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    pr.tex = tex;
+    pr.loading = false;
+    renderSphere();
+  };
+  img.src = pr.src;
 }
 
 /* WebGLが使えない環境: カンプ画像をそのまま表示 */
@@ -9938,7 +9975,8 @@ function renderSphere() {
   }
   const { gl, progs } = sphereGL;
   const pr = progs[params.design] || progs[Object.keys(progs)[0]];
-  if (!pr || (pr.needsTex && !pr.tex)) return;
+  if (!pr) return;
+  if (pr.needsTex && !pr.tex) { loadSphereTex(params.design); return; }   /* 遅延: 選ばれた時に画像を読む(読み終わるまで描かない) */
   const [ang, ang2] = sphereAngles();
   gl.useProgram(pr.prog);
   if (pr.tex) {
