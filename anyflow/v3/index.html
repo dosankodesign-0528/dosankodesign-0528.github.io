@@ -3503,12 +3503,6 @@ function loadParams() {
   if (typeof merged.orbitLayout !== 'string') merged.orbitLayout = DEFAULTS.orbitLayout;
   /* 案ごとの形とプリセットの入れ物。古い保存値(全案共通の orbitPresets)からの引っ越しもここで */
   if (!merged.gfxByMode || Array.isArray(merged.gfxByMode)) merged.gfxByMode = {};
-  /* 【2026-08-30 ヒデさん指定】プリセット保管が無い(=本番の初回など)なら、選択中プリセット・削除した案・ゴミ箱も焼き込みから復元 */
-  if (!st && typeof SHIPPED_PRESET_STATE !== 'undefined') {
-    merged.gfxPresetOn = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.on || {}));
-    merged.gfxVariantHidden = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.hidden || {}));
-    merged.gfxPresetTrash = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.trash || {}));
-  }
   if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
   if (!merged.gfxVariantOn || Array.isArray(merged.gfxVariantOn)) merged.gfxVariantOn = {};
@@ -3736,6 +3730,13 @@ function load() {
   } else if (merged.gfxPresets && Object.keys(merged.gfxPresets).length) {
     /* まだ別置きしていない古い持ち物は、ここで引っ越す */
     try { localStorage.setItem(PRESET_KEY, JSON.stringify({ v: 1, presets: merged.gfxPresets, on: merged.gfxPresetOn || {} })); } catch (e) {}
+  }
+  /* 【2026-08-30 ヒデさん指定】プリセット保管が無い(=本番の初回など)なら、
+     選択中プリセット・削除した案・ゴミ箱も焼き込み(SHIPPED_PRESET_STATE)から復元 */
+  if (!st && typeof SHIPPED_PRESET_STATE !== 'undefined') {
+    merged.gfxPresetOn = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.on || {}));
+    merged.gfxVariantHidden = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.hidden || {}));
+    merged.gfxPresetTrash = JSON.parse(JSON.stringify(SHIPPED_PRESET_STATE.trash || {}));
   }
   if (!merged.gfxPresets || Array.isArray(merged.gfxPresets)) merged.gfxPresets = {};
   if (!merged.gfxPresetOn || Array.isArray(merged.gfxPresetOn)) merged.gfxPresetOn = {};
