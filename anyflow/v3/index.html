@@ -701,6 +701,16 @@
   .res2-hl1, .res2-hl2 { display: block; }
   .res2-hl2 { display: flex; align-items: center; min-height: calc(34px * 1.7); }
   .res2-typed { white-space: pre; }
+  /* 2026-08-30 ヒデさん指定: Anyflow のスペースを先に確保し、薄いグレーの下線に打ち込む(「が支えます。」は動かない)。
+     ghost が幅を確保＆下線を出し、over(タイピング+カーソル)をその上に重ねる。 */
+  .res2-slot { position: relative; display: inline-flex; align-items: center; }
+  .res2-ghost { color: transparent; white-space: pre; pointer-events: none;
+    border-bottom: 1.5px solid var(--res-uline, rgba(17,17,17,.22)); }
+  .res2-slot .res2-over { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; align-items: center; }
+  /* 押し広げる版(旧): ghost を消して通常フローで打つ */
+  .res2-hl2.type-push .res2-ghost { display: none; }
+  .res2-hl2.type-push .res2-slot { display: inline-flex; }
+  .res2-hl2.type-push .res2-slot .res2-over { position: static; }
   .res2-caret { display: inline-block; width: 2px; height: 34px; background: var(--brand-cyan); margin-left: 2px; }
   .res2-suffix { white-space: pre; }   /* 2026-08-30 ヒデさん指定: 「が支えます。」は静的表示、Anyflowだけタイピング */
   .res2-stats { display: flex; align-items: flex-start; gap: var(--space-44); }
@@ -2172,7 +2182,7 @@
       <div class="res2-top">
         <div class="res2-head" id="resHead">
           <div class="res2-hl1" id="resHl1">事業の推進力を、</div>
-          <div class="res2-hl2"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span><span class="res2-suffix" id="resSuffix">が支えます。</span></div>
+          <div class="res2-hl2" id="resHl2"><span class="res2-slot" id="resSlot"><span class="res2-ghost" id="resGhost">Anyflow</span><span class="res2-over"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span></span></span><span class="res2-suffix" id="resSuffix">が支えます。</span></div>
         </div>
         <div class="res2-stats" id="resStats">
           <div class="r2s"><b>導入企業</b><span id="cntMain">200+</span></div>
@@ -3067,6 +3077,7 @@ const DEFAULTS = {
       /* 【2026-08-29 ヒデさん指定】タイピングテキストと、その他の要素(区切り線/3数値/2つの価値)の
          出るタイミングを別々に。typeGap=見出し1行目→タイピング開始 / restGap=タイピング開始→その他 */
       typeGap: 0.55, restGap: 0.1,
+      typeStyle: 'slot',   // 2026-08-30 ヒデさん指定: Anyflowのタイピング見せ方 slot=下線に打ち込む(既定)/push=押し広げる
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
       outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
       outTo: 0.95,     // ここで完全に黒。dev を実績尾部に重ねたので、黒の全面到達≒dev1中央到達に近づける(2026-08-26 0.85→0.95)
@@ -8296,6 +8307,9 @@ const resEls = {
   typed: document.getElementById('resTyped'), // 「Anyflow」だけタイピング
   caret: document.getElementById('resCaret'),
   suffix: document.getElementById('resSuffix'), // 「が支えます。」は静的表示(見出し1行目と一緒に出す)
+  hl2: document.getElementById('resHl2'),
+  slot: document.getElementById('resSlot'),
+  ghost: document.getElementById('resGhost'),   // Anyflow の幅を確保＋下線プレースホルダ
   stats: document.getElementById('resStats'), // 3数値グループ
   vals: document.getElementById('resVals'),   // 2つの価値
   hr: document.getElementById('resHr'),       // 区切り線
@@ -8308,7 +8322,7 @@ const resEls = {
 const RES_TYPE_TEXT = 'Anyflow';   /* 2026-08-30 ヒデさん指定: タイピングするのは「Anyflow」だけ。「が支えます。」は静的(resSuffix) */
 /* 黒せり上がりで白反転させる「濃い文字」。色付きタグ(for Saas/for AI)は反転しない */
 function resInvertEls() {
-  return [resEls.hl1, resEls.typed,
+  return [resEls.hl1, resEls.typed, resEls.suffix,   // 2026-08-30: 「が支えます。」も反転(黒く残らないよう統一)
     ...SECS.results.querySelectorAll('.r2s b'),   // 数字ラベル(導入企業/連携実績/稼働率)
     ...SECS.results.querySelectorAll('.r2s span'),// 数字そのもの
     ...SECS.results.querySelectorAll('.r2v-h'),   // 価値の見出し
@@ -8436,6 +8450,7 @@ function updateResults(p) {
     resEls.typed.textContent = '';
     if (resEls.caret) resEls.caret.style.opacity = 0;
     if (resEls.suffix) rv(resEls.suffix, 0, 0);
+    if (resEls.ghost) resEls.ghost.style.setProperty('--res-uline', 'rgba(17,17,17,0)');
     renderSlots(-1);
     slotT0 = null;
     return;
@@ -8450,6 +8465,9 @@ function updateResults(p) {
   rv(resEls.hl1, l1k, 0, 0);                            // ① フェード(blur=0)
   if (resEls.suffix) rv(resEls.suffix, l1k, 0, 0);      // 「が支えます。」も見出し1行目と一緒に静的表示(Anyflowだけ後からタイピング)
 
+  /* 【2026-08-30 ヒデさん指定】タイピングの見せ方: 既定=下線に打ち込む(スペース確保・不動)。push=押し広げる(旧) */
+  if (resEls.hl2) resEls.hl2.classList.toggle('type-push', (c.typeStyle || 'slot') === 'push');
+
   const typeStart = c.typeAt + (c.typeGap != null ? c.typeGap : 0.55);   // ② タイピング開始(見出し1行目からの間隔)
   const CH = 0.06, chars = RES_TYPE_TEXT.length;
   const typeEnd = typeStart + chars * CH;
@@ -8457,6 +8475,12 @@ function updateResults(p) {
   resEls.typed.textContent = RES_TYPE_TEXT.slice(0, nTyped);
   const typing = t >= typeStart - 0.05 && t < typeEnd + 0.4;
   if (resEls.caret) resEls.caret.style.opacity = (typing && (t * 1.8) % 1 < 0.55) ? 1 : 0;
+  /* 下線プレースホルダ: 見出しと一緒に薄く出て、打ち終わりでスッと消える(最終は下線なしのクリーンな見た目に) */
+  if (resEls.ghost) {
+    const uFade = clamp01((t - (typeEnd - 0.1)) / 0.45);   // タイピング終わり際から0.45秒でフェードアウト
+    const uAlpha = 0.22 * l1k * (1 - uFade);
+    resEls.ghost.style.setProperty('--res-uline', 'rgba(17,17,17,' + uAlpha.toFixed(3) + ')');
+  }
 
   const restAt = typeStart + (c.restGap != null ? c.restGap : 0.1);      // ③ その他(区切り線/数値/価値)がフェード
   const restK = easeOutQ(clamp01((t - restAt) / (c.softDur * 0.8)));
@@ -8507,12 +8531,14 @@ function updateResults(p) {
       resInvertOn = true;
       const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * darkK)},${Math.round(b[1] + (255 - b[1]) * darkK)},${Math.round(b[2] + (255 - b[2]) * darkK)})`;
       resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+      valInkCur = white([17, 17, 17]);   // ピクトグラムの黒い図形(#111)も同じ白反転に揃える
       const lc = `rgba(${Math.round(209 + (255 - 209) * darkK)},${Math.round(213 + (255 - 213) * darkK)},${Math.round(220 + (255 - 220) * darkK)},${(0.6 + 0.4 * darkK).toFixed(2)})`;
       if (resEls.hr) resEls.hr.style.background = lc;
       SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = lc);
     } else if (resInvertOn) {
       resInvertOn = false;
       resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+      valInkCur = VAL_INK;
       if (resEls.hr) resEls.hr.style.background = '';
       SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
     }
@@ -8537,6 +8563,7 @@ function updateResults(p) {
     resInvertOn = true;
     const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
     resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+    valInkCur = white([17, 17, 17]);   // ピクトグラムの黒い図形(#111)も同じ白反転に揃える
     const lc = `rgba(${Math.round(209 + (255 - 209) * invK)},${Math.round(213 + (255 - 213) * invK)},${Math.round(220 + (255 - 220) * invK)},${(0.6 + 0.4 * invK).toFixed(2)})`;
     if (resEls.hr) resEls.hr.style.background = lc;
     SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = lc);
@@ -8546,6 +8573,7 @@ function updateResults(p) {
     /* 反転を掛けていない位置に戻ったら、インライン color を掃除(次の再生で白く残らない) */
     resInvertOn = false;
     resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+    valInkCur = VAL_INK;
     if (resEls.hr) resEls.hr.style.background = '';
     SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
   }
@@ -9939,6 +9967,9 @@ const VAL_VB = 220;                    /* 描画の座標系。表示は 220×22
 const VAL_INK = '#111';
 const VAL_ACC = '#0EBBFF';
 const VAL_PINK = '#FF5D97';
+/* 【2026-08-30 ヒデさん指定】黒せり上がりの白反転を、ピクトグラムの「黒い図形」にも効かせる(色付きACC/PINKは維持)。
+   updateResults が毎フレーム valInkCur をセット(反転中=白寄り / 通常=VAL_INK)。valTake/valStyle が #111 を検知して差し替える。 */
+let valInkCur = VAL_INK;
 const valSvgs = {};                    /* { saas:{svg, pool}, ai:{...} } */
 function valEnsure(key, id) {
   if (valSvgs[key]) return valSvgs[key];
@@ -9962,7 +9993,7 @@ function valTake(st, tag) {
   }
   st.used++;
   el.setAttribute('opacity', '1');
-  el.setAttribute('stroke', VAL_INK);
+  el.setAttribute('stroke', valInkCur);
   el.setAttribute('stroke-width', '1.6');
   el.removeAttribute('transform');
   return el;
@@ -10029,7 +10060,7 @@ function vTrim(e, k, from) {
   return e;
 }
 function valStyle(e, o) {
-  if (o.c) e.setAttribute('stroke', o.c);
+  if (o.c) e.setAttribute('stroke', o.c === VAL_INK ? valInkCur : o.c);
   if (o.w != null) e.setAttribute('stroke-width', o.w.toFixed(2));
   if (o.a != null) e.setAttribute('opacity', Math.max(0, Math.min(1, o.a)).toFixed(3));
   if (o.dash) e.setAttribute('stroke-dasharray', o.dash); else e.removeAttribute('stroke-dasharray');
