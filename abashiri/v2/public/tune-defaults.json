@@ -147,7 +147,7 @@
     "blurMid": 0
   },
   "loop": {
-    "cycle": 15,
+    "cycle": 10,
     "show": 2.6,
     "swayFirst": true
   }

@@ -217,7 +217,7 @@ export default function TopTunePanel({
       videoVol: { fadeIn: true, fadeSec: 3, uiHideSec: 2 },
       expEnter: { ...DEFAULT_ENTER_TUNE },
       /* 周期ループ（たまらねー＋バウンス）。15秒おき・2.6秒見せるが既定 */
-      loop: { cycle: 15, show: 2.6, swayFirst: false },
+      loop: { cycle: 10, show: 2.6, swayFirst: false },
     };
     const params: Params = structuredClone(DEFAULTS);
 
