@@ -1337,13 +1337,20 @@ export default function TopTunePanel({
           /* 登場のしかた（案切替・たまらねーの披露タイミング）を触ったら、
              Anyflow のパネルと同じく、その場で登場アニメを再生し直して見せる */
           const p = info?.path || "";
+          /* バウンス2項目は再生し直さない：ページを作り直しても登場アニメが
+             見えるだけでバウンス（周期/ホバー時）は変わって見えない。
+             代わりに Stage 側が値の変化を検知して、その場で1回バウンスして見せる
+             （2026-08-30 ヒデさん指摘「変えても変わった感じがしない」の対策） */
+          const isBounce =
+            p === "anim.bouncePattern" || p === "anim.bounceStrength";
           if (
-            p.startsWith("anim.") ||
-            p.startsWith("intro.") ||
-            p.startsWith("hero.") ||
-            p.startsWith("expIntro.") ||
-            p.startsWith("expPick.") ||
-            p.startsWith("expEnter.")
+            !isBounce &&
+            (p.startsWith("anim.") ||
+              p.startsWith("intro.") ||
+              p.startsWith("hero.") ||
+              p.startsWith("expIntro.") ||
+              p.startsWith("expPick.") ||
+              p.startsWith("expEnter."))
           )
             onReplay?.(p);
         },

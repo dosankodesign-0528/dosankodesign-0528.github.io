@@ -4867,13 +4867,21 @@ let applyingVariant = false;          // 案を適用中は「案ごとの調整
 /* 【2026-08-29 ヒデさん指定】案ごとに調整値を独立させる: いま選んでいる案の状態を、その案専用に控える */
 function gfxTouchVariant() {
   if (applyingVariant || !params || !params.conv) return;
+  /* 【2026-08-30 ヒデさん指定・バグ修正】案を切り替えた直後の markDirty では保存しない。
+     ⚠️ convSwitchTo 直後は「形だけ新モード・つまみは前モードのまま」の混合状態で、
+        これを控え(gfxTweaks)に保存すると、次にその案を開いた時に混合状態が復元されていた。 */
+  if (gfxJustSwitched) { gfxJustSwitched = false; return; }
   const m = params.converge || 'off';
   const idx = (params.gfxVariantOn || {})[m];
   if (idx == null) return;
+  /* 【2026-08-30 ヒデさん指定】プリセット昇格案は「常にプリセットの数値」なので控えを取らない */
+  const vv = (typeof GFX_VARIANTS !== 'undefined' && GFX_VARIANTS[m] || [])[idx];
+  if (vv && vv.preset) return;
   if (!params.gfxTweaks) params.gfxTweaks = {};
   if (!params.gfxTweaks[m]) params.gfxTweaks[m] = {};
   try { params.gfxTweaks[m][idx] = gfxSnapshotFull(); } catch (e) {}
 }
+let gfxJustSwitched = false;   /* convSwitchTo 直後の混合状態を控えに入れないためのフラグ */
 let convGlowLast = -1e9;              // 最後に「エフェクトを出した」時刻
 let convGlowN = 0;                    // 取り込みイベントの通し番号(回数モード用)
 let convGlowBurst = -1e9;             // いま出している一連(バースト)の開始時刻
@@ -11038,6 +11046,7 @@ function convSwitchTo(next) {
   params.converge = next;
   if (!params.gfxByMode[next]) params.gfxByMode[next] = gfxDefault();
   gfxApply(params.gfxByMode[next]);
+  gfxJustSwitched = true;   /* 【2026-08-30】直後の markDirty で混合状態を控えに入れない(gfxTouchVariant参照) */
 }
 /* ===== プリセットに入れる中身 (2026-08-27 ヒデさん指摘で拡張) =====
    ⚠️ これまでプリセットは【形】(軌道と惑星の位置・大きさ・傾き)しか覚えていなかったので、
@@ -11193,19 +11202,6 @@ function applyGfxVariant(i) {
   const mode = params.converge || 'reel';
   const v = (GFX_VARIANTS[mode] || [])[i];
   if (!v) return;
-  /* 【2026-08-30 ヒデさん指定】プリセット昇格バリエーション: プリセットとまったく同じ適用で全設定を再現 */
-  if (v.preset) {
-    applyingVariant = true;
-    gfxApplyFull(JSON.parse(JSON.stringify(v.preset)));
-    if (!params.gfxVariantOn) params.gfxVariantOn = {};
-    params.gfxVariantOn[mode] = i;
-    const tw0 = params.gfxTweaks && params.gfxTweaks[mode] && params.gfxTweaks[mode][i];
-    if (tw0) gfxApplyFull(tw0);
-    applyingVariant = false;
-    markDirty();
-    renderFrame();
-    return;
-  }
   applyingVariant = true;
   /* 【2026-08-28 ヒデさん指定・根治】案を選び直したら、その案が指定しない「回転・スピン系」は
      必ず 0 へ戻す。こうしないと、前に選んだジャイロ案やスピンの保存値がブラウザに残って
@@ -11244,6 +11240,20 @@ function applyGfxVariant(i) {
     const pk0 = CONV_PARAM_KEY[mode];
     if (pk0 && DEFAULTS.conv[pk0] && params.conv[pk0])
       for (const kk in DEFAULTS.conv[pk0]) params.conv[pk0][kk] = DEFAULTS.conv[pk0][kk];
+  }
+  /* 【2026-08-30 ヒデさん指定・再修正】プリセット昇格バリエーション:
+     上の「一旦すべて既定へ」を通した上で、プリセットの全設定(gfxApplyFull)をそのまま重ねる。
+     ⚠️ 以前は既定リセットを通さない別分岐だったため、プリセットに無い古い項目(ringRotate等)へ
+        直前の案の値が漏れて「プリセットの数値と違う」が起きていた。 */
+  if (v.preset) {
+    gfxApplyFull(JSON.parse(JSON.stringify(v.preset)));
+    if (!params.gfxVariantOn) params.gfxVariantOn = {};
+    params.gfxVariantOn[mode] = i;
+    /* 昇格案は「常にプリセットの数値で開く」が正。調整の控え(gfxTweaks)は復元しない(汚染上書き防止) */
+    applyingVariant = false;
+    markDirty();
+    renderFrame();
+    return;
   }
   const base = gfxDefault(), g = v.gfx || {};
   gfxApply({

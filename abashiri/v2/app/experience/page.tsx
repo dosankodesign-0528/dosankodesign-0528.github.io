@@ -27,7 +27,7 @@ export default function ExperiencePage() {
     bouncePattern: 3,
     bounceStrength: 100,
     illustDelay: 0.5,
-    loop: { cycle: 15, show: 2.6, swayFirst: false },
+    loop: { cycle: 10, show: 2.6, swayFirst: false },
     tamaranee: 1,
     tamaIntro: { delay: 350, hold: 3000 },
     preview: { faceOn: false, patchRed: false },

@@ -368,6 +368,20 @@ export default function Stage({
   /* ホバーした瞬間に、からだが縦に弾む（2026-08-21 ヒデさん依頼。5案から選ぶ）。
      スイングとは別ラッパーに WAAPI で掛けるので干渉しない */
   const bounceRef = useRef<HTMLDivElement>(null);
+
+  /* パネルで「バウンスの動き／強さ」を変えたら、その場で1回バウンスして見せる。
+     周期（10秒おき）やホバーを待たないと違いが分からなかった対策（2026-08-30）。
+     初回マウントでは鳴らさない（登場アニメとかぶる） */
+  const bounceSigRef = useRef(`${bouncePattern}:${bounceStrength}`);
+  useEffect(() => {
+    const sig = `${bouncePattern}:${bounceStrength}`;
+    if (bounceSigRef.current === sig) return;
+    bounceSigRef.current = sig;
+    const el = bounceRef.current;
+    if (!el) return;
+    const hb = makeBounce(bouncePattern, bounceStrength);
+    el.animate(hb.keyframes, hb.options);
+  }, [bouncePattern, bounceStrength]);
   const prevOverRef = useRef(false);
   useEffect(() => {
     if (over && !prevOverRef.current) {
