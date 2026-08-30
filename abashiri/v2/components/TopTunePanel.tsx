@@ -1098,7 +1098,7 @@ export default function TopTunePanel({
               { sub: "「ぼーっ」の吹き出し", deep: true },
               /* 出方は現状の案で確定（2026-08-21 ヒデさん指示。案ピルは撤去。
                  パターン本体は boPatterns.ts の DEFAULT_BO） */
-              { sub: "位置と大きさ", deep: true },
+              { sub: "「ぼーっ」｜位置と大きさ", deep: true },
               {
                 slider: "横ずれ",
                 path: "pos.boX",
