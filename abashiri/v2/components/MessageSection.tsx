@@ -145,7 +145,11 @@ export default function MessageSection({
   return (
     <div className="pointer-events-none sticky top-0 -mt-[982px] h-[982px]">
       <div
-        className="absolute left-[140px] top-[172px] w-[720px] text-white"
+        /* 器(親)は pointer-events-none で KV ボタンのクリックを通すが、
+           それを受けると本文がドラッグ選択（コピペ）できなくなる。
+           本文ブロックだけ pointer-events を戻して選択可能にする
+           （このセクションは KV が消えてから描画されるので誤クリック飲み込みは起きない。2026-08-30 ヒデさん依頼） */
+        className="pointer-events-auto absolute left-[140px] top-[172px] w-[720px] text-white"
         style={{ opacity: shellOpacity, filter: `blur(${shellBlur}px)` }}
       >
         {/* 見出し：カンプ 15481:23022 の実測（Noto Sans JP Thin / Hero_90px / 行間1 / 白80%） */}
