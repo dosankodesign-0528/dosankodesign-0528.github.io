@@ -23049,6 +23049,34 @@
     "lastCheckedAt": "2026-08-02T05:28:51.511Z"
   },
   {
+    "id": "332d1157208f",
+    "title": "Orgnzm Studio",
+    "url": "https://orgnzm.studio/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/08/32-768x576.png",
+    "source": "muuuuu",
+    "category": [
+      "gray"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-30T04:27:08.728Z"
+  },
+  {
+    "id": "33e3c2f675c1",
+    "title": "Class A Business Center",
+    "url": "https://likova.space/",
+    "thumbnailUrl": "https://muuuuu.org/wp-content/uploads/2026/08/31-768x576.png",
+    "source": "muuuuu",
+    "category": [
+      "building"
+    ],
+    "taste": [],
+    "date": "2026-08",
+    "starred": false,
+    "firstSeen": "2026-08-30T04:27:08.728Z"
+  },
+  {
     "id": "b4039dd273c0",
     "title": "株式会社トンマナ",
     "url": "https://tonmana.co.jp/",
@@ -54003,17 +54031,17 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a65f0b824af5021149092.png",
     "source": "awwwards",
     "category": [
-      "Mobile & Apps",
-      "Technology",
-      "Animation",
-      "Colorful",
-      "Fullscreen",
       "Graphic design",
       "Responsive Design",
       "UI design",
+      "Mobile & Apps",
       "Lottie",
+      "Technology",
       "Webflow",
-      "Figma"
+      "Animation",
+      "Figma",
+      "Colorful",
+      "Fullscreen"
     ],
     "taste": [],
     "date": "2026-08",
@@ -54198,15 +54226,15 @@
     "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/06/6a2fc089a0008844773210.png",
     "source": "awwwards",
     "category": [
+      "Art & Illustration",
+      "Web & Interactive",
       "Flat Design",
       "SEO",
       "Storytelling",
       "GSAP",
       "UI design",
       "Startups",
-      "Art & Illustration",
-      "Tailwind",
-      "Web & Interactive"
+      "Tailwind"
     ],
     "taste": [],
     "date": "2026-06",
@@ -56484,89 +56512,28 @@
     "lastCheckedAt": "2026-08-02T05:36:12.653Z"
   },
   {
-    "id": "615134973202",
-    "title": "Meridian AI",
-    "url": "https://www.meridian-ai.com",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/02/65c379076dbdf238584794.png",
+    "id": "2eeeeded2892",
+    "title": "Aardvark Book Club",
+    "url": "https://aardvarkbookclub.com",
+    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a463c11037ea757661738.png",
     "source": "awwwards",
     "category": [
-      "Business & Corporate",
-      "Technology",
+      "Culture & Education",
+      "E-Commerce",
       "Animation",
-      "Data Visualization",
-      "Illustration",
-      "Header Design",
-      "Microinteractions",
-      "Startups"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:39:46.239Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:12.928Z"
-  },
-  {
-    "id": "3657f7494192",
-    "title": "Rupert AI",
-    "url": "https://www.getrupert.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/02/65bfcc133d0de017223847.png",
-    "source": "awwwards",
-    "category": [
-      "Technology",
-      "Single page",
-      "Responsive",
-      "Header Design",
-      "Startups"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:39:46.239Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:12.864Z"
-  },
-  {
-    "id": "3cc1a8f20156",
-    "title": "The AI Symphony",
-    "url": "https://queensymphony.ai/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/02/65be4ea4a6ceb109038300.jpg",
-    "source": "awwwards",
-    "category": [
-      "Design Agencies",
-      "Animation",
+      "Colorful",
       "Typography",
-      "Experimental"
-    ],
-    "taste": [],
-    "date": "2024-02",
-    "starred": false,
-    "firstSeen": "2026-06-09T15:39:46.239Z",
-    "lastCheckedAt": "2026-08-02T05:36:12.815Z"
-  },
-  {
-    "id": "0793bfe93f3a",
-    "title": "Conversational AI Portfolio",
-    "url": "https://www.assistx.michelangelozampogna.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2024/01/65b67a573c80d632147591.png",
-    "source": "awwwards",
-    "category": [
-      "Technology",
-      "Web & Interactive",
-      "Portfolio",
-      "Unusual Navigation",
-      "Video",
-      "Experimental",
-      "Storytelling",
+      "Transitions",
+      "GSAP",
       "3D",
-      "Interaction Design"
+      "Gestures / Interaction",
+      "BARBA.js",
+      "Webflow"
     ],
     "taste": [],
-    "date": "2024-02",
+    "date": "2026-08",
     "starred": false,
-    "firstSeen": "2026-06-09T15:39:46.239Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:36:13.108Z"
+    "firstSeen": "2026-08-30T04:27:08.728Z"
   },
   {
     "id": "c1695dbe550f",
@@ -56632,29 +56599,6 @@
     "date": "2026-08",
     "starred": false,
     "firstSeen": "2026-08-27T08:18:08.641Z"
-  },
-  {
-    "id": "c282e99e8b2f",
-    "title": "MIU MIU A House that we shaped",
-    "url": "https://immersivebags.miumiu.com/",
-    "thumbnailUrl": "https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/2026/07/6a450f252d19e357644605.jpg",
-    "source": "awwwards",
-    "category": [
-      "Fashion",
-      "Promotional",
-      "Colorful",
-      "Fullscreen",
-      "WebGL",
-      "Storytelling",
-      "Three.js",
-      "Luxury"
-    ],
-    "taste": [],
-    "date": "2026-08",
-    "starred": false,
-    "firstSeen": "2026-07-19T10:36:28.897Z",
-    "isDead": false,
-    "lastCheckedAt": "2026-08-02T05:40:25.563Z"
   },
   {
     "id": "f6a7e3b274cc",
