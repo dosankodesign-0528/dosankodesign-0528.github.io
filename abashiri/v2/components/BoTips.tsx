@@ -10,7 +10,7 @@
  * カンプ実測値：
  *   本体 幅700 / 角丸16 / 白10% / ブラー65 / padding44 / 縦gap24 / 中央配置
  *   ピル「ぼーっとTips」 幅186 / 白40% / ブラー90 / px16 py6 / 本体上端-22px / 16px Regular
- *   見出し「五感を使おう」20px ＋「今、何が聞こえる？」46px（ExtraLight・行間1.2・gap8）
+ *   見出し「五感を使おう」20px ＋「どんな音が聞こえるかな？」46px（ExtraLight・行間1.2・gap8）
  *   本文 14px Light 行間1.8 白
  */
 import { useEffect, useRef, useState } from "react";
@@ -178,7 +178,7 @@ export default function BoTips({
                   compact ? "text-[30px]" : "text-[46px]"
                 }`}
               >
-                今、何が聞こえる？
+                どんな音が聞こえるかな？
               </p>
             </div>
             <p className="text-left text-body-14 font-light leading-[1.8]">
