@@ -4322,24 +4322,25 @@ const CONVERGES = [
                    中を「軌道のみ / 粒とセット / 収縮あり」のカテゴリに分け、下のトグルで絞り込める。
      B ネットワーク … 網(mesh) + ネットワーク3D。
    内部モード(converge)・プリセット(gfxPresets)・バリエーション(GFX_VARIANTS)は保持したまま表示だけ束ねる。 */
-/* 【2026-08-30 ヒデさん指定】A(軌道)とB(ネットワーク)を合体して1グループ「軌道と粒」に。
-   ネットワーク(mesh)はカテゴリDとして中に並ぶ。 */
+/* 【2026-08-31 ヒデさん指定・解釈修正】タブは従来どおり A 軌道 / B ネットワーク の2つ。
+   合体するのは A の中のカテゴリ「軌道のみ」+「粒とセット」→「軌道と粒」(下の CONV_CATS)。 */
 const CONV_GROUPS = [
-  { key: 'orbit',   name: '軌道と粒',
-    modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex', 'mesh'],
-    desc: '軌道・粒・ネットワークの全案。カテゴリ(軌道のみ/粒とセット/収縮あり/ネットワーク)ごとに並びます。' },
+  { key: 'orbit',   name: 'A 軌道',
+    modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex'],
+    desc: '軌道をベースにした案。カテゴリ(軌道と粒/収縮あり)ごとに並びます。' },
+  { key: 'network', name: 'B ネットワーク', modes: ['mesh'],
+    desc: 'ゆらぎ漂うノードの網、または3Dネットワーク。データがノードを渡り歩いて惑星へ届きます。' },
 ];
 /* A(軌道)の中のカテゴリ。各内部モードをタグ付けし、バリエーション行を振り分ける＋オンオフで絞り込む。 */
+/* 【2026-08-31 ヒデさん指定】「軌道のみ」+「粒とセット」を合体して「軌道と粒」(A) に。収縮あり=B。 */
 const CONV_CATS = [
-  { key: 'plain',  name: '軌道のみ',  modes: ['off', 'gyro'] },
-  { key: 'dot',    name: '粒とセット', modes: ['spiral', 'accre', 'beads', 'duplex'] },
-  { key: 'shrink', name: '収縮あり',  modes: ['reel'] },
-  { key: 'network', name: 'ネットワーク', modes: ['mesh'] },   /* 2026-08-30: グループ合体でDカテゴリに */
+  { key: 'orbdot', name: '軌道と粒', modes: ['off', 'gyro', 'spiral', 'accre', 'beads', 'duplex'] },
+  { key: 'shrink', name: '収縮あり', modes: ['reel'] },
 ];
 function convCatOf(mode) { return (CONV_CATS.find(c => c.modes.includes(mode)) || CONV_CATS[0]).key; }
 function convCatFilter() {
-  if (!params.convCatFilter || typeof params.convCatFilter !== 'object') params.convCatFilter = { plain: true, dot: true, shrink: true, network: true };
-  if (params.convCatFilter.network == null) params.convCatFilter.network = true;   /* 2026-08-30: 合体で増えたDカテゴリを古い保存にも補完 */
+  if (!params.convCatFilter || typeof params.convCatFilter !== 'object') params.convCatFilter = { orbdot: true, shrink: true };
+  if (params.convCatFilter.orbdot == null) params.convCatFilter.orbdot = true;   /* 2026-08-31: カテゴリ合体(軌道と粒)を古い保存にも補完 */
   return params.convCatFilter;
 }
 /* あるバリエーションが「B ネットワーク」に属するか(=ネットワーク3D。off内に定義があるので名前でBへ回す) */
@@ -5378,6 +5379,11 @@ function convAccrePool() {
       tw: Math.random() * Math.PI * 2 });
   }
   return convAccre;
+}
+/* 【2026-08-31】粒(吸い込み)専用の片付け。集約オン中(mesh等)にオフへ切った時、
+   その案のプールを巻き添えにせず吸い込み粒だけを消すために使う */
+function convHideSpiralPool() {
+  if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
 }
 function convHidePools() {
   if (convSpiral) for (const p of convSpiral) { p.back.setAttribute('opacity', '0'); p.front.setAttribute('opacity', '0'); }
@@ -6434,9 +6440,19 @@ function convFrame(geoms) {
      (以前は収縮=reelだけ)。専用プールなので各案の内蔵の粒とは独立。渦(spiral)は本体が同じ動きなので除外。
      ⚠️ if連鎖の最後の else{convHidePools()} で粒プールが毎フレーム消される案があるため、
         必ずこの位置(convFrameの最後)で上書き描画する。オフの時は convHidePools が既に隠している。 */
-  if (params.conv.reelP && params.conv.reelP.on && mode !== 'spiral' && !params.conv.net3d
-      && convGroupOf(mode).key === 'orbit') {
-    runSpiralParticles(pGeoms, params.conv.reelP, dt);   /* 2026-08-30: 連動は共通トグル(spinLink)に統一 */
+  /* 【2026-08-31 ヒデさん指定・バグ修正】①グループ合体で mesh(ネットワーク)にも吸い込み粒が
+     出てしまいデザインが破綻 → mesh は対象外に(自前のノード粒の世界観のため)。
+     ②集約オン中に粒をオフへ切っても、オフ時の片付けが off パスにしか無く消えなかった
+     → ここでも吸い込み粒のプールだけを片付ける(その案の粒は巻き添えにしない)。 */
+  const reelPActive = params.conv.reelP && params.conv.reelP.on
+      && mode !== 'spiral' && mode !== 'mesh' && !params.conv.net3d
+      && convGroupOf(mode).key === 'orbit';
+  if (reelPActive) {
+    runSpiralParticles(pGeoms, params.conv.reelP, dt);   /* 連動は共通トグル(spinLink) */
+    reelPWasOn = true;
+  } else if (reelPWasOn) {
+    if (mode !== 'spiral') convHideSpiralPool();   /* spiral は本体が同じプールを描くので触らない */
+    reelPWasOn = false;
   }
 }
 const sphereCanvasEl = document.getElementById('sphere');
@@ -12259,7 +12275,7 @@ function buildPanel() {
   /* 【2026-08-30 ヒデさん指定】名称は機械割当に統一:
        A=軌道のみ(A1,A2…) / B=粒とセット(B1,B2…) / C=収縮あり(C1,C2…) / D=ネットワーク(D1,D2…)。
      消したら以降の番号は自動で詰める。元の名前はツールチップと「消した案の控え」に残す(取り違えない)。 */
-  const CAT_PREFIX = { plain: 'A', dot: 'B', shrink: 'C', network: 'D' };
+  const CAT_PREFIX = { orbdot: 'A', shrink: 'B' };   /* ネットワーク(Bタブ)は 'C' 接頭辞(下の else 分岐) */
   const fillVariantRow = function () {
     /* 【2026-08-29 ヒデさん指定・大枠再編】A(軌道)はカテゴリ(軌道のみ/粒とセット/収縮あり)に分けて表示し、
        下のトグルで絞り込む。B(ネットワーク)は mesh + ネットワーク3D。記号は残っている中で通し(A,B,C…)。 */
@@ -12368,8 +12384,8 @@ function buildPanel() {
         catItems.forEach((it, idx) => makePill(it, pfx + (idx + 1)));
       }
     } else {
-      /* D ネットワーク: mesh のみ(ネットワーク3Dは A へ移した) */
-      collect('mesh', null).forEach((it, idx) => makePill(it, 'D' + (idx + 1)));
+      /* B ネットワーク(タブ): mesh のみ。機械命名はカテゴリ通し3番目の 'C' */
+      collect('mesh', null).forEach((it, idx) => makePill(it, 'C' + (idx + 1)));
     }
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
     /* このグループで消した案をまとめて戻す */
@@ -12914,7 +12930,8 @@ function buildPanel() {
 
     /* 【2026-08-30 ヒデさん指定】「粒（吸い込み）」を A(軌道)グループの全案の共通オプションに。
        (以前は収縮=reelだけだった)。渦(spiral)は元々この動きが本体なので出さない。ネットワーク3D中も対象外。 */
-    if (convGroupOf(cvMode).key === 'orbit' && cvMode !== 'spiral' && !params.conv.net3d) {
+    if (convGroupOf(cvMode).key === 'orbit' && cvMode !== 'spiral' && cvMode !== 'mesh' && !params.conv.net3d) {
+      /* 2026-08-31: mesh(ネットワーク)は対象外(自前のノード粒とぶつかりデザインが破綻するため) */
       sub(animModeBox, '粒（吸い込み）— どの案でも重ねられる', true);
       const RP = params.conv.reelP || (params.conv.reelP = { on: false, count: 12, life: 8, speed: 0.55, size: 0.62, stay: 5, swirl: 1, fallCurve: 1 });
       segRow('粒（吸い込み）', [['なし', 0], ['あり', 1]],
