@@ -209,8 +209,12 @@ export default function SoundUi({
       setShowDialog(false);
       markConsentDone();
     }
-    if (saved === "on") {
+    /* リロード（記憶あり）では、前回OFFでも環境音ONで開始する
+       （2026-08-31 ヒデさん指示「リロードした際はデフォルトON」）。
+       自動再生がブロックされた時は、最初の操作でそっと鳴り始める */
+    if (saved !== null) {
       intentRef.current = true;
+      saveIntent(true);
       play();
       const resume = () => {
         if (intentRef.current && !duckRef.current && audioRef.current?.paused) play();
