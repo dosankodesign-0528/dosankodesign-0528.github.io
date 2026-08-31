@@ -4306,22 +4306,24 @@ const CONVERGES = [
                    中を「軌道のみ / 粒とセット / 収縮あり」のカテゴリに分け、下のトグルで絞り込める。
      B ネットワーク … 網(mesh) + ネットワーク3D。
    内部モード(converge)・プリセット(gfxPresets)・バリエーション(GFX_VARIANTS)は保持したまま表示だけ束ねる。 */
+/* 【2026-08-30 ヒデさん指定】A(軌道)とB(ネットワーク)を合体して1グループ「軌道と粒」に。
+   ネットワーク(mesh)はカテゴリDとして中に並ぶ。 */
 const CONV_GROUPS = [
-  { key: 'orbit',   name: 'A 軌道',
-    modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex'],
-    desc: '軌道をベースにした案をまとめたグループ。下の「軌道のみ / 粒とセット / 収縮あり」で絞り込めます。' },
-  { key: 'network', name: 'B ネットワーク', modes: ['mesh'],
-    desc: 'ゆらぎ漂うノードの網、または3Dネットワーク。データがノードを渡り歩いて惑星へ届きます。' },
+  { key: 'orbit',   name: '軌道と粒',
+    modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex', 'mesh'],
+    desc: '軌道・粒・ネットワークの全案。カテゴリ(軌道のみ/粒とセット/収縮あり/ネットワーク)ごとに並びます。' },
 ];
 /* A(軌道)の中のカテゴリ。各内部モードをタグ付けし、バリエーション行を振り分ける＋オンオフで絞り込む。 */
 const CONV_CATS = [
   { key: 'plain',  name: '軌道のみ',  modes: ['off', 'gyro'] },
   { key: 'dot',    name: '粒とセット', modes: ['spiral', 'accre', 'beads', 'duplex'] },
   { key: 'shrink', name: '収縮あり',  modes: ['reel'] },
+  { key: 'network', name: 'ネットワーク', modes: ['mesh'] },   /* 2026-08-30: グループ合体でDカテゴリに */
 ];
 function convCatOf(mode) { return (CONV_CATS.find(c => c.modes.includes(mode)) || CONV_CATS[0]).key; }
 function convCatFilter() {
-  if (!params.convCatFilter || typeof params.convCatFilter !== 'object') params.convCatFilter = { plain: true, dot: true, shrink: true };
+  if (!params.convCatFilter || typeof params.convCatFilter !== 'object') params.convCatFilter = { plain: true, dot: true, shrink: true, network: true };
+  if (params.convCatFilter.network == null) params.convCatFilter.network = true;   /* 2026-08-30: 合体で増えたDカテゴリを古い保存にも補完 */
   return params.convCatFilter;
 }
 /* あるバリエーションが「B ネットワーク」に属するか(=ネットワーク3D。off内に定義があるので名前でBへ回す) */
@@ -12201,10 +12203,13 @@ function buildPanel() {
     }
     fillCatToggles();
   };
-  pillRow(CONV_GROUPS, g => convGroupOf(params.converge).key === g.key,
-    g => onGroupSwitch(g),
-    { get: () => convGroupOf(params.converge).key, set: k => { const g = CONV_GROUPS.find(x => x.key === k); if (g) onGroupSwitch(g); } },
-    { noRebuild: true, tip: g => g.desc || '' });
+  /* 【2026-08-30 ヒデさん指定】グループを1つ(軌道と粒)に合体したので、タブは2つ以上ある時だけ出す */
+  if (CONV_GROUPS.length > 1) {
+    pillRow(CONV_GROUPS, g => convGroupOf(params.converge).key === g.key,
+      g => onGroupSwitch(g),
+      { get: () => convGroupOf(params.converge).key, set: k => { const g = CONV_GROUPS.find(x => x.key === k); if (g) onGroupSwitch(g); } },
+      { noRebuild: true, tip: g => g.desc || '' });
+  }
   catToggleBox = document.createElement('div');
   (mount || body).appendChild(catToggleBox);
 
@@ -12238,7 +12243,7 @@ function buildPanel() {
   /* 【2026-08-30 ヒデさん指定】名称は機械割当に統一:
        A=軌道のみ(A1,A2…) / B=粒とセット(B1,B2…) / C=収縮あり(C1,C2…) / D=ネットワーク(D1,D2…)。
      消したら以降の番号は自動で詰める。元の名前はツールチップと「消した案の控え」に残す(取り違えない)。 */
-  const CAT_PREFIX = { plain: 'A', dot: 'B', shrink: 'C' };
+  const CAT_PREFIX = { plain: 'A', dot: 'B', shrink: 'C', network: 'D' };
   const fillVariantRow = function () {
     /* 【2026-08-29 ヒデさん指定・大枠再編】A(軌道)はカテゴリ(軌道のみ/粒とセット/収縮あり)に分けて表示し、
        下のトグルで絞り込む。B(ネットワーク)は mesh + ネットワーク3D。記号は残っている中で通し(A,B,C…)。 */
@@ -12633,20 +12638,29 @@ function buildPanel() {
       const isShapeV = (params.conv.ringCount || 0) >= 2;
       const gyMixNow = () => ((params.conv.gyroMixBy || {})[cvMode] || 0);
       segRow('軌道の回転', [['する', 1], ['しない', 0]],
-        () => (convOrbitSpinAmt() !== 0 || params.conv.ringRotate === true || gyMixNow() !== 0) ? 1 : 0,
+        () => (convOrbitSpinAmt() !== 0 || params.conv.ringRotate === true) ? 1 : 0,
         v => {
           if (!params.conv.orbitSpinBy) params.conv.orbitSpinBy = {};
-          if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
           if (v) {
             const def = (params.conv.spinDefBy || {})[cvMode];
             params.conv.orbitSpinBy[cvMode] = (typeof def === 'number' && Math.abs(def) > 0.01) ? def : 0.3;
             params.conv.ringRotate = true;
-            /* ジャイロ系の案は「転がり(gyroMix)」も一緒にオンにする(案が持つ値、無ければ0=非ジャイロ) */
-            const gdef = (params.conv.gyroMixDefBy || {})[cvMode];
-            params.conv.gyroMixBy[cvMode] = (typeof gdef === 'number') ? gdef : 0;
-          } else { params.conv.orbitSpinBy[cvMode] = 0; params.conv.ringRotate = false; params.conv.gyroMixBy[cvMode] = 0; }
+            /* 【2026-08-30 ヒデさん指定】転がり(gyroMix)の自動抱き合わせをやめた。
+               ⚠️ 輪が倒れる転がりが同時に入ると、ドットが軌道上を走っていないように見えていた。
+               転がりは下の別トグルで(この案が転がりを持つ時だけ表示)。 */
+          } else { params.conv.orbitSpinBy[cvMode] = 0; params.conv.ringRotate = false; }
           markDirty(); renderFrame(); fillAnimBody();
         });
+      /* 転がり(ジャイロ): 輪が倒れながら回る動き。持っている案でだけ独立トグルとして出す */
+      if (typeof (params.conv.gyroMixDefBy || {})[cvMode] === 'number' && (params.conv.gyroMixDefBy || {})[cvMode] > 0) {
+        segRow('転がり（ジャイロ）', [['する', 1], ['しない', 0]],
+          () => (gyMixNow() !== 0 ? 1 : 0),
+          v => {
+            if (!params.conv.gyroMixBy) params.conv.gyroMixBy = {};
+            params.conv.gyroMixBy[cvMode] = v ? ((params.conv.gyroMixDefBy || {})[cvMode] || 0.45) : 0;
+            markDirty(); renderFrame(); fillAnimBody();
+          });
+      }
       if (convOrbitSpinAmt() !== 0) {
         /* 【2026-08-30 ヒデさん指定】回り方のバリエーション: ぐるっと一周 / グラグラ揺れる(往復) */
         segRow('回り方', [['ぐるっと一周', 'turn'], ['グラグラ揺れる', 'wobble']],
