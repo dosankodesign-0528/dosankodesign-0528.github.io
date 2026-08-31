@@ -775,19 +775,26 @@ function Watch({
         </button>
       )}
 
-      {/* カンプ 15152:29287: 左67 / top 768 / 地 white/10 / blur65 / 角丸16 / 左右44・上下24 */}
+      {/* 左下のぼーっとタイマー。
+          ラッパは位置とフェードだけ（filter/transform を持たせない）。
+          ⚠️ タグと数字箱は「兄弟」に並べる：blur付きの箱の中にタグを入れると、
+          タグの backdrop-blur が動画まで届かず効かなくなる（前回の再発防止） */}
       <div
-        className={`absolute left-[67px] top-[768px] flex flex-col items-start justify-center gap-6 rounded-16 bg-white/10 px-11 py-6 backdrop-blur-65 transition-opacity duration-500 ease-standard ${
+        className={`absolute left-[67px] top-[768px] flex flex-col items-start gap-2 transition-opacity duration-500 ease-standard ${
           controlsShown ? "opacity-100" : "opacity-0"
         }`}
       >
-        {/* 「ぼーっとタイマー」の白ピルタグ（V1の意匠を復活。2026-08-31 ヒデさん指示） */}
-        <span className="rounded-full bg-white px-4 py-2 text-control-14 font-black text-brand">
+        {/* タグ：カンプ 16060:23117 Main Button
+            （白20% / blur100 / 角丸full / px16 py6 / Noto Sans JP Light 20px 行間1.2 白） */}
+        <span className="rounded-full bg-white/20 px-4 py-[6px] text-[20px] font-light leading-[1.2] text-white backdrop-blur-[100px]">
           ぼーっとタイマー
         </span>
-        <p className="font-num whitespace-nowrap text-number-120 font-thin leading-none text-white">
-          {mm}:{ss}
-        </p>
+        {/* 数字箱：カンプ 15152:29287（地 white/10 / blur65 / 角丸16 / 左右44・上下24） */}
+        <div className="flex flex-col items-start justify-center rounded-16 bg-white/10 px-11 py-6 backdrop-blur-65">
+          <p className="font-num whitespace-nowrap text-number-120 font-thin leading-none text-white">
+            {mm}:{ss}
+          </p>
+        </div>
       </div>
     </div>
   );

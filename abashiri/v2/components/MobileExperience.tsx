@@ -354,18 +354,22 @@ export default function MobileExperience() {
             />
           </button>
 
+          {/* ⚠️ タグと数字箱は兄弟に（blur箱の中に入れるとタグのblurが動画に届かない） */}
           <div
-            className={`absolute bottom-8 left-6 z-10 rounded-2xl bg-white/10 px-6 py-3 backdrop-blur-[65px] transition-opacity duration-500 ${
+            className={`absolute bottom-8 left-6 z-10 flex flex-col items-start gap-1.5 transition-opacity duration-500 ${
               controls ? "opacity-100" : "opacity-0"
             }`}
           >
-            {/* 「ぼーっとタイマー」タグ（PCと同じ意匠・小さめ。2026-08-31 ヒデさん指示で復活） */}
-            <span className="mb-2 inline-block rounded-full bg-white px-3 py-1 text-[12px] font-black text-brand">
+            {/* タグ：カンプ 16060:23117 の縮小版（白20%/blur100/角丸full/Light）。
+                サイズはモバイル比率で 14px・px-3 py-1 に🟡仮置き */}
+            <span className="rounded-full bg-white/20 px-3 py-1 text-[14px] font-light leading-[1.2] text-white backdrop-blur-[100px]">
               ぼーっとタイマー
             </span>
-            <p className="font-num text-[44px] font-thin leading-none">
-              {mm}:{ss}
-            </p>
+            <div className="rounded-2xl bg-white/10 px-6 py-3 backdrop-blur-[65px]">
+              <p className="font-num text-[44px] font-thin leading-none">
+                {mm}:{ss}
+              </p>
+            </div>
           </div>
         </div>
       )}
