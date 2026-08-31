@@ -622,6 +622,7 @@ function MediaLayer({
           ref={videoRef}
           src={spot.video}
           playsInline
+          loop /* 再生ページの本編は繰り返す（2026-08-31 ヒデさん指示。付け忘れで1周で止まっていた） */
           preload="auto"
           poster={spot.src}
           onLoadedMetadata={sync}
