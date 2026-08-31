@@ -660,11 +660,21 @@ function Watch({
   const [uiVisible, setUiVisible] = useState(true);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* 再生中だけ、3秒放置で操作系を隠す */
+  /* 再生ボタンの上にカーソルがある間は自動で消さない（2026-08-31 ヒデさん指示。
+     消えた後にボタンへ向かうと、着いた瞬間また消える事象の対策） */
+  const hoverUiRef = useRef(false);
+  /* 再生中だけ、3秒放置で操作系を隠す。ホバー中なら隠さず様子見を続ける */
   const pokeUi = useCallback(() => {
     setUiVisible(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setUiVisible(false), uiHideSec * 1000);
+    const tick = () => {
+      if (hoverUiRef.current) {
+        hideTimer.current = setTimeout(tick, 500);
+        return;
+      }
+      setUiVisible(false);
+    };
+    hideTimer.current = setTimeout(tick, uiHideSec * 1000);
   }, [uiHideSec]);
   useEffect(
     () => () => {
@@ -760,6 +770,14 @@ function Watch({
           type="button"
           onClick={() => {
             setPlaying((v) => !v);
+            pokeUi();
+          }}
+          onPointerEnter={() => {
+            hoverUiRef.current = true;
+            pokeUi();
+          }}
+          onPointerLeave={() => {
+            hoverUiRef.current = false;
             pokeUi();
           }}
           aria-label={playing ? "一時停止" : "再生"}
