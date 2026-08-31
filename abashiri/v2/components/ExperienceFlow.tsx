@@ -780,7 +780,7 @@ function Watch({
           ⚠️ タグと数字箱は「兄弟」に並べる：blur付きの箱の中にタグを入れると、
           タグの backdrop-blur が動画まで届かず効かなくなる（前回の再発防止） */}
       <div
-        className={`absolute left-[67px] top-[768px] flex flex-col items-start gap-2 transition-opacity duration-500 ease-standard ${
+        className={`absolute left-[67px] top-[724px] flex flex-col items-start gap-2 transition-opacity duration-500 ease-standard ${
           controlsShown ? "opacity-100" : "opacity-0"
         }`}
       >
