@@ -359,6 +359,10 @@ export default function MobileExperience() {
               controls ? "opacity-100" : "opacity-0"
             }`}
           >
+            {/* 「ぼーっとタイマー」タグ（PCと同じ意匠・小さめ。2026-08-31 ヒデさん指示で復活） */}
+            <span className="mb-2 inline-block rounded-full bg-white px-3 py-1 text-[12px] font-black text-brand">
+              ぼーっとタイマー
+            </span>
             <p className="font-num text-[44px] font-thin leading-none">
               {mm}:{ss}
             </p>

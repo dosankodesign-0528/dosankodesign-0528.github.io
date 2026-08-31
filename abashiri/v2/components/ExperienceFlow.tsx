@@ -781,6 +781,10 @@ function Watch({
           controlsShown ? "opacity-100" : "opacity-0"
         }`}
       >
+        {/* 「ぼーっとタイマー」の白ピルタグ（V1の意匠を復活。2026-08-31 ヒデさん指示） */}
+        <span className="rounded-full bg-white px-4 py-2 text-control-14 font-black text-brand">
+          ぼーっとタイマー
+        </span>
         <p className="font-num whitespace-nowrap text-number-120 font-thin leading-none text-white">
           {mm}:{ss}
         </p>
