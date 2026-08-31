@@ -4325,10 +4325,10 @@ const CONVERGES = [
 /* 【2026-08-31 ヒデさん指定・解釈修正】タブは従来どおり A 軌道 / B ネットワーク の2つ。
    合体するのは A の中のカテゴリ「軌道のみ」+「粒とセット」→「軌道と粒」(下の CONV_CATS)。 */
 const CONV_GROUPS = [
-  { key: 'orbit',   name: 'A 軌道',
+  { key: 'orbit',   name: '軌道',
     modes: ['off', 'gyro', 'reel', 'spiral', 'accre', 'beads', 'duplex'],
     desc: '軌道をベースにした案。カテゴリ(軌道と粒/収縮あり)ごとに並びます。' },
-  { key: 'network', name: 'B ネットワーク', modes: ['mesh'],
+  { key: 'network', name: 'ネットワーク', modes: ['mesh'],
     desc: 'ゆらぎ漂うノードの網、または3Dネットワーク。データがノードを渡り歩いて惑星へ届きます。' },
 ];
 /* A(軌道)の中のカテゴリ。各内部モードをタグ付けし、バリエーション行を振り分ける＋オンオフで絞り込む。 */
@@ -12384,7 +12384,8 @@ function buildPanel() {
         catItems.forEach((it, idx) => makePill(it, pfx + (idx + 1)));
       }
     } else {
-      /* B ネットワーク(タブ): mesh のみ。機械命名はカテゴリ通し3番目の 'C' */
+      /* ネットワーク(タブ): mesh のみ。カテゴリ記号はサイト通しで3番目='C'(見出しにも明記して迷わない) */
+      addHead('C ネットワーク');
       collect('mesh', null).forEach((it, idx) => makePill(it, 'C' + (idx + 1)));
     }
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
