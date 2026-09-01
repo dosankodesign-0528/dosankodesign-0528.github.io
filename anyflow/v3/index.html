@@ -95,20 +95,22 @@
     color: var(--ink);
     white-space: nowrap;
   }
+  /* 【2026-08-31 ヒデさん指定】コピーの文字設定は調整パネル(キービジュアル>コピー(文字))から変えられる。
+     既定値は下の DEFAULTS.kv (mainSize/mainWeight/eyebrowSize/eyebrowWeight/eyebrowDash) */
   .hl-eyebrow {
     display: flex;
     align-items: center;
     gap: var(--space-10);
-    font-weight: 400;
-    font-size: 14px;
+    font-weight: var(--kv-eyebrow-weight, 400);
+    font-size: var(--kv-eyebrow-size, 14px);
     color: var(--ink-strong);
     opacity: 0;
   }
-  .hl-eyebrow i { display: block; width: 26px; height: 1px; background: var(--ink-strong); }
+  .hl-eyebrow i { display: var(--kv-eyebrow-dash, block); width: 26px; height: 1px; background: var(--ink-strong); }
   .hl-main {
     display: block;
-    font-weight: 100;
-    font-size: 70px;
+    font-weight: var(--kv-main-weight, 100);
+    font-size: var(--kv-main-size, 70px);
     line-height: 1.4;
   }
   /* 【2026-08-31 ヒデさん指定】メイン上・サブ下に入れ替えたので、間隔はサブ側に持たせる */
@@ -2062,7 +2064,9 @@
     <div class="logos">
       <!-- 【2026-08-31 ヒデさん指定】ロゴティッカーは支給の埋め込み(Logo Labo)へ差し替え。
            旧の自前マーキー(marquee-track)は廃止(パネルのロゴ間隔/速度つまみは効かなくなる)。 -->
-      <iframe loading="eager" id="llalo-6252b136-d295-46b5-9ea7-61787cc3adb6" src="https://cdn.alo.app.logo-labo.com/418c7efd-91e3-4d18-b95e-0a79411dd9fc/alo/alignment/6252b136-d295-46b5-9ea7-61787cc3adb6/pc.html" style="width: 100%; height: 70px; border: none; overflow: hidden;"></iframe>
+      <!-- 【2026-08-31 ヒデさん指定】白背景を透過: allowtransparency+背景transparent(中身が透過対応なら素通し)。
+           中身が白を描いている場合に備えて mix-blend-mode:multiply も掛ける(白=背景色に溶け、黒いロゴはそのまま)。 -->
+      <iframe loading="eager" allowtransparency="true" id="llalo-6252b136-d295-46b5-9ea7-61787cc3adb6" src="https://cdn.alo.app.logo-labo.com/418c7efd-91e3-4d18-b95e-0a79411dd9fc/alo/alignment/6252b136-d295-46b5-9ea7-61787cc3adb6/pc.html" style="width: 100%; height: 70px; border: none; overflow: hidden; background: transparent; mix-blend-mode: multiply;"></iframe>
     </div>
 
   </div>
@@ -2924,6 +2928,12 @@ const DEFAULTS = {
     /* 【2026-08-30 ヒデさん指定】全体的に出はじめを前倒し(尺=ゆったり感は不変)。headerAt 0.25→0.15 / typeAt 1.0→0.7 / eyebrowGap 0.14→0.10 */
     headerAt: 0.15,   // ヘッダーがブラーで出る
     navGap: 32,       // 【2026-08-30 ヒデさん指定】ナビ項目の左右の間隔(px)。旧20→広めの32を既定に
+    /* 【2026-08-31 ヒデさん指定】コピー(文字)の調整。パネル「キービジュアル > コピー(文字)」 */
+    mainSize: 70,       // メインコピーの文字サイズ(px)
+    mainWeight: 100,    // メインコピーの太さ(100=Thin/200/300)
+    eyebrowSize: 14,    // サブコピーの文字サイズ(px)
+    eyebrowWeight: 400, // サブコピーの太さ
+    eyebrowDash: true,  // サブコピー先頭の罫線(ハイフン)あり/なし
     eyebrowGap: 0.10, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
     typeAt: 0.7,      // タイピング開始
     charDur: 0.042,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
@@ -9804,6 +9814,16 @@ function applyNavGap() {
   document.documentElement.style.setProperty('--nav-gap', (params.kv.navGap != null ? params.kv.navGap : 32) + 'px');
 }
 applyNavGap();
+/* 【2026-08-31 ヒデさん指定】KVコピーの文字設定(サイズ/太さ/サブの罫線)をCSS変数へ反映 */
+function applyKvCopy() {
+  const r = document.documentElement.style, k = params.kv;
+  r.setProperty('--kv-main-size', (k.mainSize != null ? k.mainSize : 70) + 'px');
+  r.setProperty('--kv-main-weight', String(k.mainWeight != null ? k.mainWeight : 100));
+  r.setProperty('--kv-eyebrow-size', (k.eyebrowSize != null ? k.eyebrowSize : 14) + 'px');
+  r.setProperty('--kv-eyebrow-weight', String(k.eyebrowWeight != null ? k.eyebrowWeight : 400));
+  r.setProperty('--kv-eyebrow-dash', (k.eyebrowDash === false) ? 'none' : 'block');
+}
+applyKvCopy();
 
 function updateKV() {
   const c = params.kv, t = elapsed;
@@ -13226,6 +13246,23 @@ function buildPanel() {
   /* 【2026-08-27 ヒデさん指定】「左側コピー」に改名し、順番 / タイミング に分ける */
   sub(catKv, '左側コピー');
   const copyRoot = mount;
+  /* 【2026-08-31 ヒデさん指定】コピーの文字設定(メインのサイズ/太さ・サブの罫線あり/なし など) */
+  sub(copyRoot, 'コピー（文字）', true);
+  rows.push(slider('メインの文字サイズ', 40, 110, 1, () => (params.kv.mainSize != null ? params.kv.mainSize : 70),
+    v => { params.kv.mainSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
+    '「AIと事業を強くする」の文字サイズ。カンプは70px。'));
+  segRow('メインの太さ', [['Thin(100)', 100], ['UL(200)', 200], ['Light(300)', 300]],
+    () => (params.kv.mainWeight != null ? params.kv.mainWeight : 100),
+    v => { params.kv.mainWeight = v; applyKvCopy(); markDirty(); });
+  segRow('サブの罫線（—）', [['あり', 1], ['なし', 0]],
+    () => (params.kv.eyebrowDash === false ? 0 : 1),
+    v => { params.kv.eyebrowDash = !!v; applyKvCopy(); markDirty(); });
+  rows.push(slider('サブの文字サイズ', 10, 24, 1, () => (params.kv.eyebrowSize != null ? params.kv.eyebrowSize : 14),
+    v => { params.kv.eyebrowSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
+    '「APIでデータを繋ぐ統合開発プラットフォーム」の文字サイズ。'));
+  segRow('サブの太さ', [['Light(300)', 300], ['Regular(400)', 400], ['Medium(500)', 500]],
+    () => (params.kv.eyebrowWeight != null ? params.kv.eyebrowWeight : 400),
+    v => { params.kv.eyebrowWeight = v; applyKvCopy(); markDirty(); });
   sub(copyRoot, '順番', true);
   note('数字はページを開いてから何秒後か。上から出る順です。');
   rows.push(slider('ナビ項目の間隔', 12, 64, 1, () => (params.kv.navGap != null ? params.kv.navGap : 32),
