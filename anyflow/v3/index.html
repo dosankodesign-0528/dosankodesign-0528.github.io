@@ -658,9 +658,12 @@
   #results .pin-stage { display: flex; align-items: center; justify-content: center; }
   .res2 { width: 1138px; max-width: calc(100% - 96px); display: flex; flex-direction: column; gap: var(--space-40); color: var(--ink-strong); }
   /* 上段: 見出し(左) + 3数値(右)。フレーム 1138×116・数値グループ 631×102 */
-  .res2-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-44); }
-  .res2-head { font-family: var(--font-jp); font-weight: 300; font-size: 34px; line-height: 1.7; color: var(--ink-strong); white-space: nowrap; }
-  .res2-hl1, .res2-hl2 { display: block; }
+  /* 【2026-08-31 ヒデさん指定・カンプ15900:38712】見出しと数値を縦組み(中央)に。gap32(実測値) */
+  .res2-top { display: flex; flex-direction: column; align-items: center; gap: var(--space-32); }
+  .res2-head { font-family: var(--font-jp); font-weight: 300; font-size: 34px; line-height: 1.7; color: var(--ink-strong); white-space: nowrap;
+    display: flex; align-items: center; justify-content: center; }   /* カンプは1行 */
+  .res2-hl1 { display: inline; }
+  .res2-hl2 { display: inline-flex; }
   .res2-hl2 { display: flex; align-items: center; min-height: calc(34px * 1.7); }
   .res2-typed { white-space: pre; }
   /* 2026-08-30 ヒデさん指定: Anyflow のスペースを先に確保し、薄いグレーの下線に打ち込む(「が支えます。」は動かない)。
@@ -677,8 +680,9 @@
   .res2-suffix { white-space: pre; }   /* 2026-08-30 ヒデさん指定: 「が支えます。」は静的表示、Anyflowだけタイピング */
   .res2-stats { display: flex; align-items: flex-start; gap: var(--space-44); }
   .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
-  .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 300; font-size: 16px; line-height: 24px; color: var(--ink-label); white-space: nowrap; }
-  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 100; font-size: 70px; line-height: 1; color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* 【2026-08-31 カンプ実測】ラベル=Noto Sans JP Thin(100) 16px/24px 黒 / 数値=SF Pro Ultralight(200) 70px/1 */
+  .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 100; font-size: 16px; line-height: 24px; color: var(--ink-strong); white-space: nowrap; }
+  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 200; font-size: 70px; line-height: 1; color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
   /* 区切り線(横・全幅) */
   .res2-hr { width: 100%; height: 1px; background: var(--line); }
   /* 下段: 2つの価値。フレーム 1138×220・各カラム 512(text260 + gap32 + graphic220)・中央に縦線182 */
@@ -2137,9 +2141,10 @@
           <div class="res2-hl2" id="resHl2"><span class="res2-slot" id="resSlot"><span class="res2-ghost" id="resGhost">Anyflow</span><span class="res2-over"><span class="res2-typed" id="resTyped"></span><span class="res2-caret" id="resCaret"></span></span></span><span class="res2-suffix" id="resSuffix">が支えます。</span></div>
         </div>
         <div class="res2-stats" id="resStats">
-          <div class="r2s"><b>導入企業</b><span id="cntMain">200+</span></div>
-          <div class="r2s"><b>連携実績</b><span id="cntSub1">500+</span></div>
-          <div class="r2s"><b>稼働率</b><span id="cntSub2">99.9%</span></div>
+          <!-- 【2026-08-31 ヒデさん指定・カンプ15900:38712】数値とラベルを更新 -->
+          <div class="r2s"><b>導入企業</b><span id="cntMain">100+</span></div>
+          <div class="r2s"><b>連携実績</b><span id="cntSub1">20,000+</span></div>
+          <div class="r2s"><b>連携アプリ数</b><span id="cntSub2">200+</span></div>
         </div>
       </div>
       <!-- 区切り線(横) -->
@@ -7971,11 +7976,13 @@ const PF_ELL = [
   { cx: 363.463, cy: 333.522, rx: 473.816, ry: 158.868, rot: -5.36549 },
 ];
 /* 停止角度はカンプのドット位置から楕円式で逆算 */
+/* 【2026-08-31 ヒデさん指定・カンプ15900:38423】停止角度をカンプのドット位置から逆算して更新。
+   実行エンジン 72.9→69.8 / ワークフロー 47.1→44.5。他は前カンプと同位置(実測一致)。 */
 const PF_DOTS = [
   { ell: 0, deg: 263.7, color: '#0E4497' },
   { ell: 0, deg: 117.8, color: '#0EBBFF' },
-  { ell: 0, deg: 72.9,  color: '#000' },
-  { ell: 0, deg: 47.1,  color: '#FF5D97' },
+  { ell: 0, deg: 69.8,  color: '#000' },
+  { ell: 0, deg: 44.5,  color: '#FF5D97' },
   { ell: 0, deg: -30.6, color: '#0EBBFF' },
   { ell: 1, deg: 205.4, color: '#FF5D97' },
 ];
@@ -7990,12 +7997,14 @@ const PF_DOTS = [
    ※ カンプのドットは楕円の線から最大7.5pxほど手でずらして置かれているが、
       ラベルはドット基準なので、そのズレの影響を受けない。
    center:true は中央そろえ (カンプが -translate-x-1/2)。 */
+/* 【2026-08-31 ヒデさん指定・カンプ15900:38423】ラベル文言と位置を更新:
+   監査→SDK/CLI / 権限→実行エンジン(位置も) / 認証基盤→認証ウィザード / ワークフローの相対位置を実測値に */
 const PF_LABELS = [
-  { text: 'コネクタ',     dot: 0, dx: -26.30, dy:  18.32 },
-  { text: '監査',         dot: 1, dx: -15.61, dy:  13.38 },
-  { text: '権限',         dot: 2, dx:  -0.01, dy:  13.38 },
-  { text: 'ワークフロー', dot: 3, dx:  -0.01, dy:  16.71 },
-  { text: '認証基盤',     dot: 4, dx:   0.00, dy: -37.90, center: true },
+  { text: 'コネクタ',         dot: 0, dx: -26.30, dy:  18.33 },
+  { text: 'SDK/CLI',          dot: 1, dx: -15.61, dy:  13.38 },
+  { text: '実行エンジン',     dot: 2, dx: -35.69, dy:  18.31 },
+  { text: 'ワークフロー',     dot: 3, dx: -12.69, dy:  16.31 },
+  { text: '認証ウィザード',   dot: 4, dx:   0.00, dy: -37.89, center: true },
 ];
 /* ⚠️ 光の楕円を足したので、querySelectorAll('ellipse') で拾うと本数が合わなくなる。
    必ず id で取ること (実際にここで壊れた) */
@@ -8454,7 +8463,7 @@ let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロー�
    数字は「0 から目的の数字まで、0〜9 を何周か流してから止まる」形で作る。
    桁ごとに少し遅らせて止めるので、左から順に確定していく。 */
 const SLOT_TARGETS = [
-  ['cntMain', '200+'], ['cntSub1', '500+'], ['cntSub2', '99.9%'],   /* 2026-08-26: 3数値(最短リリースは廃止) */
+  ['cntMain', '100+'], ['cntSub1', '20,000+'], ['cntSub2', '200+'],   /* 2026-08-31 カンプ15900:38712 の数値へ */
 ];
 let slots = [];
 let slotBuiltCycles = -1;
