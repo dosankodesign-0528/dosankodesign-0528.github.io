@@ -57,7 +57,33 @@
 ### タイポグラフィ
 - 書体ファミリー（⚠️ **光学サイズ違いに注意**。SF Pro には Text と Display があり、
   Display は字幅が狭く線も細い。Noto Sans JP にも Thin/ExtraLight/Light が別々にある）
-- ウェイト（100 Thin / 200 ExtraLight / 300 Light / 400 Regular …を混同しない）
+- ウェイト 🔴 **呼称→数値の変換はフォントごとに違う。必ず下の対応表を引く（2026-09-01 制定）**
+
+#### ウェイト呼称→数値の対応表（推測禁止・ここを引く）
+
+> 事故例: カンプの「SF Pro Text : Ultralight」を、Noto の感覚（Thin=100）のまま
+> 「Ultralight は Thin の隣だから 200」と推測で埋め、数値が1段太くなった（2026-09-01 発覚）。
+> **「Thin」と「Ultralight/ExtraLight」の順序が Apple 系と一般系で逆**なのが罠。
+
+| 数値 | Apple系（SF Pro / SF Pro Text / SF Pro Display / Helvetica Neue） | 一般系（Noto Sans JP / Google Fonts の大半 / CSS標準名） |
+|---|---|---|
+| **100** | **Ultralight** | **Thin** |
+| **200** | **Thin** | **ExtraLight（UltraLight表記もある）** |
+| 300 | Light | Light |
+| 400 | Regular | Regular / Normal |
+| 500 | Medium | Medium |
+| 600 | Semibold | SemiBold |
+| 700 | Bold | Bold |
+| 800 | Heavy | ExtraBold |
+| 900 | Black | Black / Heavy |
+
+#### 変換の手順（この順番・スキップ禁止）
+1. カンプから **font-family を先に確定**する（呼称より先。同じ呼称でも数値が変わるため）
+2. そのファミリーで上の表を引いて数値化する。**表に無いファミリーは推測せず**、
+   公式のウェイト一覧を Web で確認するか、ヒデさんに確認する
+3. スペック表には **「呼称(数値)」を併記**する（例: `SF Pro Ultralight(100)`）。
+   数値だけ・呼称だけの記載は禁止（検算できない）
+4. 実装後、`getComputedStyle(el).fontWeight` の**実測値がスペック表の数値と一致**するまで「完了」と言わない
 - サイズ / 行間 / 字間 / 字下げ / 揃え（左・中央・右・両端）
 - 大文字小文字変換、装飾（下線・打ち消し）
 - 色（不透明度込み）
