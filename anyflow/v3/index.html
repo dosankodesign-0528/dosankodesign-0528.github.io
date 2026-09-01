@@ -106,7 +106,7 @@
     color: var(--ink-strong);
     opacity: 0;
   }
-  .hl-eyebrow i { display: var(--kv-eyebrow-dash, block); width: 26px; height: 1px; background: var(--ink-strong); }
+  .hl-eyebrow i { display: var(--kv-eyebrow-dash, block); width: var(--kv-eyebrow-dash-w, 26px); height: 1px; background: var(--ink-strong); }
   .hl-main {
     display: block;
     font-weight: var(--kv-main-weight, 100);
@@ -1391,7 +1391,7 @@
     /* --- キービジュアル --- */
     .headline { left: 24px; top: 104px; }
     .hl-eyebrow { font-size: 14px; gap: var(--space-8); }
-    .hl-eyebrow i { width: 18px; }
+    .hl-eyebrow i { width: calc(var(--kv-eyebrow-dash-w, 26px) * 0.7); }   /* スマホはPC設定の7割(旧18px相当) */
     .hl-main { font-size: 40px; line-height: 1.35; }
     .hl-caret { height: 34px; vertical-align: -6px; }
     /* 軌道は JS 側で 0.40 倍。原点を左上にして左寄せで置く */
@@ -2951,6 +2951,7 @@ const DEFAULTS = {
     eyebrowSize: 14,    // サブコピーの文字サイズ(px)
     eyebrowWeight: 400, // サブコピーの太さ
     eyebrowDash: true,  // サブコピー先頭の罫線(ハイフン)あり/なし
+    eyebrowDashW: 26,   // 罫線の長さ(px)
     eyebrowGap: 0.10, // タイピングが終わってから小ラベル(罫線ごと)が出るまで
     typeAt: 0.7,      // タイピング開始
     charDur: 0.042,    // 1行目「AIと事業を」の1文字あたり(平均)。素早く打つ
@@ -9858,6 +9859,7 @@ function applyKvCopy() {
   r.setProperty('--kv-eyebrow-size', (k.eyebrowSize != null ? k.eyebrowSize : 14) + 'px');
   r.setProperty('--kv-eyebrow-weight', String(k.eyebrowWeight != null ? k.eyebrowWeight : 400));
   r.setProperty('--kv-eyebrow-dash', (k.eyebrowDash === false) ? 'none' : 'block');
+  r.setProperty('--kv-eyebrow-dash-w', (k.eyebrowDashW != null ? k.eyebrowDashW : 26) + 'px');
 }
 applyKvCopy();
 
@@ -13294,7 +13296,12 @@ function buildPanel() {
     v => { params.kv.mainWeight = v; applyKvCopy(); markDirty(); });
   segRow('サブの罫線（—）', [['あり', 1], ['なし', 0]],
     () => (params.kv.eyebrowDash === false ? 0 : 1),
-    v => { params.kv.eyebrowDash = !!v; applyKvCopy(); markDirty(); });
+    v => { params.kv.eyebrowDash = !!v; applyKvCopy(); markDirty(); fillAnimBody && 0; buildPanel(); });
+  if (params.kv.eyebrowDash !== false) {
+    rows.push(slider('罫線の長さ', 8, 80, 1, () => (params.kv.eyebrowDashW != null ? params.kv.eyebrowDashW : 26),
+      v => { params.kv.eyebrowDashW = v; applyKvCopy(); }, v => Math.round(v) + 'px',
+      'サブコピー先頭の罫線(—)の長さ。カンプは26px。'));
+  }
   rows.push(slider('サブの文字サイズ', 10, 24, 1, () => (params.kv.eyebrowSize != null ? params.kv.eyebrowSize : 14),
     v => { params.kv.eyebrowSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
     '「APIでデータを繋ぐ統合開発プラットフォーム」の文字サイズ。'));
