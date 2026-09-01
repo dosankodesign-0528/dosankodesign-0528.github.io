@@ -7335,6 +7335,7 @@ function warpTime(t, amp, period, phaseDeg) {
 let elapsed = 0;      // 再生中のみ進む累積時間
 let frameSeq = 0;     // フレーム番号。矩形キャッシュの寿命管理に使う
 let lastTs = null;
+let frameCount = 0, frameErrCount = 0;   /* 【2026-09-01】__anim.health() 診断用 */
 let frameDt = 1 / 60; // 直近フレームの実時間 (スクロール慣性補間用・一時停止中も進む)
 /* スクロールの向き (-1=上へ / 1=下へ / 0=止まっている)。逆再生の開始判定に使う */
 let scrollDir = 0, lastScrollY = 0;
@@ -11095,8 +11096,12 @@ function frame(ts) {
     renderFrame();
     drawValueIcons();
   } catch (e) {
+    /* 【2026-09-01】診断用: 最後の例外を保持(A2ドット停止の調査。__anim.health() で読める) */
+    window.__lastFrameErr = String((e && e.stack) || e);
+    frameErrCount++;
     if (!frameErrLogged) { frameErrLogged = true; console.error('[anyflow] 描画中の例外:', e); }
   }
+  frameCount++;
   requestAnimationFrame(frame);   /* ← try の外。絶対に止めない */
 }
 requestAnimationFrame(frame);
@@ -11104,6 +11109,22 @@ renderFrame();
 
 /* デバッグ用フック（rAFが動かない環境で手動で時間を進める） */
 window.__anim = {
+  /* 【2026-09-01】ドット停止の現場診断: 症状が出た直後にコンソールで await __anim.health() 。
+     1秒間のフレーム数・時計の進み・例外の有無をまとめて返す(これをそのまま貼ってもらえば原因が分かる) */
+  health() {
+    const f0 = frameCount, e0 = elapsed, err0 = frameErrCount;
+    return new Promise(res => setTimeout(() => res({
+      framesPerSec: frameCount - f0,
+      clockAdvanced: +(elapsed - e0).toFixed(3),
+      running: params.running,
+      converge: params.converge,
+      net3d: params.conv && params.conv.net3d,
+      netSpd: params.net3d && params.net3d.spd,
+      netSpin: params.net3d && params.net3d.spin,
+      errorsInLastSec: frameErrCount - err0,
+      lastError: window.__lastFrameErr || null,
+    }), 1000));
+  },
   step(dt) { elapsed += dt; renderFrame(); drawValueIcons(); },
   setElapsed(v) { elapsed = v; renderFrame(); },
   /* 各セクションの自動再生を頭からやり直す (通常はリプレイしないので検証用) */
