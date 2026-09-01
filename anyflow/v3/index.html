@@ -3058,6 +3058,17 @@ const DEFAULTS = {
       npSpinDeg: 40,     // 止まるまでに回る角度
       npSpinDur: 1.0,    // 回りきるまでの秒数
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
+      /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
+         g0=傾き大きい楕円(いま青く見える方) / g1=傾き小さい楕円(いまピンクに見える方)。
+         x,y=グラデ軸の中心(楕円ローカル座標) / deg=向き / len=色が変わる距離 /
+         white=白の位置(%) / wSpan=白まわりのぼかし幅(%) / c1..c4=端→中間→中間→端の色。
+         初期値はこれまでの見た目と同じになるよう実測から逆算した値 */
+      pfGrad: {
+        g0: { x: 769.97, y: 177.74, deg: 92.1, len: 175.4, white: 49, wSpan: 23,
+              c1: '#FF5D97', c2: '#FFCFE0', c3: '#A2E6FF', c4: '#00ABEB' },
+        g1: { x: 769.97, y: 177.74, deg: 92.1, len: 175.4, white: 51, wSpan: 23,
+              c1: '#00ABEB', c2: '#A2E6FF', c3: '#FFCFE0', c4: '#FF5D97' },
+      },
       /* 「2つの価値」まわりの位置ずらし(px)。カンプ位置からの相対。
          2026-08-15 にヒデさんが調整パネルで詰めた値を既定にした */
       headX: -78, headY: 0,   // 連携が生む、2つの価値
@@ -3843,7 +3854,17 @@ function save() {
    dirty = 保存していない変更があるか */
 let dirty = false;
 let syncSaveBtn = null;   /* パネルを組む時に、保存ボタンの表示を更新する関数が入る */
-function markDirty() { dirty = true; if (syncSaveBtn) syncSaveBtn(); if (syncPresetPills) syncPresetPills(); if (typeof gfxTouchVariant === 'function') gfxTouchVariant(); }
+function markDirty() {
+  dirty = true; if (syncSaveBtn) syncSaveBtn(); if (syncPresetPills) syncPresetPills();
+  if (typeof gfxTouchVariant === 'function') gfxTouchVariant();
+  /* 【2026-09-01 ヒデさん指定】調整は自動で保存する(リロード・ブラウザを閉じても引き継ぐ)。
+     以前は「保存ボタンを押して初めて残る」設計(2026-08-19)だったが、押し忘れると
+     調整が消える方が困る、との指定で自動保存に変更。連続ドラッグ中は書かない(0.8秒デバウンス)。 */
+  clearTimeout(markDirty._t);
+  markDirty._t = setTimeout(() => {
+    try { save(); dirty = false; if (syncSaveBtn) syncSaveBtn(); } catch (e) {}
+  }, 800);
+}
 
 /* ================= ドット要素 (奥/手前レイヤーに1個ずつ) ================= */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -8121,7 +8142,29 @@ const pfEllEls = [document.getElementById('pfEll0'), document.getElementById('pf
    軸も楕円と同じ変換(mapX/mapY)で毎フレーム動かす。どの画面幅でも1440と同じ当たり方になる。
    ローカル座標の値は 1440実測(sc=1.02333, tx=-11.0, ty=141.0)から逆算した。 */
 const pfGradEls = [document.getElementById('pfG0'), document.getElementById('pfG1')];
-const PF_AXIS_LOCAL = { x1: 773.23, y1: 90.11, x2: 766.70, y2: 265.36 };
+/* 【2026-09-01 ヒデさん指定】グラデ軸・色をパネル調整可能に。設定の取得(古い保存には無いのでDEFAULTSから複製) */
+function pfGradCfg(key) {
+  const vis = params.sections.vision;
+  if (!vis.pfGrad) vis.pfGrad = JSON.parse(JSON.stringify(DEFAULTS.sections.vision.pfGrad));
+  if (!vis.pfGrad[key]) vis.pfGrad[key] = JSON.parse(JSON.stringify(DEFAULTS.sections.vision.pfGrad[key]));
+  return vis.pfGrad[key];
+}
+/* 色ストップ(offset/色)をSVGへ反映。起動時とパネル変更時だけ呼ぶ(軸は毎フレーム追従) */
+function applyPfGradStops() {
+  ['g0', 'g1'].forEach((key, gi) => {
+    const g = pfGradEls[gi]; if (!g) return;
+    const cfg = pfGradCfg(key);
+    const w = Math.min(100, Math.max(0, cfg.white)) / 100;
+    const half = Math.max(0, cfg.wSpan) / 200;
+    const offs = [0, Math.max(0, w - half), w, Math.min(1, w + half), 1];
+    const cols = [cfg.c1, cfg.c2, '#ffffff', cfg.c3, cfg.c4];
+    const stops = g.querySelectorAll('stop');
+    for (let i = 0; i < 5 && i < stops.length; i++) {
+      stops[i].setAttribute('offset', offs[i].toFixed(4));
+      stops[i].setAttribute('stop-color', cols[i]);
+    }
+  });
+}
 function pfDotPos(d, deg) {
   const e = PF_ELL[d.ell];
   const t = deg * Math.PI / 180, r = e.rot * Math.PI / 180;
@@ -8456,13 +8499,16 @@ function updateVision(p) {
     /* 小さい時は線も細く (カンプのミニ軌道の見え方に合わせる) */
     el.setAttribute('stroke-width', (c.strokeW * (0.45 + 0.55 * mv)).toFixed(2));
   });
-  /* グラデ軸を楕円と同じ変換で追従(1440基準の色の当たり方を全画面幅で維持) */
-  pfGradEls.forEach(g => {
-    if (!g) return;
-    g.setAttribute('x1', mapX(PF_AXIS_LOCAL.x1).toFixed(2));
-    g.setAttribute('y1', mapY(PF_AXIS_LOCAL.y1).toFixed(2));
-    g.setAttribute('x2', mapX(PF_AXIS_LOCAL.x2).toFixed(2));
-    g.setAttribute('y2', mapY(PF_AXIS_LOCAL.y2).toFixed(2));
+  /* グラデ軸を楕円と同じ変換で追従。軸そのもの(位置・向き・長さ)はパネルの値から計算 */
+  ['g0', 'g1'].forEach((gkey, gi) => {
+    const g = pfGradEls[gi]; if (!g) return;
+    const cfg = pfGradCfg(gkey);
+    const rad = (cfg.deg || 0) * Math.PI / 180, hl = (cfg.len || 175.4) / 2;
+    const ax = Math.cos(rad) * hl, ay = Math.sin(rad) * hl;
+    g.setAttribute('x1', mapX(cfg.x - ax).toFixed(2));
+    g.setAttribute('y1', mapY(cfg.y - ay).toFixed(2));
+    g.setAttribute('x2', mapX(cfg.x + ax).toFixed(2));
+    g.setAttribute('y2', mapY(cfg.y + ay).toFixed(2));
   });
   /* Platform文字・役割名は移動完了後にしか出ないので、縮小中は隠しておく */
   visEls.pfTexts.style.opacity = mv >= 0.999 ? 1 : 0;
@@ -9948,6 +9994,7 @@ function applyResSlotGap() {
   document.documentElement.style.setProperty('--res-slot-gap', (v != null ? v : 4) + 'px');
 }
 applyResSlotGap();
+applyPfGradStops();   /* 【2026-09-01】軌道グラデの色ストップを保存値で反映 */
 /* 【2026-08-31 ヒデさん指定・バグ修正】バリエーションの「いまの設定で上書き」がリロード後に
    見た目へ反映されない問題: 上書き自体は保存されていたが、開いた直後は誰も適用していなかった。
    起動時、選択中の案に上書き(または昇格プリセット)があれば、その数値で開く。 */
@@ -11772,6 +11819,40 @@ function slider(label, min, max, step, get, set, fmt, hint, opts) {
   return row;
 }
 
+/* 【2026-09-01 ヒデさん指定】色を選ぶ行(カラーピッカー)。sliderと同じ見た目・リセット対応 */
+function colorRow(label, get, set, hint) {
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lab = document.createElement('label');
+  lab.textContent = label;
+  const input = document.createElement('input');
+  input.type = 'color';
+  input.style.cssText = 'width:44px;height:24px;padding:0;border:1px solid #ddd;border-radius:6px;background:none;cursor:pointer;';
+  input.value = get();
+  const val = document.createElement('span');
+  val.className = 'val';
+  val.textContent = get();
+  const isLive = liveEdit;
+  input.addEventListener('input', () => {
+    set(input.value);
+    val.textContent = input.value;
+    markDirty();
+    applyEdit(isLive);
+  });
+  row._sync = () => { input.value = get(); val.textContent = get(); };
+  row.append(lab, input, val, mkReset(get, set, () => row._sync(), isLive));
+  if (subItems) subItems.push({ reset: () => { const d = defaultOf(get); if (d != null) { set(d); row._sync(); } } });
+  mount.appendChild(row);
+  if (hint) {
+    lab.title = hint;
+    const h = document.createElement('div');
+    h.className = 'row-hint';
+    h.textContent = hint;
+    mount.appendChild(h);
+  }
+  return row;
+}
+
 /* 【2026-08-29 ヒデさん指定】グラフィック全体の「自由回転」GUI。
    Illustrator の 3D 自由回転のように、①ドラッグで直感的に奥行き(XY)を回す
    ②数値でも入れられる ③遠近感(奥行きの効き)も変えられる。
@@ -13574,6 +13655,38 @@ function buildPanel() {
   rows.push(slider('輪の線の太さ', 1, 10, 0.5, () => sv().vision.strokeW, v => sv().vision.strokeW = v, v => v + 'px',
     '軌道の線の太さ。'));
 
+  /* 【2026-09-01 ヒデさん指定】軌道グラデの色・白の位置をパネルで直接調整(4回直らなかった色ズレはここで直す)。
+     「ピンクの輪」=傾きの小さい楕円(pfG1) / 「青い輪」=傾きの大きい楕円(pfG0)。 */
+  const pfGradRows = (key, ringName) => {
+    const P = () => pfGradCfg(key);
+    rows.push(slider('白の位置', 0, 100, 0.5, () => P().white, v => { P().white = v; applyPfGradStops(); }, v => v.toFixed(1) + '%',
+      ringName + 'のグラデの中で、白がどこに来るか。0=グラデの始まり側 / 100=終わり側。'));
+    rows.push(slider('白の幅', 0, 60, 0.5, () => P().wSpan, v => { P().wSpan = v; applyPfGradStops(); }, v => v.toFixed(1) + '%',
+      '白まわりの淡い部分の広さ。小さいほど白がキュッと締まり、大きいほどふんわり広がります。'));
+    rows.push(slider('グラデの角度', 0, 360, 1, () => P().deg, v => P().deg = v, v => Math.round(v) + '°',
+      '色が変わっていく向き。90°=上から下へ。回すと白の帯の向きが変わります。'));
+    rows.push(slider('グラデの長さ', 20, 800, 5, () => P().len, v => P().len = v, v => Math.round(v) + 'px',
+      '色が端から端まで変わりきる距離。短いほど色の切り替わりが急に、長いほどなだらかに。'));
+    rows.push(slider('グラデの位置 横', -600, 1600, 5, () => P().x, v => P().x = v, v => Math.round(v) + 'px',
+      'グラデ全体を輪に対して横へずらします。白の帯が左右に動きます。', { signed: true }));
+    rows.push(slider('グラデの位置 縦', -600, 1200, 5, () => P().y, v => P().y = v, v => Math.round(v) + 'px',
+      'グラデ全体を輪に対して縦へずらします。白の帯が上下に動きます。', { signed: true }));
+    colorRow('端の色（始まり側）', () => P().c1, v => { P().c1 = v; applyPfGradStops(); },
+      'グラデの始まり側の端の色。');
+    colorRow('白の手前の色', () => P().c2, v => { P().c2 = v; applyPfGradStops(); },
+      '始まり側の端と白の間に入る中間色。');
+    colorRow('白の先の色', () => P().c3, v => { P().c3 = v; applyPfGradStops(); },
+      '白と終わり側の端の間に入る中間色。');
+    colorRow('端の色（終わり側）', () => P().c4, v => { P().c4 = v; applyPfGradStops(); },
+      'グラデの終わり側の端の色。');
+  };
+  sub(catVis, '④ 軌道の色（ピンクの輪）', true);
+  note('傾きのゆるい方の輪（いまピンクに見えている輪）のグラデーション。白の位置・幅から調整するのがおすすめ。');
+  pfGradRows('g1', 'ピンクの輪');
+  sub(catVis, '④ 軌道の色（青い輪）', true);
+  note('傾きの大きい方の輪（いま青に見えている輪）のグラデーション。');
+  pfGradRows('g0', '青い輪');
+
   /* 【2026-08-29 ヒデさん指定】固定追従なし(時間再生)の「ブロックの表示タイミング」を細かく調整。
      塊＝メッセージ / グラフィック / ポイント1 / ポイント2。メッセージ自体は上の「1行目が出るまで」。 */
   sub(catVis, '表示タイミング（メッセージ→グラフィック→ポイント）', true);
@@ -13865,16 +13978,39 @@ function buildPanel() {
     setTimeout(syncSaveBtn, 1600);
   };
   syncSaveBtn();
+  /* 【2026-09-01 ヒデさん指定】「デプロイしてもKVが反映されない」対策。
+     ローカルの調整・案の選択はこのブラウザ(localStorage)にしか残らないため、
+     本番に載せるには 書き出し→Claudeに渡す→焼き込みデプロイ が必要。
+     いままでコンソールで打っていたワンライナーをボタン1つにした(中身は同じダンプ形式)。 */
+  const exportBtn = document.createElement('button');
+  exportBtn.textContent = '⬇ 設定を書き出す（本番反映用）';
+  exportBtn.title = 'いまのブラウザの設定ぜんぶを anyflow-settings.json としてダウンロードします。これをClaudeに渡すと、同じ見た目を本番に焼き込めます。';
+  exportBtn.onclick = () => {
+    try { save(); } catch (e) {}
+    const dump = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('anyflow-')) dump[k] = localStorage.getItem(k);
+    }
+    const blob = new Blob([JSON.stringify(dump)], { type: 'application/json' });
+    const aEl = document.createElement('a');
+    aEl.href = URL.createObjectURL(blob);
+    aEl.download = 'anyflow-settings.json';
+    aEl.click();
+    URL.revokeObjectURL(aEl.href);
+    exportBtn.textContent = '✅ 書き出しました（Claudeに渡してください）';
+    setTimeout(() => { exportBtn.textContent = '⬇ 設定を書き出す（本番反映用）'; }, 2200);
+  };
   /* 【2026-08-26 ヒデさん指定】下の「元に戻す」は廃止。各項目の右端にある ↺ で個別に戻す */
-  btns.append(saveBtn);
+  btns.append(saveBtn, exportBtn);
   body.appendChild(btns);
 
   /* 【2026-08-28 ヒデさん指定】「いまの設定をコピーする」ボタンは削除。 */
   const saveNote = document.createElement('div');
   saveNote.className = 'grp-note keep';
   saveNote.style.margin = '6px 0 0';
-  saveNote.textContent = 'グラフィックの形と動きは「プリセット」で保存できます。'
-    + 'それ以外のセクションは、上の「これをデフォルトに設定」で このブラウザに残ります。';
+  saveNote.textContent = '調整は自動でこのブラウザに保存されます(リロード・ブラウザを閉じてもOK)。'
+    + '本番サイトに反映したい時は「⬇ 設定を書き出す」を押して、出てきたファイルをClaudeに渡してください。';
   body.appendChild(saveNote);
   body.scrollTop = keepScroll;         // 見ていた位置に戻す
 }
