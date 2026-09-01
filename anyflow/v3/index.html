@@ -103,6 +103,7 @@
     gap: var(--kv-dash-gap, 10px);
     font-weight: var(--kv-eyebrow-weight, 400);
     font-size: var(--kv-eyebrow-size, 14px);
+    letter-spacing: var(--kv-eyebrow-ls, 0px);   /* 2026-09-01: パネルで調整可 */
     color: var(--ink-strong);
     opacity: 0;
   }
@@ -112,6 +113,8 @@
     font-weight: var(--kv-main-weight, 100);
     font-size: var(--kv-main-size, 70px);
     line-height: 1.4;
+    /* 【2026-09-01 ヒデさん指定】ウェイト100より細く見せる手段: 背景と同色の縁取りで線を削る */
+    -webkit-text-stroke: var(--kv-main-thin, 0px) var(--surface);
   }
   /* 【2026-08-31 ヒデさん指定】メイン上・サブ下に入れ替えたので、間隔はサブ側に持たせる */
   .hl-main + .hl-eyebrow { margin-top: var(--kv-copy-gap, 16px); }
@@ -2951,6 +2954,8 @@ const DEFAULTS = {
     mainWeight: 100,    // メインコピーの太さ(100=Thin/200/300)
     eyebrowSize: 14,    // サブコピーの文字サイズ(px)
     eyebrowWeight: 400, // サブコピーの太さ
+    eyebrowLs: 0,       // 【2026-09-01】サブコピーの字間(px)
+    mainThin: 0,        // 【2026-09-01】メインを縁取りで細く見せる量(px)。背景色の縁で線を削る
     eyebrowDash: true,  // サブコピー先頭の罫線(ハイフン)あり/なし
     eyebrowDashW: 26,   // 罫線の長さ(px)
     dashGap: 10,        // 罫線とサブコピー文字の間(px)
@@ -3173,6 +3178,10 @@ const DEFAULTS = {
   conv: {
     showOuter: true, showInner: true,
     showDots: true,                                          // 軌道上のドット(7個)の表示/非表示
+    /* 【2026-09-01 ヒデさん指定】B3「J 地平線・横揺れ」の横揺れ。内外の輪を左右にゆらす。
+       on=横揺れする(この案の目玉なのでB3では定義がtrueにする) / pat=揺れ方(sine/drift/tri) /
+       outerAmp・innerAmp=外・内の振れ幅(px) / period=1往復の秒数 / delay=内側の遅れ(秒) */
+    hsway: { on: false, pat: 'sine', outerAmp: 16, innerAmp: 16, period: 6, delay: 0.8 },
     net3d: false,                                            // 2026-08-29: ネットワーク3D案のときだけ true(専用レンダラーに切替)
     /* 【2026-08-26 ヒデさん指定】どの案でも効く共通のドット設定
        dotSize = 全部のドットの大きさ倍率
@@ -3897,6 +3906,20 @@ function orbitGeom(key, noSpin) {
     wobble += (key === 'outer' ? 6 : -6) * (params.swayAmp == null ? 1 : params.swayAmp) * Math.sin(2 * Math.PI * elapsed / 10) * easeIO(lead);
   }
   let dfx = 0, dfy = 0;
+  /* 【2026-09-01 ヒデさん指定】横揺れ(B3): 内外の輪を左右へ。内側はディレイぶん遅れて追従 */
+  const hs = params.conv && params.conv.hsway;
+  if (hs && hs.on && params.kvDesign === 'planet') {
+    const amp = key === 'inner' ? (hs.innerAmp || 0) : (hs.outerAmp || 0);
+    if (amp > 0) {
+      const T = Math.max(0.5, hs.period || 6);
+      const ph = 2 * Math.PI * (elapsed - (key === 'inner' ? (hs.delay || 0) : 0)) / T;
+      let w;
+      if (hs.pat === 'drift')    w = 0.62 * Math.sin(ph) + 0.38 * Math.sin(ph * 0.53 + 1.7);  /* ふわふわ(不規則) */
+      else if (hs.pat === 'tri') w = 2 * Math.asin(Math.sin(ph)) / Math.PI;                    /* 等速で往復(三角波) */
+      else                       w = Math.sin(ph);                                             /* なめらか(振り子) */
+      dfx += amp * w;
+    }
+  }
   const dr = (params.conv && params.conv.orbitDrift) || 0;
   if (dr > 0 && params.kvDesign === 'planet') {
     const ph = key === 'inner' ? 2.1 : 0;
@@ -4715,7 +4738,7 @@ const VARIANT_REMOVED = {
   duplex: ['C 大きく弧を描く', 'G ヘアライン', 'I 大小の入れ子', 'J 地平線', 'ジャイロ・直交', 'ジャイロ・速い', 'E 遠くから長い線', 'B まっすぐ放射', 'F 密な短い線', 'H 縦のクロス', 'K 斜めの流れ', 'ジャイロ・縦のクロス', 'ジャイロ・斜めの流れ', 'D 立ちクロスの線'],
   gyro:   ['F 片寄せジャイロ', 'G ヘアライン', 'I 大小の入れ子', 'J 地平線', 'D 高速スピン', 'A 標準のジャイロ', 'E 同じ向きで転がる', '花のリング', 'アトム 4本', 'アトム 6本', 'アトム 8本', '土星の輪', 'C ゆっくり大きく', 'K 斜めの流れ'],
   beads:  ['G ヘアライン', 'J 地平線', 'ジャイロ・斜めの流れ', 'ジャイロ・縦のクロス', 'ジャイロ・速い', 'ジャイロ・直交', 'H 縦のクロス', 'A 標準', 'B 細かい粒', 'I 大小の入れ子', 'K 斜めの流れ', 'F 惑星に寄るリング', 'D 立ちクロスのリング', 'E 大きいリング', 'ジャイロ・ゆるやか'],
-  spiral: ['C ゆったり大回り', 'E 大きく包む渦', 'F 近くで速い渦', 'G ヘアライン', 'I 大小の入れ子', 'K 斜めの流れ', 'H 縦のクロス', 'B 大げさな渦巻き', 'アトム 8本', '花のリング', 'アトム 6本', 'ジャイロ・縦のクロス', 'ジャイロ・斜めの流れ'],
+  spiral: ['J 地平線' /* 2026-09-01: A4をB3(J 地平線・横揺れ)へ移動 */, 'C ゆったり大回り', 'E 大きく包む渦', 'F 近くで速い渦', 'G ヘアライン', 'I 大小の入れ子', 'K 斜めの流れ', 'H 縦のクロス', 'B 大げさな渦巻き', 'アトム 8本', '花のリング', 'アトム 6本', 'ジャイロ・縦のクロス', 'ジャイロ・斜めの流れ'],
 };
 /* 【2026-08-30 ヒデさん指定】devで削除したバリエーションの完全削除ぶん(設定ダンプのhiddenを焼き込み)。
    VARIANT_REMOVED と合わせて恒久除外＝メニューにも復元一覧にも出ない。 */
@@ -4954,6 +4977,19 @@ for (const _pm in SHIPPED_PRESETS) {
     });
   });
 }
+/* 【2026-09-01 ヒデさん指定】A4「J 地平線」を収縮(B)グループへ移動。
+   reel(収縮)バケットの新案として追加し、収縮はB1(土星系reel)のhorizon調整値、
+   さらにこの案だけの「横揺れ」(内外の輪の左右ゆれ)を既定オンにする。
+   元のA4(spiral側のJ 地平線)は VARIANT_REMOVED.spiral で恒久除外。 */
+GFX_VARIANTS.reel.push({
+  name: 'J 地平線・横揺れ',
+  desc: '輪を水平に寝かせた地平線レイアウトの収縮版。内側の輪が吸い込まれ、内外の輪を左右にゆらせます。振れ幅・周期・ディレイ・揺れ方は「横揺れ（この案）」で調整。',
+  gfx: GFX_LOOKS2[3].gfx,                     /* J 地平線と同じ配置(horizon) */
+  conv: (LOOK_TUNE.reel || {}).horizon,        /* 収縮の味付けはreelのhorizon調整値 */
+  common: { orbitSpin: 0 },
+  hsway: true,
+});
+
 /* 案キー → params.conv の中のどのつまみ束か (duplex だけ名前が link) */
 const CONV_PARAM_KEY = { reel: 'reel', spiral: 'spiral', accre: 'accre', mesh: 'mesh', beads: 'beads', duplex: 'link', gyro: 'gyro' };
 /* 双方向(ラインで結ぶ)系のモード。共通エンジンで動かす */
@@ -9897,6 +9933,8 @@ function applyKvCopy() {
   r.setProperty('--kv-main-weight', String(k.mainWeight != null ? k.mainWeight : 100));
   r.setProperty('--kv-eyebrow-size', (k.eyebrowSize != null ? k.eyebrowSize : 14) + 'px');
   r.setProperty('--kv-eyebrow-weight', String(k.eyebrowWeight != null ? k.eyebrowWeight : 400));
+  r.setProperty('--kv-eyebrow-ls', (k.eyebrowLs != null ? k.eyebrowLs : 0) + 'px');
+  r.setProperty('--kv-main-thin', (k.mainThin != null ? k.mainThin : 0) + 'px');
   r.setProperty('--kv-eyebrow-dash', (k.eyebrowDash === false) ? 'none' : 'block');
   r.setProperty('--kv-eyebrow-dash-w', (k.eyebrowDashW != null ? k.eyebrowDashW : 26) + 'px');
   r.setProperty('--kv-dash-gap', (k.dashGap != null ? k.dashGap : 10) + 'px');
@@ -11303,6 +11341,7 @@ function gfxSnapshotFull() {
       orbitWidth: (C.orbitWidthBy || {})[mode], /* 案ごとの軌道の線の太さ */
       orbitScale: (C.orbitScaleBy || {})[mode], /* 案ごとの軌道のサイズ */
       net3d: !!C.net3d,                        /* 【2026-08-31】ネットワーク3Dフラグ(欠けると上書き復元で標準軌道に化けた) */
+      hsway: C.hsway ? { ...C.hsway } : undefined,   /* 【2026-09-01】横揺れ(B3) */
     },
     net3dNT: params.net3d ? { ...params.net3d } : null,   /* 【2026-08-31】ネットワーク3D専用つまみ一式 */
     mode: pk && C[pk] ? { ...C[pk] } : null,
@@ -11344,6 +11383,7 @@ function gfxApplyFull(d) {
       C.dotMove[mode] = d.common.dotMove;
     }
     if (d.common.net3d !== undefined) C.net3d = !!d.common.net3d;   /* 2026-08-31 */
+    if (d.common.hsway) C.hsway = { ...JSON.parse(JSON.stringify(DEFAULTS.conv.hsway)), ...d.common.hsway };   /* 2026-09-01: 横揺れ復元 */
     if (typeof d.common.orbitSpin === 'number') {
       if (!C.orbitSpinBy) C.orbitSpinBy = {};
       C.orbitSpinBy[mode] = d.common.orbitSpin;
@@ -11452,6 +11492,8 @@ function applyGfxVariant(i) {
                    'echoSpeed', 'echoShells', 'echoSpread', 'echoStart', 'echoFade', 'echoAlpha',
                    'fxMode', 'fxCount', 'fxEvery', 'fxInertia', 'echoCrisp', 'dotRandom', 'orbitDrift', 'net3d'])
     if (DEFAULTS.conv[k] !== undefined) params.conv[k] = DEFAULTS.conv[k];
+  /* 横揺れ(B3専用)も一旦既定(オフ)へ。B3を選んだ時だけ下で有効化される */
+  params.conv.hsway = JSON.parse(JSON.stringify(DEFAULTS.conv.hsway));
   /* 案ごとの引き出し(per-mode)も既定へ */
   if (params.conv.orbitWidthBy) params.conv.orbitWidthBy[mode] = (DEFAULTS.conv.orbitWidthBy || {})[mode];
   if (params.conv.orbitScaleBy) params.conv.orbitScaleBy[mode] = (DEFAULTS.conv.orbitScaleBy || {})[mode];
@@ -11488,6 +11530,7 @@ function applyGfxVariant(i) {
     renderFrame();
     return;
   }
+  if (v.hsway) params.conv.hsway.on = true;   /* B3「J 地平線・横揺れ」: 横揺れを既定オン */
   const base = gfxDefault(), g = v.gfx || {};
   gfxApply({
     layout: g.layout || base.layout,
@@ -12876,6 +12919,25 @@ function buildPanel() {
         slider('回転の速さ', 0, 2, 0.05, () => params.conv.ringSpin,
           v => { params.conv.ringSpin = v; renderFrame(); }, v => '×' + v.toFixed(2), 'シェイプ(輪)の回る速さ。');
       }
+      /* 【2026-09-01 ヒデさん指定】B3「J 地平線・横揺れ」専用: 内外の輪の左右ゆれ */
+      if (params.conv.hsway && params.conv.hsway.on) {
+        const HS = params.conv.hsway;
+        segRow('横揺れの揺れ方', [['なめらか', 'sine'], ['ふわふわ', 'drift'], ['等速で往復', 'tri']],
+          () => (HS.pat || 'sine'),
+          v => { HS.pat = v; markDirty(); renderFrame(); });
+        slider('外側の振れ幅', 0, 80, 1, () => (HS.outerAmp != null ? HS.outerAmp : 16),
+          v => { HS.outerAmp = v; renderFrame(); }, v => Math.round(v) + 'px',
+          '外側の輪が左右にゆれる幅。0で止まります。');
+        slider('内側の振れ幅', 0, 80, 1, () => (HS.innerAmp != null ? HS.innerAmp : 16),
+          v => { HS.innerAmp = v; renderFrame(); }, v => Math.round(v) + 'px',
+          '内側の輪が左右にゆれる幅。0で止まります。');
+        slider('揺れの周期', 1, 15, 0.1, () => (HS.period != null ? HS.period : 6),
+          v => { HS.period = v; renderFrame(); }, v => v.toFixed(1) + '秒',
+          '左右1往復にかける秒数。大きいほどゆったり。');
+        slider('内側のディレイ', 0, 5, 0.05, () => (HS.delay != null ? HS.delay : 0.8),
+          v => { HS.delay = v; renderFrame(); }, v => v.toFixed(2) + '秒',
+          '内側の輪が外側より遅れて揺れる時間差。0でぴったり連動。');
+      }
       /* 軌道のサイズ・線の太さ (全案共通) */
       slider('軌道のサイズ', 0.3, 2.5, 0.02,
         () => { const v = (params.conv.orbitScaleBy || {})[cvMode]; return (typeof v === 'number' && v > 0.05) ? v : 1; },
@@ -13394,6 +13456,9 @@ function buildPanel() {
   segRow('メインの太さ', [['Thin(100)', 100], ['UL(200)', 200], ['Light(300)', 300]],
     () => (params.kv.mainWeight != null ? params.kv.mainWeight : 100),
     v => { params.kv.mainWeight = v; applyKvCopy(); markDirty(); });
+  rows.push(slider('メインをさらに細く', 0, 1.5, 0.05, () => (params.kv.mainThin != null ? params.kv.mainThin : 0),
+    v => { params.kv.mainThin = v; applyKvCopy(); }, v => v.toFixed(2) + 'px',
+    'ウェイト100(最細)より細く見せる裏ワザ。背景と同じ色の縁取りで文字の線を外から削ります。0.3〜0.6px程度がおすすめ。'));
   segRow('サブの罫線（—）', [['あり', 1], ['なし', 0]],
     () => (params.kv.eyebrowDash === false ? 0 : 1),
     v => { params.kv.eyebrowDash = !!v; applyKvCopy(); markDirty(); fillAnimBody && 0; buildPanel(); });
@@ -13411,6 +13476,9 @@ function buildPanel() {
   rows.push(slider('サブの文字サイズ', 10, 24, 1, () => (params.kv.eyebrowSize != null ? params.kv.eyebrowSize : 14),
     v => { params.kv.eyebrowSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
     '「APIでデータを繋ぐ統合開発プラットフォーム」の文字サイズ。'));
+  rows.push(slider('サブの字間', 0, 8, 0.1, () => (params.kv.eyebrowLs != null ? params.kv.eyebrowLs : 0),
+    v => { params.kv.eyebrowLs = v; applyKvCopy(); }, v => v.toFixed(1) + 'px',
+    'サブコピーの文字と文字の間隔(レタースペーシング)。0で詰め、大きいほど広がります。'));
   segRow('サブの太さ', [['Light(300)', 300], ['Regular(400)', 400], ['Medium(500)', 500]],
     () => (params.kv.eyebrowWeight != null ? params.kv.eyebrowWeight : 400),
     v => { params.kv.eyebrowWeight = v; applyKvCopy(); markDirty(); });
