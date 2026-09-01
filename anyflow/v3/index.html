@@ -684,7 +684,9 @@
   .res2-stats .r2s { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-8); }
   /* 【2026-08-31 カンプ実測】ラベル=Noto Sans JP Thin(100) 16px/24px 黒 / 数値=SF Pro Ultralight(200) 70px/1 */
   .res2-stats .r2s b { font-family: var(--font-jp); font-weight: 100; font-size: 16px; line-height: 24px; color: var(--ink-strong); white-space: nowrap; }
-  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 200; font-size: 70px; line-height: 1; color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* 【2026-09-01 ヒデさん指定】数値はカンプの SF Pro Ultralight = weight【100】(最軽量)。
+     以前 Ultralight を 200 と誤変換していた(SF系: Ultralight=100/Thin=200。Noto系の Thin=100 と呼称がズレる) */
+  .res2-stats .r2s span { font-family: var(--font-en); font-weight: 100; font-size: 70px; line-height: 1; color: var(--ink-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
   /* 区切り線(横・全幅) */
   .res2-hr { width: 100%; height: 1px; background: var(--line); }
   /* 下段: 2つの価値。フレーム 1138×220・各カラム 512(text260 + gap32 + graphic220)・中央に縦線182 */
@@ -2104,7 +2106,7 @@
             <!-- 【2026-08-31 ヒデさん指定】元の5色グラデ(V1と同じ)。3色化は誤りだったので復元 -->
             <stop stop-color="#FF5D97"/><stop offset="0.370192" stop-color="#FFCFE0"/><stop offset="0.490385" stop-color="white"/><stop offset="0.600962" stop-color="#A2E6FF"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
-            <linearGradient id="pfG1" x1="101.80" y1="186.69" x2="770.34" y2="427.90" gradientUnits="userSpaceOnUse"><!-- 2026-08-31 カンプ15900:38423のSVG実測軸(斜めに長く流れる)へ。急傾き側(pfG0)は元々一致 -->
+            <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse"><!-- 2026-09-01 ヒデさん指定: 元の縦軸へ完全復元。git実測で「希望の色味」時代とこの定義が同一だと確認(昨晩の軸変更が色ズレの犯人) -->
             <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
           </linearGradient>
             <filter id="pfGlowF" x="-10%" y="-10%" width="120%" height="120%">
