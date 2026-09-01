@@ -2104,7 +2104,7 @@
             <!-- 【2026-08-31 ヒデさん指定】元の5色グラデ(V1と同じ)。3色化は誤りだったので復元 -->
             <stop stop-color="#FF5D97"/><stop offset="0.370192" stop-color="#FFCFE0"/><stop offset="0.490385" stop-color="white"/><stop offset="0.600962" stop-color="#A2E6FF"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
-            <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
+            <linearGradient id="pfG1" x1="101.80" y1="186.69" x2="770.34" y2="427.90" gradientUnits="userSpaceOnUse"><!-- 2026-08-31 カンプ15900:38423のSVG実測軸(斜めに長く流れる)へ。急傾き側(pfG0)は元々一致 -->
             <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
           </linearGradient>
             <filter id="pfGlowF" x="-10%" y="-10%" width="120%" height="120%">
@@ -9872,6 +9872,23 @@ function applyKvCopy() {
   r.setProperty('--kv-copy-gap', (k.copyGap != null ? k.copyGap : 16) + 'px');
 }
 applyKvCopy();
+/* 【2026-08-31 ヒデさん指定・バグ修正】バリエーションの「いまの設定で上書き」がリロード後に
+   見た目へ反映されない問題: 上書き自体は保存されていたが、開いた直後は誰も適用していなかった。
+   起動時、選択中の案に上書き(または昇格プリセット)があれば、その数値で開く。 */
+/* ⚠️ ここで即時実行すると、applyGfxVariant→markDirty が後方で let 宣言される変数(syncPresetPills等)に
+   触れて TDZ の ReferenceError になり、リセット(net3d=false)の直後に中断していた(実際に発生)。
+   setTimeout(0) でスクリプト評価が全部終わってから適用する。 */
+setTimeout(function applyOverrideOnBoot() {
+  try {
+    const m = params.converge || 'off';
+    const i = (params.gfxVariantOn || {})[m];
+    if (i == null) return;
+    const v = (GFX_VARIANTS[m] || [])[i];
+    if (!v) return;
+    const ov = ((params.gfxVarOverride || {})[m] || {})[v.name];
+    if (ov || v.preset) applyGfxVariant(i);
+  } catch (e) {}
+}, 0);
 
 function updateKV() {
   const c = params.kv, t = elapsed;
@@ -11248,7 +11265,9 @@ function gfxSnapshotFull() {
       gyroMix: (C.gyroMixBy || {})[mode] || 0, /* 案ごとのジャイロ混ぜ具合 */
       orbitWidth: (C.orbitWidthBy || {})[mode], /* 案ごとの軌道の線の太さ */
       orbitScale: (C.orbitScaleBy || {})[mode], /* 案ごとの軌道のサイズ */
+      net3d: !!C.net3d,                        /* 【2026-08-31】ネットワーク3Dフラグ(欠けると上書き復元で標準軌道に化けた) */
     },
+    net3dNT: params.net3d ? { ...params.net3d } : null,   /* 【2026-08-31】ネットワーク3D専用つまみ一式 */
     mode: pk && C[pk] ? { ...C[pk] } : null,
     meshPts: (C.mesh && C.mesh.pts) ? C.mesh.pts.map(q => ({ x: q.x, y: q.y })) : null,
     gyro: C.gyro ? { ...C.gyro } : null,   /* ジャイロの転がり方 */
@@ -11273,6 +11292,7 @@ function gfxApplyFull(d) {
   }
   const mode = params.converge || 'reel';
   const C = params.conv;
+  if (d.net3dNT && params.net3d) Object.assign(params.net3d, d.net3dNT);   /* 2026-08-31: ネットワーク3Dつまみ復元 */
   if (d.common) {
     for (const k of ['showOuter', 'showInner', 'showDots', 'dotSize', 'dotPersp',
                      'perspK', 'perspScope', 'glow', 'dotRandom', 'orbitSpin', 'orbitDrift', 'frontCut',
@@ -11286,6 +11306,7 @@ function gfxApplyFull(d) {
       if (!C.dotMove) C.dotMove = {};
       C.dotMove[mode] = d.common.dotMove;
     }
+    if (d.common.net3d !== undefined) C.net3d = !!d.common.net3d;   /* 2026-08-31 */
     if (typeof d.common.orbitSpin === 'number') {
       if (!C.orbitSpinBy) C.orbitSpinBy = {};
       C.orbitSpinBy[mode] = d.common.orbitSpin;
@@ -11419,6 +11440,9 @@ function applyGfxVariant(i) {
   const _ov = ((params.gfxVarOverride || {})[mode] || {})[v.name];
   if (_ov || v.preset) {
     gfxApplyFull(JSON.parse(JSON.stringify(_ov || v.preset)));
+    /* 【2026-08-31】古い上書きスナップショットに net3d が無くても、案の定義から必ず立て直す
+       (欠けているとネットワーク3D案が標準軌道の姿で開いてしまう) */
+    if (params.conv) params.conv.net3d = convVarIsNetwork(v) || !!(_ov && _ov.common && _ov.common.net3d);
     if (!params.gfxVariantOn) params.gfxVariantOn = {};
     params.gfxVariantOn[mode] = i;
     /* 上書き/昇格は「保存した数値で開く」が正。調整の控え(gfxTweaks)は復元しない(汚染上書き防止) */
