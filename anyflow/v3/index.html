@@ -2062,11 +2062,27 @@
     </div>
 
     <div class="logos">
-      <!-- 【2026-08-31 ヒデさん指定】ロゴティッカーは支給の埋め込み(Logo Labo)へ差し替え。
-           旧の自前マーキー(marquee-track)は廃止(パネルのロゴ間隔/速度つまみは効かなくなる)。 -->
-      <!-- 【2026-08-31 ヒデさん指定】白背景を透過: allowtransparency+背景transparent(中身が透過対応なら素通し)。
-           中身が白を描いている場合に備えて mix-blend-mode:multiply も掛ける(白=背景色に溶け、黒いロゴはそのまま)。 -->
-      <iframe loading="eager" allowtransparency="true" id="llalo-6252b136-d295-46b5-9ea7-61787cc3adb6" src="https://cdn.alo.app.logo-labo.com/418c7efd-91e3-4d18-b95e-0a79411dd9fc/alo/alignment/6252b136-d295-46b5-9ea7-61787cc3adb6/pc.html" style="width: 100%; height: 70px; border: none; overflow: hidden; background: transparent; mix-blend-mode: multiply;"></iframe>
+      <!-- 【2026-08-31 ヒデさん指定】Logo Labo iframe は取りやめ、前の自前マーキーへ戻した -->
+      <div class="marquee-track" id="marqueeTrack">
+        <div class="mq-set" role="img" aria-label="導入企業ロゴ">
+          <img src="assets/logo-1.png" alt="">
+          <img src="assets/logo-2.png" alt="">
+          <img src="assets/logo-3.png" alt="">
+          <img src="assets/logo-4.png" alt="">
+          <img src="assets/logo-5.png" alt="">
+          <img src="assets/logo-6.png" alt="">
+          <img src="assets/logo-7.png" alt="">
+        </div>
+        <div class="mq-set" aria-hidden="true">
+          <img src="assets/logo-1.png" alt="">
+          <img src="assets/logo-2.png" alt="">
+          <img src="assets/logo-3.png" alt="">
+          <img src="assets/logo-4.png" alt="">
+          <img src="assets/logo-5.png" alt="">
+          <img src="assets/logo-6.png" alt="">
+          <img src="assets/logo-7.png" alt="">
+        </div>
+      </div>
     </div>
 
   </div>
@@ -2085,11 +2101,11 @@
         <svg viewBox="0 0 862 667" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="pfG0" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
-            <!-- 【2026-08-31 ヒデさん指定】前のグラデ(KV軌道と同じ濃い3色)に戻す -->
-            <stop stop-color="#FF5D97"/><stop offset="0.404" stop-color="white"/><stop offset="1" stop-color="#00ABEB"/>
+            <!-- 【2026-08-31 ヒデさん指定】元の5色グラデ(V1と同じ)。3色化は誤りだったので復元 -->
+            <stop stop-color="#FF5D97"/><stop offset="0.370192" stop-color="#FFCFE0"/><stop offset="0.490385" stop-color="white"/><stop offset="0.600962" stop-color="#A2E6FF"/><stop offset="1" stop-color="#00ABEB"/>
           </linearGradient>
             <linearGradient id="pfG1" x1="780.271" y1="225.429" x2="773.594" y2="404.762" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#00ABEB"/><stop offset="0.49" stop-color="white"/><stop offset="1" stop-color="#FF5D97"/>
+            <stop stop-color="#00ABEB"/><stop offset="0.399038" stop-color="#A2E6FF"/><stop offset="0.509615" stop-color="white"/><stop offset="0.629808" stop-color="#FFCFE0"/><stop offset="1" stop-color="#FF5D97"/>
           </linearGradient>
             <filter id="pfGlowF" x="-10%" y="-10%" width="120%" height="120%">
               <feGaussianBlur stdDeviation="2"/>
