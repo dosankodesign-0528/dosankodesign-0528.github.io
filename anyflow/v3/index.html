@@ -5338,7 +5338,13 @@ function convHideLines2() {
 }
 function convLine2Set(q, A, B, color, w, op, front) {
   const d = `M${A.x.toFixed(1)},${A.y.toFixed(1)} L${B.x.toFixed(1)},${B.y.toFixed(1)}`;
-  for (const el of [q.back, q.front]) { el.setAttribute('d', d); el.setAttribute('stroke', color); el.setAttribute('stroke-width', String(w)); }
+  /* 【2026-09-02】色と太さは変わった時だけ書く(毎フレームのsetAttribute削減。dとopacityは毎回) */
+  const sig = color + '|' + w;
+  for (const el of [q.back, q.front]) {
+    el.setAttribute('d', d);
+    if (q._sig !== sig) { el.setAttribute('stroke', color); el.setAttribute('stroke-width', String(w)); }
+  }
+  q._sig = sig;
   q.front.setAttribute('opacity', front ? String(op) : '0');
   q.back.setAttribute('opacity', front ? '0' : String(op));
 }
@@ -10195,7 +10201,9 @@ function updateSections() {
   lastScrollY = nowY;
   updateScrollLock();
   clampScroll();
-  diagWatch();
+  /* 【2026-09-02】診断記録は8フレームに1回へ間引き。elementFromPoint+rect取得×6が毎フレーム
+     強制レイアウトを誘発していた(プロファイル実測2.2%+α)。240行リングは約32秒ぶんに伸びる */
+  if ((frameCount & 7) === 0) diagWatch();
   fastForward();
   replayCheck();
   updateKV();
