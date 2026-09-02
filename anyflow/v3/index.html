@@ -421,8 +421,8 @@
     right: auto;
     text-align: left;
     font-weight: 200;               /* Noto Sans JP ExtraLight (カンプ 15966:42707) */
-    font-size: 50px;                /* 2026-08-29 ヒデさん指定・カンプ 15966:42707: 60 → 50・冒頭に「データを」 */
-    line-height: 85px;              /* 50px × 行間1.7 */
+    font-size: var(--vis-msg-size, 50px);   /* 2026-09-03: パネル調整可(カンプ50px) */
+    line-height: 1.7;               /* 単位なし=サイズ変更に追従(50pxなら85px) */
     color: var(--ink);
     white-space: nowrap;
     overflow: hidden;               /* 下からのトリミング出現用マスク */
@@ -518,7 +518,7 @@
     height: 100%;
   }
   /* 【2026-09-02 ヒデさん指定】「連携が生む、2つの価値」見出しは削除済み(DOM/CSS/JSごと)。 */
-  .val-point { position: absolute; width: 328px; color: var(--ink); }
+  .val-point { position: absolute; width: var(--vp-width, 328px); color: var(--ink); }   /* 2026-09-03: 横幅もパネル調整可 */
   .val-p1 { left: -58.05px; top: 342.19px; }
   .val-p2 { left: 0; top: 529.02px; }
   .val-point .vp-tag {
@@ -3157,6 +3157,8 @@ const DEFAULTS = {
       npOrbitOp0: 0.35,  // パターン2: 出だしのドットの不透明度(止まる頃に100%へ)
       npOrbitBlur0: 2,   // パターン2: 出だしのドットのブラー(px。止まる頃に0へ)
       pHSize: 26, pPSize: 14,   // ポイント1・2の見出し/本文の文字サイズ(px) 2026-09-03
+      pWidth: 328,              // ポイント1・2の横幅(px) 2026-09-03
+      msgSize: 50,              // 日本語メッセージの文字サイズ(px・カンプ50) 2026-09-03
       npOrbitTextGap: 0, // パターン2: ドットが止まってから文字(役割名/Platform)が出るまでの間(秒)
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
       /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
@@ -10248,6 +10250,8 @@ function applyVpSize() {
   const r = document.documentElement.style;
   r.setProperty('--vp-h-size', (v.pHSize != null ? v.pHSize : 26) + 'px');
   r.setProperty('--vp-p-size', (v.pPSize != null ? v.pPSize : 14) + 'px');
+  r.setProperty('--vp-width', (v.pWidth != null ? v.pWidth : 328) + 'px');
+  r.setProperty('--vis-msg-size', (v.msgSize != null ? v.msgSize : 50) + 'px');
 }
 applyVpSize();
 /* 【2026-09-01】実績: Anyflowと「が」の間(px)をCSS変数へ */
@@ -13928,6 +13932,9 @@ function buildPanel() {
      旧「2行/消える・分裂/左下へ移動」の節は廃止。塊は メッセージ / 左グラフィック / ポイント1・2 だけ。 */
   sub(catVis, '② メッセージ');
   note('「データをつなぐことが、強みになる時代へ。」がマスクで出ます。出る“間隔”は下の「表示タイミング」で。');
+  rows.push(slider('メッセージの文字サイズ', 28, 72, 1, () => (sv().vision.msgSize != null ? sv().vision.msgSize : 50),
+    v => { sv().vision.msgSize = v; applyVpSize(); }, v => Math.round(v) + 'px',
+    '「データをつなぐことが、強みになる時代へ。」の文字サイズ。カンプは50px。行間は1.7倍で自動追従。'));
   rows.push(slider('メッセージが出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
     'セクションに入って(発火して)からメッセージが出るまでの時間。'));
   rows.push(slider('メッセージが出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
@@ -14034,6 +14041,9 @@ function buildPanel() {
   rows.push(slider('本文サイズ', 10, 24, 0.5, () => (sv().vision.pPSize != null ? sv().vision.pPSize : 14),
     v => { sv().vision.pPSize = v; applyVpSize(); }, v => v.toFixed(1) + 'px',
     'ポイントの説明文の文字サイズ。カンプは14px。'));
+  rows.push(slider('横幅', 220, 560, 4, () => (sv().vision.pWidth != null ? sv().vision.pWidth : 328),
+    v => { sv().vision.pWidth = v; applyVpSize(); }, v => Math.round(v) + 'px',
+    'ポイント1・2のブロックの横幅。狭いほど本文の折り返しが増えます。カンプは328px。'));
   sub(catVis, '⑤ 図の玉が1つずつ出てくる');
   note('コネクタ・監査などの玉が、1つずつ膨らみながら出てきます。');
   rows.push(slider('1個目が出るまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + '秒',
