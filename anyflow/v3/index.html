@@ -12806,7 +12806,12 @@ function buildPanel() {
     } else {
       /* ネットワーク(タブ): mesh のみ。カテゴリ記号はサイト通しで3番目='C'(見出しにも明記して迷わない) */
       addHead('C ネットワーク');
-      collect('mesh', null).forEach((it, idx) => makePill(it, 'C' + (idx + 1)));
+      /* 【2026-09-02 ヒデさん指定】「G 整った網（測地線）」はCの一番最後に出す。
+         ⚠️ 配列(GFX_VARIANTS)の並びを動かすと調整値(index対応)がズレるので、表示順だけ入れ替える */
+      const meshItems = collect('mesh', null);
+      const geoI = meshItems.findIndex(it => it.v.name === 'G 整った網（測地線）');
+      if (geoI >= 0) meshItems.push(meshItems.splice(geoI, 1)[0]);
+      meshItems.forEach((it, idx) => makePill(it, 'C' + (idx + 1)));
     }
     requestAnimationFrame(() => { syncVarFade(); requestAnimationFrame(syncVarFade); });
     /* このグループで消した案をまとめて戻す */
