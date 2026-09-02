@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>カンペ連動プレゼン — 設定</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">カンペ連動プレゼン <span class="chip">v1</span></h1>
+    <p class="subtitle">Figmaのスライドを画面共有しながら、手元のカンペ（トークスクリプト）をページに連動させます。</p>
+
+    <!-- STEP 1 : URL -->
+    <div class="card">
+      <h2><span class="step-no">1</span>Figmaプロトタイプの共有URLを貼る</h2>
+      <div class="row">
+        <input class="field" id="url" placeholder="https://www.figma.com/proto/……" style="flex:1; min-width:280px;" />
+        <button class="btn primary" id="saveUrl">保存</button>
+      </div>
+      <p class="hint" id="urlHint" style="margin-top:10px;"></p>
+    </div>
+
+    <!-- STEP 1.5 : Figma client-id -->
+    <div class="card">
+      <h2><span class="step-no">2</span>Figmaと連動させる鍵（client-id）を入れる</h2>
+      <p class="hint" style="margin-bottom:12px;">
+        カンペを自動連動させるには、Figmaで無料の「OAuthアプリ」を1回だけ作り、その<b>client-id</b>をここに貼ります。<br>
+        アプリの<b>「Embed API」→「Add an embed origin」</b>に、下の<b>あなたの現在のアドレス</b>を登録してください。
+      </p>
+      <div class="row" style="margin-bottom:10px;">
+        <span class="chip">登録するオリジン</span>
+        <code id="origin" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;"></code>
+        <button class="btn ghost" id="copyOrigin">コピー</button>
+      </div>
+      <div class="row">
+        <input class="field" id="cid" placeholder="client-id をここに貼る（例: A1b2C3d4...）" style="flex:1; min-width:280px;" />
+        <button class="btn primary" id="saveCid">保存</button>
+      </div>
+      <p class="hint" id="cidHint" style="margin-top:10px;"></p>
+    </div>
+
+    <!-- STEP 2 : ウィンドウを開く -->
+    <div class="card">
+      <h2><span class="step-no">3</span>2つのウィンドウを開く</h2>
+      <div class="row">
+        <button class="btn big primary" id="openPresent">🖥 発表ウィンドウを開く<br><small style="font-weight:400;opacity:.85">← これだけを画面共有</small></button>
+        <button class="btn big" id="openNotes">📝 カンペを開く<br><small style="font-weight:400;opacity:.85">← 共有しない・サブ画面へ</small></button>
+      </div>
+      <p class="hint" style="margin-top:12px;">
+        画面共有の時は Chrome の「<b>ウィンドウ</b>」を選んで<b>発表ウィンドウだけ</b>を選択してください。<br>
+        カンペは別ウィンドウなので、サブモニターや iPad（Sidecar）へドラッグすれば観客に映りません。
+      </p>
+    </div>
+
+    <!-- STEP 3 : 原稿 -->
+    <div class="card">
+      <h2><span class="step-no">4</span>ページごとの原稿を書く</h2>
+      <p class="hint" style="margin-bottom:14px;">
+        <b>かんたんな作り方（収録）:</b> 上の「発表ウィンドウ」を開き、プロトタイプを<b>最初から最後までクリックで送る</b>と、
+        訪れたページがこの下に<b>自動で1行ずつ追加</b>されます。あとは各行に原稿を打つだけ。<br>
+        本番はここを開いていなくてOK。原稿はこのPCに保存されます。
+        <span class="dot" id="conn2"></span> <span id="connText" style="color:var(--muted)">発表ウィンドウ未接続</span>
+      </p>
+      <div class="slides" id="slides"></div>
+      <div class="empty-hint" id="emptyHint">まだページがありません。発表ウィンドウでプロトタイプを送ると増えます。</div>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn ghost" id="addManual">＋ 空の行を手動で足す</button>
+        <button class="btn ghost" id="clearAll" style="color:var(--danger)">全消去</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="store.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let currentId = null;
+
+    // ---- STEP1 URL ----
+    $('url').value = PN.getUrl();
+    function refreshUrlHint() {
+      const v = PN.getUrl();
+      $('urlHint').innerHTML = v
+        ? '保存済み。' + (/figma\.com\/(proto|design)\//.test(v) ? '' : '<span style="color:var(--danger)">※ /proto/ か /design/ を含むURLか確認してください。</span>')
+        : '未保存です。';
+    }
+    $('saveUrl').onclick = () => { PN.setUrl($('url').value.trim()); refreshUrlHint(); };
+    refreshUrlHint();
+
+    // ---- STEP1.5 client-id / オリジン ----
+    $('origin').textContent = location.origin;
+    $('copyOrigin').onclick = () => {
+      navigator.clipboard.writeText(location.origin).then(() => { $('copyOrigin').textContent = 'コピー済'; setTimeout(() => $('copyOrigin').textContent = 'コピー', 1200); });
+    };
+    $('cid').value = PN.getClientId();
+    function refreshCidHint() {
+      $('cidHint').innerHTML = PN.getClientId()
+        ? '<span style="color:var(--accent2)">● client-id 保存済み。連動できます。</span>'
+        : '<span style="color:#e0a000">未設定です。このままだとカンペは連動しません（発表ウィンドウの表示だけはできます）。</span>';
+    }
+    $('saveCid').onclick = () => { PN.setClientId($('cid').value); refreshCidHint(); };
+    refreshCidHint();
+
+    // ---- STEP2 ウィンドウ ----
+    $('openPresent').onclick = () => {
+      if (!PN.getUrl()) { alert('先にSTEP1でFigmaのURLを保存してください。'); return; }
+      window.open('present.html', 'pn_present', 'width=1280,height=800');
+    };
+    $('openNotes').onclick = () => window.open('notes.html', 'pn_notes', 'width=680,height=900');
+
+    // ---- STEP3 原稿エディタ ----
+    function renderSlides() {
+      const s = PN.loadScripts();
+      const box = $('slides');
+      box.innerHTML = '';
+      $('emptyHint').style.display = s.order.length ? 'none' : 'block';
+
+      s.order.forEach((id, i) => {
+        const card = s.cards[id] || { label: '', script: '' };
+        const row = document.createElement('div');
+        row.className = 'slide-row' + (id === currentId ? ' current' : '');
+        row.dataset.id = id;
+        row.innerHTML =
+          '<div class="slide-num">' + (i + 1) + '</div>' +
+          '<div class="slide-body">' +
+            '<input class="slide-label" placeholder="このページの見出し（任意）例：課題の説明">' +
+            '<textarea class="field slide-script" placeholder="ここに話す内容（カンペ）を書く"></textarea>' +
+            '<div class="slide-meta">Figmaノード: ' + id + (id === currentId ? '　● 今ここ' : '') + '</div>' +
+          '</div>';
+        const labelEl = row.querySelector('.slide-label');
+        const scriptEl = row.querySelector('.slide-script');
+        labelEl.value = card.label || '';
+        scriptEl.value = card.script || '';
+        labelEl.addEventListener('input', () => updateCard(id, { label: labelEl.value }));
+        scriptEl.addEventListener('input', () => updateCard(id, { script: scriptEl.value }));
+        box.appendChild(row);
+      });
+    }
+
+    function updateCard(id, patch) {
+      const s = PN.loadScripts();
+      s.cards[id] = Object.assign({ label: '', script: '' }, s.cards[id], patch);
+      PN.saveScripts(s);
+      PN.post({ type: 'scripts-updated' }); // カンペ側に即反映
+    }
+
+    $('addManual').onclick = () => {
+      const s = PN.loadScripts();
+      const id = 'manual:' + Date.now();
+      s.order.push(id);
+      s.cards[id] = { label: '', script: '' };
+      PN.saveScripts(s);
+      renderSlides();
+    };
+    $('clearAll').onclick = () => {
+      if (!confirm('原稿とページ一覧をすべて消します。よろしいですか？')) return;
+      PN.saveScripts({ order: [], cards: {} });
+      currentId = null;
+      renderSlides();
+    };
+
+    // ---- 発表ウィンドウからの通知（収録／ハイライト） ----
+    PN.onMessage((msg) => {
+      if (!msg) return;
+      if (msg.type === 'present-ready') { $('conn2').classList.add('on'); $('connText').textContent = '発表ウィンドウ接続中'; }
+      if (msg.type === 'node') {
+        $('conn2').classList.add('on'); $('connText').textContent = '発表ウィンドウ接続中';
+        currentId = msg.nodeId;
+        renderSlides();
+        const cur = document.querySelector('.slide-row.current');
+        if (cur) cur.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      if (msg.type === 'scripts-updated') {
+        // 別ウィンドウでの編集を反映（自分が入力中でなければ）
+        if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') renderSlides();
+      }
+    });
+
+    renderSlides();
+  </script>
+</body>
+</html>

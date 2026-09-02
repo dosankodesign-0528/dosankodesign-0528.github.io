@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>カンペ（このウィンドウは共有しない）</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="notes">
+  <div class="notes-top">
+    <span class="dot" id="conn" title="発表ウィンドウとの接続"></span>
+    <span class="pageno"><b id="pnum">–</b><span id="ptotal"></span></span>
+    <span class="grow"></span>
+    <div class="font-ctl">
+      <button class="btn" id="fdown" title="文字を小さく">A−</button>
+      <span class="chip" id="fsize">40px</span>
+      <button class="btn" id="fup" title="文字を大きく">A＋</button>
+    </div>
+  </div>
+
+  <div class="notes-body">
+    <div class="notes-label" id="label" hidden></div>
+    <div class="notes-script" id="script">発表ウィンドウでページを送ると、ここに原稿が出ます。</div>
+  </div>
+
+  <div class="notes-bottom">
+    <button class="btn" id="prev" title="前へ（Figmaも一緒に戻る）">◀ 戻る</button>
+    <button class="btn" id="next" title="次へ（Figmaも一緒に送る）">送る ▶</button>
+    <div class="next-preview" id="nextprev"></div>
+  </div>
+
+  <script src="store.js"></script>
+  <script>
+    const els = {
+      conn: document.getElementById('conn'),
+      pnum: document.getElementById('pnum'),
+      ptotal: document.getElementById('ptotal'),
+      label: document.getElementById('label'),
+      script: document.getElementById('script'),
+      nextprev: document.getElementById('nextprev'),
+      fsize: document.getElementById('fsize'),
+    };
+
+    let currentId = null;
+
+    // ---- 文字サイズ ----
+    function applyFont() {
+      const px = PN.getFont();
+      els.script.style.fontSize = px + 'px';
+      els.label.style.fontSize = Math.round(px * 0.42) + 'px';
+      els.fsize.textContent = px + 'px';
+    }
+    document.getElementById('fup').onclick = () => { PN.setFont(Math.min(140, PN.getFont() + 4)); applyFont(); };
+    document.getElementById('fdown').onclick = () => { PN.setFont(Math.max(16, PN.getFont() - 4)); applyFont(); };
+    applyFont();
+
+    // ---- 表示更新 ----
+    function render(nodeId) {
+      const s = PN.loadScripts();
+      currentId = nodeId;
+      const idx = s.order.indexOf(nodeId);           // 0始まり
+      const card = s.cards[nodeId];
+      els.pnum.textContent = idx >= 0 ? (idx + 1) : '?';
+      els.ptotal.textContent = s.order.length ? (' / ' + s.order.length) : '';
+
+      const label = card && card.label ? card.label : '';
+      if (label) { els.label.textContent = label; els.label.hidden = false; }
+      else { els.label.hidden = true; }
+
+      const text = card && card.script ? card.script : '';
+      if (text) { els.script.textContent = text; els.script.classList.remove('empty'); }
+      else { els.script.textContent = '（このページのカンペは未入力です）'; els.script.classList.add('empty'); }
+
+      // 次ページのプレビュー
+      const next = idx >= 0 ? s.cards[s.order[idx + 1]] : null;
+      if (next) {
+        els.nextprev.innerHTML = '<b>次:</b> ' + (next.label ? '［' + escapeHtml(next.label) + '］ ' : '') +
+          escapeHtml((next.script || '（未入力）').slice(0, 60));
+      } else { els.nextprev.textContent = ''; }
+    }
+    function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+    // ---- 発表ウィンドウからの通知 ----
+    PN.onMessage((msg) => {
+      if (!msg) return;
+      if (msg.type === 'node') { els.conn.classList.add('on'); render(msg.nodeId); }
+      if (msg.type === 'present-ready') { els.conn.classList.add('on'); }
+      if (msg.type === 'scripts-updated' && currentId) { render(currentId); } // 編集が即反映
+    });
+
+    // ---- おまけ：カンペ側から送り ----
+    document.getElementById('next').onclick = () => PN.post({ type: 'nav', dir: 'forward' });
+    document.getElementById('prev').onclick = () => PN.post({ type: 'nav', dir: 'backward' });
+    // キーボードでも送れる（→ / ←、Space）
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { PN.post({ type: 'nav', dir: 'forward' }); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
+    });
+  </script>
+</body>
+</html>

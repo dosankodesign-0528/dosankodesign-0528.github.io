@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>発表ウィンドウ（このウィンドウを画面共有）</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="present">
+  <div class="present-overlay" id="overlay">
+    <div class="spinner"></div>
+    <div id="ovtext">Figmaプロトタイプを読み込み中…</div>
+  </div>
+  <iframe id="frame" class="present-frame" allowfullscreen allow="fullscreen" title="Figma"></iframe>
+
+  <script src="store.js"></script>
+  <script>
+    const frame = document.getElementById('frame');
+    const overlay = document.getElementById('overlay');
+    const ovtext = document.getElementById('ovtext');
+
+    // ?url= が付いていればそれを、無ければ保存済みURLを使う
+    const params = new URLSearchParams(location.search);
+    const raw = params.get('url') || PN.getUrl();
+
+    function buildEmbed(input) {
+      let u;
+      try { u = new URL(input); } catch (e) { return null; }
+      // Figma埋め込み専用ホストへ差し替え（/proto/ や /design/ のパスはそのまま活かす）
+      u.protocol = 'https:';
+      u.hostname = 'embed.figma.com';
+      u.searchParams.set('embed-host', location.hostname); // 登録した埋め込みオリジンと一致させる
+      // client-id があるとFigmaがページ移動イベントを送ってくれる（連動の必須条件）
+      const cid = PN.getClientId();
+      if (cid) u.searchParams.set('client-id', cid);
+      return u.toString();
+    }
+
+    if (!raw) {
+      ovtext.innerHTML = '設定ページでFigmaのプロトタイプ共有URLを保存してください。';
+      document.querySelector('.spinner').style.display = 'none';
+    } else {
+      const embed = buildEmbed(raw);
+      if (!embed) {
+        ovtext.textContent = 'URLの形式が正しくありません。';
+        document.querySelector('.spinner').style.display = 'none';
+      } else {
+        frame.src = embed;
+        // イベントが来なくても、読み込み完了で黒い画面を必ず外す（保険）
+        frame.addEventListener('load', () => setTimeout(() => overlay.classList.add('hidden'), 500));
+      }
+    }
+
+    // Figma埋め込みからの通知を受け取る
+    window.addEventListener('message', (e) => {
+      // 送り主が Figma でなければ無視（なりすまし対策）
+      if (!/(^https:\/\/embed\.figma\.com$)|(^https:\/\/www\.figma\.com$)/.test(e.origin)) return;
+      const msg = e.data || {};
+      switch (msg.type) {
+        case 'INITIAL_LOAD':
+          overlay.classList.add('hidden');
+          break;
+        case 'PRESENTED_NODE_CHANGED': {
+          overlay.classList.add('hidden');
+          const nodeId = PN.normId(msg.data && msg.data.presentedNodeId);
+          if (nodeId) {
+            const page = PN.ensureCard(nodeId);      // 未知ページなら登録
+            PN.post({ type: 'node', nodeId, page }); // カンペ/設定へ通知
+          }
+          break;
+        }
+        case 'LOGIN_SCREEN_SHOWN':
+          document.querySelector('.spinner').style.display = 'none';
+          ovtext.innerHTML = 'Figmaのログイン画面が出ています。<br>このファイルは「リンクを知っている全員が閲覧可」にするか、Figmaにログインしてください。';
+          break;
+        case 'PASSWORD_SCREEN_SHOWN':
+          document.querySelector('.spinner').style.display = 'none';
+          ovtext.textContent = 'このプロトタイプはパスワード保護されています。';
+          break;
+      }
+    });
+
+    // カンペ側の「◀ ▶」ボタンから送りの依頼が来たらFigmaへ中継
+    function toFigma(payload) {
+      let origin = 'https://embed.figma.com';
+      try { origin = new URL(frame.src).origin; } catch (e) {}
+      frame.contentWindow.postMessage(payload, origin);
+    }
+    PN.onMessage((msg) => {
+      if (!msg) return;
+      if (msg.type === 'nav') {
+        toFigma({ type: msg.dir === 'backward' ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' });
+      }
+      if (msg.type === 'restart') {
+        toFigma({ type: 'RESTART' });
+      }
+    });
+
+    // 発表ウィンドウが開いたことを知らせる
+    PN.post({ type: 'present-ready' });
+  </script>
+</body>
+</html>

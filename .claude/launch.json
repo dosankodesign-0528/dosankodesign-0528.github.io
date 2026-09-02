@@ -146,6 +146,15 @@
         "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v3' && exec python3 -m http.server 8776"
       ],
       "port": 8776
+    },
+    {
+      "name": "presenter-notes",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/presenter-notes/v1' && exec python3 -m http.server 8780"
+      ],
+      "port": 8780
     }
   ]
 }
