@@ -24,10 +24,23 @@
       <iframe id="pv" allow="fullscreen" title="スライドプレビュー"></iframe>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
     </div>
-    <!-- 右：カンペ原稿 -->
+    <!-- 右：カンペ原稿（表示 / 直接編集） -->
     <div class="notes-body">
-      <div class="notes-label" id="label" hidden></div>
-      <div class="notes-script" id="script">発表タブでページを送ると、ここに原稿が出ます。手元の「送る ▶」でも送れます。</div>
+      <div class="notes-scroll" id="displayWrap">
+        <div class="notes-label" id="label" hidden></div>
+        <div class="notes-script" id="script">発表タブでページを送ると、ここに原稿が出ます。手元の「送る ▶」でも送れます。</div>
+      </div>
+      <div class="notes-edit" id="editArea" hidden>
+        <input id="editLabel" placeholder="見出し（任意）例：課題の説明" />
+        <textarea id="editScript" placeholder="このページで話す内容を書く"></textarea>
+      </div>
+      <div class="notes-editbar">
+        <button class="btn" id="editBtn">✎ このページを編集</button>
+        <span class="saved-flash" id="savedFlash">保存しました</span>
+        <span class="grow"></span>
+        <button class="btn" id="cancelBtn" hidden>キャンセル</button>
+        <button class="btn primary" id="saveBtn" hidden>保存</button>
+      </div>
     </div>
   </div>
 
@@ -49,10 +62,20 @@
       fsize: document.getElementById('fsize'),
       pv: document.getElementById('pv'),
       pvBadge: document.getElementById('pvBadge'),
+      displayWrap: document.getElementById('displayWrap'),
+      editArea: document.getElementById('editArea'),
+      editLabel: document.getElementById('editLabel'),
+      editScript: document.getElementById('editScript'),
+      editBtn: document.getElementById('editBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      cancelBtn: document.getElementById('cancelBtn'),
+      savedFlash: document.getElementById('savedFlash'),
     };
 
     let currentId = null;
-    let pvNode = null; // プレビューが今表示しているノード（無駄な再ナビ防止）
+    let pvNode = null;   // プレビューが今表示しているノード（無駄な再ナビ防止）
+    let editing = false; // 直接編集中か
+    let editingId = null;// 編集対象のノード（編集中に送られても対象は固定）
 
     // ---- 文字サイズ ----
     function applyFont() {
@@ -72,6 +95,7 @@
       u.protocol = 'https:';
       u.hostname = 'embed.figma.com';
       u.searchParams.set('embed-host', location.hostname);
+      u.searchParams.set('footer', 'false'); // 下部のFigmaフッターを消す
       const cid = PN.getClientId();
       if (cid) u.searchParams.set('client-id', cid);
       return u.toString();
@@ -132,6 +156,7 @@
       }
       if (msg.type === 'scripts-updated' && currentId) { render(currentId); }
       if (msg.type === 'deck-changed') {
+        if (editing) exitEdit();
         currentId = null; pvNode = null;
         els.label.hidden = true;
         els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';
@@ -142,10 +167,52 @@
       }
     });
 
+    // ---- 直接編集（Figma Slides の Edit のように、その場で書いて保存）----
+    function enterEdit() {
+      if (!currentId) { alert('スライドのページに来てから編集してください（発表タブでそのページを表示）。'); return; }
+      editing = true; editingId = currentId;
+      const c = (PN.loadScripts().cards[editingId]) || { label: '', script: '' };
+      els.editLabel.value = c.label || '';
+      els.editScript.value = c.script || '';
+      els.displayWrap.hidden = true; els.editArea.hidden = false;
+      els.editBtn.hidden = true; els.saveBtn.hidden = false; els.cancelBtn.hidden = false;
+      els.editScript.focus();
+    }
+    function exitEdit() {
+      editing = false; editingId = null;
+      els.editArea.hidden = true; els.displayWrap.hidden = false;
+      els.editBtn.hidden = false; els.saveBtn.hidden = true; els.cancelBtn.hidden = true;
+    }
+    function saveEdit() {
+      if (!editingId) { exitEdit(); return; }
+      const s = PN.loadScripts();
+      if (!s.order.includes(editingId)) s.order.push(editingId);
+      s.cards[editingId] = Object.assign({ label: '', script: '' }, s.cards[editingId],
+        { label: els.editLabel.value, script: els.editScript.value });
+      PN.saveScripts(s);
+      PN.post({ type: 'scripts-updated' }); // 設定ページ等にも即反映
+      exitEdit();
+      render(currentId);
+      els.savedFlash.classList.add('show');
+      setTimeout(() => els.savedFlash.classList.remove('show'), 1500);
+    }
+    els.editBtn.onclick = enterEdit;
+    els.saveBtn.onclick = saveEdit;
+    els.cancelBtn.onclick = () => { exitEdit(); render(currentId); };
+    // 編集中は Cmd/Ctrl+Enter で保存、Esc でキャンセル
+    els.editScript.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+      if (e.key === 'Escape') { e.preventDefault(); exitEdit(); render(currentId); }
+    });
+
     // ---- 手元から送り（共有スライドが真実の元。発表タブへ依頼→跳ね返りで全部が揃う）----
     document.getElementById('next').onclick = () => PN.post({ type: 'nav', dir: 'forward' });
     document.getElementById('prev').onclick = () => PN.post({ type: 'nav', dir: 'backward' });
     window.addEventListener('keydown', (e) => {
+      // 編集中・入力欄にフォーカス中はページ送りしない（普通に文字入力させる）
+      if (editing) return;
+      const t = e.target.tagName;
+      if (t === 'TEXTAREA' || t === 'INPUT') return;
       if (e.key === 'ArrowRight' || e.key === ' ') { PN.post({ type: 'nav', dir: 'forward' }); e.preventDefault(); }
       if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
     });

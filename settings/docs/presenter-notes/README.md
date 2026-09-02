@@ -35,6 +35,10 @@ Figma のスライドを見せながら、手元の「カンペ（トークス�
   `{node}` を配信 → カンペがプレビューを `NAVIGATE_TO_FRAME` で追従＋原稿更新。
 - **双方向**：present を直接送ってもカンペが追従。ループはプレビューが present の `node` のみで動く設計で防止。
 - カンペが後から開いても、`notes-ready` → present が現在ノードを再送して同期。
+- **直接編集**：右下「✎ このページを編集」→ その場で見出し＋原稿を書いて「保存」（Figma Slides の Edit 風）。
+  Cmd/Ctrl+Enter で保存・Esc でキャンセル。保存はアクティブデッキの `card[currentId]` へ（`scripts-updated` で設定ページにも即反映）。
+- **Figma フッター（ロゴ/ファイル名/Edited）は非表示**：埋め込みURLに `footer=false`（present/notes 両方）。残る `<1/42>` は Figma のページナビ。
+- ⚠️ `hidden` 属性は `.btn`/`.notes-edit` の display 指定に負けるため、style.css 先頭に `[hidden]{display:none!important}` が必須。
 
 ## 複数プレゼン（デッキ）
 

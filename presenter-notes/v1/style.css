@@ -15,6 +15,8 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); }
+/* hidden 属性を最優先で効かせる（.btn や .notes-edit の display 指定に負けないように） */
+[hidden] { display: none !important; }
 
 /* ---------- 共通パーツ ---------- */
 .btn {
@@ -120,8 +122,21 @@ body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: col
   .notes-preview { flex: 0 0 38%; border-right: 0; border-bottom: 1px solid var(--line); }
 }
 
-.notes-body { flex: 1; overflow-y: auto; padding: 24px 30px; }
+.notes-body { flex: 1; overflow-y: auto; padding: 24px 30px 12px; display: flex; flex-direction: column; }
 .notes-label { color: var(--accent); font-size: 15px; margin-bottom: 10px; font-weight: 600; }
+.notes-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+/* 直接編集モード */
+.notes-edit { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.notes-edit input { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; }
+.notes-edit input:focus, .notes-edit textarea:focus { outline: none; border-color: var(--accent); }
+.notes-edit textarea { flex: 1; min-height: 120px; resize: none; background: var(--panel2); color: #f3f5f8;
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 20px; line-height: 1.6; font-family: inherit; }
+.notes-editbar { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding-top: 10px; }
+.notes-editbar .grow { flex: 1; }
+.notes-editbar .btn { padding: 8px 14px; font-size: 14px; }
+.saved-flash { color: var(--accent2); font-size: 13px; opacity: 0; transition: opacity .2s; }
+.saved-flash.show { opacity: 1; }
 .notes-script { white-space: pre-wrap; line-height: 1.65; color: #f3f5f8; }
 .notes-script.empty { color: #5b6472; font-style: italic; }
 .notes-bottom {

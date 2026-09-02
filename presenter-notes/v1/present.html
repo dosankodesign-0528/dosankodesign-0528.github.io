@@ -32,6 +32,7 @@
       u.protocol = 'https:';
       u.hostname = 'embed.figma.com';
       u.searchParams.set('embed-host', location.hostname); // 登録した埋め込みオリジンと一致させる
+      u.searchParams.set('footer', 'false');               // 下部のFigmaフッター(ロゴ/ファイル名/Edited)を消す
       // client-id があるとFigmaがページ移動イベントを送ってくれる（連動の必須条件）
       const cid = PN.getClientId();
       if (cid) u.searchParams.set('client-id', cid);

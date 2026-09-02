@@ -9,6 +9,8 @@
 
 | 日付 | プロダクト | 症状（ヒデさんの言葉で） | 真因 | 対処回数 |
 |---|---|---|---|---|
+| 2026-09-02 | presenter-notes | カンペから「送る」を押してもスライドが動かない/プレビューが同期しない | Figma埋め込みへのpostMessage(NAVIGATE_*)の送信先originが間違い。`embed.figma.com`宛だと黙って無視される→`'*'`宛で解決（受信はclient-idだけで動く） | 1 |
+| 2026-09-02 | presenter-notes | 編集エリア・保存ボタンが hidden にしても消えない | `hidden`属性が `.btn{display:inline-flex}`/`.notes-edit{display:flex}` に上書きされていた→ `[hidden]{display:none!important}` を先頭に追加 | 1 |
 | 2026-08-30 | anyflow v3 | 導入事例カードが「1枚ずつ」に戻る（再発） | 焼き込み設定ダンプ内の旧cardGap値が、migrationフラグ済みでも復活する構造 | 3回目で根治 |
 | 2026-08-30 | anyflow v3 | Visionメッセージの「下からマスクで出る」が消えた | 強み強調の旧str-goが overflow:visible を常時付与しマスクを無効化 | 1 |
 | 2026-08-29 | anyflow v3 | 開発者体験2のデザインが「全く変わらない」 | migrationが localStorage へ書き戻し忘れ→リロード1回目だけ直って見え、2回目で保存値に復帰 | 3回目で根治 |
