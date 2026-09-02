@@ -54,6 +54,11 @@
 | [anyflow/anyflow-postmortem.md](anyflow/anyflow-postmortem.md) | 事故の振り返り（[general/WORKING-RULES.md](general/WORKING-RULES.md) の根拠になった実測） |
 | [anyflow/BACKDROP-FILTER-HANDOFF.md](anyflow/BACKDROP-FILTER-HANDOFF.md) | v2 KV のすりガラス(backdrop-filter)問題の引き継ぎ書（原因複数・試したこと・検証法・次の一手。別アカ継続用） |
 
+### presenter-notes（カンペ連動プレゼン）
+| ファイル | 中身 |
+|---|---|
+| [presenter-notes/README.md](presenter-notes/README.md) | セットアップ＆運用（仕組み・Figma OAuth 設定・使い方・実運用の注意・デプロイ・検証記録） |
+
 ### travel-shiori（旅のしおり）
 | ファイル | 中身 |
 |---|---|

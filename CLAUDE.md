@@ -286,6 +286,7 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **anyflow-embed-v2（アップデート案）** | **https://anyflow-embed-v2.vercel.app** | 親リポ subdir (main) | anyflow-embed-v2 | 手動（`vercel --prod`） |
 | **abashiri-site（網走 V1.0・公開中）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✋ 手動（Git連携解除・Root Directory空）。push しても本番は動かない。上げ直しは `cd abashiri/v1 && npx vercel --prod --yes` |
 | **abashiri-site-v2（網走 アップデート案）** | **https://abashiri-site-v2.vercel.app** | 親リポ subdir (main) | abashiri-site-v2 | 手動（`vercel --prod`） |
+| **presenter-notes（カンペ連動プレゼン）** | **https://presenter-notes-seven.vercel.app** | 親リポ subdir (main) | presenter-notes | 手動（`cd presenter-notes/v1 && npx vercel --prod --yes`）。※Figma OAuth の client-id 必須・別URLは embed origin 追加登録。詳細 [settings/docs/presenter-notes/README.md](settings/docs/presenter-notes/README.md) |
 | travel-shiori（旅のしおり） | https://tabinoshiori-swart.vercel.app | 親リポ subdir (main) | **tabinoshiori**（※ project 名が違う） | - |
 | nittei-chousei | https://nittei-chousei-pi.vercel.app | submodule (master) | nittei-chousei | - |
 
