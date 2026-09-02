@@ -19,6 +19,8 @@
     const overlay = document.getElementById('overlay');
     const ovtext = document.getElementById('ovtext');
 
+    let lastNodeId = null; // 今表示しているページ（後から開いたカンペに教え直す用）
+
     // ?url= が付いていればそれを、無ければ保存済みURLを使う
     const params = new URLSearchParams(location.search);
     const raw = params.get('url') || PN.getUrl();
@@ -64,6 +66,7 @@
           overlay.classList.add('hidden');
           const nodeId = PN.normId(msg.data && msg.data.presentedNodeId);
           if (nodeId) {
+            lastNodeId = nodeId;
             const page = PN.ensureCard(nodeId);      // 未知ページなら登録
             PN.post({ type: 'node', nodeId, page }); // カンペ/設定へ通知
           }
@@ -81,10 +84,9 @@
     });
 
     // カンペ側の「◀ ▶」ボタンから送りの依頼が来たらFigmaへ中継
+    // ※ 送信先は '*' でないとFigma埋め込みは受け取らない（embed.figma.com宛だと無視される・実測）
     function toFigma(payload) {
-      let origin = 'https://embed.figma.com';
-      try { origin = new URL(frame.src).origin; } catch (e) {}
-      frame.contentWindow.postMessage(payload, origin);
+      frame.contentWindow.postMessage(payload, '*');
     }
     PN.onMessage((msg) => {
       if (!msg) return;
@@ -97,6 +99,10 @@
       // 設定でプレゼン（デッキ）を切り替えたら、新しいプロトで開き直す
       if (msg.type === 'deck-changed') {
         location.reload();
+      }
+      // カンペが後から開いたら、今のページを教え直す（開く順番に依存しないように）
+      if (msg.type === 'notes-ready' && lastNodeId) {
+        PN.post({ type: 'node', nodeId: lastNodeId });
       }
     });
 

@@ -8,7 +8,7 @@
 </head>
 <body class="notes">
   <div class="notes-top">
-    <span class="dot" id="conn" title="発表ウィンドウとの接続"></span>
+    <span class="dot" id="conn" title="スライドとの接続"></span>
     <span class="pageno"><b id="pnum">–</b><span id="ptotal"></span></span>
     <span class="grow"></span>
     <div class="font-ctl">
@@ -18,14 +18,22 @@
     </div>
   </div>
 
-  <div class="notes-body">
-    <div class="notes-label" id="label" hidden></div>
-    <div class="notes-script" id="script">発表ウィンドウでページを送ると、ここに原稿が出ます。</div>
+  <div class="notes-main">
+    <!-- 左：スライドのプレビュー（共有中のスライドと連動。操作はできない） -->
+    <div class="notes-preview">
+      <iframe id="pv" allow="fullscreen" title="スライドプレビュー"></iframe>
+      <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
+    </div>
+    <!-- 右：カンペ原稿 -->
+    <div class="notes-body">
+      <div class="notes-label" id="label" hidden></div>
+      <div class="notes-script" id="script">発表タブでページを送ると、ここに原稿が出ます。手元の「送る ▶」でも送れます。</div>
+    </div>
   </div>
 
   <div class="notes-bottom">
-    <button class="btn" id="prev" title="前へ（Figmaも一緒に戻る）">◀ 戻る</button>
-    <button class="btn" id="next" title="次へ（Figmaも一緒に送る）">送る ▶</button>
+    <button class="btn" id="prev" title="前へ（共有スライドも一緒に戻る）">◀ 戻る</button>
+    <button class="btn" id="next" title="次へ（共有スライドも一緒に送る）">送る ▶</button>
     <div class="next-preview" id="nextprev"></div>
   </div>
 
@@ -39,9 +47,12 @@
       script: document.getElementById('script'),
       nextprev: document.getElementById('nextprev'),
       fsize: document.getElementById('fsize'),
+      pv: document.getElementById('pv'),
+      pvBadge: document.getElementById('pvBadge'),
     };
 
     let currentId = null;
+    let pvNode = null; // プレビューが今表示しているノード（無駄な再ナビ防止）
 
     // ---- 文字サイズ ----
     function applyFont() {
@@ -54,11 +65,42 @@
     document.getElementById('fdown').onclick = () => { PN.setFont(Math.max(16, PN.getFont() - 4)); applyFont(); };
     applyFont();
 
-    // ---- 表示更新 ----
+    // ---- スライドプレビュー（同じFigmaプロトを埋め込み、共有スライドと同じページへ動かす）----
+    function buildEmbed(input) {
+      let u;
+      try { u = new URL(input); } catch (e) { return null; }
+      u.protocol = 'https:';
+      u.hostname = 'embed.figma.com';
+      u.searchParams.set('embed-host', location.hostname);
+      const cid = PN.getClientId();
+      if (cid) u.searchParams.set('client-id', cid);
+      return u.toString();
+    }
+    function loadPreview() {
+      const embed = buildEmbed(PN.getUrl());
+      if (embed) els.pv.src = embed;
+    }
+    // プレビューを指定ノードへ（共有スライドに追従）。同じなら何もしない。
+    function previewGoto(nodeId) {
+      if (!nodeId || nodeId === pvNode) return;
+      pvNode = nodeId;
+      // 送信先は '*'（embed.figma.com宛だと無視される・実測）
+      els.pv.contentWindow.postMessage(
+        { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: nodeId } }, '*');
+    }
+    loadPreview();
+    // プレビューiframe自身のFigmaメッセージは「読み込み完了の合図」だけ使い、操作の判断には使わない（ループ防止）
+    window.addEventListener('message', (e) => {
+      if (!/figma\.com/.test(e.origin)) return;
+      const m = e.data || {};
+      if (m.type === 'INITIAL_LOAD') { els.pvBadge.classList.add('hidden'); }
+    });
+
+    // ---- 原稿の表示更新 ----
     function render(nodeId) {
       const s = PN.loadScripts();
       currentId = nodeId;
-      const idx = s.order.indexOf(nodeId);           // 0始まり
+      const idx = s.order.indexOf(nodeId);
       const card = s.cards[nodeId];
       els.pnum.textContent = idx >= 0 ? (idx + 1) : '?';
       els.ptotal.textContent = s.order.length ? (' / ' + s.order.length) : '';
@@ -71,7 +113,6 @@
       if (text) { els.script.textContent = text; els.script.classList.remove('empty'); }
       else { els.script.textContent = '（このページのカンペは未入力です）'; els.script.classList.add('empty'); }
 
-      // 次ページのプレビュー
       const next = idx >= 0 ? s.cards[s.order[idx + 1]] : null;
       if (next) {
         els.nextprev.innerHTML = '<b>次:</b> ' + (next.label ? '［' + escapeHtml(next.label) + '］ ' : '') +
@@ -80,29 +121,37 @@
     }
     function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
-    // ---- 発表ウィンドウからの通知 ----
+    // ---- 発表タブ（＝共有スライド／真実の元）からの通知 ----
     PN.onMessage((msg) => {
       if (!msg) return;
-      if (msg.type === 'node') { els.conn.classList.add('on'); render(msg.nodeId); }
       if (msg.type === 'present-ready') { els.conn.classList.add('on'); }
-      if (msg.type === 'scripts-updated' && currentId) { render(currentId); } // 編集が即反映
-      if (msg.type === 'deck-changed') { // プレゼン切替：表示をリセット
-        currentId = null;
+      if (msg.type === 'node') {
+        els.conn.classList.add('on');
+        render(msg.nodeId);       // 原稿を更新
+        previewGoto(msg.nodeId);  // プレビューも同じページへ
+      }
+      if (msg.type === 'scripts-updated' && currentId) { render(currentId); }
+      if (msg.type === 'deck-changed') {
+        currentId = null; pvNode = null;
         els.label.hidden = true;
-        els.script.textContent = 'プレゼンが切り替わりました。発表ウィンドウでページを送ると原稿が出ます。';
+        els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';
         els.script.classList.add('empty');
         els.pnum.textContent = '–'; els.ptotal.textContent = ''; els.nextprev.textContent = '';
+        els.pvBadge.classList.remove('hidden');
+        loadPreview();
       }
     });
 
-    // ---- おまけ：カンペ側から送り ----
+    // ---- 手元から送り（共有スライドが真実の元。発表タブへ依頼→跳ね返りで全部が揃う）----
     document.getElementById('next').onclick = () => PN.post({ type: 'nav', dir: 'forward' });
     document.getElementById('prev').onclick = () => PN.post({ type: 'nav', dir: 'backward' });
-    // キーボードでも送れる（→ / ←、Space）
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === ' ') { PN.post({ type: 'nav', dir: 'forward' }); e.preventDefault(); }
       if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
     });
+
+    // 発表タブに「今のページを教えて」と依頼（開く順番に依存しないように）
+    PN.post({ type: 'notes-ready' });
   </script>
 </body>
 </html>

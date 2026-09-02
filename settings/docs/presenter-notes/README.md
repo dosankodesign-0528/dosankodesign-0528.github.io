@@ -19,6 +19,22 @@ Figma のスライドを見せながら、手元の「カンペ（トークス�
 
 > 🔑 **Figma のイベント送受信には OAuth アプリの `client-id` が必須**（無いと postMessage が一切飛ばない・実測確定）。
 > **client-id とオリジン登録はアカウントに1回だけ**。デッキ（プレゼン）や Figma ファイルには依存せず**永久に使い回す**。
+>
+> 🔑🔑 **送信コマンド（親→iframe）は `targetOrigin: '*'` でないと効かない**（最重要ハマり・実測）。
+> `NAVIGATE_FORWARD` / `NAVIGATE_BACKWARD` / `NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS`（data:`{nodeId:"a:b"}`）を
+> `embed.figma.com`（iframe の src origin）宛に送ると**黙って無視される**。`'*'` 宛なら動く。受信は client-id だけで動く。
+> OAuth アプリは **Draft のままで送受信とも動作**（publish 不要）。
+
+## 発表者ビュー（カンペ側にプレビュー＋双方向操作）
+
+カンペ（`notes.html`）は Figma Slides の発表者ビュー風：**左=スライドのプレビュー**（同じ
+プロトを埋め込み・`pointer-events:none` で操作不可）＋**右=原稿**＋**下=◀戻る/送る▶**。
+
+- **共有スライド（`present.html`）が“真実の元”**。カンペの「送る」→ BroadcastChannel `{nav}` →
+  present が `NAVIGATE_FORWARD` を Figma へ（`'*'`）→ present が `PRESENTED_NODE_CHANGED` 発火 →
+  `{node}` を配信 → カンペがプレビューを `NAVIGATE_TO_FRAME` で追従＋原稿更新。
+- **双方向**：present を直接送ってもカンペが追従。ループはプレビューが present の `node` のみで動く設計で防止。
+- カンペが後から開いても、`notes-ready` → present が現在ノードを再送して同期。
 
 ## 複数プレゼン（デッキ）
 
@@ -44,7 +60,7 @@ Figma のスライドを見せながら、手元の「カンペ（トークス�
 |---|---|---|---|
 | 設定 | `index.html` | 最初に開くタブ | URL・client-id・デッキ・原稿を管理 |
 | スライド | `present.html` | 「スライドを開く」= **同じChrome内の新しいタブ** | Figma 埋め込み。他サイトのタブと切替可 |
-| カンペ | `notes.html` | 「カンペを開く」= **別ウィンドウ** | 共有しない。ページ連動・文字サイズ A＋/A− |
+| カンペ | `notes.html` | 「カンペを開く」= **別ウィンドウ** | 共有しない。発表者ビュー（スライドプレビュー＋原稿＋送りボタン）・文字サイズ A＋/A− |
 
 ## 使い方（Chrome タブ切り替え式）
 
@@ -80,6 +96,8 @@ cd "/Users/hideyuki/Developer/Claude Code/presenter-notes/v1" && npx vercel --pr
 - Figma 埋め込み表示（リンク共有ONで未ログインでも可）✅
 - client-id 設定後 `INITIAL_LOAD` / `PRESENTED_NODE_CHANGED` 受信 ✅（localhost・Vercel 両方）
 - 発表 → カンペへ BroadcastChannel → ページ番号描画 ✅
+- **送信コマンド（`'*'` 宛）**: `NAVIGATE_FORWARD` でスライド前進（1/42→2/42）✅ / `NAVIGATE_TO_FRAME` でジャンプ ✅
+- **カンペの「送る」→ 共有スライド前進**（BroadcastChannel 経由の全経路）✅
 - 複数デッキが URL・原稿ともに独立 ✅ / 旧データの自動移行 ✅
 - 文字サイズ A＋/A−（40→48→44px 保存）✅
 
