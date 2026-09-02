@@ -3145,6 +3145,7 @@ const DEFAULTS = {
          カンプの位置（所定の位置）でピタッと止まる（2026-08-18 ヒデさん指定） */
       npSpinDeg: 40,     // 止まるまでに回る角度
       npSpinDur: 1.0,    // 回りきるまでの秒数
+      introPat: 1,       // 出現パターン 1=現状(一括ブラー) 2=ドットが動くバージョン(2026-09-02 ヒデさん指定)
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
       /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
          g0=傾き大きい楕円(いま青く見える方) / g1=傾き小さい楕円(いまピンクに見える方)。
@@ -8726,10 +8727,21 @@ function updateVision(p) {
      ⚠️ 角度は pfDotPos(d, d.deg - totalRot + rot) で使うので、
         rot = totalRot のとき ちょうど d.deg（＝カンプの位置）になる。
         そこへ向かって手前から回してくれば「少し回って所定の位置で止まる」になる */
+  /* 【2026-09-02 ヒデさん指定】出現パターン2「ドットが動くバージョン」:
+     輪がブラーで出たあと、ドットが軌道をちょうど1回転(360°)してカンプ位置で止まる。
+     開始は輪が6割出た時点・所要は「止まるまで」(npSpinDur)を流用 */
+  const pat2 = noPin && (c.introPat || 1) === 2;
+  const pat2SpinAt = miniAt + c.miniDur * 0.6;
+  const pat2SpinEnd = pat2SpinAt + Math.max(0.1, c.npSpinDur);
   if (noPin) {
-    const t2 = npBlockT('visionDots', SECS.vision.querySelector('.pin-vp:not(.np-vp)'));
-    const kk = t2 < 0 ? 0 : easeOutQ(clamp01(t2 / Math.max(0.1, c.npSpinDur)));
-    rot = totalRot - c.npSpinDeg * params.direction * (1 - kk);
+    if (pat2) {
+      const kk = A < pat2SpinAt ? 0 : easeIO(clamp01((A - pat2SpinAt) / Math.max(0.1, c.npSpinDur)));
+      rot = totalRot - 360 * params.direction * (1 - kk);
+    } else {
+      const t2 = npBlockT('visionDots', SECS.vision.querySelector('.pin-vp:not(.np-vp)'));
+      const kk = t2 < 0 ? 0 : easeOutQ(clamp01(t2 / Math.max(0.1, c.npSpinDur)));
+      rot = totalRot - c.npSpinDeg * params.direction * (1 - kk);
+    }
   }
   else if (S > 0) {
     if (S < brakeStart) rot = v * S;
@@ -8761,8 +8773,10 @@ function updateVision(p) {
   /* 【2026-08-29 ヒデさん指定】no-pin では Platform・役割名・ドットを分けず、グラフィックごと
      pfWrap の mi(ブラー)で一括登場させる(A>=miniAt で全部 1)。Point01/02 だけあとからディレイで出す。 */
   const grOn = noPin ? (A >= miniAt ? 1 : 0) : 1;
-  rv(visEls.pfTitle, noPin ? grOn : easeOutQ(clamp01((C - 0.05) / T_IN)), B);
-  rv(visEls.pfSub,   noPin ? grOn : easeOutQ(clamp01((C - 0.20) / T_IN)), B);
+  /* パターン2: Platform文字と役割名は「1回転が終わってから」ブラー出現 */
+  const pat2TxtK = pat2 ? easeOutQ(clamp01((A - pat2SpinEnd) / T_IN)) : 0;
+  rv(visEls.pfTitle, noPin ? (pat2 ? pat2TxtK : grOn) : easeOutQ(clamp01((C - 0.05) / T_IN)), B);
+  rv(visEls.pfSub,   noPin ? (pat2 ? pat2TxtK : grOn) : easeOutQ(clamp01((C - 0.20) / T_IN)), B);
   /* 「2つの価値」が出てから、ひと呼吸おいて Point 01 → Point 02 (2026-08-15 指定) */
   /* 位置は調整パネルから動かせる (カンプ位置からの相対ずらし) */
   /* ⚠️【2026-08-27】この横ズレは PC(1440座標系)で位置を合わせるためのもの。
@@ -8771,12 +8785,14 @@ function updateVision(p) {
   const offX = isMobile ? 0 : 1;
   const P_IN = (c.npPointDur != null ? c.npPointDur : 0.8);   /* 2026-08-31: ポイントの出現時間(パネル) */
   /* 【2026-09-02 ヒデさん指定】「2つの価値」見出し(valHead)は削除。Point 01/02 のみ。 */
-  rvAt(visEls.valP1,   easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
-  rvAt(visEls.valP2,   easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / P_IN)), B, 12, c.p2X * offX, c.p2Y);
+  /* パターン2: ポイント1・2は「文字のブラー出現が終わる瞬間」に出きるよう終点を合わせる */
+  const pat2PtK = pat2 ? easeOutQ(clamp01((A - (pat2SpinEnd + T_IN - P_IN)) / P_IN)) : 0;
+  rvAt(visEls.valP1,   pat2 ? pat2PtK : easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
+  rvAt(visEls.valP2,   pat2 ? pat2PtK : easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / P_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur + 1.8)) : (S < 0 ? -99 : S - (brakeStart + brake));
   /* no-pin は役割名もグラフィックと一括(grOn)。固定モードのみ従来のディレイ */
-  visEls.names.forEach((el, i) => rv(el, noPin ? grOn : easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
+  visEls.names.forEach((el, i) => rv(el, noPin ? (pat2 ? pat2TxtK : grOn) : easeOutQ(clamp01((D - i * 0.10) / T_IN)), B));
 }
 
 /* ---------- 実績: 画面に入ったらカウント開始 (時間駆動) ---------- */
@@ -13859,7 +13875,16 @@ function buildPanel() {
     '真ん中(0)で行まるごと同時。左右どちらへ動かしても1文字ずつバラバラに出ます。', { signed: true }));
 
   sub(catVis, '③ 左のグラフィック（軌道）');
-  note('メッセージの下（左）にブラーで出る軌道グラフィック。Platform・玉・役割名も分けず一括で出ます。出る“間隔”は下の「表示タイミング」で。');
+  note('メッセージの下（左）にブラーで出る軌道グラフィック。出る“間隔”は下の「表示タイミング」で。');
+  /* 【2026-09-02 ヒデさん指定】出現パターンの切り替え(現状は残す) */
+  const VIS_INTROS = [
+    { key: 1, name: '一括ブラー（現状）', tip: '軌道・玉・役割名・Platform文字が全部いっしょにブラーで出ます。' },
+    { key: 2, name: 'ドットが動くバージョン', tip: '軌道がブラーで出現 → ドットが軌道を1回転して止まる → 役割名とPlatformがブラーで出現。ポイント1・2もその瞬間に出そろいます。回転の所要は下の「玉の周回」の「止まるまで」で調整。' },
+  ];
+  pillRow(VIS_INTROS, it => (sv().vision.introPat || 1) === it.key,
+    it => { sv().vision.introPat = it.key; markDirty(); },
+    { get: () => sv().vision.introPat || 1, set: v => { sv().vision.introPat = v; } },
+    { tip: it => it.tip });
   rows.push(slider('横の位置', -600, 600, 5, () => sv().vision.noPinX || 0, v => sv().vision.noPinX = v, v => v + 'px',
     '右へ動かすほど右へ。0 でカンプ位置。（✏️編集モードで直接ドラッグでも動かせます）', { signed: true }));
   rows.push(slider('縦の位置', -400, 400, 5, () => (sv().vision.noPinY != null ? sv().vision.noPinY : 90), v => sv().vision.noPinY = v, v => v + 'px',
