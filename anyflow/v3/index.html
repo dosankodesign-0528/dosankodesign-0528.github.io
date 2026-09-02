@@ -8758,12 +8758,18 @@ function updateVision(p) {
   const pat2SpinAt = miniAt - (c.npOrbitLead != null ? c.npOrbitLead : 1.2);
   const pat2Dur = Math.max(0.5, c.npOrbitDur != null ? c.npOrbitDur : 2.2);
   const pat2SpinEnd = pat2SpinAt + pat2Dur;
-  /* 【2026-09-03 ヒデさん指定】等速をやめ「最初すごく速い→徐々に減速して停止」へ。
-     減速の効き(npOrbitEase)が大きいほど出だしが速く、後半が長くゆっくり。
+  /* 【2026-09-03 ヒデさん指定・改】減速は終点間際に寄せる。
+     途中までは速いまま等速で回り、最後のブレーキ区間だけでなめらかに減速して止まる。
+     ブレーキ区間の長さ=「減速の効き」×18%(効き2で最後の36%)。
      進行度 pat2K はドットの不透明度・ブラー(出だし薄く→止まる頃100%)にも使う */
-  const pat2K = !pat2 ? 1
-    : (A < pat2SpinAt ? 0
-       : 1 - Math.pow(1 - clamp01((A - pat2SpinAt) / pat2Dur), Math.max(1, c.npOrbitEase != null ? c.npOrbitEase : 2)));
+  const pat2K = !pat2 ? 1 : (A < pat2SpinAt ? 0 : (() => {
+    const u = clamp01((A - pat2SpinAt) / pat2Dur);
+    const Bz = Math.min(0.85, Math.max(0.1, 0.18 * (c.npOrbitEase != null ? c.npOrbitEase : 2)));
+    let sfar;
+    if (u < 1 - Bz) sfar = u;
+    else { const w = u - (1 - Bz); sfar = (1 - Bz) + w - w * w / (2 * Bz); }
+    return sfar / (1 - Bz / 2);
+  })());
   if (noPin) {
     if (pat2) {
       const dir2 = (c.npOrbitDir != null ? c.npOrbitDir : -1);
@@ -13946,9 +13952,9 @@ function buildPanel() {
   segRow('回る向き', [['向きA（既定）', -1], ['向きB（逆）', 1]],
     () => (sv().vision.npOrbitDir != null ? sv().vision.npOrbitDir : -1),
     v => { sv().vision.npOrbitDir = v; markDirty(); });
-  rows.push(slider('減速の効き', 1, 6, 0.1, () => (sv().vision.npOrbitEase != null ? sv().vision.npOrbitEase : 2),
+  rows.push(slider('減速の効き', 1, 4.5, 0.1, () => (sv().vision.npOrbitEase != null ? sv().vision.npOrbitEase : 2),
     v => sv().vision.npOrbitEase = v, v => '×' + v.toFixed(1),
-    '出だしが最速で、そこから徐々に減速します。大きいほど出だしが速く後半が長くゆっくり。出だしの速さ＝効き÷1周時間なので、「1周6秒×効き2」で以前の等速時と同じ出だしになります。'));
+    '終点間際のブレーキの長さ。途中までは速いまま回り、最後だけなめらかに減速して止まります。×2＝最後の36%でブレーキ(既定)。大きいほどブレーキが長くゆったり。'));
   rows.push(slider('出だしの薄さ', 0, 1, 0.05, () => (sv().vision.npOrbitOp0 != null ? sv().vision.npOrbitOp0 : 0.35),
     v => sv().vision.npOrbitOp0 = v, v => Math.round(v * 100) + '%',
     '回り始めのドットの不透明度。止まる頃に100%まで濃くなります。100%にすると常に濃いまま。'));
