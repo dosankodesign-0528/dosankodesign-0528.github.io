@@ -14606,9 +14606,20 @@ const siteEdit = (() => {
   function syncSel() {
     for (const t of TARGETS) { const el = t.el(); if (el) el.classList.toggle('se-sel', selection.has(t)); }
   }
+  const SE_EDGE = 14;   /* 【2026-09-03 ヒデさん指定】この幅ぶんの外周が「移動をつかむ枠」 */
+  function nearEdge(el, e) {
+    const r = el.getBoundingClientRect();
+    return (e.clientX - r.left < SE_EDGE) || (r.right - e.clientX < SE_EDGE)
+        || (e.clientY - r.top < SE_EDGE) || (r.bottom - e.clientY < SE_EDGE);
+  }
   function onDown(e) {
     if (!on) return;
     const t = this.__seTarget;
+    /* 【2026-09-03 ヒデさん指定】Figma風: バウンディングボックスの端(SE_EDGE)をつかむと移動、
+       中のテキストの上は移動せずテキスト編集(シングル=ツールバー / ダブル=打ち替え)に譲る。
+       テキストを含まないグラフィック(orbit等)は全面で移動。 */
+    const onText = e.target.closest && e.target.closest('.tt-hit');
+    if (onText && !nearEdge(this, e)) return;   /* 内側のテキスト → 移動しない(click/dblclickでtextToolsが処理) */
     e.preventDefault(); e.stopPropagation();
     /* Shift/⌘/Ctrlクリックで選択に足し引き。通常クリックは、そのオブジェクトだけを選択
        (すでに選択済みなら、選択を保ったまま複数まとめてドラッグ)。 */
@@ -14639,7 +14650,20 @@ const siteEdit = (() => {
       const el = t.el(); if (!el) continue;
       el.classList.toggle('se-hit', on);
       if (!on) el.classList.remove('se-sel');
-      if (on && !el.__seBound) { el.__seTarget = t; el.addEventListener('pointerdown', onDown); el.__seBound = true; }
+      if (on && !el.__seBound) {
+        el.__seTarget = t;
+        el.addEventListener('pointerdown', onDown);
+        /* 端＝移動カーソル / 内側のテキスト＝テキストカーソル(Figma風の見え方) */
+        el.addEventListener('pointermove', ev => {
+          if (!on) return;
+          const onT = ev.target.closest && ev.target.closest('.tt-hit');
+          const c = nearEdge(el, ev) ? 'move' : (onT ? 'text' : 'move');
+          el.style.cursor = c;
+          if (onT) onT.style.cursor = c;   /* テキストの上でも端に近ければ移動カーソル */
+        });
+        el.__seBound = true;
+      }
+      if (!on) el.style.cursor = '';
     }
     if (on) syncSel();
   }
@@ -14814,6 +14838,15 @@ const textTools = (() => {
     e.stopPropagation();
     select(sp);
   }
+  /* 【2026-09-03 ヒデさん指定】ダブルクリックで打ち替え(contenteditable)へ */
+  function onDbl(e) {
+    if (!on) return;
+    const sp = this.__ttSpec;
+    if (!sp.text) return;   /* 打ち替え非対応(KVメイン/メッセージ等)はダブルクリック無視 */
+    e.stopPropagation(); e.preventDefault();
+    select(sp);
+    startEditText(this, sp);
+  }
   function set(v) {
     on = !!v;
     document.documentElement.classList.toggle('txt-edit', on);
@@ -14821,7 +14854,7 @@ const textTools = (() => {
       const el = specEl(sp); if (!el) continue;
       el.classList.toggle('tt-hit', on);
       if (!on) el.classList.remove('tt-sel');
-      if (on && !el.__ttBound) { el.__ttSpec = sp; el.addEventListener('click', onClick); el.__ttBound = true; }
+      if (on && !el.__ttBound) { el.__ttSpec = sp; el.addEventListener('click', onClick); el.addEventListener('dblclick', onDbl); el.__ttBound = true; }
     }
     if (!on) { sel = null; if (bar) bar.classList.remove('on'); }
   }
