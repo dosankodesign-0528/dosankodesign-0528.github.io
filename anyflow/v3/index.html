@@ -512,18 +512,7 @@
     width: 328px;
     height: 100%;
   }
-  /* 「連携が生む、2つの価値」= 2026-08-29: カンプ 15900:38405 では右カラムは Point 01/02 のみ。
-     この見出しはカンプに無く、メッセージと重なるため非表示。 */
-  .val-head {
-    position: absolute;
-    left: -99.05px;
-    top: 148.11px;
-    width: 272px;
-    color: var(--ink);
-    display: none;
-  }
-  .val-head .vh-s { display: block; font-weight: 400; font-size: 20px; line-height: normal; }
-  .val-head .vh-l { display: block; font-weight: 100; font-size: 60px; line-height: normal; }
+  /* 【2026-09-02 ヒデさん指定】「連携が生む、2つの価値」見出しは削除済み(DOM/CSS/JSごと)。 */
   .val-point { position: absolute; width: 328px; color: var(--ink); }
   .val-p1 { left: -58.05px; top: 342.19px; }
   .val-p2 { left: 0; top: 529.02px; }
@@ -2126,10 +2115,8 @@
       </div>
 
       <div class="val-group">
-        <div class="val-head rv" id="valHead">
-          <span class="vh-s">連携が生む、</span>
-          <span class="vh-l">2つの価値</span>
-        </div>
+        <!-- 【2026-09-02 ヒデさん指定】「連携が生む、2つの価値」見出しはカンプに無く非表示だったため、
+             アニメの遅延要因を断つべく DOM ごと削除。Point 01/02 は絶対配置なので位置は不変。 -->
         <div class="val-point val-p1 rv" id="valP1">
           <div class="vp-tag"><i></i>Point <em>01</em></div>
           <h3>賢いAIの土台をつくる</h3>
@@ -3033,7 +3020,7 @@ const DEFAULTS = {
       miniDur: 0.4,      // 軌道グラフィックの出現時間 (2026-09-01: ヒデさんが元々詰めていた0.4へ。ブラー18は維持)
       /* 【2026-08-29 ヒデさん指定】固定追従なし(no-pin)の時間再生の「ブロック間隔」。パネルで調整可。
          npGap=メッセージ後グラフィックが出るまで / npP1=グラフィック後ポイント1 / npP2=ポイント2 (秒) */
-      npGap: 0, npP1: 0.10, npP2: 0.30,   /* 2026-08-31: ポイントの出始めをさらに前倒し */
+      npGap: 0, npP1: 0.0, npP2: 0.15,   /* 2026-09-02 ヒデさん指定: valHead削除に伴いポイントをさらに前倒し(0.10/0.30→0.0/0.15) */
       npPointDur: 0.6,   /* 【2026-09-01 ヒデさん指定】ブラー強め(18)のまま、出現はさらに短くパッと */   /* 2026-08-30: グラフィックは「マスクが出きった終点」と同時(npGap=完了からの間・0=同時)。ポイント1/2もさらに前倒し(0.30/0.60→0.20/0.45) */
       moveLead: 0.35,    // 軌道が何割出た時点で左下へ動き出すか (0=出はじめと同時)
       moveDur: 2.6,      // 左下へ移動する時間(秒)。この間ずっと少しずつ拡大する
@@ -3759,6 +3746,13 @@ function loadParams() {
           if (_v2.npP2 == null || Math.abs(_v2.npP2 - 0.60) < 1e-6 || Math.abs(_v2.npP2 - 0.80) < 1e-6) _v2.npP2 = 0.45;
         }
         localStorage.setItem('anyflow-vision-graphic-with-msg-20260830', '1');
+      }
+      /* 【2026-09-02 ヒデさん指定】「2つの価値」見出し削除に伴い、Point 01/02 をさらに前倒し。
+         確定指示なので保存値がいくつでも一度だけ 0.0 / 0.15 へ寄せる(以後パネルで変えれば尊重)。 */
+      if (!localStorage.getItem('anyflow-vision-points-earlier-20260902')) {
+        const _vp = merged.sections.vision;
+        if (_vp) { _vp.npP1 = 0.0; _vp.npP2 = 0.15; }
+        localStorage.setItem('anyflow-vision-points-earlier-20260902', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
@@ -8203,7 +8197,6 @@ const visEls = {
   pfTitle: document.getElementById('pfTitle'),
   pfSub: document.getElementById('pfSub'),
   pfTexts: document.getElementById('pfTexts'),
-  valHead: document.getElementById('valHead'),
   valP1: document.getElementById('valP1'),
   valP2: document.getElementById('valP2'),
   dots: [], names: [], chars: [[], []],
@@ -8605,7 +8598,7 @@ function updateVision(p) {
      (実測: headX=-78 がそのまま効いて、見出しが画面の外(-54px)へ出ていた) */
   const offX = isMobile ? 0 : 1;
   const P_IN = (c.npPointDur != null ? c.npPointDur : 0.8);   /* 2026-08-31: ポイントの出現時間(パネル) */
-  rvAt(visEls.valHead, easeOutQ(clamp01((C - 0.45) / P_IN)), B, 10, c.headX * offX, c.headY);
+  /* 【2026-09-02 ヒデさん指定】「2つの価値」見出し(valHead)は削除。Point 01/02 のみ。 */
   rvAt(visEls.valP1,   easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
   rvAt(visEls.valP2,   easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / P_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
@@ -13745,7 +13738,8 @@ function buildPanel() {
   sub(catVis, '⑦ 「2つの価値」の文字の位置');
   const vpRoot = mount;
   note('デザイン位置からのズレ。プラスで右／下へ。');
-  [['見出し「連携が生む、2つの価値」', 'headX', 'headY'], ['Point 01 のかたまり', 'p1X', 'p1Y'], ['Point 02 のかたまり', 'p2X', 'p2Y']]
+  /* 【2026-09-02 ヒデさん指定】「連携が生む、2つの価値」見出しは削除したので調整項目からも除外 */
+  [['Point 01 のかたまり', 'p1X', 'p1Y'], ['Point 02 のかたまり', 'p2X', 'p2Y']]
     .forEach(([label, kx, ky]) => {
       sub(vpRoot, label, true);
       rows.push(slider('左右の位置', -400, 400, 2, () => sv().vision[kx], v => sv().vision[kx] = v, v => v + 'px', 'プラスで右へ、マイナスで左へ。'));
