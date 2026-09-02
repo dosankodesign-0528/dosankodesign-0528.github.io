@@ -539,8 +539,9 @@
   .val-point .vp-tag em { font-style: normal; color: var(--brand-pink); }
   /* カンプでは Point 02 の数字だけ水色 (■ は両方ピンクのまま) */
   .val-p2 .vp-tag em { color: var(--brand-cyan); }
-  .val-point h3 { font-weight: 300; font-size: 26px; line-height: normal; margin-top: var(--space-4); }
-  .val-point p { font-weight: 300; font-size: 14px; line-height: normal; margin-top: var(--space-24); }
+  /* 【2026-09-03 ヒデさん指定】ポイント1・2の見出し/本文サイズをパネルから調整 */
+  .val-point h3 { font-weight: 300; font-size: var(--vp-h-size, 26px); line-height: normal; margin-top: var(--space-4); }
+  .val-point p { font-weight: 300; font-size: var(--vp-p-size, 14px); line-height: normal; margin-top: var(--space-24); }
 
   /* ---- 実績セクション ---- */
   #results .pin-stage { height: var(--dh, 921px); }
@@ -3148,13 +3149,14 @@ const DEFAULTS = {
       npSpinDeg: 40,     // 止まるまでに回る角度
       npSpinDur: 1.0,    // 回りきるまでの秒数
       introPat: 1,       // 出現パターン 1=現状(一括ブラー) 2=ドットが動くバージョン(2026-09-02 ヒデさん指定)
-      npOrbitDur: 3.5,   // パターン2で1周にかける時間(秒)。時間同期より「ゆったり1周」の体験優先
+      npOrbitDur: 2.2,   // パターン2で1周にかける時間(秒) 2026-09-03: 3.5→2.2(早めに止まる)
       npOrbitDir: -1,    // パターン2の回る向き。-1=既定(2026-09-02 ヒデさん指定で従来と逆に) / 1=逆
-      npOrbitLead: 0.5,  // パターン2: ブラー出現の何秒前から動き出しているか(出現時にはもう動いている)
+      npOrbitLead: 1.2,  // パターン2: ブラー出現の何秒前から動き出しているか 2026-09-03: 0.5→1.2(もっと早くから回っている)
       npOrbitEase: 2.0,  // パターン2: 減速の効き。出だしが最速で徐々に減速(2026-09-03 等速廃止)。
                          //   ⚠️出だしの速さ=効き÷1周時間。「1周6秒×効き2」で旧・等速時の速さと一致
       npOrbitOp0: 0.35,  // パターン2: 出だしのドットの不透明度(止まる頃に100%へ)
       npOrbitBlur0: 2,   // パターン2: 出だしのドットのブラー(px。止まる頃に0へ)
+      pHSize: 26, pPSize: 14,   // ポイント1・2の見出し/本文の文字サイズ(px) 2026-09-03
       npOrbitTextGap: 0, // パターン2: ドットが止まってから文字(役割名/Platform)が出るまでの間(秒)
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
       /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
@@ -3873,6 +3875,13 @@ function loadParams() {
         const _vd = merged.sections.vision;
         if (_vd) _vd.npPointDur = 0.3;
         localStorage.setItem('anyflow-vision-pointdur-20260902', '1');
+      }
+      /* 【2026-09-03 ヒデさん指定】ドットの回転は「もっと早くから回っていて早めに止まる」。
+         確定指示なので一度だけ 先行1.2秒 / 1周2.2秒 へ寄せる(以後パネルで変えれば尊重)。 */
+      if (!localStorage.getItem('anyflow-vision-orbit-earlier-20260903')) {
+        const _vo = merged.sections.vision;
+        if (_vo) { _vo.npOrbitLead = 1.2; _vo.npOrbitDur = 2.2; }
+        localStorage.setItem('anyflow-vision-orbit-earlier-20260903', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
@@ -8746,8 +8755,8 @@ function updateVision(p) {
   const pat2 = noPin && (c.introPat || 1) === 2;
   /* 【2026-09-02 ヒデさん指定】「出現してから動き出す」ではなく、ブラーで出現した時には
      もう動いている。回転はグラフィック出現(miniAt)の npOrbitLead 秒前から始めておく */
-  const pat2SpinAt = miniAt - (c.npOrbitLead != null ? c.npOrbitLead : 0.5);
-  const pat2Dur = Math.max(0.5, c.npOrbitDur != null ? c.npOrbitDur : 3.5);
+  const pat2SpinAt = miniAt - (c.npOrbitLead != null ? c.npOrbitLead : 1.2);
+  const pat2Dur = Math.max(0.5, c.npOrbitDur != null ? c.npOrbitDur : 2.2);
   const pat2SpinEnd = pat2SpinAt + pat2Dur;
   /* 【2026-09-03 ヒデさん指定】等速をやめ「最初すごく速い→徐々に減速して停止」へ。
      減速の効き(npOrbitEase)が大きいほど出だしが速く、後半が長くゆっくり。
@@ -8812,10 +8821,13 @@ function updateVision(p) {
   const offX = isMobile ? 0 : 1;
   const P_IN = (c.npPointDur != null ? c.npPointDur : 0.8);   /* 2026-08-31: ポイントの出現時間(パネル) */
   /* 【2026-09-02 ヒデさん指定】「2つの価値」見出し(valHead)は削除。Point 01/02 のみ。 */
-  /* パターン2: ポイント1・2は「文字のブラー出現が終わる瞬間」に出きるよう終点を合わせる */
-  const pat2PtK = pat2 ? easeOutQ(clamp01((A - (pat2TxtAt + T_IN - P_IN)) / P_IN)) : 0;
-  rvAt(visEls.valP1,   pat2 ? pat2PtK : easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
-  rvAt(visEls.valP2,   pat2 ? pat2PtK : easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / P_IN)), B, 12, c.p2X * offX, c.p2Y);
+  /* 【2026-09-03 ヒデさん指定】パターン2の順序: ドット停止→Platform文字+役割名→その後にポイント1→2。
+     ポイントの間は既存の「グラフィック→ポイント1/2」スライダー(npP1/npP2)を流用(起点=文字が出きった時) */
+  const pat2C = A - (pat2TxtAt + T_IN);
+  const pat2P1 = pat2 ? easeOutQ(clamp01((pat2C - (c.npP1 || 0)) / P_IN)) : 0;
+  const pat2P2 = pat2 ? easeOutQ(clamp01((pat2C - (c.npP2 || 0)) / P_IN)) : 0;
+  rvAt(visEls.valP1,   pat2 ? pat2P1 : easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
+  rvAt(visEls.valP2,   pat2 ? pat2P2 : easeOutQ(clamp01((C - (c.npP2 != null ? c.npP2 : 1.35)) / P_IN)), B, 12, c.p2X * offX, c.p2Y);
   /* 最後: ドットが完全に止まってから、役割名がブラーで出る */
   const D = noPin ? (A < 0 ? -99 : A - (miniAt + c.miniDur + 1.8)) : (S < 0 ? -99 : S - (brakeStart + brake));
   /* no-pin は役割名もグラフィックと一括(grOn)。固定モードのみ従来のディレイ */
@@ -10224,6 +10236,14 @@ function applyKvCopy() {
   r.setProperty('--kv-copy-y', (k.copyY || 0) + 'px');
 }
 applyKvCopy();
+/* ポイント1・2の文字サイズ(2026-09-03) */
+function applyVpSize() {
+  const v = (params.sections && params.sections.vision) || {};
+  const r = document.documentElement.style;
+  r.setProperty('--vp-h-size', (v.pHSize != null ? v.pHSize : 26) + 'px');
+  r.setProperty('--vp-p-size', (v.pPSize != null ? v.pPSize : 14) + 'px');
+}
+applyVpSize();
 /* 【2026-09-01】実績: Anyflowと「が」の間(px)をCSS変数へ */
 function applyResSlotGap() {
   const v = params.sections && params.sections.results ? params.sections.results.slotGap : 4;
@@ -13920,7 +13940,7 @@ function buildPanel() {
     it => { sv().vision.introPat = it.key; markDirty(); },
     { get: () => sv().vision.introPat || 1, set: v => { sv().vision.introPat = v; } },
     { tip: it => it.tip });
-  rows.push(slider('1周にかける時間', 1, 8, 0.1, () => (sv().vision.npOrbitDur != null ? sv().vision.npOrbitDur : 3.5),
+  rows.push(slider('1周にかける時間', 1, 8, 0.1, () => (sv().vision.npOrbitDur != null ? sv().vision.npOrbitDur : 2.2),
     v => sv().vision.npOrbitDur = v, v => v.toFixed(1) + '秒',
     '「ドットが動くバージョン」でドットが軌道を1周するのにかける時間。ゆるく走り出し→等速→車のようにじわっと減速して止まります。'));
   segRow('回る向き', [['向きA（既定）', -1], ['向きB（逆）', 1]],
@@ -13935,7 +13955,7 @@ function buildPanel() {
   rows.push(slider('出だしのブラー', 0, 8, 0.5, () => (sv().vision.npOrbitBlur0 != null ? sv().vision.npOrbitBlur0 : 2),
     v => sv().vision.npOrbitBlur0 = v, v => v.toFixed(1) + 'px',
     '回り始めのドットのぼかし。止まる頃に0(くっきり)へ。0でブラーなし。'));
-  rows.push(slider('動き出しの先行', 0, 2, 0.05, () => (sv().vision.npOrbitLead != null ? sv().vision.npOrbitLead : 0.5),
+  rows.push(slider('動き出しの先行', 0, 2, 0.05, () => (sv().vision.npOrbitLead != null ? sv().vision.npOrbitLead : 1.2),
     v => sv().vision.npOrbitLead = v, v => v.toFixed(2) + '秒',
     'ブラーで出現する何秒前から動き出しているか。0=出現と同時に走り出す / 大きいほど「出現した時にはもう走っている」。'));
   rows.push(slider('止まってから文字まで', 0, 2, 0.05, () => (sv().vision.npOrbitTextGap != null ? sv().vision.npOrbitTextGap : 0),
@@ -14001,6 +14021,13 @@ function buildPanel() {
     v => sv().vision.npPointDur = v, v => v.toFixed(2) + '秒',
     'Point 01/02(と見出し)がブラーから出きるまでの長さ。大きいほどゆったり。'));
 
+  sub(catVis, '⑥ ポイント1・2の文字', true);
+  rows.push(slider('見出しサイズ', 16, 44, 1, () => (sv().vision.pHSize != null ? sv().vision.pHSize : 26),
+    v => { sv().vision.pHSize = v; applyVpSize(); }, v => Math.round(v) + 'px',
+    '「賢いAIの土台をつくる」などの見出しの文字サイズ。カンプは26px。'));
+  rows.push(slider('本文サイズ', 10, 24, 0.5, () => (sv().vision.pPSize != null ? sv().vision.pPSize : 14),
+    v => { sv().vision.pPSize = v; applyVpSize(); }, v => v.toFixed(1) + 'px',
+    'ポイントの説明文の文字サイズ。カンプは14px。'));
   sub(catVis, '⑤ 図の玉が1つずつ出てくる');
   note('コネクタ・監査などの玉が、1つずつ膨らみながら出てきます。');
   rows.push(slider('1個目が出るまで', 0, 1.5, 0.05, () => sv().vision.dotsInAt, v => sv().vision.dotsInAt = v, v => v.toFixed(2) + '秒',
