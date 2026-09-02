@@ -11,9 +11,24 @@
     <h1 class="title">カンペ連動プレゼン <span class="chip">v1</span></h1>
     <p class="subtitle">Figmaのスライドを画面共有しながら、手元のカンペ（トークスクリプト）をページに連動させます。</p>
 
+    <!-- デッキ（プレゼン）選択 -->
+    <div class="card" id="deckCard">
+      <h2>🎬 プレゼン（デッキ）を選ぶ</h2>
+      <div class="row">
+        <select class="field" id="deckSel" style="flex:1; min-width:220px;"></select>
+        <button class="btn" id="deckNew">＋ 新規プレゼン</button>
+        <button class="btn ghost" id="deckRename">名前変更</button>
+        <button class="btn ghost" id="deckDelete" style="color:var(--danger)">削除</button>
+      </div>
+      <p class="hint" style="margin-top:10px;">
+        プレゼンごとに <b>Figma URL と原稿</b>を分けて保存します。新しいプレゼンは「＋新規プレゼン」→ 下でURLを貼るだけ。<br>
+        <b>下の鍵（client-id）は全プレゼン共通で1回だけ</b>。以後スライドが変わっても Figma 側の設定はやり直し不要です。
+      </p>
+    </div>
+
     <!-- STEP 1 : URL -->
     <div class="card">
-      <h2><span class="step-no">1</span>Figmaプロトタイプの共有URLを貼る</h2>
+      <h2><span class="step-no">1</span>Figmaプロトタイプの共有URLを貼る <span class="chip">このプレゼン用</span></h2>
       <div class="row">
         <input class="field" id="url" placeholder="https://www.figma.com/proto/……" style="flex:1; min-width:280px;" />
         <button class="btn primary" id="saveUrl">保存</button>
@@ -23,7 +38,7 @@
 
     <!-- STEP 1.5 : Figma client-id -->
     <div class="card">
-      <h2><span class="step-no">2</span>Figmaと連動させる鍵（client-id）を入れる</h2>
+      <h2><span class="step-no">2</span>Figmaと連動させる鍵（client-id）を入れる <span class="chip">初回だけ・全プレゼン共通</span></h2>
       <p class="hint" style="margin-bottom:12px;">
         カンペを自動連動させるには、Figmaで無料の「OAuthアプリ」を1回だけ作り、その<b>client-id</b>をここに貼ります。<br>
         アプリの<b>「Embed API」→「Add an embed origin」</b>に、下の<b>あなたの現在のアドレス</b>を登録してください。
@@ -75,6 +90,44 @@
   <script>
     const $ = (id) => document.getElementById(id);
     let currentId = null;
+
+    // ---- デッキ（プレゼン）選択 ----
+    function renderDeckBar() {
+      const decks = PN.listDecks();
+      const active = PN.getActiveDeckId();
+      $('deckSel').innerHTML = decks.map((d) =>
+        '<option value="' + d.id + '"' + (d.id === active ? ' selected' : '') + '>' +
+        (d.name || '(名称未設定)').replace(/</g, '&lt;') + '</option>'
+      ).join('');
+      $('deckDelete').style.display = decks.length > 1 ? '' : 'none';
+    }
+    function onDeckSwitch() {
+      currentId = null;
+      $('url').value = PN.getUrl();
+      refreshUrlHint();
+      renderSlides();
+    }
+    $('deckSel').onchange = () => { PN.setActiveDeckId($('deckSel').value); onDeckSwitch(); };
+    $('deckNew').onclick = () => {
+      const name = prompt('新しいプレゼンの名前', 'プレゼン' + (PN.listDecks().length + 1));
+      if (name === null) return;
+      PN.createDeck(name.trim() || undefined);
+      renderDeckBar(); onDeckSwitch();
+    };
+    $('deckRename').onclick = () => {
+      const cur = PN.getActiveDeck();
+      const name = prompt('プレゼンの名前を変更', cur.name);
+      if (name === null || !name.trim()) return;
+      PN.renameDeck(cur.id, name.trim());
+      renderDeckBar();
+    };
+    $('deckDelete').onclick = () => {
+      const cur = PN.getActiveDeck();
+      if (!confirm('プレゼン「' + cur.name + '」を、URL・原稿ごと削除します。よろしいですか？')) return;
+      PN.deleteDeck(cur.id);
+      renderDeckBar(); onDeckSwitch();
+    };
+    renderDeckBar();
 
     // ---- STEP1 URL ----
     $('url').value = PN.getUrl();
@@ -153,7 +206,7 @@
       renderSlides();
     };
     $('clearAll').onclick = () => {
-      if (!confirm('原稿とページ一覧をすべて消します。よろしいですか？')) return;
+      if (!confirm('このプレゼンの原稿とページ一覧をすべて消します。よろしいですか？')) return;
       PN.saveScripts({ order: [], cards: {} });
       currentId = null;
       renderSlides();
@@ -174,6 +227,8 @@
         // 別ウィンドウでの編集を反映（自分が入力中でなければ）
         if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') renderSlides();
       }
+      if (msg.type === 'deck-changed') { renderDeckBar(); onDeckSwitch(); }
+      if (msg.type === 'decks-updated') { renderDeckBar(); }
     });
 
     renderSlides();

@@ -94,6 +94,10 @@
       if (msg.type === 'restart') {
         toFigma({ type: 'RESTART' });
       }
+      // 設定でプレゼン（デッキ）を切り替えたら、新しいプロトで開き直す
+      if (msg.type === 'deck-changed') {
+        location.reload();
+      }
     });
 
     // 発表ウィンドウが開いたことを知らせる

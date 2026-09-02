@@ -86,6 +86,13 @@
       if (msg.type === 'node') { els.conn.classList.add('on'); render(msg.nodeId); }
       if (msg.type === 'present-ready') { els.conn.classList.add('on'); }
       if (msg.type === 'scripts-updated' && currentId) { render(currentId); } // 編集が即反映
+      if (msg.type === 'deck-changed') { // プレゼン切替：表示をリセット
+        currentId = null;
+        els.label.hidden = true;
+        els.script.textContent = 'プレゼンが切り替わりました。発表ウィンドウでページを送ると原稿が出ます。';
+        els.script.classList.add('empty');
+        els.pnum.textContent = '–'; els.ptotal.textContent = ''; els.nextprev.textContent = '';
+      }
     });
 
     // ---- おまけ：カンペ側から送り ----
