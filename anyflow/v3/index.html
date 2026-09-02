@@ -4687,6 +4687,12 @@ const GFX_VARIANTS = {
       gfx: GFX_LOOKS.upright,
       conv: { style: 'organic', nodes: 22, span: 0.42, lineAlpha: 0.45, lineWidth: 1.2, drift: 1.3, random: 0.9, size: 0.5, hop: 0.5, rate: 1.6 },
       common: { orbitSpin: 0.8 } },
+    /* 【2026-09-02 ヒデさん指定】現行ケージのブラッシュアップ案: 面がきれいに整った(潰れ・歪みなし)測地線球。 */
+    { name: 'G 整った網（測地線）', desc: '面がきれいに整った、潰れ・歪みのない網。正20面体を細分した測地線球で、全ての面がほぼ均一・全ての辺がほぼ同じ長さ。縦の潰しも無い真円の球なので、端正な多面体らしい佇まいになります。密度は「面の細かさ」で調整(1=正20面体/2=42点/3=162点)。',
+      gfx: GFX_LOOKS.wide,
+      conv: { style: 'cage', cageShape: 'geo', cageFreq: 2, cageR: 2.4, cageSpin: 0.6, cageLinks: 3, cageTilt: -14,
+              lineAlpha: 0.5, lineWidth: 0.9, size: 0.42, random: 0, hop: 0.5, rate: 2.0 },
+      common: { orbitSpin: 0 } },
     /* 【2026-08-28 ヒデさん指定】複数軌道シェイプ(本数はパネルの「軌道の本数」で増減)。粒はこの案の吸収のまま。 */
     { name: 'アトム 4本', desc: '4本の軌道が原子模型のように交差して回ります。粒はこの案の吸収のまま。',
       gfx: GFX_LOOKS.std, common: { ringCount: 4, ringShape: 'atom' } },
@@ -5231,6 +5237,37 @@ function runSpiralParticles(geoms, S, dt) {
    すべて「既存のドットと同じ circle」と「path(線)」だけで作る。惑星と軌道の見た目は変えない。 */
 const CONV_BLUE = '#0EBBFF', CONV_PINK = '#FF5D97';
 let convMesh = null, convBeads = null;   // ⑫メッシュ / ⑬ドット軌道 の状態
+/* 【2026-09-02 ヒデさん指定】面がきれいに整った(潰れ・歪みなし)網の案用: 測地線球(正20面体を細分)。
+   全頂点が球面に均等・全辺がほぼ同長=正多面体らしい整った面になる。freq=1で12頂点(正20面体)、2で42、3で162。 */
+function buildGeodesic(freq) {
+  const t = (1 + Math.sqrt(5)) / 2;
+  let verts = [[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],
+               [0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];
+  let faces = [[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],
+               [10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],
+               [2,4,11],[6,2,10],[8,6,7],[9,8,1]];
+  const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0]/l, v[1]/l, v[2]/l]; };
+  verts = verts.map(norm);
+  for (let s = 1; s < Math.max(1, freq); s++) {
+    const mid = {}, nf = [];
+    const midpoint = (a, b) => {
+      const key = a < b ? a + '_' + b : b + '_' + a;
+      if (mid[key] != null) return mid[key];
+      const va = verts[a], vb = verts[b];
+      verts.push(norm([(va[0]+vb[0])/2, (va[1]+vb[1])/2, (va[2]+vb[2])/2]));
+      return (mid[key] = verts.length - 1);
+    };
+    for (const [a, b, c] of faces) {
+      const ab = midpoint(a, b), bc = midpoint(b, c), ca = midpoint(c, a);
+      nf.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]);
+    }
+    faces = nf;
+  }
+  const eset = new Set(), edges = [];
+  const addE = (a, b) => { const k = a < b ? a + '_' + b : b + '_' + a; if (!eset.has(k)) { eset.add(k); edges.push([a, b]); } };
+  for (const [a, b, c] of faces) { addE(a, b); addE(b, c); addE(c, a); }
+  return { verts, edges };
+}
 let convLine = null;   // 線(path)のプール。奥レイヤーに置く(惑星の後ろを通る線が自然に隠れる)
 /* 【2026-08-27 ヒデさん指定】惑星を「包囲する」ケージ用の線。
    convLinePool の線は奥レイヤーにしか置けず、必ず惑星の後ろを通ってしまう。
@@ -6280,38 +6317,51 @@ function convFrame(geoms) {
     const M = C.mesh, cc = convCenter();
     const n = Math.max(6, Math.round(M.nodes));
     const links = Math.max(1, Math.round(M.cageLinks == null ? 3 : M.cageLinks));
+    /* 【2026-09-02 ヒデさん指定】geo=測地線球(整った面)。それ以外はフィボナッチ球(従来) */
+    const shape = M.cageShape || 'fibo';
+    const freq = Math.max(1, Math.round(M.cageFreq == null ? 2 : M.cageFreq));
     /* 球殻の上の位置は回しても関係が変わらないので、隣どうしの組は作る時に1回だけ決める */
-    if (!convMesh || convMesh.style !== 'cage' || convMesh.nodes.length !== n || convMesh.links !== links) {
-      const base = [];
-      for (let i = 0; i < n; i++) {
-        /* フィボナッチ球: 球面に偏りなく散らす並べ方 */
-        const yy = 1 - ((i + 0.5) / n) * 2;
-        const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
-        const th = Math.PI * (1 + Math.sqrt(5)) * i;
-        base.push({ x: Math.cos(th) * rr, y: yy, z: Math.sin(th) * rr,
-                    c: i % 2 ? CONV_PINK : CONV_BLUE, tw: Math.random() * 6.28 });
-      }
-      const pairs = [];
-      for (let i = 0; i < n; i++) {
-        const d = [];
-        for (let j = 0; j < n; j++) {
-          if (i === j) continue;
-          d.push([j, Math.hypot(base[i].x - base[j].x, base[i].y - base[j].y, base[i].z - base[j].z)]);
+    if (!convMesh || convMesh.style !== 'cage' || convMesh.shape !== shape ||
+        (shape !== 'geo' && convMesh.nodes.length !== n) || (shape === 'geo' && convMesh.freq !== freq) || convMesh.links !== links) {
+      let base, pairs;
+      if (shape === 'geo') {
+        /* 測地線球: 頂点も辺も「整った面」そのもの。最近傍接続や縦潰しをしないので歪まない。 */
+        const g = buildGeodesic(freq);
+        base = g.verts.map((v, i) => ({ x: v[0], y: v[1], z: v[2], c: i % 2 ? CONV_PINK : CONV_BLUE, tw: 0 }));
+        pairs = g.edges;
+      } else {
+        base = [];
+        for (let i = 0; i < n; i++) {
+          /* フィボナッチ球: 球面に偏りなく散らす並べ方 */
+          const yy = 1 - ((i + 0.5) / n) * 2;
+          const rr = Math.sqrt(Math.max(0, 1 - yy * yy));
+          const th = Math.PI * (1 + Math.sqrt(5)) * i;
+          base.push({ x: Math.cos(th) * rr, y: yy, z: Math.sin(th) * rr,
+                      c: i % 2 ? CONV_PINK : CONV_BLUE, tw: Math.random() * 6.28 });
         }
-        d.sort((a, b) => a[1] - b[1]);
-        for (let k = 0; k < links && k < d.length; k++) {
-          const j = d[k][0];
-          if (!pairs.some(q => (q[0] === j && q[1] === i))) pairs.push([i, j]);
+        pairs = [];
+        for (let i = 0; i < n; i++) {
+          const d = [];
+          for (let j = 0; j < n; j++) {
+            if (i === j) continue;
+            d.push([j, Math.hypot(base[i].x - base[j].x, base[i].y - base[j].y, base[i].z - base[j].z)]);
+          }
+          d.sort((a, b) => a[1] - b[1]);
+          for (let k = 0; k < links && k < d.length; k++) {
+            const j = d[k][0];
+            if (!pairs.some(q => (q[0] === j && q[1] === i))) pairs.push([i, j]);
+          }
         }
       }
-      convMesh = { style: 'cage', nodes: base, pairs, links, pk: [], next: 0 };
+      convMesh = { style: 'cage', shape, freq, nodes: base, pairs, links, pk: [], next: 0 };
     }
     const spin = M.cageSpin == null ? 1 : M.cageSpin;
     const yaw = (convDotMoves() ? elapsed : 0) * 0.42 * spin * (params.direction || 1);
     const tilt = (M.cageTilt == null ? -20 : M.cageTilt) * Math.PI / 180;
     const cy = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
-    /* 息をするようにわずかに伸び縮み(0にすると完全に固い球) */
-    const breathe = 1 + Math.sin(elapsed * 0.55) * 0.03 * (M.random || 0);
+    /* 息をするようにわずかに伸び縮み(0にすると完全に固い球)。geo(整った面)は歪ませないので固定。 */
+    const breathe = shape === 'geo' ? 1 : (1 + Math.sin(elapsed * 0.55) * 0.03 * (M.random || 0));
+    const squish = shape === 'geo' ? 1.0 : 0.94;   /* geoは縦潰しなし=真円の球で歪まない */
     /* 【2026-08-29 ヒデさん指定】ケージ(外のネットワーク)の大きさを惑星サイズから独立させる。
        以前は convPlanetR()(=130×惑星スケール)基準だったので「惑星を大きくすると外のケージも一緒に大きくなる」
        状態だった。基準を固定の 130(=惑星スケール1相当)にし、ケージは cageR だけで大きさが決まるように。
@@ -6320,7 +6370,7 @@ function convFrame(geoms) {
     const proj = q => {
       const x1 = q.x * cy + q.z * sy, z1 = -q.x * sy + q.z * cy, y1 = q.y;      /* 縦軸まわりに回す */
       const y2 = y1 * ct - z1 * st, z2 = y1 * st + z1 * ct;                      /* 少し傾ける */
-      return { x: cc.x + x1 * Rc, y: cc.y + y2 * Rc * 0.94, z: z2 };             /* z>0 = 手前 */
+      return { x: cc.x + x1 * Rc, y: cc.y + y2 * Rc * squish, z: z2 };           /* z>0 = 手前 */
     };
     const P = convMesh.nodes.map(proj);
     /* --- 骨(線) 手前は惑星の前、奥は惑星の後ろを通す --- */
@@ -6332,9 +6382,10 @@ function convFrame(geoms) {
       const al = M.lineAlpha * (0.42 + 0.58 * (zm + 1) / 2);   /* 奥ほど薄く＝奥行きが出る */
       convLine2Set(pool[i], A, B, '#6B7690', (M.lineWidth || 1) * (0.7 + 0.3 * (zm + 1) / 2), al.toFixed(3), zm > 0);
     }
-    /* --- ノード --- */
-    const pkts = convPktPool(n + 12);
-    for (let i = 0; i < n; i++) {
+    /* --- ノード --- (geoは頂点数=測地線の実頂点数に合わせる) */
+    const nn = convMesh.nodes.length;
+    const pkts = convPktPool(nn + 12);
+    for (let i = 0; i < nn; i++) {
       const p0 = P[i], q = convMesh.nodes[i], pk = pkts[i];
       const dep = 0.72 + 0.5 * (p0.z + 1) / 2;                 /* 手前ほど大きく明るく */
       pktSet(pk, p0.x, p0.y, (DOT_R * M.size * dep).toFixed(2), q.c, (0.5 + 0.5 * dep).toFixed(3), p0.z > 0);
@@ -6353,13 +6404,13 @@ function convFrame(geoms) {
       const A = q2.stage === 0 ? P[q2.from] : P[q2.via];
       const B = q2.stage === 0 ? P[q2.via] : { x: cc.x, y: cc.y, z: 1 };
       const k = convSStep(q2.k);
-      const pk = pkts[n + i];
+      const pk = pkts[nn + i];
       if (!pk) continue;
       const mx = A.x + (B.x - A.x) * k, my = A.y + (B.y - A.y) * k, mz = A.z + (B.z - A.z) * k;
       const inP = convFrontCut() && Math.hypot(mx - cc.x, my - cc.y) < convPlanetR();
       pktSet(pk, mx, my, (DOT_R * M.size * 0.8).toFixed(2), CONV_BLUE, '0.95', mz > 0 && !inP);
     }
-    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[n + i]; if (pk) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); } }
+    for (let i = convMesh.pk.length; i < 12; i++) { const pk = pkts[nn + i]; if (pk) { pk.el.setAttribute('opacity', '0'); pk.back.setAttribute('opacity', '0'); } }
   } else if (mode === 'mesh') {
     /* ⑫メッシュ (2026-08-26 改良): 3つの見た目 × ランダムに漂う動き。
        organic=ふわふわ漂う / constellation=星座(明滅・線は近いものだけ) / grid=格子状のネット */
@@ -13217,8 +13268,15 @@ function buildPanel() {
           v => '×' + v.toFixed(2), '右へ動かすほどカゴが速く回ります。0(左端)で止まります。');
         slider('カゴの傾き', -60, 60, 1, () => params.conv.mesh.cageTilt, v => M.cageTilt = v, v => v + '°',
           'カゴの軸の傾き。0で真横から見た形になります。');
-        slider('1点から出る骨', 1, 6, 1, () => params.conv.mesh.cageLinks, v => M.cageLinks = v, v => v + '本',
-          '多いほど骨が増えて、密なカゴになります。');
+        if (M.cageShape === 'geo') {
+          /* 【2026-09-02 ヒデさん指定】整った網(測地線)は面の細かさで密度を決める */
+          segRow('面の細かさ', [['粗い(20面)', 1], ['ふつう(80面)', 2], ['細かい(320面)', 3]],
+            () => (M.cageFreq == null ? 2 : M.cageFreq),
+            v => { M.cageFreq = v; renderFrame(); });
+        } else {
+          slider('1点から出る骨', 1, 6, 1, () => params.conv.mesh.cageLinks, v => M.cageLinks = v, v => v + '本',
+            '多いほど骨が増えて、密なカゴになります。');
+        }
       }
       slider('ノードの大きさ', 0.1, 3, 0.02, () => params.conv.mesh.size, v => M.size = v, v => '×' + v.toFixed(2),
         'この案のノードだけの大きさ（全体の「ドットの大きさ」に掛かります）。', { fixedMax: true });
