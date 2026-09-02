@@ -407,7 +407,7 @@
     left: 126.66px;
     right: auto;
     text-align: left;
-    top: 40px;   /* 2026-08-29: カンプ 15900:38405 準拠。メッセージの下にグラフィックを収めるため上へ(旧269) */
+    top: 40px;   /* 2026-08-29: カンプ 15900:38405 準拠 */
     font-family: var(--font-en);
     font-weight: 400;
     font-size: 20px;
@@ -447,7 +447,7 @@
     -webkit-background-clip:text; background-clip:text; color:transparent;
     animation: strLive 7s ease-in-out infinite; }
 
-  .vis-l1 { top: 72px; }    /* 2026-08-29: Our Vision(40+20)+gap12 = 72。カンプ準拠で上へ(旧301) */
+  .vis-l1 { top: 72px; }    /* 2026-08-29 */
   .vis-l2 { top: 174px; }   /* 1行化で実質未使用 */
 
   /* Platform 図: SVG座標 = カンプTOP座標(x そのまま / y -1851.98)。
@@ -13969,6 +13969,17 @@ function buildPanel() {
   rows.push(slider('メッセージの文字サイズ', 28, 72, 1, () => (sv().vision.msgSize != null ? sv().vision.msgSize : 50),
     v => { sv().vision.msgSize = v; applyVpSize(); }, v => Math.round(v) + 'px',
     '「データをつなぐことが、強みになる時代へ。」の文字サイズ。カンプは50px。行間は1.7倍で自動追従。'));
+  /* 【2026-09-03 ヒデさん指定】Our Vision / メッセージ の位置をパネルでも(編集モードの端ドラッグと同じedits) */
+  const editPos = (key) => { if (!params.edits) params.edits = {}; return params.edits[key] || (params.edits[key] = {}); };
+  rows.push(slider('Our Vision 位置 横', -400, 600, 2, () => (editPos('visLabel').dx || 0),
+    v => { editPos('visLabel').dx = v; textTools.applyAll(); }, v => v + 'px',
+    'Our Vision の左右位置。編集モードで枠の端をドラッグしても動きます。', { signed: true }));
+  rows.push(slider('Our Vision 位置 縦', -400, 600, 2, () => (editPos('visLabel').dy || 0),
+    v => { editPos('visLabel').dy = v; textTools.applyAll(); }, v => v + 'px', 'Our Vision の上下位置。', { signed: true }));
+  rows.push(slider('メッセージ 位置 横', -400, 600, 2, () => (editPos('visMsg').dx || 0),
+    v => { editPos('visMsg').dx = v; textTools.applyAll(); }, v => v + 'px', 'メッセージの左右位置。', { signed: true }));
+  rows.push(slider('メッセージ 位置 縦', -400, 600, 2, () => (editPos('visMsg').dy || 0),
+    v => { editPos('visMsg').dy = v; textTools.applyAll(); }, v => v + 'px', 'メッセージの上下位置。', { signed: true }));
   rows.push(slider('メッセージが出るまで', 0.2, 5, 0.05, () => sv().vision.line1At, v => sv().vision.line1At = v, v => v.toFixed(2) + '秒後',
     'セクションに入って(発火して)からメッセージが出るまでの時間。'));
   rows.push(slider('メッセージが出きるまで', 0.4, 3, 0.05, () => sv().vision.revealDur, v => sv().vision.revealDur = v, v => v.toFixed(2) + '秒',
@@ -14676,10 +14687,18 @@ const siteEdit = (() => {
    保存は params.edits[key]（トップ全体で共有・案非依存）。rvAt が触るのは opacity/filter/transform
    だけなので、font系プロパティは毎フレームのアニメと競合しない。 */
 const textTools = (() => {
-  /* key=保存キー / sel=要素セレクタ / name=表示名 / text=打ち替え可(子が純テキストのみ) */
+  /* key=保存キー / sel=要素セレクタ / name=表示名 / text=打ち替え可(子が純テキストのみ)
+     move=位置移動可(端ドラッグ。既定1) / font=font系編集可(既定1)。
+     【2026-09-03 ヒデさん指定】可能な限りページ全体の要素を対象にする。 */
   const SPEC = [
+    // --- ヘッダー ---
+    { key: 'navLogo',   sel: '.logo',        name: 'ロゴ',         text: 0, font: 0 },
+    { key: 'navCta',    sel: 'header .cta',  name: 'ヘッダーのボタン', text: 1 },
+    // --- キービジュアル ---
     { key: 'kvMain',    sel: '.hl-main',   name: 'KVメインコピー',   text: 0 },
     { key: 'kvEyebrow', sel: '#hlEyebrow', name: 'KVサブコピー',     text: 0 },
+    { key: 'kvLogos',   sel: '.logos',     name: 'KVロゴ帯',        text: 0, font: 0 },
+    // --- ビジョン ---
     { key: 'visLabel',  sel: '#visLabel',  name: 'Our Vision',       text: 1 },
     { key: 'visMsg',    sel: '.vis-l1',    name: 'ビジョンのメッセージ', text: 0 },
     { key: 'pfTitle',   sel: '#pfTitle',   name: 'Platform（英字）', text: 1 },
@@ -14688,9 +14707,15 @@ const textTools = (() => {
     { key: 'p1p',       sel: '#valP1 p',   name: 'Point01 本文',     text: 1 },
     { key: 'p2h',       sel: '#valP2 h3',  name: 'Point02 見出し',   text: 1 },
     { key: 'p2p',       sel: '#valP2 p',   name: 'Point02 本文',     text: 1 },
+    // --- 実績 ---
     { key: 'resHl1',    sel: '#resHl1',    name: '実績 1行目',       text: 1 },
     { key: 'resSuffix', sel: '#resSuffix', name: '実績 2行目',       text: 1 },
+    { key: 'resStats',  sel: '#resStats',  name: '実績 数値グループ', text: 0, font: 0 },
+    { key: 'resVals',   sel: '#resVals',   name: '実績 価値グループ', text: 0, font: 0 },
+    // --- 導入事例 ---
     { key: 'caseTitle', sel: '#caseTitle', name: '導入事例 見出し',  text: 1 },
+    // --- コンバージョン(CTA) ---
+    { key: 'cvInner',   sel: '.cv-inner',  name: 'CTAブロック',      text: 0, font: 0 },
   ];
   const specEl = sp => document.querySelector(sp.sel);
   function editsOf(key) {
@@ -14710,8 +14735,39 @@ const textTools = (() => {
       const hasPad = ['pt', 'pr', 'pb', 'pl'].some(k => e[k] != null);
       el.style.padding = hasPad
         ? `${e.pt || 0}px ${e.pr || 0}px ${e.pb || 0}px ${e.pl || 0}px` : '';
+      /* 位置移動は margin で反映(transformアニメと非競合。left/top指定要素にも効く) */
+      el.style.marginLeft = e.dx ? e.dx + 'px' : '';
+      el.style.marginTop  = e.dy ? e.dy + 'px' : '';
       if (sp.text && e.text != null && el.textContent !== e.text) el.textContent = e.text;
     }
+  }
+  function scaleOf(el) {
+    const w = el.offsetWidth; if (!w) return 1;
+    const k = el.getBoundingClientRect().width / w; return k > 0.01 ? k : 1;
+  }
+  const TT_EDGE = 14;
+  function nearEdge(el, e) {
+    const r = el.getBoundingClientRect();
+    return (e.clientX - r.left < TT_EDGE) || (r.right - e.clientX < TT_EDGE)
+        || (e.clientY - r.top < TT_EDGE) || (r.bottom - e.clientY < TT_EDGE);
+  }
+  /* 端をつかんだら margin で位置移動(Figma風。中央はテキスト編集に譲る) */
+  function onDown(e) {
+    if (!on) return;
+    const sp = this.__ttSpec; if (sp.move === 0) return;
+    if (!nearEdge(this, e)) return;   /* 内側はドラッグしない(click/dblclickでfont編集) */
+    e.preventDefault(); e.stopPropagation();
+    const el = this, ed = editsOf(sp.key), k = scaleOf(el);
+    const sx = e.clientX, sy = e.clientY, dx0 = ed.dx || 0, dy0 = ed.dy || 0;
+    const move = ev => {
+      const ddx = (ev.clientX - sx) / k, ddy = (ev.clientY - sy) / k;
+      if (Math.abs(ev.clientX - sx) > 3 || Math.abs(ev.clientY - sy) > 3) window.__ttDragged = true;
+      ed.dx = Math.round(dx0 + ddx); ed.dy = Math.round(dy0 + ddy);
+      applyAll(); markDirty();
+      if (sel === sp) positionBar(el);
+    };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
   }
 
   let on = false, sel = null, bar = null;
@@ -14750,25 +14806,32 @@ const textTools = (() => {
     const title = document.createElement('div');
     title.className = 'tb-title'; title.textContent = sel.name;
     b.appendChild(title);
-    /* サイズ */
-    b.appendChild(num('サイズ', 'px', () => e.fs, v => { if (v == null) delete e.fs; else e.fs = v; },
-      8, 200, 1));
-    /* ウェイト */
-    const wWrap = document.createElement('label'); wWrap.className = 'tb-num';
-    wWrap.innerHTML = '<span>太さ</span>';
-    const wSel = document.createElement('select');
-    wSel.innerHTML = '<option value="">auto</option>' +
-      [100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}">${w}</option>`).join('');
-    wSel.value = e.fw != null ? String(e.fw) : '';
-    wSel.onchange = () => { if (wSel.value === '') delete e.fw; else e.fw = +wSel.value; applyAll(); markDirty(); };
-    wSel.onpointerdown = ev => ev.stopPropagation();
-    wWrap.appendChild(wSel); b.appendChild(wWrap);
-    /* 行間(倍) */
-    b.appendChild(num('行間', '', () => e.lh, v => { if (v == null) delete e.lh; else e.lh = v; },
-      0.8, 3, 0.05));
-    /* 字間 */
-    b.appendChild(num('字間', 'px', () => e.ls, v => { if (v == null) delete e.ls; else e.ls = v; },
-      -5, 20, 0.1));
+    /* 位置 X/Y(移動可の要素のみ) */
+    if (sel.move !== 0) {
+      b.appendChild(num('X', 'px', () => e.dx, v => { if (v == null) delete e.dx; else e.dx = v; }, -1200, 1200, 1));
+      b.appendChild(num('Y', 'px', () => e.dy, v => { if (v == null) delete e.dy; else e.dy = v; }, -1200, 1200, 1));
+    }
+    if (sel.font !== 0) {
+      /* サイズ */
+      b.appendChild(num('サイズ', 'px', () => e.fs, v => { if (v == null) delete e.fs; else e.fs = v; },
+        8, 200, 1));
+      /* ウェイト */
+      const wWrap = document.createElement('label'); wWrap.className = 'tb-num';
+      wWrap.innerHTML = '<span>太さ</span>';
+      const wSel = document.createElement('select');
+      wSel.innerHTML = '<option value="">auto</option>' +
+        [100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}">${w}</option>`).join('');
+      wSel.value = e.fw != null ? String(e.fw) : '';
+      wSel.onchange = () => { if (wSel.value === '') delete e.fw; else e.fw = +wSel.value; applyAll(); markDirty(); };
+      wSel.onpointerdown = ev => ev.stopPropagation();
+      wWrap.appendChild(wSel); b.appendChild(wWrap);
+      /* 行間(倍) */
+      b.appendChild(num('行間', '', () => e.lh, v => { if (v == null) delete e.lh; else e.lh = v; },
+        0.8, 3, 0.05));
+      /* 字間 */
+      b.appendChild(num('字間', 'px', () => e.ls, v => { if (v == null) delete e.ls; else e.ls = v; },
+        -5, 20, 0.1));
+    }
     /* 余白: 上右下左 */
     const padWrap = document.createElement('div'); padWrap.className = 'tb-pad';
     padWrap.innerHTML = '<span>余白</span>';
@@ -14854,7 +14917,18 @@ const textTools = (() => {
       const el = specEl(sp); if (!el) continue;
       el.classList.toggle('tt-hit', on);
       if (!on) el.classList.remove('tt-sel');
-      if (on && !el.__ttBound) { el.__ttSpec = sp; el.addEventListener('click', onClick); el.addEventListener('dblclick', onDbl); el.__ttBound = true; }
+      if (on && !el.__ttBound) {
+        el.__ttSpec = sp;
+        el.addEventListener('click', onClick);
+        el.addEventListener('dblclick', onDbl);
+        el.addEventListener('pointerdown', onDown);
+        el.addEventListener('pointermove', ev => {
+          if (!on) return;
+          el.style.cursor = (sp.move !== 0 && nearEdge(el, ev)) ? 'move' : (sp.text || sp.font !== 0 ? 'text' : 'default');
+        });
+        el.__ttBound = true;
+      }
+      if (!on) el.style.cursor = '';
     }
     if (!on) { sel = null; if (bar) bar.classList.remove('on'); }
   }
