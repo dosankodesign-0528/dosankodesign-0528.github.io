@@ -94,6 +94,11 @@
     top: 263px;
     color: var(--ink);
     white-space: nowrap;
+    /* 【2026-09-02 ヒデさん指定】メイン/サブの上下並びをパネルで入替。column=メイン上 / column-reverse=サブ上 */
+    display: flex;
+    flex-direction: var(--kv-copy-dir, column);
+    align-items: flex-start;
+    gap: var(--kv-copy-gap, 16px);
   }
   /* 【2026-08-31 ヒデさん指定】コピーの文字設定は調整パネル(キービジュアル>コピー(文字))から変えられる。
      既定値は下の DEFAULTS.kv (mainSize/mainWeight/eyebrowSize/eyebrowWeight/eyebrowDash) */
@@ -116,8 +121,7 @@
     /* 【2026-09-01 ヒデさん指定】ウェイト100より細く見せる手段: 背景と同色の縁取りで線を削る */
     -webkit-text-stroke: var(--kv-main-thin, 0px) var(--surface);
   }
-  /* 【2026-08-31 ヒデさん指定】メイン上・サブ下に入れ替えたので、間隔はサブ側に持たせる */
-  .hl-main + .hl-eyebrow { margin-top: var(--kv-copy-gap, 16px); }
+  /* 【2026-09-02】間隔は .headline の flex gap で持つ(上下入替に対応)。旧 margin-top は廃止 */
   .hl-line { display: block; position: relative; }
   .hl-line .hl-ch { display: none; }
   /* タイピングのカーソル */
@@ -2943,6 +2947,7 @@ const DEFAULTS = {
     eyebrowWeight: 400, // サブコピーの太さ
     eyebrowLs: 0,       // 【2026-09-01】サブコピーの字間(px)
     mainThin: 0,        // 【2026-09-01】メインを縁取りで細く見せる量(px)。背景色の縁で線を削る
+    copyOrder: 'main',  // 【2026-09-02】KVコピーの上下並び 'main'=メイン上/サブ下 'sub'=サブ上/メイン下
     eyebrowDash: true,  // サブコピー先頭の罫線(ハイフン)あり/なし
     eyebrowDashW: 26,   // 罫線の長さ(px)
     dashGap: 10,        // 罫線とサブコピー文字の間(px)
@@ -3069,6 +3074,7 @@ const DEFAULTS = {
     /* 尺(中央で止まる) / カウント時間 / 画像のぼけ。
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
+      pictoW: 1,         // 【2026-09-02 ヒデさん指定】for SaaS/for AI ピクトグラムの線幅倍率(1=1px基準)
       driveLen: 2.0,     // スクロール駆動の時、尺を何倍に伸ばすか（小さいほどスクロール量が減る。2026-08-25 3.0→2.0）
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
@@ -10005,6 +10011,7 @@ function applyKvCopy() {
   r.setProperty('--kv-eyebrow-weight', String(k.eyebrowWeight != null ? k.eyebrowWeight : 400));
   r.setProperty('--kv-eyebrow-ls', (k.eyebrowLs != null ? k.eyebrowLs : 0) + 'px');
   r.setProperty('--kv-main-thin', (k.mainThin != null ? k.mainThin : 0) + 'px');
+  r.setProperty('--kv-copy-dir', k.copyOrder === 'sub' ? 'column-reverse' : 'column');
   r.setProperty('--kv-eyebrow-dash', (k.eyebrowDash === false) ? 'none' : 'block');
   r.setProperty('--kv-eyebrow-dash-w', (k.eyebrowDashW != null ? k.eyebrowDashW : 26) + 'px');
   r.setProperty('--kv-dash-gap', (k.dashGap != null ? k.dashGap : 10) + 'px');
@@ -10399,6 +10406,7 @@ const VAL_PINK = '#FF5D97';
 /* 【2026-08-30 ヒデさん指定】黒せり上がりの白反転を、ピクトグラムの「黒い図形」にも効かせる(色付きACC/PINKは維持)。
    updateResults が毎フレーム valInkCur をセット(反転中=白寄り / 通常=VAL_INK)。valTake/valStyle が #111 を検知して差し替える。 */
 let valInkCur = VAL_INK;
+let valStrokeMul = 1;   /* 【2026-09-02 ヒデさん指定】実績ピクトグラムの線幅の倍率(パネル調整)。全ての線幅×この値 */
 const valSvgs = {};                    /* { saas:{svg, pool}, ai:{...} } */
 function valEnsure(key, id) {
   if (valSvgs[key]) return valSvgs[key];
@@ -10423,7 +10431,7 @@ function valTake(st, tag) {
   st.used++;
   el.setAttribute('opacity', '1');
   el.setAttribute('stroke', valInkCur);
-  el.setAttribute('stroke-width', '1');   /* 2026-08-30 ヒデさん指定: ピクトグラムの線幅は全部1px */
+  el.setAttribute('stroke-width', (1 * valStrokeMul).toFixed(2));   /* 2026-08-30: 基準1px ×倍率(パネル・2026-09-02) */
   el.removeAttribute('transform');
   return el;
 }
@@ -10490,7 +10498,7 @@ function vTrim(e, k, from) {
 }
 function valStyle(e, o) {
   if (o.c) e.setAttribute('stroke', o.c === VAL_INK ? valInkCur : o.c);
-  if (o.w != null) e.setAttribute('stroke-width', o.w.toFixed(2));
+  if (o.w != null) e.setAttribute('stroke-width', (o.w * valStrokeMul).toFixed(2));
   if (o.a != null) e.setAttribute('opacity', Math.max(0, Math.min(1, o.a)).toFixed(3));
   if (o.dash) e.setAttribute('stroke-dasharray', o.dash); else e.removeAttribute('stroke-dasharray');
   e.removeAttribute('stroke-dashoffset');
@@ -11143,6 +11151,8 @@ const VAL_AI = {
 };
 function drawValueIcons() {
   const p = params.patterns || {};
+  const _rs = params.sections && params.sections.results;
+  valStrokeMul = (_rs && _rs.pictoW != null) ? _rs.pictoW : 1;   /* 【2026-09-02】ピクト線幅の倍率 */
   const a = valEnsure('saas', 'valSaas');
   if (a) { const f = VAL_SAAS[p.valSaas] || VAL_SAAS.S1; try { f(a, elapsed); } catch (e) {} valDone(a); }
   const b = valEnsure('ai', 'valAi');
@@ -13575,6 +13585,9 @@ function buildPanel() {
   const copyRoot = mount;
   /* 【2026-08-31 ヒデさん指定】コピーの文字設定(メインのサイズ/太さ・サブの罫線あり/なし など) */
   sub(copyRoot, 'コピー（文字）', true);
+  segRow('上下の並び', [['メインが上', 'main'], ['サブが上', 'sub']],
+    () => (params.kv.copyOrder === 'sub' ? 'sub' : 'main'),
+    v => { params.kv.copyOrder = v; applyKvCopy(); markDirty(); });
   rows.push(slider('メインの文字サイズ', 40, 110, 1, () => (params.kv.mainSize != null ? params.kv.mainSize : 70),
     v => { params.kv.mainSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
     '「AIと事業を強くする」の文字サイズ。カンプは70px。'));
@@ -13778,6 +13791,10 @@ function buildPanel() {
     () => (sv().results.slotGap != null ? sv().results.slotGap : 4),
     v => { sv().results.slotGap = v; applyResSlotGap(); }, v => Math.round(v) + 'px',
     'タイピングされる「Anyflow」と、続く「が支えます。」の間隔。'));
+  rows.push(slider('ピクトグラムの線の太さ', 0.5, 4, 0.1,
+    () => (sv().results.pictoW != null ? sv().results.pictoW : 1),
+    v => { sv().results.pictoW = v; drawValueIcons(); }, v => (1 * v).toFixed(1) + 'px',
+    'for SaaS / for AI の図(リング・カード等)の線の太さ。基準は1.0px。'));
   rows.push(slider('→ その他の要素が出る', -0.5, 3, 0.05, () => (sv().results.restGap != null ? sv().results.restGap : 0.1), v => sv().results.restGap = v, v => v.toFixed(2) + '秒',
     'タイピング開始から、区切り線・3数値・2つの価値が出るまでの間。マイナスでタイピングより前に。', { signed: true }));
   rows.push(slider('見出しの1文字の時間', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's/字',
