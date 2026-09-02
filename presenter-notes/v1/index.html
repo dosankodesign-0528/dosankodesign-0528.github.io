@@ -55,16 +55,17 @@
       <p class="hint" id="cidHint" style="margin-top:10px;"></p>
     </div>
 
-    <!-- STEP 2 : ウィンドウを開く -->
+    <!-- STEP 2 : 開く -->
     <div class="card">
-      <h2><span class="step-no">3</span>2つのウィンドウを開く</h2>
+      <h2><span class="step-no">3</span>スライドとカンペを開く</h2>
       <div class="row">
-        <button class="btn big primary" id="openPresent">🖥 発表ウィンドウを開く<br><small style="font-weight:400;opacity:.85">← これだけを画面共有</small></button>
-        <button class="btn big" id="openNotes">📝 カンペを開く<br><small style="font-weight:400;opacity:.85">← 共有しない・サブ画面へ</small></button>
+        <button class="btn big primary" id="openPresent">🖥 スライドを開く<br><small style="font-weight:400;opacity:.85">← 同じChrome内の新しいタブ</small></button>
+        <button class="btn big" id="openNotes">📝 カンペを開く<br><small style="font-weight:400;opacity:.85">← 別ウィンドウ・共有しない</small></button>
       </div>
       <p class="hint" style="margin-top:12px;">
-        画面共有の時は Chrome の「<b>ウィンドウ</b>」を選んで<b>発表ウィンドウだけ</b>を選択してください。<br>
-        カンペは別ウィンドウなので、サブモニターや iPad（Sidecar）へドラッグすれば観客に映りません。
+        <b>スライドは新しいタブで開きます。</b>他のウェブサイトも別タブで開けば、<b>タブを切り替えながら</b>スライドとサイトを見せられます。<br>
+        画面共有は Zoom 等で <b>「Chrome ウィンドウ」</b>を選択（＝そのウィンドウの全タブが映る）。タブを切り替えても常に共有されます。<br>
+        <b>カンペは別ウィンドウ</b>なので、共有する Chrome ウィンドウに入れなければ観客に映りません（サブモニター / iPad / ウィンドウの裏でOK）。
       </p>
     </div>
 
@@ -157,8 +158,10 @@
     // ---- STEP2 ウィンドウ ----
     $('openPresent').onclick = () => {
       if (!PN.getUrl()) { alert('先にSTEP1でFigmaのURLを保存してください。'); return; }
-      window.open('present.html', 'pn_present', 'width=1280,height=800');
+      // 同じChromeウィンドウ内の「新しいタブ」で開く（他サイトのタブと並べて切り替えられる）
+      window.open('present.html', '_blank');
     };
+    // カンペは必ず「別ウィンドウ」で開く（共有するChromeウィンドウに入れないため）
     $('openNotes').onclick = () => window.open('notes.html', 'pn_notes', 'width=680,height=900');
 
     // ---- STEP3 原稿エディタ ----
