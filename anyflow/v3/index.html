@@ -1711,6 +1711,35 @@
   html.site-edit .se-hit:hover { outline-color: #FF5D97; }
   /* 【2026-08-29 ヒデさん指定】複数選択されているオブジェクト＝ピンクの実線でハイライト。 */
   html.site-edit .se-sel { outline: 2px solid #FF5D97 !important; outline-offset: 3px; }
+
+  /* 【2026-09-03 ヒデさん指定】テキスト編集レイヤー: 触れるテキストに枠・選択中は実線・ツールバー */
+  html.txt-edit .tt-hit { outline: 1px dashed #8075DC; outline-offset: 2px; cursor: text; }
+  html.txt-edit .tt-hit:hover { outline-color: #FF5D97; }
+  html.txt-edit .tt-sel { outline: 2px solid #FF5D97 !important; outline-offset: 2px; }
+  .txt-editing { outline: 2px solid #0EBBFF !important; background: rgba(14,187,255,.06); cursor: text; }
+  .txt-bar {
+    position: fixed; z-index: 100000; display: none;
+    background: #1b1d24; color: #fff; border-radius: 10px; padding: 8px 10px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.32); font-size: 12px;
+    display: none; gap: 8px; align-items: center; flex-wrap: wrap; max-width: 92vw;
+  }
+  .txt-bar.on { display: flex; }
+  .txt-bar .tb-title { font-weight: 700; font-size: 12px; margin-right: 4px; white-space: nowrap; }
+  .txt-bar .tb-num { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .txt-bar .tb-num > span { opacity: .75; }
+  .txt-bar .tb-num em { opacity: .55; font-style: normal; }
+  .txt-bar input[type=number], .txt-bar select {
+    width: 52px; background: #2a2d38; color: #fff; border: 1px solid #3a3e4c;
+    border-radius: 6px; padding: 3px 5px; font-size: 12px;
+  }
+  .txt-bar .tb-pad { display: inline-flex; align-items: center; gap: 3px; }
+  .txt-bar .tb-pad > span { opacity: .75; }
+  .txt-bar .tb-pad input { width: 34px; }
+  .txt-bar .tb-btn {
+    background: #2a2d38; color: #fff; border: 1px solid #3a3e4c; border-radius: 6px;
+    padding: 4px 8px; font-size: 12px; cursor: pointer; white-space: nowrap;
+  }
+  .txt-bar .tb-btn:hover { background: #343846; }
   /* 【2026-08-29 ヒデさん指定】編集モード(✏️編集=html.site-edit)の時だけパネル上に出す項目。
      自由回転はここに入れ、編集ボタンを押した時だけ動的に現れる。 */
   .edit-only-grp { display: none; }
@@ -2998,6 +3027,9 @@ vec3 ramp(float x){
 /* ================= 調整パラメーター ================= */
 const DEFAULTS = {
   running: true,
+  /* 【2026-09-03 ヒデさん指定】編集モードの汎用テキスト編集の保存先。
+     キー→{fs,fw,lh,ls,pt,pr,pb,pl,text}。トップ全体で共有(案・KV非依存)。 */
+  edits: {},
   sway: 2,   // 2026-08-29 ヒデさん指定: 揺らぎは既定オン(②シーソー=全案共通で効く緩やかな揺れ)。回転は既定オフ
   swayAmp: 1,   // 2026-08-29 ヒデさん指定: ゆらぎの強さ(振幅倍率)。0でぴたっと止まる
   swayDir: 'tilt',   /* 【2026-08-30 ヒデさん指定】揺らぎの動き: tilt=傾き(従来) / h=左右 / v=上下 / diag=斜め */
@@ -7457,6 +7489,7 @@ const editBar = (() => {
       editHistory.revert();
       editHandles.set(false);
       if (typeof siteEdit !== 'undefined') siteEdit.set(false);   /* 2026-08-29: html.site-edit を同期(自由回転の表示を戻す) */
+      if (typeof textTools !== 'undefined') textTools.set(false);
       if (typeof buildPanel === 'function') buildPanel();
     };
     mk('save', '保存', 'いまの形で保存して編集モードを抜ける', 'primary').onclick = () => {
@@ -7466,6 +7499,7 @@ const editBar = (() => {
         btns.save.textContent = '保存';
         editHandles.set(false);
         if (typeof siteEdit !== 'undefined') siteEdit.set(false);   /* 2026-08-29: html.site-edit を同期(自由回転の表示を戻す) */
+        if (typeof textTools !== 'undefined') textTools.set(false);
         if (typeof buildPanel === 'function') buildPanel();
       }, 700);
     };
@@ -14590,6 +14624,7 @@ const siteEdit = (() => {
     const sx = e.clientX, sy = e.clientY;
     const move = ev => {
       const dx = ev.clientX - sx, dy = ev.clientY - sy;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) window.__ttDragged = true;   /* 2026-09-03: ドラッグ後はテキスト選択しない */
       for (const s of starts) s.t.set(s.p.x + dx / s.k, s.p.y + dy / s.k);
       markDirty(); renderFrame();
     };
@@ -14610,6 +14645,191 @@ const siteEdit = (() => {
   }
   return { set, get on() { return on; } };
 })();
+
+/* ===== 【2026-09-03 ヒデさん指定】汎用テキスト編集レイヤー =====
+   編集モード中、トップページの主要テキストをクリックすると浮きツールバーが出て、
+   Figmaのように サイズ / ウェイト / 行間 / 字間 / 余白 を数値で変えられ、打ち替えもできる。
+   保存は params.edits[key]（トップ全体で共有・案非依存）。rvAt が触るのは opacity/filter/transform
+   だけなので、font系プロパティは毎フレームのアニメと競合しない。 */
+const textTools = (() => {
+  /* key=保存キー / sel=要素セレクタ / name=表示名 / text=打ち替え可(子が純テキストのみ) */
+  const SPEC = [
+    { key: 'kvMain',    sel: '.hl-main',   name: 'KVメインコピー',   text: 0 },
+    { key: 'kvEyebrow', sel: '#hlEyebrow', name: 'KVサブコピー',     text: 0 },
+    { key: 'visLabel',  sel: '#visLabel',  name: 'Our Vision',       text: 1 },
+    { key: 'visMsg',    sel: '.vis-l1',    name: 'ビジョンのメッセージ', text: 0 },
+    { key: 'pfTitle',   sel: '#pfTitle',   name: 'Platform（英字）', text: 1 },
+    { key: 'pfSub',     sel: '#pfSub',     name: 'プラットフォーム',  text: 1 },
+    { key: 'p1h',       sel: '#valP1 h3',  name: 'Point01 見出し',   text: 1 },
+    { key: 'p1p',       sel: '#valP1 p',   name: 'Point01 本文',     text: 1 },
+    { key: 'p2h',       sel: '#valP2 h3',  name: 'Point02 見出し',   text: 1 },
+    { key: 'p2p',       sel: '#valP2 p',   name: 'Point02 本文',     text: 1 },
+    { key: 'resHl1',    sel: '#resHl1',    name: '実績 1行目',       text: 1 },
+    { key: 'resSuffix', sel: '#resSuffix', name: '実績 2行目',       text: 1 },
+    { key: 'caseTitle', sel: '#caseTitle', name: '導入事例 見出し',  text: 1 },
+  ];
+  const specEl = sp => document.querySelector(sp.sel);
+  function editsOf(key) {
+    if (!params.edits) params.edits = {};
+    return params.edits[key] || (params.edits[key] = {});
+  }
+  /* params.edits を全対象のDOMへ反映(起動時・変更時) */
+  function applyAll() {
+    if (!params.edits) params.edits = {};
+    for (const sp of SPEC) {
+      const el = specEl(sp); if (!el) continue;
+      const e = params.edits[sp.key] || {};
+      el.style.fontSize      = e.fs != null ? e.fs + 'px' : '';
+      el.style.fontWeight    = e.fw != null ? String(e.fw) : '';
+      el.style.lineHeight    = e.lh != null ? String(e.lh) : '';
+      el.style.letterSpacing = e.ls != null ? e.ls + 'px' : '';
+      const hasPad = ['pt', 'pr', 'pb', 'pl'].some(k => e[k] != null);
+      el.style.padding = hasPad
+        ? `${e.pt || 0}px ${e.pr || 0}px ${e.pb || 0}px ${e.pl || 0}px` : '';
+      if (sp.text && e.text != null && el.textContent !== e.text) el.textContent = e.text;
+    }
+  }
+
+  let on = false, sel = null, bar = null;
+  function buildBar() {
+    if (bar) return bar;
+    bar = document.createElement('div');
+    bar.className = 'txt-bar';
+    document.body.appendChild(bar);
+    return bar;
+  }
+  function num(label, unit, get, setV, min, max, step) {
+    const wrap = document.createElement('label');
+    wrap.className = 'tb-num';
+    wrap.innerHTML = `<span>${label}</span>`;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.min = min; inp.max = max; inp.step = step;
+    const cur = get();
+    inp.value = (cur == null ? '' : cur);
+    inp.placeholder = 'auto';
+    inp.oninput = () => {
+      const v = inp.value === '' ? null : parseFloat(inp.value);
+      setV(v); applyAll(); markDirty();
+    };
+    inp.onpointerdown = e => e.stopPropagation();
+    wrap.appendChild(inp);
+    if (unit) { const u = document.createElement('em'); u.textContent = unit; wrap.appendChild(u); }
+    return wrap;
+  }
+  function renderBar() {
+    const b = buildBar();
+    b.innerHTML = '';
+    if (!sel) { b.classList.remove('on'); return; }
+    const el = specEl(sel); if (!el) { b.classList.remove('on'); return; }
+    const e = editsOf(sel.key);
+    const cs = getComputedStyle(el);
+    const title = document.createElement('div');
+    title.className = 'tb-title'; title.textContent = sel.name;
+    b.appendChild(title);
+    /* サイズ */
+    b.appendChild(num('サイズ', 'px', () => e.fs, v => { if (v == null) delete e.fs; else e.fs = v; },
+      8, 200, 1));
+    /* ウェイト */
+    const wWrap = document.createElement('label'); wWrap.className = 'tb-num';
+    wWrap.innerHTML = '<span>太さ</span>';
+    const wSel = document.createElement('select');
+    wSel.innerHTML = '<option value="">auto</option>' +
+      [100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}">${w}</option>`).join('');
+    wSel.value = e.fw != null ? String(e.fw) : '';
+    wSel.onchange = () => { if (wSel.value === '') delete e.fw; else e.fw = +wSel.value; applyAll(); markDirty(); };
+    wSel.onpointerdown = ev => ev.stopPropagation();
+    wWrap.appendChild(wSel); b.appendChild(wWrap);
+    /* 行間(倍) */
+    b.appendChild(num('行間', '', () => e.lh, v => { if (v == null) delete e.lh; else e.lh = v; },
+      0.8, 3, 0.05));
+    /* 字間 */
+    b.appendChild(num('字間', 'px', () => e.ls, v => { if (v == null) delete e.ls; else e.ls = v; },
+      -5, 20, 0.1));
+    /* 余白: 上右下左 */
+    const padWrap = document.createElement('div'); padWrap.className = 'tb-pad';
+    padWrap.innerHTML = '<span>余白</span>';
+    [['pt', '上'], ['pr', '右'], ['pb', '下'], ['pl', '左']].forEach(([k, lb]) => {
+      const i = document.createElement('input');
+      i.type = 'number'; i.title = lb + '余白(px)'; i.placeholder = lb;
+      i.value = e[k] != null ? e[k] : '';
+      i.oninput = () => { const v = i.value === '' ? null : parseFloat(i.value);
+        if (v == null) delete e[k]; else e[k] = v; applyAll(); markDirty(); };
+      i.onpointerdown = ev => ev.stopPropagation();
+      padWrap.appendChild(i);
+    });
+    b.appendChild(padWrap);
+    /* 打ち替え */
+    if (sel.text) {
+      const ed = document.createElement('button'); ed.className = 'tb-btn'; ed.textContent = '✎ 文字を打ち替え';
+      ed.onpointerdown = ev => ev.stopPropagation();
+      ed.onclick = () => startEditText(el, sel);
+      b.appendChild(ed);
+    }
+    /* リセット */
+    const rs = document.createElement('button'); rs.className = 'tb-btn'; rs.textContent = '↺ この要素をリセット';
+    rs.onpointerdown = ev => ev.stopPropagation();
+    rs.onclick = () => { params.edits[sel.key] = {}; applyAll(); markDirty(); renderBar(); };
+    b.appendChild(rs);
+    b.classList.add('on');
+    positionBar(el);
+  }
+  function positionBar(el) {
+    const r = el.getBoundingClientRect();
+    const bw = bar.offsetWidth || 300;
+    let left = r.left + r.width / 2 - bw / 2;
+    left = Math.max(8, Math.min(left, innerWidth - bw - 8));
+    let top = r.top - bar.offsetHeight - 10;
+    if (top < 8) top = r.bottom + 10;
+    bar.style.left = left + 'px';
+    bar.style.top = top + 'px';
+  }
+  function startEditText(el, sp) {
+    el.setAttribute('contenteditable', 'true');
+    el.classList.add('txt-editing');
+    el.focus();
+    const rng = document.createRange(); rng.selectNodeContents(el);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(rng);
+    const finish = () => {
+      el.removeAttribute('contenteditable');
+      el.classList.remove('txt-editing');
+      const t = el.textContent;
+      editsOf(sp.key).text = t;
+      applyAll(); markDirty();
+      el.removeEventListener('blur', finish); el.removeEventListener('keydown', onKey);
+    };
+    const onKey = ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); el.blur(); }
+      if (ev.key === 'Escape') { el.blur(); } };
+    el.addEventListener('blur', finish); el.addEventListener('keydown', onKey);
+  }
+  function select(sp) {
+    sel = sp;
+    for (const s of SPEC) { const el = specEl(s); if (el) el.classList.toggle('tt-sel', s === sp); }
+    renderBar();
+  }
+  function onClick(e) {
+    if (!on) return;
+    const sp = this.__ttSpec;
+    /* ドラッグ(位置移動)と区別: siteEditが動かした直後は選択しない */
+    if (window.__ttDragged) { window.__ttDragged = false; return; }
+    e.stopPropagation();
+    select(sp);
+  }
+  function set(v) {
+    on = !!v;
+    document.documentElement.classList.toggle('txt-edit', on);
+    for (const sp of SPEC) {
+      const el = specEl(sp); if (!el) continue;
+      el.classList.toggle('tt-hit', on);
+      if (!on) el.classList.remove('tt-sel');
+      if (on && !el.__ttBound) { el.__ttSpec = sp; el.addEventListener('click', onClick); el.__ttBound = true; }
+    }
+    if (!on) { sel = null; if (bar) bar.classList.remove('on'); }
+  }
+  function refresh() { if (on && sel) renderBar(); }
+  return { set, applyAll, refresh, get on() { return on; } };
+})();
+textTools.applyAll();
+
 /* 【2026-08-29 ヒデさん指定】タイトル横の✏️編集ボタン: 直接編集モードのオン/オフ(パネルの開閉はしない) */
 (() => {
   const eb = document.getElementById('panelEditBtn');
@@ -14619,6 +14839,7 @@ const siteEdit = (() => {
     e.stopPropagation();                       /* パネルの開閉と喧嘩させない */
     editHandles.set(!editHandles.on);
     siteEdit.set(editHandles.on);              /* サイト全体のオブジェクトも同じモードで編集可に */
+    textTools.set(editHandles.on);             /* 2026-09-03: テキストのfont編集レイヤーも同期 */
     syncEb();
   });
   eb.addEventListener('pointerdown', e => e.stopPropagation());   /* ドラッグ開始も抑止 */
