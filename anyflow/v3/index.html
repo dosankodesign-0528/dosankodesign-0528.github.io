@@ -90,8 +90,9 @@
   /* カンプ: frame x120 y263 w358 / 罫線26px + 14px Regular、gap 9px、本文 Thin 70px lh1.4 */
   .headline {
     position: absolute;
-    left: 120px;
-    top: 263px;
+    /* 【2026-09-02 ヒデさん指定】コピーの位置をパネルで調整(カンプ位置からのずらし) */
+    left: calc(120px + var(--kv-copy-x, 0px));
+    top: calc(263px + var(--kv-copy-y, 0px));
     color: var(--ink);
     white-space: nowrap;
     /* 【2026-09-02 ヒデさん指定】メイン/サブの上下並びをパネルで入替。column=メイン上 / column-reverse=サブ上 */
@@ -3041,7 +3042,8 @@ const DEFAULTS = {
     eyebrowSize: 14,    // サブコピーの文字サイズ(px)
     eyebrowWeight: 400, // サブコピーの太さ
     eyebrowLs: 0,       // 【2026-09-01】サブコピーの字間(px)
-    mainThin: 0,        // 【2026-09-01】メインを縁取りで細く見せる量(px)。背景色の縁で線を削る
+    mainThin: 0,
+    copyX: 0, copyY: 0,   // コピー全体の位置ずらし(px・カンプ位置基準) 2026-09-02        // 【2026-09-01】メインを縁取りで細く見せる量(px)。背景色の縁で線を削る
     copyOrder: 'main',  // 【2026-09-02】KVコピーの上下並び 'main'=メイン上/サブ下 'sub'=サブ上/メイン下
     eyebrowDash: true,  // サブコピー先頭の罫線(ハイフン)あり/なし
     eyebrowDashW: 26,   // 罫線の長さ(px)
@@ -10206,6 +10208,8 @@ function applyKvCopy() {
   r.setProperty('--kv-eyebrow-dash-w', (k.eyebrowDashW != null ? k.eyebrowDashW : 26) + 'px');
   r.setProperty('--kv-dash-gap', (k.dashGap != null ? k.dashGap : 10) + 'px');
   r.setProperty('--kv-copy-gap', (k.copyGap != null ? k.copyGap : 16) + 'px');
+  r.setProperty('--kv-copy-x', (k.copyX || 0) + 'px');
+  r.setProperty('--kv-copy-y', (k.copyY || 0) + 'px');
 }
 applyKvCopy();
 /* 【2026-09-01】実績: Anyflowと「が」の間(px)をCSS変数へ */
@@ -13797,6 +13801,12 @@ function buildPanel() {
   segRow('上下の並び', [['メインが上', 'main'], ['サブが上', 'sub']],
     () => (params.kv.copyOrder === 'sub' ? 'sub' : 'main'),
     v => { params.kv.copyOrder = v; applyKvCopy(); markDirty(); });
+  rows.push(slider('位置 横', -120, 300, 2, () => (params.kv.copyX || 0),
+    v => { params.kv.copyX = v; applyKvCopy(); }, v => v + 'px',
+    'コピー全体（メイン＋サブ＋ロゴ帯より上の文字ブロック）を左右にずらします。0でカンプ位置。', { signed: true }));
+  rows.push(slider('位置 縦', -200, 300, 2, () => (params.kv.copyY || 0),
+    v => { params.kv.copyY = v; applyKvCopy(); }, v => v + 'px',
+    'コピー全体を上下にずらします。0でカンプ位置。', { signed: true }));
   rows.push(slider('メインの文字サイズ', 40, 110, 1, () => (params.kv.mainSize != null ? params.kv.mainSize : 70),
     v => { params.kv.mainSize = v; applyKvCopy(); }, v => Math.round(v) + 'px',
     '「AIと事業を強くする」の文字サイズ。カンプは70px。'));
