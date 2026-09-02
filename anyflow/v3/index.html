@@ -3151,6 +3151,10 @@ const DEFAULTS = {
       npOrbitDur: 3.5,   // パターン2で1周にかける時間(秒)。時間同期より「ゆったり1周」の体験優先
       npOrbitDir: -1,    // パターン2の回る向き。-1=既定(2026-09-02 ヒデさん指定で従来と逆に) / 1=逆
       npOrbitLead: 0.5,  // パターン2: ブラー出現の何秒前から動き出しているか(出現時にはもう動いている)
+      npOrbitEase: 2.0,  // パターン2: 減速の効き。出だしが最速で徐々に減速(2026-09-03 等速廃止)。
+                         //   ⚠️出だしの速さ=効き÷1周時間。「1周6秒×効き2」で旧・等速時の速さと一致
+      npOrbitOp0: 0.35,  // パターン2: 出だしのドットの不透明度(止まる頃に100%へ)
+      npOrbitBlur0: 2,   // パターン2: 出だしのドットのブラー(px。止まる頃に0へ)
       npOrbitTextGap: 0, // パターン2: ドットが止まってから文字(役割名/Platform)が出るまでの間(秒)
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
       /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
@@ -8745,12 +8749,16 @@ function updateVision(p) {
   const pat2SpinAt = miniAt - (c.npOrbitLead != null ? c.npOrbitLead : 0.5);
   const pat2Dur = Math.max(0.5, c.npOrbitDur != null ? c.npOrbitDur : 3.5);
   const pat2SpinEnd = pat2SpinAt + pat2Dur;
+  /* 【2026-09-03 ヒデさん指定】等速をやめ「最初すごく速い→徐々に減速して停止」へ。
+     減速の効き(npOrbitEase)が大きいほど出だしが速く、後半が長くゆっくり。
+     進行度 pat2K はドットの不透明度・ブラー(出だし薄く→止まる頃100%)にも使う */
+  const pat2K = !pat2 ? 1
+    : (A < pat2SpinAt ? 0
+       : 1 - Math.pow(1 - clamp01((A - pat2SpinAt) / pat2Dur), Math.max(1, c.npOrbitEase != null ? c.npOrbitEase : 2)));
   if (noPin) {
     if (pat2) {
-      /* 時間同期より体験優先: ゆったり等速で1周→車のようにじわっと減速して停止(2026-09-02) */
-      const kk = A < pat2SpinAt ? 0 : easeDrive(clamp01((A - pat2SpinAt) / pat2Dur));
       const dir2 = (c.npOrbitDir != null ? c.npOrbitDir : -1);
-      rot = totalRot - 360 * dir2 * (1 - kk);
+      rot = totalRot - 360 * dir2 * (1 - pat2K);
     } else {
       const t2 = npBlockT('visionDots', SECS.vision.querySelector('.pin-vp:not(.np-vp)'));
       const kk = t2 < 0 ? 0 : easeOutQ(clamp01(t2 / Math.max(0.1, c.npSpinDur)));
@@ -8766,9 +8774,13 @@ function updateVision(p) {
   }
   /* 【2026-08-25 指定】ドットは軌道が出た時点では出さず、左下へ移動する過程でフェードインさせる */
   const dotIn = noPin ? 1 : (mvT < 0 ? 0 : clamp01(mvT / Math.max(0.1, c.moveDur * 0.7)));
+  /* パターン2: 出だしは薄く+軽いブラー、止まる頃に不透明100%・くっきり(2026-09-03 ヒデさん指定) */
+  const p2op = pat2 ? ((c.npOrbitOp0 != null ? c.npOrbitOp0 : 0.35) + (1 - (c.npOrbitOp0 != null ? c.npOrbitOp0 : 0.35)) * pat2K) : 1;
+  const p2blur = pat2 ? ((c.npOrbitBlur0 != null ? c.npOrbitBlur0 : 2) * (1 - pat2K)) : 0;
   PF_DOTS.forEach((d, i) => {
     const el = visEls.dots[i];
-    el.style.opacity = dotIn.toFixed(3);
+    el.style.opacity = (dotIn * p2op).toFixed(3);
+    el.style.filter = p2blur > 0.05 ? `blur(${p2blur.toFixed(2)}px)` : '';
     if (dotIn <= 0) return;
     const pos = pfDotPos(d, d.deg - totalRot + rot);
     el.style.transform =
@@ -13914,6 +13926,15 @@ function buildPanel() {
   segRow('回る向き', [['向きA（既定）', -1], ['向きB（逆）', 1]],
     () => (sv().vision.npOrbitDir != null ? sv().vision.npOrbitDir : -1),
     v => { sv().vision.npOrbitDir = v; markDirty(); });
+  rows.push(slider('減速の効き', 1, 6, 0.1, () => (sv().vision.npOrbitEase != null ? sv().vision.npOrbitEase : 2),
+    v => sv().vision.npOrbitEase = v, v => '×' + v.toFixed(1),
+    '出だしが最速で、そこから徐々に減速します。大きいほど出だしが速く後半が長くゆっくり。出だしの速さ＝効き÷1周時間なので、「1周6秒×効き2」で以前の等速時と同じ出だしになります。'));
+  rows.push(slider('出だしの薄さ', 0, 1, 0.05, () => (sv().vision.npOrbitOp0 != null ? sv().vision.npOrbitOp0 : 0.35),
+    v => sv().vision.npOrbitOp0 = v, v => Math.round(v * 100) + '%',
+    '回り始めのドットの不透明度。止まる頃に100%まで濃くなります。100%にすると常に濃いまま。'));
+  rows.push(slider('出だしのブラー', 0, 8, 0.5, () => (sv().vision.npOrbitBlur0 != null ? sv().vision.npOrbitBlur0 : 2),
+    v => sv().vision.npOrbitBlur0 = v, v => v.toFixed(1) + 'px',
+    '回り始めのドットのぼかし。止まる頃に0(くっきり)へ。0でブラーなし。'));
   rows.push(slider('動き出しの先行', 0, 2, 0.05, () => (sv().vision.npOrbitLead != null ? sv().vision.npOrbitLead : 0.5),
     v => sv().vision.npOrbitLead = v, v => v.toFixed(2) + '秒',
     'ブラーで出現する何秒前から動き出しているか。0=出現と同時に走り出す / 大きいほど「出現した時にはもう走っている」。'));
