@@ -5533,7 +5533,9 @@ function convDrawShape() {
     /* 【2026-08-29 ヒデさん指定】白位置のずらし(0.40/0.49の交互)を撤去。全リング同じ白位置に統一。 */
     const white = 0.490385;
     const tr = `rotate(${rot.toFixed(2)} ${cc.x.toFixed(1)} ${cc.y.toFixed(1)})`;
-    const swBase = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth);
+    /* 【2026-09-02】複数リングにも「軌道の線の太さ」(案ごとの倍率)を掛ける。
+       掛け忘れでアトム型などの線幅スライダーが無反応だった(★1/6/7/9等) */
+    const swBase = (params.conv.ringWidth == null ? 3 : params.conv.ringWidth) * convOrbitWidth();
     /* 【2026-08-29 ヒデさん指定】遠近を軌道の線にも: 手前(下=front)を太く・奥(上=back)を細く */
     const cP = params.conv || {};
     const orbitPersp = (cP.dotPersp === 'persp') && (cP.perspScope === 'orbit' || cP.perspScope === 'both');
@@ -14149,8 +14151,35 @@ function buildPanel() {
     exportBtn.textContent = '✅ 書き出しました（Claudeに渡してください）';
     setTimeout(() => { exportBtn.textContent = '⬇ 設定を書き出す（本番反映用）'; }, 2200);
   };
+  /* 【2026-09-02 ヒデさん指定】案の完全削除リストのコピー。
+     パネルの「🗑削除」は隠すだけ(=「消した案を戻す」で復活できる)。コードから恒久的に消す(完全削除)には
+     Claudeに焼き込んでもらう必要があるので、いま隠している案の一覧をワンタップでコピーできるようにする。 */
+  const purgeBtn = document.createElement('button');
+  purgeBtn.textContent = '📋 完全削除リストをコピー（Claude用）';
+  purgeBtn.title = 'いま「削除」で隠している案の一覧をコピーします。Claudeに貼って「完全削除して」と言えば、コードから恒久的に消してもらえます。';
+  purgeBtn.onclick = () => {
+    try { save(); } catch (e) {}
+    const st = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+    const payload = { hidden: st.hidden || {}, trash: st.trash || {} };
+    const text = '【完全削除の依頼】以下の案を VARIANT_REMOVED_EXTRA に焼き込んで、コードから恒久的に消してください。\n'
+      + JSON.stringify(payload, null, 1);
+    const done = () => {
+      purgeBtn.textContent = '✅ コピーしました（Claudeに貼ってください）';
+      setTimeout(() => { purgeBtn.textContent = '📋 完全削除リストをコピー（Claude用）'; }, 2600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else fallbackCopy(text, done);
+    function fallbackCopy(t, cb) {
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove(); cb();
+    }
+  };
   /* 【2026-08-26 ヒデさん指定】下の「元に戻す」は廃止。各項目の右端にある ↺ で個別に戻す */
-  btns.append(saveBtn, exportBtn);
+  btns.append(saveBtn, exportBtn, purgeBtn);
   body.appendChild(btns);
 
   /* 【2026-08-28 ヒデさん指定】「いまの設定をコピーする」ボタンは削除。 */
