@@ -3,45 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>カンペ連動プレゼン — 設定</title>
+  <title>カンペ連動プレゼン</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="wrap">
-    <h1 class="title">カンペ連動プレゼン <span class="chip">v1</span></h1>
-    <p class="subtitle">Figmaのスライドを画面共有しながら、手元のカンペ（トークスクリプト）をページに連動させます。</p>
-
-    <!-- デッキ（プレゼン）選択 -->
-    <div class="card" id="deckCard">
-      <h2>🎬 プレゼン（デッキ）を選ぶ</h2>
-      <div class="row">
-        <select class="field" id="deckSel" style="flex:1; min-width:220px;"></select>
-        <button class="btn" id="deckNew">＋ 新規プレゼン</button>
-        <button class="btn ghost" id="deckRename">名前変更</button>
-        <button class="btn ghost" id="deckDelete" style="color:var(--danger)">削除</button>
+  <!-- ============ 一覧（ギャラリー） ============ -->
+  <div id="galleryView">
+    <div class="gal-wrap">
+      <div class="gal-head">
+        <h1>カンペ連動プレゼン</h1>
+        <span class="grow"></span>
+        <button class="btn" id="openSettings">⚙ 連動の設定</button>
       </div>
-      <p class="hint" style="margin-top:10px;">
-        プレゼンごとに <b>Figma URL と原稿</b>を分けて保存します。新しいプレゼンは「＋新規プレゼン」→ 下でURLを貼るだけ。<br>
-        <b>下の鍵（client-id）は全プレゼン共通で1回だけ</b>。以後スライドが変わっても Figma 側の設定はやり直し不要です。
-      </p>
-    </div>
+      <p class="gal-sub">プレゼンを選んで開くと、スライドを見ながらトークスクリプトを書けます。</p>
 
-    <!-- STEP 1 : URL -->
-    <div class="card">
-      <h2><span class="step-no">1</span>Figmaプロトタイプの共有URLを貼る <span class="chip">このプレゼン用</span></h2>
-      <div class="row">
-        <input class="field" id="url" placeholder="https://www.figma.com/proto/……" style="flex:1; min-width:280px;" />
-        <button class="btn primary" id="saveUrl">保存</button>
+      <div class="banner" id="cidBanner" hidden>
+        <span>⚠️ Figma と連動する鍵（client-id）が未設定です。連動には最初に1回だけ設定が必要です。</span>
+        <button class="btn" id="bannerSetup">設定する</button>
       </div>
-      <p class="hint" id="urlHint" style="margin-top:10px;"></p>
-    </div>
 
-    <!-- STEP 1.5 : Figma client-id -->
-    <div class="card">
-      <h2><span class="step-no">2</span>Figmaと連動させる鍵（client-id）を入れる <span class="chip">初回だけ・全プレゼン共通</span></h2>
-      <p class="hint" style="margin-bottom:12px;">
-        カンペを自動連動させるには、Figmaで無料の「OAuthアプリ」を1回だけ作り、その<b>client-id</b>をここに貼ります。<br>
-        アプリの<b>「Embed API」→「Add an embed origin」</b>に、下の<b>あなたの現在のアドレス</b>を登録してください。
+      <div class="gal-grid" id="deckGrid"></div>
+    </div>
+  </div>
+
+  <!-- ============ 編集画面 ============ -->
+  <div id="editorView" hidden>
+    <div class="ed-top">
+      <button class="btn ghost" id="backBtn">← 一覧</button>
+      <input class="ed-name" id="edName" placeholder="プレゼン名" />
+      <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
+      <span class="grow"></span>
+      <span class="chip" id="edConn">スライド読み込み中…</span>
+      <button class="btn primary" id="startBtn">▶ 本番を開始（2画面）</button>
+    </div>
+    <div class="ed-body">
+      <div class="ed-list" id="edList"></div>
+      <div class="ed-center">
+        <div class="ed-stage">
+          <iframe id="edFrame" allow="fullscreen" title="スライド"></iframe>
+          <div class="ed-empty" id="edEmpty" hidden>
+            <div>このプレゼンの Figma プロトタイプ共有URLを貼ってください。</div>
+            <input class="field" id="edUrlInput" placeholder="https://www.figma.com/proto/……" />
+            <button class="btn primary" id="edUrlSave">読み込む</button>
+          </div>
+        </div>
+        <div class="ed-nav">
+          <button class="btn" id="edPrev">◀ 前へ</button>
+          <span class="ed-counter" id="edCounter"><b>–</b> / –</span>
+          <button class="btn" id="edNext">次へ ▶</button>
+          <span class="grow"></span>
+          <span class="hint">スライドを送るとページが増えます・入力は自動保存</span>
+        </div>
+        <div class="ed-notes">
+          <input class="lbl" id="edLabel" placeholder="このページの見出し（任意）例：課題の説明" />
+          <textarea id="edScript" placeholder="このページで話すこと（トークスクリプト）を書く"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 設定モーダル（client-id） ============ -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal-box">
+      <h2>Figma と連動する鍵（client-id）</h2>
+      <p class="hint" style="margin:0 0 14px;">
+        連動には Figma で無料の「OAuthアプリ」を1回だけ作り、その <b>client-id</b> を貼ります（全プレゼン共通）。<br>
+        アプリの <b>「Embed API」→「Add an embed origin」</b> に、下のアドレスを登録してください。
       </p>
       <div class="row" style="margin-bottom:10px;">
         <span class="chip">登録するオリジン</span>
@@ -49,40 +76,12 @@
         <button class="btn ghost" id="copyOrigin">コピー</button>
       </div>
       <div class="row">
-        <input class="field" id="cid" placeholder="client-id をここに貼る（例: A1b2C3d4...）" style="flex:1; min-width:280px;" />
+        <input class="field" id="cid" placeholder="client-id を貼る" style="flex:1;min-width:240px;" />
         <button class="btn primary" id="saveCid">保存</button>
       </div>
       <p class="hint" id="cidHint" style="margin-top:10px;"></p>
-    </div>
-
-    <!-- STEP 2 : 開く -->
-    <div class="card">
-      <h2><span class="step-no">3</span>スライドとカンペを開く</h2>
-      <div class="row">
-        <button class="btn big primary" id="openPresent">🖥 スライドを開く<br><small style="font-weight:400;opacity:.85">← 同じChrome内の新しいタブ</small></button>
-        <button class="btn big" id="openNotes">📝 カンペを開く<br><small style="font-weight:400;opacity:.85">← 別ウィンドウ・共有しない</small></button>
-      </div>
-      <p class="hint" style="margin-top:12px;">
-        <b>スライドは新しいタブで開きます。</b>他のウェブサイトも別タブで開けば、<b>タブを切り替えながら</b>スライドとサイトを見せられます。<br>
-        画面共有は Zoom 等で <b>「Chrome ウィンドウ」</b>を選択（＝そのウィンドウの全タブが映る）。タブを切り替えても常に共有されます。<br>
-        <b>カンペは別ウィンドウ</b>なので、共有する Chrome ウィンドウに入れなければ観客に映りません（サブモニター / iPad / ウィンドウの裏でOK）。
-      </p>
-    </div>
-
-    <!-- STEP 3 : 原稿 -->
-    <div class="card">
-      <h2><span class="step-no">4</span>ページごとの原稿を書く</h2>
-      <p class="hint" style="margin-bottom:14px;">
-        <b>かんたんな作り方（収録）:</b> 上の「発表ウィンドウ」を開き、プロトタイプを<b>最初から最後までクリックで送る</b>と、
-        訪れたページがこの下に<b>自動で1行ずつ追加</b>されます。あとは各行に原稿を打つだけ。<br>
-        本番はここを開いていなくてOK。原稿はこのPCに保存されます。
-        <span class="dot" id="conn2"></span> <span id="connText" style="color:var(--muted)">発表ウィンドウ未接続</span>
-      </p>
-      <div class="slides" id="slides"></div>
-      <div class="empty-hint" id="emptyHint">まだページがありません。発表ウィンドウでプロトタイプを送ると増えます。</div>
-      <div class="row" style="margin-top:14px;">
-        <button class="btn ghost" id="addManual">＋ 空の行を手動で足す</button>
-        <button class="btn ghost" id="clearAll" style="color:var(--danger)">全消去</button>
+      <div class="row" style="margin-top:16px;justify-content:flex-end;">
+        <button class="btn" id="closeSettings">閉じる</button>
       </div>
     </div>
   </div>
@@ -90,151 +89,224 @@
   <script src="store.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
-    let currentId = null;
 
-    // ---- デッキ（プレゼン）選択 ----
-    function renderDeckBar() {
-      const decks = PN.listDecks();
-      const active = PN.getActiveDeckId();
-      $('deckSel').innerHTML = decks.map((d) =>
-        '<option value="' + d.id + '"' + (d.id === active ? ' selected' : '') + '>' +
-        (d.name || '(名称未設定)').replace(/</g, '&lt;') + '</option>'
-      ).join('');
-      $('deckDelete').style.display = decks.length > 1 ? '' : 'none';
+    /* ---------- 埋め込みURL ---------- */
+    function buildEmbed(input) {
+      let u; try { u = new URL(input); } catch (e) { return null; }
+      u.protocol = 'https:'; u.hostname = 'embed.figma.com';
+      u.searchParams.set('embed-host', location.hostname);
+      u.searchParams.set('footer', 'false');
+      const cid = PN.getClientId();
+      if (cid) u.searchParams.set('client-id', cid);
+      return u.toString();
     }
-    function onDeckSwitch() {
-      currentId = null;
-      $('url').value = PN.getUrl();
-      refreshUrlHint();
-      renderSlides();
+    function toFrame(frame, payload) { if (frame && frame.contentWindow) frame.contentWindow.postMessage(payload, '*'); }
+
+    /* ================= 一覧（ギャラリー） ================= */
+    function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function renderGallery() {
+      $('cidBanner').hidden = !!PN.getClientId();
+      const grid = $('deckGrid');
+      grid.innerHTML = '';
+      PN.listDecks().forEach((d) => {
+        const deck = readDeck(d.id);
+        const pages = (deck.scripts.order || []).length;
+        const card = document.createElement('div');
+        card.className = 'deck-card';
+        card.innerHTML =
+          '<div class="deck-thumb"><div class="tt">' + esc(d.name || '(名称未設定)') + '</div>' +
+            (pages ? '<div class="badge">' + pages + 'ページ</div>' : '') + '</div>' +
+          '<div class="deck-foot"><span class="nm">' + esc(d.name || '(名称未設定)') + '</span>' +
+            '<span class="menu" title="メニュー">⋯</span></div>';
+        card.querySelector('.deck-thumb').onclick = () => openEditor(d.id);
+        card.querySelector('.nm').onclick = () => openEditor(d.id);
+        card.querySelector('.menu').onclick = (e) => { e.stopPropagation(); deckMenu(d.id, d.name); };
+        grid.appendChild(card);
+      });
+      const add = document.createElement('div');
+      add.className = 'deck-card new';
+      add.textContent = '＋ 新規プレゼン';
+      add.onclick = newDeck;
+      grid.appendChild(add);
     }
-    $('deckSel').onchange = () => { PN.setActiveDeckId($('deckSel').value); onDeckSwitch(); };
-    $('deckNew').onclick = () => {
-      const name = prompt('新しいプレゼンの名前', 'プレゼン' + (PN.listDecks().length + 1));
-      if (name === null) return;
-      PN.createDeck(name.trim() || undefined);
-      renderDeckBar(); onDeckSwitch();
-    };
-    $('deckRename').onclick = () => {
-      const cur = PN.getActiveDeck();
-      const name = prompt('プレゼンの名前を変更', cur.name);
-      if (name === null || !name.trim()) return;
-      PN.renameDeck(cur.id, name.trim());
-      renderDeckBar();
-    };
-    $('deckDelete').onclick = () => {
-      const cur = PN.getActiveDeck();
-      if (!confirm('プレゼン「' + cur.name + '」を、URL・原稿ごと削除します。よろしいですか？')) return;
-      PN.deleteDeck(cur.id);
-      renderDeckBar(); onDeckSwitch();
-    };
-    renderDeckBar();
-
-    // ---- STEP1 URL ----
-    $('url').value = PN.getUrl();
-    function refreshUrlHint() {
-      const v = PN.getUrl();
-      $('urlHint').innerHTML = v
-        ? '保存済み。' + (/figma\.com\/(proto|design)\//.test(v) ? '' : '<span style="color:var(--danger)">※ /proto/ か /design/ を含むURLか確認してください。</span>')
-        : '未保存です。';
+    // デッキの中身を localStorage から直接読む（アクティブを変えずに一覧表示するため）
+    function readDeck(id) {
+      try {
+        const d = JSON.parse(localStorage.getItem('pn_decks'));
+        if (d && d.decks && d.decks[id]) return d.decks[id];
+      } catch (e) {}
+      return { name: '', url: '', scripts: { order: [], cards: {} } };
     }
-    $('saveUrl').onclick = () => { PN.setUrl($('url').value.trim()); refreshUrlHint(); };
-    refreshUrlHint();
-
-    // ---- STEP1.5 client-id / オリジン ----
-    $('origin').textContent = location.origin;
-    $('copyOrigin').onclick = () => {
-      navigator.clipboard.writeText(location.origin).then(() => { $('copyOrigin').textContent = 'コピー済'; setTimeout(() => $('copyOrigin').textContent = 'コピー', 1200); });
-    };
-    $('cid').value = PN.getClientId();
-    function refreshCidHint() {
-      $('cidHint').innerHTML = PN.getClientId()
-        ? '<span style="color:var(--accent2)">● client-id 保存済み。連動できます。</span>'
-        : '<span style="color:#e0a000">未設定です。このままだとカンペは連動しません（発表ウィンドウの表示だけはできます）。</span>';
+    function deckMenu(id, name) {
+      const act = prompt('「' + name + '」\n1=名前を変更 / 2=削除 / それ以外=キャンセル', '1');
+      if (act === '1') {
+        const nm = prompt('新しい名前', name);
+        if (nm && nm.trim()) { PN.renameDeck(id, nm.trim()); renderGallery(); }
+      } else if (act === '2') {
+        if (confirm('「' + name + '」を URL・原稿ごと削除します。よろしいですか？')) { PN.deleteDeck(id); renderGallery(); }
+      }
     }
-    $('saveCid').onclick = () => { PN.setClientId($('cid').value); refreshCidHint(); };
-    refreshCidHint();
+    function newDeck() {
+      const nm = prompt('新しいプレゼンの名前', 'プレゼン' + (PN.listDecks().length + 1));
+      if (nm === null) return;
+      const id = PN.createDeck(nm.trim() || undefined);
+      openEditor(id);
+    }
 
-    // ---- STEP2 ウィンドウ ----
-    $('openPresent').onclick = () => {
-      if (!PN.getUrl()) { alert('先にSTEP1でFigmaのURLを保存してください。'); return; }
-      // 同じChromeウィンドウ内の「新しいタブ」で開く（他サイトのタブと並べて切り替えられる）
-      window.open('present.html', '_blank');
-    };
-    // カンペは必ず「別ウィンドウ」で開く（共有するChromeウィンドウに入れないため）
-    $('openNotes').onclick = () => window.open('notes.html', 'pn_notes', 'width=680,height=900');
+    /* ================= 編集画面 ================= */
+    let edNode = null;
 
-    // ---- STEP3 原稿エディタ ----
-    function renderSlides() {
+    function showView(which) {
+      $('galleryView').hidden = (which !== 'gallery');
+      $('editorView').hidden = (which !== 'editor');
+      document.body.classList.toggle('editing', which === 'editor');
+    }
+
+    function openEditor(id) {
+      PN.setActiveDeckId(id);
+      const deck = PN.getActiveDeck();
+      edNode = null;
+      $('edName').value = deck.name || '';
+      $('edConn').textContent = 'スライド読み込み中…';
+      showView('editor');
+      loadStage(deck.url);
+      renderEdList();
+      loadNote();
+      updateCounter();
+    }
+
+    function loadStage(url) {
+      const embed = url ? buildEmbed(url) : null;
+      if (embed) {
+        $('edEmpty').hidden = true;
+        $('edFrame').src = embed;
+      } else {
+        $('edEmpty').hidden = false;
+        $('edFrame').removeAttribute('src');
+        $('edConn').textContent = 'URL未設定';
+      }
+    }
+
+    function renderEdList() {
       const s = PN.loadScripts();
-      const box = $('slides');
+      const box = $('edList');
       box.innerHTML = '';
-      $('emptyHint').style.display = s.order.length ? 'none' : 'block';
-
+      if (!s.order.length) {
+        box.innerHTML = '<div class="empty">まだページがありません。<br>右のスライドを「次へ」で送ると、来たページがここに増えます。</div>';
+        return;
+      }
       s.order.forEach((id, i) => {
-        const card = s.cards[id] || { label: '', script: '' };
+        const c = s.cards[id] || {};
         const row = document.createElement('div');
-        row.className = 'slide-row' + (id === currentId ? ' current' : '');
-        row.dataset.id = id;
-        row.innerHTML =
-          '<div class="slide-num">' + (i + 1) + '</div>' +
-          '<div class="slide-body">' +
-            '<input class="slide-label" placeholder="このページの見出し（任意）例：課題の説明">' +
-            '<textarea class="field slide-script" placeholder="ここに話す内容（カンペ）を書く"></textarea>' +
-            '<div class="slide-meta">Figmaノード: ' + id + (id === currentId ? '　● 今ここ' : '') + '</div>' +
-          '</div>';
-        const labelEl = row.querySelector('.slide-label');
-        const scriptEl = row.querySelector('.slide-script');
-        labelEl.value = card.label || '';
-        scriptEl.value = card.script || '';
-        labelEl.addEventListener('input', () => updateCard(id, { label: labelEl.value }));
-        scriptEl.addEventListener('input', () => updateCard(id, { script: scriptEl.value }));
+        row.className = 'ed-prow' + (id === edNode ? ' current' : '');
+        const snip = c.script ? esc(c.script.slice(0, 50)) : '（未入力）';
+        row.innerHTML = '<div class="n">' + (i + 1) + '</div>' +
+          '<div class="snip' + (c.script ? '' : ' empty') + '">' + (c.label ? '<b>' + esc(c.label) + '</b><br>' : '') + snip + '</div>';
+        row.onclick = () => { if (id !== edNode) toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: id } }); };
         box.appendChild(row);
       });
     }
 
-    function updateCard(id, patch) {
+    function updateCounter() {
       const s = PN.loadScripts();
-      s.cards[id] = Object.assign({ label: '', script: '' }, s.cards[id], patch);
-      PN.saveScripts(s);
-      PN.post({ type: 'scripts-updated' }); // カンペ側に即反映
+      const idx = s.order.indexOf(edNode);
+      $('edCounter').innerHTML = '<b>' + (idx >= 0 ? idx + 1 : '–') + '</b> / ' + (s.order.length || '–');
     }
 
-    $('addManual').onclick = () => {
-      const s = PN.loadScripts();
-      const id = 'manual:' + Date.now();
-      s.order.push(id);
-      s.cards[id] = { label: '', script: '' };
-      PN.saveScripts(s);
-      renderSlides();
-    };
-    $('clearAll').onclick = () => {
-      if (!confirm('このプレゼンの原稿とページ一覧をすべて消します。よろしいですか？')) return;
-      PN.saveScripts({ order: [], cards: {} });
-      currentId = null;
-      renderSlides();
-    };
+    function loadNote() {
+      const c = edNode ? (PN.loadScripts().cards[edNode] || {}) : {};
+      $('edLabel').value = c.label || '';
+      $('edScript').value = c.script || '';
+    }
 
-    // ---- 発表ウィンドウからの通知（収録／ハイライト） ----
-    PN.onMessage((msg) => {
-      if (!msg) return;
-      if (msg.type === 'present-ready') { $('conn2').classList.add('on'); $('connText').textContent = '発表ウィンドウ接続中'; }
-      if (msg.type === 'node') {
-        $('conn2').classList.add('on'); $('connText').textContent = '発表ウィンドウ接続中';
-        currentId = msg.nodeId;
-        renderSlides();
-        const cur = document.querySelector('.slide-row.current');
-        if (cur) cur.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    function saveNote() {
+      if (!edNode) return;
+      const s = PN.loadScripts();
+      if (!s.order.includes(edNode)) s.order.push(edNode);
+      s.cards[edNode] = Object.assign({ label: '', script: '' }, s.cards[edNode],
+        { label: $('edLabel').value, script: $('edScript').value });
+      PN.saveScripts(s);
+      PN.post({ type: 'scripts-updated' });
+      renderEdList();
+    }
+    $('edLabel').addEventListener('input', saveNote);
+    $('edScript').addEventListener('input', saveNote);
+
+    // スライド（編集用の埋め込み）からの通知
+    window.addEventListener('message', (e) => {
+      if (!/figma\.com/.test(e.origin)) return;
+      const f = $('edFrame');
+      if (!f || e.source !== f.contentWindow) return; // 編集用の埋め込みだけ
+      const m = e.data || {};
+      if (m.type === 'INITIAL_LOAD') { $('edConn').textContent = '● 接続中'; }
+      if (m.type === 'PRESENTED_NODE_CHANGED') {
+        $('edConn').textContent = '● 接続中';
+        const node = PN.normId(m.data && m.data.presentedNodeId);
+        if (!node) return;
+        edNode = node;
+        PN.ensureCard(node);   // 未知ページを登録
+        loadNote();
+        renderEdList();
+        updateCounter();
       }
-      if (msg.type === 'scripts-updated') {
-        // 別ウィンドウでの編集を反映（自分が入力中でなければ）
-        if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') renderSlides();
-      }
-      if (msg.type === 'deck-changed') { renderDeckBar(); onDeckSwitch(); }
-      if (msg.type === 'decks-updated') { renderDeckBar(); }
     });
 
-    renderSlides();
+    $('edPrev').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' });
+    $('edNext').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' });
+
+    // プレゼン名の変更
+    $('edName').addEventListener('input', () => {
+      const id = PN.getActiveDeckId();
+      PN.renameDeck(id, $('edName').value.trim() || 'プレゼン');
+    });
+
+    // URL の設定・変更
+    $('edUrlBtn').onclick = () => {
+      const cur = PN.getActiveDeck().url || '';
+      const v = prompt('このプレゼンの Figma プロトタイプ共有URL', cur);
+      if (v === null) return;
+      PN.setUrl(v.trim());
+      edNode = null; loadStage(v.trim()); renderEdList(); loadNote(); updateCounter();
+    };
+    $('edUrlSave').onclick = () => {
+      const v = $('edUrlInput').value.trim();
+      if (!v) return;
+      PN.setUrl(v);
+      edNode = null; loadStage(v); renderEdList(); loadNote(); updateCounter();
+    };
+
+    // 本番を開始（共有スライド＝新タブ／カンペ＝別ウィンドウ）
+    $('startBtn').onclick = () => {
+      if (!PN.getActiveDeck().url) { alert('先に Figma URL を設定してください（🔗URL）。'); return; }
+      window.open('present.html', '_blank');
+      window.open('notes.html', 'pn_notes', 'width=720,height=920');
+    };
+
+    $('backBtn').onclick = () => { showView('gallery'); renderGallery(); $('edFrame').removeAttribute('src'); };
+
+    /* ================= 設定モーダル ================= */
+    $('origin').textContent = location.origin;
+    $('copyOrigin').onclick = () => navigator.clipboard.writeText(location.origin).then(() => {
+      $('copyOrigin').textContent = 'コピー済'; setTimeout(() => $('copyOrigin').textContent = 'コピー', 1200);
+    });
+    function refreshCidHint() {
+      $('cidHint').innerHTML = PN.getClientId()
+        ? '<span style="color:var(--accent2)">● client-id 保存済み。連動できます。</span>'
+        : '<span style="color:#e0a000">未設定です。連動にはこれが必要です。</span>';
+    }
+    function openSettings() { $('cid').value = PN.getClientId(); refreshCidHint(); $('settingsModal').hidden = false; }
+    $('openSettings').onclick = openSettings;
+    $('bannerSetup').onclick = openSettings;
+    $('closeSettings').onclick = () => { $('settingsModal').hidden = true; renderGallery(); };
+    $('saveCid').onclick = () => { PN.setClientId($('cid').value); refreshCidHint(); renderGallery(); };
+
+    /* ================= 起動 ================= */
+    renderGallery();
+    // 他ウィンドウでの編集を一覧/リストに反映
+    PN.onMessage((msg) => {
+      if (!msg) return;
+      if (!$('galleryView').hidden && (msg.type === 'scripts-updated' || msg.type === 'decks-updated')) renderGallery();
+    });
   </script>
 </body>
 </html>

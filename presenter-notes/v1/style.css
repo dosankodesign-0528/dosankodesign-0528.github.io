@@ -87,6 +87,83 @@ body { background: var(--bg); color: var(--text); }
 .slide-meta { font-size: 11px; color: #667; }
 .empty-hint { color: var(--muted); font-size: 14px; padding: 16px; text-align: center; }
 
+/* ========== Figma Slides 風の authoring UI ========== */
+/* --- 一覧（ギャラリー） --- */
+.gal-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; }
+.gal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.gal-head h1 { font-size: 22px; font-weight: 700; margin: 0; }
+.gal-head .grow { flex: 1; }
+.gal-sub { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
+.banner { background: #2a2410; border: 1px solid #5a4a10; color: #e8c766; border-radius: 10px;
+  padding: 12px 14px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+.banner .btn { margin-left: auto; }
+.gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+.deck-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden; cursor: pointer; transition: border-color .12s, transform .05s; }
+.deck-card:hover { border-color: #3a4150; }
+.deck-card:active { transform: translateY(1px); }
+.deck-thumb { aspect-ratio: 16/10; background: #d8d5cf; color: #333; position: relative;
+  display: flex; align-items: center; justify-content: center; padding: 16px; overflow: hidden; }
+.deck-thumb .tt { font-size: 17px; font-weight: 700; text-align: center; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.deck-thumb .badge { position: absolute; right: 8px; bottom: 8px; font-size: 11px; color: #555;
+  background: rgba(255,255,255,.7); border-radius: 6px; padding: 2px 7px; }
+.deck-foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+.deck-foot .nm { font-size: 14px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-foot .menu { color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+.deck-foot .menu:hover { background: var(--panel2); color: var(--text); }
+.deck-card.new { display: flex; align-items: center; justify-content: center; border-style: dashed;
+  min-height: 190px; color: var(--muted); font-size: 15px; }
+.deck-card.new:hover { color: var(--accent); border-color: var(--accent); }
+
+/* --- エディタ --- */
+body.editing { overflow: hidden; }
+#editorView { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+.ed-top { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  border-bottom: 1px solid var(--line); background: var(--panel); }
+.ed-name { background: transparent; border: 1px solid transparent; color: var(--text);
+  font-size: 16px; font-weight: 600; padding: 6px 10px; border-radius: 8px; min-width: 160px; }
+.ed-name:hover { border-color: var(--line); }
+.ed-name:focus { outline: none; border-color: var(--accent); background: var(--panel2); }
+.ed-top .grow { flex: 1; }
+.ed-body { flex: 1; display: flex; min-height: 0; }
+.ed-list { flex: 0 0 220px; overflow-y: auto; border-right: 1px solid var(--line); padding: 10px; background: #0d0f14; }
+.ed-list .empty { color: var(--muted); font-size: 12px; padding: 10px; line-height: 1.6; }
+.ed-prow { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start;
+  padding: 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+.ed-prow:hover { background: var(--panel2); }
+.ed-prow.current { border-color: var(--accent); background: #10131a; }
+.ed-prow .n { color: var(--muted); font-size: 12px; font-weight: 700; text-align: right; padding-top: 2px; }
+.ed-prow.current .n { color: var(--accent); }
+.ed-prow .snip { font-size: 12px; color: #aab3c2; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ed-prow .snip.empty { color: #5b6472; font-style: italic; }
+.ed-center { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 16px 20px; gap: 12px; }
+.ed-stage { flex: 1; min-height: 0; background: #000; border-radius: 10px; position: relative; overflow: hidden; border: 1px solid var(--line); }
+.ed-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ed-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; background: var(--panel); padding: 24px; text-align: center; }
+.ed-empty .field { max-width: 460px; }
+.ed-nav { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
+.ed-counter { font-size: 14px; color: var(--muted); min-width: 70px; text-align: center; }
+.ed-counter b { color: var(--text); }
+.ed-notes { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; }
+.ed-notes label { font-size: 12px; color: var(--muted); }
+.ed-notes .lbl { background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
+.ed-notes .lbl:focus { outline: none; border-color: var(--accent); }
+.ed-notes textarea { min-height: 120px; max-height: 28vh; resize: vertical; background: var(--panel2);
+  border: 1px solid var(--line); color: #f3f5f8; border-radius: 8px; padding: 12px; font-size: 16px;
+  line-height: 1.6; font-family: inherit; }
+.ed-notes textarea:focus { outline: none; border-color: var(--accent); }
+
+/* 小さなモーダル（設定） */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center;
+  justify-content: center; z-index: 50; padding: 20px; }
+.modal-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 22px; width: 100%; max-width: 560px; }
+.modal-box h2 { margin: 0 0 6px; font-size: 17px; }
+
 /* ---------- 発表ウィンドウ (present) ---------- */
 body.present { overflow: hidden; background: #000; }
 .present-frame { position: fixed; inset: 0; width: 100vw; height: 100vh; border: 0; }
