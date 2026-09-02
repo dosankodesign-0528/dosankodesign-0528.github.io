@@ -2624,7 +2624,9 @@ const CASE_PATTERNS = [
      F = 帯なし(一方向のグラデがゆっくり流れる)
      G = 白い帯が1本、斜めに流れる
      H = 白い帯が2本、S字にうねりながら流れる */
-function waveFragment(bands, warp) {
+function waveFragment(bands, warp, rampSrc, rimCol, rimAmt) {
+  /* 【2026-09-02 ヒデさん指定】配色ランプとフチの色を差し替え可能に。
+     未指定なら従来のカンプ配色のまま(C1〜C3は挙動不変) */
   return `
 precision highp float;
 uniform vec2 uRes;
@@ -2667,7 +2669,7 @@ float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); 
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
 
-/* ===== カンプ実測の配色ランプ =====
+${rampSrc || `/* ===== カンプ実測の配色ランプ =====
    assets/planet-e.png（カンプの惑星）のピクセルを数えた面積比:
      水色/シアン 55.7% / 青 24.2% / 白に近い 8.3% / マゼンタ 7.5% / 紫 4.1%
    ストップの幅をこの比率に合わせてあるので、どこを流れても
@@ -2686,7 +2688,7 @@ vec3 ramp(float x){
   /* 水色が過半(55.7%)。中でわずかに明暗が動く程度にして帯っぽくしない */
   if (x < 0.915) return mix(cy, mix(cy, wh, 0.22), (x - 0.355) / 0.560);
   return mix(mix(cy, wh, 0.22), wh, (x - 0.915) / 0.085);          /* 白 8.3% */
-}
+}`}
 
 void main(){
   float CELL = 2.0;
@@ -2735,7 +2737,7 @@ void main(){
   /* 左下のマゼンタリム (カンプもピンクは端だけ。面積を増やさないよう控えめに) */
   float rim = pow(1.0 - n.z, 1.6) * clamp(dot(normalize(n.xy + vec2(1e-4)), normalize(vec2(-0.7, -0.6))), 0.0, 1.0);
   float mg = clamp(floor(rim * 1.5 * 3.0 + (dith - 0.5) * 1.3 + 0.5) / 3.0, 0.0, 1.0);
-  col = mix(col, vec3(1.0, 0.365, 0.592), mg * 0.70);
+  col = mix(col, ${rimCol || 'vec3(1.0, 0.365, 0.592)'}, mg * ${rimAmt || '0.70'});
 
   if (uLight > 1.5) {
     vec3 Ldir = normalize(vec3(0.62, 0.62, 0.48));
@@ -2933,6 +2935,61 @@ void main(){
     swatch: 'linear-gradient(140deg, #ff4fd8 0%, #fff 22%, #56d0ff 46%, #fff 68%, #2f6dff 100%)',
     src: 'assets/planet-e.png',
     fragment: waveFragment('0.85', '0.14'),
+  },
+  /* ===== 【2026-09-02 ヒデさん指定】A1〜A3のニューバージョン =====
+     画像貼り(A1/A2/A3)の配色を、B/C系と同じ「完全生成・色が溶けて流れるハーフトーン」で
+     作り直した新3案。既存のA1〜A3はそのまま残し、選択肢として並ぶ。 */
+  N1: {
+    name: 'A1+ ビビッドブルー・溶け(新)',
+    swatch: 'linear-gradient(135deg, #ff5d97 0%, #fff 18%, #1e9bff 55%, #0b6bff 100%)',
+    fragment: waveFragment('0.90', '0.22', `
+/* A1配色: 深い青が主役。白の帯を挟んでピンクは端だけ */
+vec3 ramp(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 mg = vec3(1.000, 0.365, 0.592);   /* #FF5D97 */
+  vec3 wh = vec3(1.0, 1.0, 1.0);
+  vec3 lb = vec3(0.118, 0.608, 1.000);   /* #1E9BFF */
+  vec3 db = vec3(0.043, 0.420, 1.000);   /* #0B6BFF */
+  vec3 dd = vec3(0.031, 0.290, 0.820);   /* 深い青 */
+  if (x < 0.07) return mix(mg, wh, x / 0.07);
+  if (x < 0.22) return mix(wh, lb, (x - 0.07) / 0.15);
+  if (x < 0.62) return mix(lb, db, (x - 0.22) / 0.40);
+  return mix(db, dd, (x - 0.62) / 0.38);
+}`),
+  },
+  N2: {
+    name: 'A2+ ピンク×ブルー・溶け(新)',
+    swatch: 'linear-gradient(160deg, #ff5d97 22%, #fff 50%, #26a9ff 78%)',
+    fragment: waveFragment('0.75', '0.20', `
+/* A2配色: ピンクと青が対等。真ん中に白 */
+vec3 ramp(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 mg = vec3(1.000, 0.365, 0.592);   /* #FF5D97 */
+  vec3 wh = vec3(1.0, 1.0, 1.0);
+  vec3 bl = vec3(0.149, 0.663, 1.000);   /* #26A9FF */
+  vec3 db = vec3(0.071, 0.459, 0.851);   /* 深い青 */
+  if (x < 0.30) return mix(mg, mix(mg, wh, 0.35), x / 0.30);
+  if (x < 0.50) return mix(mix(mg, wh, 0.35), wh, (x - 0.30) / 0.20);
+  if (x < 0.72) return mix(wh, bl, (x - 0.50) / 0.22);
+  return mix(bl, db, (x - 0.72) / 0.28);
+}`, "vec3(0.071, 0.459, 0.851)", '0.55'),
+  },
+  N3: {
+    name: 'A3+ ライトグレイン・溶け(新)',
+    swatch: 'linear-gradient(200deg, #9fdcff 12%, #fff 45%, #ff9ac4 88%)',
+    fragment: waveFragment('0.80', '0.18', `
+/* A3配色: パステル。淡い水色→白→淡いピンク */
+vec3 ramp(float x){
+  x = clamp(x, 0.0, 1.0);
+  vec3 lc = vec3(0.624, 0.863, 1.000);   /* #9FDCFF */
+  vec3 wh = vec3(1.0, 1.0, 1.0);
+  vec3 pk = vec3(1.000, 0.604, 0.769);   /* #FF9AC4 */
+  vec3 dp = vec3(1.000, 0.478, 0.690);   /* 濃いめのピンク */
+  if (x < 0.32) return mix(lc, mix(lc, wh, 0.6), x / 0.32);
+  if (x < 0.56) return mix(mix(lc, wh, 0.6), wh, (x - 0.32) / 0.24);
+  if (x < 0.86) return mix(wh, pk, (x - 0.56) / 0.30);
+  return mix(pk, dp, (x - 0.86) / 0.14);
+}`, "vec3(1.000, 0.478, 0.690)", '0.55'),
   },
 };
 
@@ -13681,6 +13738,11 @@ function buildPanel() {
     { key: 'A2', name: '2 ピンク×ブルー' },
     { key: 'A3', name: '3 ライトグレイン' },
     { key: 'B',  name: '4 ハーフトーン' },
+    /* 【2026-09-02 ヒデさん指定】1〜3の配色を4と同じ「色が溶けて流れるハーフトーン」で
+       作り直したニューバージョン。1〜3(画像貼り)はそのまま残す */
+    { key: 'N1', name: '5 ビビッド・溶け(新)', swatch: DESIGNS.N1.swatch },
+    { key: 'N2', name: '6 ピンク×ブルー・溶け(新)', swatch: DESIGNS.N2.swatch },
+    { key: 'N3', name: '7 ライトグレイン・溶け(新)', swatch: DESIGNS.N3.swatch },
   ];
   pillRow(PLANET_SKINS, it => params.design === it.key,
     it => { params.design = it.key; markDirty(); renderFrame(); },
