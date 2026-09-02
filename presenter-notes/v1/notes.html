@@ -72,6 +72,9 @@
       savedFlash: document.getElementById('savedFlash'),
     };
 
+    // タブ名（共有ウィンドウ選択で取り違えないよう「共有しない」を明示）
+    document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）';
+
     let currentId = null;
     let pvNode = null;   // プレビューが今表示しているノード（無駄な再ナビ防止）
     let editing = false; // 直接編集中か
@@ -155,8 +158,10 @@
         previewGoto(msg.nodeId);  // プレビューも同じページへ
       }
       if (msg.type === 'scripts-updated' && currentId) { render(currentId); }
+      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）'; }
       if (msg.type === 'deck-changed') {
         if (editing) exitEdit();
+        document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）';
         currentId = null; pvNode = null;
         els.label.hidden = true;
         els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';

@@ -19,6 +19,9 @@
     const overlay = document.getElementById('overlay');
     const ovtext = document.getElementById('ovtext');
 
+    // タブ名を「そのプレゼン（カード）の名前」にする（画面共有のウィンドウ選択で分かりやすく）
+    document.title = (PN.getActiveDeck().name || 'スライド');
+
     let lastNodeId = null; // 今表示しているページ（後から開いたカンペに教え直す用）
 
     // ?url= が付いていればそれを、無ければ保存済みURLを使う
@@ -105,6 +108,8 @@
       if (msg.type === 'notes-ready' && lastNodeId) {
         PN.post({ type: 'node', nodeId: lastNodeId });
       }
+      // プレゼン名が変わったらタブ名も更新
+      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || 'スライド'); }
     });
 
     // 発表ウィンドウが開いたことを知らせる
