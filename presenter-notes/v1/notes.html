@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>カンペ（このウィンドウは共有しない）</title>
+  <title>発表スライド（トークスクリプト）</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="notes">
@@ -73,10 +73,12 @@
     };
 
     // タブ名（共有ウィンドウ選択で取り違えないよう「共有しない」を明示）
-    document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）';
+    document.title = (PN.getActiveDeck().name || '発表スライド') + '（トークスクリプト）';
 
     let currentId = null;
-    let pvNode = null;   // プレビューが今表示しているノード（無駄な再ナビ防止）
+    let pvNode = null;    // プレビューが今表示しているノード（無駄な再ナビ防止）
+    let pvReady = false;  // プレビュー埋め込みの読み込み完了フラグ
+    let pvDesired = null; // 表示したいノード（読み込み前に来ても後で適用）
     let editing = false; // 直接編集中か
     let editingId = null;// 編集対象のノード（編集中に送られても対象は固定）
 
@@ -99,28 +101,36 @@
       u.hostname = 'embed.figma.com';
       u.searchParams.set('embed-host', location.hostname);
       u.searchParams.set('footer', 'false'); // 下部のFigmaフッターを消す
+      u.searchParams.set('hide-ui', '1');    // ナビ/UIを消してスライドだけ大きく
       const cid = PN.getClientId();
       if (cid) u.searchParams.set('client-id', cid);
       return u.toString();
     }
     function loadPreview() {
+      pvReady = false; pvNode = null;
       const embed = buildEmbed(PN.getUrl());
       if (embed) els.pv.src = embed;
     }
-    // プレビューを指定ノードへ（共有スライドに追従）。同じなら何もしない。
+    // プレビューを指定ノードへ（共有スライドに追従）。読み込み前なら記憶して後で適用。
     function previewGoto(nodeId) {
-      if (!nodeId || nodeId === pvNode) return;
-      pvNode = nodeId;
+      if (!nodeId) return;
+      pvDesired = nodeId;
+      applyPreview();
+    }
+    function applyPreview() {
+      if (!pvReady || !pvDesired || pvDesired === pvNode) return;
+      pvNode = pvDesired;
       // 送信先は '*'（embed.figma.com宛だと無視される・実測）
       els.pv.contentWindow.postMessage(
-        { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: nodeId } }, '*');
+        { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: pvDesired } }, '*');
     }
     loadPreview();
-    // プレビューiframe自身のFigmaメッセージは「読み込み完了の合図」だけ使い、操作の判断には使わない（ループ防止）
+    // プレビューiframe自身のFigmaメッセージは「読み込み完了の合図」だけ使う（操作判断には使わない＝ループ防止）
     window.addEventListener('message', (e) => {
       if (!/figma\.com/.test(e.origin)) return;
+      if (e.source !== els.pv.contentWindow) return; // プレビュー埋め込みだけ
       const m = e.data || {};
-      if (m.type === 'INITIAL_LOAD') { els.pvBadge.classList.add('hidden'); }
+      if (m.type === 'INITIAL_LOAD') { els.pvBadge.classList.add('hidden'); pvReady = true; applyPreview(); }
     });
 
     // ---- 原稿の表示更新 ----
@@ -158,11 +168,11 @@
         previewGoto(msg.nodeId);  // プレビューも同じページへ
       }
       if (msg.type === 'scripts-updated' && currentId) { render(currentId); }
-      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）'; }
+      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || '発表スライド') + '（トークスクリプト）'; }
       if (msg.type === 'deck-changed') {
         if (editing) exitEdit();
-        document.title = (PN.getActiveDeck().name || 'カンペ') + '（カンペ・共有しない）';
-        currentId = null; pvNode = null;
+        document.title = (PN.getActiveDeck().name || '発表スライド') + '（トークスクリプト）';
+        currentId = null; pvNode = null; pvDesired = null;
         els.label.hidden = true;
         els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';
         els.script.classList.add('empty');
@@ -224,6 +234,12 @@
 
     // 発表タブに「今のページを教えて」と依頼（開く順番に依存しないように）
     PN.post({ type: 'notes-ready' });
+
+    // 前面に戻った/フォーカスした時は同期を要求（裏で取りこぼしても即回復）
+    function requestSync() { PN.post({ type: 'sync-request' }); applyPreview(); }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) requestSync(); });
+    window.addEventListener('focus', requestSync);
+    setInterval(() => { if (!document.hidden) applyPreview(); }, 1500); // プレビュー取りこぼしの保険
   </script>
 </body>
 </html>

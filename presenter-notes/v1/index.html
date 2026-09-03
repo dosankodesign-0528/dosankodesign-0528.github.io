@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>カンペ連動プレゼン</title>
+  <title>発表スライド</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
   <div id="galleryView">
     <div class="gal-wrap">
       <div class="gal-head">
-        <h1>カンペ連動プレゼン</h1>
+        <h1>発表者ツール</h1>
         <span class="grow"></span>
         <button class="btn" id="openSettings">⚙ 連動の設定</button>
       </div>
@@ -80,6 +80,20 @@
         <button class="btn primary" id="saveCid">保存</button>
       </div>
       <p class="hint" id="cidHint" style="margin-top:10px;"></p>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin:20px 0;">
+      <h2 style="font-size:15px;margin:0 0 6px;">スライドのサムネイル画像（任意）</h2>
+      <p class="hint" style="margin:0 0 10px;">
+        編集画面の左に<b>実際のスライド画像</b>を出すには、Figmaの<b>個人アクセストークン</b>が必要です。<br>
+        Figma → 右上アバター → <b>Settings → Security → Personal access tokens → Generate new token</b>
+        （スコープ「File content」を Read でOK）。作ったトークンを貼ってください（このブラウザ内だけに保存されます）。
+      </p>
+      <div class="row">
+        <input class="field" id="ftoken" type="password" placeholder="figd_ で始まるトークンを貼る" style="flex:1;min-width:240px;" />
+        <button class="btn primary" id="saveToken">保存</button>
+      </div>
+      <p class="hint" id="tokenHint" style="margin-top:10px;"></p>
+
       <div class="row" style="margin-top:16px;justify-content:flex-end;">
         <button class="btn" id="closeSettings">閉じる</button>
       </div>
@@ -173,6 +187,7 @@
       renderEdList();
       loadNote();
       updateCounter();
+      loadThumbs();
     }
 
     function loadStage(url) {
@@ -199,12 +214,43 @@
         const c = s.cards[id] || {};
         const row = document.createElement('div');
         row.className = 'ed-prow' + (id === edNode ? ' current' : '');
+        row.dataset.id = id;
         const snip = c.script ? esc(c.script.slice(0, 50)) : '（未入力）';
-        row.innerHTML = '<div class="n">' + (i + 1) + '</div>' +
-          '<div class="snip' + (c.script ? '' : ' empty') + '">' + (c.label ? '<b>' + esc(c.label) + '</b><br>' : '') + snip + '</div>';
+        row.innerHTML = '<div class="thumb"><span class="n">' + (i + 1) + '</span></div>' +
+          '<div class="snip' + (c.script ? '' : ' empty') + '">' + (c.label ? '<b>' + esc(c.label) + '</b> ' : '') + snip + '</div>';
         row.onclick = () => { if (id !== edNode) toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: id } }); };
         box.appendChild(row);
       });
+      applyThumbs();
+    }
+
+    // ---- サムネイル（Figma画像API・アクセストークンがある時だけ表示）----
+    let thumbCache = {};  // nodeId -> 画像URL（セッション内キャッシュ）
+    let thumbKey = null;  // 現在の fileKey（別ファイルになったら破棄）
+    function fileKeyFromUrl(u) { const m = /\/(?:proto|design|file|slides)\/([A-Za-z0-9]+)/.exec(u || ''); return m ? m[1] : null; }
+    function applyThumbs() {
+      document.querySelectorAll('#edList .ed-prow').forEach((row) => {
+        const url = thumbCache[row.dataset.id];
+        const t = row.querySelector('.thumb');
+        if (url && t) t.style.backgroundImage = 'url("' + url + '")';
+      });
+    }
+    async function loadThumbs() {
+      const token = PN.getFigmaToken();
+      const deck = PN.getActiveDeck();
+      const key = fileKeyFromUrl(deck.url);
+      if (!token || !key) return;
+      if (thumbKey !== key) { thumbCache = {}; thumbKey = key; }
+      const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
+      const need = ids.filter((id) => !(id in thumbCache));
+      if (!need.length) { applyThumbs(); return; }
+      try {
+        const url = 'https://api.figma.com/v1/images/' + key + '?format=png&scale=0.5&ids=' + encodeURIComponent(need.join(','));
+        const res = await fetch(url, { headers: { 'X-Figma-Token': token } });
+        const data = await res.json();
+        if (res.ok && data && data.images) { Object.assign(thumbCache, data.images); applyThumbs(); }
+        else { console.warn('thumbnail fetch failed', data && data.err); }
+      } catch (e) { console.warn('thumbnail fetch error', e && e.message); }
     }
 
     function updateCounter() {
@@ -248,6 +294,7 @@
         loadNote();
         renderEdList();
         updateCounter();
+        loadThumbs();
       }
     });
 
@@ -300,11 +347,25 @@
         ? '<span style="color:var(--accent2)">● client-id 保存済み。連動できます。</span>'
         : '<span style="color:#e0a000">未設定です。連動にはこれが必要です。</span>';
     }
-    function openSettings() { $('cid').value = PN.getClientId(); refreshCidHint(); $('settingsModal').hidden = false; }
+    function refreshTokenHint() {
+      $('tokenHint').innerHTML = PN.getFigmaToken()
+        ? '<span style="color:var(--accent2)">● トークン保存済み。編集画面にサムネイルを表示します。</span>'
+        : 'サムネイルは表示されません（番号＋原稿の抜粋のみ）。';
+    }
+    function openSettings() {
+      $('cid').value = PN.getClientId(); refreshCidHint();
+      $('ftoken').value = PN.getFigmaToken(); refreshTokenHint();
+      $('settingsModal').hidden = false;
+    }
     $('openSettings').onclick = openSettings;
     $('bannerSetup').onclick = openSettings;
     $('closeSettings').onclick = () => { $('settingsModal').hidden = true; renderGallery(); };
     $('saveCid').onclick = () => { PN.setClientId($('cid').value); refreshCidHint(); renderGallery(); };
+    $('saveToken').onclick = () => {
+      PN.setFigmaToken($('ftoken').value); refreshTokenHint();
+      thumbCache = {}; thumbKey = null;
+      if (!$('editorView').hidden) loadThumbs();
+    };
 
     /* ================= 起動 ================= */
     renderGallery();

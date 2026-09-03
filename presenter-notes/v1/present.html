@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>発表ウィンドウ（このウィンドウを画面共有）</title>
+  <title>発表スライド</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="present">
@@ -13,6 +13,14 @@
   </div>
   <iframe id="frame" class="present-frame" allowfullscreen allow="fullscreen" title="Figma"></iframe>
 
+  <!-- 自動で隠れるページ送りナビ（マウスを動かすと出る） -->
+  <div class="pv-nav hidden" id="pvNav">
+    <button class="pv-btn" id="pnPrev" title="前へ">‹</button>
+    <span class="pv-count" id="pnCount">– / –</span>
+    <button class="pv-btn" id="pnNext" title="次へ">›</button>
+    <button class="pv-btn" id="pnRestart" title="最初へ">↺</button>
+  </div>
+
   <script src="store.js"></script>
   <script>
     const frame = document.getElementById('frame');
@@ -20,7 +28,7 @@
     const ovtext = document.getElementById('ovtext');
 
     // タブ名を「そのプレゼン（カード）の名前」にする（画面共有のウィンドウ選択で分かりやすく）
-    document.title = (PN.getActiveDeck().name || 'スライド');
+    document.title = (PN.getActiveDeck().name || '発表スライド');
 
     let lastNodeId = null; // 今表示しているページ（後から開いたカンペに教え直す用）
 
@@ -36,6 +44,7 @@
       u.hostname = 'embed.figma.com';
       u.searchParams.set('embed-host', location.hostname); // 登録した埋め込みオリジンと一致させる
       u.searchParams.set('footer', 'false');               // 下部のFigmaフッター(ロゴ/ファイル名/Edited)を消す
+      u.searchParams.set('hide-ui', '1');                  // Figmaのナビ/UIを消す（自前の自動ナビを使う）
       // client-id があるとFigmaがページ移動イベントを送ってくれる（連動の必須条件）
       const cid = PN.getClientId();
       if (cid) u.searchParams.set('client-id', cid);
@@ -73,6 +82,7 @@
             lastNodeId = nodeId;
             const page = PN.ensureCard(nodeId);      // 未知ページなら登録
             PN.post({ type: 'node', nodeId, page }); // カンペ/設定へ通知
+            updateNavCount();
           }
           break;
         }
@@ -104,13 +114,35 @@
       if (msg.type === 'deck-changed') {
         location.reload();
       }
-      // カンペが後から開いたら、今のページを教え直す（開く順番に依存しないように）
-      if (msg.type === 'notes-ready' && lastNodeId) {
+      // カンペが後から開いた／同期を求められたら、今のページを教え直す
+      if ((msg.type === 'notes-ready' || msg.type === 'sync-request') && lastNodeId) {
         PN.post({ type: 'node', nodeId: lastNodeId });
       }
       // プレゼン名が変わったらタブ名も更新
-      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || 'スライド'); }
+      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || '発表スライド'); }
     });
+
+    // --- 自動で隠れるページ送りナビ（マウスを動かすと出て、2.5秒で隠れる／ウィンドウ外で隠れる） ---
+    const pvNav = document.getElementById('pvNav');
+    let navTimer = null;
+    function showNav() { pvNav.classList.remove('hidden'); clearTimeout(navTimer); navTimer = setTimeout(() => pvNav.classList.add('hidden'), 2500); }
+    function hideNav() { clearTimeout(navTimer); pvNav.classList.add('hidden'); }
+    document.addEventListener('mousemove', showNav);
+    document.addEventListener('mouseleave', hideNav);
+    window.addEventListener('blur', hideNav);
+    document.getElementById('pnPrev').onclick = () => { toFigma({ type: 'NAVIGATE_BACKWARD' }); showNav(); };
+    document.getElementById('pnNext').onclick = () => { toFigma({ type: 'NAVIGATE_FORWARD' }); showNav(); };
+    document.getElementById('pnRestart').onclick = () => { toFigma({ type: 'RESTART' }); showNav(); };
+    function updateNavCount() {
+      const s = PN.loadScripts(); const idx = s.order.indexOf(lastNodeId);
+      document.getElementById('pnCount').textContent = (idx >= 0 ? idx + 1 : '–') + ' / ' + (s.order.length || '–');
+    }
+
+    // --- 連動のムラ対策：現在ページを定期＆前面復帰時に再配信して常に同期させる ---
+    function rebroadcast() { if (lastNodeId) PN.post({ type: 'node', nodeId: lastNodeId }); }
+    setInterval(() => { if (!document.hidden) rebroadcast(); }, 1200);   // ハートビート
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) rebroadcast(); });
+    window.addEventListener('focus', rebroadcast);
 
     // 発表ウィンドウが開いたことを知らせる
     PN.post({ type: 'present-ready' });

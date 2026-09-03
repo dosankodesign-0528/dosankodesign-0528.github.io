@@ -12,6 +12,7 @@ window.PN = (function () {
   const CHANNEL = 'presenter-notes-v1';
   const K_FONT = 'pn_font';       // カンペの文字サイズ(px)   … 全体設定
   const K_CID = 'pn_client_id';   // Figma OAuthアプリの client-id … 全体設定（デッキ非依存）
+  const K_TOKEN = 'pn_figma_token'; // Figma 個人アクセストークン（サムネイル画像取得用・任意）
   const K_DECKS = 'pn_decks';     // { activeId, order:[id...], decks:{ id:{name,url,scripts} } }
   // 旧バージョンのキー（1組だけ持っていた時代）。読み込んでデッキへ移行する。
   const K_OLD_URL = 'pn_url';
@@ -30,6 +31,8 @@ window.PN = (function () {
   // ---- 全体設定 ----
   function getClientId() { return (localStorage.getItem(K_CID) || '').trim(); }
   function setClientId(v) { localStorage.setItem(K_CID, (v || '').trim()); }
+  function getFigmaToken() { return (localStorage.getItem(K_TOKEN) || '').trim(); }
+  function setFigmaToken(v) { localStorage.setItem(K_TOKEN, (v || '').trim()); }
   function getFont() { return parseInt(localStorage.getItem(K_FONT) || '40', 10); }
   function setFont(px) { localStorage.setItem(K_FONT, String(px)); }
 
@@ -129,6 +132,7 @@ window.PN = (function () {
   return {
     CHANNEL, normId,
     getClientId, setClientId,
+    getFigmaToken, setFigmaToken,
     getFont, setFont,
     // デッキ
     listDecks, getActiveDeck, getActiveDeckId, setActiveDeckId,
