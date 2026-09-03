@@ -11,6 +11,7 @@
     <span class="dot" id="conn" title="スライドとの接続"></span>
     <span class="pageno"><b id="pnum">–</b><span id="ptotal"></span></span>
     <span class="grow"></span>
+    <button class="btn" id="mirrorBtn" title="共有中のChromeウィンドウをそのまま映す（タブ切替も見える）">🖥 画面を映す</button>
     <div class="font-ctl">
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
@@ -19,9 +20,10 @@
   </div>
 
   <div class="notes-main">
-    <!-- 左：スライドのプレビュー（共有中のスライドと連動。操作はできない） -->
+    <!-- 左：プレビュー（スライド連動 or 共有ウィンドウそのままのライブ映像） -->
     <div class="notes-preview">
       <iframe id="pv" allow="fullscreen" title="スライドプレビュー"></iframe>
+      <video id="screenVid" hidden autoplay muted playsinline></video>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
     </div>
     <!-- 右：カンペ原稿（表示 / 直接編集） -->
@@ -50,7 +52,7 @@
     <div class="next-preview" id="nextprev"></div>
   </div>
 
-  <script src="store.js"></script>
+  <script src="store.js?v=2"></script>
   <script>
     const els = {
       conn: document.getElementById('conn'),
@@ -62,6 +64,8 @@
       fsize: document.getElementById('fsize'),
       pv: document.getElementById('pv'),
       pvBadge: document.getElementById('pvBadge'),
+      mirrorBtn: document.getElementById('mirrorBtn'),
+      screenVid: document.getElementById('screenVid'),
       displayWrap: document.getElementById('displayWrap'),
       editArea: document.getElementById('editArea'),
       editLabel: document.getElementById('editLabel'),
@@ -181,6 +185,34 @@
         loadPreview();
       }
     });
+
+    // ---- 画面ミラー：共有中のChromeウィンドウをそのままライブ表示（タブ切替も見える）----
+    let screenStream = null;
+    async function startMirror() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        alert('このブラウザは画面プレビューに対応していません。'); return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
+        screenStream = stream;
+        els.screenVid.srcObject = stream;
+        els.screenVid.hidden = false;
+        els.pv.style.visibility = 'hidden';        // スライドプレビューを隠す
+        els.pvBadge.classList.add('hidden');
+        els.mirrorBtn.textContent = '🖥 スライドに戻す';
+        els.mirrorBtn.classList.add('primary');
+        stream.getVideoTracks()[0].addEventListener('ended', stopMirror); // 共有停止で自動的に戻す
+      } catch (e) { /* ユーザーがキャンセル：何もしない */ }
+    }
+    function stopMirror() {
+      if (screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
+      els.screenVid.srcObject = null;
+      els.screenVid.hidden = true;
+      els.pv.style.visibility = '';
+      els.mirrorBtn.textContent = '🖥 画面を映す';
+      els.mirrorBtn.classList.remove('primary');
+    }
+    els.mirrorBtn.onclick = () => { if (screenStream) stopMirror(); else startMirror(); };
 
     // ---- 直接編集（Figma Slides の Edit のように、その場で書いて保存）----
     function enterEdit() {
