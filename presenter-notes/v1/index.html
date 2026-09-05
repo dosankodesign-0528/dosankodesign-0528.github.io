@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>プレゼンツール</title>
+  <!-- Figmaへ事前接続（クリック前にDNS/TLSを済ませて初回表示を速く） -->
+  <link rel="preconnect" href="https://embed.figma.com" crossorigin />
+  <link rel="preconnect" href="https://www.figma.com" crossorigin />
+  <link rel="dns-prefetch" href="https://static.figma.com" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,7 +15,6 @@
   <div id="galleryView">
     <div class="gal-wrap">
       <div class="gal-head">
-        <h1>発表者ツール</h1>
         <span class="grow"></span>
         <button class="btn ghost" id="openSettings" title="設定" aria-label="設定" style="font-size:18px;padding:8px 12px;">⚙</button>
       </div>
@@ -43,6 +46,8 @@
       <div class="ed-center">
         <div class="ed-stage">
           <iframe id="edFrame" allow="fullscreen" title="スライド"></iframe>
+          <!-- 保存済み画像を即出しして待ち時間を体感ゼロに。Figmaが表示できたら消える -->
+          <img id="edPoster" hidden alt="" />
           <div class="ed-empty" id="edEmpty" hidden>
             <div>このプレゼンの Figma プロトタイプ共有URLを貼ってください。</div>
             <input class="field" id="edUrlInput" placeholder="https://www.figma.com/proto/……" />
@@ -189,16 +194,40 @@
       autoBackup();   // 裏で：Figmaから同期 → バックアップ画像を保存（UIなし）
     }
 
+    let stageUrl = null;   // 今 iframe に読み込み済みのURL（同じなら読み直さない＝再入場が一瞬）
     function loadStage(url) {
       const embed = url ? buildEmbed(url) : null;
       if (embed) {
         $('edEmpty').hidden = true;
+        if (stageUrl === embed) return;   // 既に読み込み済み：そのまま使う
+        stageUrl = embed;
+        showPoster();                     // 先に保存画像を出す（体感を速く）
         $('edFrame').src = embed;
       } else {
         $('edEmpty').hidden = false;
         $('edFrame').removeAttribute('src');
+        stageUrl = null;
         $('edConn').classList.remove('on');
       }
+    }
+
+    // 読み込み中は保存済み画像を即表示（無ければ何も出さない）
+    async function showPoster() {
+      const p = $('edPoster');
+      const order = PN.loadScripts().order;
+      const node = edNode || order[0];
+      if (!node) return;
+      const blob = await PN.getImg(PN.getActiveDeckId(), node);
+      if (!blob || stageUrl === null) return;
+      if (p._u) URL.revokeObjectURL(p._u);
+      p._u = URL.createObjectURL(blob);
+      p.src = p._u; p.hidden = false; p.classList.remove('fade');
+    }
+    function hidePoster() {
+      const p = $('edPoster');
+      if (p.hidden) return;
+      p.classList.add('fade');
+      setTimeout(() => { p.hidden = true; if (p._u) { URL.revokeObjectURL(p._u); p._u = null; } }, 260);
     }
 
     function renderEdList() {
@@ -282,9 +311,9 @@
       const f = $('edFrame');
       if (!f || e.source !== f.contentWindow) return; // 編集用の埋め込みだけ
       const m = e.data || {};
-      if (m.type === 'INITIAL_LOAD') { $('edConn').classList.add('on'); }
+      if (m.type === 'INITIAL_LOAD') { $('edConn').classList.add('on'); hidePoster(); }
       if (m.type === 'PRESENTED_NODE_CHANGED') {
-        $('edConn').classList.add('on');
+        $('edConn').classList.add('on'); hidePoster();
         const node = PN.normId(m.data && m.data.presentedNodeId);
         if (!node) return;
         edNode = node;
@@ -467,7 +496,8 @@
       location.href = 'present.html';
     };
 
-    $('backBtn').onclick = () => { showView('gallery'); renderGallery(); $('edFrame').removeAttribute('src'); };
+    // 一覧に戻ってもiframeは読み込んだまま保持する（次に開く時が一瞬で済む）
+    $('backBtn').onclick = () => { showView('gallery'); renderGallery(); };
 
     /* ================= 設定モーダル ================= */
     $('origin').textContent = location.origin;
