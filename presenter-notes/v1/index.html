@@ -34,6 +34,7 @@
       <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
       <span class="grow"></span>
       <span class="dot" id="edConn" hidden></span>
+      <button class="btn ghost" id="refreshBtn" title="Figmaから再取得（スライドを増やした時など）" aria-label="再取得" style="font-size:20px;padding:6px 12px;margin-right:12px;">↻</button>
       <button class="btn primary" id="startBtn">▶ プレゼンを開始</button>
     </div>
     <div class="ed-body">
@@ -314,13 +315,17 @@
       const deckId = PN.getActiveDeckId();
       const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
       if (!ids.length) { alert('先にスライドを最後まで送って、ページを登録してください。'); return; }
+      // 既に保存済みの画像は飛ばし、新しいページだけ取得する（再取得を速く）
+      const need = [];
+      for (const id of ids) { if (!(await PN.getImg(deckId, id))) need.push(id); }
+      if (!need.length) { setPrefetchStatus('✓ 保存済'); return; }
       setPrefetchStatus('画像URL取得中…');
       try {
-        const res = await fetch('https://api.figma.com/v1/images/' + key + '?format=png&scale=1.25&ids=' + encodeURIComponent(ids.join(',')), { headers: { 'X-Figma-Token': token } });
+        const res = await fetch('https://api.figma.com/v1/images/' + key + '?format=png&scale=1.25&ids=' + encodeURIComponent(need.join(',')), { headers: { 'X-Figma-Token': token } });
         const data = await res.json();
         if (!res.ok || !data.images) { setPrefetchStatus('取得失敗'); alert('画像の取得に失敗しました。トークンを確認してください。'); return; }
         let done = 0;
-        for (const id of ids) {
+        for (const id of need) {
           const url = data.images[id];
           if (url) { try { const b = await fetch(url).then((r) => r.blob()); await PN.putImg(deckId, id, b); } catch (e) {} }
           done++; setPrefetchStatus('保存中 ' + done + ' / ' + ids.length);
@@ -374,6 +379,14 @@
     }
     // 左のスライド一覧を隠す／表示（Figma Slides風）
     $('listToggle').onclick = () => document.querySelector('.ed-body').classList.toggle('nolist');
+
+    // ↻ 手動再取得：Figmaからスライド一覧を取り直し、新しいページのバックアップ画像だけ追加保存
+    $('refreshBtn').onclick = async () => {
+      const b = $('refreshBtn');
+      if (b.classList.contains('spin')) return;
+      b.classList.add('spin');
+      try { await autoBackup(); } finally { b.classList.remove('spin'); }
+    };
 
     // トークスクリプト欄の高さを上端ドラッグで変更（上へ＝大きく／下へ＝小さく）。高さは記憶する
     (function () {

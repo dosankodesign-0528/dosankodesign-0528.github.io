@@ -211,6 +211,7 @@ body.present { overflow: hidden; background: #000; }
 .spinner { width: 26px; height: 26px; border: 3px solid #333; border-top-color: var(--accent);
   border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; display: inline-block; }
 
 /* ---------- カンペウィンドウ (notes) ---------- */
 body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: #0b0d11; }
