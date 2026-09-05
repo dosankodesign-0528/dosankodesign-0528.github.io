@@ -38,7 +38,9 @@
         <button class="pv-btn" id="restart" title="最初へ">↺</button>
       </div>
     </div>
-    <!-- 右：カンペ原稿（表示 / 直接編集） -->
+    <!-- 中央の境界線：左右ドラッグで幅を変更 -->
+    <div class="notes-vsplit" id="notesSplit" title="ドラッグで幅を変更"></div>
+    <!-- 右：トークスクリプト（表示 / 直接編集） -->
     <div class="notes-body">
       <div class="notes-scroll" id="displayWrap">
         <div class="notes-label" id="label" hidden></div>
@@ -293,6 +295,28 @@
       if (e.key === 'ArrowRight' || e.key === ' ') { PN.post({ type: 'nav', dir: 'forward' }); e.preventDefault(); }
       if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
     });
+
+    // 中央の境界線を左右ドラッグして、プレビュー／原稿の幅を変える（幅は記憶）
+    (function () {
+      const main = document.querySelector('.notes-main');
+      const pane = document.querySelector('.notes-preview');
+      const split = document.getElementById('notesSplit');
+      const saved = parseInt(localStorage.getItem('pn_splitw') || '', 10);
+      if (saved) pane.style.flexBasis = saved + 'px';
+      let dragging = false;
+      split.addEventListener('mousedown', (e) => { dragging = true; split.classList.add('active'); document.body.classList.add('col-drag'); e.preventDefault(); });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const r = main.getBoundingClientRect();
+        const w = Math.max(r.width * 0.2, Math.min(r.width * 0.8, e.clientX - r.left));
+        pane.style.flexBasis = w + 'px';
+      });
+      window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false; split.classList.remove('active'); document.body.classList.remove('col-drag');
+        localStorage.setItem('pn_splitw', String(Math.round(pane.getBoundingClientRect().width)));
+      });
+    })();
 
     // 発表タブに「今のページを教えて」と依頼（開く順番に依存しないように）
     PN.post({ type: 'notes-ready' });
