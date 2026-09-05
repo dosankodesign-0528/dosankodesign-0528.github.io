@@ -134,8 +134,14 @@ body.editing { overflow: hidden; }
 .ed-prow { display: block; padding: 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
 .ed-prow:hover { background: var(--panel2); }
 .ed-prow.current { border-color: var(--accent); background: #10131a; }
-.ed-prow .thumb { aspect-ratio: 16/10; background: #1a1d24 center/cover no-repeat; border: 1px solid var(--line);
-  border-radius: 6px; position: relative; }
+.ed-prow .thumb { aspect-ratio: 16/9; background: #1a1d24 center/contain no-repeat; border: 1px solid var(--line);
+  border-radius: 6px; position: relative; }   /* スライドは1920×1080＝16:9。containで見切れなし */
+/* 左カラムの幅を右端ドラッグで変える */
+.ed-resize { flex: 0 0 6px; cursor: col-resize; background: transparent; transition: background .12s; }
+.ed-resize:hover, .ed-resize.active { background: var(--accent); }
+.ed-body.nolist .ed-resize { display: none; }
+body.col-drag { user-select: none; cursor: col-resize; }
+body.col-drag iframe { pointer-events: none; }   /* ドラッグ中にiframeがマウスを奪わないように */
 .ed-prow.current .thumb { border-color: var(--accent); }
 .ed-prow .thumb .n { position: absolute; top: 4px; left: 6px; background: rgba(0,0,0,.6); color: #fff;
   font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
@@ -159,7 +165,12 @@ body.editing { overflow: hidden; }
 .ed-notes .lbl { background: var(--panel2); border: 1px solid var(--line); color: var(--text);
   border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
 .ed-notes .lbl:focus { outline: none; border-color: var(--accent); }
-.ed-notes textarea { min-height: 120px; max-height: 28vh; resize: vertical; background: var(--panel2);
+/* トークスクリプト欄の上端ドラッグで高さを変える */
+.ed-vresize { flex: 0 0 6px; cursor: row-resize; border-radius: 3px; background: transparent; transition: background .12s; margin: 2px 0 -4px; }
+.ed-vresize:hover, .ed-vresize.active { background: var(--accent); }
+body.row-drag { user-select: none; cursor: row-resize; }
+body.row-drag iframe { pointer-events: none; }
+.ed-notes textarea { min-height: 80px; max-height: 70vh; resize: none; background: var(--panel2);
   border: 1px solid var(--line); color: #f3f5f8; border-radius: 8px; padding: 12px; font-size: 16px;
   line-height: 1.6; font-family: inherit; }
 .ed-notes textarea:focus { outline: none; border-color: var(--accent); }
@@ -187,6 +198,12 @@ body.present { overflow: hidden; background: #000; }
   border-radius: 999px; box-shadow: 0 6px 22px rgba(0,0,0,.45);
   opacity: 1; transition: opacity .35s; }
 .pv-nav.hidden { opacity: 0; pointer-events: none; }
+/* 画面下のホットゾーン（透明）：ここにマウスが来たらナビを再表示 */
+.nav-hot { position: fixed; left: 0; right: 0; bottom: 0; height: 70px; z-index: 5; }
+/* トークスクリプト窓では、プレビュー内の下中央に同じピルを固定表示 */
+.notes-preview .pv-nav { position: absolute; bottom: 14px; z-index: 3; }
+/* エディタでは行内に置く（fixed/transform を解除） */
+.ed-nav .pv-nav.ed-pill { position: static; transform: none; }
 .pv-btn { background: transparent; border: none; color: #e8eaed; font-size: 22px; line-height: 1;
   width: 42px; height: 38px; border-radius: 999px; cursor: pointer; }
 .pv-btn:hover { background: rgba(255,255,255,.14); }
@@ -235,8 +252,9 @@ body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: col
 .notes-editbar .btn { padding: 8px 14px; font-size: 14px; }
 .saved-flash { color: var(--accent2); font-size: 13px; opacity: 0; transition: opacity .2s; }
 .saved-flash.show { opacity: 1; }
-.notes-script { white-space: pre-wrap; line-height: 1.65; color: #f3f5f8; }
-.notes-script.empty { color: #5b6472; font-style: italic; }
+.notes-script { white-space: pre-wrap; line-height: 1.65; color: #f3f5f8;
+  font-family: "Noto Sans JP", -apple-system, "Hiragino Sans", system-ui, sans-serif; font-style: normal; }
+.notes-script.empty { color: #5b6472; font-style: normal; }
 .notes-bottom {
   flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--panel);
   padding: 10px 16px; display: flex; align-items: center; gap: 12px;

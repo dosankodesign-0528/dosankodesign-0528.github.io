@@ -33,16 +33,12 @@
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
       <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
       <span class="grow"></span>
-      <button class="btn ghost" id="syncBtn" title="Figmaの「スライド」セクションからスライド一覧を取り直す（トークスクリプトは除外）">🔄 Figmaから同期</button>
-      <span class="chip" id="syncStatus"></span>
-      <button class="btn ghost" id="prefetchBtn" title="全ページを画像で保存（弱回線・オフライン対応）">⚡ 画像保存</button>
-      <label class="ed-light" title="回線が弱くても崩れない画像モードで開始"><input type="checkbox" id="lightToggle" /> 軽量モード</label>
-      <span class="chip" id="prefetchStatus"></span>
-      <span class="chip" id="edConn">スライド読み込み中…</span>
+      <span class="dot" id="edConn" title="スライドとの接続（緑＝接続中）" style="margin-right:16px;"></span>
       <button class="btn primary" id="startBtn">▶ プレゼンを開始</button>
     </div>
     <div class="ed-body">
       <div class="ed-list" id="edList"></div>
+      <div class="ed-resize" id="edResize" title="ドラッグで幅を変更"></div>
       <div class="ed-center">
         <div class="ed-stage">
           <iframe id="edFrame" allow="fullscreen" title="スライド"></iframe>
@@ -52,13 +48,17 @@
             <button class="btn primary" id="edUrlSave">読み込む</button>
           </div>
         </div>
-        <div class="ed-nav">
-          <button class="btn" id="edPrev">◀ 前へ</button>
-          <span class="ed-counter" id="edCounter"><b>–</b> / –</span>
-          <button class="btn" id="edNext">次へ ▶</button>
+        <div class="ed-nav" hidden>
           <span class="grow"></span>
-          <span class="hint">スライドを送るとページが増えます・入力は自動保存</span>
+          <div class="pv-nav ed-pill">
+            <button class="pv-btn" id="edPrev" title="前へ">‹</button>
+            <span class="pv-count" id="edCounter"><b>–</b> / –</span>
+            <button class="pv-btn" id="edNext" title="次へ">›</button>
+            <button class="pv-btn" id="edRestart" title="最初へ">↺</button>
+          </div>
+          <span class="grow"></span>
         </div>
+        <div class="ed-vresize" id="edVResize" title="ドラッグで高さを変更"></div>
         <div class="ed-notes">
           <input class="lbl" id="edLabel" placeholder="このページの見出し（任意）例：課題の説明" hidden />
           <textarea id="edScript" placeholder="このページで話すこと（トークスクリプト）を書く"></textarea>
@@ -70,11 +70,8 @@
   <!-- ============ 設定モーダル（client-id） ============ -->
   <div id="settingsModal" class="modal" hidden>
     <div class="modal-box">
-      <h2>Figma と連動する鍵（client-id）</h2>
-      <p class="hint" style="margin:0 0 14px;">
-        連動には Figma で無料の「OAuthアプリ」を1回だけ作り、その <b>client-id</b> を貼ります（全プレゼン共通）。<br>
-        アプリの <b>「Embed API」→「Add an embed origin」</b> に、下のアドレスを登録してください。
-      </p>
+      <h2>設定（初回だけ・以後は自動）</h2>
+      <p class="hint" style="margin:0 0 10px;"><b>① 連動の鍵（client-id）</b>：Figma OAuthアプリのID。下のアドレスを Embed API の許可オリジンに登録。</p>
       <div class="row" style="margin-bottom:10px;">
         <span class="chip">登録するオリジン</span>
         <code id="origin" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;"></code>
@@ -87,12 +84,7 @@
       <p class="hint" id="cidHint" style="margin-top:10px;"></p>
 
       <hr style="border:none;border-top:1px solid var(--line);margin:20px 0;">
-      <h2 style="font-size:15px;margin:0 0 6px;">スライドのサムネイル画像（任意）</h2>
-      <p class="hint" style="margin:0 0 10px;">
-        編集画面の左に<b>実際のスライド画像</b>を出すには、Figmaの<b>個人アクセストークン</b>が必要です。<br>
-        Figma → 右上アバター → <b>Settings → Security → Personal access tokens → Generate new token</b>
-        （スコープ「File content」を Read でOK）。作ったトークンを貼ってください（このブラウザ内だけに保存されます）。
-      </p>
+      <p class="hint" style="margin:0 0 10px;"><b>② Figmaアクセストークン</b>：スライド画像・自動同期・バックアップに使用。Figma › 自分の名前 › Settings › Security › Personal access tokens › Generate new token（File content: Read）。このブラウザ内だけに保存。</p>
       <div class="row">
         <input class="field" id="ftoken" type="password" placeholder="figd_ で始まるトークンを貼る" style="flex:1;min-width:240px;" />
         <button class="btn primary" id="saveToken">保存</button>
@@ -186,15 +178,14 @@
       const deck = PN.getActiveDeck();
       edNode = null;
       $('edName').value = deck.name || '';
-      $('edConn').textContent = 'スライド読み込み中…';
+      $('edConn').classList.remove('on');
       showView('editor');
       loadStage(deck.url);
       renderEdList();
       loadNote();
       updateCounter();
       loadThumbs();
-      $('lightToggle').checked = PN.isLightMode();
-      refreshPrefetchStatus();
+      autoBackup();   // 裏で：Figmaから同期 → バックアップ画像を保存（UIなし）
     }
 
     function loadStage(url) {
@@ -205,7 +196,7 @@
       } else {
         $('edEmpty').hidden = false;
         $('edFrame').removeAttribute('src');
-        $('edConn').textContent = 'URL未設定';
+        $('edConn').classList.remove('on');
       }
     }
 
@@ -290,9 +281,9 @@
       const f = $('edFrame');
       if (!f || e.source !== f.contentWindow) return; // 編集用の埋め込みだけ
       const m = e.data || {};
-      if (m.type === 'INITIAL_LOAD') { $('edConn').textContent = '● 接続中'; }
+      if (m.type === 'INITIAL_LOAD') { $('edConn').classList.add('on'); }
       if (m.type === 'PRESENTED_NODE_CHANGED') {
-        $('edConn').textContent = '● 接続中';
+        $('edConn').classList.add('on');
         const node = PN.normId(m.data && m.data.presentedNodeId);
         if (!node) return;
         edNode = node;
@@ -305,7 +296,7 @@
     });
 
     // ---- 軽量モード：全ページを画像で保存（弱回線・オフライン対応）----
-    function setPrefetchStatus(t) { $('prefetchStatus').textContent = t || ''; }
+    function setPrefetchStatus(t) { const e = $('prefetchStatus'); if (e) e.textContent = t || ''; }
     async function refreshPrefetchStatus() {
       const deckId = PN.getActiveDeckId();
       const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
@@ -314,6 +305,7 @@
       setPrefetchStatus(n ? ('画像 ' + n + '/' + ids.length + ' 保存済') : '画像 未保存');
     }
     async function prefetchImages() {
+      const alert = (m) => console.warn('[backup] ' + m); // 自動実行なのでポップアップは出さない
       const token = PN.getFigmaToken();
       const deck = PN.getActiveDeck();
       const key = fileKeyFromUrl(deck.url);
@@ -336,13 +328,12 @@
         setPrefetchStatus('✓ ' + done + '/' + ids.length + ' 保存済');
       } catch (e) { setPrefetchStatus('失敗'); alert('保存に失敗しました: ' + (e && e.message)); }
     }
-    $('prefetchBtn').onclick = prefetchImages;
-    $('lightToggle').onchange = () => PN.setLightMode($('lightToggle').checked);
 
     // ---- Figmaから同期：「スライド」セクション内の“数字名フレーム”だけをスライドとして取り直す（トークスクリプト除外）----
-    function setSyncStatus(t) { $('syncStatus').textContent = t || ''; }
+    function setSyncStatus(t) { const e = $('syncStatus'); if (e) e.textContent = t || ''; }
     function pageIdFromUrl(u) { try { const p = new URL(u).searchParams.get('page-id'); return p ? p.replace('-', ':') : null; } catch (e) { return null; } }
     async function syncFromFigma() {
+      const alert = (m) => console.warn('[sync] ' + m); // 自動実行なのでポップアップは出さない
       const token = PN.getFigmaToken();
       const deck = PN.getActiveDeck();
       const key = fileKeyFromUrl(deck.url);
@@ -365,19 +356,69 @@
         frames.sort((a, b) => parseInt(a.name, 10) - parseInt(b.name, 10));
         const ids = frames.map((f) => f.id);
         const s = PN.loadScripts();
-        const cards = {}; ids.forEach((id) => { cards[id] = s.cards[id] || { label: '', script: '' }; }); // 既存原稿は保持
+        // 原稿は一切捨てない：既存の全カードを保持しつつ、並びだけFigmaの39枚に合わせる
+        const cards = Object.assign({}, s.cards);
+        ids.forEach((id) => { cards[id] = cards[id] || { label: '', script: '' }; });
         PN.saveScripts({ order: ids, cards });
         PN.post({ type: 'scripts-updated' });
         edNode = null; renderEdList(); loadNote(); updateCounter(); loadThumbs(); refreshPrefetchStatus();
         setSyncStatus('✓ ' + ids.length + '枚に同期');
       } catch (e) { setSyncStatus('失敗'); alert('同期に失敗しました: ' + (e && e.message)); }
     }
-    $('syncBtn').onclick = syncFromFigma;
+    // 自動バックアップ：エディタを開いたら裏で ①Figmaからスライド一覧を同期 → ②バックアップ画像を保存（UIなし・静かに）
+    async function autoBackup() {
+      if (!PN.getFigmaToken() || !PN.getActiveDeck().url) return;   // トークンかURLが無ければ何もしない
+      try { await syncFromFigma(); } catch (e) {}
+      try { await prefetchImages(); } catch (e) {}
+      try { loadThumbs(); } catch (e) {}
+    }
     // 左のスライド一覧を隠す／表示（Figma Slides風）
     $('listToggle').onclick = () => document.querySelector('.ed-body').classList.toggle('nolist');
 
+    // トークスクリプト欄の高さを上端ドラッグで変更（上へ＝大きく／下へ＝小さく）。高さは記憶する
+    (function () {
+      const ta = $('edScript'), handle = $('edVResize');
+      const saved = parseInt(localStorage.getItem('pn_notesh') || '', 10);
+      if (saved) ta.style.height = saved + 'px';
+      let dragging = false, startY = 0, startH = 0;
+      handle.addEventListener('mousedown', (e) => {
+        dragging = true; startY = e.clientY; startH = ta.getBoundingClientRect().height;
+        handle.classList.add('active'); document.body.classList.add('row-drag'); e.preventDefault();
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const h = Math.max(80, Math.min(window.innerHeight * 0.7, startH + (startY - e.clientY)));
+        ta.style.height = h + 'px';
+      });
+      window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false; handle.classList.remove('active'); document.body.classList.remove('row-drag');
+        localStorage.setItem('pn_notesh', String(Math.round(ta.getBoundingClientRect().height)));
+      });
+    })();
+
+    // 左カラムの幅を右端ドラッグで変更（サムネは16:9固定のまま幅に追従）。幅は記憶する
+    (function () {
+      const list = $('edList'), handle = $('edResize');
+      const saved = parseInt(localStorage.getItem('pn_listw') || '', 10);
+      if (saved) list.style.flexBasis = saved + 'px';
+      let dragging = false;
+      handle.addEventListener('mousedown', (e) => { dragging = true; handle.classList.add('active'); document.body.classList.add('col-drag'); e.preventDefault(); });
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const w = Math.max(120, Math.min(600, e.clientX - list.getBoundingClientRect().left));
+        list.style.flexBasis = w + 'px';
+      });
+      window.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false; handle.classList.remove('active'); document.body.classList.remove('col-drag');
+        localStorage.setItem('pn_listw', String(parseInt(list.style.flexBasis, 10) || 220));
+      });
+    })();
+
     $('edPrev').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' });
     $('edNext').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' });
+    $('edRestart').onclick = () => toFrame($('edFrame'), { type: 'RESTART' });
 
     // プレゼン名の変更
     $('edName').addEventListener('input', () => {
@@ -427,8 +468,8 @@
     }
     function refreshTokenHint() {
       $('tokenHint').innerHTML = PN.getFigmaToken()
-        ? '<span style="color:var(--accent2)">● トークン保存済み。編集画面にサムネイルを表示します。</span>'
-        : 'サムネイルは表示されません（番号＋原稿の抜粋のみ）。';
+        ? '<span style="color:var(--accent2)">● 設定済み（画像・自動同期・バックアップが有効）</span>'
+        : '未設定：画像・自動同期・バックアップは無効です。';
     }
     function openSettings() {
       $('cid').value = PN.getClientId(); refreshCidHint();

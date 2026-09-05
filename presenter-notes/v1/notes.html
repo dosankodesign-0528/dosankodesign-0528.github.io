@@ -7,14 +7,15 @@
   <link rel="preconnect" href="https://embed.figma.com" crossorigin />
   <link rel="preconnect" href="https://www.figma.com" crossorigin />
   <link rel="dns-prefetch" href="https://static.figma.com" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="notes">
   <div class="notes-top">
     <span class="dot" id="conn" title="スライドとの接続"></span>
-    <span class="pageno"><b id="pnum">–</b><span id="ptotal"></span></span>
     <span class="grow"></span>
-    <button class="btn" id="mirrorBtn" title="共有中のChromeウィンドウをそのまま映す（タブ切替も見える）">🖥 画面を映す</button>
     <div class="font-ctl">
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
@@ -29,6 +30,13 @@
       <img id="pvImg" hidden alt="スライド" />
       <video id="screenVid" hidden autoplay muted playsinline></video>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
+      <!-- 共有スライドと同じピル型ナビ（‹ N/総数 › ↺）。手元から送れる -->
+      <div class="pv-nav" id="nPill">
+        <button class="pv-btn" id="prev" title="前へ（共有スライドも一緒に戻る）">‹</button>
+        <span class="pv-count"><b id="pnum">–</b><span id="ptotal"></span></span>
+        <button class="pv-btn" id="next" title="次へ（共有スライドも一緒に送る）">›</button>
+        <button class="pv-btn" id="restart" title="最初へ">↺</button>
+      </div>
     </div>
     <!-- 右：カンペ原稿（表示 / 直接編集） -->
     <div class="notes-body">
@@ -50,11 +58,6 @@
     </div>
   </div>
 
-  <div class="notes-bottom">
-    <button class="btn" id="prev" title="前へ（共有スライドも一緒に戻る）">◀ 戻る</button>
-    <button class="btn" id="next" title="次へ（共有スライドも一緒に送る）">送る ▶</button>
-    <div class="next-preview" id="nextprev"></div>
-  </div>
 
   <script src="store.js?v=3"></script>
   <script>
@@ -64,12 +67,10 @@
       ptotal: document.getElementById('ptotal'),
       label: document.getElementById('label'),
       script: document.getElementById('script'),
-      nextprev: document.getElementById('nextprev'),
       fsize: document.getElementById('fsize'),
       pv: document.getElementById('pv'),
       pvImg: document.getElementById('pvImg'),
       pvBadge: document.getElementById('pvBadge'),
-      mirrorBtn: document.getElementById('mirrorBtn'),
       screenVid: document.getElementById('screenVid'),
       displayWrap: document.getElementById('displayWrap'),
       editArea: document.getElementById('editArea'),
@@ -149,11 +150,9 @@
         { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: pvDesired } }, '*');
     }
     async function reinitPreview() {
-      lightPreview = false;
-      if (PN.isLightMode()) {
-        const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
-        lightPreview = cnt > 0;   // 画像が保存済みなら軽量プレビュー
-      }
+      // バックアップ画像があればそれをプレビューに使う（Figma埋め込みを2本立てにしないので軽くて確実）。無ければFigma埋め込み。
+      const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
+      lightPreview = cnt > 0;
       loadPreview();
     }
     reinitPreview();
@@ -180,13 +179,8 @@
 
       const text = card && card.script ? card.script : '';
       if (text) { els.script.textContent = text; els.script.classList.remove('empty'); }
-      else { els.script.textContent = '（このページのカンペは未入力です）'; els.script.classList.add('empty'); }
+      else { els.script.textContent = '（このページのトークスクリプトは未入力です）'; els.script.classList.add('empty'); }
 
-      const next = idx >= 0 ? s.cards[s.order[idx + 1]] : null;
-      if (next) {
-        els.nextprev.innerHTML = '<b>次:</b> ' + (next.label ? '［' + escapeHtml(next.label) + '］ ' : '') +
-          escapeHtml((next.script || '（未入力）').slice(0, 60));
-      } else { els.nextprev.textContent = ''; }
     }
     function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
@@ -210,7 +204,7 @@
         els.label.hidden = true;
         els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';
         els.script.classList.add('empty');
-        els.pnum.textContent = '–'; els.ptotal.textContent = ''; els.nextprev.textContent = '';
+        els.pnum.textContent = '–'; els.ptotal.textContent = '';
         els.pvBadge.classList.remove('hidden');
         els.pvImg.removeAttribute('src'); els.pvImg.hidden = true;
         reinitPreview();
@@ -248,7 +242,6 @@
       loadPreview();   // Figma埋め込みを再読み込み
       requestSync();   // 現在ページへ追従
     }
-    els.mirrorBtn.onclick = () => { if (screenStream) stopMirror(); else startMirror(); };
 
     // ---- 直接編集（Figma Slides の Edit のように、その場で書いて保存）----
     function enterEdit() {
@@ -291,6 +284,7 @@
     // ---- 手元から送り（共有スライドが真実の元。発表タブへ依頼→跳ね返りで全部が揃う）----
     document.getElementById('next').onclick = () => PN.post({ type: 'nav', dir: 'forward' });
     document.getElementById('prev').onclick = () => PN.post({ type: 'nav', dir: 'backward' });
+    document.getElementById('restart').onclick = () => PN.post({ type: 'restart' });
     window.addEventListener('keydown', (e) => {
       // 編集中・入力欄にフォーカス中はページ送りしない（普通に文字入力させる）
       if (editing) return;
