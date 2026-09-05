@@ -179,19 +179,57 @@
       document.body.classList.toggle('editing', which === 'editor');
     }
 
-    function openEditor(id) {
+    // 編集画面の表示方式：'image'=保存画像（即表示・Figmaを読み込まない）／'live'=Figma埋め込み（画像が無い初回のみ）
+    let edMode = 'image';
+
+    async function openEditor(id) {
       PN.setActiveDeckId(id);
       const deck = PN.getActiveDeck();
       edNode = null;
       $('edName').value = deck.name || '';
       $('edConn').classList.remove('on');
       showView('editor');
-      loadStage(deck.url);
       renderEdList();
       loadNote();
       updateCounter();
       loadThumbs();
+
+      const order = PN.loadScripts().order;
+      const saved = await PN.countImg(id, order);
+      if (saved > 0) {
+        // 画像がある → Figmaは読み込まない（13秒の待ちが消える）
+        edMode = 'image';
+        $('edFrame').removeAttribute('src'); stageUrl = null;
+        $('edFrame').style.display = 'none';
+        $('edEmpty').hidden = true;
+        await edGo(order[0]);
+      } else {
+        // まだ画像が無い初回だけ Figma を読み込む
+        edMode = 'live';
+        $('edFrame').style.display = '';
+        loadStage(deck.url);
+      }
       autoBackup();   // 裏で：Figmaから同期 → バックアップ画像を保存（UIなし）
+    }
+
+    // 指定ページへ移動（画像モードは即時、ライブはFigmaへ指示）
+    async function edGo(nodeId) {
+      if (!nodeId) return;
+      if (edMode !== 'image') { toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId } }); return; }
+      edNode = nodeId;
+      const p = $('edPoster');
+      const blob = await PN.getImg(PN.getActiveDeckId(), nodeId);
+      if (blob) {
+        if (p._u) URL.revokeObjectURL(p._u);
+        p._u = URL.createObjectURL(blob);
+        p.src = p._u; p.hidden = false; p.classList.remove('fade');
+      }
+      loadNote(); renderEdList(); updateCounter();
+    }
+    function edStep(delta) {
+      const order = PN.loadScripts().order;
+      const i = order.indexOf(edNode);
+      edGo(order[Math.max(0, Math.min(order.length - 1, (i < 0 ? 0 : i) + delta))]);
     }
 
     let stageUrl = null;   // 今 iframe に読み込み済みのURL（同じなら読み直さない＝再入場が一瞬）
@@ -224,6 +262,7 @@
       p.src = p._u; p.hidden = false; p.classList.remove('fade');
     }
     function hidePoster() {
+      if (edMode === 'image') return;   // 画像モードでは画像が本体なので消さない
       const p = $('edPoster');
       if (p.hidden) return;
       p.classList.add('fade');
@@ -245,7 +284,7 @@
         row.dataset.id = id;
         // 左カラムはスライド画像のみ（Figma Slides風）。原稿が入っているページは小さな●で示す
         row.innerHTML = '<div class="thumb"><span class="n">' + (i + 1) + '</span>' + (c.script ? '<span class="has">●</span>' : '') + '</div>';
-        row.onclick = () => { if (id !== edNode) toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: id } }); };
+        row.onclick = () => { if (id !== edNode) edGo(id); };
         box.appendChild(row);
       });
       applyThumbs();
@@ -458,9 +497,9 @@
       });
     })();
 
-    $('edPrev').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' });
-    $('edNext').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' });
-    $('edRestart').onclick = () => toFrame($('edFrame'), { type: 'RESTART' });
+    $('edPrev').onclick = () => { if (edMode === 'image') edStep(-1); else toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' }); };
+    $('edNext').onclick = () => { if (edMode === 'image') edStep(1); else toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' }); };
+    $('edRestart').onclick = () => { if (edMode === 'image') edGo(PN.loadScripts().order[0]); else toFrame($('edFrame'), { type: 'RESTART' }); };
 
     // プレゼン名の変更
     $('edName').addEventListener('input', () => {
