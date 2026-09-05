@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>発表スライド</title>
+  <!-- Figmaへ事前接続してスライドの初回表示を速く -->
+  <link rel="preconnect" href="https://embed.figma.com" crossorigin />
+  <link rel="preconnect" href="https://www.figma.com" crossorigin />
+  <link rel="dns-prefetch" href="https://static.figma.com" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="present">
@@ -12,6 +16,8 @@
     <div id="ovtext">Figmaプロトタイプを読み込み中…</div>
   </div>
   <iframe id="frame" class="present-frame" allowfullscreen allow="fullscreen" title="Figma"></iframe>
+  <!-- 軽量モード（画像）用 -->
+  <img id="slideImg" hidden alt="スライド" />
 
   <!-- 自動で隠れるページ送りナビ（マウスを動かすと出る） -->
   <div class="pv-nav hidden" id="pvNav">
@@ -21,7 +27,7 @@
     <button class="pv-btn" id="pnRestart" title="最初へ">↺</button>
   </div>
 
-  <script src="store.js?v=2"></script>
+  <script src="store.js?v=3"></script>
   <script>
     const frame = document.getElementById('frame');
     const overlay = document.getElementById('overlay');
@@ -30,7 +36,10 @@
     // タブ名を「そのプレゼン（カード）の名前」にする（画面共有のウィンドウ選択で分かりやすく）
     document.title = (PN.getActiveDeck().name || '発表スライド');
 
-    let lastNodeId = null; // 今表示しているページ（後から開いたカンペに教え直す用）
+    let lastNodeId = null; // 今表示しているページ
+    let MODE = 'live';     // 'live'=Figma埋め込み / 'image'=軽量(画像・回線を使わない)
+    let imgIdx = 0;
+    const slideImg = document.getElementById('slideImg');
 
     // ?url= が付いていればそれを、無ければ保存済みURLを使う
     const params = new URLSearchParams(location.search);
@@ -39,32 +48,50 @@
     function buildEmbed(input) {
       let u;
       try { u = new URL(input); } catch (e) { return null; }
-      // Figma埋め込み専用ホストへ差し替え（/proto/ や /design/ のパスはそのまま活かす）
       u.protocol = 'https:';
       u.hostname = 'embed.figma.com';
-      u.searchParams.set('embed-host', location.hostname); // 登録した埋め込みオリジンと一致させる
-      u.searchParams.set('footer', 'false');               // 下部のFigmaフッター(ロゴ/ファイル名/Edited)を消す
-      u.searchParams.set('hide-ui', '1');                  // Figmaのナビ/UIを消す（自前の自動ナビを使う）
-      // client-id があるとFigmaがページ移動イベントを送ってくれる（連動の必須条件）
+      u.searchParams.set('embed-host', location.hostname);
+      u.searchParams.set('footer', 'false');
+      u.searchParams.set('hide-ui', '1');
       const cid = PN.getClientId();
       if (cid) u.searchParams.set('client-id', cid);
       return u.toString();
     }
 
-    if (!raw) {
-      ovtext.innerHTML = '設定ページでFigmaのプロトタイプ共有URLを保存してください。';
-      document.querySelector('.spinner').style.display = 'none';
-    } else {
-      const embed = buildEmbed(raw);
-      if (!embed) {
-        ovtext.textContent = 'URLの形式が正しくありません。';
-        document.querySelector('.spinner').style.display = 'none';
-      } else {
-        frame.src = embed;
-        // イベントが来なくても、読み込み完了で黒い画面を必ず外す（保険）
-        frame.addEventListener('load', () => setTimeout(() => overlay.classList.add('hidden'), 500));
-      }
+    // 軽量モード（画像）：保存済み画像を表示。回線を一切使わない。
+    async function showImage(i) {
+      const order = PN.loadScripts().order;
+      if (!order.length) { ovtext.textContent = 'ページがありません（先に収録してください）'; document.querySelector('.spinner').style.display = 'none'; return; }
+      imgIdx = Math.max(0, Math.min(order.length - 1, i));
+      const nodeId = order[imgIdx];
+      lastNodeId = nodeId;
+      const blob = await PN.getImg(PN.getActiveDeckId(), nodeId);
+      if (blob) { if (slideImg._u) URL.revokeObjectURL(slideImg._u); slideImg._u = URL.createObjectURL(blob); slideImg.src = slideImg._u; }
+      overlay.classList.add('hidden');
+      PN.post({ type: 'node', nodeId });
+      updateNavCount();
     }
+    function imgNav(dir) { showImage(dir === 'backward' ? imgIdx - 1 : imgIdx + 1); }
+
+    async function init() {
+      if (PN.isLightMode()) {
+        const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
+        if (cnt > 0) MODE = 'image';
+      }
+      if (MODE === 'image') {
+        frame.style.display = 'none';
+        slideImg.hidden = false;
+        await showImage(0);
+        return;
+      }
+      // --- ライブ（Figma埋め込み）---
+      if (!raw) { ovtext.innerHTML = '設定ページでFigmaのプロトタイプ共有URLを保存してください。'; document.querySelector('.spinner').style.display = 'none'; return; }
+      const embed = buildEmbed(raw);
+      if (!embed) { ovtext.textContent = 'URLの形式が正しくありません。'; document.querySelector('.spinner').style.display = 'none'; return; }
+      frame.src = embed;
+      frame.addEventListener('load', () => setTimeout(() => overlay.classList.add('hidden'), 500));
+    }
+    init();
 
     // Figma埋め込みからの通知を受け取る
     window.addEventListener('message', (e) => {
@@ -105,10 +132,12 @@
     PN.onMessage((msg) => {
       if (!msg) return;
       if (msg.type === 'nav') {
-        toFigma({ type: msg.dir === 'backward' ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' });
+        if (MODE === 'image') imgNav(msg.dir);
+        else toFigma({ type: msg.dir === 'backward' ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' });
       }
       if (msg.type === 'restart') {
-        toFigma({ type: 'RESTART' });
+        if (MODE === 'image') showImage(0);
+        else toFigma({ type: 'RESTART' });
       }
       // 設定でプレゼン（デッキ）を切り替えたら、新しいプロトで開き直す
       if (msg.type === 'deck-changed') {
@@ -130,9 +159,9 @@
     document.addEventListener('mousemove', showNav);
     document.addEventListener('mouseleave', hideNav);
     window.addEventListener('blur', hideNav);
-    document.getElementById('pnPrev').onclick = () => { toFigma({ type: 'NAVIGATE_BACKWARD' }); showNav(); };
-    document.getElementById('pnNext').onclick = () => { toFigma({ type: 'NAVIGATE_FORWARD' }); showNav(); };
-    document.getElementById('pnRestart').onclick = () => { toFigma({ type: 'RESTART' }); showNav(); };
+    document.getElementById('pnPrev').onclick = () => { if (MODE === 'image') imgNav('backward'); else toFigma({ type: 'NAVIGATE_BACKWARD' }); showNav(); };
+    document.getElementById('pnNext').onclick = () => { if (MODE === 'image') imgNav('forward'); else toFigma({ type: 'NAVIGATE_FORWARD' }); showNav(); };
+    document.getElementById('pnRestart').onclick = () => { if (MODE === 'image') showImage(0); else toFigma({ type: 'RESTART' }); showNav(); };
     function updateNavCount() {
       const s = PN.loadScripts(); const idx = s.order.indexOf(lastNodeId);
       document.getElementById('pnCount').textContent = (idx >= 0 ? idx + 1 : '–') + ' / ' + (s.order.length || '–');

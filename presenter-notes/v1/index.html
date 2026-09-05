@@ -33,6 +33,9 @@
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
       <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
       <span class="grow"></span>
+      <button class="btn ghost" id="prefetchBtn" title="全ページを画像で保存（弱回線・オフライン対応）">⚡ 画像保存</button>
+      <label class="ed-light" title="回線が弱くても崩れない画像モードで開始"><input type="checkbox" id="lightToggle" /> 軽量モード</label>
+      <span class="chip" id="prefetchStatus"></span>
       <span class="chip" id="edConn">スライド読み込み中…</span>
       <button class="btn primary" id="startBtn">▶ プレゼンを開始</button>
     </div>
@@ -100,7 +103,7 @@
     </div>
   </div>
 
-  <script src="store.js?v=2"></script>
+  <script src="store.js?v=3"></script>
   <script>
     const $ = (id) => document.getElementById(id);
 
@@ -188,6 +191,8 @@
       loadNote();
       updateCounter();
       loadThumbs();
+      $('lightToggle').checked = PN.isLightMode();
+      refreshPrefetchStatus();
     }
 
     function loadStage(url) {
@@ -297,6 +302,41 @@
         loadThumbs();
       }
     });
+
+    // ---- 軽量モード：全ページを画像で保存（弱回線・オフライン対応）----
+    function setPrefetchStatus(t) { $('prefetchStatus').textContent = t || ''; }
+    async function refreshPrefetchStatus() {
+      const deckId = PN.getActiveDeckId();
+      const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
+      if (!ids.length) { setPrefetchStatus(''); return; }
+      const n = await PN.countImg(deckId, ids);
+      setPrefetchStatus(n ? ('画像 ' + n + '/' + ids.length + ' 保存済') : '画像 未保存');
+    }
+    async function prefetchImages() {
+      const token = PN.getFigmaToken();
+      const deck = PN.getActiveDeck();
+      const key = fileKeyFromUrl(deck.url);
+      if (!token) { alert('先に ⚙ でFigmaのアクセストークンを設定してください（画像取得に必要）。'); return; }
+      if (!key) { alert('Figma URL を設定してください。'); return; }
+      const deckId = PN.getActiveDeckId();
+      const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
+      if (!ids.length) { alert('先にスライドを最後まで送って、ページを登録してください。'); return; }
+      setPrefetchStatus('画像URL取得中…');
+      try {
+        const res = await fetch('https://api.figma.com/v1/images/' + key + '?format=png&scale=1.25&ids=' + encodeURIComponent(ids.join(',')), { headers: { 'X-Figma-Token': token } });
+        const data = await res.json();
+        if (!res.ok || !data.images) { setPrefetchStatus('取得失敗'); alert('画像の取得に失敗しました。トークンを確認してください。'); return; }
+        let done = 0;
+        for (const id of ids) {
+          const url = data.images[id];
+          if (url) { try { const b = await fetch(url).then((r) => r.blob()); await PN.putImg(deckId, id, b); } catch (e) {} }
+          done++; setPrefetchStatus('保存中 ' + done + ' / ' + ids.length);
+        }
+        setPrefetchStatus('✓ ' + done + '/' + ids.length + ' 保存済');
+      } catch (e) { setPrefetchStatus('失敗'); alert('保存に失敗しました: ' + (e && e.message)); }
+    }
+    $('prefetchBtn').onclick = prefetchImages;
+    $('lightToggle').onchange = () => PN.setLightMode($('lightToggle').checked);
 
     $('edPrev').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' });
     $('edNext').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' });

@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>発表スライド（トークスクリプト）</title>
+  <link rel="preconnect" href="https://embed.figma.com" crossorigin />
+  <link rel="preconnect" href="https://www.figma.com" crossorigin />
+  <link rel="dns-prefetch" href="https://static.figma.com" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="notes">
@@ -23,6 +26,7 @@
     <!-- 左：プレビュー（スライド連動 or 共有ウィンドウそのままのライブ映像） -->
     <div class="notes-preview">
       <iframe id="pv" allow="fullscreen" title="スライドプレビュー"></iframe>
+      <img id="pvImg" hidden alt="スライド" />
       <video id="screenVid" hidden autoplay muted playsinline></video>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
     </div>
@@ -52,7 +56,7 @@
     <div class="next-preview" id="nextprev"></div>
   </div>
 
-  <script src="store.js?v=2"></script>
+  <script src="store.js?v=3"></script>
   <script>
     const els = {
       conn: document.getElementById('conn'),
@@ -63,6 +67,7 @@
       nextprev: document.getElementById('nextprev'),
       fsize: document.getElementById('fsize'),
       pv: document.getElementById('pv'),
+      pvImg: document.getElementById('pvImg'),
       pvBadge: document.getElementById('pvBadge'),
       mirrorBtn: document.getElementById('mirrorBtn'),
       screenVid: document.getElementById('screenVid'),
@@ -83,6 +88,7 @@
     let pvNode = null;    // プレビューが今表示しているノード（無駄な再ナビ防止）
     let pvReady = false;  // プレビュー埋め込みの読み込み完了フラグ
     let pvDesired = null; // 表示したいノード（読み込み前に来ても後で適用）
+    let pvImgNode = null; // 軽量プレビューで今表示している画像のノード
     let editing = false; // 直接編集中か
     let editingId = null;// 編集対象のノード（編集中に送られても対象は固定）
 
@@ -110,14 +116,28 @@
       if (cid) u.searchParams.set('client-id', cid);
       return u.toString();
     }
+    let lightPreview = false; // 軽量モード（画像プレビュー）か
     function loadPreview() {
       pvReady = false; pvNode = null;
+      if (lightPreview) { els.pv.hidden = true; els.pvImg.hidden = false; return; } // 埋め込みは使わない
+      els.pvImg.hidden = true; els.pv.hidden = false;
       const embed = buildEmbed(PN.getUrl());
       if (embed) els.pv.src = embed;
     }
     // プレビューを指定ノードへ（共有スライドに追従）。読み込み前なら記憶して後で適用。
-    function previewGoto(nodeId) {
+    async function previewGoto(nodeId) {
       if (!nodeId) return;
+      if (lightPreview) {
+        if (nodeId === pvImgNode) return;   // 同じページなら再読込しない（ハートビート対策）
+        pvImgNode = nodeId;
+        const blob = await PN.getImg(PN.getActiveDeckId(), nodeId);
+        if (blob) {
+          if (els.pvImg._u) URL.revokeObjectURL(els.pvImg._u);
+          els.pvImg._u = URL.createObjectURL(blob); els.pvImg.src = els.pvImg._u;
+          els.pvImg.hidden = false; els.pvBadge.classList.add('hidden');
+        }
+        return;
+      }
       pvDesired = nodeId;
       applyPreview();
     }
@@ -128,7 +148,15 @@
       els.pv.contentWindow.postMessage(
         { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: pvDesired } }, '*');
     }
-    loadPreview();
+    async function reinitPreview() {
+      lightPreview = false;
+      if (PN.isLightMode()) {
+        const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
+        lightPreview = cnt > 0;   // 画像が保存済みなら軽量プレビュー
+      }
+      loadPreview();
+    }
+    reinitPreview();
     // プレビューiframe自身のFigmaメッセージは「読み込み完了の合図」だけ使う（操作判断には使わない＝ループ防止）
     window.addEventListener('message', (e) => {
       if (!/figma\.com/.test(e.origin)) return;
@@ -163,10 +191,12 @@
     function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
     // ---- 発表タブ（＝共有スライド／真実の元）からの通知 ----
+    let lastBeat = 0; // 最後に発表タブから合図が来た時刻（接続監視用）
     PN.onMessage((msg) => {
       if (!msg) return;
-      if (msg.type === 'present-ready') { els.conn.classList.add('on'); }
+      if (msg.type === 'present-ready') { lastBeat = Date.now(); els.conn.classList.add('on'); }
       if (msg.type === 'node') {
+        lastBeat = Date.now();
         els.conn.classList.add('on');
         render(msg.nodeId);       // 原稿を更新
         previewGoto(msg.nodeId);  // プレビューも同じページへ
@@ -176,13 +206,14 @@
       if (msg.type === 'deck-changed') {
         if (editing) exitEdit();
         document.title = (PN.getActiveDeck().name || '発表スライド') + '（トークスクリプト）';
-        currentId = null; pvNode = null; pvDesired = null;
+        currentId = null; pvNode = null; pvDesired = null; pvImgNode = null;
         els.label.hidden = true;
         els.script.textContent = 'プレゼンが切り替わりました。発表タブでページを送ると原稿が出ます。';
         els.script.classList.add('empty');
         els.pnum.textContent = '–'; els.ptotal.textContent = ''; els.nextprev.textContent = '';
         els.pvBadge.classList.remove('hidden');
-        loadPreview();
+        els.pvImg.removeAttribute('src'); els.pvImg.hidden = true;
+        reinitPreview();
       }
     });
 
@@ -198,6 +229,9 @@
         els.screenVid.srcObject = stream;
         els.screenVid.hidden = false;
         els.pv.style.visibility = 'hidden';        // スライドプレビューを隠す
+        // 回線節約：ミラー中はFigma埋め込みを止める（帯域を空ける）
+        try { els.pv.removeAttribute('src'); } catch (e) {}
+        pvReady = false; pvNode = null;
         els.pvBadge.classList.add('hidden');
         els.mirrorBtn.textContent = '🖥 スライドに戻す';
         els.mirrorBtn.classList.add('primary');
@@ -211,6 +245,8 @@
       els.pv.style.visibility = '';
       els.mirrorBtn.textContent = '🖥 画面を映す';
       els.mirrorBtn.classList.remove('primary');
+      loadPreview();   // Figma埋め込みを再読み込み
+      requestSync();   // 現在ページへ追従
     }
     els.mirrorBtn.onclick = () => { if (screenStream) stopMirror(); else startMirror(); };
 
@@ -272,6 +308,13 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) requestSync(); });
     window.addEventListener('focus', requestSync);
     setInterval(() => { if (!document.hidden) applyPreview(); }, 1500); // プレビュー取りこぼしの保険
+
+    // 接続監視：発表タブの合図(ハートビート)が4秒来なければ切れかけと判断→●を消して再同期要求
+    setInterval(() => {
+      const alive = Date.now() - lastBeat < 4000;
+      els.conn.classList.toggle('on', alive);
+      if (!alive) PN.post({ type: 'sync-request' });
+    }, 1000);
   </script>
 </body>
 </html>

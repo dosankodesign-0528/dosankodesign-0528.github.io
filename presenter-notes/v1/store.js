@@ -129,10 +129,47 @@ window.PN = (function () {
     return s.order.indexOf(id) + 1;
   }
 
+  // ---- 軽量モード：スライド画像をローカル(IndexedDB)に保存し、回線が切れても表示できるようにする ----
+  const K_LIGHT = 'pn_light';
+  function isLightMode() { return localStorage.getItem(K_LIGHT) === '1'; }
+  function setLightMode(v) { localStorage.setItem(K_LIGHT, v ? '1' : '0'); }
+
+  let _dbPromise = null;
+  function _db() {
+    if (_dbPromise) return _dbPromise;
+    _dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open('pn-slides', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('img'); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return _dbPromise;
+  }
+  async function putImg(deckId, nodeId, blob) {
+    const db = await _db();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('img', 'readwrite');
+      tx.objectStore('img').put(blob, deckId + '|' + nodeId);
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+    });
+  }
+  async function getImg(deckId, nodeId) {
+    const db = await _db();
+    return new Promise((res) => {
+      const tx = db.transaction('img', 'readonly');
+      const r = tx.objectStore('img').get(deckId + '|' + nodeId);
+      r.onsuccess = () => res(r.result || null); r.onerror = () => res(null);
+    });
+  }
+  async function countImg(deckId, nodeIds) {
+    let n = 0; for (const id of nodeIds) { if (await getImg(deckId, id)) n++; } return n;
+  }
+
   return {
     CHANNEL, normId,
     getClientId, setClientId,
     getFigmaToken, setFigmaToken,
+    isLightMode, setLightMode, putImg, getImg, countImg,
     getFont, setFont,
     // デッキ
     listDecks, getActiveDeck, getActiveDeckId, setActiveDeckId,
