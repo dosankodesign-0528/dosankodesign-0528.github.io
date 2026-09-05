@@ -9769,9 +9769,11 @@ function updateDev2Stack() {
     if (el._seat !== seatI) { el._from = el._cur || DEV_STACK[seatI]; el._seat = seatI; el._t0 = elapsed; }
     const to = DEV_STACK[seatI];
     const kk = el._t0 == null ? 1 : swapE.fn(clamp01((elapsed - el._t0) / c.stackDur));
-    /* 暗くなる側は動きがほぼ終わってから暗くする(すれ違い中の透け防止・V1.0の対策) */
+    /* すれ違い中の透け防止(V1.0の対策＋2026-09-03): 暗くなる側は動きがほぼ終わってから暗くし、
+       明るくなる側(前面に入るカード)は逆に早め(最初の30%)に不透明化する。
+       これで前面には常にどちらか不透明なカードが居て、背景が透けなくなる。 */
     const dimming = to.op < el._from.op;
-    const opK = dimming ? easeOutQ(clamp01((kk - 0.85) / 0.15)) : kk;
+    const opK = dimming ? easeOutQ(clamp01((kk - 0.85) / 0.15)) : easeOutQ(clamp01(kk / 0.30));
     const cur = {
       sc: el._from.sc + (to.sc - el._from.sc) * kk,
       dx: el._from.dx + (to.dx - el._from.dx) * kk,
