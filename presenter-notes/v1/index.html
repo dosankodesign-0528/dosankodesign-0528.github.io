@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>発表スライド</title>
+  <title>プレゼンツール</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,9 +13,8 @@
       <div class="gal-head">
         <h1>発表者ツール</h1>
         <span class="grow"></span>
-        <button class="btn" id="openSettings">⚙ 連動の設定</button>
+        <button class="btn ghost" id="openSettings" title="設定" aria-label="設定" style="font-size:18px;padding:8px 12px;">⚙</button>
       </div>
-      <p class="gal-sub">プレゼンを選んで開くと、スライドを見ながらトークスクリプトを書けます。</p>
 
       <div class="banner" id="cidBanner" hidden>
         <span>⚠️ Figma と連動する鍵（client-id）が未設定です。連動には最初に1回だけ設定が必要です。</span>
@@ -30,9 +29,12 @@
   <div id="editorView" hidden>
     <div class="ed-top">
       <button class="btn ghost" id="backBtn">← 一覧</button>
+      <button class="btn ghost" id="listToggle" title="左のスライド一覧を隠す／表示">◧</button>
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
       <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
       <span class="grow"></span>
+      <button class="btn ghost" id="syncBtn" title="Figmaの「スライド」セクションからスライド一覧を取り直す（トークスクリプトは除外）">🔄 Figmaから同期</button>
+      <span class="chip" id="syncStatus"></span>
       <button class="btn ghost" id="prefetchBtn" title="全ページを画像で保存（弱回線・オフライン対応）">⚡ 画像保存</button>
       <label class="ed-light" title="回線が弱くても崩れない画像モードで開始"><input type="checkbox" id="lightToggle" /> 軽量モード</label>
       <span class="chip" id="prefetchStatus"></span>
@@ -58,7 +60,7 @@
           <span class="hint">スライドを送るとページが増えます・入力は自動保存</span>
         </div>
         <div class="ed-notes">
-          <input class="lbl" id="edLabel" placeholder="このページの見出し（任意）例：課題の説明" />
+          <input class="lbl" id="edLabel" placeholder="このページの見出し（任意）例：課題の説明" hidden />
           <textarea id="edScript" placeholder="このページで話すこと（トークスクリプト）を書く"></textarea>
         </div>
       </div>
@@ -220,9 +222,8 @@
         const row = document.createElement('div');
         row.className = 'ed-prow' + (id === edNode ? ' current' : '');
         row.dataset.id = id;
-        const snip = c.script ? esc(c.script.slice(0, 50)) : '（未入力）';
-        row.innerHTML = '<div class="thumb"><span class="n">' + (i + 1) + '</span></div>' +
-          '<div class="snip' + (c.script ? '' : ' empty') + '">' + (c.label ? '<b>' + esc(c.label) + '</b> ' : '') + snip + '</div>';
+        // 左カラムはスライド画像のみ（Figma Slides風）。原稿が入っているページは小さな●で示す
+        row.innerHTML = '<div class="thumb"><span class="n">' + (i + 1) + '</span>' + (c.script ? '<span class="has">●</span>' : '') + '</div>';
         row.onclick = () => { if (id !== edNode) toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: id } }); };
         box.appendChild(row);
       });
@@ -337,6 +338,43 @@
     }
     $('prefetchBtn').onclick = prefetchImages;
     $('lightToggle').onchange = () => PN.setLightMode($('lightToggle').checked);
+
+    // ---- Figmaから同期：「スライド」セクション内の“数字名フレーム”だけをスライドとして取り直す（トークスクリプト除外）----
+    function setSyncStatus(t) { $('syncStatus').textContent = t || ''; }
+    function pageIdFromUrl(u) { try { const p = new URL(u).searchParams.get('page-id'); return p ? p.replace('-', ':') : null; } catch (e) { return null; } }
+    async function syncFromFigma() {
+      const token = PN.getFigmaToken();
+      const deck = PN.getActiveDeck();
+      const key = fileKeyFromUrl(deck.url);
+      if (!token) { alert('⚙ でFigmaのアクセストークンを設定してください（同期に必要）。'); return; }
+      if (!key) { alert('Figma URL を設定してください。'); return; }
+      setSyncStatus('Figmaから取得中…');
+      try {
+        const res = await fetch('https://api.figma.com/v1/files/' + key + '?depth=3', { headers: { 'X-Figma-Token': token } });
+        const data = await res.json();
+        if (!res.ok || !data.document) { setSyncStatus('取得失敗'); alert('取得に失敗しました: ' + ((data && data.err) || res.status)); return; }
+        const pageId = pageIdFromUrl(deck.url);
+        let pages = data.document.children || [];
+        if (pageId) { const p = pages.find((x) => x.id === pageId); if (p) pages = [p]; }
+        const sections = [];
+        pages.forEach((pg) => (pg.children || []).forEach((c) => { if (c.type === 'SECTION') sections.push(c); }));
+        const isSlide = (c) => c.type === 'FRAME' && /^\d+$/.test(c.name);
+        const target = sections.find((s) => s.name === 'スライド') || sections.find((s) => (s.children || []).some(isSlide));
+        const frames = target ? (target.children || []).filter(isSlide) : [];
+        if (!frames.length) { setSyncStatus('見つからず'); alert('「スライド」セクション内に数字名のフレームが見つかりませんでした。'); return; }
+        frames.sort((a, b) => parseInt(a.name, 10) - parseInt(b.name, 10));
+        const ids = frames.map((f) => f.id);
+        const s = PN.loadScripts();
+        const cards = {}; ids.forEach((id) => { cards[id] = s.cards[id] || { label: '', script: '' }; }); // 既存原稿は保持
+        PN.saveScripts({ order: ids, cards });
+        PN.post({ type: 'scripts-updated' });
+        edNode = null; renderEdList(); loadNote(); updateCounter(); loadThumbs(); refreshPrefetchStatus();
+        setSyncStatus('✓ ' + ids.length + '枚に同期');
+      } catch (e) { setSyncStatus('失敗'); alert('同期に失敗しました: ' + (e && e.message)); }
+    }
+    $('syncBtn').onclick = syncFromFigma;
+    // 左のスライド一覧を隠す／表示（Figma Slides風）
+    $('listToggle').onclick = () => document.querySelector('.ed-body').classList.toggle('nolist');
 
     $('edPrev').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' });
     $('edNext').onclick = () => toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' });
