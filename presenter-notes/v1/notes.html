@@ -20,6 +20,7 @@
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
       <button class="btn" id="fup" title="文字を大きく">A＋</button>
+      <button class="btn" id="fbold" title="標準／太字を切り替え">B</button>
     </div>
   </div>
 
@@ -95,15 +96,23 @@
     let editing = false; // 直接編集中か
     let editingId = null;// 編集対象のノード（編集中に送られても対象は固定）
 
-    // ---- 文字サイズ ----
+    // ---- 文字サイズ・太さ ----
+    const F_MIN = 12, F_MAX = 240;                 // 幅を広げた（12〜240px）
+    function fStep(px) { return px < 40 ? 2 : px < 80 ? 4 : px < 140 ? 8 : 12; }  // 大きいほど大きく動く
+    function getWeight() { return localStorage.getItem('pn_weight') === '700' ? 700 : 400; }
+    function setWeight(w) { localStorage.setItem('pn_weight', String(w)); }
     function applyFont() {
       const px = PN.getFont();
+      const w = getWeight();
       els.script.style.fontSize = px + 'px';
+      els.script.style.fontWeight = w;
       els.label.style.fontSize = Math.round(px * 0.42) + 'px';
       els.fsize.textContent = px + 'px';
+      document.getElementById('fbold').classList.toggle('on', w === 700);
     }
-    document.getElementById('fup').onclick = () => { PN.setFont(Math.min(140, PN.getFont() + 4)); applyFont(); };
-    document.getElementById('fdown').onclick = () => { PN.setFont(Math.max(16, PN.getFont() - 4)); applyFont(); };
+    document.getElementById('fup').onclick = () => { const p = PN.getFont(); PN.setFont(Math.min(F_MAX, p + fStep(p))); applyFont(); };
+    document.getElementById('fdown').onclick = () => { const p = PN.getFont(); PN.setFont(Math.max(F_MIN, p - fStep(p - 1))); applyFont(); };
+    document.getElementById('fbold').onclick = () => { setWeight(getWeight() === 700 ? 400 : 700); applyFont(); };
     applyFont();
 
     // ---- スライドプレビュー（同じFigmaプロトを埋め込み、共有スライドと同じページへ動かす）----
