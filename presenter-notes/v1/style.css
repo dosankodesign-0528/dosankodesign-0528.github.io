@@ -228,8 +228,10 @@ body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: col
 .pageno b { color: var(--text); font-size: 18px; }
 .font-ctl { display: flex; align-items: center; gap: 6px; }
 .font-ctl .btn { padding: 8px 12px; font-size: 16px; }
-.font-ctl .btn#fbold { font-weight: 700; }
-.font-ctl .btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.wsel { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 10px; font-size: 13px; font-family: inherit; cursor: pointer; }
+.wsel:hover { border-color: #3a4150; }
+.wsel:focus { outline: none; border-color: var(--accent); }
 /* 発表者ビュー：左にスライドプレビュー、右に原稿 */
 .notes-main { flex: 1; display: flex; min-height: 0; }
 .notes-preview { flex: 0 0 46%; position: relative; background: #000; border-right: 1px solid var(--line); overflow: hidden; }

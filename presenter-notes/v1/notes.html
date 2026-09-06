@@ -9,7 +9,7 @@
   <link rel="dns-prefetch" href="https://static.figma.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="notes">
@@ -20,7 +20,16 @@
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
       <button class="btn" id="fup" title="文字を大きく">A＋</button>
-      <button class="btn" id="fbold" title="標準／太字を切り替え">B</button>
+      <select id="fweight" class="wsel" title="文字の太さ">
+        <option value="200">ExtraLight 200</option>
+        <option value="300">Light 300</option>
+        <option value="400">Regular 400</option>
+        <option value="500">Medium 500</option>
+        <option value="600">SemiBold 600</option>
+        <option value="700">Bold 700</option>
+        <option value="800">ExtraBold 800</option>
+        <option value="900">Black 900</option>
+      </select>
     </div>
   </div>
 
@@ -99,7 +108,8 @@
     // ---- 文字サイズ・太さ ----
     const F_MIN = 12, F_MAX = 240;                 // 幅を広げた（12〜240px）
     function fStep(px) { return px < 40 ? 2 : px < 80 ? 4 : px < 140 ? 8 : 12; }  // 大きいほど大きく動く
-    function getWeight() { return localStorage.getItem('pn_weight') === '700' ? 700 : 400; }
+    const WEIGHTS = [200, 300, 400, 500, 600, 700, 800, 900];
+    function getWeight() { const w = parseInt(localStorage.getItem('pn_weight') || '400', 10); return WEIGHTS.includes(w) ? w : 400; }
     function setWeight(w) { localStorage.setItem('pn_weight', String(w)); }
     function applyFont() {
       const px = PN.getFont();
@@ -108,11 +118,11 @@
       els.script.style.fontWeight = w;
       els.label.style.fontSize = Math.round(px * 0.42) + 'px';
       els.fsize.textContent = px + 'px';
-      document.getElementById('fbold').classList.toggle('on', w === 700);
+      document.getElementById('fweight').value = String(w);
     }
     document.getElementById('fup').onclick = () => { const p = PN.getFont(); PN.setFont(Math.min(F_MAX, p + fStep(p))); applyFont(); };
     document.getElementById('fdown').onclick = () => { const p = PN.getFont(); PN.setFont(Math.max(F_MIN, p - fStep(p - 1))); applyFont(); };
-    document.getElementById('fbold').onclick = () => { setWeight(getWeight() === 700 ? 400 : 700); applyFont(); };
+    document.getElementById('fweight').onchange = (e) => { setWeight(parseInt(e.target.value, 10)); applyFont(); };
     applyFont();
 
     // ---- スライドプレビュー（同じFigmaプロトを埋め込み、共有スライドと同じページへ動かす）----
