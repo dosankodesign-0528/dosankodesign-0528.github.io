@@ -533,7 +533,12 @@
     $('startBtn').onclick = () => {
       if (!PN.getActiveDeck().url) { alert('先に Figma URL を設定してください（🔗URL）。'); return; }
       // カンペ（トークスクリプト）を別ウィンドウで先に開く（1クリック内の最初の window.open なのでブロックされにくい）
-      const notesWin = window.open('notes.html', 'pn_notes', 'width=780,height=960');
+      // 画面サイズの0.7倍で、中央に開く（Macのディスプレイ比率に合わせる）
+      const sw = screen.availWidth, sh = screen.availHeight;
+      const w = Math.round(sw * 0.7), h = Math.round(sh * 0.7);
+      const left = Math.round((sw - w) / 2), top = Math.round((sh - h) / 2);
+      const notesWin = window.open('notes.html', 'pn_notes',
+        'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
       if (!notesWin) {
         alert('カンペ用ウィンドウがポップアップブロックされました。\nアドレス欄右の「ポップアップを許可」をONにして、もう一度「▶ プレゼンを開始」を押してください。');
         return; // 許可後に押し直してもらう（スライドはまだ切り替えない）
