@@ -560,8 +560,12 @@
         return; // 許可後に押し直してもらう
       }
       // 共有用スライドは「新しいタブ」で開く（このエディターのタブはそのまま残す）
-      const slideTab = window.open('present.html', '_blank');
-      if (slideTab) slideTab.focus();
+      window.open('present.html', '_blank');
+      // 最後にトークスクリプト窓を前面へ（共有タブを開くと前面を奪われるため、少し遅らせて呼び戻す）
+      const toFront = () => { try { notesWin.focus(); } catch (e) {} };
+      toFront();
+      setTimeout(toFront, 300);
+      setTimeout(toFront, 900);
     };
 
     // 一覧に戻ってもiframeは読み込んだまま保持する（次に開く時が一瞬で済む）
