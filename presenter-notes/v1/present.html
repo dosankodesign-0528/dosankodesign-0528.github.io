@@ -29,7 +29,9 @@
     <button class="pv-btn" id="pnRestart" title="最初へ">↺</button>
   </div>
 
-  <script src="store.js?v=3"></script>
+  <!-- 共有スライドは発表中に絶対リロードしない（見た目の変更だけ静かに反映） -->
+  <script>window.PN_NO_RELOAD = true;</script>
+  <script src="store.js?v=5"></script>
   <script>
     const frame = document.getElementById('frame');
     const overlay = document.getElementById('overlay');
@@ -106,16 +108,26 @@
       if (!/(^https:\/\/embed\.figma\.com$)|(^https:\/\/www\.figma\.com$)/.test(e.origin)) return;
       const msg = e.data || {};
       switch (msg.type) {
-        case 'INITIAL_LOAD':
+        case 'INITIAL_LOAD': {
           liveAlive = true;
           overlay.classList.add('hidden');
+          // 自動更新でリロードされた時は、見ていたページへ戻す（発表が中断しないように）
+          try {
+            if (sessionStorage.getItem('pn_autoreload') === '1') {
+              sessionStorage.removeItem('pn_autoreload');
+              const back = sessionStorage.getItem('pn_lastnode');
+              if (back) setTimeout(() => toFigma({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: back } }), 300);
+            }
+          } catch (e) {}
           break;
+        }
         case 'PRESENTED_NODE_CHANGED': {
           liveAlive = true;
           overlay.classList.add('hidden');
           const nodeId = PN.normId(msg.data && msg.data.presentedNodeId);
           if (nodeId) {
             lastNodeId = nodeId;
+            try { sessionStorage.setItem('pn_lastnode', nodeId); } catch (e) {}  // 自動更新後に戻る用
             const page = PN.ensureCard(nodeId);      // 未知ページなら登録
             PN.post({ type: 'node', nodeId, page }); // カンペ/設定へ通知
             updateNavCount();

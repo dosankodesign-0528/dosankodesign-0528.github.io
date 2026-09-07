@@ -8,6 +8,44 @@
  *  - デッキ（プレゼン）… { name, url(Figmaプロト), scripts(原稿) } を何個でも保存し、切り替えて使う。
  *    → 新しいプレゼンは「デッキを足してURLを貼る」だけ。Figma側の設定はもう触らない。
  */
+/* 自動更新（チラつきなし）
+ *  - 見た目(CSS)の変更 … リロードせずその場で差し替え。画面は一切消えない
+ *  - それ以外の変更   … ウィンドウが裏に回っている間に静かに適用（見えている時は待つ）
+ *  - 共有スライド      … window.PN_NO_RELOAD = true を立てて一切リロードしない（発表中の事故防止）
+ *  - 入力中            … 書きかけを失わないよう保留 */
+(function liveUpdate() {
+  let known = null;      // 最後に確認したバージョン
+  let pending = false;   // 反映待ち（リロードが要る変更）
+
+  function swapCss(v) {  // CSSだけ入れ替える＝再描画のみでチラつかない
+    document.querySelectorAll('link[rel="stylesheet"]').forEach((l) => {
+      const href = l.getAttribute('href') || '';
+      if (!href || /^https?:/i.test(href)) return;      // 外部フォント等はそのまま
+      l.setAttribute('href', href.split('?')[0] + '?v=' + v);
+    });
+  }
+
+  async function check() {
+    try {
+      const r = await fetch('version.txt?_=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const v = (await r.text()).trim();
+      if (known === null) { known = v; return; }
+      if (v !== known) { known = v; pending = true; swapCss(v); }   // 見た目は即反映
+      if (!pending) return;
+      if (window.PN_NO_RELOAD) return;                  // 共有スライドはリロードしない
+      const t = document.activeElement && document.activeElement.tagName;
+      if (t === 'TEXTAREA' || t === 'INPUT') return;    // 入力中は待つ
+      if (!document.hidden) return;                     // 見えている間は待つ（チラつき防止）
+      try { sessionStorage.setItem('pn_autoreload', '1'); } catch (e) {}
+      pending = false;
+      location.reload();
+    } catch (e) {}
+  }
+  check();
+  setInterval(check, 4000);
+})();
+
 window.PN = (function () {
   const CHANNEL = 'presenter-notes-v1';
   const K_FONT = 'pn_font';       // カンペの文字サイズ(px)   … 全体設定
