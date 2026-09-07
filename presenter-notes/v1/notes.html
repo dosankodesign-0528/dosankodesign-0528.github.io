@@ -58,7 +58,7 @@
       </div>
       <div class="notes-edit" id="editArea" hidden>
         <input id="editLabel" placeholder="見出し（任意）例：課題の説明" />
-        <textarea id="editScript" placeholder="このページで話す内容を書く"></textarea>
+        <textarea id="editScript" placeholder="テキストを入力してください"></textarea>
       </div>
       <div class="notes-editbar">
         <button class="btn" id="editBtn">✎ このページを編集</button>
@@ -200,7 +200,7 @@
 
       const text = card && card.script ? card.script : '';
       if (text) { els.script.textContent = text; els.script.classList.remove('empty'); }
-      else { els.script.textContent = '（このページのトークスクリプトは未入力です）'; els.script.classList.add('empty'); }
+      else { els.script.textContent = 'テキストを入力してください'; els.script.classList.add('empty'); }
 
     }
     function escapeHtml(s){ return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }

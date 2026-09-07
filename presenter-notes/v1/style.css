@@ -140,6 +140,9 @@ body.editing { overflow: hidden; }
 .ed-resize { flex: 0 0 6px; cursor: col-resize; background: transparent; transition: background .12s; }
 .ed-resize:hover, .ed-resize.active { background: var(--accent); }
 .ed-body.nolist .ed-resize { display: none; }
+/* トークスクリプト欄を畳む（スライドを大きく見る） */
+.ed-body.nonotes .ed-notes, .ed-body.nonotes .ed-vresize { display: none; }
+.ed-top .btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 body.col-drag { user-select: none; cursor: col-resize; }
 body.col-drag iframe { pointer-events: none; }   /* ドラッグ中にiframeがマウスを奪わないように */
 .ed-prow.current .thumb { border-color: var(--accent); }
@@ -234,7 +237,7 @@ body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: col
 .wsel:focus { outline: none; border-color: var(--accent); }
 /* 発表者ビュー：左にスライドプレビュー、右に原稿 */
 .notes-main { flex: 1; display: flex; min-height: 0; }
-.notes-preview { flex: 0 0 46%; position: relative; background: #000; border-right: 1px solid var(--line); overflow: hidden; }
+.notes-preview { flex: 0 0 50%; position: relative; background: #000; border-right: 1px solid var(--line); overflow: hidden; }
 .notes-preview iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .notes-preview img#pvImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 1; }
 .notes-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 2; }

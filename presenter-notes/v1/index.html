@@ -33,6 +33,7 @@
     <div class="ed-top">
       <button class="btn ghost" id="backBtn">← 一覧</button>
       <button class="btn ghost" id="listToggle" title="左のスライド一覧を隠す／表示">◧</button>
+      <button class="btn ghost" id="notesToggle" title="トークスクリプトを隠す／表示">▤</button>
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
       <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
       <span class="grow"></span>
@@ -67,7 +68,7 @@
         <div class="ed-vresize" id="edVResize" title="ドラッグで高さを変更"></div>
         <div class="ed-notes">
           <input class="lbl" id="edLabel" placeholder="このページの見出し（任意）例：課題の説明" hidden />
-          <textarea id="edScript" placeholder="このページで話すこと（トークスクリプト）を書く"></textarea>
+          <textarea id="edScript" placeholder="テキストを入力してください"></textarea>
         </div>
       </div>
     </div>
@@ -458,6 +459,16 @@
     }
     // 左のスライド一覧を隠す／表示（Figma Slides風）
     $('listToggle').onclick = () => document.querySelector('.ed-body').classList.toggle('nolist');
+    // トークスクリプト欄の表示／非表示（スライドを大きく見たい時に畳む）
+    $('notesToggle').onclick = () => {
+      const off = document.querySelector('.ed-body').classList.toggle('nonotes');
+      $('notesToggle').classList.toggle('on', off);
+      localStorage.setItem('pn_nonotes', off ? '1' : '0');
+    };
+    if (localStorage.getItem('pn_nonotes') === '1') {
+      document.querySelector('.ed-body').classList.add('nonotes');
+      $('notesToggle').classList.add('on');
+    }
 
     // ↻ 手動再取得：Figmaからスライド一覧を取り直し、新しいページのバックアップ画像だけ追加保存
     $('refreshBtn').onclick = async () => {
@@ -540,7 +551,7 @@
       // カンペ（トークスクリプト）を別ウィンドウで先に開く（1クリック内の最初の window.open なのでブロックされにくい）
       // 画面サイズの0.7倍で、中央に開く（Macのディスプレイ比率に合わせる）
       const sw = screen.availWidth, sh = screen.availHeight;
-      const w = Math.round(sw * 0.7), h = Math.round(sh * 0.7);
+      const w = Math.round(sw * 0.45), h = Math.round(sh * 0.45);   // 比率はそのままで小さめに
       const left = Math.round((sw - w) / 2), top = Math.round((sh - h) / 2);
       const notesWin = window.open('notes.html', 'pn_notes',
         'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
