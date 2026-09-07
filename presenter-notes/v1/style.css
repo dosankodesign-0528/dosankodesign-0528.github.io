@@ -245,6 +245,14 @@ body.notes { height: 100vh; overflow: hidden; display: flex; flex-direction: col
 .notes-preview iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .notes-preview img#pvImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 1; }
 .notes-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; z-index: 2; }
+/* クリックで共有画面のライブ表示を開始する案内（開始後は消える） */
+.mirror-hint { position: absolute; inset: 0; z-index: 3; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; background: rgba(8,10,14,.72); }
+.mirror-hint:hover { background: rgba(8,10,14,.6); }
+.mh-box { text-align: center; padding: 18px 22px; border: 1px dashed var(--line);
+  border-radius: 12px; background: rgba(23,26,33,.9); max-width: 88%; }
+.mh-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.mh-sub { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
 .pv-badge { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 10px; font-size: 12px;
   color: var(--muted); background: rgba(0,0,0,.55); text-align: center; }
 .pv-badge.hidden { display: none; }
