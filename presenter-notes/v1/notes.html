@@ -16,7 +16,6 @@
   <div class="notes-top">
     <span class="dot" id="conn" title="スライドとの接続"></span>
     <span class="grow"></span>
-    <button class="btn" id="mirrorBtn" title="共有中の画面をそのままライブ表示する">🖥 画面を映す</button>
     <div class="font-ctl">
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
@@ -35,11 +34,10 @@
   </div>
 
   <div class="notes-main">
-    <!-- 左：プレビュー（スライド連動 or 共有ウィンドウそのままのライブ映像） -->
+    <!-- 左：プレビュー（共有スライドと同じFigmaをライブで表示） -->
     <div class="notes-preview">
       <iframe id="pv" allow="fullscreen" title="スライドプレビュー"></iframe>
       <img id="pvImg" hidden alt="スライド" />
-      <video id="screenVid" hidden autoplay muted playsinline></video>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
       <!-- 共有スライドと同じピル型ナビ（‹ N/総数 › ↺）。手元から送れる -->
       <div class="pv-nav" id="nPill">
@@ -83,8 +81,6 @@
       pv: document.getElementById('pv'),
       pvImg: document.getElementById('pvImg'),
       pvBadge: document.getElementById('pvBadge'),
-      screenVid: document.getElementById('screenVid'),
-      mirrorBtn: document.getElementById('mirrorBtn'),
       displayWrap: document.getElementById('displayWrap'),
       editArea: document.getElementById('editArea'),
       editLabel: document.getElementById('editLabel'),
@@ -171,11 +167,23 @@
       els.pv.contentWindow.postMessage(
         { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: pvDesired } }, '*');
     }
-    async function reinitPreview() {
-      // バックアップ画像があればそれをプレビューに使う（Figma埋め込みを2本立てにしないので軽くて確実）。無ければFigma埋め込み。
-      const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
-      lightPreview = cnt > 0;
+    let pvFallbackTimer = null;
+    function reinitPreview() {
+      // 【本軸はライブ】共有スライドと同じFigmaをそのまま埋め込む。
+      // 保存画像はFigmaを直した瞬間に古くなるので、プレビューには既定で使わない
+      //（共有画面＝ライブ／カンペ＝画像 だと中身がズレるため）。
+      lightPreview = false;
       loadPreview();
+      // 保険：8秒たっても埋め込みが応答しない（回線不良など）時だけ保存画像へ静かに切替
+      clearTimeout(pvFallbackTimer);
+      pvFallbackTimer = setTimeout(async () => {
+        if (pvReady || lightPreview) return;
+        const cnt = await PN.countImg(PN.getActiveDeckId(), PN.loadScripts().order);
+        if (!cnt) return;
+        lightPreview = true;
+        loadPreview();
+        if (currentId) previewGoto(currentId);
+      }, 8000);
     }
     reinitPreview();
     // プレビューiframe自身のFigmaメッセージは「読み込み完了の合図」だけ使う（操作判断には使わない＝ループ防止）
@@ -233,39 +241,6 @@
       }
     });
 
-    // ---- 画面ミラー：共有中のChromeウィンドウをそのままライブ表示（タブ切替も見える）----
-    let screenStream = null;
-    async function startMirror() {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        alert('このブラウザは画面プレビューに対応していません。'); return;
-      }
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
-        screenStream = stream;
-        els.screenVid.srcObject = stream;
-        els.screenVid.hidden = false;
-        els.pv.style.visibility = 'hidden';        // スライドプレビューを隠す
-        // 回線節約：ミラー中はFigma埋め込みを止める（帯域を空ける）
-        try { els.pv.removeAttribute('src'); } catch (e) {}
-        pvReady = false; pvNode = null;
-        els.pvBadge.classList.add('hidden');
-        els.pvImg.hidden = true;                   // 静止画も隠す（映像が本体）
-        els.mirrorBtn.textContent = '🖥 スライドに戻す';
-        els.mirrorBtn.classList.add('primary');
-        stream.getVideoTracks()[0].addEventListener('ended', stopMirror); // 共有停止で自動的に戻す
-      } catch (e) { /* ユーザーがキャンセル：何もしない */ }
-    }
-    function stopMirror() {
-      if (screenStream) { screenStream.getTracks().forEach((t) => t.stop()); screenStream = null; }
-      els.screenVid.srcObject = null;
-      els.screenVid.hidden = true;
-      els.pv.style.visibility = '';
-      els.mirrorBtn.textContent = '🖥 画面を映す';
-      els.mirrorBtn.classList.remove('primary');
-      loadPreview();   // Figma埋め込みを再読み込み
-      requestSync();   // 現在ページへ追従
-    }
-
     // ---- 直接編集（Figma Slides の Edit のように、その場で書いて保存）----
     function enterEdit() {
       if (!currentId) { alert('スライドのページに来てから編集してください（発表タブでそのページを表示）。'); return; }
@@ -315,9 +290,6 @@
       if (e.key === 'ArrowRight' || e.key === ' ') { PN.post({ type: 'nav', dir: 'forward' }); e.preventDefault(); }
       if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
     });
-
-    // ボタンで開始／停止（表示切替やアニメもそのまま映る）
-    els.mirrorBtn.onclick = () => { if (screenStream) stopMirror(); else startMirror(); };
 
     // 中央の境界線を左右ドラッグして、プレビュー／原稿の幅を変える（幅は記憶）
     (function () {

@@ -389,9 +389,14 @@
       const deckId = PN.getActiveDeckId();
       const ids = PN.loadScripts().order.filter((id) => id.includes(':') && !id.startsWith('manual'));
       if (!ids.length) { alert('先にスライドを最後まで送って、ページを登録してください。'); return; }
-      // 既に保存済みの画像は飛ばし、新しいページだけ取得する（再取得を速く）
+      // Figma側が更新されていたら、保存済みの画像も全部取り直す。
+      // （保存画像は撮った時点の絵なので、スライドを直すと中身が食い違ってしまう）
+      const fileMod = localStorage.getItem('pn_filemod_' + deckId) || '';
+      const imgMod = localStorage.getItem('pn_imgmod_' + deckId) || '';
+      const stale = !!fileMod && fileMod !== imgMod;
       const need = [];
-      for (const id of ids) { if (!(await PN.getImg(deckId, id))) need.push(id); }
+      if (stale) need.push(...ids);
+      else for (const id of ids) { if (!(await PN.getImg(deckId, id))) need.push(id); }  // 新しいページだけ
       if (!need.length) { setPrefetchStatus('✓ 保存済'); return; }
       setPrefetchStatus('画像URL取得中…');
       try {
@@ -404,6 +409,7 @@
           if (url) { try { const b = await fetch(url).then((r) => r.blob()); await PN.putImg(deckId, id, b); } catch (e) {} }
           done++; setPrefetchStatus('保存中 ' + done + ' / ' + ids.length);
         }
+        try { localStorage.setItem('pn_imgmod_' + deckId, fileMod); } catch (e) {}   // この版で撮ったと記録
         setPrefetchStatus('✓ ' + done + '/' + ids.length + ' 保存済');
       } catch (e) { setPrefetchStatus('失敗'); alert('保存に失敗しました: ' + (e && e.message)); }
     }
@@ -446,6 +452,8 @@
         const cards = Object.assign({}, s.cards);
         ids.forEach((id) => { cards[id] = cards[id] || { label: '', script: '' }; });
         PN.saveScripts({ order: ids, cards });
+        // Figmaの最終更新時刻を控える。これが変わっていたらバックアップ画像も取り直す
+        try { localStorage.setItem('pn_filemod_' + PN.getActiveDeckId(), String(data.lastModified || '')); } catch (e) {}
         PN.post({ type: 'scripts-updated' });
         edNode = null; renderEdList(); loadNote(); updateCounter(); loadThumbs(); refreshPrefetchStatus();
         setSyncStatus('✓ ' + ids.length + '枚に同期');
