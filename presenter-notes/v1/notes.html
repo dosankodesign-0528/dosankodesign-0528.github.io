@@ -45,7 +45,6 @@
         <button class="pv-btn" id="prev" title="前へ（共有スライドも一緒に戻る）">‹</button>
         <span class="pv-count"><b id="pnum">–</b><span id="ptotal"></span></span>
         <button class="pv-btn" id="next" title="次へ（共有スライドも一緒に送る）">›</button>
-        <button class="pv-btn" id="restart" title="最初へ">↺</button>
       </div>
     </div>
     <!-- 中央の境界線：左右ドラッグで幅を変更 -->
@@ -71,7 +70,7 @@
   </div>
 
 
-  <script src="store.js?v=6"></script>
+  <script src="store.js?v=7"></script>
   <script>
     const els = {
       conn: document.getElementById('conn'),
@@ -320,8 +319,9 @@
       const main = document.querySelector('.notes-main');
       const pane = document.querySelector('.notes-preview');
       const split = document.getElementById('notesSplit');
-      const saved = parseInt(localStorage.getItem('pn_splitw') || '', 10);
-      if (saved) pane.style.flexBasis = saved + 'px';
+      // 比率で記憶する（ウィンドウの大きさが変わっても同じ配分で開く）
+      const savedRatio = parseFloat(localStorage.getItem('pn_splitr') || '');
+      if (savedRatio > 0.1 && savedRatio < 0.9) pane.style.flexBasis = (savedRatio * 100) + '%';
       let dragging = false;
       split.addEventListener('mousedown', (e) => { dragging = true; split.classList.add('active'); document.body.classList.add('col-drag'); e.preventDefault(); });
       window.addEventListener('mousemove', (e) => {
@@ -333,8 +333,25 @@
       window.addEventListener('mouseup', () => {
         if (!dragging) return;
         dragging = false; split.classList.remove('active'); document.body.classList.remove('col-drag');
-        localStorage.setItem('pn_splitw', String(Math.round(pane.getBoundingClientRect().width)));
+        const r = main.getBoundingClientRect();
+        if (r.width) localStorage.setItem('pn_splitr', String(pane.getBoundingClientRect().width / r.width));
       });
+    })();
+
+    // ウィンドウの大きさ・位置を記憶（次回「プレゼンを開始」でこの状態で開く）
+    (function rememberWindowBox() {
+      if (window.name !== 'pn_notes') return;   // アプリが開いた窓の時だけ記憶する
+      let t = null;
+      const save = () => {
+        try {
+          localStorage.setItem('pn_win', JSON.stringify({
+            w: window.outerWidth, h: window.outerHeight, x: window.screenX, y: window.screenY
+          }));
+        } catch (e) {}
+      };
+      window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(save, 400); });
+      window.addEventListener('beforeunload', save);
+      setTimeout(save, 1000);
     })();
 
     // 発表タブに「今のページを教えて」と依頼（開く順番に依存しないように）

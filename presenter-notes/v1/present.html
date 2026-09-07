@@ -26,12 +26,11 @@
     <button class="pv-btn" id="pnPrev" title="前へ">‹</button>
     <span class="pv-count" id="pnCount">– / –</span>
     <button class="pv-btn" id="pnNext" title="次へ">›</button>
-    <button class="pv-btn" id="pnRestart" title="最初へ">↺</button>
   </div>
 
   <!-- 共有スライドは発表中に絶対リロードしない（見た目の変更だけ静かに反映） -->
   <script>window.PN_NO_RELOAD = true;</script>
-  <script src="store.js?v=6"></script>
+  <script src="store.js?v=7"></script>
   <script>
     const frame = document.getElementById('frame');
     const overlay = document.getElementById('overlay');
@@ -196,7 +195,6 @@
     navHot.addEventListener('mousemove', showNav);
     document.getElementById('pnPrev').onclick = () => { if (MODE === 'image') imgNav('backward'); else liveNav({ type: 'NAVIGATE_BACKWARD' }); showNav(); };
     document.getElementById('pnNext').onclick = () => { if (MODE === 'image') imgNav('forward'); else liveNav({ type: 'NAVIGATE_FORWARD' }); showNav(); };
-    document.getElementById('pnRestart').onclick = () => { if (MODE === 'image') showImage(0); else toFigma({ type: 'RESTART' }); showNav(); };
     function updateNavCount() {
       const s = PN.loadScripts(); const idx = s.order.indexOf(lastNodeId);
       document.getElementById('pnCount').textContent = (idx >= 0 ? idx + 1 : '–') + ' / ' + (s.order.length || '–');

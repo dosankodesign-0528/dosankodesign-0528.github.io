@@ -61,7 +61,6 @@
             <button class="pv-btn" id="edPrev" title="前へ">‹</button>
             <span class="pv-count" id="edCounter"><b>–</b> / –</span>
             <button class="pv-btn" id="edNext" title="次へ">›</button>
-            <button class="pv-btn" id="edRestart" title="最初へ">↺</button>
           </div>
           <span class="grow"></span>
         </div>
@@ -104,7 +103,7 @@
     </div>
   </div>
 
-  <script src="store.js?v=6"></script>
+  <script src="store.js?v=7"></script>
   <script>
     const $ = (id) => document.getElementById(id);
 
@@ -521,7 +520,6 @@
 
     $('edPrev').onclick = () => { if (edMode === 'image') edStep(-1); else toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' }); };
     $('edNext').onclick = () => { if (edMode === 'image') edStep(1); else toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' }); };
-    $('edRestart').onclick = () => { if (edMode === 'image') edGo(PN.loadScripts().order[0]); else toFrame($('edFrame'), { type: 'RESTART' }); };
 
     // プレゼン名の変更
     $('edName').addEventListener('input', () => {
@@ -551,8 +549,16 @@
       // カンペ（トークスクリプト）を別ウィンドウで先に開く（1クリック内の最初の window.open なのでブロックされにくい）
       // 画面サイズの0.7倍で、中央に開く（Macのディスプレイ比率に合わせる）
       const sw = screen.availWidth, sh = screen.availHeight;
-      const w = Math.round(sw * 0.45), h = Math.round(sh * 0.45);   // 比率はそのままで小さめに
-      const left = Math.round((sw - w) / 2), top = Math.round((sh - h) / 2);
+      let w = Math.round(sw * 0.45), h = Math.round(sh * 0.45);      // 初期値：画面の0.45倍（比率は画面と同じ）
+      let left = Math.round((sw - w) / 2), top = Math.round((sh - h) / 2);
+      // 前回のウィンドウの大きさ・位置があればそれを再現する
+      try {
+        const box = JSON.parse(localStorage.getItem('pn_win') || 'null');
+        if (box && box.w > 300 && box.h > 200) {
+          w = Math.min(box.w, sw); h = Math.min(box.h, sh);
+          left = Math.max(0, Math.min(box.x, sw - w)); top = Math.max(0, Math.min(box.y, sh - h));
+        }
+      } catch (e) {}
       const notesWin = window.open('notes.html', 'pn_notes',
         'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
       if (!notesWin) {
