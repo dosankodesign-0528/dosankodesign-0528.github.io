@@ -71,7 +71,7 @@
   </div>
 
 
-  <script src="store.js?v=5"></script>
+  <script src="store.js?v=6"></script>
   <script>
     const els = {
       conn: document.getElementById('conn'),
@@ -109,7 +109,7 @@
     const F_MIN = 12, F_MAX = 240;                 // 幅を広げた（12〜240px）
     function fStep(px) { return px < 40 ? 2 : px < 80 ? 4 : px < 140 ? 8 : 12; }  // 大きいほど大きく動く
     const WEIGHTS = [200, 300, 400, 500, 600, 700, 800, 900];
-    function getWeight() { const w = parseInt(localStorage.getItem('pn_weight') || '400', 10); return WEIGHTS.includes(w) ? w : 400; }
+    function getWeight() { const w = parseInt(localStorage.getItem('pn_weight') || '300', 10); return WEIGHTS.includes(w) ? w : 300; }
     function setWeight(w) { localStorage.setItem('pn_weight', String(w)); }
     function applyFont() {
       const px = PN.getFont();

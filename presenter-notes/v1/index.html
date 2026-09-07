@@ -103,7 +103,7 @@
     </div>
   </div>
 
-  <script src="store.js?v=5"></script>
+  <script src="store.js?v=6"></script>
   <script>
     const $ = (id) => document.getElementById(id);
 
@@ -182,10 +182,14 @@
     // 編集画面の表示方式：'image'=保存画像（即表示・Figmaを読み込まない）／'live'=Figma埋め込み（画像が無い初回のみ）
     let edMode = 'image';
 
+    // エディターのタブ名は「ファイル名（プレゼン名）」にする
+    function applyDocTitle() { document.title = (PN.getActiveDeck().name || 'スライド'); }
+
     async function openEditor(id) {
       PN.setActiveDeckId(id);
       const deck = PN.getActiveDeck();
       edNode = null;
+      applyDocTitle();
       $('edName').value = deck.name || '';
       $('edConn').classList.remove('on');
       showView('editor');
@@ -512,6 +516,7 @@
     $('edName').addEventListener('input', () => {
       const id = PN.getActiveDeckId();
       PN.renameDeck(id, $('edName').value.trim() || 'プレゼン');
+      applyDocTitle();   // タブ名も追従
     });
 
     // URL の設定・変更
@@ -540,11 +545,12 @@
       const notesWin = window.open('notes.html', 'pn_notes',
         'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
       if (!notesWin) {
-        alert('カンペ用ウィンドウがポップアップブロックされました。\nアドレス欄右の「ポップアップを許可」をONにして、もう一度「▶ プレゼンを開始」を押してください。');
-        return; // 許可後に押し直してもらう（スライドはまだ切り替えない）
+        alert('トークスクリプト用ウィンドウがポップアップブロックされました。\nアドレス欄右の「ポップアップを許可」をONにして、もう一度「▶ プレゼンを開始」を押してください。');
+        return; // 許可後に押し直してもらう
       }
-      // このタブ自体を共有用スライド（クリーンな全画面スライド）に切り替える
-      location.href = 'present.html';
+      // 共有用スライドは「新しいタブ」で開く（このエディターのタブはそのまま残す）
+      const slideTab = window.open('present.html', '_blank');
+      if (slideTab) slideTab.focus();
     };
 
     // 一覧に戻ってもiframeは読み込んだまま保持する（次に開く時が一瞬で済む）
@@ -581,6 +587,7 @@
     };
 
     /* ================= 起動 ================= */
+    applyDocTitle();
     renderGallery();
     // 他ウィンドウでの編集を一覧/リストに反映
     PN.onMessage((msg) => {

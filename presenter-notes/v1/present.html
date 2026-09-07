@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>発表スライド</title>
+  <title>プレゼンテーション</title>
   <!-- Figmaへ事前接続してスライドの初回表示を速く -->
   <link rel="preconnect" href="https://embed.figma.com" crossorigin />
   <link rel="preconnect" href="https://www.figma.com" crossorigin />
@@ -31,14 +31,14 @@
 
   <!-- 共有スライドは発表中に絶対リロードしない（見た目の変更だけ静かに反映） -->
   <script>window.PN_NO_RELOAD = true;</script>
-  <script src="store.js?v=5"></script>
+  <script src="store.js?v=6"></script>
   <script>
     const frame = document.getElementById('frame');
     const overlay = document.getElementById('overlay');
     const ovtext = document.getElementById('ovtext');
 
     // タブ名を「そのプレゼン（カード）の名前」にする（画面共有のウィンドウ選択で分かりやすく）
-    document.title = (PN.getActiveDeck().name || '発表スライド');
+    document.title = 'プレゼンテーション';
 
     let lastNodeId = null; // 今表示しているページ
     let MODE = 'live';     // 'live'=Figma埋め込み / 'image'=軽量(画像・回線を使わない)
@@ -177,7 +177,7 @@
         PN.post({ type: 'node', nodeId: lastNodeId });
       }
       // プレゼン名が変わったらタブ名も更新
-      if (msg.type === 'decks-updated') { document.title = (PN.getActiveDeck().name || '発表スライド'); }
+      if (msg.type === 'decks-updated') { document.title = 'プレゼンテーション'; }
     });
 
     // --- 自動で隠れるページ送りナビ（マウスを動かすと出て、2.5秒で隠れる／ウィンドウ外で隠れる） ---

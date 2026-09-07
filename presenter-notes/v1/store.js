@@ -71,7 +71,7 @@ window.PN = (function () {
   function setClientId(v) { localStorage.setItem(K_CID, (v || '').trim()); }
   function getFigmaToken() { return (localStorage.getItem(K_TOKEN) || '').trim(); }
   function setFigmaToken(v) { localStorage.setItem(K_TOKEN, (v || '').trim()); }
-  function getFont() { return parseInt(localStorage.getItem(K_FONT) || '40', 10); }
+  function getFont() { return parseInt(localStorage.getItem(K_FONT) || '20', 10); }
   function setFont(px) { localStorage.setItem(K_FONT, String(px)); }
 
   // ---- デッキ（プレゼン）本体 ----
