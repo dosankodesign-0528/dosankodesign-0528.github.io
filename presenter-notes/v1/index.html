@@ -360,7 +360,9 @@
         const node = PN.normId(m.data && m.data.presentedNodeId);
         if (!node) return;
         edNode = node;
-        PN.ensureCard(node);   // 未知ページを登録
+        // 一覧がまだ空の時だけ来た順に登録する。一覧がある時に登録すると、
+        // トークスクリプトのフレームがスライドとして混ざってしまう。
+        if (!PN.loadScripts().order.length) PN.ensureCard(node);
         loadNote();
         renderEdList();
         updateCounter();
@@ -458,16 +460,16 @@
     }
     // 左のスライド一覧を隠す／表示（Figma Slides風）
     $('listToggle').onclick = () => document.querySelector('.ed-body').classList.toggle('nolist');
-    // トークスクリプト欄の表示／非表示（スライドを大きく見たい時に畳む）
-    $('notesToggle').onclick = () => {
-      const off = document.querySelector('.ed-body').classList.toggle('nonotes');
-      $('notesToggle').classList.toggle('on', off);
-      localStorage.setItem('pn_nonotes', off ? '1' : '0');
-    };
-    if (localStorage.getItem('pn_nonotes') === '1') {
-      document.querySelector('.ed-body').classList.add('nonotes');
-      $('notesToggle').classList.add('on');
+    // トークスクリプト欄の表示／非表示
+    // ボタンが青く光っている（アクティブ）＝トークスクリプトが出ている状態。
+    // 既定は非活性＝トークスクリプトは出ていない（スライドを大きく見せる）。
+    function setNotesVisible(show) {
+      document.querySelector('.ed-body').classList.toggle('nonotes', !show);
+      $('notesToggle').classList.toggle('on', show);
+      localStorage.setItem('pn_shownotes', show ? '1' : '0');
     }
+    $('notesToggle').onclick = () => setNotesVisible(document.querySelector('.ed-body').classList.contains('nonotes'));
+    setNotesVisible(localStorage.getItem('pn_shownotes') === '1');
 
     // ↻ 手動再取得：Figmaからスライド一覧を取り直し、新しいページのバックアップ画像だけ追加保存
     $('refreshBtn').onclick = async () => {
@@ -518,8 +520,18 @@
       });
     })();
 
-    $('edPrev').onclick = () => { if (edMode === 'image') edStep(-1); else toFrame($('edFrame'), { type: 'NAVIGATE_BACKWARD' }); };
-    $('edNext').onclick = () => { if (edMode === 'image') edStep(1); else toFrame($('edFrame'), { type: 'NAVIGATE_FORWARD' }); };
+    // 送りはスライド一覧の順で直接ジャンプ（プロトタイプの流れに任せると
+    // トークスクリプトのフレームへ進んでしまうため）
+    function edLiveNav(dir) {
+      const order = PN.loadScripts().order;
+      if (!order.length) { toFrame($('edFrame'), { type: dir < 0 ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' }); return; }
+      let i = order.indexOf(edNode);
+      if (i < 0) i = 0; else i += dir;
+      if (i < 0 || i >= order.length) return;
+      toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: order[i] } });
+    }
+    $('edPrev').onclick = () => { if (edMode === 'image') edStep(-1); else edLiveNav(-1); };
+    $('edNext').onclick = () => { if (edMode === 'image') edStep(1); else edLiveNav(1); };
 
     // プレゼン名の変更
     $('edName').addEventListener('input', () => {

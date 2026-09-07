@@ -125,10 +125,19 @@
           overlay.classList.add('hidden');
           const nodeId = PN.normId(msg.data && msg.data.presentedNodeId);
           if (nodeId) {
+            // 【観客に見せない保険】スライド一覧に無いフレーム（＝トークスクリプト等）が
+            // 出てしまったら、その場で直前のスライドへ引き戻す。
+            // ※ここで ensureCard（未知ページの自動登録）はしない。すると一覧が汚れて
+            //   トークスクリプトのフレームがスライド扱いになってしまうため。
+            const order = PN.loadScripts().order;
+            if (order.length && !order.includes(nodeId)) {
+              const back = order.includes(lastNodeId) ? lastNodeId : order[0];
+              toFigma({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: back } });
+              break;
+            }
             lastNodeId = nodeId;
             try { sessionStorage.setItem('pn_lastnode', nodeId); } catch (e) {}  // 自動更新後に戻る用
-            const page = PN.ensureCard(nodeId);      // 未知ページなら登録
-            PN.post({ type: 'node', nodeId, page }); // カンペ/設定へ通知
+            PN.post({ type: 'node', nodeId });        // カンペ/設定へ通知
             updateNavCount();
           }
           break;
@@ -157,11 +166,26 @@
       clearTimeout(navWatch);
       navWatch = setTimeout(() => { if (MODE === 'live' && lastNodeId === before && hasBackup) fallbackToImages(); }, 5000);
     }
+    // ページ送りは「スライド一覧」の順番で直接ジャンプする。
+    // プロトタイプの流れ（NAVIGATE_FORWARD）に任せると、スライドの次に置いてある
+    // トークスクリプトのフレームへ進んでしまい、共有画面に映ってしまうため。
+    function slideNav(dir) {
+      const order = PN.loadScripts().order;
+      if (!order.length) {  // まだ一度も再取得(↻)していない時だけ、従来どおりの送り
+        liveNav({ type: dir === 'backward' ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' });
+        return;
+      }
+      let i = order.indexOf(lastNodeId);
+      if (i < 0) i = 0;                                  // 現在地が不明なら先頭から
+      else i += (dir === 'backward' ? -1 : 1);
+      if (i < 0 || i >= order.length) return;            // 最初/最後では止まる（先へ行かない）
+      liveNav({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: order[i] } });
+    }
     PN.onMessage((msg) => {
       if (!msg) return;
       if (msg.type === 'nav') {
         if (MODE === 'image') imgNav(msg.dir);
-        else liveNav({ type: msg.dir === 'backward' ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' });
+        else slideNav(msg.dir);
       }
       if (msg.type === 'restart') {
         if (MODE === 'image') showImage(0);
@@ -193,8 +217,8 @@
     const navHot = document.getElementById('navHot');
     navHot.addEventListener('mouseenter', showNav);
     navHot.addEventListener('mousemove', showNav);
-    document.getElementById('pnPrev').onclick = () => { if (MODE === 'image') imgNav('backward'); else liveNav({ type: 'NAVIGATE_BACKWARD' }); showNav(); };
-    document.getElementById('pnNext').onclick = () => { if (MODE === 'image') imgNav('forward'); else liveNav({ type: 'NAVIGATE_FORWARD' }); showNav(); };
+    document.getElementById('pnPrev').onclick = () => { if (MODE === 'image') imgNav('backward'); else slideNav('backward'); showNav(); };
+    document.getElementById('pnNext').onclick = () => { if (MODE === 'image') imgNav('forward'); else slideNav('forward'); showNav(); };
     function updateNavCount() {
       const s = PN.loadScripts(); const idx = s.order.indexOf(lastNodeId);
       document.getElementById('pnCount').textContent = (idx >= 0 ? idx + 1 : '–') + ' / ' + (s.order.length || '–');
