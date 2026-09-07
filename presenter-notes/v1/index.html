@@ -414,7 +414,8 @@
       if (!key) { alert('Figma URL を設定してください。'); return; }
       setSyncStatus('Figmaから取得中…');
       try {
-        const res = await fetch('https://api.figma.com/v1/files/' + key + '?depth=3', { headers: { 'X-Figma-Token': token } });
+        // キャッシュを使わず必ず最新のFigmaを取りに行く
+        const res = await fetch('https://api.figma.com/v1/files/' + key + '?depth=3&_cb=' + Date.now(), { headers: { 'X-Figma-Token': token }, cache: 'no-store' });
         const data = await res.json();
         if (!res.ok || !data.document) { setSyncStatus('取得失敗'); alert('取得に失敗しました: ' + ((data && data.err) || res.status)); return; }
         const pageId = pageIdFromUrl(deck.url);
@@ -422,11 +423,17 @@
         if (pageId) { const p = pages.find((x) => x.id === pageId); if (p) pages = [p]; }
         const sections = [];
         pages.forEach((pg) => (pg.children || []).forEach((c) => { if (c.type === 'SECTION') sections.push(c); }));
-        const isSlide = (c) => c.type === 'FRAME' && /^\d+$/.test(c.name);
-        const target = sections.find((s) => s.name === 'スライド') || sections.find((s) => (s.children || []).some(isSlide));
+        // 「スライド」「Slide」「slides」など（日本語・英語・大文字小文字を問わない）
+        const isSlideWord = (n) => /^(スライド|slides?)$/i.test(String(n || '').trim());
+        // スライド＝セクション直下のFRAMEで、名前が数字 or スライド/Slide。トークスクリプトのフレームは除外
+        const isSlide = (c) => c.type === 'FRAME' && (/^\d+$/.test(String(c.name).trim()) || isSlideWord(c.name));
+        const target = sections.find((s) => isSlideWord(s.name)) || sections.find((s) => (s.children || []).some(isSlide));
         const frames = target ? (target.children || []).filter(isSlide) : [];
-        if (!frames.length) { setSyncStatus('見つからず'); alert('「スライド」セクション内に数字名のフレームが見つかりませんでした。'); return; }
-        frames.sort((a, b) => parseInt(a.name, 10) - parseInt(b.name, 10));
+        if (!frames.length) { setSyncStatus('見つからず'); alert('「スライド」セクション内にスライドのフレームが見つかりませんでした。'); return; }
+        // 並びはキャンバスの見た目順（上の行から、左→右）。名前が数字でない新規スライドも正しい位置に入る
+        const bb = (c) => c.absoluteBoundingBox || { x: 0, y: 0, height: 1 };
+        const band = (c) => Math.round(bb(c).y / Math.max(1, bb(c).height * 0.6));
+        frames.sort((a, b) => (band(a) - band(b)) || (bb(a).x - bb(b).x));
         const ids = frames.map((f) => f.id);
         const s = PN.loadScripts();
         // 原稿は一切捨てない：既存の全カードを保持しつつ、並びだけFigmaの39枚に合わせる
@@ -451,9 +458,9 @@
     // ↻ 手動再取得：Figmaからスライド一覧を取り直し、新しいページのバックアップ画像だけ追加保存
     $('refreshBtn').onclick = async () => {
       const b = $('refreshBtn');
-      if (b.classList.contains('spin')) return;
-      b.classList.add('spin');
-      try { await autoBackup(); } finally { b.classList.remove('spin'); }
+      if (b.disabled) return;
+      b.disabled = true;                      // 回転アニメは付けない（二重押しだけ防ぐ）
+      try { await autoBackup(); } finally { b.disabled = false; }
     };
 
     // トークスクリプト欄の高さを上端ドラッグで変更（上へ＝大きく／下へ＝小さく）。高さは記憶する

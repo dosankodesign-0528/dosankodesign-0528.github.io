@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git add -A && (git diff --cached --quiet || git commit -m 'Auto-save') && git pull --rebase --autostash origin main && git push || echo '[auto-save] 失敗: ターミナルで手動解決してな'",
+            "timeout": 90
+          }
+        ]
+      }
+    ]
+  }
+}
