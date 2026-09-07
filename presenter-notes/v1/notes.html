@@ -16,6 +16,7 @@
   <div class="notes-top">
     <span class="dot" id="conn" title="スライドとの接続"></span>
     <span class="grow"></span>
+    <button class="btn" id="mirrorBtn" title="共有中の画面をそのままライブ表示する">🖥 画面を映す</button>
     <div class="font-ctl">
       <button class="btn" id="fdown" title="文字を小さく">A−</button>
       <span class="chip" id="fsize">40px</span>
@@ -40,13 +41,6 @@
       <img id="pvImg" hidden alt="スライド" />
       <video id="screenVid" hidden autoplay muted playsinline></video>
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
-      <!-- クリックで共有画面のライブ表示を開始（ブラウザ仕様で1回だけクリックが必要） -->
-      <div class="mirror-hint" id="mirrorHint">
-        <div class="mh-box">
-          <div class="mh-title">クリックして共有画面を表示</div>
-          <div class="mh-sub">「プレゼンテーション」のタブ（またはChromeウィンドウ）を選んでください</div>
-        </div>
-      </div>
       <!-- 共有スライドと同じピル型ナビ（‹ N/総数 › ↺）。手元から送れる -->
       <div class="pv-nav" id="nPill">
         <button class="pv-btn" id="prev" title="前へ（共有スライドも一緒に戻る）">‹</button>
@@ -90,7 +84,7 @@
       pvImg: document.getElementById('pvImg'),
       pvBadge: document.getElementById('pvBadge'),
       screenVid: document.getElementById('screenVid'),
-      mirrorHint: document.getElementById('mirrorHint'),
+      mirrorBtn: document.getElementById('mirrorBtn'),
       displayWrap: document.getElementById('displayWrap'),
       editArea: document.getElementById('editArea'),
       editLabel: document.getElementById('editLabel'),
@@ -256,7 +250,8 @@
         pvReady = false; pvNode = null;
         els.pvBadge.classList.add('hidden');
         els.pvImg.hidden = true;                   // 静止画も隠す（映像が本体）
-        els.mirrorHint.hidden = true;
+        els.mirrorBtn.textContent = '🖥 スライドに戻す';
+        els.mirrorBtn.classList.add('primary');
         stream.getVideoTracks()[0].addEventListener('ended', stopMirror); // 共有停止で自動的に戻す
       } catch (e) { /* ユーザーがキャンセル：何もしない */ }
     }
@@ -265,7 +260,8 @@
       els.screenVid.srcObject = null;
       els.screenVid.hidden = true;
       els.pv.style.visibility = '';
-      els.mirrorHint.hidden = false;               // もう一度クリックで再開できるように
+      els.mirrorBtn.textContent = '🖥 画面を映す';
+      els.mirrorBtn.classList.remove('primary');
       loadPreview();   // Figma埋め込みを再読み込み
       requestSync();   // 現在ページへ追従
     }
@@ -320,8 +316,8 @@
       if (e.key === 'ArrowLeft') { PN.post({ type: 'nav', dir: 'backward' }); e.preventDefault(); }
     });
 
-    // プレビューをクリック＝共有画面のライブ表示を開始（表示切替やアニメもそのまま映る）
-    els.mirrorHint.addEventListener('click', startMirror);
+    // ボタンで開始／停止（表示切替やアニメもそのまま映る）
+    els.mirrorBtn.onclick = () => { if (screenStream) stopMirror(); else startMirror(); };
 
     // 中央の境界線を左右ドラッグして、プレビュー／原稿の幅を変える（幅は記憶）
     (function () {
