@@ -40,6 +40,13 @@
 | 38px | **40px** | 1 | KVの見出し（スマホ） |
 | 46px | **44px** | 1 | 実績の数字（スマホ） |
 
+**2026-09-09 追記（スマホ忠実トレース時の整理）**
+
+- タイプスケールのトークンに `--fs-micro:10px`（事例タグ）/ `--fs-subhead:18px`（社名）/ `--fs-heading:24px`（導入事例の見出し・SP）を追加。既存は `--fs-caption 12 / --fs-body 14 / --fs-base 16 / --fs-lead 20 / --fs-title 22 / --fs-display 26 / --fs-hero 46 / --fs-stat 50`。行間は `--lh-tight 1.4 / --lh-normal 1.6 / --lh-loose 1.7 / --lh-body 1.8`
+- 新フッター（カンプ 16083:23592）で `--surface-footer-bottom` を **#363636** に変更（旧 #434343。mid/high の「#454545 へ統合」は差が見えるため撤回）
+- `--line-grid` は **#ACACAC**（カンプ値）に戻した。high レベルの「#D1D5DC へ統合」は撤回（SP の事例カード罫線・PC の事例グリッド線がカンプ通りに）
+- 実際に有効な DS レベルは `<html data-ds="high">`（コードのコメント「既定=mid」は古い）。トークン値は必ず computed で確認する
+
 ## 2. 角丸 — 10種類 → **4段階＋2形状**
 
 | トークン | px | 使いどころ |
