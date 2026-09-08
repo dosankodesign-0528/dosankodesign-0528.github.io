@@ -1405,7 +1405,7 @@
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
-    .headline { left: 24px; right: 24px; top: 432px; white-space: normal; gap: var(--space-16);   /* カンプ 409 + ヒデさん指定でグラフィックとの間隔を拡大(2026-09-09) */
+    .headline { left: 24px; right: 24px; top: 416px; white-space: normal; gap: var(--space-16);   /* カンプ 409。グラフィックとの間隔は 432→416 に微調整(空けすぎ→もう少し詰める・2026-09-09) */
                 align-items: center; text-align: center; }
     .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
@@ -1418,10 +1418,12 @@
     .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden;
              animation: mbFadeIn .8s var(--e-out) 2.4s both; }   /* 出現: KV のグラフィックの後(⚠️仮置き 2.4s)にフェードイン */
     @keyframes mbFadeIn { from { opacity: 0; } to { opacity: 1; } }
-    /* 帯の流れは JS 駆動(mbMarqueeTick)。CSS アニメは iOS で overflow:hidden+transform 配下のレイヤーが落ちて消えた */
-    .marquee-track { animation: none; will-change: auto; }
+    /* 帯の流れは CSS アニメ(marquee)に戻す＝コンポジタ側で滑らか＆くっきり。JS 毎フレーム駆動は重い KV 描画
+       ループと同フレームで translate を計算するためカクつき(ガタガタ)＋非GPU化で画質低下していた(2026-09-09)。
+       速度は applyMarquee がモバイルだけ 8s(約90px/s)に。iOS で消える件は rv() の blur を止めて解消済み。 */
+    .marquee-track { will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
     .mq-set { gap: 30px; padding-right: 30px; height: 48px; }
-    .mq-set img { height: 20px; }   /* 16→20 に拡大(ヒデさん指定「少し小さすぎる」) */
+    .mq-set img { height: 20px; image-rendering: auto; }   /* 16→20 に拡大(ヒデさん指定「少し小さすぎる」) */
 
     /* --- ビジョン (カンプ node16534:22141 準拠: Our Vision 16px / メッセージ 26px 行間1.7) --- */
     /* 【2026-09-09 カンプSP 忠実トレース】ページ上の目標Y: Our Vision 741 / 見出し 773 / 軌道 861〜1186 /
@@ -1438,6 +1440,13 @@
     #vision { margin-top: 0; }   /* PC用の 200px 余白を撤去(KV→ビジョンが空きすぎていた) */
     .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); font-weight: 300; }   /* カンプSP: SF Pro Text Light(300)/16px → y741 */
     .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: var(--fs-display); line-height: var(--lh-loose); font-weight: 300; }   /* カンプSP: Noto Sans JP Light(300)/26px/1.7 */
+    /* 【2026-09-09 ヒデさん指定・カンプ node16534:22143 忠実】SP のメッセージは単一のダーク(#101828)。
+       PC の「つなぐ/強み」グラデ揺らぎ(.vl-nagu/.vl-strong)はカンプに無いので SP では無効化して全部ダークに。
+       文字ごとのマスク出現(.vl-ch カスケード)は残す。 */
+    .vis-line .vl-nagu, .vis-line.str-live .vl-strong {
+      background: none; -webkit-background-clip: border-box; background-clip: border-box;
+      color: var(--ink); animation: none;
+    }
     .vis-l1 { top: 106px; }   /* → y773 */
     .vis-l2 { top: 170px; }
     /* 軌道図(Platform図): JS が sc=0.488 で楕円・文字・ドットを一様に縮めるので、CSS では
@@ -7759,7 +7768,6 @@ function patternDeg(d, i, p) {
 
 function renderFrame() {
   frameSeq++;   /* このフレームぶんの矩形キャッシュを新しくする */
-  mbMarqueeTick();   /* スマホのロゴ帯(JS駆動)。PC では何もしない */
   /* resize イベントを取りこぼす環境があるので、寸法が変わっていたら組み直す
      (fit() の準備が済むまでは呼ばない) */
   if (fitReady && window.innerWidth > 0 &&
@@ -10867,24 +10875,12 @@ function applyCaseHover() {
     }
   });
 }
-/* 【2026-09-09 ヒデさん指摘「ティッカーが急に消える・遅い」】スマホのロゴ帯は JS 駆動(毎フレーム translate3d)。
-   CSS アニメだと iOS Safari で overflow:hidden+transform 配下の合成レイヤーが落ちて「消えたり出たり」したため。
-   速度もここで決める(1セット幅で折り返すので継ぎ目なし)。 */
-const MB_MARQUEE_PXPS = 70;   /* px/秒。100→70 に減速(ヒデさん指定「少し落とす」)。PC は 1826px/30s ≒ 61px/s */
-let mbMarqueeSetW = 0;
-function mbMarqueeTick() {
-  if (!isMobile || typeof marqueeTrack === 'undefined' || !marqueeTrack) return;
-  if (!mbMarqueeSetW || (frameSeq % 60) === 0) {   /* 画像の読み込みで幅が変わるので時々測り直す */
-    const set = marqueeTrack.querySelector('.mq-set');
-    if (set) mbMarqueeSetW = set.getBoundingClientRect().width;
-    if (!mbMarqueeSetW) return;
-  }
-  const x = (elapsed * MB_MARQUEE_PXPS) % mbMarqueeSetW;
-  marqueeTrack.style.transform = `translate3d(${(-x).toFixed(2)}px,0,0)`;
-}
 function applyMarquee() {
   if (!marqueeTrack) return;   /* 2026-08-31: ロゴは支給iframeに差し替え済み(自前マーキー廃止)。要素が無ければ何もしない */
-  marqueeTrack.style.animationDuration = params.marquee.duration + 's';
+  /* 【2026-09-09】モバイルは 1セット幅≒720px を 8s ≒ 90px/s で流す(CSSアニメ・滑らか)。
+     JS駆動時代に書いた inline transform が残っていると CSS アニメの transform を上書きするので消す。 */
+  if (isMobile) marqueeTrack.style.transform = '';
+  marqueeTrack.style.animationDuration = (isMobile ? 8 : params.marquee.duration) + 's';
   marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
   /* 【2026-09-09】静的モバイルでは KV 以下の演出を止めているが、ロゴティッカーだけは常に流す。
      params.running は調整パネル/古いlocalStorage由来で false のことがあり、それに引きずられて
