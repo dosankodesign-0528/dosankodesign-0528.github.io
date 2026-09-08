@@ -246,8 +246,8 @@
     flex: none;
   }
   @keyframes marquee {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
   }
 
   /* ================= スクロールセクション共通 ================= */
@@ -1415,9 +1415,11 @@
     /* カンプSP node16534:22200: ロゴ帯は y624・高さ42.4、ロゴ1つは 13.5〜19px 高(→⚠️仮置き 16px)・間隔 24〜31px(→27px)。
        iOS Safari 実機で「消えたり出たり」したため、帯自体を合成レイヤーに固定(translateZ)し、表示は CSS で確定させる
        (JS の rv() による opacity/blur/transform の毎フレーム書き込みはスマホでは行わない → updateKV 側) */
-    .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden;
-             animation: mbFadeIn .8s var(--e-out) 2.4s both; }   /* 出現: KV のグラフィックの後(⚠️仮置き 2.4s)にフェードイン */
-    @keyframes mbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* 【2026-09-09 ヒデさん指摘「ティッカーがチカチカ・一瞬消える」】.logos の遅延フェード(mbFadeIn)を撤去。
+       iOS Safari は scroll/レイヤー再構成のたびに遅延付き animation を再生し直すことがあり、その瞬間に
+       opacity が 0 に戻って「一瞬消える」原因になっていた。常時表示(opacity 1)＋GPU固定で安定させる。
+       出現の演出より“消えない”を優先(必要なら後で transition ベースの1回だけフェードに戻す)。 */
+    .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden; }
     /* 帯の流れは CSS アニメ(marquee)に戻す＝コンポジタ側で滑らか＆くっきり。JS 毎フレーム駆動は重い KV 描画
        ループと同フレームで translate を計算するためカクつき(ガタガタ)＋非GPU化で画質低下していた(2026-09-09)。
        速度は applyMarquee がモバイルだけ 8s(約90px/s)に。iOS で消える件は rv() の blur を止めて解消済み。 */
@@ -1447,13 +1449,9 @@
     #vision { margin-top: 0; }   /* PC用の 200px 余白を撤去(KV→ビジョンが空きすぎていた) */
     .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); font-weight: 300; }   /* カンプSP: SF Pro Text Light(300)/16px → y741 */
     .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: var(--fs-display); line-height: var(--lh-loose); font-weight: 300; }   /* カンプSP: Noto Sans JP Light(300)/26px/1.7 */
-    /* 【2026-09-09 ヒデさん指定・カンプ node16534:22143 忠実】SP のメッセージは単一のダーク(#101828)。
-       PC の「つなぐ/強み」グラデ揺らぎ(.vl-nagu/.vl-strong)はカンプに無いので SP では無効化して全部ダークに。
-       文字ごとのマスク出現(.vl-ch カスケード)は残す。 */
-    .vis-line .vl-nagu, .vis-line.str-live .vl-strong {
-      background: none; -webkit-background-clip: border-box; background-clip: border-box;
-      color: var(--ink); animation: none;
-    }
+    /* 【2026-09-09 ヒデさん指定】SP でも「つなぐ/強み」のギラギラのグラデ揺らぎを PC と同じく出す。
+       (以前カンプが単色だったため SP で無効化したが、ヒデさんの意向で PC 同様に復活。base の
+       .vl-nagu / .vis-line.str-live .vl-strong がそのまま適用される＝ここでは上書きしない) */
     .vis-l1 { top: 106px; }   /* → y773 */
     .vis-l2 { top: 170px; }
     /* 軌道図(Platform図): JS が sc=0.488 で楕円・文字・ドットを一様に縮めるので、CSS では
@@ -10602,7 +10600,7 @@ function updateKV() {
   if (kvRevealElapsed == null && _orbReveal > 0.5) kvRevealElapsed = elapsed;
   rv(kvEls.orbit, _orbReveal, 12);
   /* スマホのロゴ帯は JS(rv)で触らない: iOS で inline の blur/opacity 書き込みが合成レイヤーを落とすため。
-     出現は CSS アニメ(.logos の mbFadeIn)で同じタイミング感を出す */
+     スマホは常時表示(CSS の .logos opacity:1)＝チカチカ/一瞬消える対策(2026-09-09、遅延フェードは撤去)。 */
   if (!isMobile) rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
   /* 【2026-08-26 ヒデさん指定】1行目のタイピングが終わったあたりで、右のKV iframe に入場開始を合図する
      (モック→アイコン→軌道)。以前は全タイピング完了(gAt)を待っていた。introLead で前後にずらせる。 */
@@ -10887,7 +10885,7 @@ function applyMarquee() {
   /* 【2026-09-09】モバイルは 1セット幅≒720px を 8s ≒ 90px/s で流す(CSSアニメ・滑らか)。
      JS駆動時代に書いた inline transform が残っていると CSS アニメの transform を上書きするので消す。 */
   if (isMobile) marqueeTrack.style.transform = '';
-  marqueeTrack.style.animationDuration = (isMobile ? 11 : params.marquee.duration) + 's';   /* モバイル 8→11s に減速(720px/11s≒65px/s・ヒデさん指定「もう少しゆったり」2026-09-09) */
+  marqueeTrack.style.animationDuration = (isMobile ? 14 : params.marquee.duration) + 's';   /* モバイル 11→14s にさらに減速(720px/14s≒51px/s・ヒデさん指定「やや速い」2026-09-09) */
   marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
   /* 【2026-09-09】静的モバイルでは KV 以下の演出を止めているが、ロゴティッカーだけは常に流す。
      params.running は調整パネル/古いlocalStorage由来で false のことがあり、それに引きずられて
