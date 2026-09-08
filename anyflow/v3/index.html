@@ -1440,7 +1440,9 @@
        780未満(例700)になると --sp<1 ＝ ビジョン(pin-stage)だけ約90%に縮小していた。KV(.stage)は幅のみの
        --s なので縮まず、結果「ビジョンだけ小さい」に。モバイルは静的でスクロールするので高さ制約は不要 →
        幅のみの --s(実機でも常に1.0)にして design サイズを保つ。 */
-    html.mb .pin-stage { top: 0; transform: scale(var(--s)); transform-origin: left top; }
+    /* 幅も KV(.stage)と同じ --sw(=max(390, 幅/--s))に揃える。--swp(=max(390, 幅/--sp))のままだと、
+       --sp<1 の実機で 448px 等になり scale(--s=1) では画面(402)からはみ出して左右24pxが崩れる(2026-09-09)。 */
+    html.mb .pin-stage { top: 0; width: var(--sw); transform: scale(var(--s)); transform-origin: left top; }
     html.mb #results .pin-stage { align-items: flex-start; }   /* 中身は上から流す(縦中央寄せ解除) */
     #vision { margin-top: 0; }   /* PC用の 200px 余白を撤去(KV→ビジョンが空きすぎていた) */
     .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); font-weight: 300; }   /* カンプSP: SF Pro Text Light(300)/16px → y741 */
