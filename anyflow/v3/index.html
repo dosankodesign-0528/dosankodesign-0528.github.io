@@ -3192,6 +3192,7 @@ const DEFAULTS = {
       pWidth: 328,              // ポイント1・2の横幅(px) 2026-09-03
       msgSize: 50,              // 日本語メッセージの文字サイズ(px・カンプ50) 2026-09-03
       npOrbitTextGap: 0, // パターン2: ドットが止まってから文字(役割名/Platform)が出るまでの間(秒)
+      npPtLead: 0.6,     // 【2026-09-08 ヒデさん指定】ポイント1/2を回転が終わる何秒前から出すか(左グラフィックのアニメ終盤と被せる)
       blur: 18,          // 出現ブラー量 (2026-08-31: さらに強く 14→18)
       /* 【2026-09-01 ヒデさん指定】軌道グラデをパネルで直接調整できるように。
          g0=傾き大きい楕円(いま青く見える方) / g1=傾き小さい楕円(いまピンクに見える方)。
@@ -8922,7 +8923,10 @@ function updateVision(p) {
   /* 【2026-09-02 ヒデさん指定】「2つの価値」見出し(valHead)は削除。Point 01/02 のみ。 */
   /* 【2026-09-03 ヒデさん指定】パターン2の順序: ドット停止→Platform文字+役割名→その後にポイント1→2。
      ポイントの間は既存の「グラフィック→ポイント1/2」スライダー(npP1/npP2)を流用(起点=文字が出きった時) */
-  const pat2C = A - (pat2TxtAt + T_IN);
+  /* 【2026-09-08 ヒデさん指定】ポイント1/2は「回転が終わる少し前(npPtLead秒前)」を起点に出す＝
+     左グラフィックのアニメ終盤と被せる。npP1/npP2 はそこからの追加の間。 */
+  const pat2PtBase = pat2SpinEnd - (c.npPtLead != null ? c.npPtLead : 0.6);
+  const pat2C = A - pat2PtBase;
   const pat2P1 = pat2 ? easeOutQ(clamp01((pat2C - (c.npP1 || 0)) / P_IN)) : 0;
   const pat2P2 = pat2 ? easeOutQ(clamp01((pat2C - (c.npP2 || 0)) / P_IN)) : 0;
   rvAt(visEls.valP1,   pat2 ? pat2P1 : easeOutQ(clamp01((C - (c.npP1 != null ? c.npP1 : 0.95)) / P_IN)), B, 12, c.p1X * offX, c.p1Y);
@@ -10857,9 +10861,9 @@ function valStyle(e, o) {
   if (o.rot != null) e.setAttribute('transform', `rotate(${o.rot.toFixed(1)} ${o.rx0 || 110} ${o.ry0 || 110})`);
 }
 const vE = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* なめらかな出入り */
-/* 【2026-09-08 ヒデさん指定】より緩急の強い出入り(smootherstep)。両端がぐっと遅く、中央が速い＝
-   「最初ゆっくり→徐々に速く→また遅く」。for AI の矢印の線の伸びに使う。 */
-const vEIO = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return u * u * u * (u * (u * 6 - 15) + 10); };
+/* 【2026-09-08 ヒデさん指定・強化】緩急をさらに強く。両端が“ぐっと”遅く、中央で一気に速い
+   シグモイド型(指数3.4)。「最初ゆっくり→ぐっと速く→また遅く」。for AI の矢印の線の伸びに使う。 */
+const vEIO = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; const a = Math.pow(u, 3.4); return a / (a + Math.pow(1 - u, 3.4)); };
 /* 【2026-08-28 ヒデさん指定】全体的にゆったりすぎたので、緩急の強い動きを足す。
    vE2 = 一気に動いて、終わりでぴたっと止まる(見せ場に使う)
    vE3 = 少し行き過ぎて戻る(重なる・刺さる瞬間の気持ちよさ)
@@ -14266,7 +14270,10 @@ function buildPanel() {
     'ブラーで出現する何秒前から動き出しているか。0=出現と同時に走り出す / 大きいほど「出現した時にはもう走っている」。'));
   rows.push(slider('止まってから文字まで', 0, 2, 0.05, () => (sv().vision.npOrbitTextGap != null ? sv().vision.npOrbitTextGap : 0),
     v => sv().vision.npOrbitTextGap = v, v => v.toFixed(2) + '秒',
-    'ドットが止まってから、役割名とPlatform文字がブラーで出るまでの間。ポイント1・2の出そろいも同じぶん後ろへずれます。'));
+    'ドットが止まってから、役割名とPlatform文字がブラーで出るまでの間。'));
+  rows.push(slider('ポイントを早出し（回転終わりに被せる）', 0, 2, 0.05, () => (sv().vision.npPtLead != null ? sv().vision.npPtLead : 0.6),
+    v => sv().vision.npPtLead = v, v => v.toFixed(2) + '秒前',
+    'ポイント1・2を、ドットの回転が終わる何秒前から出し始めるか。大きいほど早く（左グラフィックのアニメ終盤に被せて）出ます。0=回転が止まってから。'));
   rows.push(slider('横の位置', -600, 600, 5, () => sv().vision.noPinX || 0, v => sv().vision.noPinX = v, v => v + 'px',
     '右へ動かすほど右へ。0 でカンプ位置。（✏️編集モードで直接ドラッグでも動かせます）', { signed: true }));
   rows.push(slider('縦の位置', -400, 400, 5, () => (sv().vision.noPinY != null ? sv().vision.noPinY : 90), v => sv().vision.noPinY = v, v => v + 'px',
