@@ -1401,11 +1401,11 @@
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     /* 【2026-09-09 カンプ node16534:22139 準拠】グラフィックは幅~414・上端~81・中央(左に少しはみ出し)。
        gx/gy(17,-52)ぶんを見込んで top/margin を調整(top=133-52=81 / left=195-218+17≈-6)。 */
-    .orbit { right: auto; left: 50%; top: 141px; transform-origin: 0 0; margin-left: -259px; }   /* 中央: margin-left=−(915.483×0.565)/2 は JS(applySway)が同期。top は gy(−52)込みでメッシュ中心 y245(カンプ) */
+    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -243px; }   /* 中央: margin-left=−(915.483×0.53)/2 は JS(applySway)が同期。top は gy(−52)込みでメッシュ上端≒81 */
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
-    .headline { left: 24px; right: 24px; top: 409px; white-space: normal; gap: var(--space-16);
+    .headline { left: 24px; right: 24px; top: 432px; white-space: normal; gap: var(--space-16);   /* カンプ 409 + ヒデさん指定でグラフィックとの間隔を拡大(2026-09-09) */
                 align-items: center; text-align: center; }
     .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
@@ -1420,8 +1420,8 @@
     @keyframes mbFadeIn { from { opacity: 0; } to { opacity: 1; } }
     /* 帯の流れは JS 駆動(mbMarqueeTick)。CSS アニメは iOS で overflow:hidden+transform 配下のレイヤーが落ちて消えた */
     .marquee-track { animation: none; will-change: auto; }
-    .mq-set { gap: 27px; padding-right: 27px; height: 42px; }
-    .mq-set img { height: 16px; }
+    .mq-set { gap: 30px; padding-right: 30px; height: 48px; }
+    .mq-set img { height: 20px; }   /* 16→20 に拡大(ヒデさん指定「少し小さすぎる」) */
 
     /* --- ビジョン (カンプ node16534:22141 準拠: Our Vision 16px / メッセージ 26px 行間1.7) --- */
     /* 【2026-09-09 カンプSP 忠実トレース】ページ上の目標Y: Our Vision 741 / 見出し 773 / 軌道 861〜1186 /
@@ -7858,9 +7858,9 @@ function applySway() {
   /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある)。
      【2026-09-09 カンプ node16534:22139 準拠】メッシュが枠(y81→409/328px)をほぼ埋め、惑星が
      その中心(≒y248)に来るよう拡大。0.44ではメッシュが小さくコピーとの間に空白が出ていた。 */
-  /* 【2026-09-09 画素実測で再調整】0.52 ではメッシュ直径 295(カンプ≒320)で中心が y225(カンプ 245)。
-     0.565 で直径≒320・惑星≒140(カンプ 138)。中央合わせは margin-left = −(915.483×scale)/2 を JS で同期。 */
-  const KV_MB_SCALE = 0.565;
+  /* 【2026-09-09 ヒデさん指定「メッシュ＋惑星をほんの少し小さく」】0.565→0.53。
+     中央合わせは margin-left = −(915.483×scale)/2 を JS で同期。コピーとの間隔は .headline top で別途拡大。 */
+  const KV_MB_SCALE = 0.53;
   const ob = isMobile ? ` scale(${KV_MB_SCALE})` : '';
   if (isMobile) swayEls.orbit.style.marginLeft = (-(915.483 * KV_MB_SCALE) / 2).toFixed(1) + 'px';
   /* 【2026-09-09 ヒデさん指定】静的モバイル: ゆらぎ(sway)も止める＝KVグラフィックが揺れて動くのを解消。 */
@@ -8048,7 +8048,16 @@ function playT(key, total, canStart, sec, pNow) {
      画面を6割占めたら時間で再生する。寄せ(snap)もロックもしない */
   if (params.pin === 'off') {
     const st = secPlay[key] || (secPlay[key] = { t0: null, done: false, skip: 0, snapT: 0, snapTried: false });
-    /* 【2026-08-18 ヒデさん指定】画面より下へ戻ったら巻き戻す。
+    /* 【2026-09-09 ヒデさん指定】スマホは「出現は1回だけ・以後は最終状態で固定」。スクロールで上下しても
+       巻き戻さない(=ヒデさん指摘『巻き戻ってしまった感じ』の解消)。入場は画面を6割占めた時に1回再生。 */
+    if (isMobile) {
+      if (st.done) return total;
+      if (st.t0 === null) { if (clamp01(preP(sec)) < 0.6) return -1; st.t0 = elapsed; }
+      const t = elapsed - st.t0 + st.skip;
+      if (t >= total) { st.done = true; return total; }
+      return t;
+    }
+    /* 【2026-08-18 ヒデさん指定】(PC)画面より下へ戻ったら巻き戻す。
        こうしないと「一度通り過ぎたら、戻ってきても終わった状態のまま」になる */
     if (rectOf(sec).top > (window.innerHeight || 1)) { st.t0 = null; st.done = false; st.skip = 0; }
     if (st.t0 === null) {
@@ -10536,7 +10545,10 @@ function updateKV() {
   /* 【2026-09-09 ヒデさん指定】スマホも KV の入場(タイピング→グラフィックのブラー出現)は PC と同じ。
      2026-09-08 の「最初から最終状態で固定」は撤回。スクロールで動く要因(揺れ/再レイアウト)は
      applySway の sway 無効化と fit() のガードで別途止めている。ロゴ帯だけは JS で触らず CSS で出す(下の rv 参照)。 */
-  rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
+  /* 【2026-09-09 ヒデさん指摘「ボタン/サブコピーに影」】ヘッダー(お問い合わせボタン)とサブコピーの
+     entrance blur は iOS で合成レイヤーの残像(=影)になる。スマホは blur=0(フェード+スライドのみ)にする。
+     グラフィックの登場ブラーは“望まれた演出”なので残す。 */
+  rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), isMobile ? 0 : 8, 10);
 
   /* 1文字ずつ打ち込む */
   const tt = t - c.typeAt;
@@ -10569,7 +10581,7 @@ function updateKV() {
   /* ブラーで出てくる所の速さはここでまとめて決める (2026-08-15: 速すぎるとの指摘でゆったりへ) */
   const RD = c.revealDur;
   const eyeAt = c.typeAt + typeEnd + c.eyebrowGap;
-  rv(kvEls.eyebrow, easeOutQ(clamp01((t - eyeAt) / RD)), 8, 8);
+  rv(kvEls.eyebrow, easeOutQ(clamp01((t - eyeAt) / RD)), isMobile ? 0 : 8, 8);   /* サブコピーの影対策(上記) */
   const gAt = eyeAt + c.graphicGap;
   const _orbReveal = easeOutQ(clamp01((t - gAt) / (RD * 1.5)));
   if (kvRevealElapsed == null && _orbReveal > 0.5) kvRevealElapsed = elapsed;
@@ -10858,7 +10870,7 @@ function applyCaseHover() {
 /* 【2026-09-09 ヒデさん指摘「ティッカーが急に消える・遅い」】スマホのロゴ帯は JS 駆動(毎フレーム translate3d)。
    CSS アニメだと iOS Safari で overflow:hidden+transform 配下の合成レイヤーが落ちて「消えたり出たり」したため。
    速度もここで決める(1セット幅で折り返すので継ぎ目なし)。 */
-const MB_MARQUEE_PXPS = 100;   /* ⚠️仮置き: px/秒。PC は 1826px/30s ≒ 61px/s。「遅すぎる」指摘で約1.6倍 */
+const MB_MARQUEE_PXPS = 70;   /* px/秒。100→70 に減速(ヒデさん指定「少し落とす」)。PC は 1826px/30s ≒ 61px/s */
 let mbMarqueeSetW = 0;
 function mbMarqueeTick() {
   if (!isMobile || typeof marqueeTrack === 'undefined' || !marqueeTrack) return;
