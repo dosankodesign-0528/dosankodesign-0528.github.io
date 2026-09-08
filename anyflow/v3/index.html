@@ -275,20 +275,21 @@
     /* 色：ブランド */
     --brand-cyan:#0EBBFF; --brand-pink:#FF5D97; --brand-blue-deep:#0E4497;
     /* 色：インク（文字・マーク） */
-    --ink:#101828; --ink-strong:#000; --ink-label:#333333; --ink-on-dark:#fff;
+    --ink:#101828; --ink-strong:#000; --ink-on-dark:#fff;   /* 2026-09-09統合: --ink-label は本番(high)で #101828=--ink に収束していたため --ink に一本化 */
     /* 色：サーフェス（背景） */
     --surface:#E7E7E7; --surface-dark-top:#161616; --surface-dark-bottom:#454545;
-    --surface-footer-bottom:#363636; --surface-cta:#090909; --surface-terminal:#080A0E;   /* フッター下端: 新カンプ 16083:23592 で #434343→#363636 (2026-09-09) */
-    --surface-mock-1:#2B2B2B; --surface-mock-2:#232323; --surface-mock-3:#1B1B1B;
+    --surface-footer-bottom:#363636; --surface-cta:#090909;   /* フッター下端: 新カンプ 16083:23592 で #434343→#363636。2026-09-09統合: --surface-terminal(#080A0E) は high で #090909=--surface-cta に収束のため一本化 */
+    /* 2026-09-09統合: --surface-mock-1/2/3 は high で全て #161616=--surface-dark-top に収束していたため
+       --surface-dark-top に一本化(モック地の3段グレーは high で既にフラット)。 */
     /* 色：線 */
     --line:#D1D5DC; --line-grid:#ACACAC;
     /* 色：コード構文（開発モック） */
-    --code-green:#7CE7A6; --code-string:#9BE8A4;
+    --code-green:#7CE7A6;   /* 2026-09-09統合: --code-string(#9BE8A4) は mid/high で #7CE7A6=--code-green に収束のため一本化 */
     /* 色：ガラス（暗い面の上の白） */
     --glass-10:rgba(255,255,255,.10); --glass-06:rgba(255,255,255,.06);
     /* 角丸 */
     --radius-xs:4px; --radius-sm:8px; --radius-md:14px; --radius-lg:24px;
-    --radius-pill:999px; --radius-full:50%;
+    --radius-full:50%;   /* 2026-09-09: --radius-pill(999px) は未使用のため削除 */
     /* 影 */
     --shadow-mock-panel:0 24px 48px rgba(0,0,0,.2), inset 1px 1px 2px rgba(255,255,255,.2);
     /* ぼかし */
@@ -307,7 +308,7 @@
     --fs-title:22px;     /* セクション見出し（実績/for SaaS/AI） */
     --fs-display:26px;   /* ビジョンのメッセージ */
     --fs-hero:46px;      /* KVメインコピー（モバイル） */
-    --fs-stat:50px;      /* 実績の数値 */
+    /* --fs-stat(50px) は 2026-09-09 削除: 実績の数値はカンプ更新で 34px 直書きになり未使用に */
     /* 【2026-09-09 追加】カンプSP の総点検で出た3サイズ(10/18/24)を役割名で登録し、リテラル直書きを解消 */
     --fs-micro:10px;     /* 事例タグ(枠付き小ラベル) */
     --fs-subhead:18px;   /* 事例の社名 */
@@ -317,19 +318,12 @@
     --e-soft:cubic-bezier(.22,.8,.28,1);
   }
   /* ── Mid（バランス）：見分けのつかない重複だけ統合。見た目はほぼ不変 ── */
-  html[data-ds="mid"]{
-    /* 2026-09-09: --surface-footer-bottom の統合(#454545)は撤回。新フッター(16083:23592)は #363636 で差が見えるため base 値を通す */
-    --code-string:#7CE7A6;             /* コード緑2色を1つに */
-  }
+  /* 2026-09-09: mid の統合(surface-footer-bottom / code-string)は base 側で恒久統合済み or 撤回。mid固有の上書きは無し */
   /* ── High（積極整備）：色数・トークンを最小化。小さな見た目差が出る ── */
   html[data-ds="high"]{
-    /* サーフェスを4色へ集約：地色#E7E7E7 / 黒#090909 / 暗#161616 / 中暗#454545 */
-    /* 2026-09-09: --surface-footer-bottom の統合(#454545)は撤回。新フッター(16083:23592)は #363636(base) */
-    --surface-terminal:#090909;                         /* 端末背景(#080A0E)→CTA黒に統合 */
-    --surface-mock-1:#161616; --surface-mock-2:#161616; --surface-mock-3:#161616; /* モック地(#232323)→暗セクション色に統合 */
-    /* 2026-09-09: --line-grid の統合(#D1D5DC)は撤回。カンプの罫線(PC 15800:* / SP 16534:22648)は #ACACAC。忠実優先で base 値を通す */
-    --code-string:#7CE7A6;                              /* コード緑を1つに */
-    --ink-label:#101828;                                /* ラベルのグレーを本文インクへ寄せる */
+    /* 2026-09-09整備: 色トークンの統合は base 側に取り込み(ink-label→ink / surface-terminal→cta /
+       surface-mock-1/2/3→dark-top / code-string→green)＝low/mid/high で同一に。撤回済み(footer #363636 /
+       line-grid #ACACAC)はカンプ忠実のため base のまま。high 固有で残すのは角丸の段数削減のみ。 */
     --radius-md:8px; --radius-lg:16px;                  /* 角丸の段数を削減(14→8 / 24→16) */
   }
   /* High：グリッド外の余白(27/34/59px)を8pxグリッドへスナップ */
@@ -657,9 +651,9 @@
   }
   #results.pat-c .res-stats .st:nth-child(2) { display: none; }   /* 最短リリース(1week)は隠す＝数値3つ */
   /* 2026-08-25 精査(カンプ 15779:30326): ラベルは Noto Light 16px・黒(グレー#8a8f98→黒)・行間24。 */
-  /* 2026-08-25: ラベルは色を変えず var(--ink-label) 固定(ヒデさん指定)。 */
+  /* 2026-08-25: ラベルは色を変えず本文インク(var(--ink))固定(ヒデさん指定)。2026-09-09に --ink-label→--ink 統合 */
   #results.pat-c .rn b,
-  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ink-label) !important; text-align: center; }
+  #results.pat-c .st b { font-size: 16px; font-weight: 300; line-height: 24px; color: var(--ink) !important; text-align: center; }   /* 2026-09-09: --ink-label→--ink 統合 */
   /* 数値は SF Pro Text Ultralight(100)・80px（カンプ一致）。 */
   #results.pat-c .rn span,
   #results.pat-c .st span { display: block; width: auto; font-weight: 100; font-size: 80px; line-height: 1; text-align: center; }
@@ -921,7 +915,7 @@
        濃い下地を敷いた上に、カンプの白10%を重ねる（見た目はほぼ同じで、後ろは透けない） */
     background:
       linear-gradient(var(--glass-10), var(--glass-10)),
-      linear-gradient(160deg, var(--surface-mock-1) 0%, var(--surface-mock-2) 55%, var(--surface-mock-3) 100%);
+      linear-gradient(160deg, var(--surface-dark-top) 0%, var(--surface-dark-top) 55%, var(--surface-dark-top) 100%);   /* 2026-09-09: mock-1/2/3→dark-top 統合(high で既にフラット#161616) */
     backdrop-filter: blur(var(--blur-panel));
     -webkit-backdrop-filter: blur(var(--blur-panel));
     box-shadow: var(--shadow-mock-panel);
@@ -977,7 +971,7 @@
   }
   .dm-line .kw { color: var(--brand-pink); }
   .dm-line .id { color: var(--brand-cyan); }
-  .dm-line .st { color: var(--code-string); }
+  .dm-line .st { color: var(--code-green); }   /* 2026-09-09: --code-string→--code-green 統合 */
   .dm-line .cm { color: rgba(255,255,255,.32); }
   .dm-line .pl { color: rgba(255,255,255,.82); }
   .dm-line .ok { color: var(--code-green); }
@@ -1150,7 +1144,7 @@
   .dm-panel.is-term .dm-side,
   .dm-panel.is-term .dm-chat,
   .dm-panel.is-term .dm-sdk { display: none; }
-  .dm-panel.is-term { background: var(--surface-terminal); }
+  .dm-panel.is-term { background: var(--surface-cta); }   /* 2026-09-09: --surface-terminal→--surface-cta 統合 */
   .dm-panel.is-term .dm-code { padding: 28px 36px; }
   .dm-term-bar {
     display: none;
