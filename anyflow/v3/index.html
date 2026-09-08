@@ -9156,16 +9156,10 @@ function updateResults(p) {
     resBlackK = 0;
     if (resEls.grow) resEls.grow.style.opacity = 0;
     resEls.dark.style.opacity = 0;
-    const vh2 = innerHeight || 1;
-    const devR = SECS.dev ? rectOf(SECS.dev) : { top: vh2, bottom: 0 };
-    /* 【2026-09-08 ヒデさん指定】暗転の開始点(darkFrom)・終了点(darkTo)・カーブ(darkVar)をパネル調整可に。
-       u = dev が画面下から上へ登った割合。darkFrom までは明るいまま、darkTo で真っ黒。 */
-    const _dFrom = c.darkFrom != null ? c.darkFrom : 0;
-    const _dTo = c.darkTo != null ? c.darkTo : 0.7;
-    const _u = clamp01(((vh2 - devR.top) / vh2 - _dFrom) / Math.max(0.05, _dTo - _dFrom));
-    const _dv = c.darkVar || 1;
-    const _curve = _dv === 2 ? Math.pow(_u, 2.4) : _dv === 3 ? 1 - Math.pow(1 - _u, 2.4) : _dv === 4 ? _u : easeIO(_u);
-    const darkK = (devR.bottom > 0 && devR.top < vh2) ? _curve : 0;
+    /* 【2026-09-08 ヒデさん指定・根治】文字/図/タグの白反転は、実際の背景の暗さ(devDarkK=updateDevのbgK)に
+       そのまま追従させる。updateDev が updateResults より前に走るので devDarkK は最新。
+       これで「背景は暗いのに文字が暗いまま」のズレが構造的に起きない。暗転カーブ等はdevDarkK側(updateDev)で反映済み。 */
+    const darkK = devDarkK;
     if (darkK > 0.002) {
       resInvertOn = true;
       const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * darkK)},${Math.round(b[1] + (255 - b[1]) * darkK)},${Math.round(b[2] + (255 - b[2]) * darkK)})`;
@@ -10070,8 +10064,16 @@ function updateDev(pRaw) {
     if (r.bottom > 0 && r.top < vh) {
       /* 【2026-08-29】スムーズフェード= dev が入ってくる分だけ背景を自然にクロスフェード(黒の裏に隠さない)。
          従来(黒オブジェクト)= dev1 が中央付近に来てから出す。 */
+      /* 【2026-09-08 ヒデさん指定・根治】背景の暗幕もパネルの darkFrom/darkTo/darkVar に従わせる。
+         これで“背景の暗さ”と“文字の白反転(darkKはこのdevDarkKに追従)”が必ず同期する
+         (以前は背景=旧式・文字=新カーブでズレ、暗い背景に暗い文字が残っていた)。 */
+      const _rc = params.sections.results || {};
+      const _df = _rc.darkFrom != null ? _rc.darkFrom : 0;
+      const _dt = _rc.darkTo != null ? _rc.darkTo : 0.7;
+      const _dvv = _rc.darkVar || 1;
+      const _uu = clamp01(((vh - r.top) / vh - _df) / Math.max(0.05, _dt - _df));
       const enter = resSmooth()
-        ? easeIO(clamp01((vh - r.top) / (vh * 0.7)))
+        ? (_dvv === 2 ? Math.pow(_uu, 2.4) : _dvv === 3 ? 1 - Math.pow(1 - _uu, 2.4) : _dvv === 4 ? _uu : easeIO(_uu))
         : clamp01((vh * 0.15 - r.top) / (vh * 0.25));
       /* 【2026-08-29 ヒデさん指定】dev→導入事例の境界を「実績→dev」と同じく境界を感じないフェードに。
          導入事例(下端=cases上端)がせり上がってくる分だけ、暗幕をゆっくり(easeIO)引いていく。 */
