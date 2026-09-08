@@ -2545,6 +2545,9 @@ const ORBIT_LAYOUTS = {
 let kvStartAtLoad = null, kvRevealElapsed = null;
 function kvGT() {
   if (kvStartAtLoad == null) kvStartAtLoad = (params.conv && params.conv.startPhase) || 0;
+  /* 【2026-09-08】静的モバイル: グラフィックの時間アニメ(メッシュ/軌道/回転)を固定時刻で静止させる＝
+     スクロールで動いて見えるのを止める。 */
+  if (isMobile) return kvStartAtLoad + 2.5;
   /* 登場(KVが見え始める)までは開始位相のまま止める → 登場した瞬間が開始地点になる */
   if (kvRevealElapsed == null) return kvStartAtLoad;
   return kvStartAtLoad + (elapsed - kvRevealElapsed);
@@ -10712,7 +10715,7 @@ function sphereFallback() {
 /* 球体の回転角 (主回転, 2軸目) */
 function sphereAngles() {
   const sp = params.sphere;
-  let t = elapsed;
+  let t = isMobile ? 2.5 : elapsed;   /* 【2026-09-08】静的モバイル: 惑星の回転も固定時刻で静止 */
   /* ランダム: 周期の違う3つの波を重ねて、繰り返しに聞こえない不規則さを作る
      (乱数を毎フレーム引くとガタガタになるので、なめらかな擬似ランダムにしている) */
   if (sp.random > 0) {
@@ -11867,6 +11870,25 @@ function fit() {
   /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝1画面(100vh)で普通に流す。 */
   SECS.results.style.height = resSmooth() ? '100vh' : H('results');
   SECS.results.classList.toggle('res-smooth', resSmooth());
+  /* 【2026-09-09 ヒデさん指定・見切れ根治】静的モバイル: pin-vp(100vh)より中身が高いセクションは
+     下が見切れる。最下要素の位置から実コンテンツ高さを測り、section と pin-vp に明示的に設定して
+     クリップを解除する(絶対配置でも最下要素のrectで測れる)。 */
+  if (isMobile) requestAnimationFrame(() => {
+    const fixH = (id, lastSel, pad) => {
+      const sec = SECS[id]; if (!sec) return;
+      const vp = sec.querySelector('.pin-vp'); if (!vp) return;
+      const lasts = sec.querySelectorAll(lastSel);
+      if (!lasts.length) return;
+      const secTop = sec.getBoundingClientRect().top;
+      let maxB = 0;
+      lasts.forEach(el => { const b = el.getBoundingClientRect().bottom; if (b > maxB) maxB = b; });
+      const hh = Math.ceil(maxB - secTop + (pad || 40));
+      if (hh > 100) { vp.style.position = 'relative'; vp.style.overflow = 'visible'; vp.style.height = hh + 'px'; sec.style.height = hh + 'px'; }
+    };
+    fixH('vision', '#valP1, #valP2', 48);
+    fixH('results', '#resVals, .r2v:last-child', 56);
+    fixH('cases', '.cg-cell', 64);
+  });
 }
 fitReady = true;
 window.addEventListener('resize', fit);
