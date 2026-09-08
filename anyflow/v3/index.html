@@ -1404,18 +1404,18 @@
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     .orbit { right: auto; left: 50%; top: 96px; transform-origin: 0 0; margin-left: -198px; }
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
-    .headline { left: 24px; right: 24px; top: 410px; white-space: normal; }
-    .hl-main { font-size: 44px; line-height: 1.3; }
+    /* 【2026-09-08 カンプ node16534:22195 準拠】KVメイン46px Thin/行間1.4、サブ12px Light/字間0.6px */
+    .headline { left: 24px; right: 24px; top: 410px; white-space: normal; gap: var(--space-16); }
+    .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); }   /* 46px / 1.4 */
     .hl-caret { height: 36px; vertical-align: -6px; }
-    .hl-eyebrow { font-size: 13px; gap: calc(var(--kv-dash-gap, 10px) * 0.8); flex-wrap: wrap; margin-top: 4px; }
-    .hl-eyebrow i { width: calc(var(--kv-eyebrow-dash-w, 26px) * 0.7); flex: 0 0 auto; }   /* スマホはPC設定の7割 */
+    .hl-eyebrow { font-size: var(--fs-caption); letter-spacing: 0.6px; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-4); }
+    .hl-eyebrow i { width: 10px; flex: 0 0 auto; }   /* カンプの罫線10px */
     .logos { top: 640px; }
     .mq-set img { height: 24px; }
 
-    /* --- ビジョン --- */
-    .vis-label { left: 24px; top: 74px; font-size: 16px; }
-    /* 【2026-09-02】モバイルは1行に収まらないので折り返し可(幅制限)＋フォント縮小。マスク出現は縦のみ。 */
-    .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: 28px; line-height: 42px; }
+    /* --- ビジョン (カンプ node16534:22141 準拠: Our Vision 16px / メッセージ 26px 行間1.7) --- */
+    .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); }
+    .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: var(--fs-display); line-height: var(--lh-loose); }
     .vis-l1 { top: 108px; }
     .vis-l2 { top: 170px; }
     /* 軌道図は JS の kFill が 0.43 前後になる。中心は pf-wrap の top+333.5 */
@@ -1432,10 +1432,12 @@
     .val-point { width: calc(100% - 48px); max-width: 342px; }
     .val-p1 { left: 24px; top: 462px; }
     .val-p2 { left: 24px; top: 600px; }
-    .val-point .vp-tag { font-size: 14px; line-height: 16px; }
-    .val-point .vp-tag i { width: 6px; height: 6px; }
-    .val-point h3 { font-size: 20px; margin-top: var(--space-8); }
-    .val-point p { font-size: 14px; line-height: 22px; margin-top: var(--space-12); }
+    /* 【カンプ node16534:22144】Point見出し20px / 本文12px / タグ12px, gap 8/4 */
+    .val-point { display: flex; flex-direction: column; gap: var(--space-8); }
+    .val-point .vp-tag { font-size: var(--fs-caption); line-height: 1; }
+    .val-point .vp-tag i { width: 7px; height: 7px; }
+    .val-point h3 { font-size: var(--fs-lead); margin-top: var(--space-4); }
+    .val-point p { font-size: var(--fs-caption); line-height: var(--lh-loose); margin-top: 0; }
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1458,15 +1460,16 @@
     .res-stats .st b { font-size: 14px; line-height: 18px; }
     .res-stats .st span { font-size: 28px; }
     /* --- 実績 res2(現行レイアウト)・2026-09-02 モバイル最適化 --- */
-    .res2 { max-width: calc(100% - 48px); gap: var(--space-20); }
-    .res2-head { font-size: 18px; line-height: 1.9; white-space: normal; text-align: center;
+    /* 【カンプ node16534:22512】見出し22px 行間1.7 / ラベル14px / 数値50px, グループgap32 */
+    .res2 { max-width: calc(100% - 48px); gap: var(--space-32); }
+    .res2-head { font-size: var(--fs-title); line-height: var(--lh-loose); white-space: normal; text-align: center;
                  display: flex; flex-wrap: wrap; justify-content: center; }
-    .res2-hl2 { min-height: calc(18px * 1.9); }
-    .res2-caret { height: 18px; }
-    .res2-stats { gap: var(--space-20); justify-content: center; }
-    .res2-stats .r2s { align-items: center; }
-    .res2-stats .r2s b { font-size: 12px; line-height: 16px; }
-    .res2-stats .r2s span { font-size: 30px; }
+    .res2-hl2 { min-height: calc(var(--fs-title) * 1.7); }
+    .res2-caret { height: 22px; }
+    .res2-stats { gap: var(--space-24); justify-content: center; flex-wrap: wrap; }
+    .res2-stats .r2s { align-items: flex-start; gap: var(--space-4); }
+    .res2-stats .r2s b { font-size: var(--fs-body); line-height: 24px; }
+    .res2-stats .r2s span { font-size: var(--fs-stat); }
     /* 【2026-09-08 カンプ node16534:22526 準拠】カードは縦積み(文字→中央にピクト220)。
        for SaaS と for AI の間は区切り線。文字は左寄せ、ピクトは中央。 */
     .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-40); }
