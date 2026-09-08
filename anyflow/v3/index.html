@@ -1467,16 +1467,19 @@
     .res2-stats .r2s { align-items: center; }
     .res2-stats .r2s b { font-size: 12px; line-height: 16px; }
     .res2-stats .r2s span { font-size: 30px; }
-    .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-16); }
-    /* カードは「文字が左・ピクトが右」の横並びでコンパクトに(pinの1画面に収める) */
-    .res2-vals .r2v { flex-direction: row; align-items: center; gap: var(--space-12); }
-    .res2-vals .r2v-text { width: auto; flex: 1; gap: var(--space-8); }
+    /* 【2026-09-08 カンプ node16534:22526 準拠】カードは縦積み(文字→中央にピクト220)。
+       for SaaS と for AI の間は区切り線。文字は左寄せ、ピクトは中央。 */
+    .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-40); }
+    .res2-vals .r2v { flex-direction: column; align-items: stretch; gap: var(--space-16); }
+    .res2-vals .r2v-text { width: 100%; gap: var(--space-16); }
     .r2v-tagh { gap: var(--space-4); }
-    .r2v-tag { font-size: 14px; }
-    .r2v-h { font-size: 19px; line-height: 1.4; }
-    .r2v-p { font-size: 12px; line-height: 1.6; }
-    .r2v-graphic { width: 96px; height: 96px; }
-    .res2-vline { display: none; }
+    .r2v-tag { font-size: var(--fs-base); }               /* 16px */
+    .r2v-h { font-size: var(--fs-title); line-height: var(--lh-normal); }   /* 22px / 1.6 */
+    .r2v-p { font-size: var(--fs-caption); line-height: var(--lh-body); }    /* 12px / 1.8 */
+    .r2v-graphic { width: 200px; height: 200px; align-self: center; }
+    /* SaaS↔AI の区切り線(カンプの Line 34)。縦線ではなく横の区切りに */
+    .res2-vline { display: block; width: 100%; height: 1px; background: var(--line);
+                  align-self: stretch; margin: 0; }
 
     /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
     /* 【2026-09-02】min-height:100vh(PC用)のままだと中身0.4倍で巨大な空白になる→内容の高さに合わせる */
@@ -9008,8 +9011,25 @@ let slots = [];
 let slotBuiltCycles = -1;
 /* 数字がビューポートに入った時刻。null = まだ入っていない */
 let slotT0 = null;
+/* 【2026-09-08】スロット化前の実数字(100+ / 20,000+ / 200+)を控える。静的モバイルで戻す用。
+   スクリプトは body 末尾なので DOM は既にあり、buildSlots より前に確定する。 */
+const SLOT_ORIG = {
+  main: (document.getElementById('cntMain') || {}).textContent,
+  sub1: (document.getElementById('cntSub1') || {}).textContent,
+  sub2: (document.getElementById('cntSub2') || {}).textContent,
+};
 
 function buildSlots() {
+  if (isMobile) {
+    /* 【2026-09-08】静的モバイル: スロットを使わずプレーンな数字(100+等)で固定表示。
+       すでにスロットDOMに置き換わっていたら、元の実数字へ戻す(初回に控えた値を使う)。 */
+    if (slots.length || (resEls.cntMain && resEls.cntMain.children.length)) {
+      const restore = { cntMain: SLOT_ORIG.main, cntSub1: SLOT_ORIG.sub1, cntSub2: SLOT_ORIG.sub2 };
+      for (const id in restore) { const el = document.getElementById(id); if (el && restore[id] != null) el.textContent = restore[id]; }
+      slots = []; slotBuiltCycles = -1;
+    }
+    return;
+  }
   const cy = Math.max(1, Math.round(params.sections.results.slotCycles));
   if (slotBuiltCycles === cy && slots.length) return;
   slotBuiltCycles = cy;
@@ -9101,7 +9121,10 @@ function updateResults(p) {
   SECS.results.classList.remove('pat-a', 'pat-b');
 
   buildSlots();
-  const t = playT('results', resTotal(), canPlay(p), SECS.results, p);
+  let t = playT('results', resTotal(), canPlay(p), SECS.results, p);
+  /* 【2026-09-08 ヒデさん指定】静的モバイル: 実績の登場(タイピング/スロット/カード)を最終状態で固定。
+     ただし『実績→開発者体験の暗転』は下の devDarkK 連動で残す(t とは別系統なのでそのまま効く)。 */
+  if (isMobile) t = resTotal() + 1000;
 
   /* ---- 再生前: 全部隠す(数字は0で待機) ---- */
   if (t < 0) {
@@ -9156,7 +9179,8 @@ function updateResults(p) {
   } else if (nr.top > innerHeight * 1.2) {
     slotT0 = null;
   }
-  renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
+  /* 【2026-09-08】静的モバイル: スロットは回さず最終値(実数字)で固定 */
+  renderSlots(isMobile ? 9999 : (slotT0 === null ? -1 : elapsed - slotT0));
 
   /* ===== 実績 → 開発者体験 のつなぎ(黒せり上がり + 白反転) ===== */
   const devTop = rectOf(SECS.dev).top;
@@ -10051,6 +10075,7 @@ function updateDev(pRaw) {
      45%を過ぎたら 1 で頭打ち＝出っ放し。画面の下にある間は 0＝隠す。 */
   const reveal = (el) => {
     if (!el) return 1;
+    if (isMobile) return 1;   /* 【2026-09-08】静的モバイル: ブロックは常に出しきり(スクロールで動かさない)。暗転bgKは下でそのまま維持 */
     const r = rectOf(el);
     const centerY = r.top + r.height / 2;
     /* ブロックの上端が画面上端に来た時点でほぼ出しきる(=黒背景の直後に自動で出て見える)。0.5 で top=0 のとき k≒1 */
@@ -10133,7 +10158,8 @@ const caseEls = {
 function updateCases(pRaw) {
   const c = params.sections.cases;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
-  const tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases, pRaw);
+  let tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases, pRaw);
+  if (isMobile) tc = c.playSec + 1000;   /* 【2026-09-08】静的モバイル: 導入事例も最終状態で固定 */
   const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
