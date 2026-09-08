@@ -1419,30 +1419,40 @@
     .mq-set img { height: 24px; }
 
     /* --- ビジョン (カンプ node16534:22141 準拠: Our Vision 16px / メッセージ 26px 行間1.7) --- */
-    .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); }
-    .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: var(--fs-display); line-height: var(--lh-loose); }
-    .vis-l1 { top: 108px; }
+    /* 【2026-09-09 カンプSP 忠実トレース】ページ上の目標Y: Our Vision 741 / 見出し 773 / 軌道 861〜1186 /
+       Point01 1204 / Point02 1315 / 実績 1495。ビジョン section は y667 から始まり、下の
+       html.mb .pin-stage で stage を section 上端に固定(縦中央寄せ解除)しているので、
+       値 = 目標Y − 667 でそのまま置ける(以前は中央寄せ由来の +42 が高さに応じて変動していた)。 */
+    /* 【2026-09-09 静的モバイルの土台】.pin-stage は PC 用に「section の縦中央」へ置かれる
+       (top:50% + translateY(-50%))。スマホでは section の高さを中身から決める(fixH)ため、
+       中央寄せだと高さに応じて中身の位置が動き(実測 +42)、実績のように中身が 780px 箱より
+       高いと上下にはみ出して前のセクションへ食い込んだ(実績見出しが Point02 に重なった)。
+       上端固定にして「値 = カンプY − section 上端」で置けるようにする。 */
+    html.mb .pin-stage { top: 0; transform: scale(var(--sp)); transform-origin: left top; }
+    html.mb #results .pin-stage { align-items: flex-start; }   /* 中身は上から流す(縦中央寄せ解除) */
+    #vision { margin-top: 0; }   /* PC用の 200px 余白を撤去(KV→ビジョンが空きすぎていた) */
+    .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); font-weight: 300; }   /* カンプSP: SF Pro Text Light(300)/16px → y741 */
+    .vis-line { left: 24px; right: 24px; width: auto; white-space: normal; font-size: var(--fs-display); line-height: var(--lh-loose); font-weight: 300; }   /* カンプSP: Noto Sans JP Light(300)/26px/1.7 */
+    .vis-l1 { top: 106px; }   /* → y773 */
     .vis-l2 { top: 170px; }
-    /* 軌道図は JS の kFill が 0.43 前後になる。中心は pf-wrap の top+333.5 */
-    .pf-wrap { top: -128px; }
-    /* 図が縮むぶん、図の中の文字は大きめに置いて実効サイズを稼ぐ */
-    .pf-name { font-size: 26px; line-height: 46px; }
-    .pf-sub { font-size: 34px; line-height: 60px; top: 400px; }
-    .pf-title { font-size: 100px; top: 268px; }
+    /* 軌道図(Platform図): JS が sc=0.488 で楕円・文字・ドットを一様に縮めるので、CSS では
+       文字サイズを触らない(デスクトップ値 50/16/14px のまま → 24.4/7.8/6.83px になる)。
+       位置は JS の tx/ty(スマホ固定値)で決めるので top は 0 に置く。 */
+    .pf-wrap { top: 0; }
     /* 右カラムはPCでは右アンカーだが、スマホは画面いっぱいの1カラムにする */
     .val-group { left: 0; right: auto; width: 100%; }
     .val-head { left: 24px; right: 24px; top: 372px; width: auto; }
     .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
     .val-point { width: calc(100% - 48px); max-width: 342px; }
-    .val-p1 { left: 24px; top: 462px; }
-    .val-p2 { left: 24px; top: 600px; }
+    .val-p1 { left: 24px; top: 511px; }   /* カンプSP: Point01 y1204 (=1204−667−26: .val-group 経由の実測オフセット) */
+    .val-p2 { left: 24px; top: 617px; }   /* カンプSP: Point02 y1315 (=1315−667−31) */
     /* 【カンプ node16534:22144】Point見出し20px / 本文12px / タグ12px, gap 8/4 */
     .val-point { display: flex; flex-direction: column; gap: var(--space-8); }
     .val-point .vp-tag { font-size: var(--fs-caption); line-height: 1; }
     .val-point .vp-tag i { width: 7px; height: 7px; }
     .val-point h3 { font-size: var(--fs-lead); margin-top: var(--space-4); }
-    .val-point p { font-size: var(--fs-caption); line-height: var(--lh-loose); margin-top: 0; }
+    .val-point p { font-size: var(--fs-caption); line-height: normal; margin-top: 0; }   /* カンプSP node16534:22151: Light 12px / leading normal */
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1471,27 +1481,34 @@
                  display: flex; flex-wrap: wrap; justify-content: center; }
     .res2-hl2 { min-height: calc(var(--fs-title) * 1.7); }
     .res2-caret { height: 22px; }
-    .res2-stats { gap: var(--space-24); justify-content: center; flex-wrap: wrap; }
+    /* カンプSP node16534:22514: 左寄せ gap24 で 1段目「100+ / 20,000+」・2段目「200+」の 2段組。
+       flex-wrap だと数値(SF Pro Ultralight 50px)がブラウザの光学サイズ差で数px広くなった時に
+       「縮小より先に折り返す」仕様で 3段に崩れる(実測 343 > 342)。grid 2列なら段組が固定され、
+       超過分は右余白(24px)側へ数px はみ出すだけで見た目に出ない。 */
+    .res2-stats { display: grid; grid-template-columns: auto auto; justify-content: start; gap: var(--space-24); }
     .res2-stats .r2s { align-items: flex-start; gap: var(--space-4); }
     .res2-stats .r2s b { font-size: var(--fs-body); line-height: 24px; }
     .res2-stats .r2s span { font-size: var(--fs-stat); }
     /* 【2026-09-08 カンプ node16534:22526 準拠】カードは縦積み(文字→中央にピクト220)。
        for SaaS と for AI の間は区切り線。文字は左寄せ、ピクトは中央。 */
     .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-40); }
-    .res2-vals .r2v { flex-direction: column; align-items: stretch; gap: var(--space-16); }
+    .res2-vals .r2v { flex-direction: column; align-items: stretch; gap: 0; }   /* カンプSP node16534:22527: 文章ブロック直下にピクト(gap 0) */
     .res2-vals .r2v-text { width: 100%; gap: var(--space-16); }
     .r2v-tagh { gap: var(--space-4); }
     .r2v-tag { font-size: var(--fs-base); }               /* 16px */
-    .r2v-h { font-size: var(--fs-title); line-height: var(--lh-normal); }   /* 22px / 1.6 */
+    .r2v-h { font-size: var(--fs-title); line-height: var(--lh-normal); white-space: nowrap; }   /* 22px / 1.6 / カンプは1行(nowrap) */
     .r2v-p { font-size: var(--fs-caption); line-height: var(--lh-body); }    /* 12px / 1.8 */
-    .r2v-graphic { width: 200px; height: 200px; align-self: center; }
+    .r2v-p br, .r2v-h br { display: none; }   /* カンプSP は見出し・本文とも手動改行なし(見出し1行/本文は幅342で自然に3行) */
+    .r2v-graphic { width: 220px; height: 220px; align-self: center; }   /* カンプSP: ピクト 220×220 */
     /* SaaS↔AI の区切り線(カンプの Line 34)。縦線ではなく横の区切りに */
     .res2-vline { display: block; width: 100%; height: 1px; background: var(--line);
                   align-self: stretch; margin: 0; }
 
     /* --- 開発者体験 (モバイル: 2ブロック縦積み。パネルは縮小・dev2は縦積み・要モバイルカンプ) --- */
     /* 【2026-09-02】min-height:100vh(PC用)のままだと中身0.4倍で巨大な空白になる→内容の高さに合わせる */
-    .dev-block { padding: 72px 18px; gap: 28px; min-height: 0; }
+    /* 【2026-09-09 ヒデさん指定「開発者体験1と2のギャップが広い」】上下 72px → 40px に詰める。
+       ⚠️仮置き: カンプSP(node16534:22257)は 440px の暗い帯だけで中身(Strength01/02)の指定が無い。 */
+    .dev-block { padding: 40px 18px; gap: 28px; min-height: 0; }
     .dev-center .dc-label { font-size: 14px; margin-bottom: var(--space-8); }
     .dev-center .dc-one { font-size: 22px; line-height: 1.5; }
     /* CLI/SDKの箱もモバイル文字サイズに合わせて縮める(1行に収める) */
@@ -7805,8 +7822,9 @@ function applySway() {
   /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
   const kv = params.kv;
   /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある)。
-     【2026-09-09 カンプ node16534:22139 準拠】幅414pxに合わせて 0.40→0.44 へ拡大。 */
-  const ob = isMobile ? ' scale(0.44)' : '';
+     【2026-09-09 カンプ node16534:22139 準拠】メッシュが枠(y81→409/328px)をほぼ埋め、惑星が
+     その中心(≒y248)に来るよう拡大。0.44ではメッシュが小さくコピーとの間に空白が出ていた。 */
+  const ob = isMobile ? ' scale(0.52)' : '';
   /* 【2026-09-09 ヒデさん指定】静的モバイル: ゆらぎ(sway)も止める＝KVグラフィックが揺れて動くのを解消。 */
   const swayOrbit = isMobile ? '' : orbit;
   swayEls.orbit.style.transformStyle = '';
@@ -7817,7 +7835,10 @@ function applySway() {
   const plFlat = pl.flat == null ? 1 : pl.flat;
   const plT = (pl.dx || pl.dy || pl.scale !== 1 || plFlat !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale}, ${pl.scale * plFlat})` : '';
-  swayEls.sphere.style.transform = ((isMobile ? '' : sph) + plT).trim();   /* 静的モバイル: 惑星のゆらぎも止める(2026-09-09) */
+  /* 【2026-09-09 カンプ準拠】静的モバイル: 惑星のゆらぎは止めつつ、メッシュ中心よりやや下(カンプの
+     惑星中心≒y248)へ来るよう下げる。orbit(scale0.52)配下なので screen 20px 下げ ≒ local 40px。 */
+  const mbSphere = isMobile ? 'translateY(40px) ' : '';
+  swayEls.sphere.style.transform = (mbSphere + (isMobile ? '' : sph) + plT).trim();
 }
 
 /* ================= スクロール連動セクション ================= */
@@ -8780,8 +8801,13 @@ function updateVision(p) {
       : easeOutQ(clamp01((A - (miniAt + c.dotsInAt + i * c.dotsInStagger)) / Math.max(0.01, c.dotsInDur)));
   }
   /* 画面幅に合わせて軌道も拡大する。縦にはみ出さない範囲で頭打ちにする */
-  /* スマホは基準幅を狭めて、軌道が画面幅いっぱいに見えるようにする */
-  const kFill = Math.min(stagePinW / (isMobile ? 900 : 1440), (DH - 80) / 667);
+  /* 【2026-09-09 カンプSP node16534:22627 準拠】スマホの軌道図はデスクトップ版のちょうど 0.488 倍
+     (Platform 50px→24.397px / 役割名 14→6.831 / サブ 16→7.807 / 楕円 462×155 / ドット 13.4→6.5)。
+     楕円(rx,ry)・文字(.pf-texts の scale)・ドット(scale) はすべて sc で一様に縮むので、
+     この1値だけで図全体がカンプ寸法になる。以前は幅基準(390/900=0.43)で図を縮めつつ
+     文字だけ CSS で 100px 等に膨らませていたため、カンプと全く違う見た目になっていた。 */
+  const PF_MB_SCALE = 24.397 / 50;
+  const kFill = isMobile ? PF_MB_SCALE : Math.min(stagePinW / 1440, (DH - 80) / 667);
   const R = 861.46;                                  // 軌道の右端 (pf-wrap ローカル座標)
   const scFinal = kFill;
   /* ⚠️ カンプでは軌道の原点(ローカル0)がページの左端。楕円はそこから左へ約108px
@@ -8810,6 +8836,13 @@ function updateVision(p) {
     tx = txFinal + (c.noPinX || 0);                             /* 直接編集(ドラッグ)の横ずらし */
     ty = (c.noPinY != null ? c.noPinY : 90);                    /* メッセージの下へ置く */
   }
+  /* 【2026-09-09 カンプSP node16534:22627 準拠】静的モバイルは位置も固定値。
+     カンプの図の中心はページ x136 / y1023.5 (Group1080: x-107 w486 / y861 h325)。
+     楕円中心 = mapX(363.5) = 363.5×sc + tx → x136 には tx = 136 − 363.5×0.488 ≒ −41.4。
+     縦は .pf-wrap(top:0) + 333.5 + ty がビジョン内 y356.5(=1023.5−667) になる ty=23
+     (stage は html.mb .pin-stage で section 上端固定なのでオフセット無し)。
+     パネルの noPinX/Y/Scale はPC用なのでスマホでは使わない。 */
+  if (isMobile) { sc = scFinal; tx = -41.4; ty = 23; }
   const mapX = x => x * sc + tx;
   const mapY = y => (y - 333.5) * sc + 333.5 + ty;
   visEls.pfWrap.style.opacity = mi.toFixed(3);
@@ -8823,7 +8856,9 @@ function updateVision(p) {
     el.setAttribute('ry', (e.ry * sc).toFixed(2));
     el.setAttribute('transform', `rotate(${e.rot} ${cx.toFixed(2)} ${cy.toFixed(2)})`);
     /* 小さい時は線も細く (カンプのミニ軌道の見え方に合わせる) */
-    el.setAttribute('stroke-width', (c.strokeW * (0.45 + 0.55 * mv)).toFixed(2));
+    /* 【2026-09-09】スマホは図全体が sc 倍なので線幅も同じ比で細くする(カンプSP: 3×0.488≒1.46px)。
+       楕円は SVG 座標を直接描くため transform で縮まず、線幅だけ取り残されて太く見えていた */
+    el.setAttribute('stroke-width', (c.strokeW * (0.45 + 0.55 * mv) * (isMobile ? sc : 1)).toFixed(2));
   });
   /* グラデ軸を楕円と同じ変換で追従。軸そのもの(位置・向き・長さ)はパネルの値から計算 */
   ['g0', 'g1'].forEach((gkey, gi) => {
@@ -10788,7 +10823,10 @@ function applyMarquee() {
   if (!marqueeTrack) return;   /* 2026-08-31: ロゴは支給iframeに差し替え済み(自前マーキー廃止)。要素が無ければ何もしない */
   marqueeTrack.style.animationDuration = params.marquee.duration + 's';
   marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
-  marqueeTrack.style.animationPlayState = params.running ? 'running' : 'paused';
+  /* 【2026-09-09】静的モバイルでは KV 以下の演出を止めているが、ロゴティッカーだけは常に流す。
+     params.running は調整パネル/古いlocalStorage由来で false のことがあり、それに引きずられて
+     実機で「ティッカーが止まる」事故が出たため、モバイルは running 状態に依存させず必ず走らせる。 */
+  marqueeTrack.style.animationPlayState = (isMobile || params.running) ? 'running' : 'paused';
   document.documentElement.style.setProperty('--logo-gap', params.marquee.gap + 'px');
 }
 
@@ -11831,7 +11869,11 @@ function fit() {
      変わり resize が飛ぶ。そのたびに再レイアウト(scale再計算・セクション高さ再設定)すると、静的なはずの
      コンテンツがスクロールのたびにガクッと動いて見える。モバイルで『幅は同じ・高さだけ変わった』時は
      再レイアウトせずに抜ける(幅が変わる=回転や本当のリサイズの時だけ組み直す)。 */
-  if (isMobile && fitReady && w === lastFitW && h !== lastFitH) { lastFitH = h; return; }
+  /* 【2026-09-09】静的モバイルは初回レイアウトが最終形。iOS Safari はスクロールでアドレスバーが
+     開閉して innerHeight(と時に幅サブピクセル)が変わり、それを拾って再レイアウトすると中身が
+     ガクッと動く。幅が実質変わらない(±2px)限り一切再レイアウトしない=揺れを完全に断つ。
+     本当の回転(幅が2pxより大きく変化)のときだけ通常の fit を通す。 */
+  if (isMobile && fitReady && Math.abs(w - lastFitW) <= 2) { lastFitH = h; return; }
   lastFitW = w; lastFitH = h;
   /* スマホは 390×780 の設計フレームに切り替える (PCの1440×921をそのまま縮めると
      本文が4pxくらいになって読めないため、座標系ごと差し替える) */
@@ -11841,6 +11883,10 @@ function fit() {
   DW = isMobile ? 390 : 1440;
   DH = isMobile ? 780 : 921;
   document.documentElement.classList.toggle('mb', isMobile);
+  /* 【2026-09-09】isMobile が確定したこの時点でロゴティッカーの再生を再アサート。
+     初回に applyMarquee が isMobile 未確定(=false)＋params.running=false で走ると
+     ティッカーが止まったままになるため、モバイル確定後に必ず running へ戻す。 */
+  if (isMobile && typeof marqueeTrack !== 'undefined' && marqueeTrack) marqueeTrack.style.animationPlayState = 'running';
   const s = Math.min(1, w / DW);                   // 設計幅以上では等倍(100%表示)
   const sp = Math.min(1, w / DW, h / DH);          // ピンは縦も収まるように
   stageW = Math.max(DW, w / s);
@@ -11851,7 +11897,11 @@ function fit() {
   st.setProperty('--sw', stageW + 'px');
   st.setProperty('--swp', stagePinW + 'px');
   st.setProperty('--dh', DH + 'px');
-  stage.parentElement.style.height = (DH * s) + 'px';
+  /* 【2026-09-09 カンプSP 準拠】スマホの KV は次セクション(Our Vision y741 = section 667 + label 74)の
+     直前で切る。設計フレーム DH=780 のままだと下に空白が残り、KV→ビジョンが空きすぎていた。
+     .stage-wrap は overflow:hidden なので、はみ出す分(ロゴ帯 664 より下の空白)は見えない。 */
+  const KV_MB_H = 667;
+  stage.parentElement.style.height = ((isMobile ? KV_MB_H : DH) * s) + 'px';
   /* スクロール尺 (調整パネルから変えられる) */
   /* 固定追従なしの時は 100vh（貼りつけないので余分な尺は要らない）。
      スクロール駆動の時は尺を driveLen 倍に伸ばして、進み方をゆったりにする */
@@ -11892,7 +11942,7 @@ function fit() {
       const hh = Math.ceil(maxB - secTop + (pad || 40));
       if (hh > 100) { vp.style.position = 'relative'; vp.style.overflow = 'visible'; vp.style.height = hh + 'px'; sec.style.height = hh + 'px'; }
     };
-    fixH('vision', '#valP1, #valP2', 48);
+    fixH('vision', '#valP1, #valP2', 85);   /* カンプSP: 実績 y1495 に着地させる余白(Point02 の実測高 95 は カンプ 87 より 8px 高いぶん差し引く) */
     fixH('results', '#resVals, .r2v:last-child', 56);
     fixH('cases', '.cg-cell', 64);
   });
