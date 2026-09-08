@@ -3218,6 +3218,7 @@ const DEFAULTS = {
        尺の8割ぶんスクロールすると全部出そろい、残り2割で下のセクションへ抜ける */
     results: {
       pictoW: 1,         // 【2026-09-02 ヒデさん指定】for SaaS/for AI ピクトグラムの線幅倍率(1=1px基準)
+      pictoSpeed: 1,     // 【2026-09-08 ヒデさん指定】ピクトの再生速度(SaaS/AI共通・全案に適用。1=標準)
       driveLen: 2.0,     // スクロール駆動の時、尺を何倍に伸ばすか（小さいほどスクロール量が減る。2026-08-25 3.0→2.0）
       lenVh: 200,   /* 固定される幅 = 200-100 = 100vh。この間に再生と暗転が収まる */
       numsGap: 0.55,   // 見出しが何割出たら、下の数字たちが出はじめるか
@@ -3236,6 +3237,10 @@ const DEFAULTS = {
       imgAt: 0.9,      // 画像が出はじめるまで(案A。テキストのあと)
       outFrom: 0.14,   // 案B/C: ここから遷移開始。案Cは黒レクタングルが入り始める(実績が出そろったらすぐ・2026-08-25 0.48→0.14)
       outTo: 0.95,     // ここで完全に黒。dev を実績尾部に重ねたので、黒の全面到達≒dev1中央到達に近づける(2026-08-26 0.85→0.95)
+      /* 【2026-09-08 ヒデさん指定】smoothモードの暗転(実績→開発者体験)の効き。
+         darkFrom=明るいままの範囲(devが画面をこの割合登るまで暗転しない) / darkTo=黒くなりきる位置 /
+         darkVar=暗転カーブ(1なめらか/2ためて一気に/3早めにゆっくり/4直線) */
+      darkFrom: 0.18, darkTo: 0.82, darkVar: 2,
       outBlur: 22,     // 消える時のぼかし量(案Bのみ。案Cは白反転)
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
@@ -9145,7 +9150,14 @@ function updateResults(p) {
     resEls.dark.style.opacity = 0;
     const vh2 = innerHeight || 1;
     const devR = SECS.dev ? rectOf(SECS.dev) : { top: vh2, bottom: 0 };
-    const darkK = (devR.bottom > 0 && devR.top < vh2) ? easeIO(clamp01((vh2 - devR.top) / (vh2 * 0.7))) : 0;
+    /* 【2026-09-08 ヒデさん指定】暗転の開始点(darkFrom)・終了点(darkTo)・カーブ(darkVar)をパネル調整可に。
+       u = dev が画面下から上へ登った割合。darkFrom までは明るいまま、darkTo で真っ黒。 */
+    const _dFrom = c.darkFrom != null ? c.darkFrom : 0;
+    const _dTo = c.darkTo != null ? c.darkTo : 0.7;
+    const _u = clamp01(((vh2 - devR.top) / vh2 - _dFrom) / Math.max(0.05, _dTo - _dFrom));
+    const _dv = c.darkVar || 1;
+    const _curve = _dv === 2 ? Math.pow(_u, 2.4) : _dv === 3 ? 1 - Math.pow(1 - _u, 2.4) : _dv === 4 ? _u : easeIO(_u);
+    const darkK = (devR.bottom > 0 && devR.top < vh2) ? _curve : 0;
     if (darkK > 0.002) {
       resInvertOn = true;
       const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * darkK)},${Math.round(b[1] + (255 - b[1]) * darkK)},${Math.round(b[2] + (255 - b[2]) * darkK)})`;
@@ -11630,10 +11642,14 @@ function drawValueIcons() {
   const p = params.patterns || {};
   const _rs = params.sections && params.sections.results;
   valStrokeMul = (_rs && _rs.pictoW != null) ? _rs.pictoW : 1;   /* 【2026-09-02】ピクト線幅の倍率 */
+  /* 【2026-09-08 ヒデさん指定】ピクトの速度をSaaS/AI共通で調整(全バリエーションに適用)。
+     時間を一律で伸縮＝どの案も同じテンポ感になる。 */
+  const _sp = (_rs && _rs.pictoSpeed != null) ? _rs.pictoSpeed : 1;
+  const _et = elapsed * _sp;
   const a = valEnsure('saas', 'valSaas');
-  if (a) { const f = VAL_SAAS[p.valSaas] || VAL_SAAS.S1; try { f(a, elapsed); } catch (e) {} valDone(a); }
+  if (a) { const f = VAL_SAAS[p.valSaas] || VAL_SAAS.S1; try { f(a, _et); } catch (e) {} valDone(a); }
   const b = valEnsure('ai', 'valAi');
-  if (b) { const f = VAL_AI[p.valAi] || VAL_AI.A1; try { f(b, elapsed); } catch (e) {} valDone(b); }
+  if (b) { const f = VAL_AI[p.valAi] || VAL_AI.A1; try { f(b, _et); } catch (e) {} valDone(b); }
 }
 
 function frame(ts) {
@@ -14352,6 +14368,10 @@ function buildPanel() {
     () => (sv().results.pictoW != null ? sv().results.pictoW : 1),
     v => { sv().results.pictoW = v; drawValueIcons(); }, v => (1 * v).toFixed(1) + 'px',
     'for SaaS / for AI の図(リング・カード等)の線の太さ。基準は1.0px。'));
+  /* 【2026-09-08 ヒデさん指定】ピクトの再生速度(SaaS/AI共通・全案に一律適用) */
+  segRow('ピクトの速さ', [['ゆっくり', 0.7], ['標準', 1], ['速め', 1.4], ['かなり速い', 1.9]],
+    () => (sv().results.pictoSpeed != null ? sv().results.pictoSpeed : 1),
+    v => { sv().results.pictoSpeed = v; markDirty(); drawValueIcons(); });
   rows.push(slider('→ その他の要素が出る', -0.5, 3, 0.05, () => (sv().results.restGap != null ? sv().results.restGap : 0.1), v => sv().results.restGap = v, v => v.toFixed(2) + '秒',
     'タイピング開始から、区切り線・3数値・2つの価値が出るまでの間。マイナスでタイピングより前に。', { signed: true }));
   rows.push(slider('見出しの1文字の時間', 0.02, 0.2, 0.005, () => sv().results.charDur, v => sv().results.charDur = v, v => v.toFixed(3) + 's/字',
@@ -14456,8 +14476,19 @@ function buildPanel() {
   }
   liveEdit = false;
 
-  sub(catRes, '次のセクションへのつなぎ');
-  note('案Bのみ。中身が消えるのと同時に、背景が暗い画面へ変わります。');
+  sub(catRes, '次のセクションへのつなぎ（明→黒）');
+  note('実績→開発者体験。下の「暗転のしかた」で、どこまで明るく・どこから黒に切り替えるかを決めます。');
+  /* 【2026-09-08 ヒデさん指定】smoothモードの暗転を4カーブ＋開始/終了で調整 */
+  segRow('暗転のしかた', [['なめらか', 1], ['ためて一気に', 2], ['早めにゆっくり', 3], ['直線', 4]],
+    () => sv().results.darkVar || 2,
+    v => { sv().results.darkVar = v; markDirty(); renderFrame(); });
+  rows.push(slider('明るいままの範囲', 0, 0.6, 0.02, () => (sv().results.darkFrom != null ? sv().results.darkFrom : 0.18),
+    v => { sv().results.darkFrom = v; renderFrame(); }, v => Math.round(v * 100) + '%',
+    '開発者体験が画面をこの割合まで登ってくるまでは明るいまま。大きいほど明るい状態が長く続きます。'));
+  rows.push(slider('黒くなりきる位置', 0.3, 1, 0.02, () => (sv().results.darkTo != null ? sv().results.darkTo : 0.82),
+    v => { sv().results.darkTo = v; renderFrame(); }, v => Math.round(v * 100) + '%',
+    'ここまで登ると真っ黒。上の「明るいまま」との差が小さいほどパッと切り替わります。'));
+  note('↓ここから下は黒レクタングル案(scrollHold=固定/resTrans=black)の時だけ効きます。');
   rows.push(slider('暗くなり始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
     '何割スクロールしたら暗くなり始めるか。'));
   rows.push(slider('暗くなりきる', 0.2, 1, 0.02, () => sv().results.outTo, v => sv().results.outTo = v, v => Math.round(v * 100) + '%',
