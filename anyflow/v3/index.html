@@ -1404,11 +1404,14 @@
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     .orbit { right: auto; left: 50%; top: 96px; transform-origin: 0 0; margin-left: -198px; }
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
-    /* 【2026-09-08 カンプ node16534:22195 準拠】KVメイン46px Thin/行間1.4、サブ12px Light/字間0.6px */
-    .headline { left: 24px; right: 24px; top: 410px; white-space: normal; gap: var(--space-16); }
-    .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); }   /* 46px / 1.4 */
+    /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
+       サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
+    .headline { left: 24px; right: 24px; top: 409px; white-space: normal; gap: var(--space-16);
+                align-items: center; text-align: center; }
+    .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
-    .hl-eyebrow { font-size: var(--fs-caption); letter-spacing: 0.6px; gap: var(--space-4); flex-wrap: wrap; margin-top: var(--space-4); }
+    .hl-eyebrow { font-size: var(--fs-caption); letter-spacing: 0.6px; gap: var(--space-4);
+                  flex-wrap: nowrap; justify-content: center; margin-top: 0; }
     .hl-eyebrow i { width: 10px; flex: 0 0 auto; }   /* カンプの罫線10px */
     .logos { top: 640px; }
     .mq-set img { height: 24px; }
@@ -11822,7 +11825,9 @@ function fit() {
   lastFitW = w; lastFitH = h;
   /* スマホは 390×780 の設計フレームに切り替える (PCの1440×921をそのまま縮めると
      本文が4pxくらいになって読めないため、座標系ごと差し替える) */
-  isMobile = w <= MOBILE_MAX;
+  /* 【2026-09-08】iOS Safari は読み込み直後に innerWidth が一瞬 980px 等を返すことがあり、
+     それを拾うと isMobile を誤判定して固定化する。CSS の @media と同じ matchMedia を基準にして確実化。 */
+  isMobile = (window.matchMedia && window.matchMedia('(max-width: ' + MOBILE_MAX + 'px)').matches) || w <= MOBILE_MAX;
   DW = isMobile ? 390 : 1440;
   DH = isMobile ? 780 : 921;
   document.documentElement.classList.toggle('mb', isMobile);
