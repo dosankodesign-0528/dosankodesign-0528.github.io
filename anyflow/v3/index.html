@@ -278,7 +278,7 @@
     --ink:#101828; --ink-strong:#000; --ink-label:#333333; --ink-on-dark:#fff;
     /* 色：サーフェス（背景） */
     --surface:#E7E7E7; --surface-dark-top:#161616; --surface-dark-bottom:#454545;
-    --surface-footer-bottom:#434343; --surface-cta:#090909; --surface-terminal:#080A0E;
+    --surface-footer-bottom:#363636; --surface-cta:#090909; --surface-terminal:#080A0E;   /* フッター下端: 新カンプ 16083:23592 で #434343→#363636 (2026-09-09) */
     --surface-mock-1:#2B2B2B; --surface-mock-2:#232323; --surface-mock-3:#1B1B1B;
     /* 色：線 */
     --line:#D1D5DC; --line-grid:#ACACAC;
@@ -314,16 +314,16 @@
   }
   /* ── Mid（バランス）：見分けのつかない重複だけ統合。見た目はほぼ不変 ── */
   html[data-ds="mid"]{
-    --surface-footer-bottom:#454545;   /* フッター下端(#434343)を開発下端(#454545)へ。差わずか＝不可視 */
+    /* 2026-09-09: --surface-footer-bottom の統合(#454545)は撤回。新フッター(16083:23592)は #363636 で差が見えるため base 値を通す */
     --code-string:#7CE7A6;             /* コード緑2色を1つに */
   }
   /* ── High（積極整備）：色数・トークンを最小化。小さな見た目差が出る ── */
   html[data-ds="high"]{
     /* サーフェスを4色へ集約：地色#E7E7E7 / 黒#090909 / 暗#161616 / 中暗#454545 */
-    --surface-footer-bottom:#454545;                    /* フッター下端→開発下端に統合 */
+    /* 2026-09-09: --surface-footer-bottom の統合(#454545)は撤回。新フッター(16083:23592)は #363636(base) */
     --surface-terminal:#090909;                         /* 端末背景(#080A0E)→CTA黒に統合 */
     --surface-mock-1:#161616; --surface-mock-2:#161616; --surface-mock-3:#161616; /* モック地(#232323)→暗セクション色に統合 */
-    --line-grid:#D1D5DC;                                /* 罫線グレーを1つに（事例グリッドが少し明るく） */
+    /* 2026-09-09: --line-grid の統合(#D1D5DC)は撤回。カンプの罫線(PC 15800:* / SP 16534:22648)は #ACACAC。忠実優先で base 値を通す */
     --code-string:#7CE7A6;                              /* コード緑を1つに */
     --ink-label:#101828;                                /* ラベルのグレーを本文インクへ寄せる */
     --radius-md:8px; --radius-lg:16px;                  /* 角丸の段数を削減(14→8 / 24→16) */
@@ -1336,39 +1336,31 @@
   }
   .cv-btn:hover { opacity: .75; }
 
-  /* ================= フッター (カンプ 15975:42992 全プロパティ実測で完全再現) ================= */
+  /* ================= フッター (カンプ 16083:23592 に差し替え・2026-09-09) =================
+     1440×327: 上100 / 下40 / 左右120。上段=「ロゴ+住所」と「2列ナビ」を両端寄せ、その下 60 に © を中央。
+     旧デザインのメッセージ(データをつなぐ…)・区切り線・横一列ナビ・「コンパクト化」の余白は廃止。 */
   #footer {
-    /* カンプ: 線形 90°(上→下) var(--surface-dark-top)(0%) → var(--surface-footer-bottom)(100%) */
+    /* カンプ: 線形 180°(上→下) #161616(0%) → #363636(100%) */
     background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-footer-bottom) 100%);
     color: var(--ink-on-dark);
   }
-  /* inner: 幅1200・左右120マージン(=1440基準)。上100 / 下40。要素間 gap60(縦) */
-  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 72px 0 var(--space-24); }   /* 2026-08-30: 縦をコンパクトに */
-  .ft-top { display: flex; justify-content: space-between; align-items: flex-start; height: 136px; }
-  .ft-left { display: flex; flex-direction: column; gap: var(--space-24); }   /* ロゴ枠 gap24 */
+  .ft-inner { width: min(1200px, calc(100% - 240px)); margin: 0 auto; padding: 100px 0 var(--space-40);
+              display: flex; flex-direction: column; align-items: center; gap: var(--space-60); }   /* 縦 gap60(カンプ) */
+  .ft-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+  .ft-left { display: flex; flex-direction: column; gap: var(--space-24); }   /* ロゴ→住所 gap24 */
   .ft-logo { width: 334px; height: 62px; display: block; }
-  /* 住所: Noto Sans JP Light 12 / 白100% / 行間170% */
-  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; color: var(--ink-on-dark); }
-  /* メッセージ: Noto Sans JP Thin / 40 / 行間170% / 不透明度 0.5(カンプのテキスト枠 opacity) */
-  .ft-msg  { font-weight: 100; font-size: 40px; line-height: 1.7; text-align: left; opacity: .5; white-space: nowrap; }
-  /* 区切り線+ナビ枠: 上に白10%の線 / 上下 padding 30。ナビ全体 opacity 0.5 */
-  .ft-nav {
-    display: flex; justify-content: center; gap: var(--space-10);
-    border-top: 1px solid var(--glass-10);
-    margin-top: var(--space-40); padding: var(--space-24) 0;   /* 2026-08-30: コンパクトに */
-    opacity: .5;
-  }
+  /* 住所: Noto Sans JP Light 12 / 白100% / 行間170% (カンプ 16083:23606) */
+  .ft-addr { font-weight: 300; font-size: 12px; line-height: 1.7; color: var(--ink-on-dark); white-space: nowrap; }
+  /* ナビ: 2列(列間 44・列内 24)。Noto Sans JP Light 14 / 白 / 全体 opacity 0.5 (カンプ 16534:22728) */
+  .ft-nav { display: flex; gap: var(--space-44); opacity: .5; }
+  .ft-col { display: flex; flex-direction: column; gap: var(--space-24); }
   .ft-nav a {
-    display: inline-flex; justify-content: center; align-items: center;
-    width: 140px; color: var(--ink-on-dark); text-decoration: none;
-    font-weight: 300; font-size: 14px; transition:opacity var(--t-fast) ease;   /* Noto Sans JP Light 14 */
+    color: var(--ink-on-dark); text-decoration: none; white-space: nowrap;
+    font-weight: 300; font-size: 14px; line-height: normal; transition: opacity var(--t-fast) ease;
   }
   .ft-nav a:hover { opacity: .6; }
-  /* コピーライト: SF Pro Light 16 / 白 不透明度 0.4 / 中央 */
-  .ft-copy {
-    text-align: center; padding: var(--space-40) 0 var(--space-40);   /* 2026-08-30: 下の余白を90→40に詰める */
-    font-family: var(--font-en); font-weight: 300; font-size: 16px; color: var(--ink-on-dark); opacity: .4;
-  }
+  /* コピーライト: SF Pro Light 16 / 白 不透明度 0.4 / 中央 (カンプ 16083:23620) */
+  .ft-copy { font-family: var(--font-en); font-weight: 300; font-size: 16px; line-height: normal; color: var(--ink-on-dark); opacity: .4; }
 
   /* ================= スマホ (設計フレーム 390×780) =================
      PCの1440×921をそのまま縮めると本文が4pxくらいになって読めないので、
@@ -1395,16 +1387,17 @@
 
   @media (max-width: 780px) {
     /* --- ヘッダー --- */
-    .header { left: 24px; right: 24px; top: 18px; }
-    .header .logo img { width: 148px; height: 27px; }
-    .nav-links { display: none; }            /* ナビは省略 (後で必要ならハンバーガー化) */
-    .cta { width: 112px; font-size: 14px; padding: 9px var(--space-10); }
+    /* カンプSP node16534:22176: ヘッダーは左右 17px・ロゴ 180×33・ボタン 120幅(padding 6px 16px / 角丸4 / #090909 / Light 14px) */
+    .header { left: 17px; right: 17px; top: 18px; }
+    .header .logo img { width: 180px; height: 33px; }
+    .nav-links { display: none; }            /* カンプSP にナビリンクは無い(ロゴ＋お問い合わせのみ) */
+    .cta { width: 120px; font-size: 14px; padding: 6px 16px; }
 
     /* --- キービジュアル (2026-09-02 ヒデさん指定: モバイルは【グラフィックが上・コピーが下】) --- */
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     /* 【2026-09-09 カンプ node16534:22139 準拠】グラフィックは幅~414・上端~81・中央(左に少しはみ出し)。
        gx/gy(17,-52)ぶんを見込んで top/margin を調整(top=133-52=81 / left=195-218+17≈-6)。 */
-    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -218px; }
+    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -238px; }   /* 915.483×0.52/2=238: 箱の中心=画面中央(JS側で gx=0) */
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
@@ -1412,11 +1405,15 @@
                 align-items: center; text-align: center; }
     .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
-    .hl-eyebrow { font-size: var(--fs-caption); letter-spacing: 0.6px; gap: var(--space-4);
-                  flex-wrap: nowrap; justify-content: center; margin-top: 0; }
+    .hl-eyebrow { font-size: var(--fs-caption); font-weight: 300; letter-spacing: 0.6px; gap: var(--space-4);
+                  flex-wrap: nowrap; justify-content: center; margin-top: 0; }   /* カンプSP node16534:22199: Noto Light(300) 12px / 字間0.6 (PCの --kv-eyebrow-weight=400 は使わない) */
     .hl-eyebrow i { width: 10px; flex: 0 0 auto; }   /* カンプの罫線10px */
-    .logos { top: 640px; }
-    .mq-set img { height: 24px; }
+    /* カンプSP node16534:22200: ロゴ帯は y624・高さ42.4、ロゴ1つは 13.5〜19px 高(→⚠️仮置き 16px)・間隔 24〜31px(→27px)。
+       iOS Safari 実機で「消えたり出たり」したため、帯自体を合成レイヤーに固定(translateZ)し、表示は CSS で確定させる
+       (JS の rv() による opacity/blur/transform の毎フレーム書き込みはスマホでは行わない → updateKV 側) */
+    .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden; }
+    .mq-set { gap: 27px; padding-right: 27px; height: 42px; }
+    .mq-set img { height: 16px; }
 
     /* --- ビジョン (カンプ node16534:22141 準拠: Our Vision 16px / メッセージ 26px 行間1.7) --- */
     /* 【2026-09-09 カンプSP 忠実トレース】ページ上の目標Y: Our Vision 741 / 見出し 773 / 軌道 861〜1186 /
@@ -1444,15 +1441,15 @@
     .val-head { left: 24px; right: 24px; top: 372px; width: auto; }
     .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
-    .val-point { width: calc(100% - 48px); max-width: 342px; }
+    .val-point { width: 328px; max-width: calc(100% - 48px); }   /* カンプSP node16534:22144: Points は 328px 固定幅(Fill ではない) */
     .val-p1 { left: 24px; top: 511px; }   /* カンプSP: Point01 y1204 (=1204−667−26: .val-group 経由の実測オフセット) */
     .val-p2 { left: 24px; top: 617px; }   /* カンプSP: Point02 y1315 (=1315−667−31) */
     /* 【カンプ node16534:22144】Point見出し20px / 本文12px / タグ12px, gap 8/4 */
-    .val-point { display: flex; flex-direction: column; gap: var(--space-8); }
+    .val-point { display: flex; flex-direction: column; gap: var(--space-4); }   /* カンプSP: タグ→見出し 4 / 見出し→本文 8(本文側の margin 4 と合算) */
     .val-point .vp-tag { font-size: var(--fs-caption); line-height: 1; }
     .val-point .vp-tag i { width: 7px; height: 7px; }
-    .val-point h3 { font-size: var(--fs-lead); margin-top: var(--space-4); }
-    .val-point p { font-size: var(--fs-caption); line-height: normal; margin-top: 0; }   /* カンプSP node16534:22151: Light 12px / leading normal */
+    .val-point h3 { font-size: var(--fs-lead); margin-top: 0; }
+    .val-point p { font-size: var(--fs-caption); line-height: normal; margin-top: var(--space-4); }   /* カンプSP node16534:22151: Light 12px / leading normal / 見出しとの間 8 */
 
     /* --- 実績 --- */
     /* スマホは案A/案Bとも同じ縦積みにする */
@@ -1481,6 +1478,7 @@
                  display: flex; flex-wrap: wrap; justify-content: center; }
     .res2-hl2 { min-height: calc(var(--fs-title) * 1.7); }
     .res2-caret { height: 22px; }
+    .res2-suffix { margin-left: 0; }   /* カンプSP node16534:22513「Anyflowが支えます。」: Anyflow と「が」の間は空けない(PC用の --res-slot-gap は使わない) */
     /* カンプSP node16534:22514: 左寄せ gap24 で 1段目「100+ / 20,000+」・2段目「200+」の 2段組。
        flex-wrap だと数値(SF Pro Ultralight 50px)がブラウザの光学サイズ差で数px広くなった時に
        「縮小より先に折り返す」仕様で 3段に崩れる(実測 343 > 342)。grid 2列なら段組が固定され、
@@ -1538,39 +1536,48 @@
     .dl-head span { font-size: 14px; }
 
     /* --- 導入事例 (カンプ node16534:22646 準拠: 画像上・縦カード4枚を通常フローで縦積み) --- */
-    .case-title { position: static; left: auto; top: auto; margin: 0 24px var(--space-24); font-size: 28px; line-height: 40px; }
+    .case-title { position: static; left: auto; top: auto; margin: 0 24px 17px; font-weight: 300; font-size: 24px; line-height: 64px; }   /* カンプSP node16534:22644: Noto Light 24px / 行間64px、カード群まで 17px(3515−3498) */
     .case-grid { position: static; left: auto; top: auto; width: 100%; height: auto;
-                 display: flex; flex-direction: column; gap: var(--space-40); }
+                 display: flex; flex-direction: column; gap: 0; }   /* カンプSP node16534:22646: カードは隙間なく積む(余白はカード内 padding 40) */
     .cg-vline { display: none; }
     /* 見出し行(cgH*)はモバイルでは不要(カードごとに縦積み) */
     #cgH0, #cgH1, #cgH2 { display: none; }
+    /* カンプSP node16534:22648: カードは padding 40/24・写真→文章 16・上下 1px #acacac の罫線。
+       カード同士は隙間なく積む(452+450)。2枚目以降は上罫線を持たない(罫線の二重化を避ける＝カンプの 452/450 差) */
     .cg-cell { position: static; left: auto; top: auto; width: 100%; height: auto;
-               display: flex; flex-direction: column; gap: var(--space-24); padding: 0 24px; }
-    .cg-img { flex: none; width: 100%; height: 228px; border-radius: var(--radius-md); overflow: hidden; }
+               display: flex; flex-direction: column; gap: var(--space-16); padding: 40px 24px;
+               border-bottom: 1px solid var(--line-grid); }   /* --line-grid = #ACACAC(カンプの罫線色と同値) */
+    /* 1枚目の上罫線: .case-grid の先頭には隠し罫線要素(#cgH0〜/.cg-vline)があり :first-child が効かないので、グリッド自体の上辺に引く */
+    .case-grid { border-top: 1px solid var(--line-grid); }
+    .cg-img { flex: none; width: 100%; height: 228px; border-radius: 0; overflow: hidden; }   /* カンプSP: サムネに角丸なし(2026-09-09 ヒデさん指定) */
     .cg-img img { width: 100%; height: 100%; object-fit: cover; }
-    .cg-body { gap: var(--space-16); }
-    .cg-quote { font-size: var(--fs-body); line-height: var(--lh-loose); }   /* 14px / 1.7 */
-    .cg-meta { display: flex; flex-direction: column; gap: var(--space-12); }
-    .cg-tag { font-size: var(--fs-caption); }
-    .cg-company { font-size: var(--fs-base); }
+    .cg-body { gap: var(--space-16); }                                        /* カンプSP node16534:22650: 引用→メタ 16 */
+    .cg-quote { font-size: var(--fs-base); line-height: var(--lh-body); }      /* カンプSP node16534:22651: Noto Light 16px / 1.8 */
+    .cg-meta { display: flex; flex-direction: column; gap: var(--space-8); }   /* カンプSP node16534:22652: タグ→社名 8 */
+    /* .cg-tag はスマホ用の上書きなし: PC の base(Light 10px / 枠 0.5px / padding 1×10)がそのままカンプSP node16534:22653 と一致 */
+    .cg-company { font-size: 18px; line-height: normal; }                    /* カンプSP node16534:22655: Noto Light 18px */
 
     /* --- コンバージョン (モバイル: 左右24px・1カラム。497px固定でのはみ出しを解消) --- */
     #conversion { padding: 72px 0 96px; }
-    .cv-inner { width: calc(100% - 48px); height: 380px; }
-    .cv-content { left: 0; right: 0; transform: none; width: auto; padding: 0 var(--space-20); top: 60px; }
-    .cv-head { font-size: 24px; line-height: 1.5; }
-    .cv-sub  { font-size: 14px; line-height: 1.8; margin-top: var(--space-20); }
-    .cv-btn  { margin-top: var(--space-24); }
+    /* カンプSP node16534:22767: 枠 346幅(左右22)・padding 40/24・見出し→本文→ボタン gap 8。
+       背景グラデ(16534:22768)は枠より上下 17px 大きい 275 高なので、枠を 275 にして中身を 17px 下げる */
+    .cv-inner { width: calc(100% - 44px); height: 275px; }
+    .cv-content { left: 0; right: 0; transform: none; width: auto; padding: 0 var(--space-24); top: 57px; }
+    .cv-head { font-size: var(--fs-display); line-height: 1.5; }                                   /* Noto Light 26px / 1.5 */
+    .cv-sub  { font-size: var(--fs-caption); line-height: var(--lh-body); margin-top: var(--space-8); text-align: center; }   /* Noto Light 12px / 1.8 / 中央 */
+    .cv-sub br { display: none; }                                                                 /* カンプSP は手動改行なし */
+    .cv-btn  { margin-top: var(--space-8); }   /* 140×40・角丸4・#090909・Light 14px は base がカンプと同じ */
     .cv-planet { display: none; }   /* 惑星は右上装飾。狭幅では省く */
 
     /* --- フッター (モバイル: 左右24px・縦積み。ft-inner が calc(100%-240px)=150pxに潰れるのを解消) --- */
-    .ft-inner { width: calc(100% - 48px); padding: 56px 0 var(--space-32); }
-    .ft-top { flex-direction: column; align-items: flex-start; height: auto; gap: var(--space-32); }
+    /* ⚠️仮置き: SP のフッターはカンプに無い(SP フレーム 16534:22140 は お問い合わせ で終わる)。
+       PC の新フッター(16083:23592)を縦積みに畳んだもの。余白 56/40/32・ロゴ 200 幅・ナビ2列は PC と同じ構成 */
+    .ft-inner { width: calc(100% - 48px); padding: 56px 0 var(--space-32); gap: var(--space-40); }
+    .ft-top { flex-direction: column; align-items: flex-start; gap: var(--space-32); }
     .ft-logo { width: 200px; height: auto; }
-    .ft-msg  { font-size: 18px; line-height: 1.6; white-space: normal; }   /* 40→18・折り返し可 */
-    .ft-nav  { flex-wrap: wrap; justify-content: flex-start; gap: var(--space-4); margin-top: var(--space-32); padding: var(--space-20) 0; }
-    .ft-nav a { width: auto; padding: 6px 12px; font-size: 13px; }
-    .ft-copy { padding: var(--space-32) 0 var(--space-40); font-size: 12px; }
+    .ft-addr { white-space: normal; }
+    .ft-nav  { gap: var(--space-32); }
+    .ft-copy { font-size: 12px; }
 
     /* --- 調整パネルは画面いっぱいに --- */
     .tools { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; }
@@ -2501,6 +2508,8 @@
 </section>
 
 <!-- ================= フッター (カンプ 15975:42992) ================= -->
+<!-- 【2026-09-09 カンプ 16083:23592 に差し替え】メッセージ(データをつなぐ…)と罫線は廃止。
+     上段: 左=ロゴ+住所 / 右=2列ナビ(ビジョン・提供できること・使用イメージ｜導入事例・お問い合わせ)、下段: © 中央 -->
 <footer id="footer">
   <div class="ft-inner">
     <div class="ft-top">
@@ -2508,15 +2517,18 @@
         <img class="ft-logo" src="assets/footer-logo.svg" alt="Anyflow Embed">
         <div class="ft-addr">〒105-0001　東京都港区虎ノ門1-3-1 東京虎ノ門グローバルスクエア6階</div>
       </div>
-      <div class="ft-msg">データをつなぐことが、<br>強みになる時代へ。</div>
+      <nav class="ft-nav">
+        <div class="ft-col">
+          <a href="#vision">ビジョン</a>
+          <a href="#results">提供できること</a>
+          <a href="#dev">使用イメージ</a>
+        </div>
+        <div class="ft-col">
+          <a href="#cases">導入事例</a>
+          <a href="#conversion">お問い合わせ</a>
+        </div>
+      </nav>
     </div>
-    <nav class="ft-nav">
-      <a href="#vision">ビジョン</a>
-      <a href="#results">提供できること</a>
-      <a href="#dev">使用イメージ</a>
-      <a href="#cases">導入事例</a>
-      <a href="#conversion">お問い合わせ</a>
-    </nav>
     <div class="ft-copy">© Anyflow Inc.</div>
   </div>
 </footer>
@@ -4557,6 +4569,7 @@ const cvBg = (function () {
 precision mediump float;
 uniform vec2 uRes; uniform float uTime;
 uniform float uCell, uLevels, uSpread, uSpeed, uSwell, uFlowScale, uBright, uContrast;
+uniform vec3 uGA, uGB;   /* radial gradientTransform の係数(PC/SP でカンプが違うので JS から渡す) */
 float bayer2(vec2 a){ a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
@@ -4589,10 +4602,10 @@ void main(){
   float n1 = fbm(w + vec2(uTime * uSpeed, 0.0));
   float n2 = fbm(w + vec2(0.0, uTime * uSpeed * 0.8) + 7.3);
   vec2 uvW = uv + (vec2(n1, n2) - 0.5) * uSwell;
-  /* カンプの gradientTransform(実測) で radial の t を出す */
+  /* カンプの gradientTransform(実測) で radial の t を出す(係数は uGA/uGB: PC と SP で別) */
   vec3 g = vec3(uvW, 1.0);
-  float gx = dot(vec3(-0.38077, 0.29537, 0.79503), g);
-  float gy = dot(vec3(-0.37953, -0.33868, 0.86993), g);
+  float gx = dot(uGA, g);
+  float gy = dot(uGB, g);
   float t = length(vec2(gx, gy) - 0.5) * 2.0;
   vec3 col = stopCol(t);
   col = (col - 0.5) * uContrast + 0.5;     /* カンプのディザ設定: Contrast 1.38 */
@@ -4620,7 +4633,7 @@ void main(){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(p, 'aP');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    for (const k of ['uRes', 'uTime', 'uCell', 'uLevels', 'uSpread', 'uSpeed', 'uSwell', 'uFlowScale', 'uBright', 'uContrast'])
+    for (const k of ['uRes', 'uTime', 'uCell', 'uLevels', 'uSpread', 'uSpeed', 'uSwell', 'uFlowScale', 'uBright', 'uContrast', 'uGA', 'uGB'])
       uni[k] = gl.getUniformLocation(p, k);
   }
   function visible() {
@@ -4642,6 +4655,13 @@ void main(){
     gl.uniform1f(uni.uFlowScale, c.flowScale != null ? c.flowScale : 3.0);
     gl.uniform1f(uni.uBright, c.bright != null ? c.bright : 1.04);
     gl.uniform1f(uni.uContrast, c.contrast != null ? c.contrast : 1.38);
+    /* 【2026-09-09】radial の gradientTransform をカンプ別に。PC=15993:43966 / SP=16534:22768(346×275)。
+       SP は M=[-31.225 24.205 -22.32 -26.671 300.25 32.955], r=10 を u,v∈[0,1] に正規化して
+       gx = 係数·(u,v,1)/20 + 0.5 の形にした値(中心(300,33)=右上で t=0(淡ピンク白)、左下 t≒0.98(ピンク)、右下 0.70(青紫))。 */
+    const GA = isMobile ? [-0.33604, 0.22351, 0.76480] : [-0.38077, 0.29537, 0.79503];
+    const GB = isMobile ? [-0.30497, -0.31268, 0.80212] : [-0.37953, -0.33868, 0.86993];
+    gl.uniform3f(uni.uGA, GA[0], GA[1], GA[2]);
+    gl.uniform3f(uni.uGB, GB[0], GB[1], GB[2]);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   function frame() {
@@ -7828,7 +7848,11 @@ function applySway() {
   /* 【2026-09-09 ヒデさん指定】静的モバイル: ゆらぎ(sway)も止める＝KVグラフィックが揺れて動くのを解消。 */
   const swayOrbit = isMobile ? '' : orbit;
   swayEls.orbit.style.transformStyle = '';
-  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${swayOrbit}`.trim();
+  /* 【2026-09-09 ヒデさん指摘「メッシュが右にずれている」】スマホは横オフセット gx(PC用=17px)を使わず、
+     .orbit の margin-left(−幅/2 = −238px) だけで画面中央に置く(実測: gx込みだと箱の中心が 232px で
+     画面中央 195px より 37px 右だった)。gy はカンプの上端 y81 に合わせた値として残す。 */
+  const gx = isMobile ? 0 : kv.gx;
+  swayEls.orbit.style.transform = `translate(${gx}px, ${kv.gy}px)${ob} ${swayOrbit}`.trim();
   swayEls.svgs.forEach(s => s.style.transform = isMobile ? '' : svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成。惑星は固定(回転させない) */
   const pl = params.planet;
@@ -8561,6 +8585,10 @@ const visEls = {
    文字カスケード(マスク登場)はそのまま活かしつつ、「強み」の2文字だけ .vl-strong で包んで
    強調エフェクト(発光・チカチカ 等 10案)を当てられるようにする。 */
 const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶん)
+/* 【2026-09-09 カンプSP node16534:22143】スマホのメッセージは「データをつなぐことが、」/「強みになる時代へ。」の
+   2行を明示改行。幅任せだと iPhone(402px)では「強みになる」の後で折れてカンプと違った。
+   isMobile は fit() より前なので、CSS の @media と同じ matchMedia で判定する。 */
+const VIS_MB_BREAK = !!(window.matchMedia && window.matchMedia('(max-width: ' + MOBILE_MAX + 'px)').matches);
 (function buildVisChars() {
   [visEls.l1, visEls.l2].forEach((line, i) => {
     const inner = line.firstElementChild;
@@ -8576,6 +8604,13 @@ const visStrongEls = [];   // 「強み」を包む .vl-strong 要素(l1/l2 ぶ�
       visEls.chars[i].push(s);
       const isStrong = strongStart >= 0 && idx >= strongStart && idx < strongStart + 2;
       const isNagu = naguStart >= 0 && idx >= naguStart && idx < naguStart + 3;
+      if (VIS_MB_BREAK && ch === '、') {
+        inner.appendChild(s);
+        const br = document.createElement('br');
+        br.className = 'vl-br-mb';
+        inner.appendChild(br);
+        return;
+      }
       if (isStrong) {
         if (!strongWrap) {
           strongWrap = document.createElement('span');
@@ -10499,7 +10534,13 @@ function updateKV() {
     if (kvEls.carets[1]) kvEls.carets[1].style.opacity = 0;
     rv(kvEls.eyebrow, 1, 8, 8);
     rv(kvEls.orbit, 1, 12);
-    rv(kvEls.logos, 1, 8);
+    /* 【2026-09-09 ヒデさん指摘】iOS 実機でロゴ帯が「消えたり出たり」した。rv() は opacity/blur/transform を
+       inline style に書き、1826px 幅のマーキー層に blur フィルタ層が重なると WebKit が合成レイヤーを落とす。
+       スマホでは JS からは触らず、inline を一度だけ空にして CSS(.logos: opacity 1 / translateZ(0))に委ねる。 */
+    if (!kvEls.logos.dataset.mbFixed) {
+      kvEls.logos.style.opacity = ''; kvEls.logos.style.filter = ''; kvEls.logos.style.transform = ''; kvEls.logos.style.pointerEvents = '';
+      kvEls.logos.dataset.mbFixed = '1';
+    }
     return;
   }
   rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
