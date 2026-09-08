@@ -1402,7 +1402,9 @@
 
     /* --- キービジュアル (2026-09-02 ヒデさん指定: モバイルは【グラフィックが上・コピーが下】) --- */
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
-    .orbit { right: auto; left: 50%; top: 96px; transform-origin: 0 0; margin-left: -198px; }
+    /* 【2026-09-09 カンプ node16534:22139 準拠】グラフィックは幅~414・上端~81・中央(左に少しはみ出し)。
+       gx/gy(17,-52)ぶんを見込んで top/margin を調整(top=133-52=81 / left=195-218+17≈-6)。 */
+    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -218px; }
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
@@ -7802,20 +7804,20 @@ function applySway() {
   }
   /* KVグラフィック全体の位置ずらし (調整パネル) をゆらぎの上に合成 */
   const kv = params.kv;
-  /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある) */
-  const ob = isMobile ? ' scale(0.40)' : '';
-  /* 【2026-08-28 ヒデさん指定】グラフィック全体をひとまとまりで XYZ 回転(3D)。0のときは付けない */
-  /* 【2026-08-29 ヒデさん指定・A案】自由回転(XYZ)は kvRepro が「軌道の疑似3D」で担当する。
-     ここではグラフィック全体をCSSで3D回転しない(＝惑星を潰さない)。位置ずらし・ゆらぎだけ。 */
+  /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある)。
+     【2026-09-09 カンプ node16534:22139 準拠】幅414pxに合わせて 0.40→0.44 へ拡大。 */
+  const ob = isMobile ? ' scale(0.44)' : '';
+  /* 【2026-09-09 ヒデさん指定】静的モバイル: ゆらぎ(sway)も止める＝KVグラフィックが揺れて動くのを解消。 */
+  const swayOrbit = isMobile ? '' : orbit;
   swayEls.orbit.style.transformStyle = '';
-  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${orbit}`.trim();
-  swayEls.svgs.forEach(s => s.style.transform = svg);
+  swayEls.orbit.style.transform = `translate(${kv.gx}px, ${kv.gy}px)${ob} ${swayOrbit}`.trim();
+  swayEls.svgs.forEach(s => s.style.transform = isMobile ? '' : svg);
   /* 惑星の位置・サイズ (パネル設定) を ゆらぎ の上に合成。惑星は固定(回転させない) */
   const pl = params.planet;
   const plFlat = pl.flat == null ? 1 : pl.flat;
   const plT = (pl.dx || pl.dy || pl.scale !== 1 || plFlat !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale}, ${pl.scale * plFlat})` : '';
-  swayEls.sphere.style.transform = (sph + plT).trim();
+  swayEls.sphere.style.transform = ((isMobile ? '' : sph) + plT).trim();   /* 静的モバイル: 惑星のゆらぎも止める(2026-09-09) */
 }
 
 /* ================= スクロール連動セクション ================= */
@@ -11825,6 +11827,11 @@ function fit() {
   /* 描画前などで 0 が返る環境があるのでフォールバックを噛ませる (NaN 防止) */
   const w = window.innerWidth || document.documentElement.clientWidth || 1440;
   const h = window.innerHeight || document.documentElement.clientHeight || 921;
+  /* 【2026-09-09 ヒデさん指定・根治】iOS Safari はスクロールでアドレスバーが開閉すると innerHeight だけが
+     変わり resize が飛ぶ。そのたびに再レイアウト(scale再計算・セクション高さ再設定)すると、静的なはずの
+     コンテンツがスクロールのたびにガクッと動いて見える。モバイルで『幅は同じ・高さだけ変わった』時は
+     再レイアウトせずに抜ける(幅が変わる=回転や本当のリサイズの時だけ組み直す)。 */
+  if (isMobile && fitReady && w === lastFitW && h !== lastFitH) { lastFitH = h; return; }
   lastFitW = w; lastFitH = h;
   /* スマホは 390×780 の設計フレームに切り替える (PCの1440×921をそのまま縮めると
      本文が4pxくらいになって読めないため、座標系ごと差し替える) */
