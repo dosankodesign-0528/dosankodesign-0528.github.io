@@ -1515,19 +1515,22 @@
     .dl-head b { font-size: 22px; }
     .dl-head span { font-size: 14px; }
 
-    /* --- 導入事例: モバイルは1カラム縦積み(簡易・要モバイルカンプ) --- */
-    .case-title { left: 24px; top: 56px; font-size: 28px; line-height: 40px; }
-    .case-grid { left: 0; top: 118px; width: 100%; height: 620px; }
+    /* --- 導入事例 (カンプ node16534:22646 準拠: 画像上・縦カード4枚を通常フローで縦積み) --- */
+    .case-title { position: static; left: auto; top: auto; margin: 0 24px var(--space-24); font-size: 28px; line-height: 40px; }
+    .case-grid { position: static; left: auto; top: auto; width: 100%; height: auto;
+                 display: flex; flex-direction: column; gap: var(--space-40); }
     .cg-vline { display: none; }
-    #cgH0 { top: 0; } #cgH1 { top: 310px; } #cgH2 { top: 620px; }
-    .cg-cell { width: 100%; padding: var(--space-20) var(--space-24); gap: 14px; height: 155px; }
-    .cg-tl { left: 0; top: 0; }   .cg-tr { left: 0; top: 155px; }
-    .cg-bl { left: 0; top: 310px; } .cg-br { left: 0; top: 465px; }
-    .cg-img { flex: 0 0 120px; width: 120px; height: 80px; }
-    .cg-body { gap: var(--space-10); }
-    .cg-quote { font-size: 14px; line-height: 22px; }
-    .cg-tag { font-size: 12px; }
-    .cg-company { font-size: 15px; }
+    /* 見出し行(cgH*)はモバイルでは不要(カードごとに縦積み) */
+    #cgH0, #cgH1, #cgH2 { display: none; }
+    .cg-cell { position: static; left: auto; top: auto; width: 100%; height: auto;
+               display: flex; flex-direction: column; gap: var(--space-24); padding: 0 24px; }
+    .cg-img { flex: none; width: 100%; height: 228px; border-radius: var(--radius-md); overflow: hidden; }
+    .cg-img img { width: 100%; height: 100%; object-fit: cover; }
+    .cg-body { gap: var(--space-16); }
+    .cg-quote { font-size: var(--fs-body); line-height: var(--lh-loose); }   /* 14px / 1.7 */
+    .cg-meta { display: flex; flex-direction: column; gap: var(--space-12); }
+    .cg-tag { font-size: var(--fs-caption); }
+    .cg-company { font-size: var(--fs-base); }
 
     /* --- コンバージョン (モバイル: 左右24px・1カラム。497px固定でのはみ出しを解消) --- */
     #conversion { padding: 72px 0 96px; }
