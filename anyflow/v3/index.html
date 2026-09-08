@@ -1401,11 +1401,11 @@
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     /* 【2026-09-09 カンプ node16534:22139 準拠】グラフィックは幅~414・上端~81・中央(左に少しはみ出し)。
        gx/gy(17,-52)ぶんを見込んで top/margin を調整(top=133-52=81 / left=195-218+17≈-6)。 */
-    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -243px; }   /* 中央: margin-left=−(915.483×0.53)/2 は JS(applySway)が同期。top は gy(−52)込みでメッシュ上端≒81 */
+    .orbit { right: auto; left: 50%; top: 144px; transform-origin: 0 0; margin-left: -243px; }   /* 中央: margin-left=−(915.483×0.53)/2 は JS(applySway)が同期。top 133→144 でメッシュを少し下げ、ヘッダーとの間隔を拡大(ヒデさん指定・2026-09-09) */
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
-    .headline { left: 24px; right: 24px; top: 404px; white-space: normal; gap: var(--space-16);   /* カンプ 409。グラフィックとの間隔をさらに詰める 416→404(ヒデさん指定・2026-09-09) */
+    .headline { left: 24px; right: 24px; top: 416px; white-space: normal; gap: var(--space-16);   /* グラフィックとの間隔をほんの少し空ける 404→416(ヒデさん指定・2026-09-09) */
                 align-items: center; text-align: center; }
     .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
@@ -10887,7 +10887,7 @@ function applyMarquee() {
   /* 【2026-09-09】モバイルは 1セット幅≒720px を 8s ≒ 90px/s で流す(CSSアニメ・滑らか)。
      JS駆動時代に書いた inline transform が残っていると CSS アニメの transform を上書きするので消す。 */
   if (isMobile) marqueeTrack.style.transform = '';
-  marqueeTrack.style.animationDuration = (isMobile ? 8 : params.marquee.duration) + 's';
+  marqueeTrack.style.animationDuration = (isMobile ? 11 : params.marquee.duration) + 's';   /* モバイル 8→11s に減速(720px/11s≒65px/s・ヒデさん指定「もう少しゆったり」2026-09-09) */
   marqueeTrack.style.animationDirection = params.marquee.direction === 1 ? 'normal' : 'reverse';
   /* 【2026-09-09】静的モバイルでは KV 以下の演出を止めているが、ロゴティッカーだけは常に流す。
      params.running は調整パネル/古いlocalStorage由来で false のことがあり、それに引きずられて
