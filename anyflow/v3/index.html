@@ -1405,7 +1405,7 @@
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
-    .headline { left: 24px; right: 24px; top: 416px; white-space: normal; gap: var(--space-16);   /* カンプ 409。グラフィックとの間隔は 432→416 に微調整(空けすぎ→もう少し詰める・2026-09-09) */
+    .headline { left: 24px; right: 24px; top: 404px; white-space: normal; gap: var(--space-16);   /* カンプ 409。グラフィックとの間隔をさらに詰める 416→404(ヒデさん指定・2026-09-09) */
                 align-items: center; text-align: center; }
     .hl-main { font-size: var(--fs-hero); line-height: var(--lh-tight); text-align: center; }   /* 46px / 1.4 中央 */
     .hl-caret { height: 36px; vertical-align: -6px; }
@@ -1435,7 +1435,12 @@
        中央寄せだと高さに応じて中身の位置が動き(実測 +42)、実績のように中身が 780px 箱より
        高いと上下にはみ出して前のセクションへ食い込んだ(実績見出しが Point02 に重なった)。
        上端固定にして「値 = カンプY − section 上端」で置けるようにする。 */
-    html.mb .pin-stage { top: 0; transform: scale(var(--sp)); transform-origin: left top; }
+    /* 【2026-09-09 ヒデさん指摘「ビジョンだけ小さいスケールで見える」根治】
+       --sp = min(1, 幅/390, 高さ/780) は高さも制約に入るため、実機Safariのアドレスバーで innerHeight が
+       780未満(例700)になると --sp<1 ＝ ビジョン(pin-stage)だけ約90%に縮小していた。KV(.stage)は幅のみの
+       --s なので縮まず、結果「ビジョンだけ小さい」に。モバイルは静的でスクロールするので高さ制約は不要 →
+       幅のみの --s(実機でも常に1.0)にして design サイズを保つ。 */
+    html.mb .pin-stage { top: 0; transform: scale(var(--s)); transform-origin: left top; }
     html.mb #results .pin-stage { align-items: flex-start; }   /* 中身は上から流す(縦中央寄せ解除) */
     #vision { margin-top: 0; }   /* PC用の 200px 余白を撤去(KV→ビジョンが空きすぎていた) */
     .vis-label { left: 24px; top: 74px; font-size: var(--fs-base); font-weight: 300; }   /* カンプSP: SF Pro Text Light(300)/16px → y741 */
