@@ -297,6 +297,18 @@
     --space-4:4px; --space-5:5px; --space-6:6px; --space-8:8px; --space-10:10px;
     --space-12:12px; --space-16:16px; --space-20:20px; --space-24:24px; --space-32:32px;
     --space-40:40px; --space-44:44px; --space-56:56px; --space-60:60px; --space-72:72px;
+    /* 【2026-09-08 整備】タイプスケール（font-size トークン）。従来は全部ハードコード(12px×24箇所等)で
+       近い値(10/10.5/11/11.5)が乱立していたので統一。名前=役割ベース。まず新・静的モバイルで採用し、
+       段階的にサイト全体へ寄せる。数値はカンプ実測(SP 390)に準拠。 */
+    --fs-caption:12px;   /* 本文小・タグ補足（モバイル本文の基準） */
+    --fs-body:14px;      /* 本文 */
+    --fs-base:16px;      /* ラベル/Our Vision/for SaaS タグ */
+    --fs-lead:20px;      /* ポイント見出し */
+    --fs-title:22px;     /* セクション見出し（実績/for SaaS/AI） */
+    --fs-display:26px;   /* ビジョンのメッセージ */
+    --fs-hero:46px;      /* KVメインコピー（モバイル） */
+    --fs-stat:50px;      /* 実績の数値 */
+    --lh-tight:1.4; --lh-normal:1.6; --lh-loose:1.7; --lh-body:1.8;   /* 行間の役割 */
     /* モーション：追加イージング（速さ/基本カーブは上の :root と共通） */
     --e-soft:cubic-bezier(.22,.8,.28,1);
   }
@@ -8641,7 +8653,11 @@ function updateVision(p) {
         「Our Vision」と1行目を先出ししていたため、中央に来る前に始まって早く感じた。
         いまは他のセクションと同じく【固定(ピン)された瞬間＝ステージが画面の上下中央に
         収まった瞬間】に再生を始める */
-  const A = playT('vision', visTotal, canPlay(p), SECS.vision, p);
+  let A = playT('vision', visTotal, canPlay(p), SECS.vision, p);
+  /* 【2026-09-08 ヒデさん指定】静的モバイル: 時間再生を止め、最初から最終状態(メッセージ/図/ポイント
+     すべて表示・ドットの回転も停止後)で固定する。A を十分先へ送るとすべての reveal が完了し、
+     pat2 の回転も停止状態(pat2K=1)になる。スクロールで動かない。 */
+  if (isMobile) A = visTotal + 1000;
 
   if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
@@ -10399,6 +10415,18 @@ setTimeout(function applyOverrideOnBoot() {
 
 function updateKV() {
   const c = params.kv, t = elapsed;
+  /* 【2026-09-08 ヒデさん指定】静的モバイル: タイピングやブラー登場など“動く”演出をやめ、
+     最初から最終状態で固定する(スクロールで動かない)。KVは normal flow で並べる(CSS側)。 */
+  if (isMobile) {
+    rv(kvEls.header, 1, 8, 10);
+    kvEls.chars.forEach(arr => arr.forEach(el => { el.style.display = 'inline-block'; }));
+    if (kvEls.carets[0]) kvEls.carets[0].style.opacity = 0;
+    if (kvEls.carets[1]) kvEls.carets[1].style.opacity = 0;
+    rv(kvEls.eyebrow, 1, 8, 8);
+    rv(kvEls.orbit, 1, 12);
+    rv(kvEls.logos, 1, 8);
+    return;
+  }
   rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
 
   /* 1文字ずつ打ち込む */
