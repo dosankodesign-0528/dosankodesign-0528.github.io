@@ -3589,6 +3589,37 @@ try {
   }
 } catch (e) {}
 let params = load();
+/* 【2026-09-08 ヒデさん指定・根治】「ビジョンだけ本番が遅い/直らない」の根本対策。
+   世代ガードは『保存世代 < 焼き込み世代』でしか発火しないため、いったん現行世代のまま
+   古い(遅い)値で固まったブラウザは値を直しても永久に直らなかった(実測: 現行世代+npOrbitDur3.5
+   注入→リロード2回でも3.5のまま)。しかも『速くする移行』のフラグは既に立っていて再適用もされない。
+   対策= ビジョン重要値の“内容署名”を持ち、SHIPPED と食い違ったら本番では毎回 SHIPPED の値へ
+   同期し直す(=焼き込みが常に正・固まったブラウザも次回ロードで自動回復)。localhost は対象外なので
+   ヒデさんのローカル調整は消えない。焼き込み値を変えれば署名が変わり全ブラウザへ行き渡る(世代バンプ不要)。 */
+try {
+  const _isLocalDev2 = /^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname) && !/[?&]prodsim=1/.test(location.search);
+  const _visKeys = ['npOrbitDur', 'npOrbitLead', 'npOrbitEase', 'npOrbitOp0', 'npOrbitBlur0', 'npOrbitDir',
+    'npFireK', 'npGap', 'npP1', 'npP2', 'npPointDur', 'miniDur', 'revealDur', 'line1At', 'labelDur',
+    'msgSize', 'pHSize', 'pPSize', 'pWidth', 'introPat', 'charLag', 'strokeW'];
+  const _shipVis = (typeof SHIPPED_SETTINGS !== 'undefined' && SHIPPED_SETTINGS.sections && SHIPPED_SETTINGS.sections.vision) || {};
+  const _sig = _visKeys.map(k => k + ':' + _shipVis[k]).join('|');
+  if (!_isLocalDev2 && localStorage.getItem('anyflow-vision-sig') !== _sig) {
+    if (params.sections && params.sections.vision) {
+      for (const k of _visKeys) if (_shipVis[k] !== undefined) params.sections.vision[k] = _shipVis[k];
+    }
+    /* ⚠️ メモリだけ直しても localStorage の古い値が残ると、署名一致後の次回ロードで再び古値が勝つ。
+       保存値(STORAGE_KEY)のビジョンも今この場で SHIPPED へ書き直しておく(＝次回以降も正しい値)。 */
+    try {
+      const _raw = localStorage.getItem(STORAGE_KEY);
+      if (_raw) { const _o = JSON.parse(_raw);
+        if (_o && _o.sections && _o.sections.vision) {
+          for (const k of _visKeys) if (_shipVis[k] !== undefined) _o.sections.vision[k] = _shipVis[k];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(_o));
+        } }
+    } catch (e2) {}
+    localStorage.setItem('anyflow-vision-sig', _sig);
+  }
+} catch (e) {}
 /* 2026-08-25: 実績→開発者体験の新演出(案C)を既定化＋タイミングを詰める。既存の保存値も一度だけ移行する
    （パネルで案A/Bやタイミングへ戻せる。移行フラグで一度きり＝以後は保存値を尊重） */
 try {
