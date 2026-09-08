@@ -8952,6 +8952,14 @@ function resInvertEls() {
     ...SECS.results.querySelectorAll('.r2v-h'),   // 価値の見出し
     ...SECS.results.querySelectorAll('.r2v-p')];  // 価値の本文
 }
+/* 【2026-09-08 ヒデさん指定】色付きタグ(for SaaS=ピンク / for AI=濃い青)も暗転で白へフェードさせる。
+   濃い青は黒地で読めなくなるため。各ブランド色→白へ k(暗さ)で補間。どの暗転カーブ・どのピクト案でも同じ。 */
+function resFadeTags(k) {
+  const mix = base => `rgb(${Math.round(base[0] + (255 - base[0]) * k)},${Math.round(base[1] + (255 - base[1]) * k)},${Math.round(base[2] + (255 - base[2]) * k)})`;
+  SECS.results.querySelectorAll('.r2v-tag-saas').forEach(el => el.style.color = mix([255, 93, 151]));   /* --brand-pink */
+  SECS.results.querySelectorAll('.r2v-tag-ai').forEach(el => el.style.color = mix([14, 68, 151]));       /* --brand-blue-deep */
+}
+function resClearTags() { SECS.results.querySelectorAll('.r2v-tag').forEach(el => el.style.color = ''); }
 let resT0 = null;
 let resT = -1;   // 実際に進んだ再生位置(秒)。時間とスクロールの速い方で進み、戻らない
 
@@ -9162,6 +9170,7 @@ function updateResults(p) {
       resInvertOn = true;
       const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * darkK)},${Math.round(b[1] + (255 - b[1]) * darkK)},${Math.round(b[2] + (255 - b[2]) * darkK)})`;
       resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+      resFadeTags(darkK);   // for SaaS/for AI タグも白へ(2026-09-08)
       valInkCur = white([17, 17, 17]);   // ピクトグラムの黒い図形(#111)も同じ白反転に揃える
       const lc = `rgba(${Math.round(209 + (255 - 209) * darkK)},${Math.round(213 + (255 - 213) * darkK)},${Math.round(220 + (255 - 220) * darkK)},${(0.6 + 0.4 * darkK).toFixed(2)})`;
       if (resEls.hr) resEls.hr.style.background = lc;
@@ -9169,6 +9178,7 @@ function updateResults(p) {
     } else if (resInvertOn) {
       resInvertOn = false;
       resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+      resClearTags();
       valInkCur = VAL_INK;
       if (resEls.hr) resEls.hr.style.background = '';
       SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
@@ -9194,6 +9204,7 @@ function updateResults(p) {
     resInvertOn = true;
     const white = b => `rgb(${Math.round(b[0] + (255 - b[0]) * invK)},${Math.round(b[1] + (255 - b[1]) * invK)},${Math.round(b[2] + (255 - b[2]) * invK)})`;
     resInvertEls().forEach(el => { if (el) el.style.color = white([30, 34, 42]); });
+    resFadeTags(invK);   // for SaaS/for AI タグも白へ(2026-09-08)
     valInkCur = white([17, 17, 17]);   // ピクトグラムの黒い図形(#111)も同じ白反転に揃える
     const lc = `rgba(${Math.round(209 + (255 - 209) * invK)},${Math.round(213 + (255 - 213) * invK)},${Math.round(220 + (255 - 220) * invK)},${(0.6 + 0.4 * invK).toFixed(2)})`;
     if (resEls.hr) resEls.hr.style.background = lc;
@@ -9204,6 +9215,7 @@ function updateResults(p) {
     /* 反転を掛けていない位置に戻ったら、インライン color を掃除(次の再生で白く残らない) */
     resInvertOn = false;
     resInvertEls().forEach(el => { if (el) el.style.color = ''; });
+    resClearTags();
     valInkCur = VAL_INK;
     if (resEls.hr) resEls.hr.style.background = '';
     SECS.results.querySelectorAll('.res2-vline').forEach(v => v.style.background = '');
@@ -10834,6 +10846,9 @@ function valStyle(e, o) {
   if (o.rot != null) e.setAttribute('transform', `rotate(${o.rot.toFixed(1)} ${o.rx0 || 110} ${o.ry0 || 110})`);
 }
 const vE = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   /* なめらかな出入り */
+/* 【2026-09-08 ヒデさん指定】より緩急の強い出入り(smootherstep)。両端がぐっと遅く、中央が速い＝
+   「最初ゆっくり→徐々に速く→また遅く」。for AI の矢印の線の伸びに使う。 */
+const vEIO = u => { u = u < 0 ? 0 : u > 1 ? 1 : u; return u * u * u * (u * (u * 6 - 15) + 10); };
 /* 【2026-08-28 ヒデさん指定】全体的にゆったりすぎたので、緩急の強い動きを足す。
    vE2 = 一気に動いて、終わりでぴたっと止まる(見せ場に使う)
    vE3 = 少し行き過ぎて戻る(重なる・刺さる瞬間の気持ちよさ)
@@ -11176,27 +11191,28 @@ const VAL_AI = {
   /* ===== 2026-09-08 ヒデさん指定・新規7案(コンテキスト取得→実行)。矢印の三角は
      「パスのトリミング」ではなく【線が伸びきる直前にフェードイン】で出す(＝延長線上に矢じりが現れる) ===== */
   /* 共通: 線の終点付近に三角矢じりをフェードインで置く。dir=度(0=右) */
-  A21(st, t) {   /* 折れて進む・改(既定): 左下から折れ線→伸びきる直前に三角がフェードイン */
+  A21(st, t) {   /* 折れて進む・改(既定): 左下から折れ線→伸びきる直前に三角がフェードイン。
+                   線の伸びは緩急強め(vEIO)=最初ゆっくり→速く→また遅く(2026-09-08 ヒデさん指定) */
     const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
-    const draw = Math.min(1, k / 0.72);
+    const draw = vEIO(Math.min(1, k / 0.72));   /* 進み具合そのものに緩急を掛ける */
     const P = [[36, C + 46], [78, C + 46], [78, C], [130, C], [130, C - 44], [172, C - 44]];
     vPath(st, P, { a: 0.14, dash: '4 6' });
-    vTrim(vPath(st, P, { c: VAL_ACC, w: 1 }), vE(draw));
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 1 }), draw);
     for (let i = 1; i < P.length - 1; i++) {
       const at = i / (P.length - 1);
-      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1, a: vE(draw) > at ? 0.9 : 0.18 });
+      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1, a: draw > at ? 0.9 : 0.18 });
     }
     const tri = vE(clamp01((draw - 0.78) / 0.22));   /* 伸びきる直前にフェードイン */
     vTri(st, 186, C - 44, 20, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
   },
-  A22(st, t) {   /* まっすぐ伸びて実行: 左下→右上の直線、途中に取得点、先端に三角フェードイン */
+  A22(st, t) {   /* まっすぐ伸びて実行: 左下→右上の直線、途中に取得点、先端に三角フェードイン(緩急強め) */
     const C = VAL_VB / 2, T = 4.0, k = vLoop(t, T);
-    const draw = Math.min(1, k / 0.72);
+    const draw = vEIO(Math.min(1, k / 0.72));
     const A = [40, C + 52], B = [166, C - 40];
     vPath(st, [A, B], { a: 0.14, dash: '4 6' });
-    vTrim(vPath(st, [A, B], { c: VAL_ACC, w: 1 }), vE(draw));
+    vTrim(vPath(st, [A, B], { c: VAL_ACC, w: 1 }), draw);
     for (let i = 1; i <= 3; i++) { const u = i / 4, x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u;
-      vCircle(st, x, y, 3.2, { c: VAL_ACC, w: 1, a: vE(draw) > u ? 0.95 : 0.18 }); }
+      vCircle(st, x, y, 3.2, { c: VAL_ACC, w: 1, a: draw > u ? 0.95 : 0.18 }); }
     const dir = Math.atan2(B[1] - A[1], B[0] - A[0]);
     const tri = vE(clamp01((draw - 0.78) / 0.22));
     vTri(st, B[0] + 10 * Math.cos(dir), B[1] + 10 * Math.sin(dir), 18, dir * 180 / Math.PI + 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
@@ -14477,24 +14493,30 @@ function buildPanel() {
   liveEdit = false;
 
   sub(catRes, '次のセクションへのつなぎ（明→黒）');
-  note('実績→開発者体験。下の「暗転のしかた」で、どこまで明るく・どこから黒に切り替えるかを決めます。');
-  /* 【2026-09-08 ヒデさん指定】smoothモードの暗転を4カーブ＋開始/終了で調整 */
+  note('実績セクションの背景が、下へスクロールするほど白→黒へ変わり、開発者体験(黒画面)へつながります。'
+    + '「%」は“開発者体験セクションが画面の下から上へどれだけ入ってきたか”の割合です（0%=まだ画面外／100%=画面上端まで来た）。'
+    + '暗くなると文字・図・for SaaS/for AI タグは自動で白へ反転します（どの案・どのピクトでも同じ）。');
+  /* 【2026-09-08 ヒデさん指定】smoothモードの暗転を4カーブ＋開始/終了で調整＋補足を丁寧に */
   segRow('暗転のしかた', [['なめらか', 1], ['ためて一気に', 2], ['早めにゆっくり', 3], ['直線', 4]],
     () => sv().results.darkVar || 2,
     v => { sv().results.darkVar = v; markDirty(); renderFrame(); });
+  note('暗転カーブ: なめらか=全体を等しくふわっと／ためて一気に=しばらく明るいまま→後半でグッと黒（ヒデさん既定）／早めにゆっくり=最初にサッと暗くなり後半ゆっくり／直線=一定速度。');
   rows.push(slider('明るいままの範囲', 0, 0.6, 0.02, () => (sv().results.darkFrom != null ? sv().results.darkFrom : 0.18),
     v => { sv().results.darkFrom = v; renderFrame(); }, v => Math.round(v * 100) + '%',
-    '開発者体験が画面をこの割合まで登ってくるまでは明るいまま。大きいほど明るい状態が長く続きます。'));
+    '開発者体験がここまで画面に入るまでは明るいまま（暗転しない）。右へ動かすほど、明るい状態が長く続いてから黒へ切り替わります。0%=すぐ暗くなり始める。'));
   rows.push(slider('黒くなりきる位置', 0.3, 1, 0.02, () => (sv().results.darkTo != null ? sv().results.darkTo : 0.82),
     v => { sv().results.darkTo = v; renderFrame(); }, v => Math.round(v * 100) + '%',
-    'ここまで登ると真っ黒。上の「明るいまま」との差が小さいほどパッと切り替わります。'));
-  note('↓ここから下は黒レクタングル案(scrollHold=固定/resTrans=black)の時だけ効きます。');
-  rows.push(slider('暗くなり始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
-    '何割スクロールしたら暗くなり始めるか。'));
-  rows.push(slider('暗くなりきる', 0.2, 1, 0.02, () => sv().results.outTo, v => sv().results.outTo = v, v => Math.round(v * 100) + '%',
-    'ここで完全に暗くなります。上との差が小さいほどパッと切り替わります。'));
-  rows.push(slider('消える時のぼかし', 0, 40, 1, () => sv().results.outBlur, v => sv().results.outBlur = v, v => v + 'px',
-    '大きいほど強くぼけながら消えます。'));
+    '開発者体験がここまで入ると真っ黒になりきります。「明るいまま」との差が小さいほどパッと、大きいほどゆっくり暗くなります。'));
+  /* 黒レクタングル案(scrollHold=固定/resTrans=black)専用スライダーは、その案の時だけ出す(紛らわしさ回避・2026-09-08) */
+  if ((params.patterns && params.patterns.resTrans) === 'black') {
+    note('↓は黒レクタングル案専用のスライダーです。');
+    rows.push(slider('暗くなり始める', 0, 0.9, 0.02, () => sv().results.outFrom, v => sv().results.outFrom = v, v => Math.round(v * 100) + '%',
+      '何割スクロールしたら黒矩形が出始めるか。'));
+    rows.push(slider('暗くなりきる', 0.2, 1, 0.02, () => sv().results.outTo, v => sv().results.outTo = v, v => Math.round(v * 100) + '%',
+      'ここで黒矩形が全面を覆います。上との差が小さいほどパッと切り替わります。'));
+    rows.push(slider('消える時のぼかし', 0, 40, 1, () => sv().results.outBlur, v => sv().results.outBlur = v, v => v + 'px',
+      '大きいほど強くぼけながら消えます。'));
+  }
 
   /* ========== 🖥 開発者体験 ========== */
   const catDev = category('🖥 開発者体験（暗い画面のコード紹介）', false);
