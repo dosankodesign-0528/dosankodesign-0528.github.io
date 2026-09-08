@@ -296,7 +296,7 @@
     /* 余白（4pxグリッド。gap/padding/margin用。配置座標(left/top)には使わない） */
     --space-4:4px; --space-5:5px; --space-6:6px; --space-8:8px; --space-10:10px;
     --space-12:12px; --space-16:16px; --space-20:20px; --space-24:24px; --space-32:32px;
-    --space-40:40px; --space-44:44px; --space-56:56px; --space-60:60px; --space-72:72px;
+    --space-40:40px; --space-44:44px; --space-56:56px; --space-60:60px; --space-72:72px; --space-80:80px;   /* 80: 実績の見出し+数値→for SaaS/AI(カンプSP 16534:22511) 2026-09-09 追加 */
     /* 【2026-09-08 整備】タイプスケール（font-size トークン）。従来は全部ハードコード(12px×24箇所等)で
        近い値(10/10.5/11/11.5)が乱立していたので統一。名前=役割ベース。まず新・静的モバイルで採用し、
        段階的にサイト全体へ寄せる。数値はカンプ実測(SP 390)に準拠。 */
@@ -1401,7 +1401,7 @@
     /* 軌道(メッシュ)は JS 側で約0.43倍。原点を左上にして上部に中央寄せで置く */
     /* 【2026-09-09 カンプ node16534:22139 準拠】グラフィックは幅~414・上端~81・中央(左に少しはみ出し)。
        gx/gy(17,-52)ぶんを見込んで top/margin を調整(top=133-52=81 / left=195-218+17≈-6)。 */
-    .orbit { right: auto; left: 50%; top: 133px; transform-origin: 0 0; margin-left: -238px; }   /* 915.483×0.52/2=238: 箱の中心=画面中央(JS側で gx=0) */
+    .orbit { right: auto; left: 50%; top: 141px; transform-origin: 0 0; margin-left: -259px; }   /* 中央: margin-left=−(915.483×0.565)/2 は JS(applySway)が同期。top は gy(−52)込みでメッシュ中心 y245(カンプ) */
     /* コピーはグラフィックの下へ。幅を制限して折り返し可にし、右はみ出しを解消 */
     /* 【2026-09-08 カンプ node16534:22195 準拠】KVコピーは中央寄せ。メイン46px Thin/行間1.4・中央、
        サブ12px Light/字間0.6px・中央(前に10px罫線)。コピー位置は y409(グラフィック y81-409 の下)。 */
@@ -1415,7 +1415,11 @@
     /* カンプSP node16534:22200: ロゴ帯は y624・高さ42.4、ロゴ1つは 13.5〜19px 高(→⚠️仮置き 16px)・間隔 24〜31px(→27px)。
        iOS Safari 実機で「消えたり出たり」したため、帯自体を合成レイヤーに固定(translateZ)し、表示は CSS で確定させる
        (JS の rv() による opacity/blur/transform の毎フレーム書き込みはスマホでは行わない → updateKV 側) */
-    .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden; }
+    .logos { top: 624px; height: 42px; opacity: 1; transform: translateZ(0); -webkit-backface-visibility: hidden;
+             animation: mbFadeIn .8s var(--e-out) 2.4s both; }   /* 出現: KV のグラフィックの後(⚠️仮置き 2.4s)にフェードイン */
+    @keyframes mbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* 帯の流れは JS 駆動(mbMarqueeTick)。CSS アニメは iOS で overflow:hidden+transform 配下のレイヤーが落ちて消えた */
+    .marquee-track { animation: none; will-change: auto; }
     .mq-set { gap: 27px; padding-right: 27px; height: 42px; }
     .mq-set img { height: 16px; }
 
@@ -1445,7 +1449,7 @@
     .val-head { left: 24px; right: 24px; top: 372px; width: auto; }
     .val-head .vh-s { font-size: 14px; }
     .val-head .vh-l { font-size: 34px; }
-    .val-point { width: 328px; max-width: calc(100% - 48px); }   /* カンプSP node16534:22144: Points は 328px 固定幅(Fill ではない) */
+    .val-point { width: calc(100% - 48px); }   /* カンプSP node16534:22144(Plugin API 実測): 枠 342 幅・子は Fill → 左右 24 の全幅(以前の 328 は更新前の値) */
     .val-p1 { left: 24px; top: 511px; }   /* カンプSP: Point01 y1204 (=1204−667−26: .val-group 経由の実測オフセット) */
     .val-p2 { left: 24px; top: 617px; }   /* カンプSP: Point02 y1315 (=1315−667−31) */
     /* 【カンプ node16534:22144】Point見出し20px / 本文12px / タグ12px, gap 8/4 */
@@ -1477,23 +1481,26 @@
     .res-stats .st span { font-size: 28px; }
     /* --- 実績 res2(現行レイアウト)・2026-09-02 モバイル最適化 --- */
     /* 【カンプ node16534:22512】見出し22px 行間1.7 / ラベル14px / 数値50px, グループgap32 */
-    .res2 { max-width: calc(100% - 48px); gap: var(--space-32); }
+    .res2 { max-width: calc(100% - 48px); gap: var(--space-80); }   /* カンプSP node16534:22511(Plugin API 実測): 見出し+数値 → for SaaS/AI の間 80 */
     .res2-head { font-size: var(--fs-title); line-height: var(--lh-loose); white-space: normal; text-align: center;
                  display: flex; flex-wrap: wrap; justify-content: center; }
     .res2-hl2 { min-height: calc(var(--fs-title) * 1.7); }
     .res2-caret { height: 22px; }
     .res2-suffix { margin-left: 0; }   /* カンプSP node16534:22513「Anyflowが支えます。」: Anyflow と「が」の間は空けない(PC用の --res-slot-gap は使わない) */
-    /* カンプSP node16534:22514: 左寄せ gap24 で 1段目「100+ / 20,000+」・2段目「200+」の 2段組。
-       flex-wrap だと数値(SF Pro Ultralight 50px)がブラウザの光学サイズ差で数px広くなった時に
-       「縮小より先に折り返す」仕様で 3段に崩れる(実測 343 > 342)。grid 2列なら段組が固定され、
-       超過分は右余白(24px)側へ数px はみ出すだけで見た目に出ない。 */
-    .res2-stats { display: grid; grid-template-columns: auto auto; justify-content: start; gap: var(--space-24); }
+    /* カンプSP node16534:22514(2026-09-09 更新): 数値を 50→34px に縮小したので 3つが 1 行に収まる。
+       flex-wrap gap24・左寄せ(カンプの auto-layout そのまま)。以前の grid 2段組(50px時の折返し対策)は撤回。 */
+    /* gap は カンプ 24 だが、数値がタブラー数字(等幅)のぶん実測で 348 と 342 を 6px 超えて 2 行に折れる。
+       カンプは 1 行なので、1 行維持を優先して gap を 20 に詰める(見た目差 4px は不可視)。 */
+    .res2-stats { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: var(--space-20); }
     .res2-stats .r2s { align-items: flex-start; gap: var(--space-4); }
-    .res2-stats .r2s b { font-size: var(--fs-body); line-height: 24px; }
-    .res2-stats .r2s span { font-size: var(--fs-stat); }
+    .res2-stats .r2s b { font-size: var(--fs-caption); line-height: 24px; }   /* カンプSP更新: Noto Thin 14→12px */
+    .res2-stats .r2s span { font-size: 34px; }                                /* カンプSP更新: SF Pro Ultralight 50→34px(node16534:22517) */
     /* 【2026-09-08 カンプ node16534:22526 準拠】カードは縦積み(文字→中央にピクト220)。
        for SaaS と for AI の間は区切り線。文字は左寄せ、ピクトは中央。 */
-    .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-40); }
+    /* カンプSP node16534:22524/22526: 上罫線(Line35) → 24 → for SaaS → 24 → 罫線(Line34) → 24 → for AI。
+       PC用の区切り線 .res2-hr は隠し、Line35 は res2-vals の上罫線で表現(二重線・二重ギャップの解消)。 */
+    .res2-hr { display: none; }
+    .res2-vals { flex-direction: column; align-items: stretch; gap: var(--space-24); border-top: 1px solid var(--line-grid); padding-top: var(--space-24); }
     .res2-vals .r2v { flex-direction: column; align-items: stretch; gap: 0; }   /* カンプSP node16534:22527: 文章ブロック直下にピクト(gap 0) */
     .res2-vals .r2v-text { width: 100%; gap: var(--space-16); }
     .r2v-tagh { gap: var(--space-4); }
@@ -2584,7 +2591,7 @@ function kvGT() {
   if (kvStartAtLoad == null) kvStartAtLoad = (params.conv && params.conv.startPhase) || 0;
   /* 【2026-09-08】静的モバイル: グラフィックの時間アニメ(メッシュ/軌道/回転)を固定時刻で静止させる＝
      スクロールで動いて見えるのを止める。 */
-  if (isMobile) return kvStartAtLoad + 2.5;
+  /* 【2026-09-09 ヒデさん指定】出現アニメは PC と同じに戻す(静的化で固定していたクロックを解除) */
   /* 登場(KVが見え始める)までは開始位相のまま止める → 登場した瞬間が開始地点になる */
   if (kvRevealElapsed == null) return kvStartAtLoad;
   return kvStartAtLoad + (elapsed - kvRevealElapsed);
@@ -7752,6 +7759,7 @@ function patternDeg(d, i, p) {
 
 function renderFrame() {
   frameSeq++;   /* このフレームぶんの矩形キャッシュを新しくする */
+  mbMarqueeTick();   /* スマホのロゴ帯(JS駆動)。PC では何もしない */
   /* resize イベントを取りこぼす環境があるので、寸法が変わっていたら組み直す
      (fit() の準備が済むまでは呼ばない) */
   if (fitReady && window.innerWidth > 0 &&
@@ -7850,7 +7858,11 @@ function applySway() {
   /* スマホは軌道グループごと縮小して画面幅に収める (原点は mb 用CSSで左上にしてある)。
      【2026-09-09 カンプ node16534:22139 準拠】メッシュが枠(y81→409/328px)をほぼ埋め、惑星が
      その中心(≒y248)に来るよう拡大。0.44ではメッシュが小さくコピーとの間に空白が出ていた。 */
-  const ob = isMobile ? ' scale(0.52)' : '';
+  /* 【2026-09-09 画素実測で再調整】0.52 ではメッシュ直径 295(カンプ≒320)で中心が y225(カンプ 245)。
+     0.565 で直径≒320・惑星≒140(カンプ 138)。中央合わせは margin-left = −(915.483×scale)/2 を JS で同期。 */
+  const KV_MB_SCALE = 0.565;
+  const ob = isMobile ? ` scale(${KV_MB_SCALE})` : '';
+  if (isMobile) swayEls.orbit.style.marginLeft = (-(915.483 * KV_MB_SCALE) / 2).toFixed(1) + 'px';
   /* 【2026-09-09 ヒデさん指定】静的モバイル: ゆらぎ(sway)も止める＝KVグラフィックが揺れて動くのを解消。 */
   const swayOrbit = isMobile ? '' : orbit;
   swayEls.orbit.style.transformStyle = '';
@@ -7865,10 +7877,9 @@ function applySway() {
   const plFlat = pl.flat == null ? 1 : pl.flat;
   const plT = (pl.dx || pl.dy || pl.scale !== 1 || plFlat !== 1)
     ? ` translate(${pl.dx}px, ${pl.dy}px) scale(${pl.scale}, ${pl.scale * plFlat})` : '';
-  /* 【2026-09-09 カンプ準拠】静的モバイル: 惑星のゆらぎは止めつつ、メッシュ中心よりやや下(カンプの
-     惑星中心≒y248)へ来るよう下げる。orbit(scale0.52)配下なので screen 20px 下げ ≒ local 40px。 */
-  const mbSphere = isMobile ? 'translateY(40px) ' : '';
-  swayEls.sphere.style.transform = (mbSphere + (isMobile ? '' : sph) + plT).trim();
+  /* 静的モバイル: 惑星のゆらぎ(sph)は止める。位置はメッシュ中心のまま(以前の translateY(40px) は
+     「惑星だけ下がって見える」原因だったので撤回。カンプの惑星中心 y246 はメッシュごと下げて合わせる) */
+  swayEls.sphere.style.transform = ((isMobile ? '' : sph) + plT).trim();
 }
 
 /* ================= スクロール連動セクション ================= */
@@ -8736,7 +8747,7 @@ function updateVision(p) {
   /* 【2026-09-08 ヒデさん指定】静的モバイル: 時間再生を止め、最初から最終状態(メッセージ/図/ポイント
      すべて表示・ドットの回転も停止後)で固定する。A を十分先へ送るとすべての reveal が完了し、
      pat2 の回転も停止状態(pat2K=1)になる。スクロールで動かない。 */
-  if (isMobile) A = visTotal + 1000;
+  /* 【2026-09-09 ヒデさん指定】ビジョンの入場(マスク出現→軌道→Point01/02)は PC と同じ時間再生に戻す */
 
   if (A >= autoEnd && !visAutoDone) visAutoDone = true;
 
@@ -9110,16 +9121,7 @@ const SLOT_ORIG = {
 };
 
 function buildSlots() {
-  if (isMobile) {
-    /* 【2026-09-08】静的モバイル: スロットを使わずプレーンな数字(100+等)で固定表示。
-       すでにスロットDOMに置き換わっていたら、元の実数字へ戻す(初回に控えた値を使う)。 */
-    if (slots.length || (resEls.cntMain && resEls.cntMain.children.length)) {
-      const restore = { cntMain: SLOT_ORIG.main, cntSub1: SLOT_ORIG.sub1, cntSub2: SLOT_ORIG.sub2 };
-      for (const id in restore) { const el = document.getElementById(id); if (el && restore[id] != null) el.textContent = restore[id]; }
-      slots = []; slotBuiltCycles = -1;
-    }
-    return;
-  }
+  /* 【2026-09-09 ヒデさん指定】スロットアニメはスマホでも PC と同じに再生する(固定表示は撤回) */
   const cy = Math.max(1, Math.round(params.sections.results.slotCycles));
   if (slotBuiltCycles === cy && slots.length) return;
   slotBuiltCycles = cy;
@@ -9214,7 +9216,7 @@ function updateResults(p) {
   let t = playT('results', resTotal(), canPlay(p), SECS.results, p);
   /* 【2026-09-08 ヒデさん指定】静的モバイル: 実績の登場(タイピング/スロット/カード)を最終状態で固定。
      ただし『実績→開発者体験の暗転』は下の devDarkK 連動で残す(t とは別系統なのでそのまま効く)。 */
-  if (isMobile) t = resTotal() + 1000;
+  /* 【2026-09-09 ヒデさん指定】実績のブラー出現＋スロットは PC と同じ時間再生に戻す */
 
   /* ---- 再生前: 全部隠す(数字は0で待機) ---- */
   if (t < 0) {
@@ -9270,7 +9272,7 @@ function updateResults(p) {
     slotT0 = null;
   }
   /* 【2026-09-08】静的モバイル: スロットは回さず最終値(実数字)で固定 */
-  renderSlots(isMobile ? 9999 : (slotT0 === null ? -1 : elapsed - slotT0));
+  renderSlots(slotT0 === null ? -1 : elapsed - slotT0);
 
   /* ===== 実績 → 開発者体験 のつなぎ(黒せり上がり + 白反転) ===== */
   const devTop = rectOf(SECS.dev).top;
@@ -10165,7 +10167,7 @@ function updateDev(pRaw) {
      45%を過ぎたら 1 で頭打ち＝出っ放し。画面の下にある間は 0＝隠す。 */
   const reveal = (el) => {
     if (!el) return 1;
-    if (isMobile) return 1;   /* 【2026-09-08】静的モバイル: ブロックは常に出しきり(スクロールで動かさない)。暗転bgKは下でそのまま維持 */
+    /* 【2026-09-09 ヒデさん指定】開発者体験のブラー出現も PC と同じに戻す(入場で1回だけ再生) */
     const r = rectOf(el);
     const centerY = r.top + r.height / 2;
     /* ブロックの上端が画面上端に来た時点でほぼ出しきる(=黒背景の直後に自動で出て見える)。0.5 で top=0 のとき k≒1 */
@@ -10249,7 +10251,7 @@ function updateCases(pRaw) {
   const c = params.sections.cases;
   /* 所定の位置(固定)に着いたら1本の映像として自動再生 */
   let tc = playT('cases', c.playSec, canPlay(pRaw), SECS.cases, pRaw);
-  if (isMobile) tc = c.playSec + 1000;   /* 【2026-09-08】静的モバイル: 導入事例も最終状態で固定 */
+  /* 【2026-09-09 ヒデさん指定】導入事例のブラー出現も PC と同じ時間再生に戻す */
   const p = tc < 0 ? 0 : clamp01(tc / c.playSec);
 
   /* 「導入事例」ラベルと1枚目は、セクションが画面下から入ってくる助走のうちに出しきる。
@@ -10531,24 +10533,9 @@ setTimeout(function applyOverrideOnBoot() {
 
 function updateKV() {
   const c = params.kv, t = elapsed;
-  /* 【2026-09-08 ヒデさん指定】静的モバイル: タイピングやブラー登場など“動く”演出をやめ、
-     最初から最終状態で固定する(スクロールで動かない)。KVは normal flow で並べる(CSS側)。 */
-  if (isMobile) {
-    rv(kvEls.header, 1, 8, 10);
-    kvEls.chars.forEach(arr => arr.forEach(el => { el.style.display = 'inline-block'; }));
-    if (kvEls.carets[0]) kvEls.carets[0].style.opacity = 0;
-    if (kvEls.carets[1]) kvEls.carets[1].style.opacity = 0;
-    rv(kvEls.eyebrow, 1, 8, 8);
-    rv(kvEls.orbit, 1, 12);
-    /* 【2026-09-09 ヒデさん指摘】iOS 実機でロゴ帯が「消えたり出たり」した。rv() は opacity/blur/transform を
-       inline style に書き、1826px 幅のマーキー層に blur フィルタ層が重なると WebKit が合成レイヤーを落とす。
-       スマホでは JS からは触らず、inline を一度だけ空にして CSS(.logos: opacity 1 / translateZ(0))に委ねる。 */
-    if (!kvEls.logos.dataset.mbFixed) {
-      kvEls.logos.style.opacity = ''; kvEls.logos.style.filter = ''; kvEls.logos.style.transform = ''; kvEls.logos.style.pointerEvents = '';
-      kvEls.logos.dataset.mbFixed = '1';
-    }
-    return;
-  }
+  /* 【2026-09-09 ヒデさん指定】スマホも KV の入場(タイピング→グラフィックのブラー出現)は PC と同じ。
+     2026-09-08 の「最初から最終状態で固定」は撤回。スクロールで動く要因(揺れ/再レイアウト)は
+     applySway の sway 無効化と fit() のガードで別途止めている。ロゴ帯だけは JS で触らず CSS で出す(下の rv 参照)。 */
   rv(kvEls.header, easeOutQ(clamp01((t - c.headerAt) / T_IN)), 8, 10);
 
   /* 1文字ずつ打ち込む */
@@ -10587,7 +10574,9 @@ function updateKV() {
   const _orbReveal = easeOutQ(clamp01((t - gAt) / (RD * 1.5)));
   if (kvRevealElapsed == null && _orbReveal > 0.5) kvRevealElapsed = elapsed;
   rv(kvEls.orbit, _orbReveal, 12);
-  rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
+  /* スマホのロゴ帯は JS(rv)で触らない: iOS で inline の blur/opacity 書き込みが合成レイヤーを落とすため。
+     出現は CSS アニメ(.logos の mbFadeIn)で同じタイミング感を出す */
+  if (!isMobile) rv(kvEls.logos, easeOutQ(clamp01((t - gAt - RD * 0.6) / RD)), 8);
   /* 【2026-08-26 ヒデさん指定】1行目のタイピングが終わったあたりで、右のKV iframe に入場開始を合図する
      (モック→アイコン→軌道)。以前は全タイピング完了(gAt)を待っていた。introLead で前後にずらせる。 */
   const kvIntroFireAt = c.typeAt + line1End + (c.introLead || 0);
@@ -10799,7 +10788,7 @@ function sphereFallback() {
 /* 球体の回転角 (主回転, 2軸目) */
 function sphereAngles() {
   const sp = params.sphere;
-  let t = isMobile ? 2.5 : elapsed;   /* 【2026-09-08】静的モバイル: 惑星の回転も固定時刻で静止 */
+  let t = elapsed;   /* 【2026-09-09】惑星の自転は PC と同じ(スマホで止めていたのを戻す。揺れ(sway)だけ止める) */
   /* ランダム: 周期の違う3つの波を重ねて、繰り返しに聞こえない不規則さを作る
      (乱数を毎フレーム引くとガタガタになるので、なめらかな擬似ランダムにしている) */
   if (sp.random > 0) {
@@ -10865,6 +10854,21 @@ function applyCaseHover() {
       });
     }
   });
+}
+/* 【2026-09-09 ヒデさん指摘「ティッカーが急に消える・遅い」】スマホのロゴ帯は JS 駆動(毎フレーム translate3d)。
+   CSS アニメだと iOS Safari で overflow:hidden+transform 配下の合成レイヤーが落ちて「消えたり出たり」したため。
+   速度もここで決める(1セット幅で折り返すので継ぎ目なし)。 */
+const MB_MARQUEE_PXPS = 100;   /* ⚠️仮置き: px/秒。PC は 1826px/30s ≒ 61px/s。「遅すぎる」指摘で約1.6倍 */
+let mbMarqueeSetW = 0;
+function mbMarqueeTick() {
+  if (!isMobile || typeof marqueeTrack === 'undefined' || !marqueeTrack) return;
+  if (!mbMarqueeSetW || (frameSeq % 60) === 0) {   /* 画像の読み込みで幅が変わるので時々測り直す */
+    const set = marqueeTrack.querySelector('.mq-set');
+    if (set) mbMarqueeSetW = set.getBoundingClientRect().width;
+    if (!mbMarqueeSetW) return;
+  }
+  const x = (elapsed * MB_MARQUEE_PXPS) % mbMarqueeSetW;
+  marqueeTrack.style.transform = `translate3d(${(-x).toFixed(2)}px,0,0)`;
 }
 function applyMarquee() {
   if (!marqueeTrack) return;   /* 2026-08-31: ロゴは支給iframeに差し替え済み(自前マーキー廃止)。要素が無ければ何もしない */
@@ -11934,6 +11938,13 @@ function fit() {
      初回に applyMarquee が isMobile 未確定(=false)＋params.running=false で走ると
      ティッカーが止まったままになるため、モバイル確定後に必ず running へ戻す。 */
   if (isMobile && typeof marqueeTrack !== 'undefined' && marqueeTrack) marqueeTrack.style.animationPlayState = 'running';
+  /* 【2026-09-09】ロゴ帯のぼやけ対策: 初期フレーム(isMobile 未確定=false)で rv() が
+     inline に filter:blur(8px)/opacity:0 を書いてしまい、モバイル確定後は誰も消さないため
+     帯がぼやけたまま残っていた。確定時に一度だけ inline を空にする(表示は CSS の .logos に委ねる)。 */
+  if (isMobile && typeof kvEls !== 'undefined' && kvEls.logos && !kvEls.logos.dataset.mbCleared) {
+    kvEls.logos.style.filter = ''; kvEls.logos.style.opacity = ''; kvEls.logos.style.transform = ''; kvEls.logos.style.pointerEvents = '';
+    kvEls.logos.dataset.mbCleared = '1';
+  }
   const s = Math.min(1, w / DW);                   // 設計幅以上では等倍(100%表示)
   const sp = Math.min(1, w / DW, h / DH);          // ピンは縦も収まるように
   stageW = Math.max(DW, w / s);
