@@ -3240,7 +3240,7 @@ const DEFAULTS = {
       /* 【2026-09-08 ヒデさん指定】smoothモードの暗転(実績→開発者体験)の効き。
          darkFrom=明るいままの範囲(devが画面をこの割合登るまで暗転しない) / darkTo=黒くなりきる位置 /
          darkVar=暗転カーブ(1なめらか/2ためて一気に/3早めにゆっくり/4直線) */
-      darkFrom: 0.18, darkTo: 0.82, darkVar: 2,
+      darkFrom: 0.04, darkTo: 0.5, darkVar: 2,   /* 2026-09-08修正: devのモックが出る前に黒くなりきるよう締める(0.18/0.82は遅すぎてモックが明るい背景に出ていた) */
       outBlur: 22,     // 消える時のぼかし量(案Bのみ。案Cは白反転)
       /* 数字のスロット (2026-08-17 指定)。
          数字は最初から出しておき、回転そのものを見せる。ブラー出現は見出しだけ。
@@ -3964,6 +3964,15 @@ function loadParams() {
         const _vo = merged.sections.vision;
         if (_vo) { _vo.npOrbitLead = 1.2; _vo.npOrbitDur = 2.2; }
         localStorage.setItem('anyflow-vision-orbit-earlier-20260903', '1');
+      }
+      /* 【2026-09-08 ヒデさん指定】暗転(実績→開発者体験)の既定を締め直す。以前の 0.18/0.82/2 は暗転が
+         遅すぎて、開発者体験のモックパネルが“明るい背景”のまま出ていた。モックが出る前に黒くなりきる
+         値へ一度だけ寄せる(以後パネルで変えれば尊重)。 */
+      if (!localStorage.getItem('anyflow-dark-tune-20260908b') && merged.sections.results) {
+        merged.sections.results.darkFrom = 0.04;
+        merged.sections.results.darkTo = 0.5;
+        merged.sections.results.darkVar = 2;
+        localStorage.setItem('anyflow-dark-tune-20260908b', '1');
       }
       /* ⚠️ 今の DOTS の個数ぶんだけ作る。保存が足りなければ既定で埋め、余っていれば捨てる
          (s.dots を起点にすると、増えたドットのぶんが undefined になって落ちる) */
