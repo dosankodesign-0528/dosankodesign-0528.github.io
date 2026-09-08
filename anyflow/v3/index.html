@@ -3439,7 +3439,7 @@ const DEFAULTS = {
     caseHover: 'trim',   // 導入事例のホバー = パスのトリミングを既定に (2026-08-30 ヒデさん指定)
     /* 【2026-08-28 ヒデさん指定】実績の2つの価値の、右側ピクトグラムの動き(各5案) */
     valSaas: 'S1',       // for SaaS「リアルタイムにデータ同期」
-    valAi: 'A1',         // for AI「コンテキスト取得から実行」
+    valAi: 'A20',        // for AI「コンテキスト取得から実行」2026-09-08: レーダー(棒が上下)へ
   },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
@@ -3912,6 +3912,12 @@ function loadParams() {
       }
       /* 【2026-09-03 ヒデさん指定】ドットの回転は「もっと早くから回っていて早めに止まる」。
          確定指示なので一度だけ 先行1.2秒 / 1周2.2秒 へ寄せる(以後パネルで変えれば尊重)。 */
+      /* 【2026-09-08 ヒデさん指定】for AIピクトを A4(正方形収縮+水色三角が右へ)→ A20(レーダー/棒が上下)へ。
+         確定指示なので一度だけ寄せる(以後パネルで変えれば尊重)。ダンプ焼き込みは使わない。 */
+      if (!localStorage.getItem('anyflow-valai-radar-20260908')) {
+        if (merged.patterns) merged.patterns.valAi = 'A20';
+        localStorage.setItem('anyflow-valai-radar-20260908', '1');
+      }
       if (!localStorage.getItem('anyflow-vision-orbit-earlier-20260903')) {
         const _vo = merged.sections.vision;
         if (_vo) { _vo.npOrbitLead = 1.2; _vo.npOrbitDur = 2.2; }
@@ -11099,6 +11105,24 @@ const VAL_AI = {
       else vRect(st, x, C, 12, 12, { c: VAL_ACC, w: 1, rot: u * 240, rx0: x, ry0: C });
     }
     /* 終端で光る三角(fire)は削除(ヒデさん指定) */
+  },
+  /* A20 レーダー(2026-09-08 ヒデさん指定): 縦の棒が上下するだけのループ。
+     長方形の収縮も水色の再生マークが右へずれる動きも無し。棒が波打つのを延々くり返す。 */
+  A20(st, t) {
+    const C = VAL_VB / 2;
+    const N = 5, span = 132, x0 = C - span / 2, gap = span / (N - 1);
+    const baseY = C + 48;                 /* 棒の下端(共通の底) */
+    const minH = 22, maxH = 100;
+    /* 底の基準線(うっすら)。空っぽに見えないように常設 */
+    vLine(st, x0 - 12, baseY, x0 + span + 12, baseY, { a: 0.25, w: 1 });
+    for (let i = 0; i < N; i++) {
+      const x = x0 + i * gap;
+      /* 位相を1本ずつずらして波打たせる＝レーダー/イコライザ風の上下 */
+      const s = 0.5 + 0.5 * Math.sin(t * 2.2 - i * 0.8);
+      const h = minH + (maxH - minH) * s;
+      vLine(st, x, baseY, x, baseY - h, { w: 1, a: 0.9 });
+      vCircle(st, x, baseY - h, 2.5, { c: VAL_ACC, w: 1, a: 0.9 });   /* 先端の信号点(水色) */
+    }
   },
   /* A2 形が変わる: 円 → 正方形 → 三角 と姿を変え、三角になった瞬間に外へ線が飛ぶ＝実行 */
   A2(st, t) {
