@@ -3439,7 +3439,7 @@ const DEFAULTS = {
     caseHover: 'trim',   // 導入事例のホバー = パスのトリミングを既定に (2026-08-30 ヒデさん指定)
     /* 【2026-08-28 ヒデさん指定】実績の2つの価値の、右側ピクトグラムの動き(各5案) */
     valSaas: 'S1',       // for SaaS「リアルタイムにデータ同期」
-    valAi: 'A20',        // for AI「コンテキスト取得から実行」2026-09-08: レーダー(棒が上下)へ
+    valAi: 'A21',        // for AI「コンテキスト取得から実行」2026-09-08: 折れて進む・改(矢印/三角フェードイン)を既定に
   },   // セクション演出の採用案
 };
 /* ⚠️ パラメータの「意味」を変えたら必ずこのバージョンを上げること。
@@ -3917,6 +3917,12 @@ function loadParams() {
       if (!localStorage.getItem('anyflow-valai-radar-20260908')) {
         if (merged.patterns) merged.patterns.valAi = 'A20';
         localStorage.setItem('anyflow-valai-radar-20260908', '1');
+      }
+      /* 【2026-09-08 ヒデさん指定・改】既定を A21(折れて進む・改/矢印+三角フェードイン)へ。
+         直前のレーダー移行(A20)より後に置き、最終的にA21で開く。以後パネルで変えれば尊重。 */
+      if (!localStorage.getItem('anyflow-valai-arrow-20260908b')) {
+        if (merged.patterns) merged.patterns.valAi = 'A21';
+        localStorage.setItem('anyflow-valai-arrow-20260908b', '1');
       }
       if (!localStorage.getItem('anyflow-vision-orbit-earlier-20260903')) {
         const _vo = merged.sections.vision;
@@ -11124,6 +11130,148 @@ const VAL_AI = {
       vCircle(st, x, baseY - h, 2.5, { c: VAL_ACC, w: 1, a: 0.9 });   /* 先端の信号点(水色) */
     }
   },
+  /* ===== 2026-09-08 ヒデさん指定・新規7案(コンテキスト取得→実行)。矢印の三角は
+     「パスのトリミング」ではなく【線が伸びきる直前にフェードイン】で出す(＝延長線上に矢じりが現れる) ===== */
+  /* 共通: 線の終点付近に三角矢じりをフェードインで置く。dir=度(0=右) */
+  A21(st, t) {   /* 折れて進む・改(既定): 左下から折れ線→伸びきる直前に三角がフェードイン */
+    const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
+    const draw = Math.min(1, k / 0.72);
+    const P = [[36, C + 46], [78, C + 46], [78, C], [130, C], [130, C - 44], [172, C - 44]];
+    vPath(st, P, { a: 0.14, dash: '4 6' });
+    vTrim(vPath(st, P, { c: VAL_ACC, w: 1 }), vE(draw));
+    for (let i = 1; i < P.length - 1; i++) {
+      const at = i / (P.length - 1);
+      vRect(st, P[i][0], P[i][1], 8, 8, { w: 1, a: vE(draw) > at ? 0.9 : 0.18 });
+    }
+    const tri = vE(clamp01((draw - 0.78) / 0.22));   /* 伸びきる直前にフェードイン */
+    vTri(st, 186, C - 44, 20, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A22(st, t) {   /* まっすぐ伸びて実行: 左下→右上の直線、途中に取得点、先端に三角フェードイン */
+    const C = VAL_VB / 2, T = 4.0, k = vLoop(t, T);
+    const draw = Math.min(1, k / 0.72);
+    const A = [40, C + 52], B = [166, C - 40];
+    vPath(st, [A, B], { a: 0.14, dash: '4 6' });
+    vTrim(vPath(st, [A, B], { c: VAL_ACC, w: 1 }), vE(draw));
+    for (let i = 1; i <= 3; i++) { const u = i / 4, x = A[0] + (B[0] - A[0]) * u, y = A[1] + (B[1] - A[1]) * u;
+      vCircle(st, x, y, 3.2, { c: VAL_ACC, w: 1, a: vE(draw) > u ? 0.95 : 0.18 }); }
+    const dir = Math.atan2(B[1] - A[1], B[0] - A[0]);
+    const tri = vE(clamp01((draw - 0.78) / 0.22));
+    vTri(st, B[0] + 10 * Math.cos(dir), B[1] + 10 * Math.sin(dir), 18, dir * 180 / Math.PI + 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A23(st, t) {   /* 点をつないで実行: 散らばった文脈の点→中央へ集約→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.6, k = vLoop(t, T);
+    const gather = Math.min(1, k / 0.52), go = Math.max(0, (k - 0.5) / 0.5);
+    const pts = [[50, C - 42], [42, C + 28], [86, C - 6], [66, C + 50], [92, C + 22]];
+    const hub = [112, C];
+    pts.forEach(p => { vCircle(st, p[0], p[1], 3.5, { c: VAL_ACC, w: 1, a: 0.45 + 0.5 * vE(gather) });
+      vTrim(vPath(st, [p, hub], { a: 0.5, w: 1 }), vE(gather)); });
+    vCircle(st, hub[0], hub[1], 10, { w: 1, a: 0.9 });
+    vTrim(vPath(st, [hub, [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A24(st, t) {   /* 束ねて放つ: 左の複数線が1本に束なり→右へ矢印を放つ+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.2, k = vLoop(t, T);
+    const merge = Math.min(1, k / 0.5), shoot = Math.max(0, (k - 0.5) / 0.5);
+    const ys = [C - 42, C - 15, C + 15, C + 42], x0 = 36, xm = 104;
+    ys.forEach(y => { const yy = y + (C - y) * vE(merge);
+      vPath(st, [[x0, y], [xm, yy]], { c: VAL_ACC, w: 1, a: 0.9 - 0.45 * shoot }); });
+    vTrim(vPath(st, [[xm, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(shoot));
+    const tri = vE(clamp01((shoot - 0.72) / 0.28));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A25(st, t) {   /* 満ちて矢が伸びる: 円弧が満ちる(取得)→右へ直線が伸びて三角フェードイン */
+    const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
+    const fill = Math.min(1, k / 0.55), go = Math.max(0, (k - 0.58) / 0.42);
+    const r = 34, cx = 70;
+    vCircle(st, cx, C, r, { a: 0.16 });
+    vTrim(vCircle(st, cx, C, r, { c: VAL_ACC, w: 1 }), vE(fill));
+    vCircle(st, cx, C, 4, { c: VAL_PINK, w: 1, a: 0.8 });
+    vTrim(vPath(st, [[cx + r, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A26(st, t) {   /* 枠を読み取り実行: 枠内を走査線が走って取得→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 5.0, k = vLoop(t, T), S = 78;
+    const scan = Math.min(1, k / 0.5), go = Math.max(0, (k - 0.55) / 0.45);
+    const bx = 64;
+    vRect(st, bx, C, S, S + 12, { rx: 0, w: 1, a: 0.9 });
+    for (let i = 0; i < 3; i++) { const yy = C - 22 + i * 22;
+      vLine(st, bx - 24, yy, bx + 24, yy, { a: (i / 3) < scan ? 0.5 : 0.15, dash: '5 6' }); }
+    if (go < 0.35) { const y = C - (S + 12) / 2 + (S + 12) * vE(scan);
+      vLine(st, bx - S / 2 + 6, y, bx + S / 2 - 6, y, { c: VAL_ACC, w: 1, a: scan < 1 ? 1 : 0.2 }); }
+    vTrim(vPath(st, [[bx + S / 2, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A27(st, t) {   /* ノードが灯り実行: ノードが順に灯って文脈がつながる→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.8, k = vLoop(t, T);
+    const light = Math.min(1, k / 0.6), go = Math.max(0, (k - 0.6) / 0.4);
+    const nodes = [[46, C - 30], [52, C + 36], [92, C - 2], [84, C + 42], [110, C - 36]];
+    const edges = [[0, 2], [1, 2], [2, 4], [3, 2]];
+    edges.forEach(e => vTrim(vPath(st, [nodes[e[0]], nodes[e[1]]], { a: 0.5, w: 1 }), vE(Math.min(1, light * 1.2))));
+    nodes.forEach((n, i) => vCircle(st, n[0], n[1], 4, { c: VAL_ACC, w: 1, a: light > i / nodes.length ? 0.95 : 0.2 }));
+    vTrim(vPath(st, [[110, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A28(st, t) {   /* 段を上って実行: 段(取得→整形→…)が順に現れ、つないで右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.6, k = vLoop(t, T);
+    const appear = Math.min(1, k / 0.6), go = Math.max(0, (k - 0.62) / 0.38);
+    const steps = [[54, C + 34], [96, C + 8], [134, C - 20]];
+    vPath(st, steps, { a: 0.14, dash: '4 6' });
+    steps.forEach((p, i) => { const kk = clamp01((appear - i * 0.24) / 0.24);
+      vRect(st, p[0], p[1], 26, 18, { rx: 0, w: 1, a: 0.16 + 0.8 * kk }); });
+    vTrim(vPath(st, steps, { c: VAL_ACC, w: 1 }), vE(appear));
+    const last = steps[2];
+    vTrim(vPath(st, [[last[0] + 13, last[1]], [176, last[1]]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, last[1], 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A29(st, t) {   /* 波紋が集まって実行: 同心の弧が中心へ集まる(取得)→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.4, k = vLoop(t, T);
+    const conv = Math.min(1, k / 0.55), go = Math.max(0, (k - 0.58) / 0.42);
+    const cx = 74;
+    for (let i = 0; i < 3; i++) { const r = (46 - i * 10) * (1 - 0.5 * vE(conv)) + 6;
+      vCircle(st, cx, C, r, { c: VAL_ACC, w: 1, a: 0.3 + 0.2 * i }); }
+    vCircle(st, cx, C, 5, { c: VAL_PINK, w: 1, a: 0.85 });
+    vTrim(vPath(st, [[cx + 10, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A30(st, t) {   /* 枝が1つに集約して実行: 上下の枝が中央へ集約→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.2, k = vLoop(t, T);
+    const grow = Math.min(1, k / 0.55), go = Math.max(0, (k - 0.58) / 0.42);
+    const mid = [104, C];
+    [[42, C - 42], [42, C + 42]].forEach(tp => {
+      vTrim(vPath(st, [tp, [72, C], mid], { c: VAL_ACC, w: 1 }), vE(grow));
+      vCircle(st, tp[0], tp[1], 4, { c: VAL_ACC, w: 1, a: 0.4 + 0.5 * vE(grow) }); });
+    vCircle(st, mid[0], mid[1], 8, { w: 1, a: 0.9 });
+    vTrim(vPath(st, [mid, [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A31(st, t) {   /* 粒がゲートを抜けて実行: 粒が左→ゲートを抜け→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.0, k = vLoop(t, T), gateX = 104;
+    vRect(st, gateX, C, 14, 62, { rx: 0, w: 1, a: 0.9 });
+    vLine(st, 48, C, gateX - 10, C, { a: 0.2, dash: '4 6' });
+    for (let i = 0; i < 3; i++) { const u = vLoop(t * 0.6 + i / 3, 1), x = 44 + u * 132;
+      vCircle(st, x, C, 4, { c: x > gateX ? VAL_ACC : VAL_INK, w: 1, a: 0.85 }); }
+    const go = Math.max(0, (k - 0.5) / 0.5);
+    vTrim(vPath(st, [[gateX + 10, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
+  A32(st, t) {   /* 格子が満ちて実行: 3×3の格子が順に満ちる(取得)→右へ矢印+三角フェードイン */
+    const C = VAL_VB / 2, T = 4.6, k = vLoop(t, T);
+    const fill = Math.min(1, k / 0.6), go = Math.max(0, (k - 0.62) / 0.38);
+    const gx = 68, n = 3, cell = 18, gap = 4, span = (n - 1) * (cell + gap);
+    for (let r = 0; r < n; r++) for (let c2 = 0; c2 < n; c2++) { const idx = r * n + c2, on = fill * n * n > idx;
+      vRect(st, gx - span / 2 + c2 * (cell + gap), C - span / 2 + r * (cell + gap), cell, cell, { rx: 0, w: 1, a: on ? 0.9 : 0.16 }); }
+    vTrim(vPath(st, [[gx + span / 2 + cell / 2, C], [176, C]], { c: VAL_ACC, w: 1 }), vE(go));
+    const tri = vE(clamp01((go - 0.78) / 0.22));
+    vTri(st, 186, C, 18, 90, { c: VAL_ACC, w: 1, a: 0.14 + 0.86 * tri });
+  },
   /* A2 形が変わる: 円 → 正方形 → 三角 と姿を変え、三角になった瞬間に外へ線が飛ぶ＝実行 */
   A2(st, t) {
     const C = VAL_VB / 2, T = 5.4, k = vLoop(t, T);
@@ -14248,6 +14396,20 @@ function buildPanel() {
       { key: 'A17', name: 'A17 三方向へ配信',   tip: '中央の四角から矢印が3本、同時に外へ飛びます。' },
       { key: 'A18', name: 'A18 向きを決めて飛ぶ', tip: '矢印が中心でぐるっと回り、止まった向きへシュッと飛びます。' },
       { key: 'A19', name: 'A19 ひし形を貫く',    tip: 'ひし形が左から順に現れて4つまで増え、そこを矢印が左から右へ貫きます（Figmaのピクトグラムをもとにした形）。' },
+      /* 2026-09-08 ヒデさん指定・追加。矢印の三角は「線が伸びきる直前にフェードイン」(トリミングしない) */
+      { key: 'A21', name: 'A21 折れて進む・改（既定）', tip: '左下から折れ線が伸び、伸びきる直前に三角矢印がフェードインします（トリミングしない）。' },
+      { key: 'A22', name: 'A22 まっすぐ伸びて実行', tip: '左下から右上へ直線が伸び、途中の点（取得）を通り、先端に三角矢印がフェードインします。' },
+      { key: 'A23', name: 'A23 点をつないで実行', tip: '散らばった文脈の点が中央へつながり、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A24', name: 'A24 束ねて放つ', tip: '左の複数の線が1本に束なり、右へ矢印を放って三角がフェードインします。' },
+      { key: 'A25', name: 'A25 満ちて矢が伸びる', tip: '円弧が満ちるまでが取得。満ちたら右へ矢印が伸び、三角がフェードインします。' },
+      { key: 'A26', name: 'A26 枠を読み取り実行', tip: '枠の中を走査線が走って取得し、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A27', name: 'A27 ノードが灯り実行', tip: 'ノードが順に灯って文脈がつながり、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A28', name: 'A28 段を上って実行', tip: '段（取得→整形→…）が順に現れてつながり、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A29', name: 'A29 波紋が集まって実行', tip: '同心の弧が中心へ集まって取得し、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A30', name: 'A30 枝が集約して実行', tip: '上下の枝が中央へ集約し、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A31', name: 'A31 粒がゲートを抜けて実行', tip: '粒が左からゲートを抜けて水色になり、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A32', name: 'A32 格子が満ちて実行', tip: '3×3の格子が順に満ちて取得し、右へ矢印が伸びて三角がフェードインします。' },
+      { key: 'A20', name: 'A20 レーダー', tip: '縦の棒が位相をずらして上下するだけのループ（矢印・三角なし）。' },
     ];
     /* 【2026-08-28 ヒデさん指定】どちらの案か分かるよう、見出しを付けて分ける。
        ⚠️ もとは note() で書いていたが、補足文は既定で隠しているので見えていなかった */
