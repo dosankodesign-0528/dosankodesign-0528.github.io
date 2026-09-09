@@ -1379,7 +1379,14 @@
     font-weight: 300; font-size: 14px; text-decoration: none;
     transition:opacity var(--t-fast) ease;
   }
-  .cv-btn:hover { opacity: .75; }
+  /* 【2026-09-09 ヒデさん確定】コンバージョンの「フォームを記入」も、お問い合わせボタンと同じ「矢印」ホバーに。
+     テキストは JS で <span> にラップ済み。 */
+  .cv-btn { position: relative; overflow: hidden; }
+  .cv-btn > span { position: relative; z-index: 2; transition: transform .24s var(--e-out); }
+  .cv-btn:hover > span { transform: translateX(-6px); }
+  .cv-btn::after { content: '→'; position: absolute; right: 16px; top: 50%; z-index: 2; color: var(--ink-on-dark);
+    transform: translateY(-50%) translateX(8px); opacity: 0; transition: opacity .24s, transform .24s var(--e-out); }
+  .cv-btn:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 
   /* ================= フッター (カンプ 16083:23592 に差し替え・2026-09-09) =================
      1440×327: 上100 / 下40 / 左右120。上段=「ロゴ+住所」と「2列ナビ」を両端寄せ、その下 60 に © を中央。
@@ -14481,18 +14488,8 @@ function buildPanel() {
     v => { params.kv.eyebrowWeight = v; applyKvCopy(); markDirty(); });
   sub(copyRoot, '順番', true);
   note('数字はページを開いてから何秒後か。上から出る順です。');
-  /* 【2026-09-09 ヒデさん指定】ヘッダーのホバーアニメ(テキスト5案 / ボタン5案)。切替でリアルタイム反映。 */
-  sub(copyRoot, 'ヘッダーのホバーアニメ', true);
-  note('ヘッダーの文字(お問い合わせ以外)とボタンに、マウスを乗せた時のアニメを選べます。ロゴ(ヘッダー/フッター)をクリックするとトップへ戻ります。');
-  const setHover = (k, v) => { if (!params.hoverFx || typeof params.hoverFx !== 'object') params.hoverFx = { nav: 'fade', btn: 'lighten' }; params.hoverFx[k] = v; if (window.applyHeaderHover) applyHeaderHover(); markDirty(); };
-  note('テキストのホバー（お問い合わせ以外・5案）');
-  pillRow([{ key: 'fade', name: 'フェード' }, { key: 'underline', name: '下線' }, { key: 'roll', name: '上下ロール' }, { key: 'lift', name: '浮く' }, { key: 'cyan', name: '色変化' }],
-    it => ((params.hoverFx && params.hoverFx.nav) || 'fade') === it.key, it => setHover('nav', it.key), null,
-    { noRebuild: true, tip: it => ({ fade: '薄くなる', underline: '下線が左から伸びる', roll: 'テキストが上下で入れ替わる(Framer参照)', lift: '少し浮いて色が変わる', cyan: 'シアンに変わる' })[it.key] || '' });
-  note('お問い合わせボタンのホバー（5案）');
-  pillRow([{ key: 'lighten', name: '明るく' }, { key: 'fill', name: '色が満ちる' }, { key: 'scale', name: '拡大' }, { key: 'arrow', name: '矢印' }, { key: 'invert', name: '反転' }],
-    it => ((params.hoverFx && params.hoverFx.btn) || 'lighten') === it.key, it => setHover('btn', it.key), null,
-    { noRebuild: true, tip: it => ({ lighten: '少し明るく', fill: '下から色がワイプ', scale: 'ふわっと拡大', arrow: '矢印が出て文字がずれる', invert: '白黒反転' })[it.key] || '' });
+  /* 【2026-09-09 ヒデさん確定】ヘッダーのホバーアニメは テキスト=上下ロール / ボタン=矢印 に確定＝焼き込み。
+     選択パネル(5案ずつ)は削除。実装は header の data-navhover="roll" / data-btnhover="arrow" 固定(下のJS)。 */
   rows.push(slider('ナビ項目の間隔', 12, 64, 1, () => (params.kv.navGap != null ? params.kv.navGap : 32),
     v => { params.kv.navGap = v; applyNavGap(); }, v => Math.round(v) + 'px',
     'ヘッダーのナビ(ビジョン/提供できること…)の左右の間隔。'));
@@ -15258,13 +15255,12 @@ document.getElementById('panelHead').addEventListener('click', () => {
   /* 黒ボタンのテキストを <span> に(矢印/塗りの前面化用) */
   const cta = header.querySelector('.cta');
   if (cta && cta.children.length === 0) cta.innerHTML = '<span>' + cta.textContent.trim() + '</span>';
-  /* 適用(パネルからリアルタイムで呼ぶ)。既定 fade / lighten。 */
-  if (!params.hoverFx || typeof params.hoverFx !== 'object') params.hoverFx = { nav: 'fade', btn: 'lighten' };
-  window.applyHeaderHover = () => {
-    header.dataset.navhover = (params.hoverFx && params.hoverFx.nav) || 'fade';
-    header.dataset.btnhover = (params.hoverFx && params.hoverFx.btn) || 'lighten';
-  };
-  applyHeaderHover();
+  /* 【2026-09-09 ヒデさん確定】テキスト=上下ロール / ボタン=矢印 に固定(焼き込み・選択パネルは削除)。 */
+  header.dataset.navhover = 'roll';
+  header.dataset.btnhover = 'arrow';
+  /* コンバージョンの「フォームを記入」ボタンも同じ矢印アニメにする(テキストを <span> にラップ)。 */
+  const cvBtn = document.querySelector('.cv-btn');
+  if (cvBtn && cvBtn.children.length === 0) cvBtn.innerHTML = '<span>' + cvBtn.textContent.trim() + '</span>';
   /* ロゴ(ヘッダー/フッター)クリックでホームのトップへ。透過フェード＋スムーズスクロール。 */
   const toTop = e => {
     if (e) e.preventDefault();
