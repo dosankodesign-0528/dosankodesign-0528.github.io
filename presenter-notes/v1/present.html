@@ -23,13 +23,14 @@
   <div class="nav-hot" id="navHot"></div>
   <!-- 自動で隠れるページ送りナビ（マウスを動かすと出る） -->
   <div class="pv-nav hidden" id="pvNav">
-    <button class="pv-btn" id="pnPrev" title="前へ">‹</button>
+    <button class="pv-btn" id="pnPrev" title="前へ" aria-label="前へ"><span data-ic="prev"></span></button>
     <span class="pv-count" id="pnCount">– / –</span>
-    <button class="pv-btn" id="pnNext" title="次へ">›</button>
+    <button class="pv-btn" id="pnNext" title="次へ" aria-label="次へ"><span data-ic="next"></span></button>
   </div>
 
   <!-- 共有スライドは発表中に絶対リロードしない（見た目の変更だけ静かに反映） -->
   <script>window.PN_NO_RELOAD = true;</script>
+  <script src="icons.js?v=1"></script>
   <script src="store.js?v=8"></script>
   <script>
     const frame = document.getElementById('frame');

@@ -41,9 +41,9 @@
       <div class="pv-badge" id="pvBadge">スライドの接続待ち…（発表タブを開いてください）</div>
       <!-- 共有スライドと同じピル型ナビ（‹ N/総数 › ↺）。手元から送れる -->
       <div class="pv-nav" id="nPill">
-        <button class="pv-btn" id="prev" title="前へ（共有スライドも一緒に戻る）">‹</button>
+        <button class="pv-btn" id="prev" title="前へ（共有スライドも一緒に戻る）" aria-label="前へ"><span data-ic="prev"></span></button>
         <span class="pv-count"><b id="pnum">–</b><span id="ptotal"></span></span>
-        <button class="pv-btn" id="next" title="次へ（共有スライドも一緒に送る）">›</button>
+        <button class="pv-btn" id="next" title="次へ（共有スライドも一緒に送る）" aria-label="次へ"><span data-ic="next"></span></button>
       </div>
     </div>
     <!-- 中央の境界線：左右ドラッグで幅を変更 -->
@@ -59,7 +59,7 @@
         <textarea id="editScript" placeholder="テキストを入力してください"></textarea>
       </div>
       <div class="notes-editbar">
-        <button class="btn" id="editBtn">✎ このページを編集</button>
+        <button class="btn" id="editBtn"><span data-ic="edit"></span>このページを編集</button>
         <span class="saved-flash" id="savedFlash">保存しました</span>
         <span class="grow"></span>
         <button class="btn" id="cancelBtn" hidden>キャンセル</button>
@@ -69,6 +69,7 @@
   </div>
 
 
+  <script src="icons.js?v=1"></script>
   <script src="store.js?v=8"></script>
   <script>
     const els = {

@@ -16,7 +16,7 @@
     <div class="gal-wrap">
       <div class="gal-head">
         <span class="grow"></span>
-        <button class="btn ghost" id="openSettings" title="設定" aria-label="設定" style="font-size:18px;padding:8px 12px;">⚙</button>
+        <button class="btn ghost ico" id="openSettings" title="設定" aria-label="設定"><span data-ic="settings"></span></button>
       </div>
 
       <div class="banner" id="cidBanner" hidden>
@@ -31,14 +31,14 @@
   <!-- ============ 編集画面 ============ -->
   <div id="editorView" hidden>
     <div class="ed-top">
-      <button class="btn ghost" id="listToggle" title="左のスライド一覧を隠す／表示">◧</button>
-      <button class="btn ghost" id="notesToggle" title="トークスクリプトを隠す／表示">▤</button>
+      <button class="btn ghost ico" id="listToggle" title="左のスライド一覧を隠す／表示" aria-label="スライド一覧の表示"><span data-ic="panelLeft"></span></button>
+      <button class="btn ghost ico" id="notesToggle" title="トークスクリプトを隠す／表示" aria-label="トークスクリプトの表示"><span data-ic="notes"></span></button>
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
-      <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更">🔗 URL</button>
+      <button class="btn ghost" id="edUrlBtn" title="Figma URL を変更"><span data-ic="link"></span>URL</button>
       <span class="grow"></span>
       <span class="dot" id="edConn" hidden></span>
-      <button class="btn ghost" id="refreshBtn" title="Figmaから再取得（スライドを増やした時など）" aria-label="再取得" style="font-size:20px;padding:6px 12px;margin-right:12px;">↻</button>
-      <button class="btn primary" id="startBtn">▶ プレゼンを開始</button>
+      <button class="btn ghost ico" id="refreshBtn" title="Figmaから再取得（スライドを増やした時など）" aria-label="再取得" style="margin-right:12px;"><span data-ic="refresh"></span></button>
+      <button class="btn primary" id="startBtn"><span data-ic="play"></span>プレゼンを開始</button>
     </div>
     <div class="ed-body">
       <div class="ed-list" id="edList"></div>
@@ -57,9 +57,9 @@
         <div class="ed-nav" hidden>
           <span class="grow"></span>
           <div class="pv-nav ed-pill">
-            <button class="pv-btn" id="edPrev" title="前へ">‹</button>
+            <button class="pv-btn" id="edPrev" title="前へ" aria-label="前へ"><span data-ic="prev"></span></button>
             <span class="pv-count" id="edCounter"><b>–</b> / –</span>
-            <button class="pv-btn" id="edNext" title="次へ">›</button>
+            <button class="pv-btn" id="edNext" title="次へ" aria-label="次へ"><span data-ic="next"></span></button>
           </div>
           <span class="grow"></span>
         </div>
@@ -102,6 +102,7 @@
     </div>
   </div>
 
+  <script src="icons.js?v=1"></script>
   <script src="store.js?v=8"></script>
   <script>
     const $ = (id) => document.getElementById(id);
@@ -133,7 +134,7 @@
           '<div class="deck-thumb"><div class="tt">' + esc(d.name || '(名称未設定)') + '</div>' +
             (pages ? '<div class="badge">' + pages + 'ページ</div>' : '') + '</div>' +
           '<div class="deck-foot"><span class="nm">' + esc(d.name || '(名称未設定)') + '</span>' +
-            '<span class="menu" title="メニュー">⋯</span></div>';
+            '<span class="menu" title="メニュー" aria-label="メニュー">' + PNI.svg('more', 18) + '</span></div>';
         card.querySelector('.deck-thumb').onclick = () => openEditor(d.id);
         card.querySelector('.nm').onclick = () => openEditor(d.id);
         card.querySelector('.menu').onclick = (e) => { e.stopPropagation(); deckMenu(d.id, d.name); };
@@ -141,7 +142,7 @@
       });
       const add = document.createElement('div');
       add.className = 'deck-card new';
-      add.textContent = '＋ 新規プレゼン';
+      add.innerHTML = PNI.svg('plus', 18) + '<span>新規プレゼン</span>';
       add.onclick = newDeck;
       grid.appendChild(add);
     }

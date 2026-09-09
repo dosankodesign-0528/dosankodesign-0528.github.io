@@ -110,9 +110,10 @@ body { background: var(--bg); color: var(--text); }
   background: rgba(255,255,255,.7); border-radius: 6px; padding: 2px 7px; }
 .deck-foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
 .deck-foot .nm { font-size: 14px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.deck-foot .menu { color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+.deck-foot .menu { color: var(--muted); line-height: 1; padding: 5px 6px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center; }
 .deck-foot .menu:hover { background: var(--panel2); color: var(--text); }
-.deck-card.new { display: flex; align-items: center; justify-content: center; border-style: dashed;
+.deck-card.new { display: flex; align-items: center; justify-content: center; gap: 8px; border-style: dashed;
   min-height: 190px; color: var(--muted); font-size: 15px; }
 .deck-card.new:hover { color: var(--accent); border-color: var(--accent); }
 
@@ -211,8 +212,9 @@ body.present { overflow: hidden; background: #000; }
 .notes-preview .pv-nav { position: absolute; bottom: 14px; z-index: 3; }
 /* エディタでは行内に置く（fixed/transform を解除） */
 .ed-nav .pv-nav.ed-pill { position: static; transform: none; }
-.pv-btn { background: transparent; border: none; color: #e8eaed; font-size: 22px; line-height: 1;
-  width: 42px; height: 38px; border-radius: 999px; cursor: pointer; }
+.pv-btn { background: transparent; border: none; color: #e8eaed; line-height: 1;
+  width: 42px; height: 38px; border-radius: 999px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; }
 .pv-btn:hover { background: rgba(255,255,255,.14); }
 /* ページ表記は折り返さない（「1 / 39」が崩れないように） */
 .pv-count { color: #cfd4dd; font-size: 14px; padding: 0 10px; min-width: 62px; text-align: center;
@@ -282,3 +284,10 @@ body.col-drag video { pointer-events: none; }
 .next-preview { flex: 1; color: var(--muted); font-size: 13px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; }
 .next-preview b { color: #aab3c2; }
+
+/* ---------- アイコン（案A：ライン 1.75px / 角丸） ----------
+ * 以前は ⚙ ◧ ▤ 🔗 ↻ ▶ ✎ ⋯ ＋ ‹ › を「文字」で置いていたので、
+ * 太さが揃わない・ボケる・上下がズレる、が全部起きていた。SVGに統一して解消。
+ * 色は currentColor なので、ボタンが青くなればアイコンも白く追従する。 */
+.ic { display: block; flex: 0 0 auto; }
+.btn.ico { padding: 9px 11px; }        /* アイコンだけのボタンは正方形に近い余白に */
