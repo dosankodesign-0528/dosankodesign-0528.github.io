@@ -284,6 +284,8 @@ w("'SF Pro Text'");  // カンプの指定 → 一致すれば正しい
 | **Retro Games** | **https://retro-games-one.vercel.app** | 親リポ subdir (main) | retro-games | 手動（`vercel --prod`） |
 | **anyflow-embed（V1.0・公開中）** | **https://anyflow-embed.vercel.app** | 親リポ subdir (main) | anyflow-embed | 手動（`vercel --prod`） |
 | **anyflow-embed-v2（アップデート案）** | **https://anyflow-embed-v2.vercel.app** | 親リポ subdir (main) | anyflow-embed-v2 | 手動（`vercel --prod`） |
+| **anyflow-embed-v3（旧・アップデート案）** | **https://anyflow-embed-v3.vercel.app** | 親リポ subdir (main) | anyflow-embed-v3 | 手動（`vercel --prod`） |
+| **anyflow-embed-v4（現・新規開発）** | **https://anyflow-embed-v4.vercel.app** | 親リポ subdir (main) | anyflow-embed-v4 | 手動（`vercel --prod`） |
 | **abashiri-site（網走 V1.0・公開中）** | **https://abashiri-site.vercel.app** | 親リポ subdir (main) | abashiri-site | ✋ 手動（Git連携解除・Root Directory空）。push しても本番は動かない。上げ直しは `cd abashiri/v1 && npx vercel --prod --yes` |
 | **abashiri-site-v2（網走 アップデート案）** | **https://abashiri-site-v2.vercel.app** | 親リポ subdir (main) | abashiri-site-v2 | 手動（`vercel --prod`） |
 | **presenter-notes（カンペ連動プレゼン）** | **https://presenter-notes-seven.vercel.app** | 親リポ subdir (main) | presenter-notes | 手動（`cd presenter-notes/v1 && npx vercel --prod --yes`）。※Figma OAuth の client-id 必須・別URLは embed origin 追加登録。詳細 [settings/docs/presenter-notes/README.md](settings/docs/presenter-notes/README.md) |

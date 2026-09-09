@@ -73,12 +73,12 @@
 - Dev モック1のチャットは「返信まで出た状態」、Vision の 67°グラデは単語ごとのテキストに適用
 - KV の惑星＋軌道は画像（合意済み）。ティッカーの位相は実測時の x=-16.3
 
-## 2026-09-09 V3.0/V4.0 の切り分け — 🟡 進行中（V4は開発用として作成、Vercel未リンク）
+## 2026-09-09 V3.0/V4.0 の切り分け — ✅ 完了（V4 も新規Vercelプロジェクトで本番稼働）
 - V3 を `anyflow/v3` に保持（公開・検証版）、**新規 `anyflow/v4` を作成**（`.vercel` は削除して未リンク）
 - `.claude/launch.json` に `anyflow-v4`(port 8777) を追加
-- V4 は今後の新規開発の場。デプロイタイミングで新規Vercelプロジェクト `anyflow-embed-v4` を作る
+- V4 は今後の新規開発の場。**新規Vercelプロジェクト `anyflow-embed-v4` を作成→本番デプロイ済み → https://anyflow-embed-v4.vercel.app**
 
-## 2026-09-09 V4.0 起点タスク — ✅ 実装完了（デプロイ未）
+## 2026-09-09 V4.0 起点タスク — ✅ 本番デプロイ済み（https://anyflow-embed-v4.vercel.app）
 - [x] 事例カード4件を `<div class="cg-cell">` → `<a class="cg-cell" href="..." target="_blank" rel="noopener">` に変換。URL:
   - SmartHR → https://anyflow.jp/case/smarthr
   - deex → https://anyflow.jp/case/deex
@@ -95,7 +95,7 @@
 - HubSpot フォームの色/角丸は本サイトのトーンに合わせて軽く上書き（`.form-card .hs-*` セレクタ）。HubSpot 側のクラス名は基本安定だが将来変わったら壊れる可能性あり
 - お問い合わせページのフッタは「トップへ戻る + © Anyflow Inc.」の1行のみ（本体の暗背景フッタは省略）。ヘッダーはロゴのみ・ナビ/CTAなし
 - CTA/CV は同タブ遷移（`target` なし）で作成。別タブが良ければ target="_blank" を付ける
-- V4 の Vercel プロジェクトはまだ未作成（デプロイタイミングで新規に）
+- V4 の Vercel プロジェクトは新規作成済み。V3公開版と並行運用中
 
 ## 保留・次の判断待ち
 - プリセットのチップ削除（昇格の確認が取れたら）
