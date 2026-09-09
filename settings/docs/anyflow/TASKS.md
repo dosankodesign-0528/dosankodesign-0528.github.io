@@ -59,6 +59,20 @@
 - DEFAULTS.converge / gfxVariantOn も spiral / 31 に（「リセット」の着地点）
 - SHIPPED に hoverFx・sections の既定値が明示追加（実効値は不変）
 
+## 2026-09-09 Figma ネイティブ構築：SP実装トレース 390（カンプ「SP」の右隣）— ✅ 完了
+- Figma: ページ「Anyflow」→ セクション「v3.0」内、フレーム **「SP 実装トレース 390（2026-09-09 ★6）」** node `16658:22139`（カンプ SP `16534:22140` の右120px、390×6243）
+  https://www.figma.com/design/jSLFEubHMoy3Hxgcw1AZuR/works?node-id=16658-22139
+- 7セクション（KV / Vision / Results / Dev / Cases / Conversion / Footer）を実装(390px・mb)の実測値でオートレイアウト構築。テキスト・罫線・ボタン・カード・タグはすべてネイティブ。
+- ベクター：ロゴ2点(SVG)、Vision の楕円2本(SVG)、for SaaS / for AI ピクト（アニメの「要素最多フレーム」を焼き込んだSVG）、Devのアイコン
+- 画像（画像で妥当なもののみ）：KVの惑星＋軌道（★6）、ティッカーロゴPNG×7、事例写真×4（WebPは描画されないためPNG化）、CTAの流体グラデ背景
+- 検証：各セクションの Figma 描画と Playwright 実描画を目視照合、主要ノードの座標を実測と突き合わせ（±1px）
+
+### 🟡 仮置き（違ったら直せる）
+- 書体：Figma の「SF Pro」は光学サイズの違いで幅がブラウザ(SF Pro Text)とズレる → 字間で幅合わせ（Platform / Strength / 数字）。等幅 SF Mono は Figma に無いため **Roboto Mono** で代替
+- Dev の3枚カードは実装が3D回転(perspective)＋常時回転 → **セクション到達直後の平面の重なり**で表現。スロット文字は前面カードに合わせ「CLI」
+- Dev モック1のチャットは「返信まで出た状態」、Vision の 67°グラデは単語ごとのテキストに適用
+- KV の惑星＋軌道は画像（合意済み）。ティッカーの位相は実測時の x=-16.3
+
 ## 保留・次の判断待ち
 - プリセットのチップ削除（昇格の確認が取れたら）
 - 未参照ファイル約10MB / framer-handoff.zip 9.6MB の削除（閲覧に無関係・急がない）
