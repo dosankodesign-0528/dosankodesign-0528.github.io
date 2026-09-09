@@ -10,33 +10,42 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;200;300;400&display=swap" rel="stylesheet">
   <style>
-    /* 【V4.0 2026-09-09】お問い合わせページ（ミニマム構成）。
-       デザイントーンは index.html に準拠：Noto Sans JP Light、地#F2F2F2、ボタン#090909、
-       ブランドピンク/シアン、線 #ACACAC。HubSpot フォームを埋め込むだけの1画面。 */
+    /* 【V4.0 2026-09-09】お問い合わせページ
+       ヘッダー・フッターはトップページ(index.html)と共通のデザイン・構造。
+       レスポンシブ: mobile(<600)/tablet(601-1100)/desktop(1101+) の3段。
+       トップページは fixed-canvas をJSで scale してるが、このページは通常の流動レイアウト。 */
     :root {
       --ink: #101828;
       --ink-strong: #000;
       --ink-on-dark: #fff;
       --ink-muted: #555;
-      --surface-body: #F2F2F2;   /* 本サイトの地 */
+      --surface-body: #F2F2F2;
       --surface-card: #fff;
       --surface-cta: #090909;
+      --surface-dark-top: #161616;
+      --surface-footer-bottom: #363636;
       --brand-pink: #FF5D97;
       --brand-cyan: #0EBBFF;
+      --brand-blue-deep: #0E4497;
       --line-grid: #ACACAC;
       --radius-xs: 4px;
       --radius-md: 8px;
       --radius-lg: 14px;
       --t-fast: .18s;
+      --e-fast: cubic-bezier(.2,.7,.1,1);
       --e-out: cubic-bezier(.2,.7,.1,1);
 
-      /* 縦の余白は本サイトのスペーシングに合わせる */
-      --gap-16: 16px;
-      --gap-24: 24px;
-      --gap-32: 32px;
-      --gap-40: 40px;
-      --gap-56: 56px;
-      --gap-72: 72px;
+      --font-en: 'SF Pro Text', -apple-system, 'system-ui', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+
+      --space-8: 8px;   --space-10: 10px; --space-12: 12px;
+      --space-16: 16px; --space-20: 20px; --space-24: 24px;
+      --space-32: 32px; --space-40: 40px; --space-44: 44px;
+      --space-60: 60px;
+
+      --fs-caption: 12px;
+      --fs-body: 14px;
+      --fs-base: 16px;
+      --lh-loose: 1.7;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -51,70 +60,84 @@
     }
     a { color: inherit; text-decoration: none; }
 
-    /* ---- ヘッダー(ロゴ) ---- */
+    /* ============ ヘッダー（トップと同じ構造・デザイン） ============
+       トップは transform:scale(--s) の中にあるが、ここは通常の絶対配置。
+       PC: 左50px / 右50px / 上26px、ロゴ + ナビリンク + 黒CTA */
     .site-header {
-      max-width: 640px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 24px 24px 0;
+      position: absolute;
+      left: 50px; right: 50px; top: 26px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 10;
     }
-    .site-header .logo img { display: block; height: 33px; width: auto; }
+    .site-header .logo img { width: 255px; height: 47px; display: block; }
+    .site-header .logo { display: inline-block; }
+    .nav { display: flex; align-items: center; gap: var(--space-32); }
+    .nav-links { display: flex; gap: 32px; align-items: center; margin: 0; padding: 0; list-style: none; }
+    .nav-links a {
+      font-weight: 300;
+      font-size: 16px;
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity var(--t-fast) var(--e-fast);
+    }
+    .nav-links a:hover { opacity: .5; }
+    .cta {
+      background: var(--surface-cta);
+      color: var(--ink-on-dark);
+      font-weight: 300;
+      font-size: 14px;
+      width: 150px;
+      padding: var(--space-10) var(--space-16);
+      border-radius: var(--radius-xs);
+      border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      box-sizing: border-box;
+      position: relative; overflow: hidden;
+      transition: opacity var(--t-fast) var(--e-fast);
+    }
+    .cta:hover { opacity: .78; }
+    .cta > span { position: relative; z-index: 2; }
 
-    /* ---- メイン ---- */
+    /* ============ メイン ============ */
     main {
       flex: 1 0 auto;
       width: 100%;
-      max-width: 640px;
+      max-width: 720px;
       margin: 0 auto;
-      padding: 72px 24px 96px;
+      padding: 180px 50px 120px;   /* 上=ヘッダーの下＋余白、左右50px（ヘッダー左右と合わせる） */
     }
-    /* デスクトップで少し余裕を持たせる */
-    @media (min-width: 768px) {
-      main { padding: 96px 24px 120px; }
-    }
-
-    /* ---- 見出し ---- */
-    .contact-head { margin: 0 0 var(--gap-40); }
+    .contact-head { margin: 0 0 var(--space-40); }
     .contact-eyebrow {
       display: inline-flex; align-items: center; gap: 6px;
-      font-size: 12px; font-weight: 300; letter-spacing: .06em;
-      color: var(--ink);
+      font-size: 12px; font-weight: 300; letter-spacing: .06em; color: var(--ink);
     }
-    .contact-eyebrow::before {
-      content: ''; width: 10px; height: 1px; background: var(--ink);
-    }
+    .contact-eyebrow::before { content: ''; width: 10px; height: 1px; background: var(--ink); }
     .contact-title {
       margin: 12px 0 0;
       font-weight: 300;
-      font-size: 32px;
+      font-size: 40px;
       line-height: 1.4;
       color: var(--ink-strong);
       letter-spacing: .02em;
     }
     .contact-lead {
       margin: 16px 0 0;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.9;
       color: var(--ink);
     }
-    @media (min-width: 768px) {
-      .contact-title { font-size: 40px; }
-      .contact-lead { font-size: 15px; }
-    }
 
-    /* ---- フォームカード ---- */
+    /* ============ フォームカード ============ */
     .form-card {
       background: var(--surface-card);
       border: 1px solid var(--line-grid);
       border-radius: var(--radius-lg);
-      padding: 32px 24px;
+      padding: 40px;
     }
-    @media (min-width: 768px) {
-      .form-card { padding: 40px 40px; }
-    }
-
-    /* HubSpot 側の既定スタイルを本サイトのトーンに寄せる（軽い上書き）
-       ⚠️ HubSpot が生成するクラス名は基本的に安定。壊れる可能性はゼロではないので仮置き。 */
     .hs-form-frame { font-family: inherit !important; }
     .form-card .hs-form fieldset { max-width: none !important; }
     .form-card label,
@@ -137,8 +160,7 @@
       transition: border-color var(--t-fast) var(--e-out);
     }
     .form-card input:focus, .form-card textarea:focus, .form-card select:focus {
-      outline: none !important;
-      border-color: var(--ink) !important;
+      outline: none !important; border-color: var(--ink) !important;
     }
     .form-card .hs-form-required, .form-card .hs-error-msg { color: var(--brand-pink) !important; font-size: 12px !important; }
     .form-card .hs-form-field { margin-bottom: 16px !important; }
@@ -156,23 +178,93 @@
     }
     .form-card .hs-button:hover { opacity: .82 !important; }
 
-    /* ---- フッター ---- */
-    .site-footer {
-      max-width: 640px; width: 100%; margin: 0 auto;
-      padding: 24px 24px 40px;
-      font-size: 12px; color: var(--ink-muted);
+    /* ============ フッター（トップと同じ構造・デザイン） ============
+       グラデ180° #161616→#363636、白文字、Anyflow Embed ロゴ・住所・2列ナビ・© */
+    #footer {
+      background: linear-gradient(180deg, var(--surface-dark-top) 0%, var(--surface-footer-bottom) 100%);
+      color: var(--ink-on-dark);
+      flex: 0 0 auto;
     }
-    .site-footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-    .site-footer a:hover { color: var(--ink); }
+    .ft-inner {
+      width: min(1200px, calc(100% - 240px));
+      margin: 0 auto;
+      padding: 100px 0 var(--space-40);
+      display: flex; flex-direction: column; align-items: center; gap: var(--space-60);
+    }
+    .ft-top { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+    .ft-left { display: flex; flex-direction: column; gap: var(--space-24); }
+    .ft-logo { width: 334px; height: 62px; display: block; }
+    .ft-addr {
+      font-weight: 300; font-size: var(--fs-caption); line-height: var(--lh-loose);
+      color: var(--ink-on-dark); white-space: nowrap;
+    }
+    .ft-nav { display: flex; gap: var(--space-44); opacity: .5; }
+    .ft-col { display: flex; flex-direction: column; gap: var(--space-24); }
+    .ft-nav a {
+      color: var(--ink-on-dark); text-decoration: none; white-space: nowrap;
+      font-weight: 300; font-size: var(--fs-body); line-height: normal;
+      transition: opacity var(--t-fast) ease;
+    }
+    .ft-nav a:hover { opacity: .6; }
+    .ft-copy {
+      font-family: var(--font-en); font-weight: 300; font-size: var(--fs-base);
+      line-height: normal; color: var(--ink-on-dark); opacity: .4;
+    }
+
+    /* ============ タブレット (601〜1100px) ============ */
+    @media (min-width: 601px) and (max-width: 1100px) {
+      .site-header { left: 32px; right: 32px; }
+      .site-header .logo img { width: 220px; height: auto; }
+      .nav-links { gap: var(--space-20); }
+      .nav-links a { font-size: 15px; }
+      .cta { font-size: 15px; }
+      main { padding: 160px 32px 100px; }
+      .contact-title { font-size: 36px; }
+
+      .ft-inner { width: calc(100% - 96px); padding: 80px 0 var(--space-40); }
+      .ft-logo { width: 260px; }
+    }
+
+    /* ============ モバイル (〜600px) ============
+       トップの SP と同じ: ロゴ+CTAのみ表示、ナビリンクは隠す。フッターは縦積み。 */
+    @media (max-width: 600px) {
+      .site-header { left: 17px; right: 17px; top: 18px; }
+      .site-header .logo img { width: 180px; height: 33px; }
+      .nav { gap: var(--space-16); }
+      .nav-links { display: none; }
+      .cta { width: 120px; font-size: 14px; padding: 6px 16px; }
+
+      main { padding: 110px 24px 80px; }
+      .contact-title { font-size: 28px; }
+      .contact-lead { font-size: 14px; }
+      .form-card { padding: 24px 20px; border-radius: 12px; }
+
+      .ft-inner { width: calc(100% - 48px); padding: 56px 0 var(--space-32); gap: var(--space-40); }
+      .ft-top { flex-direction: column; align-items: flex-start; gap: var(--space-32); }
+      .ft-logo { width: 200px; height: auto; }
+      .ft-addr { white-space: normal; }
+      .ft-nav { gap: var(--space-32); }
+    }
   </style>
 </head>
 <body>
+  <!-- ============ ヘッダー（トップと同じ） ============ -->
   <header class="site-header">
     <a class="logo" href="/" aria-label="Anyflow Embed トップへ">
       <img src="assets/header-logo.svg" alt="Anyflow Embed">
     </a>
+    <nav class="nav">
+      <div class="nav-links">
+        <a href="/#vision">ビジョン</a>
+        <a href="/#results">提供できること</a>
+        <a href="/#dev">使用イメージ</a>
+        <a href="/#cases">導入事例</a>
+      </div>
+      <a class="cta" href="#hs-form"><span>お問い合わせ</span></a>
+    </nav>
   </header>
 
+  <!-- ============ メイン ============ -->
   <main>
     <div class="contact-head">
       <span class="contact-eyebrow">Contact</span>
@@ -185,10 +277,28 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <a href="/">← トップへ戻る</a>
-    <span style="margin: 0 8px;">·</span>
-    © Anyflow Inc.
+  <!-- ============ フッター（トップと同じ構造） ============ -->
+  <footer id="footer">
+    <div class="ft-inner">
+      <div class="ft-top">
+        <div class="ft-left">
+          <img class="ft-logo" src="assets/footer-logo.svg" alt="Anyflow Embed">
+          <div class="ft-addr">〒105-0001　東京都港区虎ノ門1-3-1 東京虎ノ門グローバルスクエア6階</div>
+        </div>
+        <nav class="ft-nav">
+          <div class="ft-col">
+            <a href="/#vision">ビジョン</a>
+            <a href="/#results">提供できること</a>
+            <a href="/#dev">使用イメージ</a>
+          </div>
+          <div class="ft-col">
+            <a href="/#cases">導入事例</a>
+            <a href="/#conversion">お問い合わせ</a>
+          </div>
+        </nav>
+      </div>
+      <div class="ft-copy">© Anyflow Inc.</div>
+    </div>
   </footer>
 
   <!-- HubSpot フォーム埋め込み -->
