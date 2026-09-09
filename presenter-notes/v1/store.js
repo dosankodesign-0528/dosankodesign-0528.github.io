@@ -110,7 +110,13 @@ window.PN = (function () {
 
   function setActiveDeckId(id) {
     const d = loadDecks();
-    if (d.decks[id]) { d.activeId = id; saveDecks(d); post({ type: 'deck-changed', deckId: id }); }
+    if (!d.decks[id]) return;
+    // 【重要】同じプレゼンを開き直しただけの時は放送しない。
+    // deck-changed は発表タブのリロードとカンペの初期化を引き起こすので、
+    // 発表中にエディターを開くと再生中の画面が1枚目に戻ってしまう。
+    const same = (d.activeId === id);
+    d.activeId = id; saveDecks(d);
+    if (!same) post({ type: 'deck-changed', deckId: id });
   }
   function createDeck(name) {
     const d = loadDecks();

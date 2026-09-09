@@ -30,7 +30,7 @@
 
   <!-- 共有スライドは発表中に絶対リロードしない（見た目の変更だけ静かに反映） -->
   <script>window.PN_NO_RELOAD = true;</script>
-  <script src="store.js?v=7"></script>
+  <script src="store.js?v=8"></script>
   <script>
     const frame = document.getElementById('frame');
     const overlay = document.getElementById('overlay');
@@ -65,7 +65,7 @@
     async function showImage(i) {
       const order = PN.loadScripts().order;
       if (!order.length) { ovtext.textContent = 'ページがありません（先に収録してください）'; document.querySelector('.spinner').style.display = 'none'; return; }
-      imgIdx = Math.max(0, Math.min(order.length - 1, i));
+      imgIdx = (i % order.length + order.length) % order.length;
       const nodeId = order[imgIdx];
       lastNodeId = nodeId;
       const blob = await PN.getImg(PN.getActiveDeckId(), nodeId);
@@ -74,7 +74,12 @@
       PN.post({ type: 'node', nodeId });
       updateNavCount();
     }
-    function imgNav(dir) { showImage(dir === 'backward' ? imgIdx - 1 : imgIdx + 1); }
+    function imgNav(dir) {
+      const n = PN.loadScripts().order.length;
+      if (!n) return;
+      const i = (imgIdx + (dir === 'backward' ? -1 : 1) + n) % n;   // 端で反対側へ回る
+      showImage(i);
+    }
 
     // 本軸はライブ（Figma埋め込み）。バックアップ画像は「ライブが機能しない時だけ」静かに使う保険。
     let hasBackup = false;   // 保存済み画像があるか
@@ -130,9 +135,8 @@
             // ※ここで ensureCard（未知ページの自動登録）はしない。すると一覧が汚れて
             //   トークスクリプトのフレームがスライド扱いになってしまうため。
             const order = PN.loadScripts().order;
-            if (order.length && !order.includes(nodeId)) {
-              const back = order.includes(lastNodeId) ? lastNodeId : order[0];
-              toFigma({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: back } });
+            if (order.length && !order.includes(nodeId) && order.includes(lastNodeId)) {
+              toFigma({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: lastNodeId } });
               break;
             }
             lastNodeId = nodeId;
@@ -178,7 +182,8 @@
       let i = order.indexOf(lastNodeId);
       if (i < 0) i = 0;                                  // 現在地が不明なら先頭から
       else i += (dir === 'backward' ? -1 : 1);
-      if (i < 0 || i >= order.length) return;            // 最初/最後では止まる（先へ行かない）
+      // 端に来たら反対の端へ回る（最後で「次へ」＝1枚目に戻る／1枚目で「前へ」＝最後へ）
+      i = (i % order.length + order.length) % order.length;
       liveNav({ type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: order[i] } });
     }
     PN.onMessage((msg) => {

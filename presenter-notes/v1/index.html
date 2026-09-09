@@ -102,7 +102,7 @@
     </div>
   </div>
 
-  <script src="store.js?v=7"></script>
+  <script src="store.js?v=8"></script>
   <script>
     const $ = (id) => document.getElementById(id);
 
@@ -171,6 +171,18 @@
 
     /* ================= 編集画面 ================= */
     let edNode = null;
+    // 最後に見ていたページをプレゼンごとに覚える（並び替えや再取得で1枚目に戻らないように）
+    const lastPageKey = (deckId) => 'pn_lastpage_' + deckId;
+    function rememberPage(nodeId) {
+      if (!nodeId) return;
+      try { localStorage.setItem(lastPageKey(PN.getActiveDeckId()), nodeId); } catch (e) {}
+    }
+    // 覚えているページが今の並びにまだあればそれを、無ければ先頭を返す
+    function resumePage(deckId, order) {
+      let saved = null;
+      try { saved = localStorage.getItem(lastPageKey(deckId)); } catch (e) {}
+      return (saved && order.includes(saved)) ? saved : order[0];
+    }
 
     function showView(which) {
       $('galleryView').hidden = (which !== 'gallery');
@@ -207,7 +219,7 @@
         $('edFrame').removeAttribute('src'); stageUrl = null;
         $('edFrame').style.display = 'none';
         $('edEmpty').hidden = true;
-        await edGo(order[0]);
+        await edGo(resumePage(id, order));   // 1枚目固定ではなく、前に見ていたページから
       } else {
         // まだ画像が無い初回だけ Figma を読み込む
         edMode = 'live';
@@ -222,6 +234,7 @@
       if (!nodeId) return;
       if (edMode !== 'image') { toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId } }); return; }
       edNode = nodeId;
+      rememberPage(nodeId);
       const p = $('edPoster');
       const blob = await PN.getImg(PN.getActiveDeckId(), nodeId);
       if (blob) {
@@ -233,8 +246,11 @@
     }
     function edStep(delta) {
       const order = PN.loadScripts().order;
+      if (!order.length) return;
       const i = order.indexOf(edNode);
-      edGo(order[Math.max(0, Math.min(order.length - 1, (i < 0 ? 0 : i) + delta))]);
+      // 端に来たら反対の端へ回る（最後で「次へ」＝1枚目に戻る）
+      const n = ((i < 0 ? 0 : i + delta) % order.length + order.length) % order.length;
+      edGo(order[n]);
     }
 
     let stageUrl = null;   // 今 iframe に読み込み済みのURL（同じなら読み直さない＝再入場が一瞬）
@@ -456,7 +472,11 @@
         // Figmaの最終更新時刻を控える。これが変わっていたらバックアップ画像も取り直す
         try { localStorage.setItem('pn_filemod_' + PN.getActiveDeckId(), String(data.lastModified || '')); } catch (e) {}
         PN.post({ type: 'scripts-updated' });
-        edNode = null; renderEdList(); loadNote(); updateCounter(); loadThumbs(); refreshPrefetchStatus();
+        // 【重要】並び替えただけでページ位置を失わない。今見ているスライドが
+        // 新しい並びにも残っていればそのまま維持する（消えていた時だけ先頭へ）
+        if (!edNode || !ids.includes(edNode)) edNode = resumePage(PN.getActiveDeckId(), ids);
+        rememberPage(edNode);
+        renderEdList(); loadNote(); updateCounter(); loadThumbs(); refreshPrefetchStatus();
         setSyncStatus('✓ ' + ids.length + '枚に同期');
       } catch (e) { setSyncStatus('失敗'); alert('同期に失敗しました: ' + (e && e.message)); }
     }
@@ -536,7 +556,7 @@
       if (!order.length) { toFrame($('edFrame'), { type: dir < 0 ? 'NAVIGATE_BACKWARD' : 'NAVIGATE_FORWARD' }); return; }
       let i = order.indexOf(edNode);
       if (i < 0) i = 0; else i += dir;
-      if (i < 0 || i >= order.length) return;
+      i = (i % order.length + order.length) % order.length;   // 端で反対側へ回る
       toFrame($('edFrame'), { type: 'NAVIGATE_TO_FRAME_AND_CLOSE_OVERLAYS', data: { nodeId: order[i] } });
     }
     $('edPrev').onclick = () => { if (edMode === 'image') edStep(-1); else edLiveNav(-1); };
