@@ -1383,7 +1383,7 @@
     .dl-head span { font-size: 15px; }
   }
 
-  @media (max-width: 780px) {
+  @media (max-width: 600px) {   /* 【2026-09-09】スマホ層の境界 780→600(JS MOBILE_MAX と一致)。601〜はデスクトップ層へ。※390×780 は設計フレームで別物 */
     /* --- ヘッダー --- */
     /* カンプSP node16534:22176: ヘッダーは左右 17px・ロゴ 180×33・ボタン 120幅(padding 6px 16px / 角丸4 / #090909 / Light 14px) */
     .header { left: 17px; right: 17px; top: 18px; }
@@ -7894,7 +7894,8 @@ function applySway() {
    ※ renderFrame() より前に宣言しておくこと (後だと初回呼び出しで参照エラーになる) */
 let stageW = 1440, stagePinW = 1440;
 /* 設計フレーム。スマホ(<=780px)では 390×780 に切り替わる */
-const MOBILE_MAX = 780;
+const MOBILE_MAX = 600;   /* 【2026-09-09 ヒデさん指定】スマホ/タブレットの境界。780→600 に下げ、タブレット(iPad mini縦768含む)は
+                             デスクトップ層(自動縮小・834/1024で綺麗)へ寄せる。スマホ設計(≤430)は不変。CSS @media も同値。 */
 let DW = 1440, DH = 921, isMobile = false;
 let lastFitW = 0, lastFitH = 0, fitReady = false;
 const clamp01 = v => Math.max(0, Math.min(1, v));
