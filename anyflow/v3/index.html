@@ -366,6 +366,10 @@
      そのまま透けて連続し、暗幕が leave で引くと下地の var(--surface) へ自然にクロスフェードする
      （＝不透明な上端が下から硬く重なる「プツン」が出ない）。 */
   #cases .pin-vp { position: relative; background: transparent; }
+  /* 【2026-09-09 ヒデさん指定】タブレットは NOPIN セクションの1画面を詰める(JSの --nopin-vh に連動)。
+     中身は中央寄せのまま高さだけ縮むので上下の余白が減る。コンテンツは収まる範囲(=クリップしない)。 */
+  html.tab #vision .pin-vp, html.tab #results.res-smooth .pin-vp, html.tab #cases .pin-vp { height: var(--nopin-vh, 100vh); }
+  html.tab #vision { margin-top: 80px; }   /* タブレットは vision 前の余白も 200→80 に詰める */
   html.nopin #dev { margin-top: 0; }   /* 2026-08-29: #cases は上余白(96px)を活かすので nopin では強制0にしない */
   /* 縦積みで足したブロック。中身は元と同じ .pin-stage に入るので座標系は共通 */
   html.nopin .np-vp { position: relative; height: 100vh; overflow: hidden; background: var(--surface); }
@@ -830,7 +834,8 @@
      左後ろ・右後ろのカードが見えるよう perspective とゆとりを持たせる(V1.0の3枚カルーセル) */
   #dev.ds2-slide .dev-list { display: none; }
   #dev.ds2-slide .dev2-wrap { background: none; max-width: none; height: auto; justify-content: center; overflow: visible; }
-  #dev.ds2-slide .dev2-stack { flex: 0 0 auto; width: 840px; height: 520px; margin: 0 auto; align-self: center; perspective: 1600px; overflow: visible; }
+  #dev.ds2-slide .dev2-stack { flex: 0 0 auto; width: 840px; height: 520px; margin: 0 auto; align-self: center; perspective: 1600px; overflow: visible;
+    transform: scale(var(--dev2-fit, 1)); transform-origin: center center; }   /* 2026-09-09: 幅に応じて縮小(fit()が--dev2-fitを算出)＝dev1と同様に左右余白を保つ */
 
   /* ---- dev1: 単体パネル(エディタ+チャット) 840×504 を中央に (カンプ 24718) ---- */
   .dev1-mock { position: relative; width: 840px; height: 504px; max-width: 100%; }
@@ -1324,10 +1329,10 @@
     width: 497px; text-align: center; color: var(--ink-strong);
   }
   .cv-head { font-weight: 300; font-size: 34px; line-height: 1.7; }   /* Noto Sans JP Light 34 */
-  .cv-sub  { font-weight: 300; font-size: 16px; line-height: 1.8; margin: 30px 0 0; }
+  .cv-sub  { font-weight: 300; font-size: 16px; line-height: 1.8; margin: 24px 0 0; }   /* 2026-09-09: 見出しのline-height(1.7)ぶんを相殺し本文の上下の見た目余白を均等に(上30→24) */
   .cv-btn {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 140px; height: 40px; margin-top: 30px;
+    width: 140px; height: 40px; margin-top: 36px;   /* 2026-09-09: 本文の下側を+6して上下均等に(30→36) */
     background: var(--surface-cta); color: var(--ink-on-dark); border-radius: var(--radius-xs);
     font-weight: 300; font-size: 14px; text-decoration: none;
     transition:opacity var(--t-fast) ease;
@@ -1629,6 +1634,33 @@
     background: transparent;
     cursor: pointer;
   }
+  /* 【2026-09-09 ヒデさん指定】スマホ時: 調整パネルのトグル(隠しボックス)を右下へ。
+     パネルは下端固定で内容ぶん"上に伸びる"＝アコーディオンを開くと上に開く(下＝画面外に出ない)。
+     幅は左右8pxで確保するので横のはみ出しは無い。html.mb で base より確実に勝たせる。 */
+  /* 【2026-09-09 ヒデさん指定】スマホの調整パネルは Googleマップ風ボトムシート。
+     空ボックスをタップ→ピーク(見出しだけ)→上スワイプで画面半分まで展開→下スワイプでピーク/格納。
+     横幅いっぱい。中身は zoom で圧縮。 */
+  html.mb .tools-secret-hot { top: auto; bottom: 0; right: 0; width: 72px; height: 72px; }
+  html.mb .tools {
+    left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: none; z-index: 50;
+    transform: translateY(calc(100% - var(--sheet-peek, 52px)));   /* 既定=ピーク */
+    transition: transform .32s cubic-bezier(.32,.72,0,1);
+  }
+  html.mb .tools.sheet-open { transform: translateY(0); }          /* 展開=画面半分(パネル高さぶん) */
+  html.mb .tools.sheet-dragging { transition: none; }              /* ドラッグ追従中はアニメ切る */
+  html.mb .panel {
+    height: 52vh; max-height: 52vh; width: auto; min-height: 0;
+    border-radius: 16px 16px 0 0; resize: none;
+    box-shadow: 0 -6px 24px rgba(0,0,0,.12);
+  }
+  html.mb .panel-grip { display: flex; }
+  html.mb .panel-head { padding: 4px 10px 8px; }
+  html.mb .panel-head .chev { display: none; }                     /* シートはスワイプで開閉するので▲は隠す */
+  html.mb .panel-body { zoom: 0.9; }
+  /* グリップ(上部の掴みバー)。既定は非表示、スマホのみ表示 */
+  .panel-grip { display: none; justify-content: center; align-items: center; padding: 8px 0 2px; cursor: grab; touch-action: none; flex: 0 0 auto; }
+  .panel-grip::before { content: ''; width: 40px; height: 4px; border-radius: 2px; background: #cfcfcf; }
+  .panel-grip:active { cursor: grabbing; }
   .switcher {
     position: relative;
     width: 360px;
@@ -11963,6 +11995,11 @@ function fit() {
   st.setProperty('--sw', stageW + 'px');
   st.setProperty('--swp', stagePinW + 'px');
   st.setProperty('--dh', DH + 'px');
+  /* 【2026-09-09 ヒデさん指定】dev2(ds2-slide)モックの横フィット。dev は --s スケール外(設計px)で
+     dev1 は max-width:100% で縮むのに dev2(840px固定)は縮まず左右にはみ出す。dev-block は padding 120×2 なので
+     使える幅 ≒ viewport − 240、左右余白ぶん −64 して 840px を収める倍率を算出し、dev1 と同様に余白を保つ。
+     モバイル(≤600)は @media の scale(0.42) が優先されるので影響しない。 */
+  st.setProperty('--dev2-fit', isMobile ? '1' : String(Math.max(0.3, Math.min(1, (w - 160) / 840)).toFixed(3)));
   /* 【2026-09-09 カンプSP 準拠】スマホの KV は次セクション(Our Vision y741 = section 667 + label 74)の
      直前で切る。設計フレーム DH=780 のままだと下に空白が残り、KV→ビジョンが空きすぎていた。
      .stage-wrap は overflow:hidden なので、はみ出す分(ロゴ帯 664 より下の空白)は見えない。 */
@@ -11980,18 +12017,28 @@ function fit() {
   /* 固定なしでは 1ブロック=100vh。ビジョンと開発者体験は2ブロック積むので 200vh 必要 */
   const NP_BLOCKS = { vision: 2, dev: 2, results: 1, cases: 1 };
   const H = key => (noPin ? 100 * NP_BLOCKS[key] : Math.round(params.sections[key].lenVh * lenMul(key))) + 'vh';
+  /* 【2026-09-09 ヒデさん指定】タブレット(デスクトップ層で幅が --s に縮む)は「1画面=100vh」の中に
+     幅縮小(--sp)されたコンテンツが中央寄せされ、上下に大きな余白ができる。NOPIN(非ピン)の各セクションは
+     ピン走路が不要なので、タブレットだけ 1画面ぶんの高さを詰めて余白を減らす。PC(--s=1)は 100vh のまま。
+     コンテンツ高さ(≒DH×--sp)が収まる範囲で、少し余裕(×1.25・最低62vh)を持たせてクリップを防ぐ。 */
+  const isTablet = !isMobile && s < 0.92;
+  document.documentElement.classList.toggle('tab', isTablet);
+  const nopinSecVh = isTablet
+    ? Math.max(62, Math.min(100, Math.round((sp * DH / h) * 100 * 1.25))) + 'vh'
+    : '100vh';
+  document.documentElement.style.setProperty('--nopin-vh', nopinSecVh);   /* NOPINセクションの pin-vp 高さをCSSから連動(タブレットで詰める) */
   /* 【2026-08-29】Vision は常に固定追従なし＝1画面(100vh)で普通に流す(スクロールジャックしない)。
      登場は入場トリガーで updateVision が時間で自動再生する。 */
-  SECS.vision.style.height = VIS_NOPIN ? '100vh' : H('vision');
+  SECS.vision.style.height = VIS_NOPIN ? nopinSecVh : H('vision');
   /* 【2026-08-25 リデザイン】開発者体験は非pin・2ブロック(各min-height:100vh)なので、
      中身なりの高さ(auto=約200vh)にする。pin用の H('dev')(=600vh)は使わない。 */
   SECS.dev.style.height = 'auto';
   /* 【2026-08-29 ヒデさん指定】スムーズフェード時は実績に被せない＝#dev の -100vh 重なりを外して普通に下へ置く。 */
   SECS.dev.style.marginTop = resSmooth() ? '0' : '';
   /* 【2026-08-29】導入事例も固定追従なし＝1画面(100vh)。長いピン尺(最大600vh)の余分スクロールを解消。 */
-  SECS.cases.style.height = CASES_NOPIN ? '100vh' : H('cases');
+  SECS.cases.style.height = CASES_NOPIN ? nopinSecVh : H('cases');
   /* 【2026-08-29】スムーズフェード時は実績も固定追従なし＝1画面(100vh)で普通に流す。 */
-  SECS.results.style.height = resSmooth() ? '100vh' : H('results');
+  SECS.results.style.height = resSmooth() ? nopinSecVh : H('results');
   SECS.results.classList.toggle('res-smooth', resSmooth());
   /* 【2026-09-09 ヒデさん指定・見切れ根治】静的モバイル: pin-vp(100vh)より中身が高いセクションは
      下が見切れる。最下要素の位置から実コンテンツ高さを測り、section と pin-vp に明示的に設定して
@@ -15020,6 +15067,7 @@ window.addEventListener('resize', keepPanelInView);
     'input, button, select, textarea, .sw-pill, .rst, .gbtn, .seg, .np-f, .pz, .sw-copy, a'));
   let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
   const onDown = e => {
+    if (document.documentElement.classList.contains('mb')) return;   /* 【2026-09-09】スマホはボトムシート(グリップのスワイプ)操作なので、移動ドラッグは無効 */
     if (e.button !== 0) return;
     if (e.currentTarget !== head && isControl(e.target)) return;   /* 操作するものの上では動かさない */
     /* ⚠️【2026-08-19 バグ修正】ここで left/top 指定へ切り替えていたのが原因で、
@@ -15081,11 +15129,63 @@ function openPanelDownward() {
   if (up > 0) toolsEl.style.top = (top - up) + 'px';
 }
 document.getElementById('panelHead').addEventListener('click', () => {
+  if (document.documentElement.classList.contains('mb')) return;   /* 【2026-09-09】スマホはグリップのスワイプで開閉するのでクリック開閉は無効 */
   panel.classList.toggle('closed');
   requestAnimationFrame(openPanelDownward);
   /* 開いて背が伸びた分で画面外へ出ないように押し戻す（動かしたあとの位置の時だけ効く） */
   keepPanelInView();
 });
+
+/* ===== 【2026-09-09 ヒデさん指定】スマホ: Googleマップ風ボトムシート =====
+   上部のグリップをスワイプ: 下げるとピーク(見出しだけ)/格納、上げると画面半分まで展開。スナップ付き。 */
+(() => {
+  const tools = toolsEl;
+  const panel = document.getElementById('panel');
+  const head = document.getElementById('panelHead');
+  if (!tools || !panel) return;
+  const grip = document.createElement('div');
+  grip.className = 'panel-grip';
+  panel.insertBefore(grip, panel.firstChild);
+  const isMB = () => document.documentElement.classList.contains('mb');
+  let dragging = false, startY = 0, startTY = 0, curTY = 0;
+  const sheetH = () => panel.getBoundingClientRect().height || 1;
+  const peekPx = () => (grip.offsetHeight || 12) + (head ? head.offsetHeight : 40);
+  const peekTY = () => Math.max(0, sheetH() - peekPx());
+  const syncPeekVar = () => document.documentElement.style.setProperty('--sheet-peek', peekPx() + 'px');
+  const applyTY = ty => { curTY = ty; tools.style.transform = 'translateY(' + ty + 'px)'; };
+  const snapOpen = () => { tools.classList.add('sheet-open'); tools.style.transform = ''; curTY = 0; };
+  const snapPeek = () => { tools.classList.remove('sheet-open'); tools.style.transform = ''; curTY = peekTY(); };
+  const hideSheet = () => { tools.classList.add('tools-hidden'); tools.classList.remove('sheet-open'); tools.style.transform = ''; try { sessionStorage.setItem('anyflow-tools-secret', '0'); } catch (_) {} };
+  syncPeekVar(); window.addEventListener('resize', syncPeekVar);
+  const start = e => {
+    if (!isMB()) return;
+    dragging = true; startY = e.clientY;
+    startTY = tools.classList.contains('sheet-open') ? 0 : peekTY();
+    curTY = startTY;
+    tools.classList.add('sheet-dragging'); tools.classList.remove('sheet-open');
+    tools.style.transform = 'translateY(' + startTY + 'px)';
+    try { grip.setPointerCapture(e.pointerId); } catch (_) {}
+    e.preventDefault(); e.stopPropagation();
+  };
+  const move = e => {
+    if (!dragging) return;
+    const dy = e.clientY - startY;
+    applyTY(Math.max(0, Math.min(peekTY() + 90, startTY + dy)));
+    e.preventDefault();
+  };
+  const end = e => {
+    if (!dragging) return;
+    dragging = false; tools.classList.remove('sheet-dragging');
+    const p = peekTY(); const dy = ((e && e.clientY) || startY) - startY;
+    if (curTY > p + 40 && dy > 40) hideSheet();     /* ピークからさらに下げた → 格納 */
+    else if (curTY < p * 0.5) snapOpen();           /* 半分以上上げた → 展開 */
+    else snapPeek();                                /* それ以外 → ピークへスナップ */
+  };
+  grip.addEventListener('pointerdown', start);
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+})();
 /* ===== サイト全体の直接編集 (2026-08-29 ヒデさん指定) =====
    ✏️編集モード中は、KVだけでなくサイト内の主要オブジェクトをドラッグで直接動かせる。
    動かした量は既存の位置パラメータへ書くので、「これをデフォルトに設定」で保存できる。
@@ -15470,6 +15570,8 @@ textTools.applyAll();
     toolsEl.classList.toggle('tools-hidden', !shown);
     /* 【2026-08-27 ヒデさん指定】出したときはアコーディオンを開いた状態にする */
     if (shown && panelEl2) panelEl2.classList.remove('closed');
+    /* 【2026-09-09】スマホ: 空ボックスをタップで出す時は必ず「ピーク(見出しだけ)」から。展開状態は持ち越さない。 */
+    if (shown && document.documentElement.classList.contains('mb')) { toolsEl.classList.remove('sheet-open'); toolsEl.style.transform = ''; }
   };
   apply();
   const hot = document.createElement('div');
