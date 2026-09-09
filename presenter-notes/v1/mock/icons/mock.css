@@ -1,0 +1,66 @@
+/* モック比較ページの外枠（本番UIには影響しない） */
+body { background: #0b0d11; color: var(--text); padding-bottom: 80px; }
+.mk-wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+.mk-bar { position: sticky; top: 0; z-index: 20; background: rgba(11,13,17,.92);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 12px 0; margin-bottom: 32px; }
+.mk-bar .mk-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mk-bar .ttl { font-size: 15px; font-weight: 700; margin-right: 6px; }
+.mk-tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel2); color: var(--muted);
+  font-size: 13px; text-decoration: none; }
+.mk-tab:hover { border-color: #3a4150; color: var(--text); }
+.mk-tab.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+h1.mk-h1 { font-size: 24px; margin: 8px 0 6px; }
+p.mk-lead { color: var(--muted); font-size: 14px; line-height: 1.8; margin: 0 0 28px; }
+h2.mk-h2 { font-size: 16px; margin: 40px 0 6px; display: flex; align-items: baseline; gap: 10px; }
+h2.mk-h2 .no { display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff;
+  font-size: 12px; font-weight: 700; flex: 0 0 auto; }
+p.mk-note { color: var(--muted); font-size: 13px; line-height: 1.8; margin: 0 0 14px; }
+
+/* 実画面の切り抜き枠（ここの中身は本番と同じマークアップ） */
+.mk-shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.mk-shot + .mk-cap { color: var(--muted); font-size: 12px; margin: 8px 2px 0; }
+.mk-shot .ed-top, .mk-shot .notes-top { border-bottom: 1px solid var(--line); }
+.mk-shot .gal-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px 0; }
+.mk-shot .gal-head .t { font-size: 20px; font-weight: 700; flex: 1; }
+.mk-shot .gal-grid { padding: 18px 20px 22px; }
+.mk-shot .mk-stage { background: #0a0c10; padding: 26px 20px; display: flex; justify-content: center; }
+
+/* アイコンの共通の乗せ方：ボタンの中で光学的に中央に来るようにする */
+.ic { display: block; flex: 0 0 auto; }
+.btn .ic { margin: -2px 0; }
+.ic-cur { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+
+/* アイコン一覧テーブル */
+.mk-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mk-tbl th, .mk-tbl td { border-bottom: 1px solid var(--line); padding: 12px 10px; text-align: left; vertical-align: middle; }
+.mk-tbl th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.mk-tbl td.nm { color: var(--text); }
+.mk-tbl td.gl { width: 90px; }
+.mk-tbl .cell { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+  border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); color: var(--text); }
+.mk-tbl .cell.cur { color: var(--muted); }
+
+/* サイズ検証 */
+.mk-sizes { display: flex; gap: 26px; flex-wrap: wrap; }
+.mk-sizecol { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.mk-sizecol .lb { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.mk-sizecol .row { display: flex; gap: 16px; align-items: center; min-height: 34px; }
+.mk-sizecol.light { background: #e9e7e2; border-color: #cfccc5; color: #23262c; }
+.mk-sizecol.light .lb { color: #6b6f78; }
+
+/* 3案カード（一覧ページ） */
+.mk-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.mk-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.mk-card h3 { font-size: 16px; margin: 0 0 4px; }
+.mk-card .tag { color: var(--muted); font-size: 12.5px; line-height: 1.7; margin: 0 0 14px; min-height: 44px; }
+.mk-card .strip { display: flex; gap: 14px; flex-wrap: wrap; padding: 14px; border-radius: 10px;
+  background: var(--panel2); border: 1px solid var(--line); margin-bottom: 14px; }
+.mk-card .btn { width: 100%; justify-content: center; }
+
+/* アイコンだけのボタン：正方形に近い余白でアイコンを主役にする */
+.btn.ico { padding: 8px 11px; }
+.mk-shot .deck-foot .menu { display: inline-flex; align-items: center; }

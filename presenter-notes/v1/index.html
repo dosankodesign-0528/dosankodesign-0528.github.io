@@ -31,7 +31,6 @@
   <!-- ============ 編集画面 ============ -->
   <div id="editorView" hidden>
     <div class="ed-top">
-      <button class="btn ghost" id="backBtn">← 一覧</button>
       <button class="btn ghost" id="listToggle" title="左のスライド一覧を隠す／表示">◧</button>
       <button class="btn ghost" id="notesToggle" title="トークスクリプトを隠す／表示">▤</button>
       <input class="ed-name" id="edName" placeholder="プレゼン名" />
@@ -192,6 +191,8 @@
       applyDocTitle();
       $('edName').value = deck.name || '';
       $('edConn').classList.remove('on');
+      // ブラウザの「戻る」で一覧へ帰れるように履歴を1つ積む（画面内に戻るボタンは置かない）
+      try { history.pushState({ view: 'editor' }, '', location.pathname + '#edit'); } catch (e) {}
       showView('editor');
       renderEdList();
       loadNote();
@@ -594,8 +595,8 @@
       setTimeout(toFront, 900);
     };
 
-    // 一覧に戻ってもiframeは読み込んだまま保持する（次に開く時が一瞬で済む）
-    $('backBtn').onclick = () => { showView('gallery'); renderGallery(); };
+    // 一覧へは「ブラウザの戻る」で帰る（画面内に戻るボタンは置かない）
+    window.addEventListener('popstate', () => { showView('gallery'); renderGallery(); });
 
     /* ================= 設定モーダル ================= */
     $('origin').textContent = location.origin;

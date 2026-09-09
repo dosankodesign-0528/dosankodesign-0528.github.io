@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>アイコン刷新 3案｜スライド</title>
+<link rel="stylesheet" href="../../style.css" />
+<link rel="stylesheet" href="mock.css" />
+</head>
+<body>
+<script src="iconsets.js"></script>
+<script>
+(function () {
+  const TABS = [['index.html','一覧'],['current.html','現状'],['a.html','案A ライン'],['b.html','案B ソリッド'],['c.html','案C ボールド']];
+  const bar = '<div class="mk-bar"><div class="mk-wrap"><span class="ttl">アイコン刷新</span>' +
+    TABS.map(([h,t],i) => '<a class="mk-tab' + (i===0?' on':'') + '" href="' + h + '">' + t + '</a>').join('') +
+    '</div></div>';
+
+  // 現状の課題（実物を並べて見せる）
+  const ISSUES = [
+    ['settings', '⚙ が細く、20pxだと線がボケる。絵文字扱いになる環境では色が付いて浮く'],
+    ['panelLeft', '◧ が何を指すか分からない。下の ▤ とシルエットがほぼ同じ'],
+    ['notes', '▤ は潰れてただの黒い四角に見える。◧ と区別がつかない'],
+    ['link', '🔗 はカラー絵文字。他が白線なのでトーンが合わない'],
+    ['refresh', '↻ は線が細く、20pxでも何の矢印か読み取りにくい'],
+    ['play', '▶ は文字なのでベースラインで下がり、文字と上下が揃わない'],
+    ['prev', '‹ › は文字。細くて押せる場所が分かりにくい'],
+    ['edit', '✎ は環境によって絵文字に化ける'],
+  ];
+  const issueRows = ISSUES.map(([n, why]) =>
+    '<tr><td class="gl"><div class="cell cur">' + currentIcon(n, 20) + '</div></td>' +
+    '<td class="nm" style="width:170px">' + LABELS[n] + '</td><td>' + why + '</td></tr>').join('');
+
+  const card = (k) => {
+    const s = SETS[k];
+    return '<div class="mk-card"><h3>案' + k + '：' + s.name + '</h3>' +
+      '<p class="tag">' + s.tagline + '</p>' +
+      '<div class="strip">' + ORDER.map((n) => icon(k, n, 22)).join('') + '</div>' +
+      '<a class="btn primary" href="' + k.toLowerCase() + '.html">実際の画面で見る</a></div>';
+  };
+
+  document.body.innerHTML = bar + '<div class="mk-wrap">' +
+    '<h1 class="mk-h1">アイコン刷新：3案</h1>' +
+    '<p class="mk-lead">いまサイトで使っているアイコンは<b>12種すべてが「文字（記号・絵文字）」</b>です。' +
+    'フォント任せなので、太さを揃えられず・ピクセルに乗らずボケ・OSごとに形が変わります。' +
+    '3案とも 24×24 のグリッドで描き直し、意味（何を表すか）は3案共通にしました。' +
+    '<b>違うのは描き方（線／塗り／太線）だけ</b>なので、見え方だけを比べられます。</p>' +
+
+    '<h2 class="mk-h2"><span class="no">1</span>いまの課題（現物）</h2>' +
+    '<table class="mk-tbl"><tbody>' + issueRows + '</tbody></table>' +
+
+    '<h2 class="mk-h2"><span class="no">2</span>3案</h2>' +
+    '<p class="mk-note">とくに見てほしいのは「スライド一覧の開閉」と「トークスクリプトの開閉」。' +
+    '塗る位置を<b>左の柱</b>と<b>下の帯</b>で逆にして、小さくてもシルエットで区別できるようにしています。</p>' +
+    '<div class="mk-cards">' + ['A','B','C'].map(card).join('') + '</div>' +
+
+    '<h2 class="mk-h2"><span class="no">3</span>全アイコン 横並び</h2>' +
+    '<table class="mk-tbl"><thead><tr><th>用途</th><th>現状</th><th>案A</th><th>案B</th><th>案C</th></tr></thead><tbody>' +
+    ORDER.map((n) => '<tr><td class="nm">' + LABELS[n] + '</td>' +
+      '<td class="gl"><div class="cell cur">' + currentIcon(n, 20) + '</div></td>' +
+      ['A','B','C'].map((k) => '<td class="gl"><div class="cell">' + icon(k, n, 20) + '</div></td>').join('') +
+      '</tr>').join('') +
+    '</tbody></table>' +
+    '</div>';
+})();
+</script>
+</body>
+</html>
