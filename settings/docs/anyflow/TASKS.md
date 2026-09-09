@@ -73,6 +73,30 @@
 - Dev モック1のチャットは「返信まで出た状態」、Vision の 67°グラデは単語ごとのテキストに適用
 - KV の惑星＋軌道は画像（合意済み）。ティッカーの位相は実測時の x=-16.3
 
+## 2026-09-09 V3.0/V4.0 の切り分け — 🟡 進行中（V4は開発用として作成、Vercel未リンク）
+- V3 を `anyflow/v3` に保持（公開・検証版）、**新規 `anyflow/v4` を作成**（`.vercel` は削除して未リンク）
+- `.claude/launch.json` に `anyflow-v4`(port 8777) を追加
+- V4 は今後の新規開発の場。デプロイタイミングで新規Vercelプロジェクト `anyflow-embed-v4` を作る
+
+## 2026-09-09 V4.0 起点タスク — ✅ 実装完了（デプロイ未）
+- [x] 事例カード4件を `<div class="cg-cell">` → `<a class="cg-cell" href="..." target="_blank" rel="noopener">` に変換。URL:
+  - SmartHR → https://anyflow.jp/case/smarthr
+  - deex → https://anyflow.jp/case/deex
+  - SALES GO → https://anyflow.jp/case/salesgo
+  - インフォボックス → https://anyflow.jp/case/infobox
+- [x] ヘッダー「お問い合わせ」 `<button class="cta">` → `<a class="cta" href="/contact.html">`
+- [x] CV「フォームを記入」 `.cv-btn` の href → `/contact.html`（旧 anyflow.jp/lp/embed を置換）
+- [x] 新規 `contact.html`（デザイントーン準拠・ミニマム構成）：ロゴ→見出し「お問い合わせ」→リード文→**HubSpotフォーム埋め込み(v2, portalId 47236172 / formId 6db15437-...)**→©フッタ
+- [x] 事例アンカーの下線・青色を無効化する CSS 追加（`a.cg-cell { color:inherit; text-decoration:none }`）
+- [x] `.cta` に `text-decoration:none` と `box-sizing:border-box` 追加（button→a 変換に伴う調整）
+- [x] JS 構文ゲート・DOM 挙動（cta.tagName='A', href=/contact.html, spanラップ維持, card href/target 4件正）・HubSpot iframe 描画（PC/SP）を実測で確認
+
+### 🟡 仮置き（違ったら1行で直せる）
+- HubSpot フォームの色/角丸は本サイトのトーンに合わせて軽く上書き（`.form-card .hs-*` セレクタ）。HubSpot 側のクラス名は基本安定だが将来変わったら壊れる可能性あり
+- お問い合わせページのフッタは「トップへ戻る + © Anyflow Inc.」の1行のみ（本体の暗背景フッタは省略）。ヘッダーはロゴのみ・ナビ/CTAなし
+- CTA/CV は同タブ遷移（`target` なし）で作成。別タブが良ければ target="_blank" を付ける
+- V4 の Vercel プロジェクトはまだ未作成（デプロイタイミングで新規に）
+
 ## 保留・次の判断待ち
 - プリセットのチップ削除（昇格の確認が取れたら）
 - 未参照ファイル約10MB / framer-handoff.zip 9.6MB の削除（閲覧に無関係・急がない）

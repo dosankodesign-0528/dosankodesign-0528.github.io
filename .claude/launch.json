@@ -148,6 +148,15 @@
       "port": 8776
     },
     {
+      "name": "anyflow-v4",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "cd '/Users/hideyuki/Developer/Claude Code/anyflow/v4' && exec python3 -m http.server 8777"
+      ],
+      "port": 8777
+    },
+    {
       "name": "presenter-notes",
       "runtimeExecutable": "bash",
       "runtimeArgs": [
