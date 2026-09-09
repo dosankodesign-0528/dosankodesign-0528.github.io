@@ -67,7 +67,27 @@
     white-space: nowrap;
     transition:opacity var(--t-fast) var(--e-fast);
   }
-  .nav-links a:hover { opacity: .55; }
+  /* ===== 【2026-09-09 ヒデさん指定】ヘッダーのホバーアニメ(調整パネルで5案ずつ切替・リアルタイム反映) =====
+     ナビのテキスト(お問い合わせ以外)は JS で .nlab の2段構造にラップ(ロール用)。既定は data-navhover="fade"。 */
+  .nav-links a { position: relative; }
+  .nav-links a .nlab { position: relative; display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: top; }
+  .nav-links a .nlab > span { display: block; }
+  .nav-links a .nlab > span:nth-child(2) { position: absolute; left: 0; top: 100%; }   /* ロールの複製(下に待機) */
+  /* 1: フェード(既定) */
+  .header[data-navhover="fade"] .nav-links a { transition: opacity var(--t-fast) var(--e-fast); }
+  .header[data-navhover="fade"] .nav-links a:hover { opacity: .5; }
+  /* 2: 下線が左から伸びる */
+  .header[data-navhover="underline"] .nav-links a::after { content:''; position:absolute; left:0; right:100%; bottom:-4px; height:1.5px; background: currentColor; transition: right .3s var(--e-out); }
+  .header[data-navhover="underline"] .nav-links a:hover::after { right: 0; }
+  /* 3: 上下ロール(Framer参照 https://extraordinary-topic-909967.framer.app/) */
+  .header[data-navhover="roll"] .nav-links a .nlab > span { transition: transform .34s var(--e-out); }
+  .header[data-navhover="roll"] .nav-links a:hover .nlab > span { transform: translateY(-100%); }
+  /* 4: 少し浮く＋色 */
+  .header[data-navhover="lift"] .nav-links a { transition: transform .26s var(--e-out), color .26s; }
+  .header[data-navhover="lift"] .nav-links a:hover { transform: translateY(-3px); color: var(--brand-blue-deep); }
+  /* 5: 色が変わる(シアン) */
+  .header[data-navhover="cyan"] .nav-links a { transition: color .26s; }
+  .header[data-navhover="cyan"] .nav-links a:hover { color: var(--brand-cyan); }
   .cta {
     background: var(--surface-cta);
     color: var(--ink-on-dark);
@@ -84,7 +104,29 @@
     font-family: inherit;
     transition:opacity var(--t-fast) var(--e-fast);
   }
-  .cta:hover { opacity: .78; }
+  /* --- お問い合わせ黒ボタンのホバー 5案。既定 data-btnhover="lighten"。テキストは JS で <span> にラップ --- */
+  .cta { position: relative; overflow: hidden; }
+  .cta > span { position: relative; z-index: 2; }
+  /* 1: 明るく(既定) */
+  .header[data-btnhover="lighten"] .cta { transition: opacity var(--t-fast) var(--e-fast); }
+  .header[data-btnhover="lighten"] .cta:hover { opacity: .78; }
+  /* 2: 色が満ちる(下からワイプ) */
+  .header[data-btnhover="fill"] .cta::before { content:''; position:absolute; inset:0; z-index:1; background: linear-gradient(90deg, var(--brand-cyan), var(--brand-pink)); transform: translateY(101%); transition: transform .34s var(--e-out); }
+  .header[data-btnhover="fill"] .cta:hover::before { transform: translateY(0); }
+  /* 3: ふわっと拡大 */
+  .header[data-btnhover="scale"] .cta { transition: transform .24s var(--e-out), box-shadow .24s; }
+  .header[data-btnhover="scale"] .cta:hover { transform: scale(1.06); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+  /* 4: 矢印が出て文字がずれる */
+  .header[data-btnhover="arrow"] .cta > span { transition: transform .24s var(--e-out); }
+  .header[data-btnhover="arrow"] .cta:hover > span { transform: translateX(-6px); }
+  .header[data-btnhover="arrow"] .cta::after { content:'→'; position:absolute; right:16px; top:50%; z-index:2; color: var(--ink-on-dark); transform: translateY(-50%) translateX(8px); opacity:0; transition: opacity .24s, transform .24s var(--e-out); }
+  .header[data-btnhover="arrow"] .cta:hover::after { opacity:1; transform: translateY(-50%) translateX(0); }
+  /* 5: 白黒反転 */
+  .header[data-btnhover="invert"] .cta { transition: background .26s, color .26s, box-shadow .26s; }
+  .header[data-btnhover="invert"] .cta:hover { background: #fff; color: var(--surface-cta); box-shadow: inset 0 0 0 1.5px var(--surface-cta); }
+  /* ロゴはクリックでトップへ。戻る間だけ軽く透過フェード(ヒデさん「透過でOK」) */
+  .header .logo, .ft-logo { cursor: pointer; }
+  html.to-top-fade body { opacity: .82; transition: opacity .28s ease; }
 
   /* ---- Copy ---- */
   /* カンプ: frame x120 y263 w358 / 罫線26px + 14px Regular、gap 9px、本文 Thin 70px lh1.4 */
@@ -1624,12 +1666,14 @@
   /* 本体モーションパネルの開閉ボックス。左上に分離（2026-08-25）。
      網走と同じく“完全に透明な空ボックス”。アイコンは出さない（ヒデさん指定 2026-08-25） */
   /* パネルを出し入れする透明ボックス。右上に大きめの領域を取る(2026-08-27 ヒデさん指定) */
+  /* 【2026-09-09 修正】トグルを右上→右下へ。右上だとヘッダーの「お問い合わせ」ボタンに重なり
+     ホバー/クリックを奪っていた(＝ボタンのホバーアニメが効かない)。右下なら被らない。スマホも右下で統一。 */
   .tools-secret-hot {
     position: fixed;
-    top: 0;
+    bottom: 0;
     right: 0;
-    width: 180px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     z-index: 60;
     background: transparent;
     cursor: pointer;
@@ -3217,6 +3261,9 @@ const DEFAULTS = {
   visSpin: 2,          // ドットの回り方は「②速く回って減速」で確定（パネルからは外した）
   visMove: 2,          // 軌道の出方 (VIS_MOVES)。②先に動いて後で拡大 で確定（パネルからは外した）
   replay: true,        // スクロールで画面外へ出たセクションを巻き戻して再生し直す
+  /* 【2026-09-09 ヒデさん指定】ヘッダーのホバーアニメ(調整パネルで切替・リアルタイム反映)。
+     nav=テキスト(お問い合わせ以外) fade/underline/roll/lift/cyan、btn=お問い合わせボタン lighten/fill/scale/arrow/invert。 */
+  hoverFx: { nav: 'fade', btn: 'lighten' },
   marquee: {
     /* ロゴとロゴの左右の間隔(px)。継ぎ目も同じ値になるので、どこで切れても等間隔。
        【2026-08-19 ヒデさん指定】96px は広すぎたので 72px に詰めた */
@@ -14434,6 +14481,18 @@ function buildPanel() {
     v => { params.kv.eyebrowWeight = v; applyKvCopy(); markDirty(); });
   sub(copyRoot, '順番', true);
   note('数字はページを開いてから何秒後か。上から出る順です。');
+  /* 【2026-09-09 ヒデさん指定】ヘッダーのホバーアニメ(テキスト5案 / ボタン5案)。切替でリアルタイム反映。 */
+  sub(copyRoot, 'ヘッダーのホバーアニメ', true);
+  note('ヘッダーの文字(お問い合わせ以外)とボタンに、マウスを乗せた時のアニメを選べます。ロゴ(ヘッダー/フッター)をクリックするとトップへ戻ります。');
+  const setHover = (k, v) => { if (!params.hoverFx || typeof params.hoverFx !== 'object') params.hoverFx = { nav: 'fade', btn: 'lighten' }; params.hoverFx[k] = v; if (window.applyHeaderHover) applyHeaderHover(); markDirty(); };
+  note('テキストのホバー（お問い合わせ以外・5案）');
+  pillRow([{ key: 'fade', name: 'フェード' }, { key: 'underline', name: '下線' }, { key: 'roll', name: '上下ロール' }, { key: 'lift', name: '浮く' }, { key: 'cyan', name: '色変化' }],
+    it => ((params.hoverFx && params.hoverFx.nav) || 'fade') === it.key, it => setHover('nav', it.key), null,
+    { noRebuild: true, tip: it => ({ fade: '薄くなる', underline: '下線が左から伸びる', roll: 'テキストが上下で入れ替わる(Framer参照)', lift: '少し浮いて色が変わる', cyan: 'シアンに変わる' })[it.key] || '' });
+  note('お問い合わせボタンのホバー（5案）');
+  pillRow([{ key: 'lighten', name: '明るく' }, { key: 'fill', name: '色が満ちる' }, { key: 'scale', name: '拡大' }, { key: 'arrow', name: '矢印' }, { key: 'invert', name: '反転' }],
+    it => ((params.hoverFx && params.hoverFx.btn) || 'lighten') === it.key, it => setHover('btn', it.key), null,
+    { noRebuild: true, tip: it => ({ lighten: '少し明るく', fill: '下から色がワイプ', scale: 'ふわっと拡大', arrow: '矢印が出て文字がずれる', invert: '白黒反転' })[it.key] || '' });
   rows.push(slider('ナビ項目の間隔', 12, 64, 1, () => (params.kv.navGap != null ? params.kv.navGap : 32),
     v => { params.kv.navGap = v; applyNavGap(); }, v => Math.round(v) + 'px',
     'ヘッダーのナビ(ビジョン/提供できること…)の左右の間隔。'));
@@ -15185,6 +15244,39 @@ document.getElementById('panelHead').addEventListener('click', () => {
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', end);
   window.addEventListener('pointercancel', end);
+})();
+
+/* ===== 【2026-09-09 ヒデさん指定】ヘッダーのホバーアニメ(ナビ5案/ボタン5案)＋ロゴでトップへ ===== */
+(() => {
+  const header = document.querySelector('.header');
+  if (!header) return;
+  /* ナビ(お問い合わせ以外)のテキストを2段構造にラップ(ロール用)。他の案でも同じ構造でOK。 */
+  header.querySelectorAll('.nav-links a').forEach(a => {
+    const t = a.textContent.trim();
+    a.innerHTML = '<span class="nlab"><span>' + t + '</span><span aria-hidden="true">' + t + '</span></span>';
+  });
+  /* 黒ボタンのテキストを <span> に(矢印/塗りの前面化用) */
+  const cta = header.querySelector('.cta');
+  if (cta && cta.children.length === 0) cta.innerHTML = '<span>' + cta.textContent.trim() + '</span>';
+  /* 適用(パネルからリアルタイムで呼ぶ)。既定 fade / lighten。 */
+  if (!params.hoverFx || typeof params.hoverFx !== 'object') params.hoverFx = { nav: 'fade', btn: 'lighten' };
+  window.applyHeaderHover = () => {
+    header.dataset.navhover = (params.hoverFx && params.hoverFx.nav) || 'fade';
+    header.dataset.btnhover = (params.hoverFx && params.hoverFx.btn) || 'lighten';
+  };
+  applyHeaderHover();
+  /* ロゴ(ヘッダー/フッター)クリックでホームのトップへ。透過フェード＋スムーズスクロール。 */
+  const toTop = e => {
+    if (e) e.preventDefault();
+    document.documentElement.classList.add('to-top-fade');
+    try { if (window.lenis && lenis.scrollTo) lenis.scrollTo(0, { duration: 1.0 }); else window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch (_) { window.scrollTo(0, 0); }
+    setTimeout(() => document.documentElement.classList.remove('to-top-fade'), 620);
+  };
+  const hlogo = header.querySelector('.logo');
+  if (hlogo) hlogo.addEventListener('click', toTop);
+  const flogo = document.querySelector('.ft-logo');
+  if (flogo) flogo.addEventListener('click', toTop);
 })();
 /* ===== サイト全体の直接編集 (2026-08-29 ヒデさん指定) =====
    ✏️編集モード中は、KVだけでなくサイト内の主要オブジェクトをドラッグで直接動かせる。
