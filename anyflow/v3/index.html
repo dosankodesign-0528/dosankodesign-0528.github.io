@@ -13271,7 +13271,26 @@ function buildPanel() {
   const onGroupSwitch = (g) => {
     if (convGroupOf(params.converge).key !== g.key) {
       if (params.conv) params.conv.net3d = false;   /* グループを跨ぐ時はネットワーク3Dフラグを解除 */
-      onConvSwitch(convGroupDefaultMode(g));
+      /* 【2026-09-09 ヒデさん指定】ネットワーク→軌道 などタブを切り替えた時、そのグループにお気に入り(★)が
+         あれば ★1(先頭) を選択した状態で開く。無ければ従来どおりグループ既定モードへ。 */
+      const fav = (params.gfxFav || []).filter(f => g.modes.includes(f.m));
+      let applied = false;
+      if (fav.length) {
+        const f = fav[0];
+        const vlist = GFX_VARIANTS[f.m] || [];
+        const vi = vlist.findIndex(v => v.name === f.name);
+        if (vi >= 0 && !(typeof variantRemoved === 'function' && variantRemoved(f.m, vlist[vi].name))) {
+          if ((params.converge || 'off') !== f.m) convSwitchTo(f.m);
+          applyGfxVariant(vi);
+          if (params.conv) params.conv.net3d = convVarIsNetwork(vlist[vi]);
+          markDirty(); renderFrame();
+          fillAnimBody(); syncPanelRows();
+          if (fillPresetRow) fillPresetRow();
+          fillVariantRow();
+          applied = true;
+        }
+      }
+      if (!applied) onConvSwitch(convGroupDefaultMode(g));
     }
     fillCatToggles();
   };
@@ -13532,7 +13551,7 @@ function buildPanel() {
       const list = gfxPresetList();
       closeMenu();
       presetRow.innerHTML = '';
-      const style = params.presetUiStyle || 'chips';
+      const style = 'chips';   /* 【2026-09-09 ヒデさん指定】チップ固定=焼き込み(チップ/リスト切替UIは削除) */
       /* 名前をその場で書き換える(Enterで確定 / Escで取り消し) */
       const rename = (i, pillEl) => {
         const ps = list[i]; if (!ps || !pillEl) return;
@@ -13576,15 +13595,7 @@ function buildPanel() {
         };
         return add;
       };
-      /* 【2026-08-29 ヒデさん指定】見せ方の2案(チップ / ドロップダウン)を切り替えて比べられる */
-      const styleRow = document.createElement('div'); styleRow.className = 'pset-style';
-      [['chips', 'チップ'], ['drop', 'リスト']].forEach(([k, label]) => {
-        const t = document.createElement('button'); t.type = 'button'; t.className = 'pset-style-b' + (style === k ? ' on' : ''); t.textContent = label;
-        t.onclick = () => { params.presetUiStyle = k; markDirty(); fillPresetRow(); };
-        styleRow.appendChild(t);
-      });
-      presetRow.appendChild(styleRow);
-
+      /* 【2026-09-09 ヒデさん指定】プリセットの見せ方(チップ/リスト)切替UIは削除。チップ固定。 */
       if (style === 'drop') {
         /* B: ドロップダウン(いちばんコンパクト) */
         const box = document.createElement('div'); box.className = 'pset-drop';
@@ -14308,11 +14319,8 @@ function buildPanel() {
     { key: 'A2', name: '2 ピンク×ブルー' },
     { key: 'A3', name: '3 ライトグレイン' },
     { key: 'B',  name: '4 ハーフトーン' },
-    /* 【2026-09-02 ヒデさん指定】1〜3の配色を4と同じ「色が溶けて流れるハーフトーン」で
-       作り直したニューバージョン。1〜3(画像貼り)はそのまま残す */
-    { key: 'N1', name: '5 ビビッド・溶け(新)', swatch: DESIGNS.N1.swatch },
-    { key: 'N2', name: '6 ピンク×ブルー・溶け(新)', swatch: DESIGNS.N2.swatch },
-    { key: 'N3', name: '7 ライトグレイン・溶け(新)', swatch: DESIGNS.N3.swatch },
+    /* 【2026-09-09 ヒデさん指定】5〜7(N1/N2/N3・溶け新版)は削除。惑星スキンは1〜4のみ。
+       本番の design は "B"(4) なので選択肢削除で本番は不変。 */
   ];
   pillRow(PLANET_SKINS, it => params.design === it.key,
     it => { params.design = it.key; markDirty(); renderFrame(); },
@@ -14321,8 +14329,8 @@ function buildPanel() {
   /* 【2026-08-28 ヒデさん指定】惑星の大きさをパネルからも変えられるように */
   slider('大きさ', 0.2, 3, 0.02, () => params.planet.scale, v => { params.planet.scale = v; if (editHandles.on) editHandles.place(); },
     v => Math.round(v * 100) + '%', '惑星の大きさ。100%が基準です。編集モードで角をつまんでも変えられます。');
-  slider('つぶし', 0.4, 1.6, 0.02, () => (params.planet.flat == null ? 1 : params.planet.flat), v => { params.planet.flat = v; if (editHandles.on) editHandles.place(); },
-    v => v.toFixed(2), '縦横のつぶし具合。1.00が真円です。');
+  /* 【2026-09-09 ヒデさん指定】惑星の「つぶし」項目は削除。真円(flat=1)に固定＝焼き込み。
+     実装は params.planet.flat 未設定時 1(真円) が既定なので挙動不変。 */
 
   /* 【2026-08-27 ヒデさん指摘・削除】「登場（出てくる順番）」の節はここにあったが丸ごと削除。
      理由: 中身(入場の起点 / モックが出る / アイコンが出る・ばらけ / 軌道が出る)は
@@ -14462,9 +14470,8 @@ function buildPanel() {
   rows.push(slider('1周にかける時間', 1, 8, 0.1, () => (sv().vision.npOrbitDur != null ? sv().vision.npOrbitDur : 2.2),
     v => sv().vision.npOrbitDur = v, v => v.toFixed(1) + '秒',
     '「ドットが動くバージョン」でドットが軌道を1周するのにかける時間。ゆるく走り出し→等速→車のようにじわっと減速して止まります。'));
-  segRow('回る向き', [['向きA（既定）', -1], ['向きB（逆）', 1]],
-    () => (sv().vision.npOrbitDir != null ? sv().vision.npOrbitDir : -1),
-    v => { sv().vision.npOrbitDir = v; markDirty(); });
+  /* 【2026-09-09 ヒデさん指定】「回る向き」(向きA/向きB)の選択UIは削除。向きA(-1)に固定＝焼き込み。
+     実装は npOrbitDir 未設定時 -1(向きA) が既定なので挙動不変。 */
   rows.push(slider('減速の効き', 1, 4.5, 0.1, () => (sv().vision.npOrbitEase != null ? sv().vision.npOrbitEase : 2),
     v => sv().vision.npOrbitEase = v, v => '×' + v.toFixed(1),
     '終点間際のブレーキの長さ。途中までは速いまま回り、最後だけなめらかに減速して止まります。×2＝最後の36%でブレーキ(既定)。大きいほどブレーキが長くゆったり。'));
@@ -14596,9 +14603,8 @@ function buildPanel() {
 
   sub(catRes, '出てくる順番とタイミング');
   note('「事業の推進力を、」(見出し1行目) → タイピング「Anyflow」→「が支えます。」 → その他(区切り線・3数値・2つの価値)。それぞれの間隔を分けて調整できます。');
-  segRow('Anyflowの見せ方', [['下線に打ち込む', 'slot'], ['押し広げる', 'push']],
-    () => (sv().results.typeStyle || 'slot'),
-    v => { sv().results.typeStyle = v; markDirty(); renderFrame(); });
+  /* 【2026-09-09 ヒデさん指定】「Anyflowの見せ方」(下線に打ち込む/押し広げる)の選択UIは削除。
+     下線に打ち込む(slot)に固定＝焼き込み。実装は (c.typeStyle || 'slot') が既定 slot なので挙動不変。 */
   rows.push(slider('見出し1行目が出るまで', 0, 2, 0.05, () => sv().results.typeAt, v => sv().results.typeAt = v, v => v.toFixed(2) + '秒後',
     'セクションに入って(発火して)から「事業の推進力を、」が出るまで。'));
   rows.push(slider('→ タイピングが始まる', 0, 2.5, 0.05, () => (sv().results.typeGap != null ? sv().results.typeGap : 0.55), v => sv().results.typeGap = v, v => v.toFixed(2) + '秒',
@@ -14766,13 +14772,9 @@ function buildPanel() {
   rows.push(slider('割れきる時間（ゆったり）', 0.2, 3, 0.05, () => sv().dev.splitDur, v => sv().dev.splitDur = v, v => v.toFixed(2) + '秒',
     '箱が完全に開ききるまでの時間。大きいほどゆったり開きます。'));
 
-  sub(catDev, 'スロット（語の切替モーション）');
-  note('↓ CLI→SDK→API の入れ替わりモーション（6種）。');
-  const dsMotNote = noteLive(() => { const m = sv().dev.slideMotion || 'snap';
-    return ({ snap: 'スナップ: ホールド→素早く縦に切替（メリハリ）。', flip: 'フリップ: 縦に3Dで倒れて入れ替わる。', blur: 'ブラー: ぼけながら入れ替わる。', push: '横押し: 左へ抜け、右から入る。', zoom: 'ズーム: 縮んで消え、拡大して現れる。', cube: 'キューブ: 横に3D回転して入れ替わる。' })[m] || ''; });
-  pillRow([{ key: 'snap', name: 'スナップ' }, { key: 'flip', name: 'フリップ' }, { key: 'blur', name: 'ブラー' }, { key: 'push', name: '横押し' }, { key: 'zoom', name: 'ズーム' }, { key: 'cube', name: 'キューブ' }],
-    it => (sv().dev.slideMotion || 'snap') === it.key,
-    it => { sv().dev.slideMotion = it.key; dsMotNote(); renderFrame(); }, null, { noRebuild: true });
+  sub(catDev, 'スロット（切替タイミング）');
+  /* 【2026-09-09 ヒデさん指定】切替モーションは「スナップ」に固定＝焼き込み。フリップ/ブラー/横押し/ズーム/キューブと
+     選択UIは削除。実装は applyDsMotion(d.slideMotion || 'snap') が既定 snap なので挙動不変。 */
   rows.push(slider('スナップのキレ', 1, 6, 0.2, () => sv().dev.slideSnapK, v => sv().dev.slideSnapK = v, v => '×' + v.toFixed(1),
     'スナップの切替の急さ。大きいほどメリハリが強く（スナップ選択時）。'));
   rows.push(slider('自動で切り替わる間隔', 1.5, 8, 0.1, () => sv().dev.slideEvery, v => sv().dev.slideEvery = v, v => v.toFixed(1) + '秒',
